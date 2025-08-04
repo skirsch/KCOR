@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Adjusted Deaths/Week Derivation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; line-height: 1.6; }
+        h1 { color: #204080; }
+        h2 { color: #306090; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<h1>📉 Adjusted Deaths/Week Derivation</h1>
+
+<p>This document outlines the complete method for adjusting weekly deaths in vaccinated and unvaccinated groups to account for demographic drift. The adjustments remove natural changes in baseline mortality unrelated to intervention.</p>
+
+<h2>🔢 Step-by-Step</h2>
+
+<ol>
+  <li><strong>Trim to Post-HVE Window</strong><br>
+      Start analysis after enrollment week + HVE skip weeks.
+  </li>
+  <li><strong>Measure Unvaccinated Slope</strong><br>
+      - Smooth unvax deaths/week with 8-week moving average<br>
+      - Identify strict local minima: values that are the lowest within a ±2-week window and lower than previous minima<br>
+      - Fit an exponential decay: <code>D(t) = b · exp(a_u · t)</code><br>
+      - In our case, <code>a_u = -0.00213</code> with R² ≈ 0.977
+  </li>
+  <li><strong>Estimate Pre-Vax Population Slope</strong><br>
+      - Use 2020–2021 pre-vax baseline<br>
+      - Approximate as flat: <code>a1 ≈ 0</code>
+  </li>
+  <li><strong>Compute Vaccinated Slope Indirectly</strong><br>
+      Use formula:
+      <pre>
+a3 = ln( (A·e^(a1) - B·e^(a2)) / (A - B) )
+      </pre>
+      Where:<br>
+      - A = total deaths/week (e.g., 2000)<br>
+      - B = unvax deaths/week (e.g., 900)<br>
+      - a1 = pre-vax slope (0)<br>
+      - a2 = unvax slope (–0.00213)<br>
+      Result: <code>a3 ≈ 0.001739</code>
+  </li>
+  <li><strong>Normalize Deaths</strong><br>
+      - Multiply unvax deaths by <code>exp(-a2·t)</code><br>
+      - Multiply vax deaths by <code>exp(-a3·t)</code><br>
+      - This flattens curves and removes confounding demographic drift
+  </li>
+</ol>
+
+<h2>📊 Unvax Fit Example</h2>
+<img src="unvax_fit_chart.png" alt="Unvax Fit Chart" style="max-width: 100%; border: 1px solid #ccc;">
+
+<p>This chart shows the 8-week moving average of unvax deaths, the local minima used for fitting, and the resulting exponential fit.</p>
+
+</body>
+</html>
