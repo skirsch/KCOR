@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KCOR Method with Drift Normalization</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", "Noto Sans", sans-serif;
+      margin: 40px auto;
+      max-width: 850px;
+      padding: 0 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+    h1 {
+      font-size: 1.8em;
+    }
+    h2 {
+      font-size: 1.3em;
+      margin-top: 2em;
+      color: #0050b3;
+    }
+    ul {
+      margin-left: 1.5em;
+    }
+    .math-block {
+      text-align: center;
+      margin: 1em 0;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📘 KCOR (Kirsch Cumulative Outcome Ratio) with Drift Normalization</h1>
+
+<p><strong>Goal:</strong> Compare cumulative mortality (or outcomes) between vaccinated and unvaccinated groups using only weekly death counts, while adjusting for population-level drift such as aging or wave effects.</p>
+
+<h2>🧾 Input</h2>
+<ul>
+  <li>A simple weekly dataset with columns:
+    <ul>
+      <li><code>week</code></li>
+      <li><code>deaths_vax(t)</code></li>
+      <li><code>deaths_unvax(t)</code></li>
+    </ul>
+  </li>
+</ul>
+
+<h2>🔧 Parameters</h2>
+<ul>
+  <li><code>enrollment_week</code>: start of analysis window</li>
+  <li><code>HVE_skip_weeks</code>: weeks to skip post-vax (e.g. 4)</li>
+  <li><code>baseline_weeks</code>: number of weeks to use for modeling baseline trend (e.g. 8)</li>
+</ul>
+
+<h2>🔢 Step-by-Step KCOR(t) with Drift Normalization</h2>
+
+<h3>1. Trim to post-HVE window</h3>
+<p>Let:</p>
+<div class="math-block">\( t_0 = \mathrm{enrollment\_week} + \mathrm{HVE\_skip\_weeks} \)</div>
+<p>Baseline window: from \( t_0 \) to \( t_0 + \mathrm{baseline\_weeks} - 1 \)<br>
+Analysis window: from \( t_0 + \mathrm{baseline\_weeks} \) onward</p>
+
+<h3>2. Estimate pre-vax death trend</h3>
+<p>Using baseline window:</p>
+<ul>
+  <li>Compute: \( D_{total}(t) = D_{vax}(t) + D_{unvax}(t) \)</li>
+</ul>
+<p>Fit exponential:</p>
+<div class="math-block">\( D_{total}(t) = b \cdot e^{a t} \)</div>
+
+<h3>3. Derive vaccinated deaths</h3>
+<p>In post-baseline window:</p>
+<div class="math-block">\( D_{pre}(t) = b \cdot e^{a t} \)</div>
+<div class="math-block">\( D_{vax}^{derived}(t) = D_{pre}(t) - D_{unvax}^{obs}(t) \)</div>
+
+<h3>4. Fit slope to derived vaccinated deaths</h3>
+<p>Fit exponential:</p>
+<div class="math-block">\( D_{vax}^{derived}(t) = b_v \cdot e^{a_v t} \)</div>
+
+<h3>5. Apply slope-only normalization</h3>
+<p>Use slope \( a_u \) for unvax and \( a_v \) for vax normalization:</p>
+<div class="math-block">\( D_{adj,\ unvax}(t) = \frac{D_{unvax}^{obs}(t)}{e^{a_u t}}, \quad D_{adj,\ vax}(t) = \frac{D_{vax}^{obs}(t)}{e^{a_v t}} \)</div>
+<p><strong>Note:</strong> Do not divide by \( b \cdot e^{a t} \) — this would erase magnitude differences.</p>
+
+<h3>6. Compute cumulative adjusted deaths</h3>
+<div class="math-block">\( \text{cum}_{adj, vax}(t) = \sum_{\tau \le t} D_{adj, vax}(\tau) \)</div>
+<div class="math-block">\( \text{cum}_{adj, unvax}(t) = \sum_{\tau \le t} D_{adj, unvax}(\tau) \)</div>
+
+<h3>7. Compute KCOR(t)</h3>
+<div class="math-block">\( \text{KCOR}(t) = \frac{\text{cum}_{adj, vax}(t)}{\text{cum}_{adj, unvax}(t)} \)</div>
+
+<h3>8. Plot and Interpret</h3>
+<ul>
+  <li>Flat KCOR(t) at 1.0 → no mortality difference</li>
+  <li>Rising KCOR(t) → excess mortality in vaccinated group</li>
+  <li>Falling KCOR(t) → protective effect</li>
+</ul>
+
+<h2>✅ Summary Table</h2>
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr><th>Step</th><th>Description</th></tr>
+  <tr><td>1</td><td>Extract post-HVE baseline and analysis windows</td></tr>
+  <tr><td>2</td><td>Model baseline mortality via exponential</td></tr>
+  <tr><td>3</td><td>Derive vax deaths via subtraction</td></tr>
+  <tr><td>4</td><td>Fit slope to derived vax curve</td></tr>
+  <tr><td>5</td><td>Apply slope-only normalization</td></tr>
+  <tr><td>6</td><td>Compute cumulative adjusted deaths</td></tr>
+  <tr><td>7</td><td>Compute KCOR(t)</td></tr>
+  <tr><td>8</td><td>Plot and interpret</td></tr>
+</table>
+
+</body>
+</html>
