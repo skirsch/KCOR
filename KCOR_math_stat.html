@@ -134,5 +134,77 @@ R(t)=c\,R_{\text{raw}}(t)=c\,\frac{CD_v(t)}{CD_u(t)}.
 
 <p>KCOR sidesteps the <em>first</em> kind of NPH entirely, but the <em>second</em> kind can still distort the result if the intervention cohorts are age-skewed and the disease hazard isn’t proportional to baseline mortality across ages. Slope-neutralization can’t fully correct for that, because it’s not just a slow baseline drift — it’s a structural difference in hazard scaling. The safest way to handle this is to select or stratify cohorts to minimize that skew.</p>
 
+<h2>Self-check property of KCOR</h2>
+
+<p>
+One of the strongest features of KCORv3 is that it is <em>self-checking</em>.
+If the slope neutralization has been done correctly, the net harm/benefit curve
+\[
+R(t) = \frac{\mathrm{CD}_v(t)}{\mathrm{CD}_u(t)}
+\]
+will approach a constant value once the intervention’s short-term effects have worn off and only background mortality remains.
+</p>
+
+<p>
+Formally, let \( T \) denote the time after which post-intervention hazards are no longer different from baseline hazards.  
+For \( t \ge T \),
+\[
+R(t) \approx \text{constant}.
+\]
+This constant reflects the residual ratio of cumulative deaths if the cohorts have been properly normalized for intrinsic slope differences.
+</p>
+
+<p>
+Recall that cumulative deaths are computed as:
+\[
+\mathrm{CD}_g(t) = \sum_{\tau = 0}^{t} \hat{D}_g(\tau),
+\]
+where \( \hat{D}_g(\tau) \) is the slope-neutralized deaths per week for group \( g \in \{v, u\} \).
+If slope removal is correct, then:
+\[
+\frac{\mathrm{CD}_v(t)}{\mathrm{CD}_u(t)} \to \text{constant}, \quad t \to \infty.
+\]
+</p>
+
+<h3>Practical reading</h3>
+<ul>
+<li>If \( R(t) \) levels off above 1, the intervention produced a net harm signal persisting through \( T \).</li>
+<li>If \( R(t) \) levels off below 1, the intervention produced a net benefit signal persisting through \( T \).</li>
+<li>If \( R(t) \) oscillates or drifts after \( T \), slope neutralization may be incorrect or residual differences remain between cohorts.</li>
+</ul>
+
+<h3>Diagnostics</h3>
+<ul>
+<li><strong>Flat after \( T \)</strong>: Suggests slope estimation was correct and cohorts are balanced with respect to age/frailty drift.</li>
+<li><strong>Upward drift after \( T \)</strong>: Indicates under-correction of the vaccinated slope (harm looks smaller) or over-correction of the unvaccinated slope (benefit looks larger).</li>
+<li><strong>Downward drift after \( T \)</strong>: Indicates over-correction of the vaccinated slope or under-correction of the unvaccinated slope.</li>
+<li><strong>Non-flat, irregular</strong>: Possible seasonality, residual confounding, or data quality issues.</li>
+</ul>
+
+<p>
+This self-check property is a built-in validity test:  
+if the neutralization is wrong, the curve cannot asymptote to a constant — it will drift or oscillate,  
+signaling a methodological error or unadjusted bias.
+</p>
+
+<h2>Why KCOR’s self-check is unique</h2>
+<p>
+Most standard epidemiological estimators (e.g., Cox PH, Poisson/logistic regression, Kaplan–Meier) provide results under modeling
+assumptions and only offer <em>optional</em> goodness-of-fit diagnostics. They do not contain a built-in, visual “pass/fail” criterion
+tied to their own preprocessing steps. KCOR differs in three ways:
+</p>
+<ul>
+  <li><strong>Intrinsic validation:</strong> After slope neutralization, the KCOR curve \(R(t)=\mathrm{CD}_v(t)/\mathrm{CD}_u(t)\) must asymptote
+      to a horizontal line once post-intervention effects dissipate. Persistent drift is a direct signal of mis-specified slope or residual bias.</li>
+  <li><strong>No auxiliary tests required:</strong> The validation is part of the method, not an add-on (no residual tests or separate GOF procedures needed).</li>
+  <li><strong>Minimal-data robustness:</strong> KCOR’s self-check still functions when only dates (DoI, DoO, optional DoB) or weekly cohort counts are available;
+      if normalization is wrong, \(R(t)\) will not flatten.</li>
+</ul>
+<p>
+In short, KCOR’s asymptotic flatness acts as a <em>necessary condition</em> for correct normalization. Standard tools produce estimates even when their
+assumptions are violated; KCOR visibly “fails” (non-flat \(R(t)\)) when its key assumption is violated—making errors easy to detect.
+</p>
+
+
 </body>
 </html>
