@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>📉 Adjusted Deaths/Week Derivation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 2em;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #204080;
+        }
+        h1::before {
+            content: "📊 ";
+        }
+        h2::before {
+            content: "🔹 ";
+        }
+        .note {
+            background: #e7f5ff;
+            border-left: 4px solid #2b8aed;
+            padding: 10px;
+            margin-top: 1em;
+        }
+        img {
+            border: 1px solid #ccc;
+            max-width: 100%;
+            margin: 1em 0;
+        }
+    </style>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+</head>
+<body>
+
+<h1>Adjusted Deaths/Week Derivation</h1>
+
+<p>
+This guide outlines how we adjusted weekly deaths in vaccinated and unvaccinated cohorts to remove
+population-level drift. By correcting for baseline mortality trends, we can isolate true differences
+in outcomes attributable to the intervention (e.g., vaccination).
+</p>
+
+<h2>Step-by-Step Method</h2>
+
+<ol>
+    <li>
+        <strong>Trim to Post-HVE Window</strong><br>
+        Start analysis after enrollment week + HVE skip period.
+    </li>
+    <li>
+        <strong>Measure Unvaccinated Slope</strong><br>
+        <ul>
+            <li>Apply an 8-week moving average to unvax deaths/week.</li>
+            <li>Extract strict local minima (lowest in ±2-week window and lower than previous minima).</li>
+            <li>Fit exponential decay:<br>
+                \( D(t) = b \cdot e^{a_u t} \)<br>
+                Result: \( a_u = -0.00213 \) with \( R^2 \approx 0.977 \)
+            </li>
+        </ul>
+    </li>
+    <li>
+        <strong>Estimate Pre-Vax Population Slope</strong><br>
+        <ul>
+            <li>Use pre-vax baseline (e.g., Apr–Aug 2020).</li>
+            <li>Observed slope is roughly flat: \( a_1 \approx 0 \)</li>
+        </ul>
+    </li>
+    <li>
+        <strong>Compute Vaccinated Slope Indirectly</strong><br>
+        Using conservation of population deaths:
+        <p style="font-size: 1.2em;">
+        \[
+        a_3 = \ln\left( \frac{A \cdot e^{a_1} - B \cdot e^{a_2}}{A - B} \right)
+        \]
+        </p>
+        <ul>
+            <li>\( A = 2000 \), total deaths/week</li>
+            <li>\( B = 900 \), unvax deaths/week</li>
+            <li>\( a_1 = 0 \), flat pre-vax trend</li>
+            <li>\( a_2 = -0.00213 \), decay for unvax</li>
+        </ul>
+        Result: \( a_3 \approx 0.001739 \)
+    </li>
+    <li>
+        <strong>Normalize Raw Deaths</strong><br>
+        <ul>
+            <li>Unvax: \( D_{\text{adj}}(t) = D(t) \cdot e^{-a_2 t} \)</li>
+            <li>Vax: \( D_{\text{adj}}(t) = D(t) \cdot e^{-a_3 t} \)</li>
+        </ul>
+    </li>
+</ol>
+
+<h2>📈 Fit Visualization</h2>
+<p>This plot shows the 8-week moving average of unvax deaths, selected local minima, and the fitted exponential decay:</p>
+<img src="unvax_fit_chart.png" alt="Unvax Fit Chart">
+
+<h2>🧠 Sanity Checks</h2>
+<div class="note">
+<ul>
+    <li><strong>Flat Slope After Normalization:</strong> The adjusted unvax and vax curves should flatten over time, particularly in late 2024+.</li>
+    <li><strong>Stable KCOR(t):</strong> If the vaccine has no effect, the normalized KCOR(t) should level off, not rise or fall indefinitely.</li>
+    <li><strong>Minimal Total Drift:</strong> Since total population deaths are stable, we expect a modest upward correction to vax drift only.</li>
+</ul>
+</div>
+
+</body>
+</html>

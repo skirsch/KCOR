@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>KCOR Method with Drift Normalization</title>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 2em;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #204080;
+        }
+        h1::before {
+            content: "📘 ";
+        }
+        h2::before {
+            content: "🔹 ";
+        }
+        code, pre {
+            background: #f4f4f4;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: Consolas, monospace;
+        }
+        .note {
+            background: #fff8e1;
+            border-left: 4px solid #f0ad4e;
+            padding: 10px;
+            margin-top: 1em;
+        }
+    </style>
+</head>
+<body>
+
+<h1>KCOR Method with Drift Normalization</h1>
+
+<p>
+The Kirsch Cumulative Outcome Ratio (KCOR) method evaluates all-cause mortality between intervention and control groups (e.g., vaccinated vs. unvaccinated), accounting for selection effects and demographic drift.
+This document provides a full description of the KCOR methodology as applied to the Czech all-ages dataset, incorporating our new exponential slope-based drift normalization.
+</p>
+
+<h2>1. Background</h2>
+<p>
+Traditional observational comparisons suffer from confounding due to non-proportional hazards (e.g., vaccinated cohorts being healthier). KCOR improves this by standardizing death rates within well-defined observation windows.
+</p>
+
+<h2>2. Key Parameters</h2>
+<ul>
+    <li><strong>Enrollment Date:</strong> June 14, 2021</li>
+    <li><strong>HVE Skip Period:</strong> 2–4 weeks</li>
+    <li><strong>Baseline Observation Period:</strong> July 5, 2021 to August 23, 2021</li>
+    <li><strong>Post-Baseline Observation:</strong> Through May 2024</li>
+</ul>
+
+<h2>3. Adjusted Death Normalization</h2>
+<p>
+Drift in background mortality is normalized using exponential correction of deaths per week for each cohort.
+The method is detailed in the linked document:
+<a href="adjusted_deaths_week_method_UPDATED.html">Adjusted Deaths/Week Derivation</a>
+</p>
+
+<p>
+Unvaxxed slope \( a_2 = -0.00213 \), derived from local minima of smoothed data. Vaccinated slope \( a_3 = 0.001739 \) was computed using:
+</p>
+
+<p style="font-size: 1.2em;">
+\[
+a_3 = \ln\left( \frac{A \cdot e^{a_1} - B \cdot e^{a_2}}{A - B} \right)
+\]
+</p>
+
+<h2>4. KCOR Computation Steps</h2>
+<ol>
+    <li>Aggregate deaths per week by cohort as of enrollment date.</li>
+    <li>Apply drift normalization:
+        <ul>
+            <li>Unvax: \( D_u(t) \cdot e^{-a_2 t} \)</li>
+            <li>Vax: \( D_v(t) \cdot e^{-a_3 t} \)</li>
+        </ul>
+    </li>
+    <li>Cumulate adjusted deaths over time to get \( C_u(t), C_v(t) \)</li>
+    <li>Compute KCOR(t): \( \frac{C_v(t)}{C_u(t)} \)</li>
+    <li>Normalize KCOR(t) using baseline period to form final flat-asymptote ratio</li>
+</ol>
+
+<h2>5. Results</h2>
+<p>
+After correction, KCOR(t) stabilizes. A final value greater than 1 indicates higher all-cause mortality in the vaccinated cohort.
+</p>
+
+<p>
+Example: If final KCOR(t) = 1.20, this implies a 20% excess all-cause mortality in the vaccinated cohort over the observation window.
+</p>
+
+<h2>6. Visual Sanity Checks</h2>
+<ul>
+    <li><strong>Unvax Adjusted Curve:</strong> Should be flat across full observation window</li>
+    <li><strong>Vax Adjusted Curve:</strong> Should be flat after vaccine-induced effects stabilize</li>
+    <li><strong>KCOR(t):</strong> Should level off and not rise indefinitely in a drift-neutral scenario</li>
+</ul>
+
+<h2>7. Notes</h2>
+<div class="note">
+<p>
+Because the unvaxxed cohort is often higher-risk, failing to adjust for drift can lead to overestimation of vaccine benefit.
+KCOR controls for this by using slope-normalized comparisons based on population-level constraints.
+</p>
+</div>
+
+</body>
+</html>
