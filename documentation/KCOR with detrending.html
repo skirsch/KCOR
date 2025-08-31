@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KCOR from Mortality Rates — Concise Guide</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;background:#0b0f14;color:#e6edf3;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px}
+  h1,h2,h3{line-height:1.15;margin:0 0 10px}
+  h1{font-size:28px;margin-bottom:18px}
+  h2{font-size:22px;margin-top:26px}
+  h3{font-size:18px;margin-top:18px}
+  .card{background:#111826;border:1px solid #1f2937;border-radius:14px;padding:18px 16px;margin:16px 0}
+  code,pre{font-family:ui-monospace,Menlo,Consolas,monospace}
+  pre{background:#0a1320;border:1px solid #1b2840;border-radius:10px;padding:14px;overflow:auto;color:#dbe8ff}
+  .muted{color:#a1adba}
+  ul.tight>li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>KCOR from Mortality Rates — Concise Guide</h1>
+
+  <div class="card">
+    <h2>Protocol</h2>
+    <ol class="tight">
+      <li>Compute weekly <b>deaths</b> D<sub>w</sub> and <b>person-time</b> PT<sub>w</sub> (≈ Alive + 0.5·Dead).</li>
+      <li>Weekly crude mortality rate (CMR): r<sub>w</sub> = D<sub>w</sub>/PT<sub>w</sub>.</li>
+      <li>Select cohorts to compare (e.g. Dose 2 vs Dose 0, same birth-year).</li>
+      <li>Form weekly <b>log-ratio</b>: y<sub>w</sub> = log(r<sub>w,treat</sub>/r<sub>w,ref</sub>).</li>
+      <li>Detrend y<sub>w</sub> by subtracting a baseline fit in a “plateau” window (e.g. calendar 2023) ⇒ ỹ<sub>w</sub>.</li>
+      <li>Apply weights w<sub>w</sub> = min(PT<sub>w,treat</sub>,PT<sub>w,ref</sub>) (or =1).</li>
+      <li>Cumulative KCOR:  
+        <pre>KCOR(t) = exp( Σ ỹ_w·w_w / Σ w_w )</pre>
+      </li>
+      <li>95% CI: Var(log RR<sub>w</sub>) ≈ 1/D<sub>w,treat</sub> + 1/D<sub>w,ref</sub>.  
+          Propagate through weighted mean, then exponentiate.</li>
+      <li>If detrending=off, KCOR(t) = ratio of cumulative CMRs.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Key points</h2>
+    <ul class="tight">
+      <li>Detrending is done on the <b>ratio</b>, not each arm separately.</li>
+      <li>One correction per (BirthYear × Dose_vs_0) curve.</li>
+      <li>If you skip detrending, both formulas collapse to the raw cumulative ratio.</li>
+      <li>KCOR(t) & CIs can be computed each week for plotting.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Pseudocode</h2>
+<pre>
+for each week w:
+    r_treat[w] = D_treat[w]/PT_treat[w]
+    r_ref[w]   = D_ref[w]/PT_ref[w]
+    y[w] = log(r_treat[w]/r_ref[w])
+
+# Detrend using baseline window
+ỹ[w] = y[w] - baseline_fit(y)
+
+# Weighted cumulative mean of detrended log-ratios
+mu[t] = Σ(ỹ[:t]*w[:t]) / Σ w[:t]
+KCOR[t] = exp(mu[t])
+
+# Variance for CI
+var_mu[t] = Σ(w[:t]^2 * var_log_rr[:t]) / (Σ w[:t])^2
+SE = sqrt(var_mu[t])
+CI = exp(mu[t] ± 1.96·SE)
+</pre>
+  </div>
+
+</div>
+</body>
+</html>

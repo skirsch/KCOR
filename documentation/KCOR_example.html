@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KCOR Worked Example — 5 Weeks with Detrending from Last 2 Weeks</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+ body{margin:0;background:#0b0f14;color:#e6edf3;font:16px/1.55 system-ui,sans-serif}
+ .wrap{max-width:900px;margin:0 auto;padding:32px 20px}
+ h1{font-size:26px;margin:0 0 14px}
+ h2{font-size:20px;margin:22px 0 10px}
+ .card{background:#111826;border:1px solid #1f2937;border-radius:14px;padding:16px;margin:14px 0}
+ table{width:100%;border-collapse:collapse;margin-top:10px}
+ th,td{padding:6px 8px;border:1px solid #334155;text-align:right}
+ th{text-align:center;background:#1e293b}
+ code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#a7f3d0}
+ .muted{color:#a1adba}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>KCOR Worked Example — 5 Weeks with Detrending from Last 2 Weeks</h1>
+
+  <div class="card">
+    <h2>Setup</h2>
+    <ul>
+      <li>Cohort: Birth year 1940; comparison: <b>Dose&nbsp;2</b> vs <b>Dose&nbsp;0</b>.</li>
+      <li>Weeks: 5 consecutive weeks; assume equal person-time per arm each week (PT = 1000).</li>
+      <li>We’ll compute the <b>detrend baseline</b> as the <b>mean of the last two weeks’ log-ratios</b> (a flat anchor over the last 2 weeks).</li>
+      <li>Weights w<sub>w</sub> = PT (equal here), so the weighted mean reduces to a simple average.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Weekly input and instantaneous rates</h2>
+    <table>
+      <tr>
+        <th>Week</th>
+        <th>Deaths Dose&nbsp;0</th><th>Deaths Dose&nbsp;2</th>
+        <th>PT (each)</th>
+        <th>CMR Dose&nbsp;0</th><th>CMR Dose&nbsp;2</th>
+        <th>Ratio (D2/D0)</th><th>log(Ratio)</th>
+      </tr>
+      <tr><td>1</td><td>5</td><td>7</td><td>1000</td><td>0.0050</td><td>0.0070</td><td>1.4000</td><td>0.336472</td></tr>
+      <tr><td>2</td><td>6</td><td>8</td><td>1000</td><td>0.0060</td><td>0.0080</td><td>1.3333</td><td>0.287682</td></tr>
+      <tr><td>3</td><td>7</td><td>8</td><td>1000</td><td>0.0070</td><td>0.0080</td><td>1.1429</td><td>0.133531</td></tr>
+      <tr><td>4</td><td>7</td><td>9</td><td>1000</td><td>0.0070</td><td>0.0090</td><td>1.2857</td><td>0.251314</td></tr>
+      <tr><td>5</td><td>8</td><td>9</td><td>1000</td><td>0.0080</td><td>0.0090</td><td>1.1250</td><td>0.117783</td></tr>
+    </table>
+    <p class="muted">CMR = deaths / PT. Ratios use CMR<sub>Dose2</sub> / CMR<sub>Dose0</sub>. log = natural log.</p>
+  </div>
+
+  <div class="card">
+    <h2>Detrending baseline from the last 2 weeks</h2>
+    <p>Take the last two weeks’ log-ratios and average them (flat anchor over weeks 4–5):</p>
+    <ul>
+      <li>log(Ratio)<sub>4</sub> = 0.251314</li>
+      <li>log(Ratio)<sub>5</sub> = 0.117783</li>
+      <li><b>Baseline</b> = (0.251314 + 0.117783) / 2 = <b>0.184549</b></li>
+    </ul>
+    <p>Detrended weekly log-ratios: ỹ<sub>w</sub> = log(Ratio)<sub>w</sub> − Baseline</p>
+    <table>
+      <tr><th>Week</th><th>log(Ratio)</th><th>Baseline</th><th>ỹ = log(Ratio) − Baseline</th></tr>
+      <tr><td>1</td><td>0.336472</td><td>0.184549</td><td><b> 0.151924</b></td></tr>
+      <tr><td>2</td><td>0.287682</td><td>0.184549</td><td><b> 0.103133</b></td></tr>
+      <tr><td>3</td><td>0.133531</td><td>0.184549</td><td><b>-0.051017</b></td></tr>
+      <tr><td>4</td><td>0.251314</td><td>0.184549</td><td><b> 0.066766</b></td></tr>
+      <tr><td>5</td><td>0.117783</td><td>0.184549</td><td><b>-0.066766</b></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>KCOR with detrending (point estimate)</h2>
+    <p>With equal PT, the weights are equal, so the cumulative mean of detrended log-ratios through week 5 is the simple average:</p>
+    <pre>μ(5) = (Σ ỹ) / 5 = (0.151924 + 0.103133 - 0.051017 + 0.066766 - 0.066766) / 5
+     = 0.040808</pre>
+    <p>KCOR(5) = exp( μ(5) ) = exp(0.040808) = <b>1.041652</b></p>
+    <p class="muted">Interpretation: after removing the baseline drift (anchored on the last two weeks), the cumulative relative risk over 5 weeks is ~4.2% higher for Dose&nbsp;2 vs Dose&nbsp;0.</p>
+  </div>
+
+  <div class="card">
+    <h2>95% Confidence Interval (delta method)</h2>
+    <p>Approximate weekly variance of log RR: Var(log RR<sub>w</sub>) ≈ 1/D<sub>w,treat</sub> + 1/D<sub>w,ref</sub>.</p>
+    <table>
+      <tr><th>Week</th><th>Dose 2 deaths</th><th>Dose 0 deaths</th><th>Var(log RR)</th></tr>
+      <tr><td>1</td><td>7</td><td>5</td><td>0.342857</td></tr>
+      <tr><td>2</td><td>8</td><td>6</td><td>0.291667</td></tr>
+      <tr><td>3</td><td>8</td><td>7</td><td>0.267857</td></tr>
+      <tr><td>4</td><td>9</td><td>7</td><td>0.253968</td></tr>
+      <tr><td>5</td><td>9</td><td>8</td><td>0.236111</td></tr>
+    </table>
+    <p>For equal weights w<sub>w</sub>=1, the variance of the mean μ over 5 weeks is:</p>
+    <pre>Var[μ] = (Σ Var_w) / 5^2 = 0.0556984
+SE = sqrt(Var[μ]) = 0.236005</pre>
+    <p>95% CI on the log scale: μ ± 1.96·SE ⇒ 0.040808 ± 1.96·0.236005</p>
+    <p>Exponentiate to ratio scale:</p>
+    <pre>KCOR_LCL = exp(0.040808 - 1.96*0.236005) = 0.655890
+KCOR_UCL = exp(0.040808 + 1.96*0.236005) = 1.654300</pre>
+    <p class="muted">These CIs are wide because weekly deaths are small in this toy example. With real data and larger counts, CIs will tighten.</p>
+  </div>
+
+  <div class="card">
+    <h2>Notes</h2>
+    <ul>
+      <li>The “detrend baseline” here is a <b>flat</b> level = mean of the last two log-ratios (weeks 4–5). You could also fit a slope over those weeks (not identifiable with only 2 points), or use a longer anchor window (e.g., calendar 2023).</li>
+      <li>With unequal PT, set weekly weight w<sub>w</sub> = min(PT<sub>w,treat</sub>, PT<sub>w,ref</sub>) and use the weighted formulas for μ and Var[μ].</li>
+      <li>If you turn detrending off (baseline = 0), the KCOR equals the ratio of cumulative CMRs.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
