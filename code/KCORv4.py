@@ -36,10 +36,12 @@ TAU = 0.10                      # quantile level for QR
 EPS = 1e-12                     # numerical floor to avoid log(0) - increased from 1e-18
 MAX_SE_LOGK = 10.0             # maximum allowed SE(log K) to prevent overflow
 
-# Slope calculation timing parameters
-SLOPE_START_WEEKS = 72  # Start slope calculation 72 weeks after enrollment
-SLOPE_WINDOW_WEEKS = 52  # Use only 52 weeks of data for slope calculation
-SLOPE_MAX_DATE = "2024-04-01"  # Maximum date for slope calculation (data missing after this)
+# Slope calculation using lookup table method
+SLOPE_LOOKUP_TABLE = {
+    '2021_24': (53, 114)  # (offset1, offset2) from enrollment for slope calculation
+}
+MA_TOTAL_LENGTH = 8  # Total length of centered moving average (8 weeks = 4 weeks on either side)
+CENTERED = True  # Use centered moving average (4 weeks before + 4 weeks after each point)
 
 # Debug parameters - limit scope for debugging
 DEBUG_AGE_ONLY = 1940           # Only process this age group (set to None to process all)
@@ -109,39 +111,52 @@ def quantile_slope_log_y(t, y, tau=TAU):
     
     return b
 
-def compute_group_slopes_qr(df):
-    """Slope per (YearOfBirth,Dose) on log(MR) using timing parameters."""
+def compute_group_slopes_lookup(df, sheet_name):
+    """Slope per (YearOfBirth,Dose) using lookup table method."""
     slopes = {}
-    max_date = pd.to_datetime(SLOPE_MAX_DATE)
+    
+    # Get lookup table values for this sheet
+    if sheet_name not in SLOPE_LOOKUP_TABLE:
+        print(f"[WARNING] No lookup table entry for sheet {sheet_name}, using default slope 0.0")
+        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+            slopes[(yob,dose)] = 0.0
+        return slopes
+    
+    offset1, offset2 = SLOPE_LOOKUP_TABLE[sheet_name]
+    T = offset2 - offset1  # Time difference between the two points
     
     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-        g2 = g.dropna(subset=["MR"])
-        if g2.empty or len(g2) < 3:
+        g_sorted = g.sort_values("t")
+        
+        # Find MR values at the two lookup points
+        point1 = g_sorted[g_sorted["t"] == offset1]
+        point2 = g_sorted[g_sorted["t"] == offset2]
+        
+        if point1.empty or point2.empty:
             slopes[(yob,dose)] = 0.0
+            # if DEBUG_VERBOSE and (yob, dose) in [(1940, 0), (1940, 2)]:
+            #     print(f"  [DEBUG] Missing lookup points for Age {yob}, Dose {dose}: t={offset1} or t={offset2}")
             continue
         
-        # Filter by timing parameters
-        # 1. Start 72 weeks after enrollment (t >= SLOPE_START_WEEKS)
-        # 2. End before max date (DateDied <= SLOPE_MAX_DATE)
-        # 3. Use only 52 weeks of data (SLOPE_WINDOW_WEEKS)
-        g_filtered = g2[
-            (g2["t"] >= SLOPE_START_WEEKS) & 
-            (g2["DateDied"] <= max_date)
-        ].copy()
+        # Get MR values at the two points
+        A = point1["MR_smooth"].iloc[0]  # MR at offset1
+        B = point2["MR_smooth"].iloc[0]  # MR at offset2
         
-        if g_filtered.empty or len(g_filtered) < 3:
-            slopes[(yob,dose)] = 0.0
-            continue
-            
-        # Take the first SLOPE_WINDOW_WEEKS of the filtered data
-        gwin = g_filtered.iloc[:SLOPE_WINDOW_WEEKS] if len(g_filtered) > SLOPE_WINDOW_WEEKS else g_filtered
+        # Calculate exponential slope: slope = ln(B/A) / T
+        if A > EPS and B > EPS:
+            slope = (np.log(B) - np.log(A)) / T
+        else:
+            slope = 0.0
         
-        # Additional data quality checks
-        if gwin["MR"].var() < EPS or gwin["t"].var() < EPS:
-            slopes[(yob,dose)] = 0.0
-            continue
-            
-        slopes[(yob,dose)] = quantile_slope_log_y(gwin["t"].values, gwin["MR"].values, tau=TAU)
+        slopes[(yob,dose)] = slope
+        
+        # Debug: Show lookup table calculation
+        # if DEBUG_VERBOSE and (yob, dose) in [(1940, 0), (1940, 2)]:
+        #     print(f"  [DEBUG] Lookup slope calculation for Age {yob}, Dose {dose}:")
+        #     print(f"    Point 1: t={offset1}, MR={A:.6f}")
+        #     print(f"    Point 2: t={offset2}, MR={B:.6f}")
+        #     print(f"    T={T}, slope = ln({B:.6f}/{A:.6f})/{T} = {slope:.6f}")
+    
     return slopes
 
 def adjust_mr(df, slopes, t0=ANCHOR_WEEKS):
@@ -154,6 +169,30 @@ def adjust_mr(df, slopes, t0=ANCHOR_WEEKS):
 def safe_sqrt(x, eps=EPS):
     """Safe square root with clipping."""
     return np.sqrt(np.clip(x, eps, None))
+
+def apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED):
+    """Apply centered moving average smoothing to MR values before quantile regression.
+    
+    Args:
+        window: Total length of moving average (e.g., 8 weeks = 4 weeks on either side)
+        centered: If True, use centered MA (4 weeks before + 4 weeks after each point)
+    """
+    df_smooth = df.copy()
+    
+    for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+        # Sort by time to ensure proper order
+        g_sorted = g.sort_values("t")
+        
+        # Apply centered moving average to MR values
+        if centered:
+            g_sorted["MR_smooth"] = g_sorted["MR"].rolling(window=window, center=True, min_periods=1).mean()
+        else:
+            g_sorted["MR_smooth"] = g_sorted["MR"].rolling(window=window, center=False, min_periods=1).mean()
+        
+        # Update the original dataframe
+        df_smooth.loc[g_sorted.index, "MR_smooth"] = g_sorted["MR_smooth"]
+    
+    return df_smooth
 
 def build_kcor_rows(df, sheet_name):
     """
@@ -195,27 +234,27 @@ def build_kcor_rows(df, sheet_name):
                 continue
                 
             # Debug: Print detailed info for each date
-            if DEBUG_VERBOSE:
-                print(f"\n[DEBUG] Age {yob}, Doses {num} vs {den}")
-                print(f"  Number of merged rows: {len(merged)}")
-                print(f"  Date range: {merged['DateDied'].min().strftime('%m/%d/%Y')} to {merged['DateDied'].max().strftime('%m/%d/%Y')}")
-                
-                # Check for duplicate dates
-                date_counts = merged['DateDied'].value_counts()
-                if date_counts.max() > 1:
-                    print(f"  WARNING: Found duplicate dates!")
-                    print(f"    Max rows per date: {date_counts.max()}")
-                    print(f"    Dates with multiple rows: {len(date_counts[date_counts > 1])}")
-                    print(f"    Sample duplicate dates:")
-                    for date, count in date_counts[date_counts > 1].head(3).items():
-                        print(f"      {date.strftime('%m/%d/%Y')}: {count} rows")
-                
-                print(f"  Sample data points:")
-                for i, row in merged.head(5).iterrows():
-                    print(f"    Date: {row['DateDied'].strftime('%m/%d/%Y')}")
-                    print(f"      Dose {num}: MR={row['MR_num']:.6f}, MR_adj={row['MR_adj_num']:.6f}, CMR={row['CMR_num']:.6f}, cumD_adj={row['cumD_adj_num']:.6f}")
-                    print(f"      Dose {den}: MR={row['MR_den']:.6f}, MR_adj={row['MR_adj_den']:.6f}, CMR={row['CMR_den']:.6f}, cumD_adj={row['cumD_adj_den']:.6f}")
-                print()
+            # if DEBUG_VERBOSE:
+            #     print(f"\n[DEBUG] Age {yob}, Doses {num} vs {den}")
+            #     print(f"  Number of merged rows: {len(merged)}")
+            #     print(f"  Date range: {merged['DateDied'].min().strftime('%m/%d/%Y')} to {merged['DateDied'].max().strftime('%m/%d/%Y')}")
+            #     
+            #     # Check for duplicate dates
+            #     date_counts = merged['DateDied'].value_counts()
+            #     if date_counts.max() > 1:
+            #         print(f"  WARNING: Found duplicate dates!")
+            #         print(f"    Max rows per date: {date_counts.max()}")
+            #         print(f"    Dates with multiple rows: {len(date_counts[date_counts > 1])}")
+            #         print(f"    Sample duplicate dates:")
+            #         for date, count in date_counts[date_counts > 1].head(3).items():
+            #             print(f"      {date.strftime('%m/%d/%Y')}: {count} rows")
+            #     
+            #     print(f"  Sample data points:")
+            #     for i, row in merged.head(5).iterrows():
+            #         print(f"    Date: {row['DateDied'].strftime('%m/%d/%Y')}")
+            #         print(f"      Dose {num}: MR={row['MR_num']:.6f}, MR_adj={row['MR_adj_num']:.6f}, CMR={row['CMR_num']:.6f}, cumD_adj={row['cumD_adj_num']:.6f}")
+            #         print(f"      Dose {den}: MR={row['MR_den']:.6f}, MR_adj={row['MR_adj_den']:.6f}, CMR={row['CMR_den']:.6f}, cumD_adj={row['cumD_adj_den']:.6f}")
+            #     print()
 
             # Handle division by zero or very small denominators
             valid_denom = merged["CMR_den"] > EPS
@@ -233,17 +272,17 @@ def build_kcor_rows(df, sheet_name):
 
             
             # Debug: Check for suspiciously large KCOR values
-            if merged["KCOR"].max() > 10:
-                print(f"\n[DEBUG] Large KCOR detected in {sheet_name}, Age {yob}, Doses {num} vs {den}")
-                print(f"  CMR_num range: {merged['CMR_num'].min():.6f} to {merged['CMR_num'].max():.6f}")
-                print(f"  CMR_den range: {merged['CMR_den'].min():.6f} to {merged['CMR_den'].max():.6f}")
-                print(f"  K_raw range: {merged['K_raw'].min():.6f} to {merged['K_raw'].max():.6f}")
-                print(f"  Anchor value: {anchor:.6f}")
-                print(f"  KCOR range: {merged['KCOR'].min():.6f} to {merged['KCOR'].max():.6f}")
-                print(f"  Sample data points:")
-                for i, row in merged.head(3).iterrows():
-                    print(f"    Date: {row['DateDied']}, CMR_num: {row['CMR_num']:.6f}, CMR_den: {row['CMR_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
-                print()
+            # if merged["KCOR"].max() > 10:
+            #     print(f"\n[DEBUG] Large KCOR detected in {sheet_name}, Age {yob}, Doses {num} vs {den}")
+            #     print(f"  CMR_num range: {merged['CMR_num'].min():.6f} to {merged['CMR_num'].max():.6f}")
+            #     print(f"  CMR_den range: {merged['CMR_den'].min():.6f} to {merged['CMR_den'].max():.6f}")
+            #     print(f"  K_raw range: {merged['K_raw'].min():.6f} to {merged['K_raw'].max():.6f}")
+            #     print(f"  Anchor value: {anchor:.6f}")
+            #     print(f"  KCOR range: {merged['KCOR'].min():.6f} to {merged['KCOR'].max():.6f}")
+            #     print(f"  Sample data points:")
+            #     for i, row in merged.head(3).iterrows():
+            #         print(f"    Date: {row['DateDied']}, CMR_num: {row['CMR_num']:.6f}, CMR_den: {row['CMR_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
+            #     print()
 
             # Safe calculation of SE_logK with clipping
             merged["SE_logK"] = safe_sqrt(
@@ -429,8 +468,22 @@ def process_workbook(src_path: str, out_path: str):
         df["MR"]   = np.where(df["PT"] > 0, df["Dead"]/(df["PT"] + EPS), np.nan)
         df["t"]    = df.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
 
-        # QR slope removal
-        slopes = compute_group_slopes_qr(df)
+        # Apply centered moving average smoothing before quantile regression
+        df = apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED)
+        
+        # Debug: Show effect of moving average
+        # if DEBUG_VERBOSE:
+        #     print(f"\n[DEBUG] Centered moving average smoothing (total length={MA_TOTAL_LENGTH} weeks, centered={CENTERED}):")
+        #     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+        #         if len(g) > 0:
+        #             mr_orig = g["MR"].values
+        #             mr_smooth = g["MR_smooth"].values
+        #             print(f"  Age {yob}, Dose {dose}:")
+        #             print(f"    Original MR range: {mr_orig.min():.6f} to {mr_orig.max():.6f}")
+        #             print(f"    Smoothed MR range: {mr_smooth.min():.6f} to {mr_smooth.max():.6f}")
+        
+        # Lookup table slope calculation (using smoothed MR values)
+        slopes = compute_group_slopes_lookup(df, sh)
         
         # Debug: Show computed slopes
         if DEBUG_VERBOSE:
@@ -442,29 +495,29 @@ def process_workbook(src_path: str, out_path: str):
         df = adjust_mr(df, slopes, t0=ANCHOR_WEEKS)
         
         # Debug: Show MR values week by week, especially weeks with no deaths
-        if DEBUG_VERBOSE:
-            print(f"\n[DEBUG] MR values by week for sheet {sh}:")
-            for dose in df["Dose"].unique():
-                dose_data = df[df["Dose"] == dose].sort_values("DateDied")
-                print(f"  Dose {dose}:")
-                print(f"    Original MR range: {dose_data['MR'].min():.6f} to {dose_data['MR'].max():.6f}")
-                print(f"    Adjusted MR range: {dose_data['MR_adj'].min():.6f} to {dose_data['MR_adj'].max():.6f}")
-                
-                # Show weeks with extreme MR_adj values
-                extreme_mr = dose_data[dose_data["MR_adj"] > 100]
-                if not extreme_mr.empty:
-                    print(f"    WARNING: {len(extreme_mr)} weeks with MR_adj > 100:")
-                    for _, row in extreme_mr.head(5).iterrows():
-                        print(f"      Date: {row['DateDied']}, Original MR: {row['MR']:.6f}, MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}, Dead: {row['Dead']:.6f}")
-                
-                # Show weeks with no deaths but high MR_adj
-                no_deaths_high_mr = dose_data[(dose_data["Dead"] == 0) & (dose_data["MR_adj"] > 10)]
-                if not no_deaths_high_mr.empty:
-                    print(f"    WARNING: {len(no_deaths_high_mr)} weeks with no deaths but MR_adj > 10:")
-                    for _, row in no_deaths_high_mr.head(5).iterrows():
-                        print(f"      Date: {row['DateDied']}, Original MR: {row['MR']:.6f}, MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}, Dead: {row['Dead']:.6f}")
-                
-                print()
+        # if DEBUG_VERBOSE:
+        #     print(f"\n[DEBUG] MR values by week for sheet {sh}:")
+        #     for dose in df["Dose"].unique():
+        #         dose_data = df[df["Dose"] == dose].sort_values("DateDied")
+        #         print(f"  Dose {dose}:")
+        #         print(f"    Original MR range: {dose_data['MR'].min():.6f} to {dose_data['MR'].max():.6f}")
+        #         print(f"    Adjusted MR range: {dose_data['MR_adj'].min():.6f} to {dose_data['MR_adj'].max():.6f}")
+        #     
+        #     # Show weeks with extreme MR_adj values
+        #     extreme_mr = dose_data[dose_data["MR_adj"] > 100]
+        #     if not extreme_mr.empty:
+        #         print(f"    WARNING: {len(extreme_mr)} weeks with MR_adj > 100:")
+        #         for _, row in extreme_mr.head(5).iterrows():
+        #             print(f"      Date: {row['DateDied']}, Original MR: {row['MR']:.6f}, MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}, Dead: {row['Dead']:.6f}")
+        #     
+        #     # Show weeks with no deaths but high MR_adj
+        #     no_deaths_high_mr = dose_data[(dose_data["Dead"] == 0) & (dose_data["MR_adj"] > 10)]
+        #     if not no_deaths_high_mr.empty:
+        #         print(f"    WARNING: {len(no_deaths_high_mr)} weeks with no deaths but MR_adj > 10:")
+        #         for _, row in no_deaths_high_mr.head(5).iterrows():
+        #             print(f"      Date: {row['DateDied']}, Original MR: {row['MR']:.6f}, MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}, Dead: {row['Dead']:.6f}")
+        #     
+        #     print()
 
         # adjusted deaths, cumulative, CMR
         df["D_adj"]    = df["MR_adj"] * df["PT"]
@@ -481,29 +534,29 @@ def process_workbook(src_path: str, out_path: str):
         df["CMR"] = np.where(df["cumPT"] > 0, df["cumD_adj"]/df["cumPT"], np.nan)
         
         # Debug: Print detailed CMR calculation info
-        if DEBUG_VERBOSE:
-            print(f"\n[DEBUG] CMR calculation details for sheet {sh}:")
-            for dose in df["Dose"].unique():
-                dose_data = df[df["Dose"] == dose]
-                if not dose_data.empty:
-                    print(f"  Dose {dose}:")
-                    print(f"    PT range: {dose_data['PT'].min():.6f} to {dose_data['PT'].max():.6f}")
-                    print(f"    MR_adj range: {dose_data['MR_adj'].min():.6f} to {dose_data['MR_adj'].max():.6f}")
-                    print(f"    D_adj range: {dose_data['D_adj'].min():.6f} to {dose_data['D_adj'].max():.6f}")
-                    print(f"    cumD_adj range: {dose_data['cumD_adj'].min():.6f} to {dose_data['cumD_adj'].max():.6f}")
-                    print(f"    cumPT range: {dose_data['cumPT'].min():.6f} to {dose_data['cumPT'].max():.6f}")
-                    print(f"    CMR range: {dose_data['CMR'].min():.6f} to {dose_data['CMR'].max():.6f}")
-                    print()
+        # if DEBUG_VERBOSE:
+        #     print(f"\n[DEBUG] CMR calculation details for sheet {sh}:")
+        #     for dose in df["Dose"].unique():
+        #         dose_data = df[df["Dose"] == dose]
+        #         if not dose_data.empty:
+        #             print(f"  Dose {dose}:")
+        #             print(f"    PT range: {dose_data['PT'].min():.6f} to {dose_data['PT'].max():.6f}")
+        #             print(f"    MR_adj range: {dose_data['MR_adj'].min():.6f} to {dose_data['MR_adj'].max():.6f}")
+        #             print(f"    D_adj range: {dose_data['D_adj'].min():.6f} to {dose_data['D_adj'].max():.6f}")
+        #             print(f"    cumD_adj range: {dose_data['cumD_adj'].min():.6f} to {dose_data['cumD_adj'].max():.6f}")
+        #             print(f"    cumPT range: {dose_data['cumPT'].min():.6f} to {dose_data['cumPT'].max():.6f}")
+        #             print(f"    CMR range: {dose_data['CMR'].min():.6f} to {dose_data['CMR'].max():.6f}")
+        #             print()
         
         # Debug: Check for extreme CMR values
-        extreme_cmr = df[df["CMR"] > 1000]
-        if not extreme_cmr.empty:
-            print(f"\n[DEBUG] Extreme CMR values detected in sheet {sh}:")
-            for _, row in extreme_cmr.head(3).iterrows():
-                print(f"  Age: {row['YearOfBirth']}, Dose: {row['Dose']}, CMR: {row['CMR']:.6f}")
-                print(f"    cumD_adj: {row['cumD_adj']:.6f}, cumPT: {row['cumPT']:.6f}")
-                print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
-            print()
+        # extreme_cmr = df[df["CMR"] > 1000]
+        # if not extreme_cmr.empty:
+        #     print(f"\n[DEBUG] Extreme CMR values detected in sheet {sh}:")
+        #     for _, row in extreme_cmr.head(3).iterrows():
+        #         print(f"  Age: {row['YearOfBirth']}, Dose: {row['Dose']}, CMR: {row['CMR']:.6f}")
+        #         print(f"    cumD_adj: {row['cumD_adj']:.6f}, cumPT: {row['cumPT']:.6f}")
+        #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
+        #     print()
 
         out_sh = build_kcor_rows(df, sh)
         all_out.append(out_sh)
@@ -511,15 +564,12 @@ def process_workbook(src_path: str, out_path: str):
     combined = pd.concat(all_out, ignore_index=True).sort_values(["Sheet","YearOfBirth","Dose_num","Dose_den","Date"])
 
     # Debug: Show Date column info for main sheets
-    print(f"\n[DEBUG] Main sheets Date column info:")
-    print(f"  Date column dtype: {combined['Date'].dtype}")
-    print(f"  Sample Date values: {combined['Date'].head(3).tolist()}")
-    print(f"  Date range: {combined['Date'].min()} to {combined['Date'].max()}")
+    # print(f"\n[DEBUG] Main sheets Date column info:")
+    # print(f"  Date column dtype: {combined['Date'].dtype}")
+    # print(f"  Sample Date values: {combined['Date'].head(3).tolist()}")
+    # print(f"  Date range: {combined['Date'].min()} to {combined['Date'].max()}")
     
-    # Write main sheets to CSV
-    main_csv_path = out_path.replace('.xlsx', '_main.csv')
-    combined.to_csv(main_csv_path, index=False)
-    print(f"[DEBUG] Wrote main sheets to {main_csv_path}")
+
 
     # Report KCOR values at end of 2022 for each dose combo and age
     print("\n" + "="*80)
@@ -592,10 +642,17 @@ def process_workbook(src_path: str, out_path: str):
                 "MR_adj": "mean",  # Average MR_adj across sexes
                 "CMR": "mean",  # Average CMR across sexes
                 "cumD_adj": "sum",  # Sum cumulative deaths
-                "cumPT": "sum"   # Sum cumulative person-time
+                "cumPT": "sum",  # Sum cumulative person-time
+                "MR_smooth": "mean",  # Average smoothed MR across sexes
+                "t": "first"  # Time index (should be same for all sexes)
             }).reset_index().sort_values("DateDied")
             
             for _, row in dose_data.iterrows():
+                # Calculate smoothed adjusted MR using the slope
+                # Since we're only processing age 1940, use that for slope lookup
+                slope = slopes.get((1940, dose), 0.0)
+                smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
+                
                 debug_data.append({
                     "Date": row["DateDied"].date(),  # Use standard pandas date format (was working perfectly - DON'T TOUCH)
                     "Dose": dose,  # Add dose column
@@ -606,20 +663,19 @@ def process_workbook(src_path: str, out_path: str):
                     "MR_adj": row["MR_adj"],
                     "Cum_MR": row["CMR"],
                     "Cumu_Adj_Deaths": row["cumD_adj"],
-                    "Cumu_Person_Time": row["cumPT"]
+                    "Cumu_Person_Time": row["cumPT"],
+                    "Smoothed_Raw_MR": row["MR_smooth"],
+                    "Smoothed_Adjusted_MR": smoothed_adj_mr
                 })
         
         debug_df = pd.DataFrame(debug_data)
-        print(f"\n[DEBUG] Created debug sheet with {len(debug_df)} rows")
-        print(f"  Date range: {debug_df['Date'].min()} to {debug_df['Date'].max()}")
-        print(f"  Date column dtype: {debug_df['Date'].dtype}")
-        print(f"  Sample Date values: {debug_df['Date'].head(3).tolist()}")
-        print(f"  Doses included: {debug_df['ISOweek'].nunique()} unique ISO weeks")
+        # print(f"\n[DEBUG] Created debug sheet with {len(debug_df)} rows")
+        # print(f"  Date range: {debug_df['Date'].min()} to {debug_df['Date'].max()}")
+        # print(f"  Date column dtype: {debug_df['Date'].dtype}")
+        # print(f"  Sample Date values: {debug_df['Date'].head(3).tolist()}")
+        # print(f"  Doses included: {debug_df['ISOweek'].nunique()} unique ISO weeks")
         
-        # Write debug sheet to CSV
-        debug_csv_path = out_path.replace('.xlsx', '_debug.csv')
-        debug_df.to_csv(debug_csv_path, index=False)
-        print(f"[DEBUG] Wrote debug sheet to {debug_csv_path}")
+
     
     # write
     with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
