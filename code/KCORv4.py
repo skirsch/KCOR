@@ -30,7 +30,7 @@ except Exception as e:
     sys.exit(1)
 
 # ---------------- Config (adjust as needed) ----------------
-PAIRS = [(2,0)]   # (numerator dose, denominator dose) - only 2 vs 0 for debugging
+PAIRS = [(1,0), (2,0), (2,1)]   # (numerator dose, denominator dose) - lower dose is always denominator
 ANCHOR_WEEKS = 4                # anchor KCOR to 1 at this index if available else first row
 TAU = 0.10                      # quantile level for QR
 EPS = 1e-12                     # numerical floor to avoid log(0) - increased from 1e-18
@@ -44,9 +44,9 @@ MA_TOTAL_LENGTH = 8  # Total length of centered moving average (8 weeks = 4 week
 CENTERED = True  # Use centered moving average (4 weeks before + 4 weeks after each point)
 
 # Debug parameters - limit scope for debugging
-DEBUG_AGE_ONLY = 1940           # Only process this age group (set to None to process all)
+YEAR_RANGE = (1930, 1960)       # Process age groups from start to end year (inclusive)
 DEBUG_SHEET_ONLY = "2021_24"   # Only process this sheet (set to None to process all)
-DEBUG_DOSE_PAIR_ONLY = (2, 0)  # Only process this dose pair (set to None to process all)
+DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
 
@@ -410,8 +410,9 @@ def process_workbook(src_path: str, out_path: str):
     
     # Apply debug filters
     sheets_to_process = [DEBUG_SHEET_ONLY] if DEBUG_SHEET_ONLY else xls.sheet_names
-    if DEBUG_AGE_ONLY:
-        print(f"[DEBUG] Limiting to age group: {DEBUG_AGE_ONLY}")
+    if YEAR_RANGE:
+        start_year, end_year = YEAR_RANGE
+        print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
     if DEBUG_SHEET_ONLY:
         print(f"[DEBUG] Limiting to sheet: {DEBUG_SHEET_ONLY}")
     
@@ -445,13 +446,14 @@ def process_workbook(src_path: str, out_path: str):
             print(f"[DEBUG] Filtered to start from enrollment date {enrollment_date.strftime('%m/%d/%Y')}: {len(df)} rows")
         
         # Apply debug age filter
-        if DEBUG_AGE_ONLY:
-            df = df[df["YearOfBirth"] == DEBUG_AGE_ONLY]
-            print(f"[DEBUG] Filtered to {len(df)} rows for age {DEBUG_AGE_ONLY}")
+        if YEAR_RANGE:
+            start_year, end_year = YEAR_RANGE
+            df = df[(df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year)]
+            print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
         
         # Apply debug dose filter - only process doses 0 and 2
-        df = df[df["Dose"].isin([0, 2])]
-        print(f"[DEBUG] Filtered to doses 0 and 2: {len(df)} rows")
+        df = df[df["Dose"].isin([0, 1, 2])]
+        print(f"[DEBUG] Filtered to doses 0, 1, and 2: {len(df)} rows")
         
         # Aggregate across sexes for each dose/date/age combination
         df = df.groupby(["YearOfBirth", "Dose", "DateDied"]).agg({
@@ -488,8 +490,10 @@ def process_workbook(src_path: str, out_path: str):
         # Debug: Show computed slopes
         if DEBUG_VERBOSE:
             print(f"\n[DEBUG] Computed slopes for sheet {sh}:")
-            for (yob, dose), slope in slopes.items():
-                print(f"  Age {yob}, Dose {dose}: slope = {slope:.6f}")
+            for dose in [0, 1, 2]:
+                for yob in sorted(df["YearOfBirth"].unique()):
+                    if (yob, dose) in slopes:
+                        print(f"  Age {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
             print()
         
         df = adjust_mr(df, slopes, t0=ANCHOR_WEEKS)
@@ -631,7 +635,7 @@ def process_workbook(src_path: str, out_path: str):
     # Create debug sheet with individual dose curves
     if DEBUG_VERBOSE:
         debug_data = []
-        for dose in [0, 2]:
+        for dose in [0, 1, 2]:
             # Aggregate across sexes for each dose/date combination
             dose_data = df[df["Dose"] == dose].groupby("DateDied").agg({
                 "ISOweekDied": "first",
