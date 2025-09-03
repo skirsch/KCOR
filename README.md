@@ -73,45 +73,8 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 #### 4. KCOR Computation
 **KCOR Formula:**
 
-this
-
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)}{a}$$
-
-and this works
-
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_a}{a}$$
-
-chatgpt suggested
-$$
-\text{KCOR}(t)=
-\frac{{\text{CMR}}_{\text{num}}(t) / {\text{CMR}}_{\text{foo}}}{a}
-$$
-
-$$
-\mathrm{KCOR}(t)=
-\frac{\mathrm{CMR}_{\mathrm{num}}(t) / \mathrm{CMR}_{\mathrm{foo}}}{a}
-$$
-
-but these two fail
-
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{foo}}}{a}$$
-
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}}{a}$$
-
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}(t)}{\text{CMR}_{\text{num}}(t_0) / \text
-{CMR}_{\text{den}}(t_0)}$$
-
-
-and try this
-
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)}{a}$$
-and this
-$$\text{KCOR}(t) = \frac{a}{b}$$
-and
-$$a=b$$
-or this 
-$$a$$
-
+$$\text{KCOR}(t) = \frac{\text{CMR}_{vax}}(t) / \text{CMR}_{control}}(t)}{\text{CMR}_{vax}(t_0) / \text
+{CMR}_{control}(t_0)}$$
 
 Where:
 - **CMR(t)** = Cumulative adjusted mortality rate at time t:
