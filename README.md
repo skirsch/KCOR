@@ -81,6 +81,17 @@ and this works
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_a}{a}$$
 
+chatgpt suggested
+$$
+\text{KCOR}(t)=
+\frac{{\text{CMR}}_{\text{num}}(t) / {\text{CMR}}_{\text{foo}}}{a}
+$$
+
+$$
+\mathrm{KCOR}(t)=
+\frac{\mathrm{CMR}_{\mathrm{num}}(t) / \mathrm{CMR}_{\mathrm{foo}}}{a}
+$$
+
 but these two fail
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{foo}}}{a}$$
