@@ -73,7 +73,7 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 #### 4. KCOR Computation
 **KCOR Formula:**
 
-$$\text{KCOR}(t) = \frac{\text{CMR}_{vax}(t) / \text{CMR}_{control}(t)}  {a}$$
+$$\text{KCOR}(t) = \frac{\text{CMR}_{vax}(t) / \text{CMR}_{control}(t)}  {\text{CMR}_{vax}(t_0) / \text{CMR}_{control}(t_0)}$$
 
 Where:
 - **CMR(t)** = Cumulative adjusted mortality rate at time t:
