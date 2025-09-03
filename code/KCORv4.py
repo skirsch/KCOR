@@ -210,15 +210,13 @@ def compute_group_slopes_lookup(df, sheet_name):
             slopes[(yob,dose)] = 0.0
             continue
         
-        # Geometric mean: exp(mean(log(values)))
-        A = np.exp(np.mean(np.log(mr1_values)))  # Geometric mean of MR in window1
-        B = np.exp(np.mean(np.log(mr2_values)))  # Geometric mean of MR in window2
+        # Direct geometric mean calculation (more efficient than exp(mean(log)))
+        # Log of geometric mean = mean of logs
+        log_A = np.mean(np.log(mr1_values))  # Log of geometric mean of MR in window1
+        log_B = np.mean(np.log(mr2_values))  # Log of geometric mean of MR in window2
         
-        # Calculate exponential slope: slope = ln(B/A) / T
-        if A > EPS and B > EPS:
-            slope = (np.log(B) - np.log(A)) / T
-        else:
-            slope = 0.0
+        # Calculate exponential slope: slope = (log_B - log_A) / T
+        slope = (log_B - log_A) / T
         
         slopes[(yob,dose)] = slope
         
