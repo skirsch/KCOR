@@ -3,13 +3,32 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Methodology](#methodology)
+  - [Core Concept](#core-concept)
+  - [Analysis Pipeline](#analysis-pipeline)
+  - [Key Assumptions](#key-assumptions)
+- [Repository Structure](#repository-structure)
+- [Installation & Dependencies](#installation--dependencies)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Interpretation](#interpretation)
+- [Advanced Features](#advanced-features)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Citation](#citation)
+- [License](#license)
+- [Contact](#contact)
+
 ## Overview
 
 KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality risk between different vaccination groups while accounting for underlying time trends. This repository contains the complete analysis pipeline for computing KCOR values from mortality data.
 
-## Methodology
+## 🔬 Methodology
 
-### Core Concept
+### 🎯 Core Concept
 
 KCOR represents the ratio of cumulative mortality rates between two groups (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline period. This approach provides interpretable estimates of relative mortality risk that account for:
 
@@ -17,7 +36,7 @@ KCOR represents the ratio of cumulative mortality rates between two groups (e.g.
 - **Baseline differences** between groups
 - **Statistical uncertainty** in the estimates
 
-### Analysis Pipeline
+### ⚙️ Analysis Pipeline
 
 #### 1. Data Preprocessing
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24)
@@ -123,7 +142,7 @@ Where:
 - Baseline period (week 4) represents "normal" conditions
 - Person-time = Alive (survivor function approximation)
 
-## Repository Structure
+## 🏗️ Repository Structure
 
 ```
 KCOR/
@@ -138,7 +157,7 @@ KCOR/
 └── peer review/                        # Peer review materials
 ```
 
-## Installation & Dependencies
+## 📦 Installation & Dependencies
 
 ### Requirements
 - Python 3.8 or higher
@@ -157,7 +176,7 @@ cd KCOR
 pip install pandas numpy statsmodels openpyxl
 ```
 
-## Usage
+## 🚀 Usage
 
 ### Quick Start
 
@@ -210,7 +229,7 @@ The analysis produces Excel workbooks with multiple sheets:
 - **Individual Dose Curves**: Raw and adjusted mortality rates for each dose-age combination
 - **Columns**: Date, ISOweekDied, YearOfBirth, Dose, Dead, Alive, MR, MR_adj, CMR, MR_smooth, Smoothed_Raw_MR, Smoothed_Adjusted_MR
 
-## Configuration
+## ⚙️ Configuration
 
 ### Key Parameters
 
@@ -236,7 +255,7 @@ The script automatically determines dose pairs based on sheet names:
 - **2021_24**: Doses 0, 1, 2 → Comparisons: (1,0), (2,0), (2,1)
 - **2022_06**: Doses 0, 1, 2, 3 → Comparisons: (1,0), (2,0), (2,1), (3,2), (3,0)
 
-## Interpretation
+## 📊 Interpretation
 
 ### KCOR Values
 
@@ -260,7 +279,7 @@ This shows that for dose 2 vs. dose 0:
 - **Age 1940**: 26.1% higher risk (95% CI: 12.4% to 41.4%)
 - **Age 1955**: 50.3% higher risk (95% CI: 22.9% to 83.7%)
 
-## Advanced Features
+## 🔧 Advanced Features
 
 ### Moving Average Smoothing
 - **8-week centered MA**: Reduces noise while preserving trend information
@@ -277,7 +296,7 @@ This shows that for dose 2 vs. dose 0:
 - **Asymmetric Bounds**: Reflects the non-symmetric nature of ratio estimates
 - **Binomial Variance**: Appropriate for count data
 
-## Troubleshooting
+## 🚨 Troubleshooting
 
 ### Common Issues
 
@@ -295,7 +314,7 @@ DEBUG_SHEET_ONLY = ["sheet_name"]  # Limit to specific sheets
 YEAR_RANGE = (1940, 1945)          # Limit to specific age range
 ```
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions to improve the KCOR methodology and implementation. Please:
 
@@ -304,23 +323,21 @@ We welcome contributions to improve the KCOR methodology and implementation. Ple
 3. Make your changes with appropriate tests
 4. Submit a pull request with detailed description
 
-## Citation
+## 📚 Citation
 
 If you use KCOR in your research, please cite:
 
-```
-KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis
-[Your paper title]
-[Authors]
-[Journal/Conference]
+**KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis**  
+[Your paper title]  
+[Authors]  
+[Journal/Conference]  
 [Year]
-```
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contact
+## 📞 Contact
 
 For questions about the methodology or implementation, please open an issue on GitHub or contact the development team.
 
