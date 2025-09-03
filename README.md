@@ -79,6 +79,10 @@ $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)}{a}$$
 
 and
 
+$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_a}}{a}$$
+
+$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_\text{foo}}}{a}$$
+
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}}{a}$$
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}(t)}{\text{CMR}_{\text{num}}(t_0) / \text
