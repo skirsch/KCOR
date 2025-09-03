@@ -79,7 +79,7 @@ and try this
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)}{a}$$
 and this
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}(t)}{\text{CMR}_{\text{num}}(t_0) / \text{CMR}_{\text{den}}(t_0)}$$
+$$\text{KCOR}(t) = \frac{a}{b}$$
 and
 $$a=b$$
 or this 
