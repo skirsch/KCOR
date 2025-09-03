@@ -100,7 +100,7 @@ Where:
 
 The variance of KCOR is calculated using proper uncertainty propagation:
 
-$$\text{Var}[\text{KCOR}(t)] = \text{KCOR}(t)^2 \times \left[\frac{\text{Var}[\text{cumD}_{\text{num}}(t)]}{\text{cumD}_{\text{num}}(t)^2} + \frac{\text{Var}[\text{cumD}_{\text{den}}(t)]}{\text{cumD}_{\text{den}}(t)^2} + \frac{\text{Var}[\text{cumD}_{\text{num}}(t_0)]}{\text{cumD}_{\text{num}}(t_0)^2} + \frac{\text{Var}[\text{cumD}_{\text{den}}(t_0)]}{\text{cumD}_{\text{den}}(t_0)^2}\right]$$
+$$\text{Var}[\text{KCOR}(t)] = \text{KCOR}(t)^2 \times \left[\frac{\text{Var}[\text{cumD}_v(t)]}{\text{cumD}_v(t)^2} + \frac{\text{Var}[\text{cumD}_u(t)]}{\text{cumD}_u(t)^2} + \frac{\text{Var}[\text{cumD}_v(t_0)]}{\text{cumD}_v(t_0)^2} + \frac{\text{Var}[\text{cumD}_u(t_0)]}{\text{cumD}_u(t_0)^2}\right]$$
 
 **Confidence Interval Bounds:**
 
