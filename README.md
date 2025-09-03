@@ -26,6 +26,14 @@
 
 KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality risk between different vaccination groups while accounting for underlying time trends. This repository contains the complete analysis pipeline for computing KCOR values from mortality data.
 
+Suppose you could take any two cohorts, regardless of age, sex, frailty mix, and normalize the mortality rate so that if there is no external signal applied that might differentially impact their mortality, both cohorts would die over time with identical death rates.
+
+That’s what KCOR does. Once the cohorts are precisely matched from a mortality point of view, we simply count the total deaths over time in each cohort and see which cohort had more deaths.
+
+KCOR basically allows you to run a randomized trial with respect to the death outcome, using observational data.
+
+KCOR allows us, for the first time, to objectively answer very important societal questions such as, “Did the COVID vaccine kill more people than it saved?”
+
 ## 🔬 Methodology
 
 ### 🎯 Core Concept
@@ -339,7 +347,7 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Output when used on the Czech data
-There was no combination of dose and age where there was a statistically significant benefit. It was pretty much all statistically significant harm. All the CI's had a high CI that was >1.
+There was no combination of dose and age where there was a statistically significant benefit. It was pretty much all statistically significant harm. All the CI's had a high CI that was >1. See the [log file](https://analysis/KCOR_console_summary.log) for the full data.
 ```
 Dose combination: 2 vs 0
 --------------------------------------------------
