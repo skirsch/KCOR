@@ -77,11 +77,13 @@ this
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)}{a}$$
 
-and
+and this works
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_a}{a}$$
 
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_\text{foo}}{a}$$
+but these two fail
+
+$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{foo}}}{a}$$
 
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}}{a}$$
 
