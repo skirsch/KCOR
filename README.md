@@ -76,7 +76,10 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}(t)}{\text{CMR}_{\text{num}}(t_0) / \text{CMR}_{\text{den}}(t_0)}$$
 
 Where:
-- **CMR(t)** = Cumulative adjusted mortality rate at time t: $$\text{CMR}(t) = \frac{\text{cumD}_{\text{adj}}(t)}{\text{cumPT}(t)}$$
+- **CMR(t)** = Cumulative adjusted mortality rate at time t:
+
+$$\text{CMR}(t) = \frac{\text{cumD}_{\text{adj}}(t)}{\text{cumPT}(t)}$$
+
 - **t₀** = Baseline time (typically week 4) where KCOR is normalized to 1
 - **cumD_adj(t)** = Cumulative adjusted deaths up to time t
 - **cumPT(t)** = Cumulative person-time up to time t
