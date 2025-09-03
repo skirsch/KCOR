@@ -115,58 +115,6 @@ def safe_exp(x, max_val=1e6):
     return np.clip(np.exp(x), 0, max_val)
 
 
-
-    y = np.asarray(y, float).clip(min=EPS)
-    t = np.asarray(t, float)
-    
-    # Check for sufficient data and variation
-    if len(y) < 3:
-        return 0.0
-    
-    if np.var(y) < EPS or np.var(t) < EPS:
-        return 0.0
-    
-    # Check for all identical values
-    if np.allclose(y, y[0], rtol=1e-10) or np.allclose(t, t[0], rtol=1e-10):
-        return 0.0
-    
-    X = sm.add_constant(t)
-    
-    # Robust fit with multiple fallback strategies
-    try:
-        # Try quantile regression first
-
-        b = float(res.params[1])
-        
-        # Check if result is reasonable
-        if not np.isfinite(b) or abs(b) > 100:
-            raise ValueError("QR result unreasonable")
-            
-    except Exception as e:
-        try:
-            # Fallback to OLS with regularization
-            X_reg = X.copy()
-            X_reg[0, 0] += 1e-8  # Add small regularization to intercept
-            a, b = np.linalg.lstsq(X_reg, np.log(y), rcond=1e-10)[0]
-            b = float(b)
-            
-            # Check if result is reasonable
-            if not np.isfinite(b) or abs(b) > 100:
-                raise ValueError("OLS result unreasonable")
-                
-        except Exception:
-            # Final fallback: simple linear regression
-            try:
-                # Use numpy's polyfit as last resort
-                coeffs = np.polyfit(t, np.log(y), 1)
-                b = float(coeffs[0])
-                if not np.isfinite(b) or abs(b) > 100:
-                    b = 0.0
-            except Exception:
-                b = 0.0
-    
-    return b
-
 def get_dose_pairs(sheet_name):
     """
     Get dose pairs based on sheet name.
