@@ -30,20 +30,18 @@ KCOR represents the ratio of cumulative mortality rates between two groups (e.g.
 - **Geometric Mean**: Calculates geometric mean of smoothed MR values within each window
 
 **Slope Formula:**
-```
-r = (1/Δt) ln(B̃/Ã)
-```
+
+$$r = \frac{1}{\Delta t} \ln\left(\frac{\tilde{B}}{\tilde{A}}\right)$$
 
 Where:
-- **Ã** = Geometric mean of MR values in window around first anchor: `Ã = GM(MR_{t∈[t₀-w, t₀+w]})`
-- **B̃** = Geometric mean of MR values in window around second anchor: `B̃ = GM(MR_{t∈[t₁-w, t₁+w]})`
+- **Ã** = Geometric mean of MR values in window around first anchor: $$\tilde{A} = \text{GM}(MR_{t \in [t_0-w, t_0+w]})$$
+- **B̃** = Geometric mean of MR values in window around second anchor: $$\tilde{B} = \text{GM}(MR_{t \in [t_1-w, t_1+w]})$$
 - **Δt** = Time difference between anchor points (in weeks)
 - **w** = Window size (default: 2 weeks)
 
 **Geometric Mean Calculation:**
-```
-GM(x₁, x₂, ..., xₙ) = exp(1/n × Σ ln(xᵢ))
-```
+
+$$\text{GM}(x_1, x_2, \ldots, x_n) = \exp\left(\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)\right)$$
 
 - **Consistency**: Same anchor points used for all doses to ensure comparability
 - **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
@@ -55,20 +53,18 @@ GM(x₁, x₂, ..., xₙ) = exp(1/n × Σ ln(xᵢ))
 
 #### 4. KCOR Computation
 **KCOR Formula:**
-```
-KCOR(t) = [CMR_num(t) / CMR_den(t)] / [CMR_num(t₀) / CMR_den(t₀)]
-```
+
+$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}(t)}{\text{CMR}_{\text{num}}(t_0) / \text{CMR}_{\text{den}}(t_0)}$$
 
 Where:
-- **CMR(t)** = Cumulative adjusted mortality rate at time t: `CMR(t) = cumD_adj(t) / cumPT(t)`
+- **CMR(t)** = Cumulative adjusted mortality rate at time t: $$\text{CMR}(t) = \frac{\text{cumD}_{\text{adj}}(t)}{\text{cumPT}(t)}$$
 - **t₀** = Baseline time (typically week 4) where KCOR is normalized to 1
 - **cumD_adj(t)** = Cumulative adjusted deaths up to time t
 - **cumPT(t)** = Cumulative person-time up to time t
 
 **Mortality Rate Adjustment:**
-```
-MR_adj(t) = MR(t) × exp(-r × (t - t₀))
-```
+
+$$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times \exp(-r \times (t - t_0))$$
 
 Where:
 - **r** = Calculated slope for the specific dose-age combination
@@ -83,15 +79,13 @@ Where:
 
 The variance of KCOR is calculated using proper uncertainty propagation:
 
-```
-Var[KCOR(t)] = KCOR(t)² × [Var[cumD_num(t)]/cumD_num(t)² + Var[cumD_den(t)]/cumD_den(t)² + Var[cumD_num(t₀)]/cumD_num(t₀)² + Var[cumD_den(t₀)]/cumD_den(t₀)²]
-```
+$$\text{Var}[\text{KCOR}(t)] = \text{KCOR}(t)^2 \times \left[\frac{\text{Var}[\text{cumD}_{\text{num}}(t)]}{\text{cumD}_{\text{num}}(t)^2} + \frac{\text{Var}[\text{cumD}_{\text{den}}(t)]}{\text{cumD}_{\text{den}}(t)^2} + \frac{\text{Var}[\text{cumD}_{\text{num}}(t_0)]}{\text{cumD}_{\text{num}}(t_0)^2} + \frac{\text{Var}[\text{cumD}_{\text{den}}(t_0)]}{\text{cumD}_{\text{den}}(t_0)^2}\right]$$
 
 **Confidence Interval Bounds:**
-```
-CI_lower(t) = KCOR(t) × exp(-1.96 × √Var[ln(KCOR(t))])
-CI_upper(t) = KCOR(t) × exp(1.96 × √Var[ln(KCOR(t))])
-```
+
+$$\text{CI}_{\text{lower}}(t) = \text{KCOR}(t) \times \exp(-1.96 \times \sqrt{\text{Var}[\ln(\text{KCOR}(t))]})$$
+
+$$\text{CI}_{\text{upper}}(t) = \text{KCOR}(t) \times \exp(1.96 \times \sqrt{\text{Var}[\ln(\text{KCOR}(t))]})$$
 
 Where:
 - **Var[D] ≈ D**: Using binomial variance approximation for death counts
@@ -105,9 +99,7 @@ Where:
 
 The age-standardized KCOR is calculated using fixed baseline weights:
 
-```
-KCOR_ASMR(t) = exp(Σ wᵢ × ln(KCORᵢ(t)) / Σ wᵢ)
-```
+$$\text{KCOR}_{\text{ASMR}}(t) = \exp\left(\frac{\sum_i w_i \times \ln(\text{KCOR}_i(t))}{\sum_i w_i}\right)$$
 
 Where:
 - **wᵢ** = Fixed weight for age group i (person-time in first 4 weeks)
@@ -115,9 +107,8 @@ Where:
 - **ln(KCORᵢ(t))** = Natural logarithm of KCOR for age group i
 
 **Weight Calculation:**
-```
-wᵢ = Σ PTᵢ(t) for t ∈ [t₀, t₀+3]
-```
+
+$$w_i = \sum_{t=t_0}^{t_0+3} \text{PT}_i(t)$$
 
 Where:
 - **PTᵢ(t)** = Person-time for age group i at week t
