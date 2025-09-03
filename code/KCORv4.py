@@ -1,19 +1,68 @@
 
 #!/usr/bin/env python3
 """
-KCOR real-data pipeline with quantile regression slope removal (tau = 0.10).
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.0
 
-Input workbook schema per sheet (e.g., '2021_13', '2021_24', ...):
+This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
+mortality rates between different dose groups, normalized to 1 at a baseline period.
+
+METHODOLOGY OVERVIEW:
+====================
+
+1. DATA PREPROCESSING:
+   - Filter data by enrollment date (derived from sheet name, e.g., "2021_24" = 2021, week 24)
+   - Aggregate mortality data across sexes for each (YearOfBirth, Dose, DateDied) combination
+   - Apply 8-week centered moving average to raw mortality rates for smoothing
+
+2. SLOPE CALCULATION (Lookup Table Method):
+   - Uses predefined anchor points (e.g., weeks 53 and 114 from enrollment for 2021_24)
+   - For each anchor point, creates a ±2 week window (5 points total)
+   - Calculates geometric mean of smoothed MR values within each window
+   - Slope = ln(B/A) / T where A = geometric mean at first anchor, B = geometric mean at second anchor
+   - Same anchor points used for all doses to ensure comparability
+   - Anchor dates chosen during "quiet periods" with no differential events (COVID waves, policy changes, etc.)
+
+3. MORTALITY RATE ADJUSTMENT:
+   - Applies exponential slope removal: MR_adj = MR × exp(-slope × (t - t0))
+   - t0 = baseline week (typically week 4) where KCOR is normalized to 1
+   - Each dose-age combination gets its own slope for adjustment
+
+4. KCOR COMPUTATION:
+   - KCOR = (CMR_num / CMR_den) / (CMR_num_baseline / CMR_den_baseline)
+   - CMR = cumulative adjusted mortality rate = cumD_adj / cumPT
+   - Baseline values taken at week 4 (or first available week)
+   - Results in KCOR = 1 at baseline, showing relative risk over time
+
+5. UNCERTAINTY QUANTIFICATION:
+   - 95% confidence intervals using proper uncertainty propagation
+   - Accounts for baseline uncertainty and current time uncertainty
+   - Uses binomial variance approximation: Var[D] ≈ D for death counts
+   - CI bounds calculated on log scale then exponentiated for proper asymmetry
+
+6. AGE STANDARDIZATION:
+   - ASMR pooling across age groups using fixed baseline weights
+   - Weights = person-time in first 4 weeks per age group (time-invariant)
+   - Provides population-level KCOR estimates
+
+KEY ASSUMPTIONS:
+- Mortality rates follow exponential trends during observation period
+- No differential events affect dose groups differently during anchor periods
+- Baseline period (week 4) represents "normal" conditions
+- Person-time = Alive (survivor function approximation)
+
+INPUT WORKBOOK SCHEMA per sheet (e.g., '2021_24', '2022_06', ...):
     ISOweekDied, DateDied, YearOfBirth, Sex, Dose, Alive, Dead
 
-Outputs (one sheet per input sheet + "ALL"):
+OUTPUTS (one sheet per input sheet + "ALL"):
     Columns:
       Sheet, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled), Dose_num, Dose_den,
-      KCOR, MoE,
-      MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den
+      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den
 
-Usage:
+USAGE:
     python KCORv4.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
+
+This approach provides robust, interpretable estimates of relative mortality risk
+between vaccination groups while accounting for underlying time trends.
 """
 import sys
 import math
@@ -29,23 +78,30 @@ except Exception as e:
     print("ERROR: statsmodels is required (pip install statsmodels).", e)
     sys.exit(1)
 
-# ---------------- Config (adjust as needed) ----------------
-PAIRS = [(1,0), (2,0), (2,1)]   # (numerator dose, denominator dose) - lower dose is always denominator
-ANCHOR_WEEKS = 4                # anchor KCOR to 1 at this index if available else first row
-TAU = 0.10                      # quantile level for QR
-EPS = 1e-12                     # numerical floor to avoid log(0) - increased from 1e-18
-MAX_SE_LOGK = 10.0             # maximum allowed SE(log K) to prevent overflow
+# ---------------- Configuration Parameters ----------------
+# Core KCOR methodology parameters
+ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
+EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 
-# Slope calculation using lookup table method
+# Date limitations for data quality - prevents using unreliable data beyond this date
+MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ranges
+
+# SLOPE CALCULATION METHODOLOGY:
+# Uses lookup table with window-based geometric mean approach for robust slope estimation
 SLOPE_LOOKUP_TABLE = {
-    '2021_24': (53, 114)  # (offset1, offset2) from enrollment for slope calculation
+    '2021_24': (53, 114), # (offset1, offset2) weeks from enrollment for slope calculation
+    '2022_06': (19,111)   # These dates chosen during "quiet periods" with minimal differential events
 }
+SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points total) for geometric mean
+
+# DATA SMOOTHING:
+# Apply moving average before slope calculation to reduce noise and improve stability
 MA_TOTAL_LENGTH = 8  # Total length of centered moving average (8 weeks = 4 weeks on either side)
-CENTERED = True  # Use centered moving average (4 weeks before + 4 weeks after each point)
+CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each point) to minimize lag
 
 # Debug parameters - limit scope for debugging
-YEAR_RANGE = (1930, 1960)       # Process age groups from start to end year (inclusive)
-DEBUG_SHEET_ONLY = "2021_24"   # Only process this sheet (set to None to process all)
+YEAR_RANGE = (1920, 2000)       # Process age groups from start to end year (inclusive)
+DEBUG_SHEET_ONLY = ["2021_24",'2022_06']   # List of sheets to process for DEBUG (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
@@ -111,6 +167,26 @@ def quantile_slope_log_y(t, y, tau=TAU):
     
     return b
 
+def get_dose_pairs(sheet_name):
+    """
+    Get dose pairs based on sheet name.
+    
+    This function implements sheet-specific dose configurations to handle different
+    vaccination schedules and data availability across different enrollment periods.
+    
+    The dose pairs are designed so that the lower dose is always the denominator,
+    providing consistent relative risk comparisons across different vaccination levels.
+    """
+    if sheet_name == "2021_24":
+        # First sheet: max dose is 2, only doses 0, 1, 2
+        return [(1,0), (2,0), (2,1)]
+    elif sheet_name == "2022_06":
+        # Second sheet: includes dose 3 comparisons
+        return [(1,0), (2,0), (2,1), (3,2), (3,0)]
+    else:
+        # Default: max dose is 2
+        return [(1,0), (2,0), (2,1)]
+
 def compute_group_slopes_lookup(df, sheet_name):
     """Slope per (YearOfBirth,Dose) using lookup table method."""
     slopes = {}
@@ -125,22 +201,70 @@ def compute_group_slopes_lookup(df, sheet_name):
     offset1, offset2 = SLOPE_LOOKUP_TABLE[sheet_name]
     T = offset2 - offset1  # Time difference between the two points
     
+    # Validate that lookup table dates don't extend beyond MAX_DATE_FOR_SLOPE
+    from datetime import datetime
+    max_date = datetime.strptime(MAX_DATE_FOR_SLOPE, "%Y-%m-%d")
+    
+    # Get enrollment date from sheet name (e.g., "2021_24" -> 2021, week 24)
+    if "_" in sheet_name:
+        year_str, week_str = sheet_name.split("_")
+        enrollment_year = int(year_str)
+        enrollment_week = int(week_str)
+        
+        # Calculate enrollment date
+        from datetime import timedelta
+        jan1 = datetime(enrollment_year, 1, 1)
+        days_to_monday = (7 - jan1.weekday()) % 7
+        if days_to_monday == 0 and jan1.weekday() != 0:
+            days_to_monday = 7
+        first_monday = jan1 + timedelta(days=days_to_monday)
+        enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
+        
+        # Calculate lookup dates
+        lookup_date1 = enrollment_date + timedelta(weeks=offset1)
+        lookup_date2 = enrollment_date + timedelta(weeks=offset2)
+        
+        # Check if lookup dates extend beyond MAX_DATE_FOR_SLOPE
+        if lookup_date1 > max_date or lookup_date2 > max_date:
+            error_msg = f"ERROR: Lookup table dates extend beyond {MAX_DATE_FOR_SLOPE}. "
+            error_msg += f"Sheet {sheet_name} enrollment: {enrollment_date.strftime('%Y-%m-%d')}, "
+            error_msg += f"offsets ({offset1}, {offset2}) weeks -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
+            raise ValueError(error_msg)
+        
+        print(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
+              f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})")
+    
     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
         g_sorted = g.sort_values("t")
         
-        # Find MR values at the two lookup points
-        point1 = g_sorted[g_sorted["t"] == offset1]
-        point2 = g_sorted[g_sorted["t"] == offset2]
+        # Get window of points around offset1 (anchor point 1)
+        window1_start = max(0, offset1 - SLOPE_WINDOW_SIZE)
+        window1_end = offset1 + SLOPE_WINDOW_SIZE
+        window1_points = g_sorted[(g_sorted["t"] >= window1_start) & (g_sorted["t"] <= window1_end)]
         
-        if point1.empty or point2.empty:
+        # Get window of points around offset2 (anchor point 2)
+        window2_start = max(0, offset2 - SLOPE_WINDOW_SIZE)
+        window2_end = offset2 + SLOPE_WINDOW_SIZE
+        window2_points = g_sorted[(g_sorted["t"] >= window2_start) & (g_sorted["t"] <= window2_end)]
+        
+        if window1_points.empty or window2_points.empty:
             slopes[(yob,dose)] = 0.0
             # if DEBUG_VERBOSE and (yob, dose) in [(1940, 0), (1940, 2)]:
             #     print(f"  [DEBUG] Missing lookup points for Age {yob}, Dose {dose}: t={offset1} or t={offset2}")
             continue
         
-        # Get MR values at the two points
-        A = point1["MR_smooth"].iloc[0]  # MR at offset1
-        B = point2["MR_smooth"].iloc[0]  # MR at offset2
+        # Calculate geometric mean of MR values in each window
+        # Filter out non-positive values for geometric mean calculation
+        mr1_values = window1_points["MR_smooth"][window1_points["MR_smooth"] > EPS].values
+        mr2_values = window2_points["MR_smooth"][window2_points["MR_smooth"] > EPS].values
+        
+        if len(mr1_values) == 0 or len(mr2_values) == 0:
+            slopes[(yob,dose)] = 0.0
+            continue
+        
+        # Geometric mean: exp(mean(log(values)))
+        A = np.exp(np.mean(np.log(mr1_values)))  # Geometric mean of MR in window1
+        B = np.exp(np.mean(np.log(mr2_values)))  # Geometric mean of MR in window2
         
         # Calculate exponential slope: slope = ln(B/A) / T
         if A > EPS and B > EPS:
@@ -153,8 +277,8 @@ def compute_group_slopes_lookup(df, sheet_name):
         # Debug: Show lookup table calculation
         # if DEBUG_VERBOSE and (yob, dose) in [(1940, 0), (1940, 2)]:
         #     print(f"  [DEBUG] Lookup slope calculation for Age {yob}, Dose {dose}:")
-        #     print(f"    Point 1: t={offset1}, MR={A:.6f}")
-        #     print(f"    Point 2: t={offset2}, MR={B:.6f}")
+        #     print(f"    Point 1: t={offset1}, MR={B:.6f}")
+        #     print(f"    Point 2: t={offset2}, MR={A:.6f}")
         #     print(f"    T={T}, slope = ln({B:.6f}/{A:.6f})/{T} = {slope:.6f}")
     
     return slopes
@@ -203,7 +327,7 @@ def build_kcor_rows(df, sheet_name):
       - MR_adj slope-removed via QR
       - CMR = cumD_adj / cumPT
       - KCOR = (CMR_num / CMR_den), anchored to 1 at week ANCHOR_WEEKS if available
-      - MoE uses SE(log K) ≈ sqrt(1/cumD_adj_num + 1/cumD_adj_den)
+              - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
     """
     out_rows = []
@@ -212,8 +336,9 @@ def build_kcor_rows(df, sheet_name):
                    for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
 
     # -------- per-age KCOR rows --------
+    dose_pairs = get_dose_pairs(sheet_name)
     for yob in df["YearOfBirth"].unique():
-        for num, den in PAIRS:
+        for num, den in dose_pairs:
             # Apply debug dose pair filter
             if DEBUG_DOSE_PAIR_ONLY and (num, den) != DEBUG_DOSE_PAIR_ONLY:
                 continue
@@ -284,18 +409,33 @@ def build_kcor_rows(df, sheet_name):
             #         print(f"    Date: {row['DateDied']}, CMR_num: {row['CMR_num']:.6f}, CMR_den: {row['CMR_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
             #     print()
 
-            # Safe calculation of SE_logK with clipping
-            merged["SE_logK"] = safe_sqrt(
-                1.0/(merged["cumD_adj_num"] + EPS) + 1.0/(merged["cumD_adj_den"] + EPS)
+            # Correct KCOR 95% CI calculation based on baseline uncertainty
+            # Get baseline death counts at anchor week (week 4)
+            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            baseline_num = merged["cumD_adj_num"].iloc[t0_idx]
+            baseline_den = merged["cumD_adj_den"].iloc[t0_idx]
+            
+            # Calculate variance components for each time point
+            # Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
+            # Using binomial uncertainty: Var[D] ≈ D for death counts
+            
+            merged["SE_logKCOR"] = safe_sqrt(
+                (merged["cumD_adj_num"] + EPS) / (merged["cumD_adj_num"] + EPS)**2 +  # Var[cumD_num]/cumD_num²
+                (merged["cumD_adj_den"] + EPS) / (merged["cumD_adj_den"] + EPS)**2 +  # Var[cumD_den]/cumD_den²
+                (baseline_num + EPS) / (baseline_num + EPS)**2 +                      # Var[baseline_num]/baseline_num²
+                (baseline_den + EPS) / (baseline_den + EPS)**2                        # Var[baseline_den]/baseline_den²
             )
             
-            # Clip SE_logK to prevent overflow in MoE calculation
-            merged["SE_logK"] = np.clip(merged["SE_logK"], 0, MAX_SE_LOGK)
+            # Calculate 95% CI bounds on log scale, then exponentiate
+            # CI = exp(log(KCOR) ± 1.96 * SE_logKCOR)
+            merged["CI_lower"] = merged["KCOR"] * safe_exp(-1.96 * merged["SE_logKCOR"])
+            merged["CI_upper"] = merged["KCOR"] * safe_exp(1.96 * merged["SE_logKCOR"])
             
-            # Safe MoE calculation
-            merged["MoE"] = merged["KCOR"] * (safe_exp(1.96*merged["SE_logK"]) - 1.0)
+            # Clip CI bounds to reasonable values
+            merged["CI_lower"] = np.clip(merged["CI_lower"], 0, merged["KCOR"] * 10)
+            merged["CI_upper"] = np.clip(merged["CI_upper"], merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
-            out = merged[["DateDied","ISOweekDied_num","KCOR","MoE",
+            out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
                           "MR_num","MR_adj_num","CMR_num",
                           "MR_den","MR_adj_den","CMR_den"]].copy()
             out["Sheet"] = sheet_name
@@ -304,6 +444,7 @@ def build_kcor_rows(df, sheet_name):
             out["Dose_den"] = den
             out.rename(columns={"ISOweekDied_num":"ISOweekDied",
                                 "DateDied":"Date"}, inplace=True)
+            out["CI_95"] = out.apply(lambda row: f"[{row['CI_lower']:.3f}, {row['CI_upper']:.3f}]", axis=1)
             # Convert Date to standard pandas date format (same as debug sheet)
             out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
             out_rows.append(out)
@@ -319,7 +460,8 @@ def build_kcor_rows(df, sheet_name):
     pooled_rows = []
     all_dates = sorted(df_sorted["DateDied"].unique())
 
-    for num, den in PAIRS:
+    dose_pairs = get_dose_pairs(sheet_name)
+    for num, den in dose_pairs:
         # Per-age anchors at t0 for this (num,den)
         anchors = {}
         for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
@@ -364,10 +506,36 @@ def build_kcor_rows(df, sheet_name):
             if logs and sum(wts) > 0:
                 logK = np.average(logs, weights=wts)
                 Kpool = float(safe_exp(logK))
-                SE = safe_sqrt(sum(var_terms)) / sum(wts)
-                # Clip SE to prevent overflow
-                SE = min(SE, MAX_SE_LOGK)
-                MoE = Kpool * (safe_exp(1.96*SE) - 1.0)
+                # Correct pooled KCOR 95% CI calculation based on baseline uncertainty
+                # For pooled results, we need to account for baseline uncertainty across all age groups
+                baseline_uncertainty = 0.0
+                for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
+                    if yob not in anchors:
+                        continue
+                    gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
+                    gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
+                    if len(gvn) > ANCHOR_WEEKS and len(gdn) > ANCHOR_WEEKS:
+                        baseline_num = gvn["cumD_adj"].iloc[ANCHOR_WEEKS]
+                        baseline_den = gdn["cumD_adj"].iloc[ANCHOR_WEEKS]
+                        if baseline_num > EPS and baseline_den > EPS:
+                            # Add baseline uncertainty for this age group (weighted)
+                            weight = weights.get(yob, 0.0)
+                            baseline_uncertainty += (weight**2) * (1.0/baseline_num + 1.0/baseline_den)
+                
+                # Calculate total uncertainty including baseline
+                total_uncertainty = sum(var_terms) + baseline_uncertainty
+                SE_total = safe_sqrt(total_uncertainty) / sum(wts)
+                
+                # Clip SE to prevent overflow (using reasonable bound)
+                SE_total = min(SE_total, 10.0)
+                
+                # Calculate 95% CI bounds on log scale, then exponentiate
+                CI_lower = Kpool * safe_exp(-1.96 * SE_total)
+                CI_upper = Kpool * safe_exp(1.96 * SE_total)
+                
+                # Clip CI bounds to reasonable values
+                CI_lower = max(0, min(CI_lower, Kpool * 10))
+                CI_upper = max(Kpool * 0.1, min(CI_upper, Kpool * 10))
                 
 
                 
@@ -388,16 +556,21 @@ def build_kcor_rows(df, sheet_name):
                     "Dose_num": num,
                     "Dose_den": den,
                     "KCOR": Kpool,
-                    "MoE": MoE,
-                    "MR_num": np.nan, "MR_adj_num": np.nan, "CMR_num": np.nan,
-                    "MR_den": np.nan, "MR_adj_den": np.nan, "CMR_den": np.nan,
+                    "CI_lower": CI_lower,
+                    "CI_upper": CI_upper,
+                    "MR_num": np.nan,
+                    "MR_adj_num": np.nan,
+                    "CMR_num": np.nan,
+                    "MR_den": np.nan,
+                    "MR_adj_den": np.nan,
+                    "CMR_den": np.nan
                 })
 
     if out_rows or pooled_rows:
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "Sheet","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","MoE","MR_num","MR_adj_num","CMR_num","MR_den","MR_adj_den","CMR_den"
+        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","MR_den","MR_adj_den","CMR_den"
     ])
 
 def process_workbook(src_path: str, out_path: str):
@@ -405,16 +578,27 @@ def process_workbook(src_path: str, out_path: str):
     warnings.filterwarnings('ignore', category=RuntimeWarning, module='statsmodels')
     warnings.filterwarnings('ignore', category=RuntimeWarning, module='pandas')
     
+    # Print professional header
+    from datetime import datetime
+    print("="*80)
+    print("KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis")
+    print("="*80)
+    print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Input File: {src_path}")
+    print(f"Output File: {out_path}")
+    print("="*80)
+    print()
+    
     xls = pd.ExcelFile(src_path)
     all_out = []
     
     # Apply debug filters
-    sheets_to_process = [DEBUG_SHEET_ONLY] if DEBUG_SHEET_ONLY else xls.sheet_names
+    sheets_to_process = DEBUG_SHEET_ONLY if DEBUG_SHEET_ONLY else xls.sheet_names
     if YEAR_RANGE:
         start_year, end_year = YEAR_RANGE
         print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
     if DEBUG_SHEET_ONLY:
-        print(f"[DEBUG] Limiting to sheet: {DEBUG_SHEET_ONLY}")
+        print(f"[DEBUG] Limiting to sheets: {DEBUG_SHEET_ONLY}")
     
     for sh in sheets_to_process:
         print(f"[Info] Processing sheet: {sh}")
@@ -451,9 +635,12 @@ def process_workbook(src_path: str, out_path: str):
             df = df[(df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year)]
             print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
         
-        # Apply debug dose filter - only process doses 0 and 2
-        df = df[df["Dose"].isin([0, 1, 2])]
-        print(f"[DEBUG] Filtered to doses 0, 1, and 2: {len(df)} rows")
+        # Apply sheet-specific dose filtering
+        dose_pairs = get_dose_pairs(sh)
+        max_dose = max(max(pair) for pair in dose_pairs)
+        valid_doses = list(range(max_dose + 1))  # Include all doses from 0 to max_dose
+        df = df[df["Dose"].isin(valid_doses)]
+        print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
         
         # Aggregate across sexes for each dose/date/age combination
         df = df.groupby(["YearOfBirth", "Dose", "DateDied"]).agg({
@@ -490,7 +677,9 @@ def process_workbook(src_path: str, out_path: str):
         # Debug: Show computed slopes
         if DEBUG_VERBOSE:
             print(f"\n[DEBUG] Computed slopes for sheet {sh}:")
-            for dose in [0, 1, 2]:
+            dose_pairs = get_dose_pairs(sh)
+            max_dose = max(max(pair) for pair in dose_pairs)
+            for dose in range(max_dose + 1):
                 for yob in sorted(df["YearOfBirth"].unique()):
                     if (yob, dose) in slopes:
                         print(f"  Age {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
@@ -565,6 +754,7 @@ def process_workbook(src_path: str, out_path: str):
         out_sh = build_kcor_rows(df, sh)
         all_out.append(out_sh)
 
+    # Combine all results
     combined = pd.concat(all_out, ignore_index=True).sort_values(["Sheet","YearOfBirth","Dose_num","Dose_den","Date"])
 
     # Debug: Show Date column info for main sheets
@@ -575,17 +765,14 @@ def process_workbook(src_path: str, out_path: str):
     
 
 
-    # Report KCOR values at end of 2022 for each dose combo and age
+    # Report KCOR values at end of 2022 for each dose combo and age for ALL sheets
     print("\n" + "="*80)
-    print("KCOR VALUES AT END OF 2022 - 2021_24 SHEET ONLY")
+    print("KCOR VALUES AT END OF 2022 - ALL SHEETS")
     print("="*80)
     
-    # Filter for end of 2022 (last date in 2022) and ONLY 2021_24 sheet
+    # Filter for end of 2022 (last date in 2022) for ALL sheets
     combined["Date"] = pd.to_datetime(combined["Date"])
-    combined_2022 = combined[
-        (combined["Date"].dt.year == 2022) & 
-        (combined["Sheet"] == "2021_24")
-    ]
+    combined_2022 = combined[combined["Date"].dt.year == 2022]
     
     if not combined_2022.empty:
         # Get the last date in 2022
@@ -596,48 +783,63 @@ def process_workbook(src_path: str, out_path: str):
         # Filter for that specific date
         end_2022_data = combined_2022[combined_2022["Date"] == last_date_2022]
         
-        # Group by dose combinations and show results
-        for (dose_num, dose_den) in PAIRS:
-            print(f"\nDose combination: {dose_num} vs {dose_den}")
-            print("-" * 50)
+        # Group by sheets and dose combinations
+        for sheet_name in sorted(end_2022_data["Sheet"].unique()):
+            print(f"\nSheet: {sheet_name}")
+            print("=" * 60)
             
-            # Get data for this dose combination
-            dose_data = end_2022_data[
-                (end_2022_data["Dose_num"] == dose_num) & 
-                (end_2022_data["Dose_den"] == dose_den)
-            ]
+            # Get dose pairs for this specific sheet
+            dose_pairs = get_dose_pairs(sheet_name)
             
-            if dose_data.empty:
-                print("  No data available for this dose combination")
-                continue
-            
-            # Show results by age (including ASMR = 0)
-            for age in sorted(dose_data["YearOfBirth"].unique()):
-                age_data = dose_data[dose_data["YearOfBirth"] == age]
-                if not age_data.empty:
-                    kcor_val = age_data["KCOR"].iloc[0]
-                    moe_val = age_data["MoE"].iloc[0]
-                    sheet_name = age_data["Sheet"].iloc[0]
-                    
-                    if age == 0:
-                        age_label = "ASMR (pooled)"
-                    elif age == -1:
-                        age_label = "Age (unknown)"
-                    else:
-                        age_label = f"Age {age}"
-                    
-                    print(f"  {age_label:15} | KCOR: {kcor_val:8.4f} | MoE: {moe_val:8.4f} | Sheet: {sheet_name}")
+            for (dose_num, dose_den) in dose_pairs:
+                print(f"\nDose combination: {dose_num} vs {dose_den}")
+                print("-" * 50)
+                
+                # Get data for this dose combination and sheet
+                dose_data = end_2022_data[
+                    (end_2022_data["Sheet"] == sheet_name) &
+                    (end_2022_data["Dose_num"] == dose_num) & 
+                    (end_2022_data["Dose_den"] == dose_den)
+                ]
+                
+                if dose_data.empty:
+                    print("  No data available for this dose combination")
+                    continue
+                
+                # Show results by age (including ASMR = 0)
+                for age in sorted(dose_data["YearOfBirth"].unique()):
+                    age_data = dose_data[dose_data["YearOfBirth"] == age]
+                    if not age_data.empty:
+                        kcor_val = age_data["KCOR"].iloc[0]
+                        ci_lower = age_data["CI_lower"].iloc[0]
+                        ci_upper = age_data["CI_upper"].iloc[0]
+                        
+                        if age == 0:
+                            age_label = "ASMR (pooled)"
+                        elif age == -1:
+                            age_label = "Age (unknown)"
+                        else:
+                            age_label = f"Age {age}"
+                        
+                        print(f"  {age_label:15} | KCOR [95% CI]: {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
     else:
-        print("No data available for 2022 in 2021_24 sheet")
+        print("No data available for 2022 in any sheet")
     
     print("="*80)
 
     # Create debug sheet with individual dose curves
     if DEBUG_VERBOSE:
         debug_data = []
-        for dose in [0, 1, 2]:
-            # Aggregate across sexes for each dose/date combination
-            dose_data = df[df["Dose"] == dose].groupby("DateDied").agg({
+        # Use the first sheet's dose range for debug (since df is from the last processed sheet)
+        first_sheet = sheets_to_process[0] if sheets_to_process else "2021_24"
+        dose_pairs = get_dose_pairs(first_sheet)
+        max_dose = max(max(pair) for pair in dose_pairs)
+        for dose in range(max_dose + 1):
+            # Get all data for this dose (not aggregated by date yet)
+            dose_df = df[df["Dose"] == dose]
+            
+            # Aggregate across sexes for each dose/date/age combination
+            dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
                 "ISOweekDied": "first",
                 "Dead": "sum",
                 "Alive": "sum", 
@@ -648,17 +850,18 @@ def process_workbook(src_path: str, out_path: str):
                 "cumD_adj": "sum",  # Sum cumulative deaths
                 "cumPT": "sum",  # Sum cumulative person-time
                 "MR_smooth": "mean",  # Average smoothed MR across sexes
-                "t": "first"  # Time index (should be same for all sexes)
-            }).reset_index().sort_values("DateDied")
+                "t": "first"  # Time index (should be same for all sexes
+            }).reset_index().sort_values(["DateDied", "YearOfBirth"])
             
             for _, row in dose_data.iterrows():
                 # Calculate smoothed adjusted MR using the slope
-                # Since we're only processing age 1940, use that for slope lookup
-                slope = slopes.get((1940, dose), 0.0)
+                # Use the actual age from the row for slope lookup
+                slope = slopes.get((row["YearOfBirth"], dose), 0.0)
                 smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
                 
                 debug_data.append({
                     "Date": row["DateDied"].date(),  # Use standard pandas date format (was working perfectly - DON'T TOUCH)
+                    "YearOfBirth": row["YearOfBirth"],  # Add year of birth column
                     "Dose": dose,  # Add dose column
                     "ISOweek": row["ISOweekDied"],
                     "Dead": row["Dead"],
@@ -678,21 +881,21 @@ def process_workbook(src_path: str, out_path: str):
         # print(f"  Date column dtype: {debug_df['Date'].dtype}")
         # print(f"  Sample Date values: {debug_df['Date'].head(3).tolist()}")
         # print(f"  Doses included: {debug_df['ISOweek'].nunique()} unique ISO weeks")
-        
-
     
+
     # write
     with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
         # Add debug sheet first (working format)
         if DEBUG_VERBOSE:
             debug_df.to_excel(writer, index=False, sheet_name="DEBUG_1940_curves")
         
-        # Write main sheets
+        # Write main sheets (excluding 2021_24 since ALL contains everything)
         for sh in combined["Sheet"].unique():
-            sheet_data = combined.loc[combined["Sheet"]==sh].copy()
-            # Ensure Date column stays as date objects (not timestamps)
-            sheet_data["Date"] = sheet_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
-            sheet_data.to_excel(writer, index=False, sheet_name=sh)
+            if sh != "2021_24":  # Skip 2021_24 sheet as it's redundant
+                sheet_data = combined.loc[combined["Sheet"]==sh].copy()
+                # Ensure Date column stays as date objects (not timestamps)
+                sheet_data["Date"] = sheet_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                sheet_data.to_excel(writer, index=False, sheet_name=sh)
         
         # Ensure ALL sheet Date column stays as date objects
         all_data = combined.copy()

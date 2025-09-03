@@ -4,12 +4,12 @@
 
 KCOR:
 	@echo "Running KCOR analysis..."
-	python KCORv4.py ../../Czech/data/KCOR_output.xlsx KCOR_processed_REAL.xlsx
+	python KCORv4.py ../../Czech/data/KCOR_output.xlsx ../../Czech/analysis/KCOR_analysis.xlsx
 	@echo "KCOR analysis complete!"
 
 clean:
 	@echo "Cleaning up output files..."
-	rm -f KCOR_processed_REAL.xlsx
+	rm -f ../../Czech/analysis/KCOR_analysis.xlsx
 	@echo "Cleanup complete!"
 
 # Help target
