@@ -41,13 +41,13 @@ Where:
 
 **Geometric Mean Calculation:**
 
-$$\text{GM}(x_1, x_2, \ldots, x_n) = \exp\left(\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)\right)$$
+$$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 
 - **Consistency**: Same anchor points used for all doses to ensure comparability
 - **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
 
 #### 3. Mortality Rate Adjustment
-- **Exponential Slope Removal**: `MR_adj = MR × exp(-slope × (t - t0))`
+- **Exponential Slope Removal**: `MR_adj = MR × e^{-slope × (t - t0)}`
 - **Baseline Normalization**: t0 = baseline week (typically week 4) where KCOR is normalized to 1
 - **Dose-Specific Slopes**: Each dose-age combination gets its own slope for adjustment
 
@@ -64,13 +64,12 @@ Where:
 
 **Mortality Rate Adjustment:**
 
-$$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times \exp(-r \times (t - t_0))$$
+$$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
 
 Where:
 - **r** = Calculated slope for the specific dose-age combination
 - **MR(t)** = Raw mortality rate at time t
 - **t₀** = Baseline time for normalization
-
 - **Baseline Reference**: Baseline values taken at week 4 (or first available week)
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
 
@@ -83,15 +82,14 @@ $$\text{Var}[\text{KCOR}(t)] = \text{KCOR}(t)^2 \times \left[\frac{\text{Var}[\t
 
 **Confidence Interval Bounds:**
 
-$$\text{CI}_{\text{lower}}(t) = \text{KCOR}(t) \times \exp(-1.96 \times \sqrt{\text{Var}[\ln(\text{KCOR}(t))]})$$
+$$\text{CI}_{\text{lower}}(t) = \text{KCOR}(t) \times e^{-1.96 \sqrt{\text{Var}[\ln(\text{KCOR}(t))]}}$$
 
-$$\text{CI}_{\text{upper}}(t) = \text{KCOR}(t) \times \exp(1.96 \times \sqrt{\text{Var}[\ln(\text{KCOR}(t))]})$$
+$$\text{CI}_{\text{upper}}(t) = \text{KCOR}(t) \times e^{1.96 \sqrt{\text{Var}[\ln(\text{KCOR}(t))]}}$$
 
 Where:
 - **Var[D] ≈ D**: Using binomial variance approximation for death counts
 - **Var[ln(KCOR)]**: Variance on log scale for proper uncertainty propagation
 - **1.96**: 95% confidence level multiplier (standard normal distribution)
-
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
 #### 6. Age Standardization
@@ -99,7 +97,7 @@ Where:
 
 The age-standardized KCOR is calculated using fixed baseline weights:
 
-$$\text{KCOR}_{\text{ASMR}}(t) = \exp\left(\frac{\sum_i w_i \times \ln(\text{KCOR}_i(t))}{\sum_i w_i}\right)$$
+$$\text{KCOR}_{\text{ASMR}}(t) = e^{\frac{\sum_i w_i \ln(\text{KCOR}_i(t))}{\sum_i w_i}}$$
 
 Where:
 - **wᵢ** = Fixed weight for age group i (person-time in first 4 weeks)

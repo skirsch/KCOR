@@ -114,8 +114,8 @@ def safe_exp(x, max_val=1e6):
     """Safe exponential with clipping to prevent overflow."""
     return np.clip(np.exp(x), 0, max_val)
 
-def quantile_slope_log_y(t, y, tau=TAU):
-    """Return slope b of log(y) ~ a + b*t via Quantile Regression at tau."""
+
+
     y = np.asarray(y, float).clip(min=EPS)
     t = np.asarray(t, float)
     
@@ -135,7 +135,7 @@ def quantile_slope_log_y(t, y, tau=TAU):
     # Robust fit with multiple fallback strategies
     try:
         # Try quantile regression first
-        res = sm.QuantReg(np.log(y), X).fit(q=tau, max_iter=1000)
+
         b = float(res.params[1])
         
         # Check if result is reasonable

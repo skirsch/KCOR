@@ -1,12 +1,19 @@
-PS C:\Users\stk\Documents\GitHub\KCOR\code> make KCOR   
+PS C:\Users\stk\Documents\GitHub\KCOR\code> make KCOR
 "Running KCOR analysis..."
-python KCORv4.py ../../Czech/data/KCOR_output.xlsx KCOR_processed_REAL.xlsx
+python KCORv4.py ../../Czech/data/KCOR_output.xlsx ../../Czech/analysis/KCOR_analysis.xlsx
+Traceback (most recent call last):
+  File "C:\Users\stk\Documents\GitHub\KCOR\code\KCORv4.py", line 117, in <module>
+    def quantile_slope_log_y(t, y, tau=TAU):
+                                       ^^^
+NameError: name 'TAU' is not defined
+make: *** [Makefile:7: KCOR] Error 1
+PS C:\Users\stk\Documents\GitHub\KCOR\code> python KCORv4.py ../../Czech/data/KCOR_output.xlsx ../../Czech/analysis/KCOR_analysis.xlsx       
 ================================================================================
 KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-02 16:45:23
+Analysis Date: 2025-09-02 18:06:03
 Input File: ../../Czech/data/KCOR_output.xlsx
-Output File: KCOR_processed_REAL.xlsx
+Output File: ../../Czech/analysis/KCOR_analysis.xlsx
 ================================================================================
 
 [DEBUG] Limiting to age range: 1920-2000
@@ -19,56 +26,56 @@ Output File: KCOR_processed_REAL.xlsx
 [DEBUG] Lookup table validation: 2021_24 enrollment 2021-06-14, offsets (53, 114) -> dates (2022-06-20, 2023-08-21)
 
 [DEBUG] Computed slopes for sheet 2021_24:
-  Age 1920, Dose 0: slope = -0.004988
-  Age 1925, Dose 0: slope = -0.004486
-  Age 1930, Dose 0: slope = -0.002020
-  Age 1935, Dose 0: slope = -0.001458
-  Age 1940, Dose 0: slope = -0.003604
-  Age 1945, Dose 0: slope = -0.000953
-  Age 1950, Dose 0: slope = -0.000671
-  Age 1955, Dose 0: slope = 0.000841
-  Age 1960, Dose 0: slope = -0.000648
-  Age 1965, Dose 0: slope = -0.001063
-  Age 1970, Dose 0: slope = -0.001207
-  Age 1975, Dose 0: slope = 0.000490
-  Age 1980, Dose 0: slope = 0.001913
-  Age 1985, Dose 0: slope = -0.000235
-  Age 1990, Dose 0: slope = 0.000012
-  Age 1995, Dose 0: slope = -0.003456
-  Age 2000, Dose 0: slope = -0.002181
-  Age 1920, Dose 1: slope = 0.002518
-  Age 1925, Dose 1: slope = -0.001309
-  Age 1930, Dose 1: slope = 0.000902
-  Age 1935, Dose 1: slope = -0.001565
-  Age 1940, Dose 1: slope = 0.000377
-  Age 1945, Dose 1: slope = 0.002082
-  Age 1950, Dose 1: slope = 0.001942
-  Age 1955, Dose 1: slope = 0.000917
-  Age 1960, Dose 1: slope = 0.003431
-  Age 1965, Dose 1: slope = 0.006556
-  Age 1970, Dose 1: slope = 0.002843
-  Age 1975, Dose 1: slope = 0.001031
-  Age 1980, Dose 1: slope = 0.005636
-  Age 1985, Dose 1: slope = 0.022734
-  Age 1990, Dose 1: slope = 0.000009
-  Age 1995, Dose 1: slope = 0.011370
-  Age 2000, Dose 1: slope = 0.029380
-  Age 1920, Dose 2: slope = 0.001013
-  Age 1925, Dose 2: slope = 0.001929
-  Age 1930, Dose 2: slope = 0.003053
-  Age 1935, Dose 2: slope = 0.001008
-  Age 1940, Dose 2: slope = 0.001998
-  Age 1945, Dose 2: slope = 0.003173
-  Age 1950, Dose 2: slope = 0.002044
-  Age 1955, Dose 2: slope = 0.002172
-  Age 1960, Dose 2: slope = 0.000530
-  Age 1965, Dose 2: slope = 0.003855
-  Age 1970, Dose 2: slope = 0.006957
-  Age 1975, Dose 2: slope = 0.001856
-  Age 1980, Dose 2: slope = 0.000024
-  Age 1985, Dose 2: slope = 0.011381
-  Age 1990, Dose 2: slope = -0.011343
-  Age 1995, Dose 2: slope = 0.011375
+  Age 1920, Dose 0: slope = -0.004527
+  Age 1925, Dose 0: slope = -0.004276
+  Age 1930, Dose 0: slope = -0.001584
+  Age 1935, Dose 0: slope = -0.001479
+  Age 1940, Dose 0: slope = -0.003628
+  Age 1945, Dose 0: slope = -0.001115
+  Age 1950, Dose 0: slope = -0.001401
+  Age 1955, Dose 0: slope = 0.000408
+  Age 1960, Dose 0: slope = -0.000866
+  Age 1965, Dose 0: slope = -0.001065
+  Age 1970, Dose 0: slope = -0.000521
+  Age 1975, Dose 0: slope = 0.000027
+  Age 1980, Dose 0: slope = 0.001336
+  Age 1985, Dose 0: slope = 0.000815
+  Age 1990, Dose 0: slope = -0.000816
+  Age 1995, Dose 0: slope = -0.003552
+  Age 2000, Dose 0: slope = -0.001072
+  Age 1920, Dose 1: slope = 0.000564
+  Age 1925, Dose 1: slope = -0.001730
+  Age 1930, Dose 1: slope = 0.001286
+  Age 1935, Dose 1: slope = -0.001177
+  Age 1940, Dose 1: slope = 0.001069
+  Age 1945, Dose 1: slope = 0.001253
+  Age 1950, Dose 1: slope = 0.002074
+  Age 1955, Dose 1: slope = 0.000670
+  Age 1960, Dose 1: slope = 0.002698
+  Age 1965, Dose 1: slope = 0.005185
+  Age 1970, Dose 1: slope = 0.002743
+  Age 1975, Dose 1: slope = 0.001738
+  Age 1980, Dose 1: slope = 0.006556
+  Age 1985, Dose 1: slope = 0.013097
+  Age 1990, Dose 1: slope = 0.000135
+  Age 1995, Dose 1: slope = 0.012313
+  Age 2000, Dose 1: slope = 0.024516
+  Age 1920, Dose 2: slope = 0.000988
+  Age 1925, Dose 2: slope = 0.001797
+  Age 1930, Dose 2: slope = 0.002697
+  Age 1935, Dose 2: slope = 0.000865
+  Age 1940, Dose 2: slope = 0.001896
+  Age 1945, Dose 2: slope = 0.002820
+  Age 1950, Dose 2: slope = 0.001537
+  Age 1955, Dose 2: slope = 0.002017
+  Age 1960, Dose 2: slope = 0.000469
+  Age 1965, Dose 2: slope = 0.002927
+  Age 1970, Dose 2: slope = 0.005298
+  Age 1975, Dose 2: slope = 0.003226
+  Age 1980, Dose 2: slope = 0.000282
+  Age 1985, Dose 2: slope = 0.010700
+  Age 1990, Dose 2: slope = -0.009365
+  Age 1995, Dose 2: slope = 0.006830
   Age 2000, Dose 2: slope = 0.000000
 
 [Info] Processing sheet: 2022_06
@@ -79,74 +86,74 @@ Output File: KCOR_processed_REAL.xlsx
 [DEBUG] Lookup table validation: 2022_06 enrollment 2022-02-07, offsets (19, 111) -> dates (2022-06-20, 2024-03-25)
 
 [DEBUG] Computed slopes for sheet 2022_06:
-  Age 1920, Dose 0: slope = -0.002444
-  Age 1925, Dose 0: slope = -0.001124
-  Age 1930, Dose 0: slope = -0.000858
-  Age 1935, Dose 0: slope = -0.001075
-  Age 1940, Dose 0: slope = -0.001966
-  Age 1945, Dose 0: slope = -0.000660
-  Age 1950, Dose 0: slope = -0.000600
-  Age 1955, Dose 0: slope = -0.000158
-  Age 1960, Dose 0: slope = -0.002258
-  Age 1965, Dose 0: slope = -0.000529
-  Age 1970, Dose 0: slope = -0.000982
-  Age 1975, Dose 0: slope = -0.000740
-  Age 1980, Dose 0: slope = 0.000028
-  Age 1985, Dose 0: slope = -0.004141
-  Age 1990, Dose 0: slope = -0.002969
-  Age 1995, Dose 0: slope = 0.003887
-  Age 2000, Dose 0: slope = 0.000955
-  Age 1920, Dose 1: slope = 0.007007
-  Age 1925, Dose 1: slope = -0.000093
-  Age 1930, Dose 1: slope = -0.001563
-  Age 1935, Dose 1: slope = -0.001548
-  Age 1940, Dose 1: slope = -0.000482
-  Age 1945, Dose 1: slope = 0.002906
-  Age 1950, Dose 1: slope = 0.001718
-  Age 1955, Dose 1: slope = -0.000616
-  Age 1960, Dose 1: slope = -0.002373
-  Age 1965, Dose 1: slope = -0.006679
-  Age 1970, Dose 1: slope = 0.006815
-  Age 1975, Dose 1: slope = -0.002244
-  Age 1980, Dose 1: slope = 0.002767
-  Age 1985, Dose 1: slope = 0.001698
-  Age 1990, Dose 1: slope = -0.006070
-  Age 1995, Dose 1: slope = 0.005560
-  Age 2000, Dose 1: slope = -0.007525
-  Age 1920, Dose 2: slope = 0.005311
-  Age 1925, Dose 2: slope = -0.002906
-  Age 1930, Dose 2: slope = -0.000797
-  Age 1935, Dose 2: slope = -0.001019
-  Age 1940, Dose 2: slope = -0.000934
-  Age 1945, Dose 2: slope = -0.001123
-  Age 1950, Dose 2: slope = -0.002819
-  Age 1955, Dose 2: slope = 0.000165
-  Age 1960, Dose 2: slope = 0.001042
-  Age 1965, Dose 2: slope = 0.001118
-  Age 1970, Dose 2: slope = 0.000848
-  Age 1975, Dose 2: slope = -0.001670
-  Age 1980, Dose 2: slope = 0.002974
-  Age 1985, Dose 2: slope = 0.001778
-  Age 1990, Dose 2: slope = -0.005544
-  Age 1995, Dose 2: slope = -0.003870
-  Age 2000, Dose 2: slope = -0.007528
-  Age 1920, Dose 3: slope = 0.001596
-  Age 1925, Dose 3: slope = 0.001804
-  Age 1930, Dose 3: slope = 0.002522
-  Age 1935, Dose 3: slope = 0.003116
-  Age 1940, Dose 3: slope = 0.003381
-  Age 1945, Dose 3: slope = 0.002585
-  Age 1950, Dose 3: slope = 0.001977
-  Age 1955, Dose 3: slope = 0.002172
-  Age 1960, Dose 3: slope = 0.001947
-  Age 1965, Dose 3: slope = 0.005933
-  Age 1970, Dose 3: slope = 0.003112
-  Age 1975, Dose 3: slope = 0.001387
-  Age 1980, Dose 3: slope = 0.000855
-  Age 1985, Dose 3: slope = 0.004816
-  Age 1990, Dose 3: slope = 0.004009
-  Age 1995, Dose 3: slope = -0.019468
-  Age 2000, Dose 3: slope = -0.015061
+  Age 1920, Dose 0: slope = -0.003100
+  Age 1925, Dose 0: slope = -0.001001
+  Age 1930, Dose 0: slope = -0.000838
+  Age 1935, Dose 0: slope = -0.001393
+  Age 1940, Dose 0: slope = -0.002285
+  Age 1945, Dose 0: slope = -0.000916
+  Age 1950, Dose 0: slope = -0.001030
+  Age 1955, Dose 0: slope = -0.000757
+  Age 1960, Dose 0: slope = -0.002574
+  Age 1965, Dose 0: slope = -0.000579
+  Age 1970, Dose 0: slope = -0.001356
+  Age 1975, Dose 0: slope = -0.001592
+  Age 1980, Dose 0: slope = -0.000244
+  Age 1985, Dose 0: slope = -0.004479
+  Age 1990, Dose 0: slope = -0.000409
+  Age 1995, Dose 0: slope = 0.003531
+  Age 2000, Dose 0: slope = 0.000775
+  Age 1920, Dose 1: slope = 0.008320
+  Age 1925, Dose 1: slope = 0.000313
+  Age 1930, Dose 1: slope = -0.001709
+  Age 1935, Dose 1: slope = -0.001654
+  Age 1940, Dose 1: slope = -0.000403
+  Age 1945, Dose 1: slope = 0.001582
+  Age 1950, Dose 1: slope = 0.000672
+  Age 1955, Dose 1: slope = -0.000755
+  Age 1960, Dose 1: slope = -0.002978
+  Age 1965, Dose 1: slope = -0.004662
+  Age 1970, Dose 1: slope = 0.007792
+  Age 1975, Dose 1: slope = -0.001374
+  Age 1980, Dose 1: slope = 0.000979
+  Age 1985, Dose 1: slope = 0.004068
+  Age 1990, Dose 1: slope = -0.008783
+  Age 1995, Dose 1: slope = 0.003982
+  Age 2000, Dose 1: slope = -0.008407
+  Age 1920, Dose 2: slope = 0.005003
+  Age 1925, Dose 2: slope = -0.002383
+  Age 1930, Dose 2: slope = -0.000889
+  Age 1935, Dose 2: slope = -0.000786
+  Age 1940, Dose 2: slope = -0.000843
+  Age 1945, Dose 2: slope = -0.001299
+  Age 1950, Dose 2: slope = -0.002976
+  Age 1955, Dose 2: slope = -0.000231
+  Age 1960, Dose 2: slope = 0.000075
+  Age 1965, Dose 2: slope = 0.000965
+  Age 1970, Dose 2: slope = 0.001556
+  Age 1975, Dose 2: slope = -0.002117
+  Age 1980, Dose 2: slope = 0.000855
+  Age 1985, Dose 2: slope = 0.003460
+  Age 1990, Dose 2: slope = -0.005647
+  Age 1995, Dose 2: slope = -0.001495
+  Age 2000, Dose 2: slope = -0.003554
+  Age 1920, Dose 3: slope = 0.001951
+  Age 1925, Dose 3: slope = 0.001593
+  Age 1930, Dose 3: slope = 0.002357
+  Age 1935, Dose 3: slope = 0.002895
+  Age 1940, Dose 3: slope = 0.003155
+  Age 1945, Dose 3: slope = 0.002510
+  Age 1950, Dose 3: slope = 0.001916
+  Age 1955, Dose 3: slope = 0.002267
+  Age 1960, Dose 3: slope = 0.001923
+  Age 1965, Dose 3: slope = 0.005386
+  Age 1970, Dose 3: slope = 0.003341
+  Age 1975, Dose 3: slope = 0.001855
+  Age 1980, Dose 3: slope = 0.001642
+  Age 1985, Dose 3: slope = 0.003158
+  Age 1990, Dose 3: slope = 0.002401
+  Age 1995, Dose 3: slope = -0.016789
+  Age 2000, Dose 3: slope = -0.012929
 
 
 ================================================================================
@@ -160,175 +167,174 @@ Sheet: 2021_24
 
 Dose combination: 1 vs 0
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.1213 | MoE:   0.2844
-  Age 1920        | KCOR:   0.9038 | MoE:   0.5464
-  Age 1925        | KCOR:   0.7649 | MoE:   0.2031
-  Age 1930        | KCOR:   0.8363 | MoE:   0.1556
-  Age 1935        | KCOR:   1.0805 | MoE:   0.1991
-  Age 1940        | KCOR:   1.0374 | MoE:   0.1668
-  Age 1945        | KCOR:   0.9789 | MoE:   0.1471
-  Age 1950        | KCOR:   1.1866 | MoE:   0.1998
-  Age 1955        | KCOR:   1.1612 | MoE:   0.2390
-  Age 1960        | KCOR:   1.1435 | MoE:   0.2987
-  Age 1965        | KCOR:   0.8908 | MoE:   0.2735
-  Age 1970        | KCOR:   1.1564 | MoE:   0.4183
-  Age 1975        | KCOR:   1.2385 | MoE:   0.5538
-  Age 1980        | KCOR:   0.7191 | MoE:   0.4448
-  Age 1985        | KCOR:   0.9898 | MoE:   1.1808
-  Age 1990        | KCOR:   2.6929 | MoE:   5.4718
-  Age 1995        | KCOR:   0.4725 | MoE:   4.7255
-  Age 2000        | KCOR:   0.1747 | MoE:   0.2389
+  ASMR (pooled)   | KCOR [95% CI]:   1.1426 [0.887, 1.472]
+  Age 1920        | KCOR [95% CI]:   0.9807 [0.536, 1.794]
+  Age 1925        | KCOR [95% CI]:   0.7822 [0.600, 1.020]
+  Age 1930        | KCOR [95% CI]:   0.8378 [0.695, 1.009]
+  Age 1935        | KCOR [95% CI]:   1.0640 [0.885, 1.279]
+  Age 1940        | KCOR [95% CI]:   1.0097 [0.860, 1.186]
+  Age 1945        | KCOR [95% CI]:   1.0037 [0.864, 1.166]
+  Age 1950        | KCOR [95% CI]:   1.1505 [0.972, 1.362]
+  Age 1955        | KCOR [95% CI]:   1.1546 [0.940, 1.418]
+  Age 1960        | KCOR [95% CI]:   1.1668 [0.899, 1.515]
+  Age 1965        | KCOR [95% CI]:   0.9359 [0.689, 1.272]
+  Age 1970        | KCOR [95% CI]:   1.1905 [0.829, 1.709]
+  Age 1975        | KCOR [95% CI]:   1.1834 [0.757, 1.851]
+  Age 1980        | KCOR [95% CI]:   0.6804 [0.366, 1.263]
+  Age 1985        | KCOR [95% CI]:   1.3863 [0.421, 4.570]
+  Age 1990        | KCOR [95% CI]:   2.5884 [0.339, 19.748]
+  Age 1995        | KCOR [95% CI]:   0.4564 [0.000, 4.564]
+  Age 2000        | KCOR [95% CI]:   0.2061 [0.053, 0.805]
 
 Dose combination: 2 vs 0
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.3021 | MoE:   0.3058
-  Age 1920        | KCOR:   0.8516 | MoE:   0.2561
-  Age 1925        | KCOR:   0.8624 | MoE:   0.1363
-  Age 1930        | KCOR:   0.9350 | MoE:   0.1094
-  Age 1935        | KCOR:   1.2425 | MoE:   0.1459
-  Age 1940        | KCOR:   1.2568 | MoE:   0.1441
-  Age 1945        | KCOR:   1.3250 | MoE:   0.1614
-  Age 1950        | KCOR:   1.6080 | MoE:   0.2405
-  Age 1955        | KCOR:   1.5164 | MoE:   0.3051
-  Age 1960        | KCOR:   1.3417 | MoE:   0.3416
-  Age 1965        | KCOR:   1.7249 | MoE:   0.7241
-  Age 1970        | KCOR:   0.9288 | MoE:   0.3947
-  Age 1975        | KCOR:   1.9230 | MoE:   1.3391
-  Age 1980        | KCOR:   0.9010 | MoE:   0.6635
-  Age 1985        | KCOR:   1.1121 | MoE:   1.3420
-  Age 1990        | KCOR:   2.1728 | MoE:   3.2519
-  Age 1995        | KCOR:   0.6539 | MoE:   0.9979
-  Age 2000        | KCOR:   0.5546 | MoE:   0.8686
+  ASMR (pooled)   | KCOR [95% CI]:   1.3050 [1.032, 1.650]
+  Age 1920        | KCOR [95% CI]:   0.8667 [0.642, 1.171]
+  Age 1925        | KCOR [95% CI]:   0.8732 [0.746, 1.023]
+  Age 1930        | KCOR [95% CI]:   0.9621 [0.856, 1.082]
+  Age 1935        | KCOR [95% CI]:   1.2485 [1.110, 1.404]
+  Age 1940        | KCOR [95% CI]:   1.2607 [1.124, 1.414]
+  Age 1945        | KCOR [95% CI]:   1.3354 [1.182, 1.508]
+  Age 1950        | KCOR [95% CI]:   1.5983 [1.376, 1.856]
+  Age 1955        | KCOR [95% CI]:   1.5026 [1.229, 1.837]
+  Age 1960        | KCOR [95% CI]:   1.3343 [1.034, 1.721]
+  Age 1965        | KCOR [95% CI]:   1.7859 [1.174, 2.717]
+  Age 1970        | KCOR [95% CI]:   1.0115 [0.662, 1.547]
+  Age 1975        | KCOR [95% CI]:   1.7949 [0.894, 3.602]
+  Age 1980        | KCOR [95% CI]:   0.8737 [0.418, 1.825]
+  Age 1985        | KCOR [95% CI]:   1.1823 [0.354, 3.950]
+  Age 1990        | KCOR [95% CI]:   1.9061 [0.428, 8.497]
+  Age 1995        | KCOR [95% CI]:   0.7569 [0.165, 3.470]
+  Age 2000        | KCOR [95% CI]:   0.5809 [0.121, 2.782]
 
 Dose combination: 2 vs 1
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.2279 | MoE:   0.3936
-  Age 1920        | KCOR:   0.9422 | MoE:   0.5626
-  Age 1925        | KCOR:   1.1276 | MoE:   0.2887
-  Age 1930        | KCOR:   1.1180 | MoE:   0.1973
-  Age 1935        | KCOR:   1.1499 | MoE:   0.2020
-  Age 1940        | KCOR:   1.2115 | MoE:   0.1905
-  Age 1945        | KCOR:   1.3536 | MoE:   0.2043
-  Age 1950        | KCOR:   1.3551 | MoE:   0.2516
-  Age 1955        | KCOR:   1.3059 | MoE:   0.3165
-  Age 1960        | KCOR:   1.1733 | MoE:   0.3735
-  Age 1965        | KCOR:   1.9364 | MoE:   0.9120
-  Age 1970        | KCOR:   0.8032 | MoE:   0.4028
-  Age 1975        | KCOR:   1.5527 | MoE:   1.1971
-  Age 1980        | KCOR:   1.2531 | MoE:   1.0819
-  Age 1985        | KCOR:   1.1236 | MoE:   1.8305
-  Age 1990        | KCOR:   0.8069 | MoE:   1.9636
-  Age 1995        | KCOR:   2.2383 | MoE:  22.3825
-  Age 2000        | KCOR:   3.1745 | MoE:   5.9596
+  ASMR (pooled)   | KCOR [95% CI]:   1.1936 [0.866, 1.644]
+  Age 1920        | KCOR [95% CI]:   0.8837 [0.487, 1.605]
+  Age 1925        | KCOR [95% CI]:   1.1163 [0.864, 1.442]
+  Age 1930        | KCOR [95% CI]:   1.1484 [0.963, 1.370]
+  Age 1935        | KCOR [95% CI]:   1.1735 [0.984, 1.399]
+  Age 1940        | KCOR [95% CI]:   1.2486 [1.067, 1.461]
+  Age 1945        | KCOR [95% CI]:   1.3305 [1.144, 1.547]
+  Age 1950        | KCOR [95% CI]:   1.3892 [1.154, 1.673]
+  Age 1955        | KCOR [95% CI]:   1.3014 [1.021, 1.658]
+  Age 1960        | KCOR [95% CI]:   1.1435 [0.832, 1.572]
+  Age 1965        | KCOR [95% CI]:   1.9081 [1.191, 3.056]
+  Age 1970        | KCOR [95% CI]:   0.8497 [0.515, 1.402]
+  Age 1975        | KCOR [95% CI]:   1.5167 [0.701, 3.280]
+  Age 1980        | KCOR [95% CI]:   1.2840 [0.541, 3.046]
+  Age 1985        | KCOR [95% CI]:   0.8528 [0.167, 4.346]
+  Age 1990        | KCOR [95% CI]:   0.7364 [0.065, 7.364]
+  Age 1995        | KCOR [95% CI]:   2.6703 [0.000, 26.703]
+  Age 2000        | KCOR [95% CI]:   2.8190 [0.433, 18.350]
 
 Sheet: 2022_06
 ============================================================
 
 Dose combination: 1 vs 0
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.0568 | MoE:   0.2543
-  Age 1920        | KCOR:   0.7372 | MoE:   0.6725
-  Age 1925        | KCOR:   1.3604 | MoE:   0.7036
-  Age 1930        | KCOR:   1.0775 | MoE:   0.3039
-  Age 1935        | KCOR:   1.2887 | MoE:   0.3992
-  Age 1940        | KCOR:   0.8569 | MoE:   0.2041
-  Age 1945        | KCOR:   0.9289 | MoE:   0.2423
-  Age 1950        | KCOR:   1.2356 | MoE:   0.3817
-  Age 1955        | KCOR:   0.9768 | MoE:   0.3207
-  Age 1960        | KCOR:   1.0703 | MoE:   0.4512
-  Age 1965        | KCOR:   0.9290 | MoE:   0.4214
-  Age 1970        | KCOR:   0.8803 | MoE:   0.4988
-  Age 1975        | KCOR:   0.8929 | MoE:   0.5324
-  Age 1980        | KCOR:   1.0035 | MoE:   0.8545
-  Age 1985        | KCOR:   0.9627 | MoE:   1.0603
-  Age 1990        | KCOR:   2.1179 | MoE:   3.1840
-  Age 1995        | KCOR:   0.6677 | MoE:   1.1260
-  Age 2000        | KCOR:   1.7629 | MoE:   3.7713
+  ASMR (pooled)   | KCOR [95% CI]:   1.0594 [0.833, 1.348]
+  Age 1920        | KCOR [95% CI]:   0.7151 [0.287, 1.782]
+  Age 1925        | KCOR [95% CI]:   1.3532 [0.807, 2.270]
+  Age 1930        | KCOR [95% CI]:   1.0808 [0.815, 1.433]
+  Age 1935        | KCOR [95% CI]:   1.2836 [0.942, 1.750]
+  Age 1940        | KCOR [95% CI]:   0.8504 [0.670, 1.079]
+  Age 1945        | KCOR [95% CI]:   0.9474 [0.730, 1.229]
+  Age 1950        | KCOR [95% CI]:   1.2504 [0.918, 1.703]
+  Age 1955        | KCOR [95% CI]:   0.9680 [0.697, 1.344]
+  Age 1960        | KCOR [95% CI]:   1.0770 [0.707, 1.642]
+  Age 1965        | KCOR [95% CI]:   0.8910 [0.566, 1.403]
+  Age 1970        | KCOR [95% CI]:   0.8569 [0.486, 1.511]
+  Age 1975        | KCOR [95% CI]:   0.8624 [0.475, 1.566]
+  Age 1980        | KCOR [95% CI]:   1.0291 [0.439, 2.410]
+  Age 1985        | KCOR [95% CI]:   0.9084 [0.302, 2.736]
+  Age 1990        | KCOR [95% CI]:   2.3666 [0.526, 10.654]
+  Age 1995        | KCOR [95% CI]:   0.6819 [0.126, 3.681]
+  Age 2000        | KCOR [95% CI]:   1.7927 [0.211, 15.221]
 
 Dose combination: 2 vs 0
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.1772 | MoE:   0.1813
-  Age 1920        | KCOR:   0.8050 | MoE:   0.3526
-  Age 1925        | KCOR:   0.9417 | MoE:   0.1893
-  Age 1930        | KCOR:   1.0812 | MoE:   0.1538
-  Age 1935        | KCOR:   1.0209 | MoE:   0.1434
-  Age 1940        | KCOR:   0.9846 | MoE:   0.1308
-  Age 1945        | KCOR:   0.9987 | MoE:   0.1337
-  Age 1950        | KCOR:   1.3110 | MoE:   0.2075
-  Age 1955        | KCOR:   1.0060 | MoE:   0.1928
-  Age 1960        | KCOR:   1.0074 | MoE:   0.2482
-  Age 1965        | KCOR:   0.9675 | MoE:   0.2803
-  Age 1970        | KCOR:   0.8843 | MoE:   0.2858
-  Age 1975        | KCOR:   1.8461 | MoE:   0.8687
-  Age 1980        | KCOR:   1.0219 | MoE:   0.5750
-  Age 1985        | KCOR:   1.1075 | MoE:   0.8390
-  Age 1990        | KCOR:   1.4816 | MoE:   1.2716
-  Age 1995        | KCOR:   1.0959 | MoE:   1.2895
-  Age 2000        | KCOR:   2.9503 | MoE:   3.9677
+  ASMR (pooled)   | KCOR [95% CI]:   1.1668 [1.000, 1.361]
+  Age 1920        | KCOR [95% CI]:   0.7983 [0.515, 1.237]
+  Age 1925        | KCOR [95% CI]:   0.9347 [0.764, 1.143]
+  Age 1930        | KCOR [95% CI]:   1.0835 [0.940, 1.249]
+  Age 1935        | KCOR [95% CI]:   1.0103 [0.878, 1.163]
+  Age 1940        | KCOR [95% CI]:   0.9769 [0.855, 1.116]
+  Age 1945        | KCOR [95% CI]:   0.9972 [0.872, 1.140]
+  Age 1950        | KCOR [95% CI]:   1.3045 [1.114, 1.528]
+  Age 1955        | KCOR [95% CI]:   1.0016 [0.827, 1.213]
+  Age 1960        | KCOR [95% CI]:   1.0202 [0.797, 1.305]
+  Age 1965        | KCOR [95% CI]:   0.9694 [0.726, 1.295]
+  Age 1970        | KCOR [95% CI]:   0.8660 [0.627, 1.196]
+  Age 1975        | KCOR [95% CI]:   1.8328 [1.145, 2.934]
+  Age 1980        | KCOR [95% CI]:   1.0611 [0.605, 1.862]
+  Age 1985        | KCOR [95% CI]:   1.0614 [0.498, 2.264]
+  Age 1990        | KCOR [95% CI]:   1.5669 [0.664, 3.698]
+  Age 1995        | KCOR [95% CI]:   1.0288 [0.317, 3.339]
+  Age 2000        | KCOR [95% CI]:   2.6829 [0.699, 10.292]
 
 Dose combination: 2 vs 1
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.1138 | MoE:   0.2846
-  Age 1920        | KCOR:   1.0920 | MoE:   1.0371
-  Age 1925        | KCOR:   0.6922 | MoE:   0.3628
-  Age 1930        | KCOR:   1.0035 | MoE:   0.2872
-  Age 1935        | KCOR:   0.7922 | MoE:   0.2461
-  Age 1940        | KCOR:   1.1491 | MoE:   0.2730
-  Age 1945        | KCOR:   1.0751 | MoE:   0.2800
-  Age 1950        | KCOR:   1.0610 | MoE:   0.3334
-  Age 1955        | KCOR:   1.0299 | MoE:   0.3438
-  Age 1960        | KCOR:   0.9413 | MoE:   0.4094
-  Age 1965        | KCOR:   1.0415 | MoE:   0.4838
-  Age 1970        | KCOR:   1.0045 | MoE:   0.5747
-  Age 1975        | KCOR:   2.0677 | MoE:   1.3871
-  Age 1980        | KCOR:   1.0183 | MoE:   0.9195
-  Age 1985        | KCOR:   1.1503 | MoE:   1.3960
-  Age 1990        | KCOR:   0.6996 | MoE:   1.1208
-  Age 1995        | KCOR:   1.6414 | MoE:   2.7693
-  Age 2000        | KCOR:   1.6735 | MoE:   3.9038
+  ASMR (pooled)   | KCOR [95% CI]:   1.1013 [0.853, 1.422]
+  Age 1920        | KCOR [95% CI]:   1.1162 [0.431, 2.888]
+  Age 1925        | KCOR [95% CI]:   0.6908 [0.409, 1.167]
+  Age 1930        | KCOR [95% CI]:   1.0025 [0.753, 1.335]
+  Age 1935        | KCOR [95% CI]:   0.7871 [0.577, 1.074]
+  Age 1940        | KCOR [95% CI]:   1.1488 [0.906, 1.457]
+  Age 1945        | KCOR [95% CI]:   1.0526 [0.811, 1.366]
+  Age 1950        | KCOR [95% CI]:   1.0433 [0.762, 1.428]
+  Age 1955        | KCOR [95% CI]:   1.0346 [0.741, 1.445]
+  Age 1960        | KCOR [95% CI]:   0.9473 [0.613, 1.463]
+  Age 1965        | KCOR [95% CI]:   1.0880 [0.683, 1.732]
+  Age 1970        | KCOR [95% CI]:   1.0106 [0.570, 1.792]
+  Age 1975        | KCOR [95% CI]:   2.1251 [1.086, 4.157]
+  Age 1980        | KCOR [95% CI]:   1.0311 [0.418, 2.542]
+  Age 1985        | KCOR [95% CI]:   1.1684 [0.347, 3.937]
+  Age 1990        | KCOR [95% CI]:   0.6621 [0.133, 3.289]
+  Age 1995        | KCOR [95% CI]:   1.5087 [0.279, 8.153]
+  Age 2000        | KCOR [95% CI]:   1.4966 [0.145, 14.966]
 
 Dose combination: 3 vs 2
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.2372 | MoE:   0.2380
-  Age 1920        | KCOR:   1.5450 | MoE:   0.6559
-  Age 1925        | KCOR:   1.3806 | MoE:   0.2545
-  Age 1930        | KCOR:   1.3784 | MoE:   0.1746
-  Age 1935        | KCOR:   1.4650 | MoE:   0.1773
-  Age 1940        | KCOR:   1.6392 | MoE:   0.1893
-  Age 1945        | KCOR:   1.6781 | MoE:   0.1982
-  Age 1950        | KCOR:   1.3656 | MoE:   0.2046
-  Age 1955        | KCOR:   1.4772 | MoE:   0.2752
-  Age 1960        | KCOR:   1.3375 | MoE:   0.3422
-  Age 1965        | KCOR:   1.2081 | MoE:   0.3722
-  Age 1970        | KCOR:   1.5742 | MoE:   0.5792
-  Age 1975        | KCOR:   1.0803 | MoE:   0.6327
-  Age 1980        | KCOR:   1.1675 | MoE:   0.7847
-  Age 1985        | KCOR:   0.8221 | MoE:   0.7748
-  Age 1990        | KCOR:   1.4503 | MoE:   1.9832
-  Age 1995        | KCOR:   1.1284 | MoE:   1.4913
-  Age 2000        | KCOR:   0.4974 | MoE:   0.8230
+  ASMR (pooled)   | KCOR [95% CI]:   1.2398 [1.023, 1.503]
+  Age 1920        | KCOR [95% CI]:   1.5272 [0.999, 2.335]
+  Age 1925        | KCOR [95% CI]:   1.4001 [1.164, 1.684]
+  Age 1930        | KCOR [95% CI]:   1.3808 [1.216, 1.567]
+  Age 1935        | KCOR [95% CI]:   1.4783 [1.310, 1.669]
+  Age 1940        | KCOR [95% CI]:   1.6499 [1.470, 1.852]
+  Age 1945        | KCOR [95% CI]:   1.6752 [1.489, 1.885]
+  Age 1950        | KCOR [95% CI]:   1.3631 [1.173, 1.583]
+  Age 1955        | KCOR [95% CI]:   1.4633 [1.215, 1.763]
+  Age 1960        | KCOR [95% CI]:   1.3131 [1.017, 1.696]
+  Age 1965        | KCOR [95% CI]:   1.2181 [0.895, 1.658]
+  Age 1970        | KCOR [95% CI]:   1.5881 [1.099, 2.295]
+  Age 1975        | KCOR [95% CI]:   1.0584 [0.589, 1.901]
+  Age 1980        | KCOR [95% CI]:   1.0991 [0.561, 2.152]
+  Age 1985        | KCOR [95% CI]:   0.8809 [0.343, 2.260]
+  Age 1990        | KCOR [95% CI]:   1.4952 [0.381, 5.866]
+  Age 1995        | KCOR [95% CI]:   1.1163 [0.297, 4.190]
+  Age 2000        | KCOR [95% CI]:   0.5170 [0.099, 2.705]
 
 Dose combination: 3 vs 0
 --------------------------------------------------
-  ASMR (pooled)   | KCOR:   1.4564 | MoE:   0.2507
-  Age 1920        | KCOR:   1.2437 | MoE:   0.4134
-  Age 1925        | KCOR:   1.3001 | MoE:   0.2128
-  Age 1930        | KCOR:   1.4903 | MoE:   0.1745
-  Age 1935        | KCOR:   1.4957 | MoE:   0.1774
-  Age 1940        | KCOR:   1.6139 | MoE:   0.1882
-  Age 1945        | KCOR:   1.6760 | MoE:   0.1993
-  Age 1950        | KCOR:   1.7903 | MoE:   0.2479
-  Age 1955        | KCOR:   1.4861 | MoE:   0.2619
-  Age 1960        | KCOR:   1.3475 | MoE:   0.3132
-  Age 1965        | KCOR:   1.1689 | MoE:   0.3404
-  Age 1970        | KCOR:   1.3922 | MoE:   0.5003
-  Age 1975        | KCOR:   1.9943 | MoE:   0.9941
-  Age 1980        | KCOR:   1.1931 | MoE:   0.7171
-  Age 1985        | KCOR:   0.9105 | MoE:   0.7217
-  Age 1990        | KCOR:   2.1488 | MoE:   2.6866
-  Age 1995        | KCOR:   1.2366 | MoE:   1.6332
-  Age 2000        | KCOR:   1.4674 | MoE:   2.0082
+  ASMR (pooled)   | KCOR [95% CI]:   1.4466 [1.218, 1.718]
+  Age 1920        | KCOR [95% CI]:   1.2191 [0.874, 1.700]
+  Age 1925        | KCOR [95% CI]:   1.3087 [1.111, 1.541]
+  Age 1930        | KCOR [95% CI]:   1.4961 [1.331, 1.682]
+  Age 1935        | KCOR [95% CI]:   1.4936 [1.327, 1.682]
+  Age 1940        | KCOR [95% CI]:   1.6118 [1.434, 1.811]
+  Age 1945        | KCOR [95% CI]:   1.6706 [1.483, 1.882]
+  Age 1950        | KCOR [95% CI]:   1.7781 [1.548, 2.042]
+  Age 1955        | KCOR [95% CI]:   1.4656 [1.229, 1.748]
+  Age 1960        | KCOR [95% CI]:   1.3396 [1.062, 1.690]
+  Age 1965        | KCOR [95% CI]:   1.1809 [0.883, 1.580]
+  Age 1970        | KCOR [95% CI]:   1.3752 [0.960, 1.970]
+  Age 1975        | KCOR [95% CI]:   1.9399 [1.178, 3.193]
+  Age 1980        | KCOR [95% CI]:   1.1662 [0.639, 2.127]
+  Age 1985        | KCOR [95% CI]:   0.9350 [0.424, 2.064]
+  Age 1990        | KCOR [95% CI]:   2.3429 [0.671, 8.178]
+  Age 1995        | KCOR [95% CI]:   1.1485 [0.306, 4.304]
+  Age 2000        | KCOR [95% CI]:   1.3872 [0.353, 5.453]
 ================================================================================
-[Done] Wrote 21996 rows to KCOR_processed_REAL.xlsx
-"KCOR analysis complete!"
-
+[Done] Wrote 21996 rows to ../../Czech/analysis/KCOR_analysis.xlsx
+PS C:\Users\stk\Documents\GitHub\KCOR\code> ^C
