@@ -347,7 +347,7 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Output when used on the Czech data
-There was no combination of dose and age where there was a statistically significant benefit. It was pretty much all statistically significant harm. All the CI's had a high CI that was >1. See the [log file](https://analysis/KCOR_console_summary.log) for the full data.
+There was no combination of dose and age where there was a statistically significant benefit. It was pretty much all statistically significant harm. All the CI's had a high CI that was >1. See the [log file](analysis/KCOR_console_summary.log) for the full data.
 ```
 Dose combination: 2 vs 0
 --------------------------------------------------
