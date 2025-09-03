@@ -53,9 +53,10 @@ KEY ASSUMPTIONS:
 INPUT WORKBOOK SCHEMA per sheet (e.g., '2021_24', '2022_06', ...):
     ISOweekDied, DateDied, YearOfBirth, Sex, Dose, Alive, Dead
 
-OUTPUTS (one sheet per input sheet + "ALL"):
-    Columns:
-      Sheet, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled), Dose_num, Dose_den,
+OUTPUTS (two main sheets):
+    - "by_dose": Individual dose curves with raw and adjusted mortality rates
+    - "dose_pairs": KCOR values for all dose comparisons with columns:
+      Sheet, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
       KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den
 
 USAGE:
@@ -393,7 +394,7 @@ def build_kcor_rows(df, sheet_name):
             out["Dose_den"] = den
             out.rename(columns={"ISOweekDied_num":"ISOweekDied",
                                 "DateDied":"Date"}, inplace=True)
-            out["CI_95"] = out.apply(lambda row: f"[{row['CI_lower']:.3f}, {row['CI_upper']:.3f}]", axis=1)
+            # CI_95 column removed as it's redundant with CI_lower and CI_upper columns
             # Convert Date to standard pandas date format (same as debug sheet)
             out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
             out_rows.append(out)
@@ -631,7 +632,7 @@ def process_workbook(src_path: str, out_path: str):
             for dose in range(max_dose + 1):
                 for yob in sorted(df["YearOfBirth"].unique()):
                     if (yob, dose) in slopes:
-                        print(f"  Age {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
+                        print(f"  YoB {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
             print()
         
         df = adjust_mr(df, slopes, t0=ANCHOR_WEEKS)
@@ -766,9 +767,9 @@ def process_workbook(src_path: str, out_path: str):
                         if age == 0:
                             age_label = "ASMR (pooled)"
                         elif age == -1:
-                            age_label = "Age (unknown)"
+                            age_label = "YoB (unknown)"
                         else:
-                            age_label = f"Age {age}"
+                            age_label = f"YoB {age}"
                         
                         print(f"  {age_label:15} | KCOR [95% CI]: {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
     else:
@@ -834,22 +835,66 @@ def process_workbook(src_path: str, out_path: str):
 
     # write
     with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
-        # Add debug sheet first (working format)
+        # Add About sheet first
+        about_data = {
+            "Field": [
+                "KCOR Version",
+                "Analysis Date", 
+                "Input File",
+                "Output File",
+                "",
+                "Methodology Information:",
+                "",
+                "GitHub Repository",
+                "",
+                "Sheet Descriptions:",
+                "",
+                "by_dose",
+                "",
+                "dose_pairs",
+                "",
+                "Notes:",
+                "",
+                "YearOfBirth = 0",
+                "",
+                "YearOfBirth = -1"
+            ],
+            "Value": [
+                VERSION,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                src_path,
+                out_path,
+                "",
+                "",
+                "",
+                "https://github.com/skirsch/KCOR/tree/main",
+                "",
+                "",
+                "",
+                "Individual dose curves with raw and adjusted mortality rates for each dose-age combination",
+                "",
+                "KCOR values for all dose comparisons. Contains both individual age group results and pooled ASMR results.",
+                "",
+                "",
+                "",
+                "Represents pooled ASMR (Age-Standardized Mortality Ratio) computations. Many columns (MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den) will be blank for these rows as they don't apply to pooled calculations.",
+                "",
+                "Represents individuals with unknown birth year. Included in individual calculations but excluded from ASMR pooling."
+            ]
+        }
+        about_df = pd.DataFrame(about_data)
+        about_df.to_excel(writer, index=False, sheet_name="About")
+        
+        # Add debug sheet (working format)
         if DEBUG_VERBOSE:
-            debug_df.to_excel(writer, index=False, sheet_name="DEBUG_1940_curves")
+            debug_df.to_excel(writer, index=False, sheet_name="by_dose")
         
-        # Write main sheets (excluding 2021_24 since ALL contains everything)
-        for sh in combined["Sheet"].unique():
-            if sh != "2021_24":  # Skip 2021_24 sheet as it's redundant
-                sheet_data = combined.loc[combined["Sheet"]==sh].copy()
-                # Ensure Date column stays as date objects (not timestamps)
-                sheet_data["Date"] = sheet_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
-                sheet_data.to_excel(writer, index=False, sheet_name=sh)
+        # Individual sheets removed - everything is now in the dose_pairs sheet
         
-        # Ensure ALL sheet Date column stays as date objects
+        # Ensure dose_pairs sheet Date column stays as date objects
         all_data = combined.copy()
         all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
-        all_data.to_excel(writer, index=False, sheet_name="ALL")
+        all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
     print(f"[Done] Wrote {len(combined)} rows to {out_path}")
     return combined
