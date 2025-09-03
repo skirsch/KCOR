@@ -77,7 +77,7 @@ $$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t) / \text{CMR}_{\text{den}}(t)
 
 and try this
 
-$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)$$
+$$\text{KCOR}(t) = \frac{\text{CMR}_{\text{num}}(t)}$
 
 Where:
 - **CMR(t)** = Cumulative adjusted mortality rate at time t:
