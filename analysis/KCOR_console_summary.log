@@ -1,13 +1,3 @@
-PS C:\Users\stk\Documents\GitHub\KCOR\code> make KCOR
-"Running KCOR analysis..."
-python KCORv4.py ../../Czech/data/KCOR_output.xlsx ../../Czech/analysis/KCOR_analysis.xlsx
-Traceback (most recent call last):
-  File "C:\Users\stk\Documents\GitHub\KCOR\code\KCORv4.py", line 117, in <module>
-    def quantile_slope_log_y(t, y, tau=TAU):
-                                       ^^^
-NameError: name 'TAU' is not defined
-make: *** [Makefile:7: KCOR] Error 1
-PS C:\Users\stk\Documents\GitHub\KCOR\code> python KCORv4.py ../../Czech/data/KCOR_output.xlsx ../../Czech/analysis/KCOR_analysis.xlsx       
 ================================================================================
 KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================

@@ -79,6 +79,9 @@ except Exception as e:
     sys.exit(1)
 
 # ---------------- Configuration Parameters ----------------
+# Version information
+VERSION = "v4.0"                # KCOR version number
+
 # Core KCOR methodology parameters
 ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
@@ -527,7 +530,7 @@ def process_workbook(src_path: str, out_path: str):
     # Print professional header
     from datetime import datetime
     print("="*80)
-    print("KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis")
+    print(f"KCOR {VERSION} - Kirsch Cumulative Outcomes Ratio Analysis")
     print("="*80)
     print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Input File: {src_path}")
