@@ -24,11 +24,11 @@
 
 ## Overview
 
-KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality risk between different vaccination groups while accounting for underlying time trends. This repository contains the complete analysis pipeline for computing KCOR values from mortality data.
+KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality risk between different vaccination groups while accounting for underlying mortality rate time trend differences. This repository contains the complete analysis pipeline for computing KCOR values from mortality data.
 
-Suppose you could take any two cohorts, regardless of age, sex, frailty mix, and normalize the mortality rate so that if there is no external signal applied that might differentially impact their mortality, both cohorts would die over time with identical death rates.
+Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc. and normalize the mortality rate so that if there is no external signal applied that might differentially impact their mortality, both cohorts would die over time with identical mortality rates.
 
-That’s what KCOR does. Once the cohorts are precisely matched from a mortality point of view, we simply count the total deaths over time in each cohort and see which cohort had more deaths.
+That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more deaths.
 
 KCOR basically allows you to run a randomized trial with respect to the death outcome, using observational data.
 
@@ -38,11 +38,12 @@ KCOR allows us, for the first time, to objectively answer very important societa
 
 ### 🎯 Core Concept
 
-KCOR represents the ratio of cumulative mortality rates between two groups (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline period. This approach provides interpretable estimates of relative mortality risk that account for:
+KCOR represents the ratio of cumulative hazard functions between two groups (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline period. This approach provides interpretable estimates of relative mortality risk that account for:
 
-- **Time-varying trends** in mortality rates
-- **Baseline differences** between groups
-- **Statistical uncertainty** in the estimates
+- **Time-varying trends** in mortality rates through slope correction
+- **Mathematical exactness** through discrete hazard function transformation
+- **Baseline differences** between groups through normalization
+- **Statistical uncertainty** in the estimates through proper variance propagation
 
 ### ⚙️ Analysis Pipeline
 
@@ -82,40 +83,44 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 **Three-Step Process:**
 
 1. **Individual MR Adjustment**: Apply slope correction to each mortality rate
-2. **Hazard Transform**: Convert to discrete cumulative-hazard for mathematical exactness  
-3. **Cumulative Sum**: Compute CMR as cumulative sum of adjusted hazards
+2. **Hazard Transform**: Convert adjusted mortality rates to discrete hazard functions for mathematical exactness  
+3. **Cumulative Hazard**: Compute CMR as cumulative sum of hazard functions
+4. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to baseline
 
 **Step 1: Mortality Rate Adjustment**
 
 $$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
 
-**Step 2: Discrete Cumulative-Hazard Transform**
+**Step 2: Discrete Hazard Function Transform**
 
 $$\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))$$
 
 Where MR_adj is clipped to 0.999 to avoid log(0).
 
-**Step 3: Cumulative Mortality Rate**
+**Step 3: Cumulative Hazard (CMR)**
 
 $$\text{CMR}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
 
+**Step 4: KCOR as Hazard Ratio**
+
 **KCOR Formula:**
 
-$$\text{KCOR}(t) = \frac{\text{CMR}_v(t)}{\text{CMR}_u(t)}$$
+$$\text{KCOR}(t) = \frac{\text{CMR}_v(t) / \text{CMR}_u(t)}{\text{CMR}_v(t_0) / \text{CMR}_u(t_0)}$$
 
 Where:
 - **r** = Calculated slope for the specific dose-age combination
 - **MR(t)** = Raw mortality rate at time t
 - **t₀** = Baseline time for normalization (typically week 4)
+- **CMR(t)** = Cumulative hazard at time t (sum of discrete hazards)
 - **Mathematical Enhancement**: Discrete cumulative-hazard transform provides more exact CMR calculation than simple summation
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
 
-#### 6. Uncertainty Quantification
+#### 5. Uncertainty Quantification
 **95% Confidence Interval Calculation:**
 
-The variance of KCOR is calculated using proper uncertainty propagation:
+The variance of KCOR is calculated using proper uncertainty propagation for the hazard ratio:
 
-$$\text{Var}[\text{KCOR}(t)] = \text{KCOR}(t)^2 \times \left[\frac{\text{Var}[\text{cumD}_v(t)]}{\text{cumD}_v(t)^2} + \frac{\text{Var}[\text{cumD}_u(t)]}{\text{cumD}_u(t)^2} + \frac{\text{Var}[\text{cumD}_v(t_0)]}{\text{cumD}_v(t_0)^2} + \frac{\text{Var}[\text{cumD}_u(t_0)]}{\text{cumD}_u(t_0)^2}\right]$$
+$$\text{Var}[\ln(\text{KCOR}(t))] = \frac{\text{Var}[\text{CMR}_v(t)]}{\text{CMR}_v(t)^2} + \frac{\text{Var}[\text{CMR}_u(t)]}{\text{CMR}_u(t)^2} + \frac{\text{Var}[\text{CMR}_v(t_0)]}{\text{CMR}_v(t_0)^2} + \frac{\text{Var}[\text{CMR}_u(t_0)]}{\text{CMR}_u(t_0)^2}$$
 
 **Confidence Interval Bounds:**
 
@@ -124,12 +129,12 @@ $$\text{CI}_{\text{lower}}(t) = \text{KCOR}(t) \times e^{-1.96 \sqrt{\text{Var}[
 $$\text{CI}_{\text{upper}}(t) = \text{KCOR}(t) \times e^{1.96 \sqrt{\text{Var}[\ln(\text{KCOR}(t))]}}$$
 
 Where:
-- **Var[D] ≈ D**: Using binomial variance approximation for death counts
-- **Var[ln(KCOR)]**: Variance on log scale for proper uncertainty propagation
+- **Var[CMR] ≈ CMR**: Using Poisson variance approximation for cumulative hazard (sum of hazards)
+- **Var[ln(KCOR)]**: Variance on log scale for proper uncertainty propagation of hazard ratio
 - **1.96**: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-#### 7. Age Standardization
+#### 6. Age Standardization
 **ASMR Pooling Formula:**
 
 The age-standardized KCOR is calculated using fixed baseline weights:
@@ -159,6 +164,8 @@ Where:
 - No differential events affect dose groups differently during anchor periods
 - Baseline period (week 4) represents "normal" conditions
 - Person-time = Alive (survivor function approximation)
+- Discrete hazard function transformation provides accurate cumulative hazard estimation
+- Hazard ratios are appropriate for comparing mortality risk between groups
 
 ## 🏗️ Repository Structure
 
@@ -374,11 +381,12 @@ This shows that for dose 2 vs. dose 0:
 - **Validation Ready**: Users can verify every mathematical relationship
 - **Debug Friendly**: Easy to spot-check individual values and calculations
 
-### Discrete Cumulative-Hazard Transform (v4.1)
-- **Mathematical Enhancement**: More exact CMR calculation than simple summation
-- **Hazard Function**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping
-- **Cumulative Process**: `CMR(t) = sum(hazard(i))` for i=0 to t
-- **Numerical Stability**: Handles edge cases with proper bounds
+### Discrete Hazard Function Transform (v4.1)
+- **Mathematical Enhancement**: More exact CMR calculation than simple summation of mortality rates
+- **Hazard Function**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping to avoid log(0)
+- **Cumulative Process**: `CMR(t) = sum(hazard(i))` for i=0 to t (cumulative hazard)
+- **Numerical Stability**: Handles edge cases with proper bounds and clipping
+- **Hazard Ratio**: KCOR computed as ratio of cumulative hazards, normalized to baseline
 
 ### Error Handling & User Experience
 - **File Access Protection**: Automatic retry when Excel files are open
@@ -445,7 +453,8 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 ## 🆕 Version 4.1 Enhancements
 
 ### Major Improvements
-- **Discrete Cumulative-Hazard Transform**: Enhanced mathematical exactness in CMR calculation
+- **Discrete Hazard Function Transform**: Enhanced mathematical exactness in CMR calculation using hazard functions
+- **Hazard Ratio Methodology**: KCOR computed as ratio of cumulative hazards with proper normalization
 - **Complete Methodology Transparency**: All intermediate values included in output
 - **Error Handling**: Automatic retry when Excel files are open
 - **Clean Console Output**: Professional formatting with column headings
@@ -460,7 +469,10 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Smoothed MR**: `MR_smooth_num/den` - Smoothed MR values used for slope calculation
 
 ### Mathematical Enhancements
-- **Three-Step Process**: MR_adj → hazard → cumsum(hazard) for CMR
+- **Four-Step Process**: MR_adj → hazard → cumsum(hazard) → hazard ratio for KCOR
+- **Hazard Function Transform**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping
+- **Cumulative Hazard**: `CMR(t) = sum(hazard(i))` for mathematical exactness
+- **Hazard Ratio**: `KCOR(t) = (CMR_v(t)/CMR_u(t)) / (CMR_v(t0)/CMR_u(t0))`
 - **Numerical Stability**: Proper clipping to avoid log(0) and overflow
 - **Validation Ready**: All mathematical relationships visible in output
 
