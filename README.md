@@ -1,4 +1,4 @@
-# KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v4.1 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -78,32 +78,39 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 - **Baseline Normalization**: t0 = baseline week (typically week 4) where KCOR is normalized to 1
 - **Dose-Specific Slopes**: Each dose-age combination gets its own slope for adjustment
 
-#### 4. KCOR Computation
-**KCOR Formula:**
+#### 4. KCOR Computation (Enhanced v4.1)
+**Three-Step Process:**
 
-$$\text{KCOR}(t) = \frac{\text{CMR}_v(t) / \text{CMR}_u(t)}  {\text{CMR}_v(t_0) / \text{CMR}_u(t_0)}$$
+1. **Individual MR Adjustment**: Apply slope correction to each mortality rate
+2. **Hazard Transform**: Convert to discrete cumulative-hazard for mathematical exactness  
+3. **Cumulative Sum**: Compute CMR as cumulative sum of adjusted hazards
 
-Where:
-- **CMR(t)** = Cumulative adjusted mortality rate at time t:
-
-$$\text{CMR}(t) = \frac{\text{cumD}_{\text{adj}}(t)}{\text{cumPT}(t)}$$
-
-- **t₀** = Baseline time (typically week 4) where KCOR is normalized to 1
-- **cumD_adj(t)** = Cumulative adjusted deaths up to time t
-- **cumPT(t)** = Cumulative person-time up to time t
-
-**Mortality Rate Adjustment:**
+**Step 1: Mortality Rate Adjustment**
 
 $$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
+
+**Step 2: Discrete Cumulative-Hazard Transform**
+
+$$\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))$$
+
+Where MR_adj is clipped to 0.999 to avoid log(0).
+
+**Step 3: Cumulative Mortality Rate**
+
+$$\text{CMR}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
+
+**KCOR Formula:**
+
+$$\text{KCOR}(t) = \frac{\text{CMR}_v(t)}{\text{CMR}_u(t)}$$
 
 Where:
 - **r** = Calculated slope for the specific dose-age combination
 - **MR(t)** = Raw mortality rate at time t
-- **t₀** = Baseline time for normalization
-- **Baseline Reference**: Baseline values taken at week 4 (or first available week)
+- **t₀** = Baseline time for normalization (typically week 4)
+- **Mathematical Enhancement**: Discrete cumulative-hazard transform provides more exact CMR calculation than simple summation
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
 
-#### 5. Uncertainty Quantification
+#### 6. Uncertainty Quantification
 **95% Confidence Interval Calculation:**
 
 The variance of KCOR is calculated using proper uncertainty propagation:
@@ -122,7 +129,7 @@ Where:
 - **1.96**: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-#### 6. Age Standardization
+#### 7. Age Standardization
 **ASMR Pooling Formula:**
 
 The age-standardized KCOR is calculated using fixed baseline weights:
@@ -159,10 +166,13 @@ Where:
 KCOR/
 ├── README.md                           # This file
 ├── code/
-│   ├── KCORv4.py                      # Main analysis script
-│   ├── Makefile                        # Build automation (Linux/Mac)
+│   ├── KCORv4.py                      # Main analysis script (v4.1)
+│   ├── KCOR_CMR.py                    # Data aggregation script
+│   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── run_KCOR.bat                   # Windows batch script
 │   └── run_KCOR.ps1                   # Windows PowerShell script
+├── data/                               # Output files organized by country
+│   └── [country]/                     # Country-specific outputs
 ├── analysis/                           # Analysis outputs and logs
 ├── documentation/                      # Detailed methodology documentation
 └── peer review/                        # Peer review materials
@@ -174,7 +184,6 @@ KCOR/
 - Python 3.8 or higher
 - pandas
 - numpy
-- statsmodels
 - openpyxl (for Excel output)
 
 ### Setup
@@ -184,18 +193,23 @@ git clone <repository-url>
 cd KCOR
 
 # Install dependencies
-pip install pandas numpy statsmodels openpyxl
+pip install pandas numpy openpyxl
 ```
 
 ## 🚀 Usage
 
 ### Quick Start
 
-#### Using Make (Linux/Mac)
+#### Using Make (Cross-Platform)
 ```bash
 cd code
 make KCOR
 ```
+
+The Makefile automatically:
+1. Runs `KCOR_CMR.py` to aggregate data from external sources
+2. Runs `KCORv4.py` to perform the KCOR analysis
+3. Organizes outputs by country in the `data/` directory
 
 #### Using Windows Scripts
 ```bash
@@ -210,7 +224,11 @@ run_KCOR.bat
 #### Direct Python Execution
 ```bash
 cd code
-python KCORv4.py ../../Czech/data/KCOR_output.xlsx ../../Czech/analysis/KCOR_analysis.xlsx
+# Step 1: Data aggregation
+python KCOR_CMR.py [input_file] [output_file]
+
+# Step 2: KCOR analysis
+python KCORv4.py [aggregated_file] [analysis_output]
 ```
 
 ### Input Data Format
@@ -229,16 +247,47 @@ The script expects Excel workbooks with the following schema per sheet:
 
 ### Output Files
 
-The analysis produces Excel workbooks with multiple sheets:
+The analysis produces Excel workbooks with comprehensive methodology transparency:
+
+#### Main Output Files
+
+**`KCORv4_analysis.xlsx`** - Complete analysis with all enrollment periods combined
+This file enables users to visualize results for any cohort combination and contains:
+
+**`KCOR_summary.xlsx`** - Console-style summary by enrollment date
+This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) formatted like the console output, with dose combination headers and final KCOR values for each age group.
 
 #### Main Analysis Sheets
-- **Individual Sheets**: KCOR values over time for each input sheet
-- **ALL Sheet**: Combined results from all processed sheets
-- **Columns**: Sheet, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den, KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den
+- **`dose_pairs`**: KCOR values for all dose comparisons with complete methodology transparency
+- **Columns**: Sheet, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den, KCOR, CI_lower, CI_upper, 
+  MR_num, MR_adj_num, CMR_num, CMR_actual_num, hazard_num, slope_num, scale_factor_num, MR_smooth_num, t_num,
+  MR_den, MR_adj_den, CMR_den, CMR_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
 
 #### Debug Sheet
-- **Individual Dose Curves**: Raw and adjusted mortality rates for each dose-age combination
-- **Columns**: Date, ISOweekDied, YearOfBirth, Dose, Dead, Alive, MR, MR_adj, CMR, MR_smooth, Smoothed_Raw_MR, Smoothed_Adjusted_MR
+- **`by_dose`**: Individual dose curves with complete methodology transparency
+- **Columns**: Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, Cum_MR, Cum_MR_Actual, Hazard, 
+  Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
+  Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
+
+#### About Sheet
+- **Metadata**: Version information, methodology overview, and analysis parameters
+- **Documentation**: Complete explanation of the KCOR methodology and output columns
+
+#### Visualization Capabilities
+
+**`KCORv4_analysis.xlsx`** - Complete analysis file:
+- **Filter by Cohort**: Use Excel filters to examine specific dose combinations (e.g., 2 vs 0, 3 vs 0)
+- **Filter by Age**: Focus on specific birth years or age groups
+- **Time Series Analysis**: Plot KCOR values over time for any cohort combination
+- **Confidence Intervals**: Visualize uncertainty bounds alongside point estimates
+- **Methodology Validation**: Examine all intermediate calculations for transparency
+
+**`KCOR_summary.xlsx`** - Console-style summary format:
+- **One Sheet Per Enrollment**: Easy comparison across different enrollment periods (2021_24, 2022_06, etc.)
+- **Console Format**: Structured like the console output with dose combination headers
+- **Final Values**: Shows the latest KCOR values and confidence intervals for each age group
+- **Easy Reading**: Clean format with dose combination headers and age group results
+- **Cross-Period Analysis**: Compare final KCOR values across different enrollment cohorts
 
 ## ⚙️ Configuration
 
@@ -280,9 +329,11 @@ The script automatically determines dose pairs based on sheet names:
 ```
 Dose combination: 2 vs 0
 --------------------------------------------------
-  ASMR (pooled)   | KCOR [95% CI]:   1.3050 [1.032, 1.650]
-  Age 1940        | KCOR [95% CI]:   1.2607 [1.124, 1.414]
-  Age 1955        | KCOR [95% CI]:   1.5026 [1.229, 1.837]
+            YoB | KCOR [95% CI]
+--------------------------------------------------
+  ASMR (pooled) | 1.3050 [1.032, 1.650]
+           1940 | 1.2607 [1.124, 1.414]
+           1955 | 1.5026 [1.229, 1.837]
 ```
 
 This shows that for dose 2 vs. dose 0:
@@ -291,6 +342,24 @@ This shows that for dose 2 vs. dose 0:
 - **Age 1955**: 50.3% higher risk (95% CI: 22.9% to 83.7%)
 
 ## 🔧 Advanced Features
+
+### Complete Methodology Transparency (v4.1)
+- **Full Traceability**: Every step of the calculation is visible in output
+- **Mathematical Relationships**: All intermediate values (slope, scale_factor, hazard) included
+- **Validation Ready**: Users can verify every mathematical relationship
+- **Debug Friendly**: Easy to spot-check individual values and calculations
+
+### Discrete Cumulative-Hazard Transform (v4.1)
+- **Mathematical Enhancement**: More exact CMR calculation than simple summation
+- **Hazard Function**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping
+- **Cumulative Process**: `CMR(t) = sum(hazard(i))` for i=0 to t
+- **Numerical Stability**: Handles edge cases with proper bounds
+
+### Error Handling & User Experience
+- **File Access Protection**: Automatic retry when Excel files are open
+- **Clean Console Output**: Professional column headings and formatting
+- **Version Documentation**: Complete change history in code
+- **Cross-Platform**: Windows-compatible Makefile and scripts
 
 ### Moving Average Smoothing
 - **8-week centered MA**: Reduces noise while preserving trend information
@@ -311,10 +380,12 @@ This shows that for dose 2 vs. dose 0:
 
 ### Common Issues
 
-1. **Missing Data**: Ensure all required columns are present in input files
-2. **Date Formats**: Verify dates are in proper datetime format
-3. **Memory Issues**: Large datasets may require processing in smaller chunks
-4. **Slope Calculation**: Check that anchor points fall within available data range
+1. **File Access Errors**: If Excel files are open, the script will prompt you to close them and retry
+2. **Missing Data**: Ensure all required columns are present in input files
+3. **Date Formats**: Verify dates are in proper datetime format
+4. **Memory Issues**: Large datasets may require processing in smaller chunks
+5. **Slope Calculation**: Check that anchor points fall within available data range
+6. **Makefile Dependencies**: Ensure input files exist before running `make KCOR`
 
 ### Debug Mode
 
@@ -338,13 +409,35 @@ We welcome contributions to improve the KCOR methodology and implementation. Ple
 
 If you use KCOR in your research, please cite:
 
-**KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis**  
+**KCOR v4.1 - Kirsch Cumulative Outcomes Ratio Analysis**  
 [Your paper title]  
 [Authors]  
 [Journal/Conference]  
 [Year]
 
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
+
+## 🆕 Version 4.1 Enhancements
+
+### Major Improvements
+- **Discrete Cumulative-Hazard Transform**: Enhanced mathematical exactness in CMR calculation
+- **Complete Methodology Transparency**: All intermediate values included in output
+- **Error Handling**: Automatic retry when Excel files are open
+- **Clean Console Output**: Professional formatting with column headings
+- **Cross-Platform Build**: Windows-compatible Makefile and scripts
+- **Version Documentation**: Complete change history in code
+
+### New Output Columns
+- **Hazard Values**: `hazard_num/den` - Discrete hazard function results
+- **Slope Values**: `slope_num/den` - Slope used for each cohort
+- **Scale Factors**: `scale_factor_num/den` - `exp(-slope × (t - t0))` values
+- **Time Indices**: `t_num/den` - Time index (weeks from enrollment)
+- **Smoothed MR**: `MR_smooth_num/den` - Smoothed MR values used for slope calculation
+
+### Mathematical Enhancements
+- **Three-Step Process**: MR_adj → hazard → cumsum(hazard) for CMR
+- **Numerical Stability**: Proper clipping to avoid log(0) and overflow
+- **Validation Ready**: All mathematical relationships visible in output
 
 ## Output when used on the Czech data
 There was no combination of dose and age where there was a statistically significant benefit. It was pretty much all statistically significant harm. All the CI's had a high CI that was >1. See the [log file](analysis/KCOR_console_summary.log) for the full data.

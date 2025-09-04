@@ -979,8 +979,99 @@ def _process_workbook_internal(src_path: str, out_path: str):
         all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
         all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
-    print(f"[Done] Wrote {len(combined)} rows to {out_path}")
+    # Write main analysis file with retry logic
+    write_excel_with_retry(combined, debug_df, about_df, out_path)
+    
+    # Create summary file with one sheet per enrollment date
+    create_summary_file(combined, out_path)
+    
     return combined
+
+def create_summary_file(combined_data, out_path):
+    """Create KCOR_summary.xlsx with one sheet per enrollment date, formatted like console output."""
+    import os
+    
+    # Determine summary file path
+    out_dir = os.path.dirname(out_path)
+    summary_path = os.path.join(out_dir, "KCOR_summary.xlsx")
+    
+    print(f"[Summary] Creating summary file: {summary_path}")
+    
+    # Group data by Sheet (enrollment date)
+    sheets = combined_data["Sheet"].unique()
+    
+    # Write summary file with retry logic
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            with pd.ExcelWriter(summary_path, engine='openpyxl') as writer:
+        for sheet_name in sorted(sheets):
+            sheet_data = combined_data[combined_data["Sheet"] == sheet_name].copy()
+            
+            # Get the latest data for each dose combination and age group (like console output)
+            latest_data = sheet_data.groupby(["YearOfBirth", "Dose_num", "Dose_den"]).last().reset_index()
+            
+            # Create summary format similar to console output
+            summary_rows = []
+            
+            # Get unique dose pairs for this sheet
+            dose_pairs = latest_data[["Dose_num", "Dose_den"]].drop_duplicates().sort_values(["Dose_num", "Dose_den"])
+            
+            for _, dose_pair in dose_pairs.iterrows():
+                dose_num, dose_den = dose_pair["Dose_num"], dose_pair["Dose_den"]
+                
+                # Get data for this dose combination
+                dose_data = latest_data[
+                    (latest_data["Dose_num"] == dose_num) & 
+                    (latest_data["Dose_den"] == dose_den)
+                ].sort_values("YearOfBirth")
+                
+                # Add header row for this dose combination
+                summary_rows.append({
+                    "Dose_Combination": f"{dose_num} vs {dose_den}",
+                    "YearOfBirth": "",
+                    "KCOR": "",
+                    "CI_Lower": "",
+                    "CI_Upper": ""
+                })
+                
+                # Add data rows for each age group
+                for _, row in dose_data.iterrows():
+                    age = row["YearOfBirth"]
+                    if age == 0:
+                        age_label = "ASMR (pooled)"
+                    elif age == -1:
+                        age_label = "(unknown)"
+                    else:
+                        age_label = f"{age}"
+                    
+                    summary_rows.append({
+                        "Dose_Combination": "",
+                        "YearOfBirth": age_label,
+                        "KCOR": f"{row['KCOR']:.4f}",
+                        "CI_Lower": f"{row['CI_lower']:.3f}",
+                        "CI_Upper": f"{row['CI_upper']:.3f}"
+                    })
+                
+                # Add empty row for separation
+                summary_rows.append({
+                    "Dose_Combination": "",
+                    "YearOfBirth": "",
+                    "KCOR": "",
+                    "CI_Lower": "",
+                    "CI_Upper": ""
+                })
+            
+            # Create DataFrame and write to Excel
+            summary_df = pd.DataFrame(summary_rows)
+            summary_df.to_excel(writer, index=False, sheet_name=sheet_name)
+            
+            print(f"  - {sheet_name}: {len(dose_pairs)} dose combinations, {len(summary_rows)} summary rows")
+    
+    print(f"[Summary] Created summary with {len(sheets)} enrollment periods")
+    return summary_path
 
 def main():
     if len(sys.argv) < 3:

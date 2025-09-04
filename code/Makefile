@@ -29,19 +29,18 @@ CMR: $(CMR_OUTPUT)
 
 # Create output directories if they don't exist
 create_dirs:
-	@if not exist "..\data\$(COUNTRY)" mkdir "..\data\$(COUNTRY)"
+	@mkdir -p ../data/$(COUNTRY)
 
 # Clean up all output files for current country
 clean:
 	@echo "Cleaning up output files for $(COUNTRY)..."
-	@if exist "$(CMR_OUTPUT)" del "$(CMR_OUTPUT)"
-	@if exist "$(KCOR_OUTPUT)" del "$(KCOR_OUTPUT)"
+	@rm -f $(CMR_OUTPUT) $(KCOR_OUTPUT)
 	@echo "Cleanup complete!"
 
 # Clean up all output files for all countries
 clean-all:
 	@echo "Cleaning up all output files..."
-	@if exist "..\data" rmdir /s /q "..\data"
+	@rm -rf ../data/*
 	@echo "Cleanup complete!"
 
 # Help target
