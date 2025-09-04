@@ -1,3 +1,344 @@
+PS C:\Users\stk\Documents\GitHub\KCOR\code> make KCOR
+"Running KCORv4 analysis..."
+python KCORv4.py ../data/Czech/KCOR_CMR.xlsx ../data/Czech/KCORv4.xlsx
+================================================================================
+KCOR v4.1 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2025-09-03 20:51:56
+Input File: ../data/Czech/KCOR_CMR.xlsx
+Output File: ../data/Czech/KCORv4.xlsx
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2000
+[DEBUG] Limiting to sheets: ['2021_24', '2022_06']
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 137808 rows
+[DEBUG] Filtered to 70992 rows for ages 1920-2000
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 26622 rows
+[DEBUG] Aggregated across sexes: 8874 rows
+[DEBUG] Lookup table validation: 2021_24 enrollment 2021-06-14, offsets (53, 114) -> dates (2022-06-20, 2023-08-21)
+
+[DEBUG] Computed slopes for sheet 2021_24:
+  YoB 1920, Dose 0: slope = -0.004527
+  YoB 1925, Dose 0: slope = -0.004276
+  YoB 1930, Dose 0: slope = -0.001584
+  YoB 1935, Dose 0: slope = -0.001479
+  YoB 1940, Dose 0: slope = -0.003628
+  YoB 1945, Dose 0: slope = -0.001115
+  YoB 1950, Dose 0: slope = -0.001401
+  YoB 1955, Dose 0: slope = 0.000408
+  YoB 1960, Dose 0: slope = -0.000866
+  YoB 1965, Dose 0: slope = -0.001065
+  YoB 1970, Dose 0: slope = -0.000521
+  YoB 1975, Dose 0: slope = 0.000027
+  YoB 1980, Dose 0: slope = 0.001336
+  YoB 1985, Dose 0: slope = 0.000815
+  YoB 1990, Dose 0: slope = -0.000816
+  YoB 1995, Dose 0: slope = -0.003552
+  YoB 2000, Dose 0: slope = -0.001072
+  YoB 1920, Dose 1: slope = 0.000564
+  YoB 1925, Dose 1: slope = -0.001730
+  YoB 1930, Dose 1: slope = 0.001286
+  YoB 1935, Dose 1: slope = -0.001177
+  YoB 1940, Dose 1: slope = 0.001069
+  YoB 1945, Dose 1: slope = 0.001253
+  YoB 1950, Dose 1: slope = 0.002074
+  YoB 1955, Dose 1: slope = 0.000670
+  YoB 1960, Dose 1: slope = 0.002698
+  YoB 1965, Dose 1: slope = 0.005185
+  YoB 1970, Dose 1: slope = 0.002743
+  YoB 1975, Dose 1: slope = 0.001738
+  YoB 1980, Dose 1: slope = 0.006556
+  YoB 1985, Dose 1: slope = 0.013097
+  YoB 1990, Dose 1: slope = 0.000135
+  YoB 1995, Dose 1: slope = 0.012313
+  YoB 2000, Dose 1: slope = 0.024516
+  YoB 1920, Dose 2: slope = 0.000988
+  YoB 1925, Dose 2: slope = 0.001797
+  YoB 1930, Dose 2: slope = 0.002697
+  YoB 1935, Dose 2: slope = 0.000865
+  YoB 1940, Dose 2: slope = 0.001896
+  YoB 1945, Dose 2: slope = 0.002820
+  YoB 1950, Dose 2: slope = 0.001537
+  YoB 1955, Dose 2: slope = 0.002017
+  YoB 1960, Dose 2: slope = 0.000469
+  YoB 1965, Dose 2: slope = 0.002927
+  YoB 1970, Dose 2: slope = 0.005298
+  YoB 1975, Dose 2: slope = 0.003226
+  YoB 1980, Dose 2: slope = 0.000282
+  YoB 1985, Dose 2: slope = 0.010700
+  YoB 1990, Dose 2: slope = -0.009365
+  YoB 1995, Dose 2: slope = 0.006830
+  YoB 2000, Dose 2: slope = 0.000000
+
+[Info] Processing sheet: 2022_06
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 110880 rows
+[DEBUG] Filtered to 57120 rows for ages 1920-2000
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 28560 rows
+[DEBUG] Aggregated across sexes: 9520 rows
+[DEBUG] Lookup table validation: 2022_06 enrollment 2022-02-07, offsets (19, 111) -> dates (2022-06-20, 2024-03-25)
+
+[DEBUG] Computed slopes for sheet 2022_06:
+  YoB 1920, Dose 0: slope = -0.003100
+  YoB 1925, Dose 0: slope = -0.001001
+  YoB 1930, Dose 0: slope = -0.000838
+  YoB 1935, Dose 0: slope = -0.001393
+  YoB 1940, Dose 0: slope = -0.002285
+  YoB 1945, Dose 0: slope = -0.000916
+  YoB 1950, Dose 0: slope = -0.001030
+  YoB 1955, Dose 0: slope = -0.000757
+  YoB 1960, Dose 0: slope = -0.002574
+  YoB 1965, Dose 0: slope = -0.000579
+  YoB 1970, Dose 0: slope = -0.001356
+  YoB 1975, Dose 0: slope = -0.001592
+  YoB 1980, Dose 0: slope = -0.000244
+  YoB 1985, Dose 0: slope = -0.004479
+  YoB 1990, Dose 0: slope = -0.000409
+  YoB 1995, Dose 0: slope = 0.003531
+  YoB 2000, Dose 0: slope = 0.000775
+  YoB 1920, Dose 1: slope = 0.008320
+  YoB 1925, Dose 1: slope = 0.000313
+  YoB 1930, Dose 1: slope = -0.001709
+  YoB 1935, Dose 1: slope = -0.001654
+  YoB 1940, Dose 1: slope = -0.000403
+  YoB 1945, Dose 1: slope = 0.001582
+  YoB 1950, Dose 1: slope = 0.000672
+  YoB 1955, Dose 1: slope = -0.000755
+  YoB 1960, Dose 1: slope = -0.002978
+  YoB 1965, Dose 1: slope = -0.004662
+  YoB 1970, Dose 1: slope = 0.007792
+  YoB 1975, Dose 1: slope = -0.001374
+  YoB 1980, Dose 1: slope = 0.000979
+  YoB 1985, Dose 1: slope = 0.004068
+  YoB 1990, Dose 1: slope = -0.008783
+  YoB 1995, Dose 1: slope = 0.003982
+  YoB 2000, Dose 1: slope = -0.008407
+  YoB 1920, Dose 2: slope = 0.005003
+  YoB 1925, Dose 2: slope = -0.002383
+  YoB 1930, Dose 2: slope = -0.000889
+  YoB 1935, Dose 2: slope = -0.000786
+  YoB 1940, Dose 2: slope = -0.000843
+  YoB 1945, Dose 2: slope = -0.001299
+  YoB 1950, Dose 2: slope = -0.002976
+  YoB 1955, Dose 2: slope = -0.000231
+  YoB 1960, Dose 2: slope = 0.000075
+  YoB 1965, Dose 2: slope = 0.000965
+  YoB 1970, Dose 2: slope = 0.001556
+  YoB 1975, Dose 2: slope = -0.002117
+  YoB 1980, Dose 2: slope = 0.000855
+  YoB 1985, Dose 2: slope = 0.003460
+  YoB 1990, Dose 2: slope = -0.005647
+  YoB 1995, Dose 2: slope = -0.001495
+  YoB 2000, Dose 2: slope = -0.003554
+  YoB 1920, Dose 3: slope = 0.001951
+  YoB 1925, Dose 3: slope = 0.001593
+  YoB 1930, Dose 3: slope = 0.002357
+  YoB 1935, Dose 3: slope = 0.002895
+  YoB 1940, Dose 3: slope = 0.003155
+  YoB 1945, Dose 3: slope = 0.002510
+  YoB 1950, Dose 3: slope = 0.001916
+  YoB 1955, Dose 3: slope = 0.002267
+  YoB 1960, Dose 3: slope = 0.001923
+  YoB 1965, Dose 3: slope = 0.005386
+  YoB 1970, Dose 3: slope = 0.003341
+  YoB 1975, Dose 3: slope = 0.001855
+  YoB 1980, Dose 3: slope = 0.001642
+  YoB 1985, Dose 3: slope = 0.003158
+  YoB 1990, Dose 3: slope = 0.002401
+  YoB 1995, Dose 3: slope = -0.016789
+  YoB 2000, Dose 3: slope = -0.012929
+
+
+================================================================================
+KCOR VALUES AT END OF 2022 - ALL SHEETS
+================================================================================
+Last date in 2022: 2022-12-26
+Sheet: 2021_24
+
+Sheet: 2021_24
+============================================================
+
+Dose combination: 1 vs 0
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.1405 [1.020, 1.276]
+  YoB 1920        | KCOR [95% CI]:   0.9509 [0.732, 1.236]
+  YoB 1925        | KCOR [95% CI]:   0.7677 [0.684, 0.862]
+  YoB 1930        | KCOR [95% CI]:   0.8327 [0.768, 0.903]
+  YoB 1935        | KCOR [95% CI]:   1.0673 [0.985, 1.157]
+  YoB 1940        | KCOR [95% CI]:   1.0057 [0.938, 1.079]
+  YoB 1945        | KCOR [95% CI]:   1.0036 [0.940, 1.071]
+  YoB 1950        | KCOR [95% CI]:   1.1486 [1.067, 1.236]
+  YoB 1955        | KCOR [95% CI]:   1.1557 [1.056, 1.264]
+  YoB 1960        | KCOR [95% CI]:   1.1638 [1.039, 1.304]
+  YoB 1965        | KCOR [95% CI]:   0.9308 [0.815, 1.064]
+  YoB 1970        | KCOR [95% CI]:   1.1867 [1.014, 1.389]
+  YoB 1975        | KCOR [95% CI]:   1.1811 [0.972, 1.436]
+  YoB 1980        | KCOR [95% CI]:   0.6772 [0.518, 0.885]
+  YoB 1985        | KCOR [95% CI]:   1.3873 [0.822, 2.341]
+  YoB 1990        | KCOR [95% CI]:   2.5871 [1.051, 6.370]
+  YoB 1995        | KCOR [95% CI]:   0.4564 [0.000, 4.564]
+  YoB 2000        | KCOR [95% CI]:   0.2059 [0.117, 0.364]
+
+Dose combination: 2 vs 0
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.3005 [1.174, 1.441]
+  YoB 1920        | KCOR [95% CI]:   0.8381 [0.736, 0.954]
+  YoB 1925        | KCOR [95% CI]:   0.8553 [0.798, 0.916]
+  YoB 1930        | KCOR [95% CI]:   0.9577 [0.910, 1.008]
+  YoB 1935        | KCOR [95% CI]:   1.2503 [1.188, 1.316]
+  YoB 1940        | KCOR [95% CI]:   1.2554 [1.194, 1.320]
+  YoB 1945        | KCOR [95% CI]:   1.3348 [1.266, 1.408]
+  YoB 1950        | KCOR [95% CI]:   1.5970 [1.496, 1.705]
+  YoB 1955        | KCOR [95% CI]:   1.5021 [1.375, 1.640]
+  YoB 1960        | KCOR [95% CI]:   1.3333 [1.193, 1.490]
+  YoB 1965        | KCOR [95% CI]:   1.7816 [1.481, 2.143]
+  YoB 1970        | KCOR [95% CI]:   1.0074 [0.838, 1.211]
+  YoB 1975        | KCOR [95% CI]:   1.7876 [1.316, 2.427]
+  YoB 1980        | KCOR [95% CI]:   0.8739 [0.634, 1.204]
+  YoB 1985        | KCOR [95% CI]:   1.1669 [0.691, 1.971]
+  YoB 1990        | KCOR [95% CI]:   1.9053 [0.984, 3.689]
+  YoB 1995        | KCOR [95% CI]:   0.7450 [0.386, 1.439]
+  YoB 2000        | KCOR [95% CI]:   0.5804 [0.294, 1.146]
+
+Dose combination: 2 vs 1
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.1928 [1.036, 1.374]
+  YoB 1920        | KCOR [95% CI]:   0.8814 [0.681, 1.141]
+  YoB 1925        | KCOR [95% CI]:   1.1142 [0.997, 1.245]
+  YoB 1930        | KCOR [95% CI]:   1.1501 [1.065, 1.242]
+  YoB 1935        | KCOR [95% CI]:   1.1714 [1.085, 1.265]
+  YoB 1940        | KCOR [95% CI]:   1.2482 [1.165, 1.337]
+  YoB 1945        | KCOR [95% CI]:   1.3300 [1.245, 1.421]
+  YoB 1950        | KCOR [95% CI]:   1.3904 [1.282, 1.508]
+  YoB 1955        | KCOR [95% CI]:   1.2998 [1.169, 1.445]
+  YoB 1960        | KCOR [95% CI]:   1.1456 [0.997, 1.317]
+  YoB 1965        | KCOR [95% CI]:   1.9141 [1.557, 2.353]
+  YoB 1970        | KCOR [95% CI]:   0.8489 [0.683, 1.056]
+  YoB 1975        | KCOR [95% CI]:   1.5134 [1.079, 2.123]
+  YoB 1980        | KCOR [95% CI]:   1.2904 [0.888, 1.876]
+  YoB 1985        | KCOR [95% CI]:   0.8411 [0.413, 1.712]
+  YoB 1990        | KCOR [95% CI]:   0.7365 [0.251, 2.165]
+  YoB 1995        | KCOR [95% CI]:   2.6726 [0.000, 26.726]
+  YoB 2000        | KCOR [95% CI]:   2.8191 [1.273, 6.245]
+
+Sheet: 2022_06
+============================================================
+
+Dose combination: 1 vs 0
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.0580 [0.954, 1.173]
+  YoB 1920        | KCOR [95% CI]:   0.6639 [0.457, 0.964]
+  YoB 1925        | KCOR [95% CI]:   1.3529 [1.085, 1.686]
+  YoB 1930        | KCOR [95% CI]:   1.0821 [0.962, 1.218]
+  YoB 1935        | KCOR [95% CI]:   1.2875 [1.129, 1.468]
+  YoB 1940        | KCOR [95% CI]:   0.8473 [0.767, 0.936]
+  YoB 1945        | KCOR [95% CI]:   0.9453 [0.848, 1.054]
+  YoB 1950        | KCOR [95% CI]:   1.2491 [1.096, 1.424]
+  YoB 1955        | KCOR [95% CI]:   0.9681 [0.843, 1.112]
+  YoB 1960        | KCOR [95% CI]:   1.0766 [0.899, 1.289]
+  YoB 1965        | KCOR [95% CI]:   0.8938 [0.737, 1.083]
+  YoB 1970        | KCOR [95% CI]:   0.8520 [0.671, 1.082]
+  YoB 1975        | KCOR [95% CI]:   0.8624 [0.670, 1.110]
+  YoB 1980        | KCOR [95% CI]:   1.0274 [0.715, 1.476]
+  YoB 1985        | KCOR [95% CI]:   0.9029 [0.564, 1.446]
+  YoB 1990        | KCOR [95% CI]:   2.3662 [1.228, 4.560]
+  YoB 1995        | KCOR [95% CI]:   0.6787 [0.332, 1.388]
+  YoB 2000        | KCOR [95% CI]:   1.7949 [0.708, 4.552]
+
+Dose combination: 2 vs 0
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.1672 [1.092, 1.247]
+  YoB 1920        | KCOR [95% CI]:   0.7552 [0.630, 0.905]
+  YoB 1925        | KCOR [95% CI]:   0.9374 [0.862, 1.020]
+  YoB 1930        | KCOR [95% CI]:   1.0844 [1.022, 1.151]
+  YoB 1935        | KCOR [95% CI]:   1.0100 [0.952, 1.071]
+  YoB 1940        | KCOR [95% CI]:   0.9759 [0.923, 1.032]
+  YoB 1945        | KCOR [95% CI]:   0.9979 [0.943, 1.055]
+  YoB 1950        | KCOR [95% CI]:   1.3080 [1.223, 1.399]
+  YoB 1955        | KCOR [95% CI]:   1.0008 [0.923, 1.085]
+  YoB 1960        | KCOR [95% CI]:   1.0181 [0.917, 1.131]
+  YoB 1965        | KCOR [95% CI]:   0.9680 [0.856, 1.095]
+  YoB 1970        | KCOR [95% CI]:   0.8644 [0.754, 0.991]
+  YoB 1975        | KCOR [95% CI]:   1.8328 [1.495, 2.246]
+  YoB 1980        | KCOR [95% CI]:   1.0605 [0.835, 1.348]
+  YoB 1985        | KCOR [95% CI]:   1.0561 [0.763, 1.463]
+  YoB 1990        | KCOR [95% CI]:   1.5748 [1.088, 2.280]
+  YoB 1995        | KCOR [95% CI]:   1.0330 [0.622, 1.716]
+  YoB 2000        | KCOR [95% CI]:   2.6985 [1.499, 4.857]
+
+Dose combination: 2 vs 1
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.1032 [0.988, 1.232]
+  YoB 1920        | KCOR [95% CI]:   1.1375 [0.771, 1.677]
+  YoB 1925        | KCOR [95% CI]:   0.6929 [0.554, 0.866]
+  YoB 1930        | KCOR [95% CI]:   1.0021 [0.889, 1.130]
+  YoB 1935        | KCOR [95% CI]:   0.7844 [0.687, 0.895]
+  YoB 1940        | KCOR [95% CI]:   1.1517 [1.043, 1.271]
+  YoB 1945        | KCOR [95% CI]:   1.0556 [0.947, 1.177]
+  YoB 1950        | KCOR [95% CI]:   1.0471 [0.916, 1.197]
+  YoB 1955        | KCOR [95% CI]:   1.0338 [0.898, 1.190]
+  YoB 1960        | KCOR [95% CI]:   0.9456 [0.785, 1.139]
+  YoB 1965        | KCOR [95% CI]:   1.0830 [0.889, 1.319]
+  YoB 1970        | KCOR [95% CI]:   1.0146 [0.798, 1.291]
+  YoB 1975        | KCOR [95% CI]:   2.1253 [1.596, 2.830]
+  YoB 1980        | KCOR [95% CI]:   1.0322 [0.703, 1.516]
+  YoB 1985        | KCOR [95% CI]:   1.1697 [0.696, 1.966]
+  YoB 1990        | KCOR [95% CI]:   0.6656 [0.331, 1.340]
+  YoB 1995        | KCOR [95% CI]:   1.5221 [0.743, 3.117]
+  YoB 2000        | KCOR [95% CI]:   1.5034 [0.542, 4.166]
+
+Dose combination: 3 vs 2
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.2385 [1.139, 1.346]
+  YoB 1920        | KCOR [95% CI]:   1.5883 [1.332, 1.893]
+  YoB 1925        | KCOR [95% CI]:   1.4092 [1.304, 1.523]
+  YoB 1930        | KCOR [95% CI]:   1.3878 [1.316, 1.464]
+  YoB 1935        | KCOR [95% CI]:   1.4810 [1.407, 1.559]
+  YoB 1940        | KCOR [95% CI]:   1.6489 [1.570, 1.731]
+  YoB 1945        | KCOR [95% CI]:   1.6735 [1.592, 1.759]
+  YoB 1950        | KCOR [95% CI]:   1.3583 [1.274, 1.448]
+  YoB 1955        | KCOR [95% CI]:   1.4619 [1.350, 1.583]
+  YoB 1960        | KCOR [95% CI]:   1.3122 [1.176, 1.464]
+  YoB 1965        | KCOR [95% CI]:   1.2145 [1.065, 1.385]
+  YoB 1970        | KCOR [95% CI]:   1.5885 [1.358, 1.859]
+  YoB 1975        | KCOR [95% CI]:   1.0561 [0.819, 1.363]
+  YoB 1980        | KCOR [95% CI]:   1.0992 [0.825, 1.465]
+  YoB 1985        | KCOR [95% CI]:   0.8787 [0.587, 1.315]
+  YoB 1990        | KCOR [95% CI]:   1.4829 [0.818, 2.690]
+  YoB 1995        | KCOR [95% CI]:   1.1316 [0.637, 2.011]
+  YoB 2000        | KCOR [95% CI]:   0.5147 [0.250, 1.060]
+
+Dose combination: 3 vs 0
+--------------------------------------------------
+  ASMR (pooled)   | KCOR [95% CI]:   1.4456 [1.342, 1.557]
+  YoB 1920        | KCOR [95% CI]:   1.1995 [1.043, 1.380]
+  YoB 1925        | KCOR [95% CI]:   1.3211 [1.233, 1.416]
+  YoB 1930        | KCOR [95% CI]:   1.5049 [1.433, 1.581]
+  YoB 1935        | KCOR [95% CI]:   1.4957 [1.423, 1.572]
+  YoB 1940        | KCOR [95% CI]:   1.6091 [1.532, 1.691]
+  YoB 1945        | KCOR [95% CI]:   1.6700 [1.588, 1.756]
+  YoB 1950        | KCOR [95% CI]:   1.7767 [1.675, 1.884]
+  YoB 1955        | KCOR [95% CI]:   1.4631 [1.357, 1.577]
+  YoB 1960        | KCOR [95% CI]:   1.3359 [1.209, 1.476]
+  YoB 1965        | KCOR [95% CI]:   1.1756 [1.038, 1.331]
+  YoB 1970        | KCOR [95% CI]:   1.3730 [1.177, 1.602]
+  YoB 1975        | KCOR [95% CI]:   1.9356 [1.560, 2.401]
+  YoB 1980        | KCOR [95% CI]:   1.1657 [0.902, 1.507]
+  YoB 1985        | KCOR [95% CI]:   0.9280 [0.661, 1.302]
+  YoB 1990        | KCOR [95% CI]:   2.3353 [1.356, 4.022]
+  YoB 1995        | KCOR [95% CI]:   1.1689 [0.659, 2.075]
+  YoB 2000        | KCOR [95% CI]:   1.3889 [0.769, 2.507]
+================================================================================
+[Done] Wrote 21996 rows to ../data/Czech/KCORv4.xlsx
+"KCOR analysis complete!"
+"KCOR analysis complete!"
+PS C:\Users\stk\Documents\GitHub\KCOR\code> 
+PS C:\Users\stk\Documents\GitHub\KCOR\code> 
+
+
+
+
+OLD VERSIONS LOG
 ================================================================================
 KCOR v4.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================

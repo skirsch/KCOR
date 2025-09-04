@@ -57,10 +57,15 @@ INPUT WORKBOOK SCHEMA per sheet (e.g., '2021_24', '2022_06', ...):
     ISOweekDied, DateDied, YearOfBirth, Sex, Dose, Alive, Dead
 
 OUTPUTS (two main sheets):
-    - "by_dose": Individual dose curves with raw and adjusted mortality rates
-    - "dose_pairs": KCOR values for all dose comparisons with columns:
+    - "by_dose": Individual dose curves with complete methodology transparency including:
+      Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, Cum_MR, Cum_MR_Actual, Hazard, 
+      Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
+      Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
+    - "dose_pairs": KCOR values for all dose comparisons with complete methodology transparency:
       Sheet, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
-      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, CMR_actual_num, MR_den, MR_adj_den, CMR_den, CMR_actual_den
+      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, CMR_actual_num, hazard_num, 
+      slope_num, scale_factor_num, MR_smooth_num, t_num, MR_den, MR_adj_den, CMR_den, 
+      CMR_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
 
 USAGE:
     python KCORv4.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
@@ -305,8 +310,8 @@ def build_kcor_rows(df, sheet_name):
             if gv is None or gu is None:
                 continue
             # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
             
             merged = pd.merge(
                 gv_unique,
@@ -394,8 +399,8 @@ def build_kcor_rows(df, sheet_name):
             merged["CI_upper"] = np.clip(merged["CI_upper"], merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "MR_num","MR_adj_num","CMR_num","CMR_actual_num",
-                          "MR_den","MR_adj_den","CMR_den","CMR_actual_den"]].copy()
+                          "MR_num","MR_adj_num","CMR_num","CMR_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
+                          "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"]].copy()
             out["Sheet"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
@@ -520,22 +525,63 @@ def build_kcor_rows(df, sheet_name):
                     "MR_adj_num": np.nan,
                     "CMR_num": np.nan,
                     "CMR_actual_num": np.nan,
+                    "hazard_num": np.nan,
+                    "slope_num": np.nan,
+                    "scale_factor_num": np.nan,
+                    "MR_smooth_num": np.nan,
+                    "t_num": np.nan,
                     "MR_den": np.nan,
                     "MR_adj_den": np.nan,
                     "CMR_den": np.nan,
-                    "CMR_actual_den": np.nan
+                    "CMR_actual_den": np.nan,
+                    "hazard_den": np.nan,
+                    "slope_den": np.nan,
+                    "scale_factor_den": np.nan,
+                    "MR_smooth_den": np.nan,
+                    "t_den": np.nan
                 })
 
     if out_rows or pooled_rows:
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "Sheet","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","CMR_actual_num","MR_den","MR_adj_den","CMR_den","CMR_actual_den"
+        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","CMR_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
+        "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
     ])
 
 def process_workbook(src_path: str, out_path: str):
     # Suppress specific warnings that we're handling
     warnings.filterwarnings('ignore', category=RuntimeWarning, module='pandas')
+    
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            return _process_workbook_internal(src_path, out_path)
+        except PermissionError as e:
+            retry_count += 1
+            if retry_count < max_retries:
+                print(f"\n❌ Error: Cannot access output file '{out_path}'")
+                print("   This usually means the file is open in Excel or another program.")
+                print(f"   Attempt {retry_count}/{max_retries}")
+                
+                response = input("   Please close the file and press Enter to retry (or 'q' to quit): ").strip().lower()
+                if response == 'q':
+                    print("   Exiting...")
+                    return False
+                print("   Retrying...")
+            else:
+                print(f"\n❌ Error: Failed to access '{out_path}' after {max_retries} attempts.")
+                print("   Please ensure the file is not open in Excel or another program.")
+                return False
+        except Exception as e:
+            print(f"\n❌ Unexpected error: {e}")
+            return False
+    
+    return False
+
+def _process_workbook_internal(src_path: str, out_path: str):
     
     # Print professional header
     from datetime import datetime
@@ -677,6 +723,10 @@ def process_workbook(src_path: str, out_path: str):
             scale_factor = safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
             return row["MR"] * scale_factor
         
+        # Add slope and scale factor columns for transparency
+        df["slope"] = df.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
+        df["scale_factor"] = df.apply(lambda row: safe_exp(-df["slope"].iloc[row.name] * (row["t"] - float(ANCHOR_WEEKS))), axis=1)
+        
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
@@ -764,6 +814,8 @@ def process_workbook(src_path: str, out_path: str):
             for (dose_num, dose_den) in dose_pairs:
                 print(f"\nDose combination: {dose_num} vs {dose_den}")
                 print("-" * 50)
+                print(f"{'YoB':>15} | KCOR [95% CI]")
+                print("-" * 50)
                 
                 # Get data for this dose combination and sheet
                 dose_data = end_2022_data[
@@ -787,11 +839,11 @@ def process_workbook(src_path: str, out_path: str):
                         if age == 0:
                             age_label = "ASMR (pooled)"
                         elif age == -1:
-                            age_label = "YoB (unknown)"
+                            age_label = "(unknown)"
                         else:
-                            age_label = f"YoB {age}"
+                            age_label = f"{age}"
                         
-                        print(f"  {age_label:15} | KCOR [95% CI]: {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
+                        print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
     else:
         print("No data available for 2022 in any sheet")
     
@@ -818,6 +870,9 @@ def process_workbook(src_path: str, out_path: str):
                 "MR_adj": "mean",  # Average MR_adj across sexes
                 "CMR": "mean",  # Average CMR across sexes
                 "CMR_actual": "mean",  # Average CMR_actual across sexes
+                "hazard": "mean",  # Average hazard across sexes
+                "slope": "mean",  # Average slope across sexes
+                "scale_factor": "mean",  # Average scale factor across sexes
                 "cumD_adj": "sum",  # Sum cumulative deaths
                 "cumD_unadj": "sum",  # Sum unadjusted cumulative deaths
                 "cumPT": "sum",  # Sum cumulative person-time
@@ -842,11 +897,15 @@ def process_workbook(src_path: str, out_path: str):
                     "MR_adj": row["MR_adj"],
                     "Cum_MR": row["CMR"],
                     "Cum_MR_Actual": row["CMR_actual"],
+                    "Hazard": row["hazard"],
+                    "Slope": row["slope"],
+                    "Scale_Factor": row["scale_factor"],
                     "Cumu_Adj_Deaths": row["cumD_adj"],
                     "Cumu_Unadj_Deaths": row["cumD_unadj"],
                     "Cumu_Person_Time": row["cumPT"],
                     "Smoothed_Raw_MR": row["MR_smooth"],
-                    "Smoothed_Adjusted_MR": smoothed_adj_mr
+                    "Smoothed_Adjusted_MR": smoothed_adj_mr,
+                    "Time_Index": row["t"]
                 })
         
         debug_df = pd.DataFrame(debug_data)
