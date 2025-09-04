@@ -29,9 +29,10 @@ METHODOLOGY OVERVIEW:
 
 4. KCOR COMPUTATION:
    - KCOR = (CMR_num / CMR_den) / (CMR_num_baseline / CMR_den_baseline)
-   - CMR = slope-corrected cumulative mortality rate
-   - Step 1: Calculate unadjusted cumulative MR: CMR_actual = cumsum(MR)
-   - Step 2: Apply slope correction to cumulative MR: CMR = CMR_actual × exp(-slope × (t - t0))
+   - CMR = slope-corrected cumulative hazard (mathematically exact)
+   - Step 1: Apply slope correction to individual MR: MR_adj = MR × exp(-slope × (t - t0))
+   - Step 2: Apply discrete cumulative-hazard transform: hazard = -ln(1 - MR_adj)
+   - Step 3: Calculate cumulative hazard: CMR = cumsum(hazard)
    - Baseline values taken at week 4 (or first available week)
    - Results in KCOR = 1 at baseline, showing relative risk over time
 
@@ -81,7 +82,14 @@ import warnings
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.0"                # KCOR version number
+VERSION = "v4.1"                # KCOR version number
+
+# Version History:
+# v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
+# v4.1 - Enhanced with discrete cumulative-hazard transform for mathematical exactness
+#        - Changed from simple cumsum(MR_adj) to cumsum(-ln(1 - MR_adj))
+#        - Removes small-rate approximation limitation
+#        - More robust for any mortality rate magnitude
 
 # Core KCOR methodology parameters
 ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
@@ -275,7 +283,7 @@ def build_kcor_rows(df, sheet_name):
       - Person-time PT = Alive
       - MR = Dead / PT
       - MR_adj slope-removed via QR (for smoothing, not CMR calculation)
-      - CMR = CMR_actual × exp(-slope × (t - t0)) where CMR_actual = cumsum(MR)
+      - CMR = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
       - KCOR = (CMR_num / CMR_den), anchored to 1 at week ANCHOR_WEEKS if available
               - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
@@ -671,8 +679,12 @@ def process_workbook(src_path: str, out_path: str):
         
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         
-        # Calculate cumulative sum of adjusted MRs
-        df["CMR"] = df.groupby(["YearOfBirth","Dose"])["MR_adj"].cumsum()
+        # Apply discrete cumulative-hazard transform for mathematical exactness
+        # Clip MR_adj to avoid log(0) and ensure numerical stability
+        df["hazard"] = -np.log(1 - df["MR_adj"].clip(upper=0.999))
+        
+        # Calculate cumulative hazard (mathematically exact, not approximation)
+        df["CMR"] = df.groupby(["YearOfBirth","Dose"])["hazard"].cumsum()
         
         # Keep unadjusted data for comparison
         df["CMR_actual"] = df.groupby(["YearOfBirth","Dose"])["MR"].cumsum()
