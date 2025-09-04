@@ -189,11 +189,15 @@ KCOR/
 ### Setup
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/skirsch/KCOR
 cd KCOR
 
 # Install dependencies
 pip install pandas numpy openpyxl
+
+# Download required data file
+# Download vax_24.csv from: https://www.nzip.cz/data/2135-covid-19-prehled-populace
+# Rename it to vax_24.csv and place it in: ../../Czech/data/vax_24.csv
 ```
 
 ## 🚀 Usage
@@ -231,7 +235,28 @@ python KCOR_CMR.py [input_file] [output_file]
 python KCORv4.py [aggregated_file] [analysis_output]
 ```
 
-### Input Data Format
+### Data Requirements
+
+#### Czech Data Setup
+The analysis requires Czech vaccination and mortality data:
+
+1. **Download the data file**:
+   - Visit: https://www.nzip.cz/data/2135-covid-19-prehled-populace
+   - Download the CSV file containing population and vaccination data
+   - Rename it to `vax_24.csv`
+
+2. **Place the file**:
+   - Create the directory structure: `../../Czech/data/`
+   - Place `vax_24.csv` in `../../Czech/data/vax_24.csv`
+
+3. **File structure should be**:
+   ```
+   KCOR/
+   ├── code/
+   └── ../../Czech/data/vax_24.csv
+   ```
+
+#### Input Data Format
 
 The script expects Excel workbooks with the following schema per sheet:
 
