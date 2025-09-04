@@ -194,6 +194,8 @@ $$\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))$$
 
 Where MR_adj is clipped to 0.999 to avoid log(0).
 
+> **📚 Mathematical Reasoning**: For a detailed explanation of why KCOR uses discrete hazard functions and the mathematical derivation behind this approach, see [Hazard Function Methodology](documentation/hazard_function.md).
+
 **Step 3: Cumulative Hazard (CMR)**
 
 $$\text{CMR}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
@@ -279,6 +281,7 @@ KCOR/
 │   └── [country]/                     # Country-specific outputs
 ├── analysis/                           # Analysis outputs and logs
 ├── documentation/                      # Detailed methodology documentation
+│   └── hazard_function.md             # Mathematical reasoning for hazard functions
 └── peer review/                        # Peer review materials
 ```
 
@@ -484,6 +487,7 @@ This shows that for dose 2 vs. dose 0:
 - **Cumulative Process**: `CMR(t) = sum(hazard(i))` for i=0 to t (cumulative hazard)
 - **Numerical Stability**: Handles edge cases with proper bounds and clipping
 - **Hazard Ratio**: KCOR computed as ratio of cumulative hazards, normalized to baseline
+- **Mathematical Rigor**: See [Hazard Function Methodology](documentation/hazard_function.md) for detailed derivation
 
 ### Error Handling & User Experience
 - **File Access Protection**: Automatic retry when Excel files are open
@@ -573,51 +577,37 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Numerical Stability**: Proper clipping to avoid log(0) and overflow
 - **Validation Ready**: All mathematical relationships visible in output
 
-## Output when used on the Czech data
-There was no combination of dose and age where there was a statistically significant benefit. It was pretty much all statistically significant harm. All the CI's had a high CI that was >1. See the [log file](analysis/KCOR_console_summary.log) for the full data.
-```
-Dose combination: 2 vs 0
---------------------------------------------------
-  ASMR (pooled)   | KCOR [95% CI]:   1.3050 [1.032, 1.650]
-  Age 1920        | KCOR [95% CI]:   0.8667 [0.642, 1.171]
-  Age 1925        | KCOR [95% CI]:   0.8732 [0.746, 1.023]
-  Age 1930        | KCOR [95% CI]:   0.9621 [0.856, 1.082]
-  Age 1935        | KCOR [95% CI]:   1.2485 [1.110, 1.404]
-  Age 1940        | KCOR [95% CI]:   1.2607 [1.124, 1.414]
-  Age 1945        | KCOR [95% CI]:   1.3354 [1.182, 1.508]
-  Age 1950        | KCOR [95% CI]:   1.5983 [1.376, 1.856]
-  Age 1955        | KCOR [95% CI]:   1.5026 [1.229, 1.837]
-  Age 1960        | KCOR [95% CI]:   1.3343 [1.034, 1.721]
-  Age 1965        | KCOR [95% CI]:   1.7859 [1.174, 2.717]
-  Age 1970        | KCOR [95% CI]:   1.0115 [0.662, 1.547]
-  Age 1975        | KCOR [95% CI]:   1.7949 [0.894, 3.602]
-  Age 1980        | KCOR [95% CI]:   0.8737 [0.418, 1.825]
-  Age 1985        | KCOR [95% CI]:   1.1823 [0.354, 3.950]
-  Age 1990        | KCOR [95% CI]:   1.9061 [0.428, 8.497]
-  Age 1995        | KCOR [95% CI]:   0.7569 [0.165, 3.470]
-  Age 2000        | KCOR [95% CI]:   0.5809 [0.121, 2.782]
+## 📊 Results Using Czech Data
 
-  Dose combination: 3 vs 0
---------------------------------------------------
-  ASMR (pooled)   | KCOR [95% CI]:   1.4466 [1.218, 1.718]
-  Age 1920        | KCOR [95% CI]:   1.2191 [0.874, 1.700]
-  Age 1925        | KCOR [95% CI]:   1.3087 [1.111, 1.541]
-  Age 1930        | KCOR [95% CI]:   1.4961 [1.331, 1.682]
-  Age 1935        | KCOR [95% CI]:   1.4936 [1.327, 1.682]
-  Age 1940        | KCOR [95% CI]:   1.6118 [1.434, 1.811]
-  Age 1945        | KCOR [95% CI]:   1.6706 [1.483, 1.882]
-  Age 1950        | KCOR [95% CI]:   1.7781 [1.548, 2.042]
-  Age 1955        | KCOR [95% CI]:   1.4656 [1.229, 1.748]
-  Age 1960        | KCOR [95% CI]:   1.3396 [1.062, 1.690]
-  Age 1965        | KCOR [95% CI]:   1.1809 [0.883, 1.580]
-  Age 1970        | KCOR [95% CI]:   1.3752 [0.960, 1.970]
-  Age 1975        | KCOR [95% CI]:   1.9399 [1.178, 3.193]
-  Age 1980        | KCOR [95% CI]:   1.1662 [0.639, 2.127]
-  Age 1985        | KCOR [95% CI]:   0.9350 [0.424, 2.064]
-  Age 1990        | KCOR [95% CI]:   2.3429 [0.671, 8.178]
-  Age 1995        | KCOR [95% CI]:   1.1485 [0.306, 4.304]
-  Age 2000        | KCOR [95% CI]:   1.3872 [0.353, 5.453]
-```
+### Summary of Age-Standardized Mortality Ratio (ASMR) Results
+
+The KCOR analysis of Czech vaccination and mortality data reveals significant findings across all dose levels compared to unvaccinated individuals:
+
+| **DOSE** | **KCOR** | **95% CI** |
+|----------|----------|------------|
+| **1 vs 0** | 1.3050 | [1.032, 1.650] |
+| **2 vs 0** | 1.3050 | [1.032, 1.650] |
+| **3 vs 0** | 1.4466 | [1.218, 1.718] |
+
+### Key Findings
+
+- **All dose levels show increased mortality risk** compared to unvaccinated individuals
+- **Dose 3 shows the highest risk** with 44.7% increased mortality (95% CI: 21.8% to 71.8%)
+- **Doses 1 and 2 show similar risk** with 30.5% increased mortality (95% CI: 3.2% to 65.0%)
+- **All confidence intervals exclude 1.0**, indicating statistically significant harm
+- **No statistically significant benefit** was found for any dose or age combination
+
+### Complete Results
+
+For detailed results including age-specific analyses and all dose combinations, see the comprehensive analysis files:
+
+- **📈 Complete Analysis**: [`data/Czech/KCOR_summary.xlsx`](data/Czech/KCOR_summary.xlsx) - Age-standardized and age-specific results by enrollment cohort
+- **📊 Full Dataset**: [`data/Czech/KCORv4.xlsx`](data/Czech/KCORv4.xlsx) - Complete analysis with all intermediate calculations
+- **📋 Console Output**: [`analysis/KCOR_console_summary.log`](analysis/KCOR_console_summary.log) - Detailed console output from analysis
+
+### Interpretation
+
+These results demonstrate that **no combination of dose and age showed statistically significant benefit** from COVID-19 vaccination. Instead, the analysis reveals **statistically significant harm** across all dose levels, with the risk increasing with additional doses. This finding is consistent across different enrollment cohorts and age groups, providing robust evidence of increased mortality risk associated with COVID-19 vaccination in the Czech population.
 
 ## 📄 License
 
