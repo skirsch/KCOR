@@ -29,7 +29,9 @@ METHODOLOGY OVERVIEW:
 
 4. KCOR COMPUTATION:
    - KCOR = (CMR_num / CMR_den) / (CMR_num_baseline / CMR_den_baseline)
-   - CMR = cumulative adjusted mortality rate = cumD_adj / cumPT
+   - CMR = slope-corrected cumulative mortality rate
+   - Step 1: Calculate unadjusted cumulative MR: CMR_actual = cumsum(MR)
+   - Step 2: Apply slope correction to cumulative MR: CMR = CMR_actual × exp(-slope × (t - t0))
    - Baseline values taken at week 4 (or first available week)
    - Results in KCOR = 1 at baseline, showing relative risk over time
 
@@ -57,10 +59,13 @@ OUTPUTS (two main sheets):
     - "by_dose": Individual dose curves with raw and adjusted mortality rates
     - "dose_pairs": KCOR values for all dose comparisons with columns:
       Sheet, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
-      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den
+      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, CMR_actual_num, MR_den, MR_adj_den, CMR_den, CMR_actual_den
 
 USAGE:
     python KCORv4.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
+    
+DEPENDENCIES:
+    pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
 between vaccination groups while accounting for underlying time trends.
@@ -72,12 +77,7 @@ import pandas as pd
 from pathlib import Path
 import warnings
 
-# Dependencies: statsmodels
-try:
-    import statsmodels.api as sm
-except Exception as e:
-    print("ERROR: statsmodels is required (pip install statsmodels).", e)
-    sys.exit(1)
+# Dependencies: pandas, numpy, openpyxl
 
 # ---------------- Configuration Parameters ----------------
 # Version information
@@ -274,8 +274,8 @@ def build_kcor_rows(df, sheet_name):
     Assumptions:
       - Person-time PT = Alive
       - MR = Dead / PT
-      - MR_adj slope-removed via QR
-      - CMR = cumD_adj / cumPT
+      - MR_adj slope-removed via QR (for smoothing, not CMR calculation)
+      - CMR = CMR_actual × exp(-slope × (t - t0)) where CMR_actual = cumsum(MR)
       - KCOR = (CMR_num / CMR_den), anchored to 1 at week ANCHOR_WEEKS if available
               - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
@@ -297,8 +297,8 @@ def build_kcor_rows(df, sheet_name):
             if gv is None or gu is None:
                 continue
             # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CMR","cumD_adj"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CMR","cumD_adj"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj"]].drop_duplicates(subset=["DateDied"], keep="first")
             
             merged = pd.merge(
                 gv_unique,
@@ -386,8 +386,8 @@ def build_kcor_rows(df, sheet_name):
             merged["CI_upper"] = np.clip(merged["CI_upper"], merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "MR_num","MR_adj_num","CMR_num",
-                          "MR_den","MR_adj_den","CMR_den"]].copy()
+                          "MR_num","MR_adj_num","CMR_num","CMR_actual_num",
+                          "MR_den","MR_adj_den","CMR_den","CMR_actual_den"]].copy()
             out["Sheet"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
@@ -501,7 +501,7 @@ def build_kcor_rows(df, sheet_name):
                 pooled_rows.append({
                     "Sheet": sheet_name,
                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
-                    "Date": dt.date(),  # Convert to standard pandas date format (same as debug sheet)
+                    "Date": pd.to_datetime(dt).date(),  # Convert to standard pandas date format (same as debug sheet)
                     "YearOfBirth": 0,      # ASMR pooled row
                     "Dose_num": num,
                     "Dose_den": den,
@@ -511,21 +511,22 @@ def build_kcor_rows(df, sheet_name):
                     "MR_num": np.nan,
                     "MR_adj_num": np.nan,
                     "CMR_num": np.nan,
+                    "CMR_actual_num": np.nan,
                     "MR_den": np.nan,
                     "MR_adj_den": np.nan,
-                    "CMR_den": np.nan
+                    "CMR_den": np.nan,
+                    "CMR_actual_den": np.nan
                 })
 
     if out_rows or pooled_rows:
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "Sheet","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","MR_den","MR_adj_den","CMR_den"
+        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","CMR_actual_num","MR_den","MR_adj_den","CMR_den","CMR_actual_den"
     ])
 
 def process_workbook(src_path: str, out_path: str):
     # Suppress specific warnings that we're handling
-    warnings.filterwarnings('ignore', category=RuntimeWarning, module='statsmodels')
     warnings.filterwarnings('ignore', category=RuntimeWarning, module='pandas')
     
     # Print professional header
@@ -662,19 +663,26 @@ def process_workbook(src_path: str, out_path: str):
         #     
         #     print()
 
-        # adjusted deaths, cumulative, CMR
-        df["D_adj"]    = df["MR_adj"] * df["PT"]
+        # Apply slope correction to each individual MR value
+        def apply_slope_correction_to_mr(row):
+            slope = slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
+            scale_factor = safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
+            return row["MR"] * scale_factor
         
-        # For the first entry (week 0), use original values without adjustments
-        first_week_mask = df["t"] == 0
-        df.loc[first_week_mask, "MR_adj"] = df.loc[first_week_mask, "MR"]
-        df.loc[first_week_mask, "D_adj"] = df.loc[first_week_mask, "Dead"]
+        df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         
-        # Reset cumulative counters to start from enrollment date (week 0)
-        df["cumD_adj"] = df.groupby(["YearOfBirth","Dose"])["D_adj"].cumsum()
-        df["cumPT"]    = df.groupby(["YearOfBirth","Dose"])["PT"].cumsum()
+        # Calculate cumulative sum of adjusted MRs
+        df["CMR"] = df.groupby(["YearOfBirth","Dose"])["MR_adj"].cumsum()
         
-        df["CMR"] = np.where(df["cumPT"] > 0, df["cumD_adj"]/df["cumPT"], np.nan)
+        # Keep unadjusted data for comparison
+        df["CMR_actual"] = df.groupby(["YearOfBirth","Dose"])["MR"].cumsum()
+        
+        # Keep cumD_adj for backward compatibility (now represents adjusted cumulative deaths)
+        df["cumPT"] = df.groupby(["YearOfBirth","Dose"])["PT"].cumsum()
+        df["cumD_adj"] = df["CMR"] * df["cumPT"]
+        
+        # Keep unadjusted data for comparison
+        df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"])["Dead"].cumsum()
         
         # Debug: Print detailed CMR calculation info
         # if DEBUG_VERBOSE:
@@ -797,7 +805,9 @@ def process_workbook(src_path: str, out_path: str):
                 "MR": "mean",  # Average MR across sexes
                 "MR_adj": "mean",  # Average MR_adj across sexes
                 "CMR": "mean",  # Average CMR across sexes
+                "CMR_actual": "mean",  # Average CMR_actual across sexes
                 "cumD_adj": "sum",  # Sum cumulative deaths
+                "cumD_unadj": "sum",  # Sum unadjusted cumulative deaths
                 "cumPT": "sum",  # Sum cumulative person-time
                 "MR_smooth": "mean",  # Average smoothed MR across sexes
                 "t": "first"  # Time index (should be same for all sexes
@@ -819,7 +829,9 @@ def process_workbook(src_path: str, out_path: str):
                     "MR": row["MR"],
                     "MR_adj": row["MR_adj"],
                     "Cum_MR": row["CMR"],
+                    "Cum_MR_Actual": row["CMR_actual"],
                     "Cumu_Adj_Deaths": row["cumD_adj"],
+                    "Cumu_Unadj_Deaths": row["cumD_unadj"],
                     "Cumu_Person_Time": row["cumPT"],
                     "Smoothed_Raw_MR": row["MR_smooth"],
                     "Smoothed_Adjusted_MR": smoothed_adj_mr
