@@ -56,7 +56,7 @@ KEY ASSUMPTIONS:
 - Baseline period (week 4) represents "normal" conditions
 - Person-time = Alive (survivor function approximation)
 
-INPUT WORKBOOK SCHEMA per sheet (e.g., '2021_24', '2022_06', ...):
+INPUT WORKBOOK SCHEMA per sheet (e.g., '2021-13', '2021_24', '2022_06', ...):
     ISOweekDied, DateDied, YearOfBirth, Sex, Dose, Alive, Dead
 
 OUTPUTS (two main sheets):
@@ -83,12 +83,32 @@ actual mortality burden rather than population size.
 """
 import sys
 import math
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import warnings
+import logging
+from datetime import datetime
 
 # Dependencies: pandas, numpy, openpyxl
+
+def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
+    """Set up dual output to both console and file."""
+    # Create log file path
+    log_file = os.path.join(output_dir, log_filename)
+    
+    # Open file for writing
+    log_file_handle = open(log_file, 'w', encoding='utf-8')
+    
+    def dual_print(*args, **kwargs):
+        """Print to both console and file."""
+        message = ' '.join(str(arg) for arg in args)
+        print(message, **kwargs)  # Console output
+        print(message, file=log_file_handle, **kwargs)  # File output
+        log_file_handle.flush()  # Ensure immediate write
+    
+    return dual_print, log_file_handle
 
 # ---------------- Configuration Parameters ----------------
 # Version information
@@ -116,7 +136,7 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ra
 # SLOPE CALCULATION METHODOLOGY:
 # Uses lookup table with window-based geometric mean approach for robust slope estimation
 SLOPE_LOOKUP_TABLE = {
-    '2021-13': (64, 125), # (offset1, offset2) weeks from enrollment for slope calculation
+    '2021_13': (64, 125), # (offset1, offset2) weeks from enrollment for slope calculation
     '2021_24': (53, 114), # (offset1, offset2) weeks from enrollment for slope calculation
     '2022_06': (19,111)   # These dates chosen during "quiet periods" with minimal differential events
 }
@@ -129,7 +149,7 @@ CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each poin
 
 # Debug parameters - limit scope for debugging
 YEAR_RANGE = (1920, 2000)       # Process age groups from start to end year (inclusive)
-DEBUG_SHEET_ONLY = ['2021-13',"2021_24",'2022_06']   # List of sheets to process for DEBUG (set to None to process all)
+DEBUG_SHEET_ONLY = ['2021_13',"2021_24",'2022_06']   # List of sheets to process for DEBUG (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
@@ -155,17 +175,20 @@ def get_dose_pairs(sheet_name):
     The dose pairs are designed so that the lower dose is always the denominator,
     providing consistent relative risk comparisons across different vaccination levels.
     """
-    if sheet_name == "2021_24":
-        # First sheet: max dose is 2, only doses 0, 1, 2
+    if sheet_name == "2021-13":
+        # Early 2021 sheet: max dose is 2, only doses 0, 1, 2
+        return [(1,0), (2,0), (2,1)]
+    elif sheet_name == "2021_24":
+        # Mid 2021 sheet: max dose is 2, only doses 0, 1, 2
         return [(1,0), (2,0), (2,1)]
     elif sheet_name == "2022_06":
-        # Second sheet: includes dose 3 comparisons
+        # 2022 sheet: includes dose 3 comparisons
         return [(1,0), (2,0), (2,1), (3,2), (3,0)]
     else:
         # Default: max dose is 2
         return [(1,0), (2,0), (2,1)]
 
-def compute_group_slopes_lookup(df, sheet_name):
+def compute_group_slopes_lookup(df, sheet_name, logger=None):
     """Slope per (YearOfBirth,Dose) using lookup table method."""
     slopes = {}
     
@@ -209,8 +232,12 @@ def compute_group_slopes_lookup(df, sheet_name):
             error_msg += f"offsets ({offset1}, {offset2}) weeks -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
             raise ValueError(error_msg)
         
-        print(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
-              f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})")
+        if logger:
+            logger.info(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
+                  f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})")
+        else:
+            print(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
+                  f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})")
     
     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
         g_sorted = g.sort_values("t")
@@ -606,18 +633,26 @@ def build_kcor_rows(df, sheet_name):
         "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
     ])
 
-def process_workbook(src_path: str, out_path: str):
+def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log"):
+    
+    # Set up dual output (console + file)
+    output_dir = os.path.dirname(out_path)
+    dual_print, log_file_handle = setup_dual_output(output_dir, log_filename)
     
     # Print professional header
     from datetime import datetime
-    print("="*80)
-    print(f"KCOR {VERSION} - Kirsch Cumulative Outcomes Ratio Analysis")
-    print("="*80)
-    print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Input File: {src_path}")
-    print(f"Output File: {out_path}")
-    print("="*80)
-    print()
+    log_file_path = os.path.join(output_dir, log_filename)
+    # Use forward slashes for display consistency
+    log_file_display = log_file_path.replace('\\', '/')
+    dual_print("="*80)
+    dual_print(f"KCOR {VERSION} - Kirsch Cumulative Outcomes Ratio Analysis")
+    dual_print("="*80)
+    dual_print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    dual_print(f"Input File: {src_path}")
+    dual_print(f"Output File: {out_path}")
+    dual_print(f"Log File: {log_file_display}")
+    dual_print("="*80)
+    dual_print("")
     
     xls = pd.ExcelFile(src_path)
     all_out = []
@@ -626,12 +661,12 @@ def process_workbook(src_path: str, out_path: str):
     sheets_to_process = DEBUG_SHEET_ONLY if DEBUG_SHEET_ONLY else xls.sheet_names
     if YEAR_RANGE:
         start_year, end_year = YEAR_RANGE
-        print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
+        dual_print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
     if DEBUG_SHEET_ONLY:
-        print(f"[DEBUG] Limiting to sheets: {DEBUG_SHEET_ONLY}")
+        dual_print(f"[DEBUG] Limiting to sheets: {DEBUG_SHEET_ONLY}")
     
     for sh in sheets_to_process:
-        print(f"[Info] Processing sheet: {sh}")
+        dual_print(f"[Info] Processing sheet: {sh}")
         df = pd.read_excel(src_path, sheet_name=sh)
         # prep
         df["DateDied"] = pd.to_datetime(df["DateDied"])
@@ -657,20 +692,20 @@ def process_workbook(src_path: str, out_path: str):
             # Calculate the start of the specified ISO week
             enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
             df = df[df["DateDied"] >= enrollment_date]
-            print(f"[DEBUG] Filtered to start from enrollment date {enrollment_date.strftime('%m/%d/%Y')}: {len(df)} rows")
+            dual_print(f"[DEBUG] Filtered to start from enrollment date {enrollment_date.strftime('%m/%d/%Y')}: {len(df)} rows")
         
         # Apply debug age filter
         if YEAR_RANGE:
             start_year, end_year = YEAR_RANGE
             df = df[(df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year)]
-            print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
+            dual_print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
         
         # Apply sheet-specific dose filtering
         dose_pairs = get_dose_pairs(sh)
         max_dose = max(max(pair) for pair in dose_pairs)
         valid_doses = list(range(max_dose + 1))  # Include all doses from 0 to max_dose
         df = df[df["Dose"].isin(valid_doses)]
-        print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
+        dual_print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
         
         # Aggregate across sexes for each dose/date/age combination
         df = df.groupby(["YearOfBirth", "Dose", "DateDied"]).agg({
@@ -678,7 +713,7 @@ def process_workbook(src_path: str, out_path: str):
             "Alive": "sum",
             "Dead": "sum"
         }).reset_index()
-        print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
+        dual_print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
         
         df = df.sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
         # person-time proxy and MR
@@ -706,14 +741,14 @@ def process_workbook(src_path: str, out_path: str):
         
         # Debug: Show computed slopes
         if DEBUG_VERBOSE:
-            print(f"\n[DEBUG] Computed slopes for sheet {sh}:")
+            dual_print(f"\n[DEBUG] Computed slopes for sheet {sh}:")
             dose_pairs = get_dose_pairs(sh)
             max_dose = max(max(pair) for pair in dose_pairs)
             for dose in range(max_dose + 1):
                 for yob in sorted(df["YearOfBirth"].unique()):
                     if (yob, dose) in slopes:
-                        print(f"  YoB {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
-            print()
+                        dual_print(f"  YoB {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
+            dual_print()
         
         df = adjust_mr(df, slopes, t0=ANCHOR_WEEKS)
         
@@ -817,9 +852,9 @@ def process_workbook(src_path: str, out_path: str):
 
 
     # Report KCOR values at end of 2022 for each dose combo and age for ALL sheets
-    print("\n" + "="*80)
-    print("KCOR VALUES AT END OF 2022 - ALL SHEETS")
-    print("="*80)
+    dual_print("\n" + "="*80)
+    dual_print("KCOR VALUES AT END OF 2022 - ALL SHEETS")
+    dual_print("="*80)
     
     # Filter for end of 2022 (last date in 2022) for ALL sheets
     combined["Date"] = pd.to_datetime(combined["Date"])
@@ -843,10 +878,10 @@ def process_workbook(src_path: str, out_path: str):
             dose_pairs = get_dose_pairs(sheet_name)
             
             for (dose_num, dose_den) in dose_pairs:
-                print(f"\nDose combination: {dose_num} vs {dose_den}")
-                print("-" * 50)
-                print(f"{'YoB':>15} | KCOR [95% CI]")
-                print("-" * 50)
+                dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
+                dual_print("-" * 50)
+                dual_print(f"{'YoB':>15} | KCOR [95% CI]")
+                dual_print("-" * 50)
                 
                 # Get data for this dose combination and sheet
                 dose_data = end_2022_data[
@@ -856,7 +891,7 @@ def process_workbook(src_path: str, out_path: str):
                 ]
                 
                 if dose_data.empty:
-                    print("  No data available for this dose combination")
+                    dual_print("  No data available for this dose combination")
                     continue
                 
                 # Show results by age (including ASMR = 0)
@@ -874,11 +909,11 @@ def process_workbook(src_path: str, out_path: str):
                         else:
                             age_label = f"{age}"
                         
-                        print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
     else:
-        print("No data available for 2022 in any sheet")
+        dual_print("No data available for 2022 in any sheet")
     
-    print("="*80)
+    dual_print("="*80)
 
     # Create debug sheet with individual dose curves
     if DEBUG_VERBOSE:
@@ -1113,7 +1148,7 @@ def process_workbook(src_path: str, out_path: str):
                 all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
             
             # If we get here, the file was written successfully
-            print(f"[Done] Wrote {len(combined)} rows to {out_path}")
+            dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
             break
             
         except PermissionError as e:
@@ -1137,11 +1172,14 @@ def process_workbook(src_path: str, out_path: str):
             return combined
     
     # Create summary file with one sheet per enrollment date
-    create_summary_file(combined, out_path)
+    create_summary_file(combined, out_path, dual_print)
+    
+    # Close log file
+    log_file_handle.close()
     
     return combined
 
-def create_summary_file(combined_data, out_path):
+def create_summary_file(combined_data, out_path, dual_print):
     """Create KCOR_summary.xlsx with one sheet per enrollment date, formatted like console output."""
     import os
     
@@ -1149,7 +1187,7 @@ def create_summary_file(combined_data, out_path):
     out_dir = os.path.dirname(out_path)
     summary_path = os.path.join(out_dir, "KCOR_summary.xlsx")
     
-    print(f"[Summary] Creating summary file: {summary_path}")
+    dual_print(f"[Summary] Creating summary file: {summary_path}")
     
     # Group data by Sheet (enrollment date)
     sheets = combined_data["Sheet"].unique()
@@ -1232,10 +1270,10 @@ def create_summary_file(combined_data, out_path):
                     summary_df = pd.DataFrame(summary_rows)
                     summary_df.to_excel(writer, index=False, sheet_name=sheet_name)
                     
-                    print(f"  - {sheet_name}: {len(dose_pairs)} dose combinations, {len(summary_rows)} summary rows")
+                    dual_print(f"  - {sheet_name}: {len(dose_pairs)} dose combinations, {len(summary_rows)} summary rows")
             
             # If we get here, the file was written successfully
-            print(f"[Summary] Created summary with {len(sheets)} enrollment periods")
+            dual_print(f"[Summary] Created summary with {len(sheets)} enrollment periods")
             return summary_path
             
         except PermissionError as e:
@@ -1261,12 +1299,13 @@ def create_summary_file(combined_data, out_path):
     return None
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: python kcor_real_pipeline.py <input.xlsx> <output.xlsx>")
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
+        print("Usage: python KCORv4.py <input_file> <output_file> [log_filename]")
         sys.exit(2)
     src = sys.argv[1]
     dst = sys.argv[2]
-    process_workbook(src, dst)
+    log_filename = sys.argv[3] if len(sys.argv) == 4 else "KCOR_summary.log"
+    process_workbook(src, dst, log_filename)
 
 if __name__ == "__main__":
     main()

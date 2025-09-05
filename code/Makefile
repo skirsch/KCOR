@@ -15,7 +15,7 @@ KCOR: $(KCOR_OUTPUT)
 # KCOR analysis depends on CMR output and KCORv4.py script
 $(KCOR_OUTPUT): $(CMR_OUTPUT) KCORv4.py
 	@echo "Running KCORv4 analysis..."
-	python KCORv4.py $(CMR_OUTPUT) $(KCOR_OUTPUT)
+	python KCORv4.py $(CMR_OUTPUT) $(KCOR_OUTPUT) KCOR_summary.log
 	@echo "KCOR analysis complete!"
 
 # CMR aggregation depends on input data and KCOR_CMR.py script

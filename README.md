@@ -344,7 +344,9 @@ cd code
 python KCOR_CMR.py [input_file] [output_file]
 
 # Step 2: KCOR analysis
-python KCORv4.py [aggregated_file] [analysis_output]
+python KCORv4.py [aggregated_file] [analysis_output] [log_filename]
+# Note: log_filename is optional (defaults to "KCOR_summary.log")
+# Output appears both on console and in the specified log file
 ```
 
 ### Data Requirements
@@ -656,7 +658,7 @@ For detailed results including age-specific analyses and all dose combinations, 
 
 - **📈 Complete Analysis**: [`data/Czech/KCOR_summary.xlsx`](data/Czech/KCOR_summary.xlsx) - Age-standardized and age-specific results by enrollment cohort
 - **📊 Full Dataset**: [`data/Czech/KCORv4.xlsx`](data/Czech/KCORv4.xlsx) - Complete analysis with all intermediate calculations
-- **📋 Console Output**: [`analysis/KCOR_console_summary.log`](analysis/KCOR_console_summary.log) - Detailed console output from analysis
+- **📋 Console Output**: [`data/Czech/KCOR_summary.log`](data/Czech/KCOR_summary.log) - Detailed console output from analysis (dual output: console + file)
 
 ### Interpretation
 
@@ -668,9 +670,9 @@ These results demonstrate a **dose-dependent accelerating mortality pattern** th
 
 This pattern suggests that **the first dose may provide some benefit that offsets early harm**, but **additional doses cause cumulative damage with accelerating mortality risk**. The analysis reveals **no statistically significant benefit** from COVID-19 vaccination beyond the first dose, with **statistically significant harm** for doses 2 and 3. This finding is consistent across different enrollment cohorts and age groups, providing robust evidence of dose-dependent vaccine toxicity in the Czech population.
 
-## Grok 5 validation
+## Grok assessment
 
-[Grok validated](https://grok.com/share/c2hhcmQtMg%3D%3D_6bda87e0-f4b7-49b7-a6b7-3cf48fc453b2) the methodology, the description in this README file, and the implementation.
+[Grok validated](https://grok.com/share/c2hhcmQtMg%3D%3D_6bda87e0-f4b7-49b7-a6b7-3cf48fc453b2) the methodology, the documentation, and the implementation.
 
 ## 📄 License
 
