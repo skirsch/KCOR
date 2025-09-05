@@ -145,12 +145,12 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
 ### ⚙️ Analysis Pipeline
 
 #### 1. Data Preprocessing
-- **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24)
+- **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021-13" = 2021, week 13, "2021_24" = 2021, week 24)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (YearOfBirth, Dose, DateDied) combination
 - **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
 #### 2. Slope Calculation (Lookup Table Method)
-- **Anchor Points**: Uses predefined time points (e.g., weeks 53 and 114 from enrollment for 2021_24)
+- **Anchor Points**: Uses predefined time points (e.g., weeks 64 and 125 from enrollment for 2021-13, weeks 53 and 114 for 2021_24)
 - **Window Approach**: For each anchor point, creates a ±2 week window (5 points total)
 - **Geometric Mean**: Calculates geometric mean of smoothed MR values within each window
 
@@ -392,7 +392,7 @@ The analysis produces Excel workbooks with comprehensive methodology transparenc
 This file enables users to visualize results for any cohort combination and contains:
 
 **`KCOR_summary.xlsx`** - Console-style summary by enrollment date
-This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) formatted like the console output, with dose combination headers and final KCOR values for each age group.
+This file provides one sheet per enrollment period (e.g., 2021-13, 2021_24, 2022_06) formatted like the console output, with dose combination headers and final KCOR values for each age group.
 
 #### Main Analysis Sheets
 - **`dose_pairs`**: KCOR values for all dose comparisons with complete methodology transparency
@@ -420,7 +420,7 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 - **Methodology Validation**: Examine all intermediate calculations for transparency
 
 **`KCOR_summary.xlsx`** - Console-style summary format:
-- **One Sheet Per Enrollment**: Easy comparison across different enrollment periods (2021_24, 2022_06, etc.)
+- **One Sheet Per Enrollment**: Easy comparison across different enrollment periods (2021-13, 2021_24, 2022_06, etc.)
 - **Console Format**: Structured like the console output with dose combination headers
 - **Final Values**: Shows the latest KCOR values and confidence intervals for each age group
 - **Easy Reading**: Clean format with dose combination headers and age group results
@@ -442,13 +442,14 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation
 
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process
-DEBUG_SHEET_ONLY = ["2021_24", "2022_06"]  # Sheets to process
+DEBUG_SHEET_ONLY = ["2021-13", "2021_24", "2022_06"]  # Sheets to process
 ```
 
 ### Sheet-Specific Configuration
 
 The script automatically determines dose pairs based on sheet names:
 
+- **2021-13**: Doses 0, 1, 2 → Comparisons: (1,0), (2,0), (2,1)
 - **2021_24**: Doses 0, 1, 2 → Comparisons: (1,0), (2,0), (2,1)
 - **2022_06**: Doses 0, 1, 2, 3 → Comparisons: (1,0), (2,0), (2,1), (3,2), (3,0)
 

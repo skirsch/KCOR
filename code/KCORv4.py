@@ -116,6 +116,7 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ra
 # SLOPE CALCULATION METHODOLOGY:
 # Uses lookup table with window-based geometric mean approach for robust slope estimation
 SLOPE_LOOKUP_TABLE = {
+    '2021-13': (64, 125), # (offset1, offset2) weeks from enrollment for slope calculation
     '2021_24': (53, 114), # (offset1, offset2) weeks from enrollment for slope calculation
     '2022_06': (19,111)   # These dates chosen during "quiet periods" with minimal differential events
 }
@@ -128,7 +129,7 @@ CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each poin
 
 # Debug parameters - limit scope for debugging
 YEAR_RANGE = (1920, 2000)       # Process age groups from start to end year (inclusive)
-DEBUG_SHEET_ONLY = ["2021_24",'2022_06']   # List of sheets to process for DEBUG (set to None to process all)
+DEBUG_SHEET_ONLY = ['2021-13',"2021_24",'2022_06']   # List of sheets to process for DEBUG (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
