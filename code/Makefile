@@ -29,18 +29,18 @@ CMR: $(CMR_OUTPUT)
 
 # Create output directories if they don't exist
 create_dirs:
-	@mkdir -p ../data/$(COUNTRY)
+	@python -c "import os; os.makedirs('../data/$(COUNTRY)', exist_ok=True)"
 
 # Clean up all output files for current country
 clean:
 	@echo "Cleaning up output files for $(COUNTRY)..."
-	@rm -f $(CMR_OUTPUT) $(KCOR_OUTPUT)
+	@python -c "import os; [os.remove(f) for f in ['$(CMR_OUTPUT)', '$(KCOR_OUTPUT)'] if os.path.exists(f)]"
 	@echo "Cleanup complete!"
 
 # Clean up all output files for all countries
 clean-all:
 	@echo "Cleaning up all output files..."
-	@rm -rf ../data/*
+	@python -c "import shutil, os; shutil.rmtree('../data') if os.path.exists('../data') else None"
 	@echo "Cleanup complete!"
 
 # Help target

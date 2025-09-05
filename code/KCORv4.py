@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 """
-KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.0
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.2
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
 mortality rates between different dose groups, normalized to 1 at a baseline period.
@@ -27,7 +27,7 @@ METHODOLOGY OVERVIEW:
    - t0 = baseline week (typically week 4) where KCOR is normalized to 1
    - Each dose-age combination gets its own slope for adjustment
 
-4. KCOR COMPUTATION:
+4. KCOR COMPUTATION (v4.1+):
    - KCOR = (CMR_num / CMR_den) / (CMR_num_baseline / CMR_den_baseline)
    - CMR = slope-corrected cumulative hazard (mathematically exact)
    - Step 1: Apply slope correction to individual MR: MR_adj = MR × exp(-slope × (t - t0))
@@ -42,10 +42,13 @@ METHODOLOGY OVERVIEW:
    - Uses binomial variance approximation: Var[D] ≈ D for death counts
    - CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-6. AGE STANDARDIZATION:
-   - ASMR pooling across age groups using fixed baseline weights
-   - Weights = person-time in first 4 weeks per age group (time-invariant)
-   - Provides population-level KCOR estimates
+6. AGE STANDARDIZATION (Option 2+ - v4.2):
+   - ASMR pooling across age groups using expected-deaths weights
+   - Weights = smoothed mortality rate × person-time in quiet baseline window
+   - Formula: w_a ∝ h_a × PT_a(W) where h_a = smoothed mean MR in quiet window W
+   - Properly weights elderly age groups who contribute most to death burden
+   - Provides population-level KCOR estimates reflecting actual mortality impact
+   - FIXED in v4.2: Previous person-time only weighting over-weighted young people
 
 KEY ASSUMPTIONS:
 - Mortality rates follow exponential trends during observation period
@@ -74,7 +77,9 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends.
+between vaccination groups while accounting for underlying time trends. Version 4.2
+includes corrected ASMR pooling using expected-deaths weights that properly reflect
+actual mortality burden rather than population size.
 """
 import sys
 import math
@@ -87,7 +92,7 @@ import warnings
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.1"                # KCOR version number
+VERSION = "v4.2"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -95,6 +100,11 @@ VERSION = "v4.1"                # KCOR version number
 #        - Changed from simple cumsum(MR_adj) to cumsum(-ln(1 - MR_adj))
 #        - Removes small-rate approximation limitation
 #        - More robust for any mortality rate magnitude
+# v4.2 - Fixed ASMR pooling with Option 2+ expected-deaths weights
+#        - Changed from person-time weights to expected-deaths weights: w_a ∝ h_a × PT_a(W)
+#        - Properly weights elderly age groups who contribute most to death burden
+#        - Uses pooled quiet baseline window with smoothed mortality rates
+#        - ASMR now reflects actual mortality impact rather than population size
 
 # Core KCOR methodology parameters
 ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
@@ -129,7 +139,9 @@ def safe_log(x, eps=EPS):
 
 def safe_exp(x, max_val=1e6):
     """Safe exponential with clipping to prevent overflow."""
-    return np.clip(np.exp(x), 0, max_val)
+    # Clip the input to prevent overflow, not the output
+    clipped_x = np.clip(x, -np.log(max_val), np.log(max_val))
+    return np.exp(clipped_x)
 
 
 def get_dose_pairs(sheet_name):
@@ -234,6 +246,9 @@ def compute_group_slopes_lookup(df, sheet_name):
         
         # Calculate exponential slope: slope = (log_B - log_A) / T
         slope = (log_B - log_A) / T
+        
+        # Clip extreme slopes to prevent overflow in exp() calculations
+        slope = np.clip(slope, -10.0, 10.0)
         
         slopes[(yob,dose)] = slope
         
@@ -413,12 +428,53 @@ def build_kcor_rows(df, sheet_name):
             out_rows.append(out)
 
     # -------- ASMR pooled rows (YearOfBirth = 0) --------
-    # Fixed baseline weights per age = sum of PT over the first 4 *distinct weeks* across all doses
+    # Option 2+: Expected-deaths weights using pooled quiet baseline window
+    # w_a ∝ h_a × PT_a(W) where h_a = smoothed mean MR in quiet window W
     weights = {}
     df_sorted = df.sort_values("DateDied")
-    for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
-        first_weeks = g_age.drop_duplicates(subset=["DateDied"]).head(4)
-        weights[yob] = float(first_weeks["PT"].sum())
+    
+    # Define quiet baseline window W (first 4 distinct weeks, same as before)
+    quiet_window_dates = df_sorted.drop_duplicates(subset=["DateDied"]).head(4)["DateDied"].tolist()
+    quiet_data = df_sorted[df_sorted["DateDied"].isin(quiet_window_dates)]
+    
+    # Calculate expected-deaths weights for each age group
+    for yob, g_age in quiet_data.groupby("YearOfBirth", sort=False):
+        # Get all doses for this age group in quiet window
+        age_quiet_data = g_age
+        
+        # Calculate smoothed mean mortality rate h_a across all doses in quiet window
+        # Use 8-week MA smoothing (already applied to MR_smooth column)
+        smoothed_mrs = age_quiet_data["MR_smooth"].values
+        valid_mrs = smoothed_mrs[smoothed_mrs > EPS]  # Remove zeros for mean calculation
+        
+        if len(valid_mrs) > 0:
+            h_a = np.mean(valid_mrs)  # Smoothed mean MR in quiet window
+        else:
+            # Handle zero deaths with shrinkage - use minimum observed MR across all ages
+            all_mrs = quiet_data["MR_smooth"][quiet_data["MR_smooth"] > EPS].values
+            h_a = np.min(all_mrs) if len(all_mrs) > 0 else EPS
+        
+        # Calculate person-time PT_a(W) for this age group in quiet window
+        PT_a = float(age_quiet_data["PT"].sum())
+        
+        # Expected-deaths weight: w_a ∝ h_a × PT_a(W)
+        weights[yob] = h_a * PT_a
+    
+    # Normalize weights: w_a = (h_a PT_a(W)) / (Σ_b h_b PT_b(W))
+    total_weight = sum(weights.values())
+    if total_weight > 0:
+        weights = {yob: w / total_weight for yob, w in weights.items()}
+    else:
+        # Fallback to equal weights if all weights are zero
+        weights = {yob: 1.0 / len(weights) for yob in weights.keys()}
+    
+    # Debug: Show expected-deaths weights
+    if DEBUG_VERBOSE:
+        print(f"\n[DEBUG] Expected-deaths weights for ASMR pooling (Option 2+):")
+        for yob in sorted(weights.keys()):
+            print(f"  Age {yob}: weight = {weights[yob]:.6f}")
+        print(f"  Total weight: {sum(weights.values()):.6f}")
+        print()
 
     pooled_rows = []
     all_dates = sorted(df_sorted["DateDied"].unique())
@@ -688,11 +744,17 @@ def process_workbook(src_path: str, out_path: str):
         # Apply slope correction to each individual MR value
         def apply_slope_correction_to_mr(row):
             slope = slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
+            # Clip slope to prevent overflow
+            slope = np.clip(slope, -10.0, 10.0)
             scale_factor = safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
             return row["MR"] * scale_factor
         
         # Add slope and scale factor columns for transparency
         df["slope"] = df.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
+        
+        # Clip extreme slope values to prevent overflow
+        df["slope"] = np.clip(df["slope"], -10.0, 10.0)  # Reasonable bounds for mortality slopes
+        
         df["scale_factor"] = df.apply(lambda row: safe_exp(-df["slope"].iloc[row.name] * (row["t"] - float(ANCHOR_WEEKS))), axis=1)
         
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
@@ -948,7 +1010,130 @@ def process_workbook(src_path: str, out_path: str):
         all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
     # Write main analysis file with retry logic
-    write_main_analysis_with_retry(combined, debug_df, about_df, out_path)
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+                # Add About sheet first
+                about_data = {
+                    "Field": [
+                        "KCOR Version",
+                        "Analysis Date", 
+                        "Input File",
+                        "Output File",
+                        "",
+                        "Methodology Information:",
+                        "",
+                        "1. Data Preprocessing:",
+                        "   - Enrollment Date Filtering: Data processing starts from enrollment date",
+                        "   - Sex Aggregation: Mortality data aggregated across sexes",
+                        "   - Smoothing: 8-week centered moving average applied to raw mortality rates",
+                        "",
+                        "2. Slope Calculation:",
+                        "   - Uses predefined anchor points (e.g., weeks 53 and 114)",
+                        "   - Geometric mean of smoothed MR values within ±2 week windows",
+                        "   - Formula: r = (1/Δt) × ln(B̃/Ã)",
+                        "",
+                        "3. Mortality Rate Adjustment:",
+                        "   - MR_adj = MR × exp(-slope × (t - t0))",
+                        "   - t0 = baseline week (typically week 4)",
+                        "",
+                        "4. KCOR Computation (v4.1):",
+                        "   - Step 1: MR_adj = MR × exp(-slope × (t - t0))",
+                        "   - Step 2: hazard = -ln(1 - MR_adj) [clipped to 0.999]",
+                        "   - Step 3: CMR = cumsum(hazard)",
+                        "   - KCOR = CMR_v / CMR_u",
+                        "",
+                        "5. Uncertainty Quantification:",
+                        "   - 95% Confidence intervals using proper uncertainty propagation",
+                        "   - Binomial variance approximation for death counts",
+                        "",
+                        "Output Sheets:",
+                        "- dose_pairs: KCOR values for all dose comparisons",
+                        "- by_dose: Individual dose curves with complete methodology transparency",
+                        "- About: This metadata sheet",
+                        "",
+                        "For more information, see: https://github.com/skirsch/KCOR"
+                    ],
+                    "Value": [
+                        VERSION,
+                        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        src_path,
+                        out_path,
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+                about_df = pd.DataFrame(about_data)
+                about_df.to_excel(writer, index=False, sheet_name="About")
+                
+                # Add debug sheet (working format)
+                if DEBUG_VERBOSE:
+                    debug_df.to_excel(writer, index=False, sheet_name="by_dose")
+                
+                # Individual sheets removed - everything is now in the dose_pairs sheet
+                
+                # Ensure dose_pairs sheet Date column stays as date objects
+                all_data = combined.copy()
+                all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
+            
+            # If we get here, the file was written successfully
+            print(f"[Done] Wrote {len(combined)} rows to {out_path}")
+            break
+            
+        except PermissionError as e:
+            retry_count += 1
+            if retry_count < max_retries:
+                print(f"\n❌ Error: Cannot access output file '{out_path}'")
+                print("   This usually means the file is open in Excel or another program.")
+                print(f"   Attempt {retry_count}/{max_retries}")
+                
+                response = input("   Please close the file and press Enter to retry (or 'q' to quit): ").strip().lower()
+                if response == 'q':
+                    print("   Exiting...")
+                    return combined
+                print("   Retrying...")
+            else:
+                print(f"\n❌ Error: Failed to access '{out_path}' after {max_retries} attempts.")
+                print("   Please ensure the file is not open in Excel or another program.")
+                return combined
+        except Exception as e:
+            print(f"\n❌ Unexpected error writing main analysis file: {e}")
+            return combined
     
     # Create summary file with one sheet per enrollment date
     create_summary_file(combined, out_path)
@@ -978,8 +1163,18 @@ def create_summary_file(combined_data, out_path):
                 for sheet_name in sorted(sheets):
                     sheet_data = combined_data[combined_data["Sheet"] == sheet_name].copy()
                     
-                    # Get the latest data for each dose combination and age group (like console output)
-                    latest_data = sheet_data.groupby(["YearOfBirth", "Dose_num", "Dose_den"]).last().reset_index()
+                    # Use same logic as console output: filter for end of 2022
+                    sheet_data["Date"] = pd.to_datetime(sheet_data["Date"])
+                    sheet_2022 = sheet_data[sheet_data["Date"].dt.year == 2022]
+                    
+                    if sheet_2022.empty:
+                        # If no 2022 data, use latest data for each dose combination and age group
+                        latest_data = sheet_data.groupby(["YearOfBirth", "Dose_num", "Dose_den"]).last().reset_index()
+                    else:
+                        # Get the last date in 2022 for this sheet
+                        last_date_2022 = sheet_2022["Date"].max()
+                        # Filter for that specific date
+                        latest_data = sheet_2022[sheet_2022["Date"] == last_date_2022]
                     
                     # Create summary format similar to console output
                     summary_rows = []
