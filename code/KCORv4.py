@@ -61,11 +61,11 @@ INPUT WORKBOOK SCHEMA per sheet (e.g., '2021-13', '2021_24', '2022_06', ...):
 
 OUTPUTS (two main sheets):
     - "by_dose": Individual dose curves with complete methodology transparency including:
-      Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, Cum_MR, Cum_MR_Actual, Hazard, 
+      EnrollmentDate, Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, Cum_MR, Cum_MR_Actual, Hazard, 
       Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
       Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
     - "dose_pairs": KCOR values for all dose comparisons with complete methodology transparency:
-      Sheet, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
+      EnrollmentDate, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
       KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, CMR_actual_num, hazard_num, 
       slope_num, scale_factor_num, MR_smooth_num, t_num, MR_den, MR_adj_den, CMR_den, 
       CMR_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
@@ -444,7 +444,7 @@ def build_kcor_rows(df, sheet_name):
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
                           "MR_num","MR_adj_num","CMR_num","CMR_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
                           "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"]].copy()
-            out["Sheet"] = sheet_name
+            out["EnrollmentDate"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
             out["Dose_den"] = den
@@ -596,7 +596,7 @@ def build_kcor_rows(df, sheet_name):
                     print(f"  Final logK: {logK:.6f}")
                     print()
                 pooled_rows.append({
-                    "Sheet": sheet_name,
+                    "EnrollmentDate": sheet_name,
                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
                     "Date": pd.to_datetime(dt).date(),  # Convert to standard pandas date format (same as debug sheet)
                     "YearOfBirth": 0,      # ASMR pooled row
@@ -628,7 +628,7 @@ def build_kcor_rows(df, sheet_name):
     if out_rows or pooled_rows:
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
-        "Sheet","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
+        "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
         "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","CMR_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
         "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
     ])
@@ -664,6 +664,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
     if DEBUG_SHEET_ONLY:
         dual_print(f"[DEBUG] Limiting to sheets: {DEBUG_SHEET_ONLY}")
+    
+    # Initialize debug data collection (will be populated inside sheet loop)
+    debug_data = []
     
     for sh in sheets_to_process:
         dual_print(f"[Info] Processing sheet: {sh}")
@@ -812,6 +815,63 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Keep unadjusted data for comparison
         df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"])["Dead"].cumsum()
         
+        # Collect debug data for this sheet (after all columns are created)
+        if DEBUG_VERBOSE:
+            dose_pairs = get_dose_pairs(sh)
+            max_dose = max(max(pair) for pair in dose_pairs)
+            for dose in range(max_dose + 1):
+                # Get all data for this dose (not aggregated by date yet)
+                dose_df = df[df["Dose"] == dose]
+                
+                # Aggregate across sexes for each dose/date/age combination
+                dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
+                    "ISOweekDied": "first",
+                    "Dead": "sum",
+                    "Alive": "sum", 
+                    "PT": "sum",
+                    "MR": "mean",  # Average MR across sexes
+                    "MR_adj": "mean",  # Average MR_adj across sexes
+                    "CMR": "mean",  # Average CMR across sexes
+                    "CMR_actual": "mean",  # Average CMR_actual across sexes
+                    "hazard": "mean",  # Average hazard across sexes
+                    "slope": "mean",  # Average slope across sexes
+                    "scale_factor": "mean",  # Average scale factor across sexes
+                    "cumD_adj": "sum",  # Sum cumulative deaths
+                    "cumD_unadj": "sum",  # Sum unadjusted cumulative deaths
+                    "cumPT": "sum",  # Sum cumulative person-time
+                    "MR_smooth": "mean",  # Average smoothed MR across sexes
+                    "t": "first"  # Time index (should be same for all sexes
+                }).reset_index().sort_values(["DateDied", "YearOfBirth"])
+                
+                for _, row in dose_data.iterrows():
+                    # Calculate smoothed adjusted MR using the slope
+                    # Use the actual age from the row for slope lookup
+                    slope = slopes.get((row["YearOfBirth"], dose), 0.0)
+                    smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
+                    
+                    debug_data.append({
+                        "EnrollmentDate": sh,  # Add enrollment date column
+                        "Date": row["DateDied"].date(),  # Use standard pandas date format (was working perfectly - DON'T TOUCH)
+                        "YearOfBirth": row["YearOfBirth"],  # Add year of birth column
+                        "Dose": dose,  # Add dose column
+                        "ISOweek": row["ISOweekDied"],
+                        "Dead": row["Dead"],
+                        "Alive": row["Alive"],
+                        "MR": row["MR"],
+                        "MR_adj": row["MR_adj"],
+                        "Cum_MR": row["CMR"],
+                        "Cum_MR_Actual": row["CMR_actual"],
+                        "Hazard": row["hazard"],
+                        "Slope": row["slope"],
+                        "Scale_Factor": row["scale_factor"],
+                        "Cumu_Adj_Deaths": row["cumD_adj"],
+                        "Cumu_Unadj_Deaths": row["cumD_unadj"],
+                        "Cumu_Person_Time": row["cumPT"],
+                        "Smoothed_Raw_MR": row["MR_smooth"],
+                        "Smoothed_Adjusted_MR": smoothed_adj_mr,
+                        "Time_Index": row["t"]
+                    })
+        
         # Debug: Print detailed CMR calculation info
         # if DEBUG_VERBOSE:
         #     print(f"\n[DEBUG] CMR calculation details for sheet {sh}:")
@@ -841,7 +901,16 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         all_out.append(out_sh)
 
     # Combine all results
-    combined = pd.concat(all_out, ignore_index=True).sort_values(["Sheet","YearOfBirth","Dose_num","Dose_den","Date"])
+    combined = pd.concat(all_out, ignore_index=True).sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
+    
+    # Create debug DataFrame from collected data
+    if DEBUG_VERBOSE:
+        debug_df = pd.DataFrame(debug_data)
+        # print(f"\n[DEBUG] Created debug sheet with {len(debug_df)} rows")
+        # print(f"  Date range: {debug_df['Date'].min()} to {debug_df['Date'].max()}")
+        # print(f"  Date column dtype: {debug_df['Date'].dtype}")
+        # print(f"  Sample Date values: {debug_df['Date'].head(3).tolist()}")
+        # print(f"  Doses included: {debug_df['ISOweek'].nunique()} unique ISO weeks")
 
     # Debug: Show Date column info for main sheets
     # print(f"\n[DEBUG] Main sheets Date column info:")
@@ -870,7 +939,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         end_2022_data = combined_2022[combined_2022["Date"] == last_date_2022]
         
         # Group by sheets and dose combinations
-        for sheet_name in sorted(end_2022_data["Sheet"].unique()):
+        for sheet_name in sorted(end_2022_data["EnrollmentDate"].unique()):
             print(f"\nSheet: {sheet_name}")
             print("=" * 60)
             
@@ -885,7 +954,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 
                 # Get data for this dose combination and sheet
                 dose_data = end_2022_data[
-                    (end_2022_data["Sheet"] == sheet_name) &
+                    (end_2022_data["EnrollmentDate"] == sheet_name) &
                     (end_2022_data["Dose_num"] == dose_num) & 
                     (end_2022_data["Dose_den"] == dose_den)
                 ]
@@ -914,73 +983,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print("No data available for 2022 in any sheet")
     
     dual_print("="*80)
-
-    # Create debug sheet with individual dose curves
-    if DEBUG_VERBOSE:
-        debug_data = []
-        # Use the first sheet's dose range for debug (since df is from the last processed sheet)
-        first_sheet = sheets_to_process[0] if sheets_to_process else "2021_24"
-        dose_pairs = get_dose_pairs(first_sheet)
-        max_dose = max(max(pair) for pair in dose_pairs)
-        for dose in range(max_dose + 1):
-            # Get all data for this dose (not aggregated by date yet)
-            dose_df = df[df["Dose"] == dose]
-            
-            # Aggregate across sexes for each dose/date/age combination
-            dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
-                "ISOweekDied": "first",
-                "Dead": "sum",
-                "Alive": "sum", 
-                "PT": "sum",
-                "MR": "mean",  # Average MR across sexes
-                "MR_adj": "mean",  # Average MR_adj across sexes
-                "CMR": "mean",  # Average CMR across sexes
-                "CMR_actual": "mean",  # Average CMR_actual across sexes
-                "hazard": "mean",  # Average hazard across sexes
-                "slope": "mean",  # Average slope across sexes
-                "scale_factor": "mean",  # Average scale factor across sexes
-                "cumD_adj": "sum",  # Sum cumulative deaths
-                "cumD_unadj": "sum",  # Sum unadjusted cumulative deaths
-                "cumPT": "sum",  # Sum cumulative person-time
-                "MR_smooth": "mean",  # Average smoothed MR across sexes
-                "t": "first"  # Time index (should be same for all sexes
-            }).reset_index().sort_values(["DateDied", "YearOfBirth"])
-            
-            for _, row in dose_data.iterrows():
-                # Calculate smoothed adjusted MR using the slope
-                # Use the actual age from the row for slope lookup
-                slope = slopes.get((row["YearOfBirth"], dose), 0.0)
-                smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
-                
-                debug_data.append({
-                    "Date": row["DateDied"].date(),  # Use standard pandas date format (was working perfectly - DON'T TOUCH)
-                    "YearOfBirth": row["YearOfBirth"],  # Add year of birth column
-                    "Dose": dose,  # Add dose column
-                    "ISOweek": row["ISOweekDied"],
-                    "Dead": row["Dead"],
-                    "Alive": row["Alive"],
-                    "MR": row["MR"],
-                    "MR_adj": row["MR_adj"],
-                    "Cum_MR": row["CMR"],
-                    "Cum_MR_Actual": row["CMR_actual"],
-                    "Hazard": row["hazard"],
-                    "Slope": row["slope"],
-                    "Scale_Factor": row["scale_factor"],
-                    "Cumu_Adj_Deaths": row["cumD_adj"],
-                    "Cumu_Unadj_Deaths": row["cumD_unadj"],
-                    "Cumu_Person_Time": row["cumPT"],
-                    "Smoothed_Raw_MR": row["MR_smooth"],
-                    "Smoothed_Adjusted_MR": smoothed_adj_mr,
-                    "Time_Index": row["t"]
-                })
-        
-        debug_df = pd.DataFrame(debug_data)
-        # print(f"\n[DEBUG] Created debug sheet with {len(debug_df)} rows")
-        # print(f"  Date range: {debug_df['Date'].min()} to {debug_df['Date'].max()}")
-        # print(f"  Date column dtype: {debug_df['Date'].dtype}")
-        # print(f"  Sample Date values: {debug_df['Date'].head(3).tolist()}")
-        # print(f"  Doses included: {debug_df['ISOweek'].nunique()} unique ISO weeks")
-    
 
     # write
     with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
@@ -1189,8 +1191,8 @@ def create_summary_file(combined_data, out_path, dual_print):
     
     dual_print(f"[Summary] Creating summary file: {summary_path}")
     
-    # Group data by Sheet (enrollment date)
-    sheets = combined_data["Sheet"].unique()
+    # Group data by EnrollmentDate (enrollment date)
+    sheets = combined_data["EnrollmentDate"].unique()
     
     # Write summary file with retry logic
     max_retries = 3
@@ -1200,7 +1202,7 @@ def create_summary_file(combined_data, out_path, dual_print):
         try:
             with pd.ExcelWriter(summary_path, engine='openpyxl') as writer:
                 for sheet_name in sorted(sheets):
-                    sheet_data = combined_data[combined_data["Sheet"] == sheet_name].copy()
+                    sheet_data = combined_data[combined_data["EnrollmentDate"] == sheet_name].copy()
                     
                     # Use same logic as console output: filter for end of 2022
                     sheet_data["Date"] = pd.to_datetime(sheet_data["Date"])
