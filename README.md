@@ -777,7 +777,7 @@ The KCOR methodology has been independently validated using multiple approaches 
 
 ### Independent Validation Methods
 
-The [`validation/`](validation/) directory contains two independent validation approaches:
+The [`validation/`](validation/) directory contains three independent validation approaches:
 
 1. **GLM Validation**: A **completely different methodology** using Generalized Linear Models with **variable cohorts** rather than fixed cohorts. This approach creates output that looks nearly identical to KCOR results, providing strong independent validation.
 
@@ -789,7 +789,13 @@ The [`validation/`](validation/) directory contains two independent validation a
    
    *KCOR results for direct comparison with GLM validation*
 
-2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
+2. **Aarstad Correlation Analysis**: Independent correlation analysis of CDC excess deaths data by county, providing external validation of KCOR findings.
+
+   ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
+   
+   *Aarstad correlation analysis showing consistent patterns with KCOR methodology*
+
+3. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
 
 ### Validation Objectives
 
