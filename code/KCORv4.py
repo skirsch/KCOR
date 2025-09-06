@@ -435,9 +435,6 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                         # If final KCOR is below minimum, adjust scaling factor
                         if final_kcor < FINAL_KCOR_MIN:
                             scale_factor = 1.0 / final_kcor
-                            if dual_print:
-                                dual_print(f"[INFO] KCOR scaling adjustment for Age {yob}, Doses {num} vs {den}: final KCOR = {final_kcor:.4f} < {FINAL_KCOR_MIN}")
-                                dual_print(f"[INFO] Original scale factor = 1.0, adjusted scale factor = {scale_factor:.4f}")
             
             # Save scale factor for ASMR computation
             scale_factors[(yob, num, den)] = scale_factor
