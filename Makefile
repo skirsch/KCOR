@@ -5,6 +5,7 @@ MAKEFLAGS += --no-print-directory
 
 CODE_DIR := code
 VALIDATION_DSCMRR_DIR := validation/DS-CMRR
+VALIDATION_KM_DIR := validation/kaplan_meier
 
 .PHONY: all run validation test clean
 
@@ -15,9 +16,14 @@ all: run validation
 run:
 	$(MAKE) -C $(CODE_DIR) KCOR
 
-# Validation suite (currently DS-CMRR; extend as needed)
+# Validation suite (DS-CMRR and Kaplan–Meier)
 validation:
 	$(MAKE) -C $(VALIDATION_DSCMRR_DIR) run
+	$(MAKE) -C $(VALIDATION_KM_DIR) run
+
+# Convenience target to run only Kaplan–Meier
+km:
+	$(MAKE) -C $(VALIDATION_KM_DIR) run
 
 # Alias: `make test` maps to validation (keep unit tests separate if added later)
 test: validation
@@ -25,5 +31,6 @@ test: validation
 clean:
 	-$(MAKE) -C $(CODE_DIR) clean
 	-$(MAKE) -C $(VALIDATION_DSCMRR_DIR) clean
+	-$(MAKE) -C $(VALIDATION_KM_DIR) clean
 
 

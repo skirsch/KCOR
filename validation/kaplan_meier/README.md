@@ -13,4 +13,22 @@ Planned contents:
 
 Implementation to follow.
 
+### Usage
+
+Run with make (defaults: `SHEET=2021_24 START=1940 END=2000 GROUPA=0 GROUPB=1,2`):
+
+```bash
+make -C validation/kaplan_meier run
+```
+
+Notes:
+- The `--groups` parameter defines two dose groups. For example, `"0"` and `"1,2"` means cohort 0 vs. combined cohorts 1 and 2.
+- Survival is equalized to the vaccinated group's enrollment population so curves are comparable when cohorts are death-matched but have different sizes.
+
+To override parameters:
+
+```bash
+make -C validation/kaplan_meier run SHEET=2021_24 START=1940 END=2000 GROUPA="0" GROUPB="1,2"
+```
+
 
