@@ -184,7 +184,7 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, do
         if den <= 0: 
             continue
         K = num / den
-        out_rows.append([sheet_name, pd.Timestamp(dt).date(), iso_map.get(dt), K, sum(num_d), sum(den_d)])
+        out_rows.append([sheet_name, pd.Timestamp(dt).date(), iso_map.get(pd.Timestamp(dt)), K, sum(num_d), sum(den_d)])
 
     out = pd.DataFrame(out_rows, columns=["EnrollmentDate","Date","ISOweekDied","K_std","Dnum_w2","Dden_w2"])
     if out.empty:
@@ -265,7 +265,7 @@ def age_specific_ratios(df, sheet_name, anchor_weeks, dose_num_min=1, dose_den_e
             out_rows.append([
                 sheet_name,
                 pd.Timestamp(dt).date(),
-                iso_map.get(dt),
+                iso_map.get(pd.Timestamp(dt)),
                 yob,
                 dose_num_min,
                 dose_den_exact,

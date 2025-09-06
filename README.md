@@ -789,13 +789,17 @@ The [`validation/`](validation/) directory contains three independent validation
    
    *KCOR results for direct comparison with GLM validation*
 
-2. **Aarstad Correlation Analysis**: Independent correlation analysis of CDC excess deaths data by county, providing external validation of KCOR findings.
+2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
+
+   ![DS-CMRR dose 2 vs 0 (ASMR case)](validation/DS-CMRR/DS-CMRR_dose2.png)
+
+   *DS-CMRR output KCOR(t) for Czech data, dose 2 vs unvaccinated (single-sheet 2021_24)*
+
+3. **Aarstad Correlation Analysis**: Independent correlation analysis of CDC excess deaths data by county, providing external validation of KCOR findings.
 
    ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
-   
-   *Aarstad correlation analysis showing consistent patterns with KCOR methodology*
 
-3. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
+   *Aarstad correlation analysis showing consistent patterns with KCOR methodology*
 
 ### Validation Objectives
 
