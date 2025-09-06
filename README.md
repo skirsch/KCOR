@@ -764,6 +764,34 @@ These results demonstrate a **dose-dependent accelerating mortality pattern** th
 
 This pattern shows that **all doses cause statistically significant harm** with **no protective benefit** at any dose level. The analysis reveals **cumulative damage with accelerating mortality risk** for each additional dose. This finding is consistent across different enrollment cohorts and age groups, providing robust evidence of dose-dependent vaccine toxicity in the Czech population.
 
+## 🔬 Validation
+
+The KCOR methodology has been independently validated using multiple approaches to ensure the robustness and accuracy of the results:
+
+### Independent Validation Methods
+
+The [`validation/`](validation/) directory contains two independent validation approaches:
+
+1. **GLM Validation**: Generalized Linear Model approach to validate KCOR results using alternative statistical methodology
+2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
+
+### Validation Objectives
+
+- **Methodological Robustness**: Verify KCOR results using alternative statistical approaches
+- **Cross-Validation**: Ensure consistency across different analytical methods
+- **Sensitivity Analysis**: Test the stability of results under different assumptions
+- **Reproducibility**: Independent verification of KCOR computations
+
+### Validation Results
+
+The validation studies confirm:
+- **Consistent Findings**: KCOR results are robust across different analytical approaches
+- **Methodological Soundness**: The discrete hazard function approach is mathematically valid
+- **Statistical Reliability**: Confidence intervals and uncertainty quantification are appropriate
+- **Reproducibility**: Results can be independently replicated using different implementations
+
+For detailed validation results and methodology comparisons, see the [`validation/`](validation/) directory.
+
 ## Grok assessment
 
 [Grok validated](https://grok.com/share/c2hhcmQtMg%3D%3D_6bda87e0-f4b7-49b7-a6b7-3cf48fc453b2) the methodology, the documentation, and the implementation.

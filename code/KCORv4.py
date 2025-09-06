@@ -4,7 +4,7 @@
 KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.3
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
-mortality rates between different dose groups, normalized to 1 at a baseline period.
+hazards between different dose groups, normalized to 1 at a baseline period.
 
 METHODOLOGY OVERVIEW:
 ====================
@@ -28,11 +28,11 @@ METHODOLOGY OVERVIEW:
    - Each dose-age combination gets its own slope for adjustment
 
 4. KCOR COMPUTATION (v4.1+):
-   - KCOR = (cum_hazard_num / cum_hazard_den) / (cum_hazard_num_baseline / cum_hazard_den_baseline)
-   - cum_hazard = slope-corrected cumulative hazard (mathematically exact)
+   - KCOR = (CH_num / CH_den) / (CH_num_baseline / CH_den_baseline)
+   - CH = slope-corrected cumulative hazard (mathematically exact)
    - Step 1: Apply slope correction to individual MR: MR_adj = MR × exp(-slope × (t - t0))
    - Step 2: Apply discrete cumulative-hazard transform: hazard = -ln(1 - MR_adj)
-   - Step 3: Calculate cumulative hazard: cum_hazard = cumsum(hazard)
+   - Step 3: Calculate cumulative hazard: CH = cumsum(hazard)
    - Baseline values taken at week 4 (or first available week)
    - Results in KCOR = 1 at baseline, showing relative risk over time
 
@@ -61,7 +61,7 @@ INPUT WORKBOOK SCHEMA per sheet (e.g., '2021-13', '2021_24', '2022_06', ...):
 
 OUTPUTS (two main sheets):
     - "by_dose": Individual dose curves with complete methodology transparency including:
-      EnrollmentDate, Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, Cum_MR, Cum_MR_Actual, Hazard, 
+      EnrollmentDate, Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, CH, CH_actual, Hazard, 
       Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
       Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
     - "dose_pairs": KCOR values for all dose comparisons with complete methodology transparency:
