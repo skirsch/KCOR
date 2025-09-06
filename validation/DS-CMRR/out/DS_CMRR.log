@@ -4,7 +4,7 @@ Fixed-Cohort Direct Standardized Cumulative-Hazard Ratio (DS-CMRR)
 Input : ../../data/Czech/KCOR_CMR.xlsx
 Output: out/DS-CMRR_output.xlsx
 Log   : /mnt/c/Users/stk/Documents/GitHub/KCOR/validation/DS-CMRR/out/DS_CMRR.log
-Config: anchor_weeks=4, baseline_weeks=4, weights=expected_deaths, year_range=(1920,2000), sheet_filter=['2021_24'], by_age=yes, dose_num_min=2, dose_den_exact=0
+Config: anchor_weeks=4, baseline_weeks=4, weights=expected_deaths, year_range=(1920,2000), sheet_filter=['2021_24'], by_age=yes, dose_num_min=2, dose_den_exact=0, variance=kish
 ================================================================================
 
 [Sheet] 2021_24

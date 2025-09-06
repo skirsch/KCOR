@@ -148,7 +148,7 @@ def build_per_age_series(df, dose_num_min=1, dose_den_exact=0):
             per_age[a] = {"u": u, "v": gv}
     return per_age
 
-def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, dose_den_exact=0):
+def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, dose_den_exact=0, variance_method="kish"):
     out_rows = []
     all_dates = sorted(df["Date"].unique())
     iso_map = (df.drop_duplicates(subset=["Date"])[["Date","ISOweekDied"]]
@@ -158,7 +158,8 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, do
 
     for dt in all_dates:
         num_cmrs, den_cmrs = [], []
-        num_d, den_d = [], []
+        num_d_w2, den_d_w2 = [], []
+        num_d_w1, den_d_w1 = [], []
         for a in ages:
             if a not in weights or a not in per_age: 
                 continue
@@ -174,8 +175,10 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, do
 
             num_cmrs.append(w * vcmr)
             den_cmrs.append(w * ucmr)
-            num_d.append((w**2) * vd)
-            den_d.append((w**2) * ud)
+            num_d_w2.append((w**2) * vd)
+            den_d_w2.append((w**2) * ud)
+            num_d_w1.append(w * vd)
+            den_d_w1.append(w * ud)
 
         if not num_cmrs or not den_cmrs:
             continue
@@ -184,9 +187,16 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, do
         if den <= 0: 
             continue
         K = num / den
-        out_rows.append([sheet_name, pd.Timestamp(dt).date(), iso_map.get(pd.Timestamp(dt)), K, sum(num_d), sum(den_d)])
+        # Kish effective deaths under weighting
+        dnum_w1 = sum(num_d_w1)
+        dden_w1 = sum(den_d_w1)
+        dnum_w2 = sum(num_d_w2)
+        dden_w2 = sum(den_d_w2)
+        dnum_eff = (dnum_w1*dnum_w1)/(dnum_w2+EPS) if dnum_w2>0 else 0.0
+        dden_eff = (dden_w1*dden_w1)/(dden_w2+EPS) if dden_w2>0 else 0.0
+        out_rows.append([sheet_name, pd.Timestamp(dt).date(), iso_map.get(pd.Timestamp(dt)), K, dnum_w2, dden_w2, dnum_eff, dden_eff])
 
-    out = pd.DataFrame(out_rows, columns=["EnrollmentDate","Date","ISOweekDied","K_std","Dnum_w2","Dden_w2"])
+    out = pd.DataFrame(out_rows, columns=["EnrollmentDate","Date","ISOweekDied","K_std","Dnum_w2","Dden_w2","Dnum_eff","Dden_eff"])
     if out.empty:
         return out
 
@@ -195,13 +205,21 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, do
     if not np.isfinite(anchor) or anchor<=0: anchor = 1.0
     out["K_std"] = out["K_std"] / anchor
 
-    base_num = float(out["Dnum_w2"].iloc[idx0]) if len(out)>idx0 else 0.0
-    base_den = float(out["Dden_w2"].iloc[idx0]) if len(out)>idx0 else 0.0
+    if variance_method == "kish":
+        base_num = float(out["Dnum_eff"].iloc[idx0]) if len(out)>idx0 else 0.0
+        base_den = float(out["Dden_eff"].iloc[idx0]) if len(out)>idx0 else 0.0
+    else:
+        base_num = float(out["Dnum_w2"].iloc[idx0]) if len(out)>idx0 else 0.0
+        base_den = float(out["Dden_w2"].iloc[idx0]) if len(out)>idx0 else 0.0
 
     se_logs = []
     for i in range(len(out)):
-        vn = float(out["Dnum_w2"].iloc[i])
-        vd = float(out["Dden_w2"].iloc[i])
+        if variance_method == "kish":
+            vn = float(out["Dnum_eff"].iloc[i])
+            vd = float(out["Dden_eff"].iloc[i])
+        else:
+            vn = float(out["Dnum_w2"].iloc[i])
+            vd = float(out["Dden_w2"].iloc[i])
         # Delta-method for log ratio: Var[logK(t)] ≈ 1/D_num(t) + 1/D_den(t)
         # Anchor adjustment adds 1/D_num(anchor) + 1/D_den(anchor)
         se2 = (1.0/(vn+EPS)) + (1.0/(vd+EPS)) + (1.0/(base_num+EPS)) + (1.0/(base_den+EPS))
@@ -392,7 +410,7 @@ def process_book(args):
             f"weights={args.weights}, year_range=({args.year_min},{args.year_max}), "
             f"sheet_filter={args.sheet if args.sheet else 'all'}, "
             f"by_age={'only' if args.by_age_only else ('yes' if args.by_age else 'no')}, "
-            f"dose_num_min={args.dose_num_min}, dose_den_exact={args.dose_den_exact}")
+            f"dose_num_min={args.dose_num_min}, dose_den_exact={args.dose_den_exact}, variance={args.variance_method}")
     printer("="*80)
 
     xls = pd.ExcelFile(args.input)
@@ -421,7 +439,7 @@ def process_book(args):
         weights = compute_weights(df, baseline_dates, args.weights, printer, args.dose_num_min)
         # aggregate standardized
         if not args.by_age_only:
-            out_sh = standardized_ratio(df, weights, sh, args.anchor_weeks, args.dose_num_min, args.dose_den_exact)
+            out_sh = standardized_ratio(df, weights, sh, args.anchor_weeks, args.dose_num_min, args.dose_den_exact, args.variance_method)
             if out_sh.empty:
                 printer("  (no aligned dates across cohorts for standardized)")
             else:
@@ -456,14 +474,14 @@ def process_book(args):
             "Field":[
                 "Method","Anchor week index","Baseline weeks","Weight scheme",
                 "Generated","Input file","Output file","Year min","Year max",
-                "Dose numerator min","Dose denominator exact"
+                "Dose numerator min","Dose denominator exact","Variance method"
             ],
             "Value":[
                 "Fixed-Cohort Direct Standardized Cumulative-Hazard Ratio (DS-CMRR)",
                 args.anchor_weeks, args.baseline_weeks, args.weights,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.input, args.output,
                 args.year_min, args.year_max,
-                args.dose_num_min, args.dose_den_exact
+                args.dose_num_min, args.dose_den_exact, getattr(args, "variance_method", "kish")
             ]
         })
         about.to_excel(w, index=False, sheet_name="About")
@@ -510,6 +528,8 @@ def build_arg_parser():
                    help="Numerator includes doses >= this value (default: 1)")
     p.add_argument("--dose-den-exact", type=int, default=0,
                    help="Denominator exact dose (default: 0)")
+    p.add_argument("--variance-method", choices=["kish","sumw2"], default="kish",
+                   help="Variance for ASMR CIs: 'kish' (effective deaths) or 'sumw2' (w^2 sum)")
     p.add_argument("--sheet", action="append",
                    help="Only process specific sheet(s); can be repeated (e.g., --sheet 2021_24)")
     return p
