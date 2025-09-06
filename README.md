@@ -246,13 +246,6 @@ When unsafe vaccines create artificially high baseline mortality rates during th
 
 **Scaling Formula:**
 
-
-
-$$\text{KCOR}(t) = \text{ba2seline\\_kraw} $$
-$$\text{KCOR}(t) = \text{bas3eline\\\_kraw} $$
-
-
-
 $$\text{KCOR}(t) = \frac{\text{Kraw}(t)}{\text{baseline\\_kraw}} \times \text{scale\\_factor}$$
 
 Where:
