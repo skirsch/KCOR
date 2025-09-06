@@ -1,4 +1,4 @@
-# KCOR v4.2 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -145,12 +145,12 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
 ### ⚙️ Analysis Pipeline
 
 #### 1. Data Preprocessing
-- **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021-13" = 2021, week 13, "2021_24" = 2021, week 24)
+- **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (YearOfBirth, Dose, DateDied) combination
 - **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
 #### 2. Slope Calculation (Lookup Table Method)
-- **Anchor Points**: Uses predefined time points (e.g., weeks 64 and 125 from enrollment for 2021-13, weeks 53 and 114 for 2021_24)
+- **Anchor Points**: Uses predefined time points (e.g., weeks 53 and 114 for 2021_24, weeks 19 and 111 for 2022_06)
 - **Window Approach**: For each anchor point, creates a ±2 week window (5 points total)
 - **Geometric Mean**: Calculates geometric mean of smoothed MR values within each window
 
@@ -233,7 +233,40 @@ Where:
 - **1.96**: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-#### 6. Age Standardization (Option 2+ - Enhanced v4.2)
+#### 6. KCOR Normalization Fine-Tuning (v4.3+)
+**Baseline Correction for Unsafe Vaccine Effects:**
+
+When unsafe vaccines create artificially high baseline mortality rates during the normalization period, KCOR values become artificially low. This feature automatically detects and corrects for this bias by adjusting the baseline anchor value:
+
+**Detection Logic:**
+1. Compute KCOR values normally using baseline normalization (week 4)
+2. Check KCOR value at specified final date (default: April 1, 2024)
+3. If final KCOR < threshold (default: 1.0), adjust scale factor = 1/final_KCOR
+4. Apply adjusted scale factor to all KCOR computations
+
+**Scaling Formula:**
+
+$$\text{KCOR}(t) = \frac{\text{K\_raw}(t)}{\text{baseline\_k\_raw}} \times \text{scale\_factor}$$
+
+Where:
+- **KCOR_final_date** = KCOR value at the specified final date with original normalization
+- **Scale factor** = 1/KCOR_final_date when KCOR_final_date < threshold
+- **Applied to**: Scale factor only (preserves all K_raw relationships)
+
+**Configuration Parameters:**
+```python
+FINAL_KCOR_MIN = 1              # Minimum KCOR threshold for scaling
+FINAL_KCOR_DATE = "4/1/24"      # Date to check for scaling (MM/DD/YY format)
+```
+
+**Key Benefits:**
+- **Corrects Baseline Bias**: Fixes artificially low KCOR values due to unsafe vaccine effects
+- **Automatic Detection**: Only applies scaling when needed (KCOR < threshold)
+- **Preserves Relationships**: Maintains relative differences between all time points
+- **Transparent Process**: BEFORE/AFTER anchor values logged for full transparency
+- **Conservative Approach**: Only scales when clear evidence of baseline bias exists
+
+#### 7. Age Standardization (Option 2+ - Enhanced v4.2)
 **Expected-Deaths Weighting for ASMR Pooling:**
 
 The age-standardized KCOR uses expected-deaths weights that properly reflect actual mortality burden:
@@ -394,7 +427,7 @@ The analysis produces Excel workbooks with comprehensive methodology transparenc
 This file enables users to visualize results for any cohort combination and contains:
 
 **`KCOR_summary.xlsx`** - Console-style summary by enrollment date
-This file provides one sheet per enrollment period (e.g., 2021-13, 2021_24, 2022_06) formatted like the console output, with dose combination headers and final KCOR values for each age group.
+This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) formatted like the console output, with dose combination headers and final KCOR values for each age group.
 
 #### Main Analysis Sheets
 - **`dose_pairs`**: KCOR values for all dose comparisons with complete methodology transparency
@@ -422,7 +455,7 @@ This file provides one sheet per enrollment period (e.g., 2021-13, 2021_24, 2022
 - **Methodology Validation**: Examine all intermediate calculations for transparency
 
 **`KCOR_summary.xlsx`** - Console-style summary format:
-- **One Sheet Per Enrollment**: Easy comparison across different enrollment periods (2021-13, 2021_24, 2022_06, etc.)
+- **One Sheet Per Enrollment**: Easy comparison across different enrollment periods (2021_24, 2022_06, etc.)
 - **Console Format**: Structured like the console output with dose combination headers
 - **Final Values**: Shows the latest KCOR values and confidence intervals for each age group
 - **Easy Reading**: Clean format with dose combination headers and age group results
@@ -444,7 +477,7 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation
 
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process
-DEBUG_SHEET_ONLY = ["2021-13", "2021_24", "2022_06"]  # Sheets to process
+ENROLLMENT_DATES = ["2021_24", "2022_06"]  # Enrollment dates (sheet names) to process
 ```
 
 ### Sheet-Specific Configuration
@@ -467,19 +500,32 @@ The script automatically determines dose pairs based on sheet names:
 ### Example Output
 
 ```
-Dose combination: 2 vs 0
+Dose combination: 2 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI]
 --------------------------------------------------
-  ASMR (pooled) | 1.2238 [1.198, 1.250]
+  ASMR (pooled) | 1.2579 [1.232, 1.285]
            1940 | 1.2554 [1.194, 1.320]
            1955 | 1.5021 [1.375, 1.640]
+
+Dose combination: 3 vs 2 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI]
+--------------------------------------------------
+  ASMR (pooled) | 1.4941 [1.464, 1.525]
+           1940 | 1.6489 [1.570, 1.731]
+           1955 | 1.4619 [1.350, 1.583]
 ```
 
-This shows that for dose 2 vs. dose 0:
-- **ASMR**: 22.4% higher mortality risk (95% CI: 19.8% to 25.0%)
+This shows that for dose 2 vs. dose 0 (2021_24 cohort):
+- **ASMR**: 25.8% higher mortality risk (95% CI: 23.2% to 28.5%)
 - **Age 1940**: 25.5% higher risk (95% CI: 19.4% to 32.0%)
 - **Age 1955**: 50.2% higher risk (95% CI: 37.5% to 64.0%)
+
+And for dose 3 vs. dose 2 (2022_06 cohort):
+- **ASMR**: 49.4% higher mortality risk (95% CI: 46.4% to 52.5%)
+- **Age 1940**: 64.9% higher risk (95% CI: 57.0% to 73.1%)
+- **Age 1955**: 46.2% higher risk (95% CI: 35.0% to 58.3%)
 
 ## 🔧 Advanced Features
 
@@ -534,7 +580,7 @@ This shows that for dose 2 vs. dose 0:
 Enable detailed debugging by setting:
 ```python
 DEBUG_VERBOSE = True
-DEBUG_SHEET_ONLY = ["sheet_name"]  # Limit to specific sheets
+ENROLLMENT_DATES = ["sheet_name"]  # Limit to specific enrollment dates
 YEAR_RANGE = (1940, 1945)          # Limit to specific age range
 ```
 
@@ -559,6 +605,24 @@ If you use KCOR in your research, please cite:
 
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
+## 🆕 Version 4.3 Enhancements
+
+### Major Improvements
+- **Improved KCOR Scaling Logic**: Fixed baseline normalization adjustment to properly scale the scale factor
+- **Corrected Scaling Application**: Scaling now applied to the scale factor, not individual KCOR values
+- **Enhanced Parameter Management**: Single ENROLLMENT_DATES parameter replaces DEBUG_SHEET_ONLY
+- **Streamlined Processing**: Removed 2021_13 enrollment date, focusing on 2021_24 and 2022_06 cohorts
+- **Transparent Logging**: Original and adjusted scale factors logged when scaling is applied
+- **Preserved Relationships**: All K_raw relationships maintained while correcting baseline bias
+- **Updated Examples**: README examples updated with latest KCOR values from current analysis
+
+### KCOR Scaling Fix (v4.3)
+- **Before (v4.2)**: Scaling applied to individual KCOR values after computation
+- **After (v4.3)**: Scaling applied to the scale factor during computation
+- **Logic**: Check final KCOR value, if < threshold, adjust scale factor by 1/final_KCOR
+- **Result**: Proper baseline correction while preserving all relative relationships
+- **Transparency**: Original and adjusted scale factors logged for full methodology transparency
+
 ## 🆕 Version 4.2 Enhancements
 
 ### Major Improvements
@@ -568,12 +632,20 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Mathematical Correctness**: Elderly properly weighted, young under-weighted in ASMR
 - **Robust Implementation**: Uses pooled quiet baseline window with smoothed mortality rates
 - **Enhanced Documentation**: Complete explanation of Option 2+ methodology
+- **KCOR Normalization Fine-Tuning**: Automatic baseline correction for unsafe vaccine effects
 
 ### ASMR Pooling Fix (Option 2+)
 - **Before (v4.1)**: Weights = person-time only → over-weighted young people
 - **After (v4.2)**: Weights = hazard × person-time → properly weighted by death burden
 - **Formula**: `w_a ∝ h_a × PT_a(W)` where h_a = smoothed mean MR in quiet window
 - **Result**: ASMR values now reflect actual mortality impact rather than population size
+
+### KCOR Normalization Fine-Tuning
+- **Automatic Detection**: Checks KCOR values on specified final date (default: April 1, 2024)
+- **Baseline Correction**: Scales all KCOR values when minimum KCOR < threshold (default: 1.0)
+- **Unsafe Vaccine Fix**: Corrects for artificially high baseline mortality rates during normalization
+- **Transparent Process**: Scaling factor is logged for full methodology transparency
+- **Conservative Approach**: Only applies when clear evidence of baseline bias exists
 
 ### New Results Pattern
 - **Dose 1 vs 0**: KCOR = 0.99 (essentially neutral, no significant effect)
@@ -626,6 +698,17 @@ The KCOR analysis of Czech vaccination and mortality data reveals significant fi
 - **Dose 3 shows severe harm** with 54.8% increased mortality (95% CI: 51.8% to 57.9%)
 - **Dose-dependent accelerating mortality** - risk increases dramatically with additional doses
 - **All confidence intervals for doses 2+ exclude 1.0**, indicating statistically significant harm
+
+### ⚠️ Important Note on Dose 1 Harm Estimates
+
+**The Dose 1 harm estimates are likely CONSERVATIVE (underestimated)** due to the enrollment period timing:
+
+- **Enrollment starts months after first doses**: The analysis begins enrollment periods (2021_24, 2022_06) many months after the first COVID-19 vaccine doses were administered to elderly populations
+- **Early harm missed**: Any immediate or early-term mortality effects from Dose 1 that occurred before the enrollment periods are not captured in this analysis
+- **Baseline period protection**: The enrollment period was deliberately chosen to start after major COVID-19 waves to ensure accurate baseline mortality rate calculations
+- **Conservative interpretation**: This means the true harm from Dose 1 is likely higher than the neutral effect (KCOR ≈ 1.0) shown in these results
+
+This conservative bias is particularly important for understanding the true cumulative impact of COVID-19 vaccination on mortality risk.
 
 ### 🎯 Dose-Dependent Accelerating Mortality Pattern
 

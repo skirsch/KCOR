@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 """
-KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.2
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.3
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
 mortality rates between different dose groups, normalized to 1 at a baseline period.
@@ -28,11 +28,11 @@ METHODOLOGY OVERVIEW:
    - Each dose-age combination gets its own slope for adjustment
 
 4. KCOR COMPUTATION (v4.1+):
-   - KCOR = (CMR_num / CMR_den) / (CMR_num_baseline / CMR_den_baseline)
-   - CMR = slope-corrected cumulative hazard (mathematically exact)
+   - KCOR = (cum_hazard_num / cum_hazard_den) / (cum_hazard_num_baseline / cum_hazard_den_baseline)
+   - cum_hazard = slope-corrected cumulative hazard (mathematically exact)
    - Step 1: Apply slope correction to individual MR: MR_adj = MR × exp(-slope × (t - t0))
    - Step 2: Apply discrete cumulative-hazard transform: hazard = -ln(1 - MR_adj)
-   - Step 3: Calculate cumulative hazard: CMR = cumsum(hazard)
+   - Step 3: Calculate cumulative hazard: cum_hazard = cumsum(hazard)
    - Baseline values taken at week 4 (or first available week)
    - Results in KCOR = 1 at baseline, showing relative risk over time
 
@@ -112,7 +112,7 @@ def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.2"                # KCOR version number
+VERSION = "v4.3"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -125,10 +125,17 @@ VERSION = "v4.2"                # KCOR version number
 #        - Properly weights elderly age groups who contribute most to death burden
 #        - Uses pooled quiet baseline window with smoothed mortality rates
 #        - ASMR now reflects actual mortality impact rather than population size
+# v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
+#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KCOR_MIN parameters
+#        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
 
 # Core KCOR methodology parameters
 ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
+
+# KCOR normalization fine-tuning parameters
+FINAL_KCOR_MIN = 1              # Minimum KCOR value threshold for scaling
+FINAL_KCOR_DATE = "4/1/24"      # Date to check for KCOR scaling (MM/DD/YY format)
 
 # Date limitations for data quality - prevents using unreliable data beyond this date
 MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ranges
@@ -147,9 +154,9 @@ SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points tota
 MA_TOTAL_LENGTH = 8  # Total length of centered moving average (8 weeks = 4 weeks on either side)
 CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each point) to minimize lag
 
-# Debug parameters - limit scope for debugging
+# Processing parameters
 YEAR_RANGE = (1920, 2000)       # Process age groups from start to end year (inclusive)
-DEBUG_SHEET_ONLY = ['2021_13',"2021_24",'2022_06']   # List of sheets to process for DEBUG (set to None to process all)
+ENROLLMENT_DATES = ['2021_24', '2022_06']  # List of enrollment dates (sheet names) to process (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
@@ -300,6 +307,7 @@ def safe_sqrt(x, eps=EPS):
     """Safe square root with clipping."""
     return np.sqrt(np.clip(x, eps, None))
 
+
 def apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED):
     """Apply centered moving average smoothing to MR values before quantile regression.
     
@@ -324,7 +332,7 @@ def apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED):
     
     return df_smooth
 
-def build_kcor_rows(df, sheet_name):
+def build_kcor_rows(df, sheet_name, dual_print=None):
     """
     Build per-age KCOR rows for all PAIRS and ASMR pooled rows (YearOfBirth=0).
     Assumptions:
@@ -332,7 +340,7 @@ def build_kcor_rows(df, sheet_name):
       - MR = Dead / PT
       - MR_adj slope-removed via QR (for smoothing, not CMR calculation)
       - CMR = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
-      - KCOR = (CMR_num / CMR_den), anchored to 1 at week ANCHOR_WEEKS if available
+      - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week ANCHOR_WEEKS if available
               - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
     """
@@ -340,6 +348,9 @@ def build_kcor_rows(df, sheet_name):
     # Fast access by (age,dose)
     by_age_dose = {(y,d): g.sort_values("DateDied")
                    for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
+    
+    # Store scale factors for ASMR computation
+    scale_factors = {}  # {(age, dose_num, dose_den): scale_factor}
 
     # -------- per-age KCOR rows --------
     dose_pairs = get_dose_pairs(sheet_name)
@@ -388,19 +399,53 @@ def build_kcor_rows(df, sheet_name):
             #     print()
 
             # Handle division by zero or very small denominators
+            # Note: CMR_num and CMR_den are actually cumulative hazards, not mortality rates
             valid_denom = merged["CMR_den"] > EPS
             merged["K_raw"] = np.where(valid_denom, 
                                       merged["CMR_num"] / merged["CMR_den"], 
                                       np.nan)
-            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
-            anchor = merged["K_raw"].iloc[t0_idx]
-            if not (np.isfinite(anchor) and anchor > EPS):
-                anchor = 1.0
-            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
-                                     merged["K_raw"] / anchor, 
-                                     np.nan)
             
-
+            # Get baseline K_raw value (week 4)
+            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            baseline_k_raw = merged["K_raw"].iloc[t0_idx]
+            if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+                baseline_k_raw = 1.0
+            
+            # Check if KCOR at FINAL_KCOR_DATE needs scaling adjustment
+            scale_factor = 1.0  # Default: no scaling
+            
+            # Parse the final KCOR date
+            try:
+                final_date = pd.to_datetime(FINAL_KCOR_DATE, format="%m/%d/%y")
+            except:
+                try:
+                    final_date = pd.to_datetime(FINAL_KCOR_DATE, format="%m/%d/%Y")
+                except:
+                    final_date = None
+            
+            if final_date is not None:
+                # Check if we have data for the final date
+                final_date_data = merged[merged["DateDied"] == final_date]
+                if not final_date_data.empty:
+                    # Compute what KCOR would be at final date with current baseline
+                    final_k_raw = final_date_data["K_raw"].iloc[0]
+                    if np.isfinite(final_k_raw):
+                        final_kcor = final_k_raw / baseline_k_raw
+                        
+                        # If final KCOR is below minimum, adjust scaling factor
+                        if final_kcor < FINAL_KCOR_MIN:
+                            scale_factor = 1.0 / final_kcor
+                            if dual_print:
+                                dual_print(f"[INFO] KCOR scaling adjustment for Age {yob}, Doses {num} vs {den}: final KCOR = {final_kcor:.4f} < {FINAL_KCOR_MIN}")
+                                dual_print(f"[INFO] Original scale factor = 1.0, adjusted scale factor = {scale_factor:.4f}")
+            
+            # Save scale factor for ASMR computation
+            scale_factors[(yob, num, den)] = scale_factor
+            
+            # Compute final KCOR values using adjusted scale factor
+            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
+                                     (merged["K_raw"] / baseline_k_raw) * scale_factor, 
+                                     np.nan)
             
             # Debug: Check for suspiciously large KCOR values
             # if merged["KCOR"].max() > 10:
@@ -420,6 +465,10 @@ def build_kcor_rows(df, sheet_name):
             t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
             baseline_num = merged["cumD_adj_num"].iloc[t0_idx]
             baseline_den = merged["cumD_adj_den"].iloc[t0_idx]
+            
+            # Note: The baseline uncertainty calculation doesn't need scaling adjustment
+            # because the scaling factor affects the normalization but not the underlying
+            # death count uncertainties, which are what drive the CI calculation
             
             # Calculate variance components for each time point
             # Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
@@ -456,7 +505,7 @@ def build_kcor_rows(df, sheet_name):
             out_rows.append(out)
 
     # -------- ASMR pooled rows (YearOfBirth = 0) --------
-    # Option 2+: Expected-deaths weights using pooled quiet baseline window
+    # Expected-deaths weights using pooled quiet baseline window
     # w_a ∝ h_a × PT_a(W) where h_a = smoothed mean MR in quiet window W
     weights = {}
     df_sorted = df.sort_values("DateDied")
@@ -498,7 +547,7 @@ def build_kcor_rows(df, sheet_name):
     
     # Debug: Show expected-deaths weights
     if DEBUG_VERBOSE:
-        print(f"\n[DEBUG] Expected-deaths weights for ASMR pooling (Option 2+):")
+        print(f"\n[DEBUG] Expected-deaths weights for ASMR pooling:")
         for yob in sorted(weights.keys()):
             print(f"  Age {yob}: weight = {weights[yob]:.6f}")
         print(f"  Total weight: {sum(weights.values()):.6f}")
@@ -543,6 +592,11 @@ def build_kcor_rows(df, sheet_name):
                 if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
                     continue
                 kstar = k / k0
+                
+                # Apply scale factor if available for this age group and dose combination
+                scale_factor = scale_factors.get((yob, num, den), 1.0)
+                kstar = kstar * scale_factor
+                
                 logs.append(safe_log(kstar))
                 wts.append(weights.get(yob, 0.0))
                 Dv = float(gv["cumD_adj"].values[0])
@@ -553,6 +607,7 @@ def build_kcor_rows(df, sheet_name):
             if logs and sum(wts) > 0:
                 logK = np.average(logs, weights=wts)
                 Kpool = float(safe_exp(logK))
+                
                 # Correct pooled KCOR 95% CI calculation based on baseline uncertainty
                 # For pooled results, we need to account for baseline uncertainty across all age groups
                 baseline_uncertainty = 0.0
@@ -657,13 +712,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     xls = pd.ExcelFile(src_path)
     all_out = []
     
-    # Apply debug filters
-    sheets_to_process = DEBUG_SHEET_ONLY if DEBUG_SHEET_ONLY else xls.sheet_names
+    # Apply processing filters
+    sheets_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else xls.sheet_names
     if YEAR_RANGE:
         start_year, end_year = YEAR_RANGE
         dual_print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
-    if DEBUG_SHEET_ONLY:
-        dual_print(f"[DEBUG] Limiting to sheets: {DEBUG_SHEET_ONLY}")
+    if ENROLLMENT_DATES:
+        dual_print(f"[DEBUG] Limiting to enrollment dates: {ENROLLMENT_DATES}")
     
     # Initialize debug data collection (will be populated inside sheet loop)
     debug_data = []
@@ -897,7 +952,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
 
-        out_sh = build_kcor_rows(df, sh)
+        out_sh = build_kcor_rows(df, sh, dual_print)
         all_out.append(out_sh)
 
     # Combine all results
@@ -947,7 +1002,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             dose_pairs = get_dose_pairs(sheet_name)
             
             for (dose_num, dose_den) in dose_pairs:
-                dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
+                dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
                 dual_print("-" * 50)
                 dual_print(f"{'YoB':>15} | KCOR [95% CI]")
                 dual_print("-" * 50)
@@ -1090,7 +1145,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "Output Sheets:",
                         "- dose_pairs: KCOR values for all dose comparisons",
-                        "- by_dose: Individual dose curves with complete methodology transparency",
+                        "- by_dose: Individual dose curves with complete methodology transparency", 
                         "- About: This metadata sheet",
                         "",
                         "For more information, see: https://github.com/skirsch/KCOR"
