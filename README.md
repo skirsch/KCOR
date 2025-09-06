@@ -791,7 +791,7 @@ The [`validation/`](validation/) directory contains three independent validation
 
 2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
 
-   ![DS-CMRR dose 2 vs 0 (ASMR case)](validation/DS-CMRR/DS-CMRR_dose2.png)
+   ![DS-CMRR dose 2 vs 0 (ASMR case)](validation/DS-CMRR/out/DS-CMRR_ASMR.png)
 
    *DS-CMRR output KCOR(t) for Czech data, dose 2 vs unvaccinated (single-sheet 2021_24)*
 

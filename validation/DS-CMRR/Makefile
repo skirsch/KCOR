@@ -17,7 +17,10 @@ outdir:
 	@mkdir -p $(OUTDIR)
 
 run: outdir
-	$(PYTHON) $(SCRIPT) $(INPUT) $(OUTPUT) --log $(LOG) --balance-report --export-dose-pairs --sheet 2021_24 --by-age --dose-num-min 2 --dose-den-exact 0 | cat
+	$(PYTHON) $(SCRIPT) $(INPUT) $(OUTPUT) --log $(LOG) --balance-report --export-dose-pairs --sheet 2021_24 --by-age --dose-num-min 2 --dose-den-exact 0 --variance-method kish --save-png | cat
+
+by-age-only: outdir
+	$(PYTHON) $(SCRIPT) $(INPUT) $(OUTPUT) --log $(LOG) --sheet 2021_24 --by-age-only --dose-num-min 2 --dose-den-exact 0 --variance-method kish | cat
 
 clean:
 	rm -rf $(OUTDIR) $(LOG)

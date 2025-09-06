@@ -23,6 +23,11 @@ import sys, os, math, argparse
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+try:
+    import matplotlib.pyplot as plt
+    HAVE_MPL = True
+except Exception:
+    HAVE_MPL = False
 
 EPS = 1e-12
 
@@ -396,6 +401,30 @@ def export_dose_pairs(excel_writer, df_main, sheet_name="dose_pairs"):
     })[["EnrollmentDate","YearOfBirth","ISOweekDied","Date","dose_num","dose_den","y","lo","hi"]]
     out.to_excel(excel_writer, index=False, sheet_name=sheet_name)
 
+def maybe_save_png_as_standardized(output_path, combined_df, title_suffix="ASMR standardized"):
+    if not HAVE_MPL:
+        return
+    try:
+        df = combined_df[combined_df["YearOfBirth"].eq(0)].copy()
+        if df.empty:
+            return
+        df = df.sort_values(["EnrollmentDate","Date"]).reset_index(drop=True)
+        fig, ax = plt.subplots(figsize=(8,4))
+        ax.plot(df["Date"], df["KCOR"], label="KCOR")
+        if "CI_lower" in df.columns and "CI_upper" in df.columns:
+            ax.fill_between(df["Date"], df["CI_lower"], df["CI_upper"], alpha=0.2, label="95% CI")
+        ax.axhline(1.0, color="#666", lw=1, linestyle="--")
+        ax.set_title(title_suffix)
+        ax.set_ylabel("KCOR")
+        ax.set_xlabel("Date")
+        ax.legend()
+        png_path = os.path.join(os.path.dirname(os.path.abspath(output_path)), "DS-CMRR_ASMR.png")
+        fig.tight_layout()
+        fig.savefig(png_path, dpi=150)
+        plt.close(fig)
+    except Exception:
+        pass
+
 def process_book(args):
     out_dir = os.path.dirname(os.path.abspath(args.output)) or "."
     printer, fh, log_path = dual_print_factory(out_dir, args.log)
@@ -495,6 +524,9 @@ def process_book(args):
             pd.concat(balances, ignore_index=True).to_excel(w, index=False, sheet_name="BalanceShares")
             pd.concat(meta_rows, ignore_index=True).to_excel(w, index=False, sheet_name="BalanceMeta")
 
+    if getattr(args, "save_png", False):
+        maybe_save_png_as_standardized(args.output, combined, title_suffix=f"DS-CMRR {sheets[0]} ASMR (dose>={args.dose_num_min} vs {args.dose_den_exact})")
+
     printer(f"\n[Done] Wrote {len(combined)} rows to {args.output}")
     fh.close()
     return True
@@ -524,12 +556,14 @@ def build_arg_parser():
                    help="Also output per-YearOfBirth KCOR time series")
     p.add_argument("--by-age-only", action="store_true",
                    help="Output only per-YearOfBirth KCOR (omit standardized aggregate)")
-    p.add_argument("--dose-num-min", type=int, default=1,
-                   help="Numerator includes doses >= this value (default: 1)")
+    p.add_argument("--dose-num-min", type=int, default=2,
+                   help="Numerator includes doses >= this value (default: 2)")
     p.add_argument("--dose-den-exact", type=int, default=0,
                    help="Denominator exact dose (default: 0)")
     p.add_argument("--variance-method", choices=["kish","sumw2"], default="kish",
                    help="Variance for ASMR CIs: 'kish' (effective deaths) or 'sumw2' (w^2 sum)")
+    p.add_argument("--save-png", action="store_true",
+                   help="Save a PNG of the standardized ASMR curve next to the output file")
     p.add_argument("--sheet", action="append",
                    help="Only process specific sheet(s); can be repeated (e.g., --sheet 2021_24)")
     return p
