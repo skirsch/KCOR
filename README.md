@@ -23,7 +23,7 @@
   - [🆕 Version 4.3 Enhancements](#-version-43-enhancements)
   - [🆕 Version 4.2 Enhancements](#-version-42-enhancements)
   - [🆕 Version 4.1 Enhancements](#-version-41-enhancements)
-- [📊 Results Using Czech Data (v4.2 - Corrected ASMR)](#-results-using-czech-data-v42---corrected-asmr)
+- [📊 Results Using Czech Data](#-results-using-czech-data)
 - [🔬 Validation](#-validation)
 - [Grok assessment](#grok-assessment)
 - [📄 License](#-license)
@@ -688,7 +688,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Numerical Stability**: Proper clipping to avoid log(0) and overflow
 - **Validation Ready**: All mathematical relationships visible in output
 
-## 📊 Results Using Czech Data (v4.2 - Corrected ASMR)
+## 📊 Results Using Czech Data
 
 ### Summary of Age-Standardized Mortality Ratio (ASMR) Results
 
