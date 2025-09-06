@@ -19,6 +19,13 @@
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Citation](#citation)
+- [Version History](#version-history)
+  - [Version 4.3 Enhancements](#version-43-enhancements)
+  - [Version 4.2 Enhancements](#version-42-enhancements)
+  - [Version 4.1 Enhancements](#version-41-enhancements)
+- [Results Using Czech Data](#results-using-czech-data-v42---corrected-asmr)
+- [Validation](#validation)
+- [Grok Assessment](#grok-assessment)
 - [License](#license)
 - [Contact](#contact)
 
