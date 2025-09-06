@@ -773,6 +773,7 @@ For detailed results including age-specific analyses and all dose combinations, 
 - **📈 Complete Analysis**: [`data/Czech/KCOR_summary.xlsx`](data/Czech/KCOR_summary.xlsx) - Age-standardized and age-specific results by enrollment cohort
 - **📊 Full Dataset**: [`data/Czech/KCORv4.xlsx`](data/Czech/KCORv4.xlsx) - Complete analysis with all intermediate calculations
 - **📋 Console Output**: [`data/Czech/KCOR_summary.log`](data/Czech/KCOR_summary.log) - Detailed console output from analysis (dual output: console + file)
+ - **🧮 Interactive Plotting Workbook**: [`analysis/Czech/KCORv4_analysis.xlsx`](analysis/Czech/KCORv4_analysis.xlsx) - Excel workbook for plotting KCOR(t) curves for any cohort/dose mix
 
 ### Interpretation
 
