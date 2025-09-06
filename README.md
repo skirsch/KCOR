@@ -648,10 +648,12 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Conservative Approach**: Only applies when clear evidence of baseline bias exists
 
 ### New Results Pattern
-- **Dose 1 vs 0**: KCOR = 0.99 (essentially neutral, no significant effect)
-- **Dose 2 vs 0**: KCOR = 1.22 (22% increased mortality risk)
-- **Dose 3 vs 0**: KCOR = 1.55 (55% increased mortality risk)
-- **Pattern**: Dose-dependent accelerating mortality, not linear dose-response
+- **Dose 1 vs 0 (2021_24)**: KCOR = 1.05 (5.2% increased mortality risk)
+- **Dose 2 vs 0 (2021_24)**: KCOR = 1.26 (25.8% increased mortality risk)
+- **Dose 1 vs 0 (2022_06)**: KCOR = 1.12 (11.9% increased mortality risk)
+- **Dose 2 vs 0 (2022_06)**: KCOR = 1.05 (5.0% increased mortality risk)
+- **Dose 3 vs 0 (2022_06)**: KCOR = 1.55 (54.9% increased mortality risk)
+- **Pattern**: Dose-dependent accelerating mortality with cohort-specific effects
 
 ## 🆕 Version 4.1 Enhancements
 
@@ -685,14 +687,11 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 The KCOR analysis of Czech vaccination and mortality data reveals significant findings across all dose levels compared to unvaccinated individuals. **Version 4.2 uses corrected expected-deaths weighting** that properly reflects actual mortality burden:
 
-| **DOSE** | **KCOR** | **95% CI** | **Risk Increase** |
-|----------|----------|------------|-------------------|
-| **1 vs 0 (2021_24)** | 1.0516 | [1.022, 1.082] | +5.2% |
-| **2 vs 0 (2021_24)** | 1.2579 | [1.232, 1.285] | +25.8% |
-| **1 vs 0 (2022_06)** | 1.1194 | [1.071, 1.170] | +11.9% |
-| **2 vs 0 (2022_06)** | 1.0502 | [1.027, 1.074] | +5.0% |
-| **3 vs 2 (2022_06)** | 1.4941 | [1.464, 1.525] | +49.4% |
-| **3 vs 0 (2022_06)** | 1.5487 | [1.518, 1.580] | +54.9% |
+| **DOSE** | **KCOR** | **95% CI** | **Risk Increase** | **Enrollment** |
+|----------|----------|------------|-------------------|----------------|
+| **1** | 1.0516 | [1.022, 1.082] | +5.2% | 2021_24 |
+| **2** | 1.2579 | [1.232, 1.285] | +25.8% | 2021_24 |
+| **3** | 1.5487 | [1.518, 1.580] | +54.9% | 2022_06 |
 
 ### Key Findings
 
