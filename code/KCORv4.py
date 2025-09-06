@@ -66,9 +66,9 @@ OUTPUTS (two main sheets):
       Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
     - "dose_pairs": KCOR values for all dose comparisons with complete methodology transparency:
       EnrollmentDate, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
-      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CMR_num, CMR_actual_num, hazard_num, 
-      slope_num, scale_factor_num, MR_smooth_num, t_num, MR_den, MR_adj_den, CMR_den, 
-      CMR_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
+      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CH_num, CH_actual_num, hazard_num, 
+      slope_num, scale_factor_num, MR_smooth_num, t_num, MR_den, MR_adj_den, CH_den, 
+      CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
 
 USAGE:
     python KCORv4.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
@@ -338,8 +338,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
     Assumptions:
       - Person-time PT = Alive
       - MR = Dead / PT
-      - MR_adj slope-removed via QR (for smoothing, not CMR calculation)
-      - CMR = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
+      - MR_adj slope-removed via QR (for smoothing, not CH calculation)
+      - CH = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
       - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week ANCHOR_WEEKS if available
               - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
@@ -364,8 +364,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             if gv is None or gu is None:
                 continue
             # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CMR","CMR_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
             
             merged = pd.merge(
                 gv_unique,
@@ -394,15 +394,15 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             #     print(f"  Sample data points:")
             #     for i, row in merged.head(5).iterrows():
             #         print(f"    Date: {row['DateDied'].strftime('%m/%d/%Y')}")
-            #         print(f"      Dose {num}: MR={row['MR_num']:.6f}, MR_adj={row['MR_adj_num']:.6f}, CMR={row['CMR_num']:.6f}, cumD_adj={row['cumD_adj_num']:.6f}")
-            #         print(f"      Dose {den}: MR={row['MR_den']:.6f}, MR_adj={row['MR_adj_den']:.6f}, CMR={row['CMR_den']:.6f}, cumD_adj={row['cumD_adj_den']:.6f}")
+            #         print(f"      Dose {num}: MR={row['MR_num']:.6f}, MR_adj={row['MR_adj_num']:.6f}, CH={row['CH_num']:.6f}, cumD_adj={row['cumD_adj_num']:.6f}")
+            #         print(f"      Dose {den}: MR={row['MR_den']:.6f}, MR_adj={row['MR_adj_den']:.6f}, CH={row['CH_den']:.6f}, cumD_adj={row['cumD_adj_den']:.6f}")
             #     print()
 
             # Handle division by zero or very small denominators
-            # Note: CMR_num and CMR_den are actually cumulative hazards, not mortality rates
-            valid_denom = merged["CMR_den"] > EPS
-            merged["K_raw"] = np.where(valid_denom, 
-                                      merged["CMR_num"] / merged["CMR_den"], 
+            # Note: CH_num and CH_den are cumulative hazards, not mortality rates
+            valid_denom = merged["CH_den"] > EPS
+            merged["K_raw"] = np.where(valid_denom,
+                                      merged["CH_num"] / merged["CH_den"], 
                                       np.nan)
             
             # Get baseline K_raw value (week 4)
@@ -447,14 +447,14 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             # Debug: Check for suspiciously large KCOR values
             # if merged["KCOR"].max() > 10:
             #     print(f"\n[DEBUG] Large KCOR detected in {sheet_name}, Age {yob}, Doses {num} vs {den}")
-            #     print(f"  CMR_num range: {merged['CMR_num'].min():.6f} to {merged['CMR_num'].max():.6f}")
-            #     print(f"  CMR_den range: {merged['CMR_den'].min():.6f} to {merged['CMR_den'].max():.6f}")
+            #     print(f"  CH_num range: {merged['CH_num'].min():.6f} to {merged['CH_num'].max():.6f}")
+            #     print(f"  CH_den range: {merged['CH_den'].min():.6f} to {merged['CH_den'].max():.6f}")
             #     print(f"  K_raw range: {merged['K_raw'].min():.6f} to {merged['K_raw'].max():.6f}")
             #     print(f"  Anchor value: {anchor:.6f}")
             #     print(f"  KCOR range: {merged['KCOR'].min():.6f} to {merged['KCOR'].max():.6f}")
             #     print(f"  Sample data points:")
             #     for i, row in merged.head(3).iterrows():
-            #         print(f"    Date: {row['DateDied']}, CMR_num: {row['CMR_num']:.6f}, CMR_den: {row['CMR_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
+            #         print(f"    Date: {row['DateDied']}, CH_num: {row['CH_num']:.6f}, CH_den: {row['CH_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
             #     print()
 
             # Correct KCOR 95% CI calculation based on baseline uncertainty
@@ -488,8 +488,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             merged["CI_upper"] = np.clip(merged["CI_upper"], merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "MR_num","MR_adj_num","CMR_num","CMR_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
-                          "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"]].copy()
+                          "MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
+                          "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"]].copy()
             out["EnrollmentDate"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
@@ -563,8 +563,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             if gvn.empty or gdn.empty:
                 continue
             t0_idx = ANCHOR_WEEKS if len(gvn) > ANCHOR_WEEKS and len(gdn) > ANCHOR_WEEKS else 0
-            c1 = gvn["CMR"].iloc[t0_idx]
-            c0 = gdn["CMR"].iloc[t0_idx]
+            c1 = gvn["CH"].iloc[t0_idx]
+            c0 = gdn["CH"].iloc[t0_idx]
             if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
                 anchors[yob] = c1 / c0
 
@@ -580,9 +580,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 # Take first occurrence if multiple rows per date
                 gv = gv.iloc[[0]]
                 gu = gu.iloc[[0]]
-                denom_cmr = gu["CMR"].values[0]
-                if denom_cmr > EPS:
-                    k = (gv["CMR"].values[0]) / denom_cmr
+                denom_ch = gu["CH"].values[0]
+                if denom_ch > EPS:
+                    k = (gv["CH"].values[0]) / denom_ch
                 else:
                     continue  # Skip this comparison if denominator is too small
                 k0 = anchors[yob]
@@ -659,8 +659,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     "CI_upper": CI_upper,
                     "MR_num": np.nan,
                     "MR_adj_num": np.nan,
-                    "CMR_num": np.nan,
-                    "CMR_actual_num": np.nan,
+                    "CH_num": np.nan,
+                    "CH_actual_num": np.nan,
                     "hazard_num": np.nan,
                     "slope_num": np.nan,
                     "scale_factor_num": np.nan,
@@ -668,8 +668,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     "t_num": np.nan,
                     "MR_den": np.nan,
                     "MR_adj_den": np.nan,
-                    "CMR_den": np.nan,
-                    "CMR_actual_den": np.nan,
+                    "CH_den": np.nan,
+                    "CH_actual_den": np.nan,
                     "hazard_den": np.nan,
                     "slope_den": np.nan,
                     "scale_factor_den": np.nan,
@@ -681,8 +681,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CMR_num","CMR_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
-        "MR_den","MR_adj_den","CMR_den","CMR_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
+        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
+        "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
     ])
 
 def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log"):
@@ -855,14 +855,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["hazard"] = -np.log(1 - df["MR_adj"].clip(upper=0.999))
         
         # Calculate cumulative hazard (mathematically exact, not approximation)
-        df["CMR"] = df.groupby(["YearOfBirth","Dose"])["hazard"].cumsum()
+        df["CH"] = df.groupby(["YearOfBirth","Dose"])["hazard"].cumsum()
         
         # Keep unadjusted data for comparison
-        df["CMR_actual"] = df.groupby(["YearOfBirth","Dose"])["MR"].cumsum()
+        df["CH_actual"] = df.groupby(["YearOfBirth","Dose"])["MR"].cumsum()
         
         # Keep cumD_adj for backward compatibility (now represents adjusted cumulative deaths)
         df["cumPT"] = df.groupby(["YearOfBirth","Dose"])["PT"].cumsum()
-        df["cumD_adj"] = df["CMR"] * df["cumPT"]
+        df["cumD_adj"] = df["CH"] * df["cumPT"]
         
         # Keep unadjusted data for comparison
         df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"])["Dead"].cumsum()
@@ -883,8 +883,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "PT": "sum",
                     "MR": "mean",  # Average MR across sexes
                     "MR_adj": "mean",  # Average MR_adj across sexes
-                    "CMR": "mean",  # Average CMR across sexes
-                    "CMR_actual": "mean",  # Average CMR_actual across sexes
+                    "CH": "mean",  # Average CH across sexes
+                    "CH_actual": "mean",  # Average CH_actual across sexes
                     "hazard": "mean",  # Average hazard across sexes
                     "slope": "mean",  # Average slope across sexes
                     "scale_factor": "mean",  # Average scale factor across sexes
@@ -911,8 +911,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Alive": row["Alive"],
                         "MR": row["MR"],
                         "MR_adj": row["MR_adj"],
-                        "Cum_MR": row["CMR"],
-                        "Cum_MR_Actual": row["CMR_actual"],
+                        "Cum_MR": row["CH"],
+                        "Cum_MR_Actual": row["CH_actual"],
                         "Hazard": row["hazard"],
                         "Slope": row["slope"],
                         "Scale_Factor": row["scale_factor"],
@@ -924,9 +924,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Time_Index": row["t"]
                     })
         
-        # Debug: Print detailed CMR calculation info
+        # Debug: Print detailed CH calculation info
         # if DEBUG_VERBOSE:
-        #     print(f"\n[DEBUG] CMR calculation details for sheet {sh}:")
+        #     print(f"\n[DEBUG] CH calculation details for sheet {sh}:")
         #     for dose in df["Dose"].unique():
         #         dose_data = df[df["Dose"] == dose]
         #         if not dose_data.empty:
@@ -936,15 +936,15 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #             print(f"    D_adj range: {dose_data['D_adj'].min():.6f} to {dose_data['D_adj'].max():.6f}")
         #             print(f"    cumD_adj range: {dose_data['cumD_adj'].min():.6f} to {dose_data['cumD_adj'].max():.6f}")
         #             print(f"    cumPT range: {dose_data['cumPT'].min():.6f} to {dose_data['cumPT'].max():.6f}")
-        #             print(f"    CMR range: {dose_data['CMR'].min():.6f} to {dose_data['CMR'].max():.6f}")
+        #             print(f"    CH range: {dose_data['CH'].min():.6f} to {dose_data['CH'].max():.6f}")
         #             print()
         
-        # Debug: Check for extreme CMR values
-        # extreme_cmr = df[df["CMR"] > 1000]
-        # if not extreme_cmr.empty:
-        #     print(f"\n[DEBUG] Extreme CMR values detected in sheet {sh}:")
-        #     for _, row in extreme_cmr.head(3).iterrows():
-        #         print(f"  Age: {row['YearOfBirth']}, Dose: {row['Dose']}, CMR: {row['CMR']:.6f}")
+        # Debug: Check for extreme CH values
+        # extreme_ch = df[df["CH"] > 1000]
+        # if not extreme_ch.empty:
+        #     print(f"\n[DEBUG] Extreme CH values detected in sheet {sh}:")
+        #     for _, row in extreme_ch.head(3).iterrows():
+        #         print(f"  Age: {row['YearOfBirth']}, Dose: {row['Dose']}, CH: {row['CH']:.6f}")
         #         print(f"    cumD_adj: {row['cumD_adj']:.6f}, cumPT: {row['cumPT']:.6f}")
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
@@ -1080,7 +1080,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 "",
                 "",
                 "",
-                "Represents pooled ASMR (Age-Standardized Mortality Ratio) computations. Many columns (MR_num, MR_adj_num, CMR_num, MR_den, MR_adj_den, CMR_den) will be blank for these rows as they don't apply to pooled calculations.",
+                "Represents pooled ASMR (Age-Standardized Mortality Ratio) computations. Many columns (MR_num, MR_adj_num, CH_num, MR_den, MR_adj_den, CH_den) will be blank for these rows as they don't apply to pooled calculations.",
                 "",
                 "Represents individuals with unknown birth year. Included in individual calculations but excluded from ASMR pooling."
             ]
@@ -1133,8 +1133,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "4. KCOR Computation (v4.1):",
                         "   - Step 1: MR_adj = MR × exp(-slope × (t - t0))",
                         "   - Step 2: hazard = -ln(1 - MR_adj) [clipped to 0.999]",
-                        "   - Step 3: CMR = cumsum(hazard)",
-                        "   - KCOR = CMR_v / CMR_u",
+                        "   - Step 3: CH = cumsum(hazard)",
+                        "   - KCOR = CH_v / CH_u",
                         "",
                         "5. Uncertainty Quantification:",
                         "   - 95% Confidence intervals using proper uncertainty propagation",

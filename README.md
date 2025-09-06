@@ -181,7 +181,7 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 
 1. **Individual MR Adjustment**: Apply slope correction to each mortality rate
 2. **Hazard Transform**: Convert adjusted mortality rates to discrete hazard functions for mathematical exactness  
-3. **Cumulative Hazard**: Compute CMR as cumulative sum of hazard functions
+3. **Cumulative Hazard**: Compute CH as cumulative sum of hazard functions
 4. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to baseline
 
 **Step 1: Mortality Rate Adjustment**
@@ -196,22 +196,22 @@ Where MR_adj is clipped to 0.999 to avoid log(0).
 
 > **📚 Mathematical Reasoning**: For a detailed explanation of why KCOR uses discrete hazard functions and the mathematical derivation behind this approach, see [Hazard Function Methodology](documentation/hazard_function.md).
 
-**Step 3: Cumulative Hazard (CMR)**
+**Step 3: Cumulative Hazard (CH)**
 
-$$\text{CMR}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
+$$\text{CH}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
 
 **Step 4: KCOR as Hazard Ratio**
 
 **KCOR Formula:**
 
-$$\text{KCOR}(t) = \frac{\text{CMR}_v(t) / \text{CMR}_u(t)}{\text{CMR}_v(t_0) / \text{CMR}_u(t_0)}$$
+$$\text{KCOR}(t) = \frac{\text{CH}_v(t) / \text{CH}_u(t)}{\text{CH}_v(t_0) / \text{CH}_u(t_0)}$$
 
 Where:
 - **r** = Calculated slope for the specific dose-age combination
 - **MR(t)** = Raw mortality rate at time t
 - **t₀** = Baseline time for normalization (typically week 4)
-- **CMR(t)** = Cumulative hazard at time t (sum of discrete hazards)
-- **Mathematical Enhancement**: Discrete cumulative-hazard transform provides more exact CMR calculation than simple summation
+- **CH(t)** = Cumulative hazard at time t (sum of discrete hazards)
+- **Mathematical Enhancement**: Discrete cumulative-hazard transform provides more exact CH calculation than simple summation
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
 
 #### 5. Uncertainty Quantification
@@ -219,7 +219,7 @@ Where:
 
 The variance of KCOR is calculated using proper uncertainty propagation for the hazard ratio:
 
-$$\text{Var}[\ln(\text{KCOR}(t))] = \frac{\text{Var}[\text{CMR}_v(t)]}{\text{CMR}_v(t)^2} + \frac{\text{Var}[\text{CMR}_u(t)]}{\text{CMR}_u(t)^2} + \frac{\text{Var}[\text{CMR}_v(t_0)]}{\text{CMR}_v(t_0)^2} + \frac{\text{Var}[\text{CMR}_u(t_0)]}{\text{CMR}_u(t_0)^2}$$
+$$\text{Var}[\ln(\text{KCOR}(t))] = \frac{\text{Var}[\text{CH}_v(t)]}{\text{CH}_v(t)^2} + \frac{\text{Var}[\text{CH}_u(t)]}{\text{CH}_u(t)^2} + \frac{\text{Var}[\text{CH}_v(t_0)]}{\text{CH}_v(t_0)^2} + \frac{\text{Var}[\text{CH}_u(t_0)]}{\text{CH}_u(t_0)^2}$$
 
 **Confidence Interval Bounds:**
 
@@ -228,7 +228,7 @@ $$\text{CI}_{\text{lower}}(t) = \text{KCOR}(t) \times e^{-1.96 \sqrt{\text{Var}[
 $$\text{CI}_{\text{upper}}(t) = \text{KCOR}(t) \times e^{1.96 \sqrt{\text{Var}[\ln(\text{KCOR}(t))]}}$$
 
 Where:
-- **Var[CMR] ≈ CMR**: Using Poisson variance approximation for cumulative hazard (sum of hazards)
+- **Var[CH] ≈ CH**: Using Poisson variance approximation for cumulative hazard (sum of hazards)
 - **Var[ln(KCOR)]**: Variance on log scale for proper uncertainty propagation of hazard ratio
 - **1.96**: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
@@ -432,8 +432,8 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 #### Main Analysis Sheets
 - **`dose_pairs`**: KCOR values for all dose comparisons with complete methodology transparency
 - **Columns**: Sheet, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den, KCOR, CI_lower, CI_upper, 
-  MR_num, MR_adj_num, CMR_num, CMR_actual_num, hazard_num, slope_num, scale_factor_num, MR_smooth_num, t_num,
-  MR_den, MR_adj_den, CMR_den, CMR_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
+  MR_num, MR_adj_num, CH_num, CH_actual_num, hazard_num, slope_num, scale_factor_num, MR_smooth_num, t_num,
+  MR_den, MR_adj_den, CH_den, CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
 
 #### Debug Sheet
 - **`by_dose`**: Individual dose curves with complete methodology transparency
@@ -536,9 +536,9 @@ And for dose 3 vs. dose 2 (2022_06 cohort):
 - **Debug Friendly**: Easy to spot-check individual values and calculations
 
 ### Discrete Hazard Function Transform (v4.1)
-- **Mathematical Enhancement**: More exact CMR calculation than simple summation of mortality rates
+- **Mathematical Enhancement**: More exact CH calculation than simple summation of mortality rates
 - **Hazard Function**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping to avoid log(0)
-- **Cumulative Process**: `CMR(t) = sum(hazard(i))` for i=0 to t (cumulative hazard)
+- **Cumulative Process**: `CH(t) = sum(hazard(i))` for i=0 to t (cumulative hazard)
 - **Numerical Stability**: Handles edge cases with proper bounds and clipping
 - **Hazard Ratio**: KCOR computed as ratio of cumulative hazards, normalized to baseline
 - **Mathematical Rigor**: See [Hazard Function Methodology](documentation/hazard_function.md) for detailed derivation
@@ -658,7 +658,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 ## 🆕 Version 4.1 Enhancements
 
 ### Major Improvements
-- **Discrete Hazard Function Transform**: Enhanced mathematical exactness in CMR calculation using hazard functions
+- **Discrete Hazard Function Transform**: Enhanced mathematical exactness in CH calculation using hazard functions
 - **Hazard Ratio Methodology**: KCOR computed as ratio of cumulative hazards with proper normalization
 - **Complete Methodology Transparency**: All intermediate values included in output
 - **Error Handling**: Automatic retry when Excel files are open
@@ -676,8 +676,8 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 ### Mathematical Enhancements
 - **Four-Step Process**: MR_adj → hazard → cumsum(hazard) → hazard ratio for KCOR
 - **Hazard Function Transform**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping
-- **Cumulative Hazard**: `CMR(t) = sum(hazard(i))` for mathematical exactness
-- **Hazard Ratio**: `KCOR(t) = (CMR_v(t)/CMR_u(t)) / (CMR_v(t0)/CMR_u(t0))`
+- **Cumulative Hazard**: `CH(t) = sum(hazard(i))` for mathematical exactness
+- **Hazard Ratio**: `KCOR(t) = (CH_v(t)/CH_u(t)) / (CH_v(t0)/CH_u(t0))`
 - **Numerical Stability**: Proper clipping to avoid log(0) and overflow
 - **Validation Ready**: All mathematical relationships visible in output
 

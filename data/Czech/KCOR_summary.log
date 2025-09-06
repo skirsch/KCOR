@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-05 17:23:55
+Analysis Date: 2025-09-05 18:29:27
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCORv4.xlsx
 Log File: ../data/Czech/KCOR_summary.log
@@ -68,44 +68,6 @@ Log File: ../data/Czech/KCOR_summary.log
   YoB 1995, Dose 2: slope = 0.006830
   YoB 2000, Dose 2: slope = 0.000000
 
-[INFO] KCOR scaling adjustment for Age 1920, Doses 1 vs 0: final KCOR = 0.8977 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1140
-[INFO] KCOR scaling adjustment for Age 1920, Doses 2 vs 0: final KCOR = 0.8648 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1563
-[INFO] KCOR scaling adjustment for Age 1920, Doses 2 vs 1: final KCOR = 0.9634 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0380
-[INFO] KCOR scaling adjustment for Age 1925, Doses 1 vs 0: final KCOR = 0.7929 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.2612
-[INFO] KCOR scaling adjustment for Age 1925, Doses 2 vs 0: final KCOR = 0.8227 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.2155
-[INFO] KCOR scaling adjustment for Age 1930, Doses 1 vs 0: final KCOR = 0.8264 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.2100
-[INFO] KCOR scaling adjustment for Age 1930, Doses 2 vs 0: final KCOR = 0.9690 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0320
-[INFO] KCOR scaling adjustment for Age 1965, Doses 1 vs 0: final KCOR = 0.9054 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1045
-[INFO] KCOR scaling adjustment for Age 1970, Doses 2 vs 0: final KCOR = 0.9047 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1053
-[INFO] KCOR scaling adjustment for Age 1970, Doses 2 vs 1: final KCOR = 0.7225 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.3841
-[INFO] KCOR scaling adjustment for Age 1980, Doses 1 vs 0: final KCOR = 0.6681 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.4969
-[INFO] KCOR scaling adjustment for Age 1980, Doses 2 vs 0: final KCOR = 0.9589 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0429
-[INFO] KCOR scaling adjustment for Age 1985, Doses 2 vs 0: final KCOR = 0.8992 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1121
-[INFO] KCOR scaling adjustment for Age 1985, Doses 2 vs 1: final KCOR = 0.7974 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.2541
-[INFO] KCOR scaling adjustment for Age 1990, Doses 2 vs 1: final KCOR = 0.8953 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1169
-[INFO] KCOR scaling adjustment for Age 1995, Doses 1 vs 0: final KCOR = 0.3069 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 3.2579
-[INFO] KCOR scaling adjustment for Age 1995, Doses 2 vs 0: final KCOR = 0.4783 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 2.0908
-[INFO] KCOR scaling adjustment for Age 2000, Doses 1 vs 0: final KCOR = 0.1343 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 7.4443
-[INFO] KCOR scaling adjustment for Age 2000, Doses 2 vs 0: final KCOR = 0.4968 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 2.0128
 [Info] Processing sheet: 2022_06
 [DEBUG] Filtered to start from enrollment date 02/07/2022: 110880 rows
 [DEBUG] Filtered to 57120 rows for ages 1920-2000
@@ -182,50 +144,6 @@ Log File: ../data/Czech/KCOR_summary.log
   YoB 1995, Dose 3: slope = -0.016789
   YoB 2000, Dose 3: slope = -0.012929
 
-[INFO] KCOR scaling adjustment for Age 1920, Doses 1 vs 0: final KCOR = 0.5497 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.8191
-[INFO] KCOR scaling adjustment for Age 1920, Doses 2 vs 0: final KCOR = 0.7315 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.3670
-[INFO] KCOR scaling adjustment for Age 1925, Doses 2 vs 1: final KCOR = 0.7015 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.4255
-[INFO] KCOR scaling adjustment for Age 1935, Doses 2 vs 0: final KCOR = 0.9856 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0146
-[INFO] KCOR scaling adjustment for Age 1935, Doses 2 vs 1: final KCOR = 0.7623 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.3119
-[INFO] KCOR scaling adjustment for Age 1940, Doses 1 vs 0: final KCOR = 0.7966 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.2553
-[INFO] KCOR scaling adjustment for Age 1940, Doses 2 vs 0: final KCOR = 0.9867 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0135
-[INFO] KCOR scaling adjustment for Age 1945, Doses 1 vs 0: final KCOR = 0.9253 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0808
-[INFO] KCOR scaling adjustment for Age 1955, Doses 1 vs 0: final KCOR = 0.9848 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0155
-[INFO] KCOR scaling adjustment for Age 1960, Doses 2 vs 1: final KCOR = 0.8590 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1641
-[INFO] KCOR scaling adjustment for Age 1965, Doses 2 vs 0: final KCOR = 0.9655 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0358
-[INFO] KCOR scaling adjustment for Age 1965, Doses 2 vs 1: final KCOR = 0.8473 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1802
-[INFO] KCOR scaling adjustment for Age 1970, Doses 1 vs 0: final KCOR = 0.6739 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.4840
-[INFO] KCOR scaling adjustment for Age 1970, Doses 2 vs 0: final KCOR = 0.7882 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.2688
-[INFO] KCOR scaling adjustment for Age 1975, Doses 1 vs 0: final KCOR = 0.8900 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1236
-[INFO] KCOR scaling adjustment for Age 1985, Doses 1 vs 0: final KCOR = 0.7219 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.3853
-[INFO] KCOR scaling adjustment for Age 1985, Doses 2 vs 0: final KCOR = 0.9014 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1094
-[INFO] KCOR scaling adjustment for Age 1985, Doses 3 vs 2: final KCOR = 0.9513 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.0512
-[INFO] KCOR scaling adjustment for Age 1985, Doses 3 vs 0: final KCOR = 0.8575 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.1662
-[INFO] KCOR scaling adjustment for Age 1990, Doses 2 vs 1: final KCOR = 0.7597 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.3163
-[INFO] KCOR scaling adjustment for Age 1995, Doses 1 vs 0: final KCOR = 0.5623 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.7785
-[INFO] KCOR scaling adjustment for Age 2000, Doses 3 vs 2: final KCOR = 0.6653 < 1
-[INFO] Original scale factor = 1.0, adjusted scale factor = 1.5031
 
 ================================================================================
 KCOR VALUES AT END OF 2022 - ALL SHEETS
