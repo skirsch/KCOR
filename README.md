@@ -327,7 +327,7 @@ KCOR/
 ├── analysis/                           # Analysis outputs and logs
 ├── documentation/                      # Detailed methodology documentation
 │   └── hazard_function.md             # Mathematical reasoning for hazard functions
-└── peer review/                        # Peer review materials
+└── peer_review/                        # Peer review materials
 ```
 
 ### Build structure
