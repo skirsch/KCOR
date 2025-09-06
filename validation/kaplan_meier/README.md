@@ -31,4 +31,13 @@ To override parameters:
 make -C validation/kaplan_meier run SHEET=2021_24 START=1940 END=2000 GROUPA="0" GROUPB="1,2"
 ```
 
+### Results
+
+This directory (`validation/kaplan_meier/`) contains outputs under `out/`.
+
+- Example result (YoB 1940–1995, sheet 2021_24):
+  - `validation/kaplan_meier/out/KM_2021_24_1940_1995.png`
+
+Observation: Using the naturally matched cohorts (equalized initial population at enrollment), the curves diverge with the unvaccinated cohort exhibiting lower mortality over time.
+
 
