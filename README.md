@@ -7,8 +7,8 @@
 
 - [Overview](#overview)
 - [🔬 Methodology](#-methodology)
-  - [Core Concept](#core-concept)
-  - [Analysis Pipeline](#analysis-pipeline)
+  - [🎯 Core Concept](#-core-concept)
+  - [⚙️ Analysis Pipeline](#️-analysis-pipeline)
   - [Key Assumptions](#key-assumptions)
 - [🏗️ Repository Structure](#️-repository-structure)
 - [📦 Installation & Dependencies](#-installation--dependencies)
