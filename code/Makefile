@@ -13,7 +13,6 @@ KCOR_OUTPUT      = ../data/$(COUNTRY)/KCORv4.xlsx
 
 # Default target - run complete KCOR pipeline
 KCOR: $(KCOR_OUTPUT)
-	@echo "KCOR analysis complete!"
 
 # KCOR analysis depends on CMR output and KCORv4.py script
 $(KCOR_OUTPUT): $(CMR_OUTPUT) KCORv4.py
