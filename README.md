@@ -772,7 +772,16 @@ The KCOR methodology has been independently validated using multiple approaches 
 
 The [`validation/`](validation/) directory contains two independent validation approaches:
 
-1. **GLM Validation**: Generalized Linear Model approach to validate KCOR results using alternative statistical methodology
+1. **GLM Validation**: A **completely different methodology** using Generalized Linear Models with **variable cohorts** rather than fixed cohorts. This approach creates output that looks nearly identical to KCOR results, providing strong independent validation.
+
+   ![GLM Validation Results](validation/GLM/GLM_plot_Czech_data.png)
+   
+   *GLM validation results showing remarkable consistency with KCOR methodology*
+   
+   ![KCOR Results](analysis/KCOR_ASMR_dose2.png)
+   
+   *KCOR results for direct comparison with GLM validation*
+
 2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
 
 ### Validation Objectives
