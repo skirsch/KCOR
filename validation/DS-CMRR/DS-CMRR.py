@@ -3,6 +3,20 @@
 """
 Fixed-Cohort Direct Standardized Cumulative-Hazard Ratio (DS-CMRR)
 Enhanced: CLI flags, balance report, and 'dose_pairs' export.
+
+Direct Standardized Cumulative-Hazard Ratio (DS-CMRR)
+
+Model-free, fixed cohorts, and no slope normalization.
+We build vaccinated (dose ≥1) vs unvaccinated (dose 0) cohorts as of the enrollment sheet, 
+compute age-specific cumulative hazards over time, then direct-standardize both cohorts to a 
+baseline reference distribution (you can pick vax_pt or expected_deaths). Finally we form a 
+cumulative ratio and a delta-method CI (Poisson counts, age-wise independence) with baseline 
+anchoring to 1 at week ANCHOR_WEEKS.
+
+So: it isn't doing weekly ASMR (i.e., instant ASMR) it is producing a cumulative, age-standardized ratio on 
+calendar time using the weighting scheme you picked (default = expected_deaths, which is why 
+you're calling it the “ASMR case”).
+
 """
 
 import sys, os, math, argparse
@@ -165,7 +179,7 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks):
         if den <= 0: 
             continue
         K = num / den
-        out_rows.append([sheet_name, dt.date(), iso_map.get(dt), K, sum(num_d), sum(den_d)])
+        out_rows.append([sheet_name, pd.Timestamp(dt).date(), iso_map.get(dt), K, sum(num_d), sum(den_d)])
 
     out = pd.DataFrame(out_rows, columns=["EnrollmentDate","Date","ISOweekDied","K_std","Dnum_w2","Dden_w2"])
     if out.empty:
@@ -305,11 +319,19 @@ def process_book(args):
     printer(f"Output: {args.output}")
     printer(f"Log   : {log_path}")
     printer(f"Config: anchor_weeks={args.anchor_weeks}, baseline_weeks={args.baseline_weeks}, "
-            f"weights={args.weights}, year_range=({args.year_min},{args.year_max})")
+            f"weights={args.weights}, year_range=({args.year_min},{args.year_max}), "
+            f"sheet_filter={args.sheet if args.sheet else 'all'}")
     printer("="*80)
 
     xls = pd.ExcelFile(args.input)
     sheets = xls.sheet_names
+    if args.sheet:
+        wanted = set(args.sheet)
+        sheets = [sh for sh in sheets if sh in wanted]
+        if not sheets:
+            printer("No output rows produced.")
+            fh.close()
+            return False
 
     all_out = []
     balances = []
@@ -397,6 +419,8 @@ def build_arg_parser():
                    help="Also write a 'dose_pairs' sheet for downstream plotting")
     p.add_argument("--balance-report", action="store_true",
                    help="Write BalanceShares and BalanceMeta sheets with age-share and SMD diagnostics")
+    p.add_argument("--sheet", action="append",
+                   help="Only process specific sheet(s); can be repeated (e.g., --sheet 2021_24)")
     return p
 
 def main(argv=None):

@@ -1,0 +1,26 @@
+================================================================================
+Fixed-Cohort Direct Standardized Cumulative-Hazard Ratio (DS-CMRR)
+================================================================================
+Input : data/Czech/KCOR_CMR.xlsx
+Output: validation/DS-CMRR/out/DS-CMRR_output.xlsx
+Log   : /mnt/c/Users/stk/Documents/GitHub/KCOR/validation/DS-CMRR/out/DS_CMRR.log
+Config: anchor_weeks=4, baseline_weeks=4, weights=expected_deaths, year_range=(1920,2000)
+================================================================================
+
+[Sheet] 2021_13
+[2021_13] start 2021-03-29, rows 75480
+[weights:expected_deaths] ages=17 sample: 1920:0.0144, 1925:0.0741, 1930:0.1522, 1935:0.1749, 1940:0.1647, 1945:0.1518, 1950:0.1118, 1955:0.0642, 1960:0.0330, 1965:0.0223
+
+[Sheet] 2021_24
+[2021_24] start 2021-06-14, rows 70992
+[weights:expected_deaths] ages=17 sample: 1920:0.0177, 1925:0.0746, 1930:0.1492, 1935:0.1620, 1940:0.1699, 1945:0.1585, 1950:0.1117, 1955:0.0597, 1960:0.0367, 1965:0.0205
+
+[Sheet] 2022_06
+[2022_06] start 2022-02-07, rows 57120
+[weights:expected_deaths] ages=17 sample: 1920:0.0121, 1925:0.0520, 1930:0.1402, 1935:0.1462, 1940:0.2044, 1945:0.1888, 1950:0.1082, 1955:0.0619, 1960:0.0301, 1965:0.0220
+
+[Sheet] 2022_47
+[2022_47] start 2022-11-21, rows 40392
+[weights:expected_deaths] ages=17 sample: 1920:0.0078, 1925:0.0515, 1930:0.1302, 1935:0.1611, 1940:0.1715, 1945:0.1720, 1950:0.1204, 1955:0.0728, 1960:0.0359, 1965:0.0230
+
+[Done] Wrote 598 rows to validation/DS-CMRR/out/DS-CMRR_output.xlsx
