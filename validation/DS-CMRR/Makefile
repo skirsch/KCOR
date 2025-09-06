@@ -3,7 +3,7 @@
 PYTHON ?= python3
 SCRIPT := DS-CMRR.py
 INPUT  := ../../data/Czech/KCOR_CMR.xlsx
-OUTDIR := .
+OUTDIR := out
 OUTPUT := $(OUTDIR)/DS-CMRR_output.xlsx
 LOG    := DS_CMRR.log
 
@@ -17,7 +17,7 @@ outdir:
 	@mkdir -p $(OUTDIR)
 
 run: outdir
-	$(PYTHON) $(SCRIPT) $(INPUT) $(OUTPUT) --log $(LOG) --balance-report --export-dose-pairs --sheet 2021_24 | cat
+	$(PYTHON) $(SCRIPT) $(INPUT) $(OUTPUT) --log $(LOG) --balance-report --export-dose-pairs --sheet 2021_24 --by-age --dose-num-min 2 --dose-den-exact 0 | cat
 
 clean:
 	rm -rf $(OUTDIR) $(LOG)

@@ -97,7 +97,7 @@ def pick_baseline_dates(df, baseline_weeks):
     dates = df["Date"].drop_duplicates().sort_values().head(baseline_weeks).tolist()
     return set(dates)
 
-def compute_weights(df, baseline_dates, scheme, printer):
+def compute_weights(df, baseline_dates, scheme, printer, dose_num_min):
     """
     Returns weights dict: {YearOfBirth -> weight}, sum to 1 over ages present.
       - 'vax_pt':             w_a ∝ sum_{baseline, dose>=1} PT_a
@@ -109,7 +109,7 @@ def compute_weights(df, baseline_dates, scheme, printer):
     for a in ages:
         ga = b[b["YearOfBirth"]==a]
         if scheme == "vax_pt":
-            w = float(ga[ga["Dose"]>=1]["PT"].sum())
+            w = float(ga[ga["Dose"]>=dose_num_min]["PT"].sum())
         elif scheme == "expected_deaths":
             pt_all = float(ga["PT"].sum())
             mra = float(ga["MR"].mean()) if len(ga)>0 else 0.0
@@ -129,13 +129,18 @@ def compute_weights(df, baseline_dates, scheme, printer):
     printer(f"[weights:{scheme}] ages={len(ages)} sample: {s}")
     return weights
 
-def build_per_age_series(df):
+def build_per_age_series(df, dose_num_min=1, dose_den_exact=0):
     # Pre-compute per-age vax and unvax series aligned by date
     per_age = {}
     for a, g in df.groupby("YearOfBirth"):
         g = g.sort_values(["Dose","Date"])
-        u = g[g["Dose"]==0].sort_values("Date")[["Date","CMR","cumD","cumPT"]].drop_duplicates("Date")
-        gv = g[g["Dose"]>=1][["Date","hazard","Dead","PT"]].groupby("Date",as_index=False).sum().sort_values("Date")
+        u = g[g["Dose"]==dose_den_exact].sort_values("Date")[ ["Date","CMR","cumD","cumPT"] ].drop_duplicates("Date")
+        gv = (g[g["Dose"]>=dose_num_min][["Date","Dead","PT"]]
+                .groupby("Date",as_index=False).sum().sort_values("Date"))
+        gv["PT"] = gv["PT"].astype(float).clip(lower=0.0)
+        gv["Dead"] = gv["Dead"].astype(float).clip(lower=0.0)
+        gv["MR"] = np.where(gv["PT"]>0, gv["Dead"]/(gv["PT"]+EPS), 0.0)
+        gv["hazard"] = -np.log(1.0 - np.clip(gv["MR"], 0.0, 0.999))
         gv["CMR"]   = gv["hazard"].cumsum()
         gv["cumD"]  = gv["Dead"].cumsum()
         gv["cumPT"] = gv["PT"].cumsum()
@@ -143,12 +148,12 @@ def build_per_age_series(df):
             per_age[a] = {"u": u, "v": gv}
     return per_age
 
-def standardized_ratio(df, weights, sheet_name, anchor_weeks):
+def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, dose_den_exact=0):
     out_rows = []
     all_dates = sorted(df["Date"].unique())
     iso_map = (df.drop_duplicates(subset=["Date"])[["Date","ISOweekDied"]]
                  .set_index("Date")["ISOweekDied"].to_dict())
-    per_age = build_per_age_series(df)
+    per_age = build_per_age_series(df, dose_num_min, dose_den_exact)
     ages = sorted(df["YearOfBirth"].unique())
 
     for dt in all_dates:
@@ -195,9 +200,11 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks):
 
     se_logs = []
     for i in range(len(out)):
-        vn = out["Dnum_w2"].iloc[i]
-        vd = out["Dden_w2"].iloc[i]
-        se2 = (vn/(vn+EPS)) + (vd/(vd+EPS)) + (base_num/(base_num+EPS)) + (base_den/(base_den+EPS))
+        vn = float(out["Dnum_w2"].iloc[i])
+        vd = float(out["Dden_w2"].iloc[i])
+        # Delta-method for log ratio: Var[logK(t)] ≈ 1/D_num(t) + 1/D_den(t)
+        # Anchor adjustment adds 1/D_num(anchor) + 1/D_den(anchor)
+        se2 = (1.0/(vn+EPS)) + (1.0/(vd+EPS)) + (1.0/(base_num+EPS)) + (1.0/(base_den+EPS))
         se = math.sqrt(max(se2, 0.0))
         se_logs.append(se)
     out["SE_logK"] = se_logs
@@ -205,12 +212,75 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks):
     out["CI_upper"] = out["K_std"] * np.exp( 1.96 * out["SE_logK"])
 
     out["YearOfBirth"] = 0
-    out["Dose_num"] = 1
-    out["Dose_den"] = 0
+    out["Dose_num"] = dose_num_min
+    out["Dose_den"] = dose_den_exact
     out.rename(columns={"K_std":"KCOR"}, inplace=True)
     cols = ["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
             "KCOR","CI_lower","CI_upper"]
     return out[cols]
+
+def age_specific_ratios(df, sheet_name, anchor_weeks, dose_num_min=1, dose_den_exact=0):
+    """
+    Produce per-YearOfBirth KCOR time series without cross-age standardization.
+    Each age is anchored independently at the given anchor_weeks index.
+    """
+    out_rows = []
+    all_dates = sorted(df["Date"].unique())
+    iso_map = (df.drop_duplicates(subset=["Date"])[["Date","ISOweekDied"]]
+                 .set_index("Date")["ISOweekDied"].to_dict())
+    per_age = build_per_age_series(df, dose_num_min, dose_den_exact)
+
+    for yob, series in per_age.items():
+        v = series["v"][ ["Date","CMR","cumD"] ].rename(columns={"CMR":"vCMR","cumD":"vD"})
+        u = series["u"][ ["Date","CMR","cumD"] ].rename(columns={"CMR":"uCMR","cumD":"uD"})
+        m = pd.merge(v, u, on="Date", how="inner").sort_values("Date").reset_index(drop=True)
+        if m.empty:
+            continue
+        # avoid divide-by-zero; drop rows where denominator is nonpositive
+        m = m[m["uCMR"] > 0.0].copy()
+        if m.empty:
+            continue
+        m["K"] = m["vCMR"] / (m["uCMR"] + EPS)
+        # Anchor per-age
+        idx0 = anchor_weeks if len(m)>anchor_weeks else 0
+        anchor = float(m["K"].iloc[idx0]) if len(m)>0 else 1.0
+        if not np.isfinite(anchor) or anchor<=0: anchor = 1.0
+        m["K"] = m["K"] / anchor
+
+        # Delta-method CI using cumulative deaths
+        base_v = float(m["vD"].iloc[idx0]) if len(m)>idx0 else 0.0
+        base_u = float(m["uD"].iloc[idx0]) if len(m)>idx0 else 0.0
+        se_logs = []
+        for i in range(len(m)):
+            dv = float(m["vD"].iloc[i])
+            du = float(m["uD"].iloc[i])
+            se2 = (1.0/(dv+EPS)) + (1.0/(du+EPS)) + (1.0/(base_v+EPS)) + (1.0/(base_u+EPS))
+            se_logs.append(math.sqrt(max(se2, 0.0)))
+        m["SE_logK"] = se_logs
+        m["CI_lower"] = m["K"] * np.exp(-1.96 * m["SE_logK"])
+        m["CI_upper"] = m["K"] * np.exp( 1.96 * m["SE_logK"])
+
+        for _, row in m.iterrows():
+            dt = row["Date"]
+            out_rows.append([
+                sheet_name,
+                pd.Timestamp(dt).date(),
+                iso_map.get(dt),
+                yob,
+                dose_num_min,
+                dose_den_exact,
+                float(row["K"]),
+                float(row["CI_lower"]),
+                float(row["CI_upper"]),
+            ])
+
+    if not out_rows:
+        return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR","CI_lower","CI_upper"])
+
+    out = pd.DataFrame(out_rows, columns=["EnrollmentDate","Date","ISOweekDied","YearOfBirth","Dose_num","Dose_den","KCOR","CI_lower","CI_upper"])
+    # Reorder to match standard output order
+    out = out[["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR","CI_lower","CI_upper"]]
+    return out
 
 def smd_continuous(x, g, weights=None):
     """
@@ -320,7 +390,9 @@ def process_book(args):
     printer(f"Log   : {log_path}")
     printer(f"Config: anchor_weeks={args.anchor_weeks}, baseline_weeks={args.baseline_weeks}, "
             f"weights={args.weights}, year_range=({args.year_min},{args.year_max}), "
-            f"sheet_filter={args.sheet if args.sheet else 'all'}")
+            f"sheet_filter={args.sheet if args.sheet else 'all'}, "
+            f"by_age={'only' if args.by_age_only else ('yes' if args.by_age else 'no')}, "
+            f"dose_num_min={args.dose_num_min}, dose_den_exact={args.dose_den_exact}")
     printer("="*80)
 
     xls = pd.ExcelFile(args.input)
@@ -346,12 +418,21 @@ def process_book(args):
             continue
 
         baseline_dates = pick_baseline_dates(df, args.baseline_weeks)
-        weights = compute_weights(df, baseline_dates, args.weights, printer)
-        out_sh = standardized_ratio(df, weights, sh, args.anchor_weeks)
-        if out_sh.empty:
-            printer("  (no aligned dates across cohorts)")
-            continue
-        all_out.append(out_sh)
+        weights = compute_weights(df, baseline_dates, args.weights, printer, args.dose_num_min)
+        # aggregate standardized
+        if not args.by_age_only:
+            out_sh = standardized_ratio(df, weights, sh, args.anchor_weeks, args.dose_num_min, args.dose_den_exact)
+            if out_sh.empty:
+                printer("  (no aligned dates across cohorts for standardized)")
+            else:
+                all_out.append(out_sh)
+        # optional per-age outputs
+        if args.by_age or args.by_age_only:
+            by_age = age_specific_ratios(df, sh, args.anchor_weeks, args.dose_num_min, args.dose_den_exact)
+            if by_age.empty:
+                printer("  (no aligned dates across cohorts for per-age)")
+            else:
+                all_out.append(by_age)
 
         if args.balance_report:
             comb, meta = balance_report(df, baseline_dates, weights)
@@ -374,13 +455,15 @@ def process_book(args):
         about = pd.DataFrame({
             "Field":[
                 "Method","Anchor week index","Baseline weeks","Weight scheme",
-                "Generated","Input file","Output file","Year min","Year max"
+                "Generated","Input file","Output file","Year min","Year max",
+                "Dose numerator min","Dose denominator exact"
             ],
             "Value":[
                 "Fixed-Cohort Direct Standardized Cumulative-Hazard Ratio (DS-CMRR)",
                 args.anchor_weeks, args.baseline_weeks, args.weights,
                 datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.input, args.output,
-                args.year_min, args.year_max
+                args.year_min, args.year_max,
+                args.dose_num_min, args.dose_den_exact
             ]
         })
         about.to_excel(w, index=False, sheet_name="About")
@@ -419,6 +502,14 @@ def build_arg_parser():
                    help="Also write a 'dose_pairs' sheet for downstream plotting")
     p.add_argument("--balance-report", action="store_true",
                    help="Write BalanceShares and BalanceMeta sheets with age-share and SMD diagnostics")
+    p.add_argument("--by-age", action="store_true",
+                   help="Also output per-YearOfBirth KCOR time series")
+    p.add_argument("--by-age-only", action="store_true",
+                   help="Output only per-YearOfBirth KCOR (omit standardized aggregate)")
+    p.add_argument("--dose-num-min", type=int, default=1,
+                   help="Numerator includes doses >= this value (default: 1)")
+    p.add_argument("--dose-den-exact", type=int, default=0,
+                   help="Denominator exact dose (default: 0)")
     p.add_argument("--sheet", action="append",
                    help="Only process specific sheet(s); can be repeated (e.g., --sheet 2021_24)")
     return p
