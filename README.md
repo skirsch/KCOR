@@ -253,7 +253,7 @@ $$\text{KCOR}(t) = \text{bas3eline\\\_kraw} $$
 
 
 
-$$\text{KCOR}(t) = \frac{\text{Kraw}(t)}{\text{baseline\_kraw}} \times \text{scale\_factor}$$
+$$\text{KCOR}(t) = \frac{\text{Kraw}(t)}{\text{baseline\\_kraw}} \times \text{scale\\_factor}$$
 
 Where:
 - **KCOR_final_date** = KCOR value at the specified final date with original normalization
