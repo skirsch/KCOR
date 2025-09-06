@@ -2,9 +2,12 @@
 
 # Configuration - Edit these paths for different countries/datasets
 COUNTRY = Czech
-INPUT_DATA = ../../$(COUNTRY)/data/vax_24.csv
-CMR_OUTPUT = ../data/$(COUNTRY)/KCOR_CMR.xlsx
-KCOR_OUTPUT = ../data/$(COUNTRY)/KCORv4.xlsx
+# Raw CSV (uncompressed) and compressed asset stored in repo
+RAW_CSV          = ../data/$(COUNTRY)/Czech-NZIP-NR-26-30-release-2024-01.csv
+RAW_CSV_GZ       = ../data/$(COUNTRY)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip
+INPUT_DATA       = $(RAW_CSV)
+CMR_OUTPUT       = ../data/$(COUNTRY)/KCOR_CMR.xlsx
+KCOR_OUTPUT      = ../data/$(COUNTRY)/KCORv4.xlsx
 
 .PHONY: clean clean-all help create_dirs
 
@@ -30,6 +33,12 @@ CMR: $(CMR_OUTPUT)
 # Create output directories if they don't exist
 create_dirs:
 	@python -c "import os; os.makedirs('../data/$(COUNTRY)', exist_ok=True)"
+
+# Rule to inflate the raw CSV from the compressed LFS asset
+$(RAW_CSV): $(RAW_CSV_GZ) | create_dirs
+	@echo "Decompressing $(RAW_CSV_GZ) -> $(RAW_CSV) ..."
+	@gzip -dc "$<" > "$@"
+	@echo "Done."
 
 # Clean up all output files for current country
 clean:

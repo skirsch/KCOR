@@ -1,6 +1,5 @@
 # ---- Global defaults ----
 * text=auto eol=lf
-
 # Prefer LF in the repo for source/text
 *.txt   text=auto
 *.md    text=auto
@@ -8,14 +7,12 @@
 *.sh    text=auto
 *.rb    text=auto
 *.pl    text=auto
-
 # Windows scripts (CRLF on checkout)
 # PowerShell
 *.ps1   text eol=crlf
 # Batch / CMD
 *.bat   text eol=crlf
 *.cmd   text eol=crlf
-
 # Web/dev files
 *.json  text=auto
 *.yml   text=auto
@@ -34,10 +31,8 @@
 *.xml   text=auto
 *.tex   text=auto
 *.rst   text=auto
-
 # Notebooks (do not normalize)
 *.ipynb -text
-
 # Data & binary assets (do not normalize)
 *.bin   -text
 *.dat   -text
@@ -59,8 +54,8 @@
 *.avi   -text
 *.woff  -text
 *.woff2 -text
-
 # Git & CI metadata
 .gitattributes  text=auto
 .gitignore      text=auto
 .editorconfig   text=auto
+data/Czech/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip filter=lfs diff=lfs merge=lfs -text
