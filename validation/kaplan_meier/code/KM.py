@@ -35,6 +35,7 @@ from typing import Dict, Iterable, List, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
 
 
 DATA_PATH = Path("data/Czech/KCOR_CMR.xlsx")
@@ -77,7 +78,6 @@ def filter_enrollment_start(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
     year_str, week_str = sheet.split("_")
     enrollment_year = int(year_str)
     enrollment_week = int(week_str)
-    from datetime import datetime, timedelta
     jan1 = datetime(enrollment_year, 1, 1)
     days_to_monday = (7 - jan1.weekday()) % 7
     if days_to_monday == 0 and jan1.weekday() != 0:
@@ -85,6 +85,21 @@ def filter_enrollment_start(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
     first_monday = jan1 + timedelta(days=days_to_monday)
     enrollment_date = first_monday + timedelta(weeks=enrollment_week - 1)
     return df[df["DateDied"] >= enrollment_date]
+
+
+def get_enrollment_date(sheet: str) -> pd.Timestamp:
+    """Compute the enrollment start date (Monday of the ISO week encoded in sheet)."""
+    if "_" not in sheet:
+        raise ValueError(f"Cannot derive enrollment date from sheet name: {sheet}")
+    year_str, week_str = sheet.split("_")
+    enrollment_year = int(year_str)
+    enrollment_week = int(week_str)
+    jan1 = datetime(enrollment_year, 1, 1)
+    days_to_monday = (7 - jan1.weekday()) % 7
+    if days_to_monday == 0 and jan1.weekday() != 0:
+        days_to_monday = 7
+    first_monday = jan1 + timedelta(days=days_to_monday)
+    return pd.to_datetime(first_monday + timedelta(weeks=enrollment_week - 1))
 
 
 def filter_birth_years(df: pd.DataFrame, birth_year_range: Tuple[int, int]) -> pd.DataFrame:
@@ -265,6 +280,24 @@ def main():
     df = aggregate_across_sex(df)
 
     grouped = build_groups(df, group_specs)
+    
+    # Print deaths on enrollment date and on 2024-04-01 for each cohort (summed across ages)
+    enrollment_dt = get_enrollment_date(sheet)
+    final_dt = pd.to_datetime("2024-04-01")
+    print("Week            Cohort #   Deaths   CumDeaths")
+    for label_grp in group_specs:
+        label = "+".join(str(d) for d in label_grp)
+        gdf = grouped[label_grp]
+        # Ensure DateDied dtype is datetime64[ns]
+        gdf["DateDied"] = pd.to_datetime(gdf["DateDied"]) 
+        cohort_by_date = gdf.groupby("DateDied")["Dead"].sum().sort_index()
+        cohort_cum = cohort_by_date.cumsum()
+        d_enroll = int(cohort_by_date.loc[cohort_by_date.index == enrollment_dt].sum())
+        d_final  = int(cohort_by_date.loc[cohort_by_date.index == final_dt].sum())
+        c_enroll = int(cohort_cum.loc[cohort_cum.index == enrollment_dt].sum())
+        c_final  = int(cohort_cum.loc[cohort_cum.index == final_dt].sum())
+        print(f"{enrollment_dt.date()}    {label:>7}   {d_enroll:>6}   {c_enroll:>9}")
+        print(f"{final_dt.date()}    {label:>7}   {d_final:>6}   {c_final:>9}")
     # Compute KM per group, per age
     km_by_group: Dict[Tuple[int, ...], pd.DataFrame] = {}
     for grp, gdf in grouped.items():

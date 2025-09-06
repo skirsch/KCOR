@@ -6,9 +6,10 @@ INPUT  := ../../data/Czech/KCOR_CMR.xlsx
 OUTDIR := out
 
 # Defaults (can be overridden: make run SHEET=2021_24 START=1940 END=2000 GROUPA="0" GROUPB="1,2")
+# note that 1940-2999 is good, but 1950-1970 is tighter and more obvious
 SHEET  ?= 2021_24
-START  ?= 1940
-END    ?= 2000
+START  ?= 1950
+END    ?= 1970
 GROUPA ?= 0
 GROUPB ?= 1,2
 OUTPNG ?= $(OUTDIR)/KM_$(SHEET)_$(START)_$(END).png
