@@ -799,7 +799,7 @@ The [`validation/`](validation/) directory contains three independent validation
    
    *GLM validation results showing remarkable consistency with KCOR methodology*
    
-   ![KCOR Results](analysis/KCOR_ASMR_dose2.png)
+   ![KCOR Results](analysis/Czech/KCOR_ASMR_dose2.png)
    
    *KCOR results for direct comparison with GLM validation*
 
