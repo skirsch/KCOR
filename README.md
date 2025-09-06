@@ -25,6 +25,7 @@
   - [🆕 Version 4.1 Enhancements](#-version-41-enhancements)
 - [📊 Results Using Czech Data](#-results-using-czech-data)
 - [🔬 Validation](#-validation)
+- [Peer review](#peer-review)
 - [Grok assessment](#grok-assessment)
 - [📄 License](#-license)
 - [📞 Contact](#-contact)
@@ -833,6 +834,15 @@ The validation studies confirm:
 For detailed validation results and methodology comparisons, see the [`validation/`](validation/) directory.
 
 ## Grok assessment
+## Peer review
+
+As you can imagine, it's like pulling teeth to get any credible epidemiologist to look at this. Harvey Risch, with an h-index of 119, is arguably one of the top epidemiologists in the world. He reviewed an earlier version of KCOR and I made a transcript of the Zoom call. The bottom line is he didn't find any flaws in the methodology but noted that it would be hard to convince the epidemiology community because it is an engineering approach to making the harm/benefit assessment (he used the term "heuristic").
+
+Grok validated the code, the README, and the methodology and couldn't find any problems. It noted that we make the assumption that large groups of people die per Gompertz curve mortality and said that might not be true. I asked for a counter-example and Grok couldn't come up with one. 
+
+- Yale Professor Harvey Risch review (PDF): [`peer_review/KCOR_Risch_review.pdf`](peer_review/KCOR_Risch_review.pdf)
+- Grok external assessment: see [Grok assessment](#grok-assessment)
+
 
 [Grok validated](https://grok.com/share/c2hhcmQtMg%3D%3D_6bda87e0-f4b7-49b7-a6b7-3cf48fc453b2) the methodology, the documentation, and the implementation.
 
