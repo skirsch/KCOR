@@ -330,6 +330,15 @@ KCOR/
 └── peer review/                        # Peer review materials
 ```
 
+### Build structure
+
+- Root `Makefile` orchestrates common tasks:
+  - `make` → runs analysis (`run`) and validation
+  - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
+  - `make validation` → DS-CMRR validation (delegates to `validation/DS-CMRR/Makefile run`)
+  - `make test` → alias to validation (reserve for unit tests if you add them later)
+- Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`) remain runnable on their own via `make -C <dir> <target>`.
+
 ## 📦 Installation & Dependencies
 
 ### Requirements
@@ -357,15 +366,19 @@ pip install pandas numpy openpyxl
 ### Quick Start
 
 #### Using Make (Cross-Platform)
+Root Makefile orchestrates both the KCOR pipeline and the validation suite.
 ```bash
-cd code
-make KCOR
+# From repo root
+make            # runs analysis (run) + validation
+make run        # main KCOR pipeline
+make validation # DS-CMRR validation (single-sheet defaults)
+make test       # alias to validation
 ```
 
-The Makefile automatically:
-1. Runs `KCOR_CMR.py` to aggregate data from external sources
-2. Runs `KCORv4.py` to perform the KCOR analysis
-3. Organizes outputs by country in the `data/` directory
+Notes:
+- `make run` delegates to `code/Makefile KCOR`.
+- `make validation` delegates to `validation/DS-CMRR/Makefile run`.
+- Subdirectory Makefiles remain runnable directly; use `make -C <dir> <target>`.
 
 #### Using Windows Scripts
 ```bash
