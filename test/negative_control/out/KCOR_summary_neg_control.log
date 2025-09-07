@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-07 09:52:20
+Analysis Date: 2025-09-07 10:54:14
 Input File: ../../test/negative_control/data/KCOR_synthetic_neg_control.xlsx
 Output File: ../../test/negative_control/out/KCOR_processed_neg_control.xlsx
 Log File: ../../test/negative_control/out/KCOR_summary_neg_control.log

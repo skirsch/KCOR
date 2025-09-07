@@ -16,6 +16,8 @@ For the negative control test dataset, we fake it by comparing the unvaccinated 
 
 we do the same comparing vaccinated with vaccinated, but different ages. 
 
+and then again, using the entire death data, regardless of vaccination status.
+
 So essentially, we turn ages into doses and we're always comparing people in the same cohort.
 
 We read the data/Czech/KCOR_CMR.xlsx file, and we create corresponding control sheets by using 10 year younger age groups for the doses.
@@ -33,6 +35,8 @@ Then we do the same method for the vaccinated, but treat them as all born in 194
 - dose 1= vaxxed with 2 doses born in 1940,1945
 - dose 2= vaxxed with 2 doses in 1950,1955
 
+Then we do the same for all people, regardless of vaccination status... treat them all as if born in 1960. Same dose mapping as we did before, treating the different age groups as having different doses at enrollment.
+
 so basically, we are comparing cohorts of those in the same category, which should result in a very low signal for the unvaccinated, and a higher signal for the vaccinated, but nowhere near as high as unvax--> vax comparison.
 
 So we have a code, data, out directory and a Makefile at the root. The makefile makes the test file as described above and puts it in data. It then calls KCOR to process it, having it put the output file in the out directory.
@@ -40,4 +44,8 @@ So we have a code, data, out directory and a Makefile at the root. The makefile 
 Note: we ignore sex from the CMR file for now. These tests are for all sexes including other.
 
 The negative control test is made from multiple enrollment dates (specified in the Makefile).
+
+The makefile should specify the age range for each dose.
+
+The three years we simulate the output for (1940, 1950, 1960) is hardwired into the code.
 

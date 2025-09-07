@@ -39,17 +39,28 @@ def build_negative_control_sheet(df: pd.DataFrame, mode: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Input sheet missing required columns: {sorted(missing)}")
 
-    if mode not in {"unvax", "vax2"}:
-        raise ValueError("mode must be 'unvax' or 'vax2'")
+    if mode not in {"unvax", "vax2", "total", "all"}:
+        raise ValueError("mode must be 'unvax', 'vax2', or 'total'")
 
-    source_dose = 0 if mode == "unvax" else 2
-    constant_yob = 1950 if mode == "unvax" else 1940
+    is_unvax = mode == "unvax"
+    is_vax2  = mode == "vax2"
+    is_total = mode in {"total", "all"}
+
+    source_dose = 0 if is_unvax else (2 if is_vax2 else None)
+    constant_yob = 1950 if is_unvax else (1940 if is_vax2 else 1960)
 
     target_to_source_yobs = {0: {1930, 1935}, 1: {1940, 1945}, 2: {1950, 1955}}
 
     parts = []
     for target_dose, yob_set in target_to_source_yobs.items():
-        src = df[(df["Dose"] == source_dose) & (df["YearOfBirth"].isin(list(yob_set)))].copy()
+        if is_total:
+            src = df[df["YearOfBirth"].isin(list(yob_set))].copy()
+            # Sum across original doses to get TOTAL for these cohorts
+            for col in ["Alive", "Dead"]:
+                src[col] = pd.to_numeric(src[col], errors="coerce").fillna(0)
+            src = src.groupby(["ISOweekDied","DateDied","YearOfBirth","Sex"], as_index=False)[["Alive","Dead"]].sum()
+        else:
+            src = df[(df["Dose"] == source_dose) & (df["YearOfBirth"].isin(list(yob_set)))].copy()
         if src.empty:
             continue
         src["Dose"] = target_dose
@@ -82,7 +93,8 @@ def generate(input_path: str, output_path: str, mode: str = "unvax", sheets=None
             if mode == "both":
                 out_unvax = build_negative_control_sheet(df, "unvax")
                 out_vax2  = build_negative_control_sheet(df, "vax2")
-                out = pd.concat([out_unvax, out_vax2], ignore_index=True)
+                out_total = build_negative_control_sheet(df, "total")
+                out = pd.concat([out_unvax, out_vax2, out_total], ignore_index=True)
             else:
                 out = build_negative_control_sheet(df, mode)
             if not out.empty:
