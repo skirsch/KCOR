@@ -12,3 +12,7 @@ Log File: ../data/Czech/KCOR_summary_SA.log
 [DEBUG] Limiting to age range: 1920-2000
 [DEBUG] Limiting to enrollment dates: ['2021_24']
 [Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 137808 rows
+[DEBUG] Filtered to 70992 rows for ages 1920-2000
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 26622 rows
+[DEBUG] Aggregated across sexes: 8874 rows
