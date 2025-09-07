@@ -1,0 +1,14 @@
+================================================================================
+KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2025-09-06 21:54:14
+Mode: Sensitivity Analysis (SA)
+Input File: ../data/Czech/KCOR_CMR.xlsx
+SA Output File: ../data/Czech/KCOR_SA.xlsx
+Log File: ../data/Czech/KCOR_summary_SA.log
+(Standard multi-sheet workbook suppressed in SA mode)
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2000
+[DEBUG] Limiting to enrollment dates: ['2021_24']
+[Info] Processing sheet: 2021_24

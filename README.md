@@ -28,6 +28,7 @@
 - [Peer review](#peer-review)
 - [📄 License](#-license)
 - [📞 Contact](#-contact)
+ - [Sensitivity Analysis](#sensitivity-analysis)
 
 ## Overview
 
@@ -338,6 +339,71 @@ KCOR/
   - `make validation` → DS-CMRR + KM validation (delegates to `validation/DS-CMRR/` and `validation/kaplan_meier/`)
   - `make test` → alias to validation (reserve for unit tests if you add them later)
 - Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) remain runnable on their own via `make -C <dir> <target>`.
+
+## Sensitivity Analysis
+
+### Overview
+
+The repository includes a Make-driven Sensitivity Analysis (SA) mode to verify that reasonable parameter choices do not change KCOR’s conclusions. SA mode sweeps user-specified parameters and writes a compact workbook with only the requested cohorts/ages/dose-pairs.
+
+### How to run
+
+From repo root:
+
+```bash
+make sensitivity
+```
+
+This uses defaults defined in the root `Makefile` and produces SA-specific outputs without overwriting the standard analysis.
+
+### Defaults (root Makefile)
+
+- Cohorts (`SA_COHORTS`): `2021_24`
+- Dose pairs (`SA_DOSE_PAIRS`): `1,0;2,0`
+- Slope anchors:
+  - `SA_SLOPE_START=53,53,1` (offset1)
+  - `SA_SLOPE_LENGTH=61,61,1` (Δt; offset2 = 53 + 61 = 114)
+- Year-of-birth selector (`SA_YOB`): `0` (ASMR only)
+
+You can adjust these in the root `Makefile`; command-line overrides are optional.
+
+### Parameters
+
+- SA_COHORTS: Comma-separated sheet names to process (e.g., `2021_24,2022_06`).
+- SA_DOSE_PAIRS: Semicolon-separated list of dose pairs `a,b` (e.g., `1,0;2,0`).
+- SA_SLOPE_START: `start,end,step` for slope anchor offset1 (inclusive). Example: `52,60,2`.
+- SA_SLOPE_LENGTH: `start,end,step` for Δt = offset2 − offset1 (inclusive). Example: `48,70,2`.
+- SA_YOB:
+  - `0` → ASMR pooled only
+  - `start,end,step` → range of birth years (e.g., `1940,1950,5`)
+  - `list` → explicit list (e.g., `1940,1950,1960`)
+
+### Output
+
+- KCOR_SA.xlsx (single sheet `sensitivity`)
+  - Columns: `EnrollmentDate`, `Dose_num`, `Dose_den`, `YearOfBirth`, `Date`, `KCOR`, `CI_lower`, `CI_upper`
+  - For each cohort and dose pair (and selected YoB), selects the last date in 2022 if available; otherwise the latest available date.
+- KCOR_summary_SA.xlsx
+  - SA-specific summary when created; normal summaries are not overwritten.
+
+### Examples
+
+- Use defaults (2021_24, ASMR-only, dose pairs 1:0 and 2:0):
+```bash
+make sensitivity
+```
+
+- Include a few specific ages in addition to ASMR:
+```bash
+make sensitivity SA_YOB=0,1940,1950
+```
+
+- Range of ages (e.g., 1940, 1945, 1950):
+```bash
+make sensitivity SA_YOB=1940,1950,5
+```
+
+Results are written to `analysis/<country>/KCOR_SA.xlsx`.
 
 ## 📦 Installation & Dependencies
 

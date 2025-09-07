@@ -9,7 +9,7 @@ INPUT_DATA       = $(RAW_CSV)
 CMR_OUTPUT       = ../data/$(COUNTRY)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(COUNTRY)/KCORv4.xlsx
 
-.PHONY: clean clean-all help create_dirs
+.PHONY: clean clean-all help create_dirs sensitivity
 
 # Default target - run complete KCOR pipeline
 KCOR: $(KCOR_OUTPUT)
@@ -56,6 +56,7 @@ help:
 	@echo "Available targets:"
 	@echo "  KCOR      - Run complete KCOR pipeline (CMR + analysis)"
 	@echo "  CMR       - Run only CMR aggregation step"
+	@echo "  sensitivity - Smoke test sensitivity plumbing (echo SA_* and run analysis)"
 	@echo "  clean     - Remove output files for current country ($(COUNTRY))"
 	@echo "  clean-all - Remove all output files for all countries"
 	@echo "  help      - Show this help message"
@@ -65,3 +66,18 @@ help:
 	@echo "  Input:   $(INPUT_DATA)"
 	@echo "  CMR:     $(CMR_OUTPUT)"
 	@echo "  KCOR:    $(KCOR_OUTPUT)"
+
+## Minimal sensitivity plumbing target (no Python changes yet)
+# Echos SA_* variables and runs normal pipeline to a separate output file to verify wiring.
+sensitivity: $(CMR_OUTPUT) KCORv4.py | create_dirs
+	@echo "[sensitivity] Environment:"
+	@echo "  SENSITIVITY_ANALYSIS = $(SENSITIVITY_ANALYSIS)"
+	@echo "  SA_SLOPE_START       = $(SA_SLOPE_START)"
+	@echo "  SA_SLOPE_LENGTH      = $(SA_SLOPE_LENGTH)"
+	@echo "  SA_YOB               = $(SA_YOB)"
+	@echo "  SA_COHORTS           = $(SA_COHORTS)"
+	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
+	@echo "Running KCORv4 analysis (smoke) ..."
+	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
+		python KCORv4.py $(CMR_OUTPUT) ../data/$(COUNTRY)/KCORv4_sensitivity_smoke.xlsx KCOR_summary_SA.log
+	@echo "Sensitivity plumbing check complete!"

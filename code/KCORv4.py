@@ -93,6 +93,11 @@ from datetime import datetime
 
 # Dependencies: pandas, numpy, openpyxl
 
+# Sensitivity analysis flag (environment-driven)
+def _is_sa_mode() -> bool:
+    v = os.environ.get("SENSITIVITY_ANALYSIS", "")
+    return str(v).strip().lower() in ("1", "true", "yes")
+
 def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
     """Set up dual output to both console and file."""
     # Create log file path
@@ -143,9 +148,9 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ra
 # SLOPE CALCULATION METHODOLOGY:
 # Uses lookup table with window-based geometric mean approach for robust slope estimation
 SLOPE_LOOKUP_TABLE = {
-    '2021_13': (64, 125), # (offset1, offset2) weeks from enrollment for slope calculation
-    '2021_24': (53, 114), # (offset1, offset2) weeks from enrollment for slope calculation
-    '2022_06': (19,111)   # These dates chosen during "quiet periods" with minimal differential events
+    '2021_13': (64, 61),  # (start_offset, length) where offset2 = start + length
+    '2021_24': (53, 61),  # (start_offset, length) weeks from enrollment for slope calculation
+    '2022_06': (19, 92)   # These dates chosen during "quiet periods" with minimal differential events
 }
 SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points total) for geometric mean
 
@@ -160,6 +165,67 @@ ENROLLMENT_DATES = ['2021_24', '2022_06']  # List of enrollment dates (sheet nam
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
+
+# Optional overrides via environment for sensitivity/plumbing without CLI changes
+# SA_COHORTS: comma-separated list of sheet names, e.g., "2021_24,2022_06"
+# SA_DOSE_PAIRS: semicolon-separated list of pairs as a,b; e.g., "1,0;2,0"
+# SA_YOB: "0" for ASMR only, or range "start,end,step", or list "y1,y2,y3"
+OVERRIDE_DOSE_PAIRS = None
+OVERRIDE_YOBS = None
+
+def _parse_env_dose_pairs(value: str):
+    pairs = []
+    for part in value.split(';'):
+        part = part.strip()
+        if not part:
+            continue
+        ab = [x.strip() for x in part.split(',')]
+        if len(ab) != 2:
+            continue
+        try:
+            pairs.append((int(ab[0]), int(ab[1])))
+        except Exception:
+            continue
+    return pairs if pairs else None
+
+def _parse_sa_yob(value: str):
+    try:
+        s = value.strip()
+        if not s:
+            return None
+        # Range form: start,end,step
+        parts = [p.strip() for p in s.split(',')]
+        if len(parts) == 1:
+            return [int(parts[0])]
+        if len(parts) == 3:
+            start, end, step = map(int, parts)
+            if step <= 0:
+                step = 1
+            # inclusive end
+            vals = list(range(start, end + 1, step))
+            return vals
+        # Else treat as list
+        return [int(p) for p in parts]
+    except Exception:
+        return None
+
+# Apply environment overrides if provided
+try:
+    _env_cohorts = os.environ.get('SA_COHORTS')
+    if _env_cohorts:
+        ENROLLMENT_DATES = [x.strip() for x in _env_cohorts.split(',') if x.strip()]
+    _env_pairs = os.environ.get('SA_DOSE_PAIRS')
+    if _env_pairs:
+        OVERRIDE_DOSE_PAIRS = _parse_env_dose_pairs(_env_pairs)
+        if DEBUG_VERBOSE and OVERRIDE_DOSE_PAIRS:
+            print(f"[DEBUG] Overriding dose pairs via SA_DOSE_PAIRS: {OVERRIDE_DOSE_PAIRS}")
+    _env_yob = os.environ.get('SA_YOB')
+    if _env_yob:
+        OVERRIDE_YOBS = _parse_sa_yob(_env_yob)
+        if DEBUG_VERBOSE and OVERRIDE_YOBS:
+            print(f"[DEBUG] Overriding YOB selection via SA_YOB: {OVERRIDE_YOBS}")
+except Exception:
+    pass
 
 def safe_log(x, eps=EPS):
     """Safe logarithm with clipping to avoid log(0) or log(negative)."""
@@ -182,6 +248,10 @@ def get_dose_pairs(sheet_name):
     The dose pairs are designed so that the lower dose is always the denominator,
     providing consistent relative risk comparisons across different vaccination levels.
     """
+    # Global override for sensitivity: if provided, use it for all sheets
+    if OVERRIDE_DOSE_PAIRS is not None:
+        return OVERRIDE_DOSE_PAIRS
+
     if sheet_name == "2021-13":
         # Early 2021 sheet: max dose is 2, only doses 0, 1, 2
         return [(1,0), (2,0), (2,1)]
@@ -206,8 +276,10 @@ def compute_group_slopes_lookup(df, sheet_name, logger=None):
             slopes[(yob,dose)] = 0.0
         return slopes
     
-    offset1, offset2 = SLOPE_LOOKUP_TABLE[sheet_name]
-    T = offset2 - offset1  # Time difference between the two points
+    start_offset, length = SLOPE_LOOKUP_TABLE[sheet_name]
+    offset1 = start_offset
+    offset2 = start_offset + length
+    T = length  # Time difference between the two points
     
     # Validate that lookup table dates don't extend beyond MAX_DATE_FOR_SLOPE
     from datetime import datetime
@@ -700,9 +772,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"KCOR {VERSION} - Kirsch Cumulative Outcomes Ratio Analysis")
     dual_print("="*80)
     dual_print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    dual_print(f"Input File: {src_path}")
-    dual_print(f"Output File: {out_path}")
-    dual_print(f"Log File: {log_file_display}")
+    if _is_sa_mode():
+        out_dir_hdr = os.path.dirname(out_path)
+        sa_hdr_path = os.path.join(out_dir_hdr, "KCOR_SA.xlsx").replace('\\', '/')
+        dual_print("Mode: Sensitivity Analysis (SA)")
+        dual_print(f"Input File: {src_path}")
+        dual_print(f"SA Output File: {sa_hdr_path}")
+        dual_print(f"Log File: {log_file_display}")
+        dual_print("(Standard multi-sheet workbook suppressed in SA mode)")
+    else:
+        dual_print(f"Input File: {src_path}")
+        dual_print(f"Output File: {out_path}")
+        dual_print(f"Log File: {log_file_display}")
     dual_print("="*80)
     dual_print("")
     
@@ -1036,78 +1117,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     dual_print("="*80)
 
-    # write
-    with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
-        # Add About sheet first
-        about_data = {
-            "Field": [
-                "KCOR Version",
-                "Analysis Date", 
-                "Input File",
-                "Output File",
-                "",
-                "Methodology Information:",
-                "",
-                "GitHub Repository",
-                "",
-                "Sheet Descriptions:",
-                "",
-                "by_dose",
-                "",
-                "dose_pairs",
-                "",
-                "Notes:",
-                "",
-                "YearOfBirth = 0",
-                "",
-                "YearOfBirth = -1"
-            ],
-            "Value": [
-                VERSION,
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                src_path,
-                out_path,
-                "",
-                "",
-                "",
-                "https://github.com/skirsch/KCOR/tree/main",
-                "",
-                "",
-                "",
-                "Individual dose curves with raw and adjusted mortality rates for each dose-age combination",
-                "",
-                "KCOR values for all dose comparisons. Contains both individual age group results and pooled ASMR results.",
-                "",
-                "",
-                "",
-                "Represents pooled ASMR (Age-Standardized Mortality Ratio) computations. Many columns (MR_num, MR_adj_num, CH_num, MR_den, MR_adj_den, CH_den) will be blank for these rows as they don't apply to pooled calculations.",
-                "",
-                "Represents individuals with unknown birth year. Included in individual calculations but excluded from ASMR pooling."
-            ]
-        }
-        about_df = pd.DataFrame(about_data)
-        about_df.to_excel(writer, index=False, sheet_name="About")
-        
-        # Add debug sheet (working format)
-        if DEBUG_VERBOSE:
-            debug_df.to_excel(writer, index=False, sheet_name="by_dose")
-        
-        # Individual sheets removed - everything is now in the dose_pairs sheet
-        
-        # Ensure dose_pairs sheet Date column stays as date objects
-        all_data = combined.copy()
-        all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
-        all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
+    # write (standard mode handled later with retry block)
 
     # Write main analysis file with retry logic
     max_retries = 3
     retry_count = 0
     
-    while retry_count < max_retries:
-        try:
-            with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
-                # Add About sheet first
-                about_data = {
+    if not _is_sa_mode():
+        while retry_count < max_retries:
+            try:
+                with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+                    # Add About sheet first
+                    about_data = {
                     "Field": [
                         "KCOR Version",
                         "Analysis Date", 
@@ -1186,47 +1207,115 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         ""
                     ]
-                }
-                about_df = pd.DataFrame(about_data)
-                about_df.to_excel(writer, index=False, sheet_name="About")
+                    }
+                    about_df = pd.DataFrame(about_data)
+                    about_df.to_excel(writer, index=False, sheet_name="About")
+                    
+                    # Add debug sheet (working format)
+                    if DEBUG_VERBOSE:
+                        debug_df.to_excel(writer, index=False, sheet_name="by_dose")
+                    
+                    # Individual sheets removed - everything is now in the dose_pairs sheet
+                    
+                    # Ensure dose_pairs sheet Date column stays as date objects
+                    all_data = combined.copy()
+                    all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                    all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
                 
-                # Add debug sheet (working format)
-                if DEBUG_VERBOSE:
-                    debug_df.to_excel(writer, index=False, sheet_name="by_dose")
+                # If we get here, the file was written successfully
+                dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
+                break
                 
-                # Individual sheets removed - everything is now in the dose_pairs sheet
-                
-                # Ensure dose_pairs sheet Date column stays as date objects
-                all_data = combined.copy()
-                all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
-                all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
-            
-            # If we get here, the file was written successfully
-            dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
-            break
-            
-        except PermissionError as e:
-            retry_count += 1
-            if retry_count < max_retries:
-                print(f"\n❌ Error: Cannot access output file '{out_path}'")
-                print("   This usually means the file is open in Excel or another program.")
-                print(f"   Attempt {retry_count}/{max_retries}")
-                
-                response = input("   Please close the file and press Enter to retry (or 'q' to quit): ").strip().lower()
-                if response == 'q':
-                    print("   Exiting...")
+            except PermissionError as e:
+                retry_count += 1
+                if retry_count < max_retries:
+                    print(f"\n❌ Error: Cannot access output file '{out_path}'")
+                    print("   This usually means the file is open in Excel or another program.")
+                    print(f"   Attempt {retry_count}/{max_retries}")
+                    
+                    response = input("   Please close the file and press Enter to retry (or 'q' to quit): ").strip().lower()
+                    if response == 'q':
+                        print("   Exiting...")
+                        return combined
+                    print("   Retrying...")
+                else:
+                    print(f"\n❌ Error: Failed to access '{out_path}' after {max_retries} attempts.")
+                    print("   Please ensure the file is not open in Excel or another program.")
                     return combined
-                print("   Retrying...")
-            else:
-                print(f"\n❌ Error: Failed to access '{out_path}' after {max_retries} attempts.")
-                print("   Please ensure the file is not open in Excel or another program.")
+            except Exception as e:
+                print(f"\n❌ Unexpected error writing main analysis file: {e}")
                 return combined
-        except Exception as e:
-            print(f"\n❌ Unexpected error writing main analysis file: {e}")
-            return combined
     
-    # Create summary file with one sheet per enrollment date
-    create_summary_file(combined, out_path, dual_print)
+    # In SA mode, write a compact SA workbook instead of full summary; else create normal summary file
+    if _is_sa_mode():
+        try:
+            # Filter combined to ASMR rows only (YearOfBirth=0) and specified dose pairs if any
+            data = combined.copy()
+            # Filter YOBs per override: if SA_YOB provided and not just [0], include those ages; else ASMR only (0)
+            if OVERRIDE_YOBS is not None:
+                data = data[data["YearOfBirth"].isin(OVERRIDE_YOBS)]
+            else:
+                data = data[data["YearOfBirth"] == 0]
+            if OVERRIDE_DOSE_PAIRS is not None:
+                mask = False
+                for (a,b) in OVERRIDE_DOSE_PAIRS:
+                    mask = mask | ((data["Dose_num"]==a) & (data["Dose_den"]==b))
+                data = data[mask]
+            # For each cohort and dose pair, pick last 2022 date else latest
+            data["Date"] = pd.to_datetime(data["Date"])
+            out_records = []
+            # Capture parameter settings to memorialize in each SA row
+            sa_env_cohorts = os.environ.get('SA_COHORTS', '')
+            sa_env_pairs = os.environ.get('SA_DOSE_PAIRS', '')
+            sa_env_yob = os.environ.get('SA_YOB', '')
+            for (enr, dn, dd), g in data.groupby(["EnrollmentDate","Dose_num","Dose_den"], sort=False):
+                g2022 = g[g["Date"].dt.year == 2022]
+                if not g2022.empty:
+                    target = g2022[g2022["Date"] == g2022["Date"].max()].iloc[0]
+                else:
+                    target = g.iloc[-1]
+                # Derive slope anchors used for this sheet from lookup table
+                off1, slope_len = (None, None)
+                if enr in SLOPE_LOOKUP_TABLE:
+                    try:
+                        off1, slope_len = SLOPE_LOOKUP_TABLE[enr]
+                    except Exception:
+                        off1, slope_len = (None, None)
+                out_records.append({
+                    "EnrollmentDate": enr,
+                    "Dose_num": dn,
+                    "Dose_den": dd,
+                    "YearOfBirth": int(target["YearOfBirth"]),
+                    "Date": target["Date"].date(),
+                    "KCOR": target["KCOR"],
+                    "CI_lower": target["CI_lower"],
+                    "CI_upper": target["CI_upper"],
+                    # Memorialize key parameters
+                    "param_anchor_weeks": ANCHOR_WEEKS,
+                    "param_ma_total_length": MA_TOTAL_LENGTH,
+                    "param_centered": int(bool(CENTERED)),
+                    "param_slope_window_size": SLOPE_WINDOW_SIZE,
+                    "param_final_kcor_min": FINAL_KCOR_MIN,
+                    "param_final_kcor_date": FINAL_KCOR_DATE,
+                    "param_max_date_for_slope": MAX_DATE_FOR_SLOPE,
+                    "param_slope_start": off1,
+                    "param_slope_length": slope_len,
+                    "param_sa_cohorts": sa_env_cohorts,
+                    "param_sa_dose_pairs": sa_env_pairs,
+                    "param_sa_yob": sa_env_yob
+                })
+            sa_df = pd.DataFrame(out_records)
+            # Write single-sheet SA workbook named KCOR_SA.xlsx in the same directory as out_path
+            out_dir = os.path.dirname(out_path)
+            sa_path = os.path.join(out_dir, "KCOR_SA.xlsx")
+            with pd.ExcelWriter(sa_path, engine="openpyxl") as writer:
+                sa_df.to_excel(writer, index=False, sheet_name="sensitivity")
+            dual_print(f"[SA] Wrote {len(sa_df)} rows to {sa_path}")
+        except Exception as e:
+            print(f"\n❌ Error creating SA workbook: {e}")
+    else:
+        # Standard summary
+        create_summary_file(combined, out_path, dual_print)
     
     # Close log file
     log_file_handle.close()
@@ -1239,7 +1328,10 @@ def create_summary_file(combined_data, out_path, dual_print):
     
     # Determine summary file path
     out_dir = os.path.dirname(out_path)
-    summary_path = os.path.join(out_dir, "KCOR_summary.xlsx")
+    # Use SA-specific filename to avoid overwriting normal summary during sensitivity runs
+    sa_flag = str(os.environ.get("SENSITIVITY_ANALYSIS", "")).strip().lower() in ("1", "true", "yes")
+    summary_name = "KCOR_summary_SA.xlsx" if sa_flag else "KCOR_summary.xlsx"
+    summary_path = os.path.join(out_dir, summary_name)
     
     dual_print(f"[Summary] Creating summary file: {summary_path}")
     
