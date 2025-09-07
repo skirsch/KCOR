@@ -318,7 +318,7 @@ Where:
 KCOR/
 ├── README.md                           # This file
 ├── code/
-│   ├── KCORv4.py                      # Main analysis script (v4.2)
+│   ├── KCOR.py                      # Main analysis script (v4.2)
 │   ├── KCOR_CMR.py                    # Data aggregation script
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── run_KCOR.bat                   # Windows batch script
@@ -355,9 +355,9 @@ From repo root:
 make sensitivity
 ```
 
-This uses defaults defined in the root `Makefile` and produces SA-specific outputs without overwriting the standard analysis.
+This uses defaults defined in `test/sensitivity/Makefile` and produces SA-specific outputs without overwriting the standard analysis.
 
-### Defaults (root Makefile)
+### Defaults (local Makefile)
 
 - Cohorts (`SA_COHORTS`): `2021_24`
 - Dose pairs (`SA_DOSE_PAIRS`): `1,0;2,0`
@@ -366,7 +366,7 @@ This uses defaults defined in the root `Makefile` and produces SA-specific outpu
   - `SA_SLOPE_LENGTH=61,61,1` (Δt; offset2 = 53 + 61 = 114)
 - Year-of-birth selector (`SA_YOB`): `0` (ASMR only)
 
-You can adjust these in the root `Makefile`; command-line overrides are optional.
+You can adjust these in `test/sensitivity/Makefile`; command-line overrides are optional.
 
 ### Parameters
 
@@ -463,7 +463,7 @@ cd code
 python KCOR_CMR.py [input_file] [output_file]
 
 # Step 2: KCOR analysis
-python KCORv4.py [aggregated_file] [analysis_output] [log_filename]
+python KCOR.py [aggregated_file] [analysis_output] [log_filename]
 # Note: log_filename is optional (defaults to "KCOR_summary.log")
 # Output appears both on console and in the specified log file
 ```

@@ -14,10 +14,10 @@ KCOR_OUTPUT      = ../data/$(COUNTRY)/KCORv4.xlsx
 # Default target - run complete KCOR pipeline
 KCOR: $(KCOR_OUTPUT)
 
-# KCOR analysis depends on CMR output and KCORv4.py script
-$(KCOR_OUTPUT): $(CMR_OUTPUT) KCORv4.py
+# KCOR analysis depends on CMR output and KCOR.py script
+$(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py
 	@echo "Running KCORv4 analysis..."
-	python KCORv4.py $(CMR_OUTPUT) $(KCOR_OUTPUT) KCOR_summary.log
+	python KCOR.py $(CMR_OUTPUT) $(KCOR_OUTPUT) "Primary Analysis" KCOR_summary.log
 	@echo "KCOR analysis complete!"
 
 # CMR aggregation depends on input data and KCOR_CMR.py script
@@ -69,7 +69,7 @@ help:
 
 ## Minimal sensitivity plumbing target (no Python changes yet)
 # Echos SA_* variables and runs normal pipeline to a separate output file to verify wiring.
-sensitivity: $(CMR_OUTPUT) KCORv4.py | ../data/$(COUNTRY)
+sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(COUNTRY)
 	@echo "[sensitivity] Environment:"
 	@echo "  SENSITIVITY_ANALYSIS = $(SENSITIVITY_ANALYSIS)"
 	@echo "  SA_SLOPE_START       = $(SA_SLOPE_START)"
@@ -79,5 +79,5 @@ sensitivity: $(CMR_OUTPUT) KCORv4.py | ../data/$(COUNTRY)
 	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
 	@echo "Running KCORv4 analysis (smoke) ..."
 	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
-		python KCORv4.py $(CMR_OUTPUT) ../data/$(COUNTRY)/KCORv4_sensitivity_smoke.xlsx KCOR_summary_SA.log
+		python KCOR.py $(CMR_OUTPUT) ../data/$(COUNTRY)/KCORv4_sensitivity_smoke.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
 	@echo "Sensitivity plumbing check complete!"

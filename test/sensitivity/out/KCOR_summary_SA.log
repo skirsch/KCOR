@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-07 12:02:30
+Analysis Date: 2025-09-07 13:52:39
 Mode: Sensitivity Analysis (SA)
 Input File: ../../data/Czech/KCOR_CMR.xlsx
 SA Output File: ../../test/sensitivity/out/KCOR_SA.xlsx
@@ -10,139 +10,60 @@ Log File: ../../test/sensitivity/out/KCOR_summary_SA.log
 ================================================================================
 
 [DEBUG] Limiting to age range: 1920-2000
-[DEBUG] Limiting to enrollment dates: ['2021_24', '2022_06']
+[DEBUG] Limiting to enrollment dates: ['2021_24']
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 137808 rows
 [DEBUG] Filtered to 70992 rows for ages 1920-2000
 [DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 26622 rows
 [DEBUG] Aggregated across sexes: 8874 rows
 
-[DEBUG] Computed slopes for sheet 2021_24:
-  YoB 1920, Dose 0: slope = -0.004527
-  YoB 1925, Dose 0: slope = -0.004276
-  YoB 1930, Dose 0: slope = -0.001584
-  YoB 1935, Dose 0: slope = -0.001479
-  YoB 1940, Dose 0: slope = -0.003628
-  YoB 1945, Dose 0: slope = -0.001115
-  YoB 1950, Dose 0: slope = -0.001401
-  YoB 1955, Dose 0: slope = 0.000408
-  YoB 1960, Dose 0: slope = -0.000866
-  YoB 1965, Dose 0: slope = -0.001065
-  YoB 1970, Dose 0: slope = -0.000521
-  YoB 1975, Dose 0: slope = 0.000027
-  YoB 1980, Dose 0: slope = 0.001336
-  YoB 1985, Dose 0: slope = 0.000815
-  YoB 1990, Dose 0: slope = -0.000816
-  YoB 1995, Dose 0: slope = -0.003552
-  YoB 2000, Dose 0: slope = -0.001072
-  YoB 1920, Dose 1: slope = 0.000564
-  YoB 1925, Dose 1: slope = -0.001730
-  YoB 1930, Dose 1: slope = 0.001286
-  YoB 1935, Dose 1: slope = -0.001177
-  YoB 1940, Dose 1: slope = 0.001069
-  YoB 1945, Dose 1: slope = 0.001253
-  YoB 1950, Dose 1: slope = 0.002074
-  YoB 1955, Dose 1: slope = 0.000670
-  YoB 1960, Dose 1: slope = 0.002698
-  YoB 1965, Dose 1: slope = 0.005185
-  YoB 1970, Dose 1: slope = 0.002743
-  YoB 1975, Dose 1: slope = 0.001738
-  YoB 1980, Dose 1: slope = 0.006556
-  YoB 1985, Dose 1: slope = 0.013097
-  YoB 1990, Dose 1: slope = 0.000135
-  YoB 1995, Dose 1: slope = 0.012313
-  YoB 2000, Dose 1: slope = 0.024516
-  YoB 1920, Dose 2: slope = 0.000988
-  YoB 1925, Dose 2: slope = 0.001797
-  YoB 1930, Dose 2: slope = 0.002697
-  YoB 1935, Dose 2: slope = 0.000865
-  YoB 1940, Dose 2: slope = 0.001896
-  YoB 1945, Dose 2: slope = 0.002820
-  YoB 1950, Dose 2: slope = 0.001537
-  YoB 1955, Dose 2: slope = 0.002017
-  YoB 1960, Dose 2: slope = 0.000469
-  YoB 1965, Dose 2: slope = 0.002927
-  YoB 1970, Dose 2: slope = 0.005298
-  YoB 1975, Dose 2: slope = 0.003226
-  YoB 1980, Dose 2: slope = 0.000282
-  YoB 1985, Dose 2: slope = 0.010700
-  YoB 1990, Dose 2: slope = -0.009365
-  YoB 1995, Dose 2: slope = 0.006830
-  YoB 2000, Dose 2: slope = 0.000000
+================================================================================
+KCOR VALUES AT END OF 2022 - ALL SHEETS
+================================================================================
 
-[Info] Processing sheet: 2022_06
-[DEBUG] Filtered to start from enrollment date 02/07/2022: 110880 rows
-[DEBUG] Filtered to 57120 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 28560 rows
-[DEBUG] Aggregated across sexes: 9520 rows
+Dose combination: 1 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI]
+--------------------------------------------------
+  ASMR (pooled)   |   1.0754 [1.046, 1.106]
+  1920            |   1.1177 [0.864, 1.447]
+  1925            |   0.9035 [0.806, 1.013]
+  1930            |   1.1027 [1.018, 1.195]
+  1935            |   1.1254 [1.039, 1.219]
+  1940            |   0.9266 [0.864, 0.993]
+  1945            |   1.0108 [0.947, 1.079]
+  1950            |   1.4063 [1.307, 1.513]
+  1955            |   1.2609 [1.153, 1.379]
+  1960            |   1.2723 [1.136, 1.425]
+  1965            |   0.9401 [0.823, 1.074]
+  1970            |   1.4766 [1.262, 1.728]
+  1975            |   1.0350 [0.852, 1.258]
+  1980            |   0.3511 [0.269, 0.458]
+  1985            |   0.9304 [0.555, 1.560]
+  1990            |   3.2961 [1.339, 8.113]
+  1995            |   0.5096 [0.000, 5.096]
+  2000            |   0.1883 [0.108, 0.329]
 
-[DEBUG] Computed slopes for sheet 2022_06:
-  YoB 1920, Dose 0: slope = -0.003100
-  YoB 1925, Dose 0: slope = -0.001001
-  YoB 1930, Dose 0: slope = -0.000838
-  YoB 1935, Dose 0: slope = -0.001393
-  YoB 1940, Dose 0: slope = -0.002285
-  YoB 1945, Dose 0: slope = -0.000916
-  YoB 1950, Dose 0: slope = -0.001030
-  YoB 1955, Dose 0: slope = -0.000757
-  YoB 1960, Dose 0: slope = -0.002574
-  YoB 1965, Dose 0: slope = -0.000579
-  YoB 1970, Dose 0: slope = -0.001356
-  YoB 1975, Dose 0: slope = -0.001592
-  YoB 1980, Dose 0: slope = -0.000244
-  YoB 1985, Dose 0: slope = -0.004479
-  YoB 1990, Dose 0: slope = -0.000409
-  YoB 1995, Dose 0: slope = 0.003531
-  YoB 2000, Dose 0: slope = 0.000775
-  YoB 1920, Dose 1: slope = 0.008320
-  YoB 1925, Dose 1: slope = 0.000313
-  YoB 1930, Dose 1: slope = -0.001709
-  YoB 1935, Dose 1: slope = -0.001654
-  YoB 1940, Dose 1: slope = -0.000403
-  YoB 1945, Dose 1: slope = 0.001582
-  YoB 1950, Dose 1: slope = 0.000672
-  YoB 1955, Dose 1: slope = -0.000755
-  YoB 1960, Dose 1: slope = -0.002978
-  YoB 1965, Dose 1: slope = -0.004662
-  YoB 1970, Dose 1: slope = 0.007792
-  YoB 1975, Dose 1: slope = -0.001374
-  YoB 1980, Dose 1: slope = 0.000979
-  YoB 1985, Dose 1: slope = 0.004068
-  YoB 1990, Dose 1: slope = -0.008783
-  YoB 1995, Dose 1: slope = 0.003982
-  YoB 2000, Dose 1: slope = -0.008407
-  YoB 1920, Dose 2: slope = 0.005003
-  YoB 1925, Dose 2: slope = -0.002383
-  YoB 1930, Dose 2: slope = -0.000889
-  YoB 1935, Dose 2: slope = -0.000786
-  YoB 1940, Dose 2: slope = -0.000843
-  YoB 1945, Dose 2: slope = -0.001299
-  YoB 1950, Dose 2: slope = -0.002976
-  YoB 1955, Dose 2: slope = -0.000231
-  YoB 1960, Dose 2: slope = 0.000075
-  YoB 1965, Dose 2: slope = 0.000965
-  YoB 1970, Dose 2: slope = 0.001556
-  YoB 1975, Dose 2: slope = -0.002117
-  YoB 1980, Dose 2: slope = 0.000855
-  YoB 1985, Dose 2: slope = 0.003460
-  YoB 1990, Dose 2: slope = -0.005647
-  YoB 1995, Dose 2: slope = -0.001495
-  YoB 2000, Dose 2: slope = -0.003554
-  YoB 1920, Dose 3: slope = 0.001951
-  YoB 1925, Dose 3: slope = 0.001593
-  YoB 1930, Dose 3: slope = 0.002357
-  YoB 1935, Dose 3: slope = 0.002895
-  YoB 1940, Dose 3: slope = 0.003155
-  YoB 1945, Dose 3: slope = 0.002510
-  YoB 1950, Dose 3: slope = 0.001916
-  YoB 1955, Dose 3: slope = 0.002267
-  YoB 1960, Dose 3: slope = 0.001923
-  YoB 1965, Dose 3: slope = 0.005386
-  YoB 1970, Dose 3: slope = 0.003341
-  YoB 1975, Dose 3: slope = 0.001855
-  YoB 1980, Dose 3: slope = 0.001642
-  YoB 1985, Dose 3: slope = 0.003158
-  YoB 1990, Dose 3: slope = 0.002401
-  YoB 1995, Dose 3: slope = -0.016789
-  YoB 2000, Dose 3: slope = -0.012929
-
+Dose combination: 2 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI]
+--------------------------------------------------
+  ASMR (pooled)   |   1.2655 [1.239, 1.292]
+  1920            |   1.1315 [0.995, 1.287]
+  1925            |   1.0340 [0.966, 1.107]
+  1930            |   1.1547 [1.098, 1.214]
+  1935            |   1.1901 [1.131, 1.252]
+  1940            |   1.2184 [1.159, 1.281]
+  1945            |   1.3316 [1.263, 1.404]
+  1950            |   1.7008 [1.594, 1.815]
+  1955            |   1.3658 [1.252, 1.490]
+  1960            |   1.4399 [1.288, 1.609]
+  1965            |   1.7400 [1.447, 2.092]
+  1970            |   0.9014 [0.751, 1.082]
+  1975            |   1.6256 [1.197, 2.207]
+  1980            |   0.4335 [0.315, 0.596]
+  1985            |   1.8298 [1.081, 3.097]
+  1990            |   1.2438 [0.651, 2.378]
+  1995            |   1.4881 [0.772, 2.868]
+  2000            |   0.8558 [0.434, 1.688]
+================================================================================

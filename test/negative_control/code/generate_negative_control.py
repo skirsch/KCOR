@@ -59,6 +59,8 @@ def build_negative_control_sheet(df: pd.DataFrame, mode: str) -> pd.DataFrame:
             for col in ["Alive", "Dead"]:
                 src[col] = pd.to_numeric(src[col], errors="coerce").fillna(0)
             src = src.groupby(["ISOweekDied","DateDied","YearOfBirth","Sex"], as_index=False)[["Alive","Dead"]].sum()
+            # After summing across doses, set the synthetic cohort YoB to 1960
+            src["YearOfBirth"] = 1960
         else:
             src = df[(df["Dose"] == source_dose) & (df["YearOfBirth"].isin(list(yob_set)))].copy()
         if src.empty:

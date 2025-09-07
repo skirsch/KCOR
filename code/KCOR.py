@@ -71,7 +71,7 @@ OUTPUTS (two main sheets):
       CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
 
 USAGE:
-    python KCORv4.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
+    python KCOR.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
     
 DEPENDENCIES:
     pip install pandas numpy openpyxl
@@ -823,10 +823,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"KCOR {VERSION} - Kirsch Cumulative Outcomes Ratio Analysis")
     dual_print("="*80)
     dual_print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    mode_str = os.environ.get('KCOR_MODE', 'Primary Analysis')
+    dual_print(f"Mode: {mode_str}")
     if _is_sa_mode():
         out_dir_hdr = os.path.dirname(out_path)
         sa_hdr_path = os.path.join(out_dir_hdr, "KCOR_SA.xlsx").replace('\\', '/')
-        dual_print("Mode: Sensitivity Analysis (SA)")
         dual_print(f"Input File: {src_path}")
         dual_print(f"SA Output File: {sa_hdr_path}")
         dual_print(f"Log File: {log_file_display}")
@@ -972,10 +973,25 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     df2["cumPT"] = df2.groupby(["YearOfBirth","Dose"])['PT'].cumsum()
                     df2["cumD_adj"] = df2["CH"] * df2["cumPT"]
                     df2["cumD_unadj"] = df2.groupby(["YearOfBirth","Dose"])['Dead'].cumsum()
-                    out_sh_sa = build_kcor_rows(df2, sh, dual_print)
-                    out_sh_sa["param_slope_start"] = int(start_val)
-                    out_sh_sa["param_slope_length"] = int(length_val)
-                    produced_outputs.append(out_sh_sa)
+                    # Sweep FINAL_KCOR_MIN if provided as range
+                    sa_final_mins = _parse_triplet_range(os.environ.get('SA_FINAL_KCOR_MIN', ''))
+                    if not sa_final_mins:
+                        try:
+                            sa_final_mins = [float(FINAL_KCOR_MIN)]
+                        except Exception:
+                            sa_final_mins = [1.0]
+                    prev_final_min = globals().get('FINAL_KCOR_MIN', 1.0)
+                    for _final_min in sa_final_mins:
+                        try:
+                            globals()['FINAL_KCOR_MIN'] = float(_final_min)
+                        except Exception:
+                            globals()['FINAL_KCOR_MIN'] = prev_final_min
+                        out_sh_sa = build_kcor_rows(df2, sh, dual_print)
+                        out_sh_sa["param_slope_start"] = int(start_val)
+                        out_sh_sa["param_slope_length"] = int(length_val)
+                        out_sh_sa["param_final_kcor_min"] = float(globals().get('FINAL_KCOR_MIN', 1.0))
+                        produced_outputs.append(out_sh_sa)
+                    globals()['FINAL_KCOR_MIN'] = prev_final_min
                 if skip_remaining_lengths:
                     # Stop trying larger lengths for this start
                     pass
@@ -1568,12 +1584,16 @@ def create_summary_file(combined_data, out_path, dual_print):
     return None
 
 def main():
-    if len(sys.argv) < 3 or len(sys.argv) > 4:
-        print("Usage: python KCORv4.py <input_file> <output_file> [log_filename]")
+    if len(sys.argv) < 4 or len(sys.argv) > 5:
+        print("Usage: python KCOR.py <input_file> <output_file> <mode> [log_filename]")
+        print("  mode examples: Primary Analysis | Sensitivity Analysis | Negative Control Test")
         sys.exit(2)
     src = sys.argv[1]
     dst = sys.argv[2]
-    log_filename = sys.argv[3] if len(sys.argv) == 4 else "KCOR_summary.log"
+    mode = sys.argv[3]
+    log_filename = sys.argv[4] if len(sys.argv) == 5 else "KCOR_summary.log"
+    # Propagate mode to header via env for consistent printing
+    os.environ['KCOR_MODE'] = mode
     process_workbook(src, dst, log_filename)
 
 if __name__ == "__main__":

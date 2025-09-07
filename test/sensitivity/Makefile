@@ -1,9 +1,29 @@
+# Sensitivity analysis Makefile
+# Run from the root Makefile as make test
+# Run with: make run SA_SLOPE_START=53,53,1 SA_SLOPE_LENGTH=21,61,5 SA_YOB=0 SA_COHORTS=2021_24 SA_DOSE_PAIRS=1,0;2,0 SA_ANCHOR_WEEKS=4 SA_MA_TOTAL_LENGTH=8 SA_CENTERED=1 SA_SLOPE_WINDOW_SIZE=2 SA_FINAL_KCOR_MIN=0,1,1 SA_FINAL_KCOR_DATE=4/1/24
+
+# Suppress Entering/Leaving directory noise from sub-makes
+MAKEFLAGS += --no-print-directory
+
 ROOT := ../..
 PY := python3
 
 CMR := $(ROOT)/data/Czech/KCOR_CMR.xlsx
 OUT_DIR := $(ROOT)/test/sensitivity/out
 OUT_XLSX := $(OUT_DIR)/KCORv4_sensitivity_smoke.xlsx
+
+# Defaults for sensitivity analysis (overridable from CLI)
+SA_SLOPE_START ?= 53,53,1
+SA_SLOPE_LENGTH ?= 21,61,5
+SA_YOB ?= 0
+SA_COHORTS ?= 2021_24
+SA_DOSE_PAIRS ?= 1,0;2,0
+SA_ANCHOR_WEEKS ?= 4
+SA_MA_TOTAL_LENGTH ?= 8
+SA_CENTERED ?= 1
+SA_SLOPE_WINDOW_SIZE ?= 2
+SA_FINAL_KCOR_MIN ?= 0,1,1
+SA_FINAL_KCOR_DATE ?= 4/1/24
 
 .PHONY: all run clean
 
@@ -20,7 +40,7 @@ run: | $(OUT_DIR)
 	SA_ANCHOR_WEEKS="$(SA_ANCHOR_WEEKS)" SA_MA_TOTAL_LENGTH="$(SA_MA_TOTAL_LENGTH)" \
 	SA_CENTERED="$(SA_CENTERED)" SA_SLOPE_WINDOW_SIZE="$(SA_SLOPE_WINDOW_SIZE)" \
 	SA_FINAL_KCOR_MIN="$(SA_FINAL_KCOR_MIN)" SA_FINAL_KCOR_DATE="$(SA_FINAL_KCOR_DATE)" \
-	$(PY) $(ROOT)/code/KCORv4.py $(CMR) $(OUT_XLSX) KCOR_summary_SA.log
+	$(PY) $(ROOT)/code/KCOR.py $(CMR) $(OUT_XLSX) KCOR_summary_SA.log
 
 clean:
 	rm -f $(OUT_DIR)/KCORv4_sensitivity_smoke.xlsx

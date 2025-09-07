@@ -53,6 +53,36 @@ def parse_groups(group_args: List[str]) -> List[Tuple[int, ...]]:
     return groups
 
 
+def parse_plot_range(plot_spec: str) -> List[Tuple[int, ...]]:
+    """Parse plot range 'start,end[,step]' into two groups:
+    - Group A: (start,)
+    - Group B: tuple of all doses in [start+step, end] stepping by step, combined
+    If step omitted, default to 1.
+    """
+    if not plot_spec:
+        return [(0,), (1, 2)]
+    parts = [p.strip() for p in plot_spec.split(',') if p.strip() != '']
+    if len(parts) < 2:
+        raise ValueError("--plot requires at least 'start,end' (e.g., 0,2 or 0,2,1)")
+    start = int(parts[0])
+    end = int(parts[1])
+    step = int(parts[2]) if len(parts) >= 3 else 1
+    if step == 0:
+        raise ValueError("step must be non-zero")
+    if (end - start) * step < 0:
+        raise ValueError("step sign inconsistent with start/end")
+    # Build range
+    seq = list(range(start, end + (1 if step > 0 else -1), step))
+    if not seq:
+        raise ValueError("empty plot range")
+    a = start
+    rest = [d for d in seq if d != a]
+    if not rest:
+        # Only one cohort specified; show just that cohort
+        return [(a,)]
+    return [(a,), tuple(sorted(set(rest)))]
+
+
 def load_sheet(sheet: str, data_path: Path) -> pd.DataFrame:
     """Load a single enrollment sheet from the workbook.
 
@@ -71,7 +101,7 @@ def load_sheet(sheet: str, data_path: Path) -> pd.DataFrame:
 
 def filter_enrollment_start(df: pd.DataFrame, sheet: str) -> pd.DataFrame:
     """Filter to rows on/after the enrollment start date derived from sheet name YYYY_WW.
-    Mirrors logic in KCORv4.py.
+    Mirrors logic in KCOR.py.
     """
     if "_" not in sheet:
         return df
@@ -254,17 +284,25 @@ def main():
     p.add_argument("--sheet", required=True, help="Enrollment sheet name, e.g., 2021_24")
     p.add_argument("--birth-years", nargs=2, type=int, metavar=("START", "END"), required=True,
                    help="Inclusive birth year range, e.g., 1940 2000")
-    p.add_argument("--groups", nargs=2, required=True,
-                   help="Two dose groups, e.g., '0' '1,2' means [0] vs [1,2]")
+    p.add_argument("--groups", nargs=2, required=False,
+                   help="Two dose groups, e.g., '0' '1,2' means [0] vs [1,2] (deprecated; use --plot)")
+    p.add_argument("--plot", required=False,
+                   help="Dose range 'start,end[,step]'; builds groups: start vs combine(start+step..end). Default 0,2,1")
     p.add_argument("--out", default=None, help="Output PNG path")
     p.add_argument("--input", default=None, help="Path to KCOR_CMR.xlsx (defaults to repo-root data path)")
+    p.add_argument("--equal-population", type=int, choices=[0,1], default=1,
+                   help="1 = equalize initial populations between cohorts (default), 0 = use source populations")
     args = p.parse_args()
 
     sheet = args.sheet
     birth_years = (args.birth_years[0], args.birth_years[1])
-    group_specs = parse_groups(args.groups)
-    if len(group_specs) != 2:
-        raise ValueError("Exactly two groups must be provided, e.g., --groups '0' '1,2'")
+    if args.groups:
+        group_specs = parse_groups(args.groups)
+    else:
+        group_specs = parse_plot_range(args.plot or "0,2,1")
+    if len(group_specs) == 1:
+        # Duplicate for plotting logic expecting two keys; second stays empty later
+        group_specs = [group_specs[0], tuple()]
 
     # Resolve input path; default to repo-root data path
     if args.input:
@@ -306,12 +344,26 @@ def main():
         gdf = to_week_index(gdf)
         km_by_group[grp] = compute_km_by_age(gdf)
 
-    # Equalize populations relative to vaccinated group (assume vaccinated is the second group)
-    grp_A, grp_B = group_specs[0], group_specs[1]
-    ref = km_by_group[grp_B]
+    # Build curves per parameter
+    grp_A, grp_B = group_specs[0], (group_specs[1] if len(group_specs) > 1 else tuple())
     curves: Dict[Tuple[int, ...], pd.DataFrame] = {}
-    curves[grp_B] = equalize_population_ref_to(ref, ref)
-    curves[grp_A] = equalize_population_ref_to(km_by_group[grp_A], ref)
+    if args.equal_population == 1 and grp_B:
+        # Equalize populations relative to second group (assumed vaccinated)
+        ref = km_by_group[grp_B]
+        curves[grp_B] = equalize_population_ref_to(ref, ref)
+        curves[grp_A] = equalize_population_ref_to(km_by_group[grp_A], ref)
+    else:
+        # Use source populations (no equalization) and aggregate survivors directly
+        def to_cohort_survivors(df: pd.DataFrame) -> pd.DataFrame:
+            df = df.copy()
+            df["survivors_age"] = df["Alive0"].fillna(0.0) * df["S"].fillna(1.0)
+            cohort = df.groupby("DateDied")["survivors_age"].sum().reset_index().sort_values("DateDied")
+            cohort["t"] = np.arange(len(cohort), dtype=int)
+            cohort.rename(columns={"survivors_age": "survivors"}, inplace=True)
+            return cohort
+        curves[grp_A] = to_cohort_survivors(km_by_group[grp_A])
+        if grp_B:
+            curves[grp_B] = to_cohort_survivors(km_by_group[grp_B])
 
     title = f"Kaplan–Meier: {sheet}, YoB {birth_years[0]}-{birth_years[1]}"
     out_path = Path(args.out) if args.out else Path(f"validation/kaplan_meier/out/KM_{sheet}_{birth_years[0]}_{birth_years[1]}.png")
