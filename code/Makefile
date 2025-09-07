@@ -1,4 +1,4 @@
-# Makefile for KCOR analysis pipeline
+# Makefile for KCOR analysis pipeline. This is not the root Makefile.
 
 # Configuration - Dataset namespace (inherited from root Makefile)
 DATASET ?= Czech
@@ -68,8 +68,8 @@ help:
 	@echo "  CMR:     $(CMR_OUTPUT)"
 	@echo "  KCOR:    $(KCOR_OUTPUT)"
 
-## Minimal sensitivity plumbing target (no Python changes yet)
-# Echos SA_* variables and runs normal pipeline to a separate output file to verify wiring.
+## Minimal sensitivity plumbing target (kept for convenience)
+# Echos SA_* variables and runs analysis to the unified SA artifact under test/sensitivity/out
 sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "[sensitivity] Environment:"
 	@echo "  SENSITIVITY_ANALYSIS = $(SENSITIVITY_ANALYSIS)"
@@ -78,7 +78,8 @@ sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "  SA_YOB               = $(SA_YOB)"
 	@echo "  SA_COHORTS           = $(SA_COHORTS)"
 	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
-	@echo "Running KCORv4 analysis (smoke) ..."
+	@echo "Running KCOR sensitivity analysis ..."
+	@python -c "import os; os.makedirs('../test/sensitivity/out', exist_ok=True)"
 	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
-		python KCOR.py $(CMR_OUTPUT) ../data/$(DATASET)/KCOR_sensitivity_smoke.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
-	@echo "Sensitivity plumbing check complete!"
+		python KCOR.py $(CMR_OUTPUT) ../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
+	@echo "Sensitivity run complete! Output: test/sensitivity/out/KCOR_SA.xlsx"

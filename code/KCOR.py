@@ -247,9 +247,14 @@ try:
             print(f"[DEBUG] Overriding SLOPE_WINDOW_SIZE via SA_SLOPE_WINDOW_SIZE: {SLOPE_WINDOW_SIZE}")
     _env_final_min = os.environ.get('SA_FINAL_KCOR_MIN')
     if _env_final_min:
-        FINAL_KCOR_MIN = float(_env_final_min)
-        if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding FINAL_KCOR_MIN via SA_FINAL_KCOR_MIN: {FINAL_KCOR_MIN}")
+        # If a range/list is provided (e.g., "0,1,1"), defer handling to SA loop
+        try:
+            if ',' not in _env_final_min.strip():
+                FINAL_KCOR_MIN = float(_env_final_min)
+                if DEBUG_VERBOSE:
+                    print(f"[DEBUG] Overriding FINAL_KCOR_MIN via SA_FINAL_KCOR_MIN: {FINAL_KCOR_MIN}")
+        except Exception:
+            pass
     _env_final_date = os.environ.get('SA_FINAL_KCOR_DATE')
     if _env_final_date:
         FINAL_KCOR_DATE = _env_final_date
@@ -1404,6 +1409,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             group_cols = ["EnrollmentDate","Dose_num","Dose_den"]
             if "param_slope_start" in data.columns and "param_slope_length" in data.columns:
                 group_cols += ["param_slope_start","param_slope_length"]
+            if "param_final_kcor_min" in data.columns:
+                group_cols += ["param_final_kcor_min"]
             for keys, g in data.groupby(group_cols, sort=False):
                 g2022 = g[g["Date"].dt.year == 2022]
                 if not g2022.empty:
@@ -1420,6 +1427,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             off1, slope_len = SLOPE_LOOKUP_TABLE[enr]
                         except Exception:
                             off1, slope_len = (None, None)
+                # Use row-level param_final_kcor_min when available
+                param_final_min = target.get("param_final_kcor_min", FINAL_KCOR_MIN)
+                try:
+                    param_final_min = float(param_final_min)
+                except Exception:
+                    param_final_min = FINAL_KCOR_MIN
                 out_records.append({
                     "EnrollmentDate": enr,
                     "Dose_num": int(target["Dose_num"]),
@@ -1434,7 +1447,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "param_ma_total_length": MA_TOTAL_LENGTH,
                     "param_centered": int(bool(CENTERED)),
                     "param_slope_window_size": SLOPE_WINDOW_SIZE,
-                    "param_final_kcor_min": FINAL_KCOR_MIN,
+                    "param_final_kcor_min": param_final_min,
                     "param_final_kcor_date": FINAL_KCOR_DATE,
                     "param_max_date_for_slope": MAX_DATE_FOR_SLOPE,
                     "param_slope_start": off1,

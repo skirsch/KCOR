@@ -1,8 +1,8 @@
 ================================================================================
 KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-07 13:52:39
-Mode: Sensitivity Analysis (SA)
+Analysis Date: 2025-09-07 15:52:08
+Mode: Sensitivity Analysis
 Input File: ../../data/Czech/KCOR_CMR.xlsx
 SA Output File: ../../test/sensitivity/out/KCOR_SA.xlsx
 Log File: ../../test/sensitivity/out/KCOR_summary_SA.log
@@ -67,3 +67,4 @@ Dose combination: 2 vs 0 [2021_24]
   1995            |   1.4881 [0.772, 2.868]
   2000            |   0.8558 [0.434, 1.688]
 ================================================================================
+[SA] Wrote 20 rows to ../../test/sensitivity/out/KCOR_SA.xlsx

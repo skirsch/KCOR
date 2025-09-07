@@ -54,10 +54,10 @@ def parse_groups(group_args: List[str]) -> List[Tuple[int, ...]]:
 
 
 def parse_plot_range(plot_spec: str) -> List[Tuple[int, ...]]:
-    """Parse plot range 'start,end[,step]' into two groups:
-    - Group A: (start,)
-    - Group B: tuple of all doses in [start+step, end] stepping by step, combined
-    If step omitted, default to 1.
+    """Parse plot range 'start,end[,step]' into individual dose groups.
+
+    Returns list of singletons: [(d,), (d+step,), ...] covering the inclusive range.
+    If step omitted, defaults to 1.
     """
     if not plot_spec:
         return [(0,), (1, 2)]
@@ -71,16 +71,11 @@ def parse_plot_range(plot_spec: str) -> List[Tuple[int, ...]]:
         raise ValueError("step must be non-zero")
     if (end - start) * step < 0:
         raise ValueError("step sign inconsistent with start/end")
-    # Build range
+    # Build inclusive range
     seq = list(range(start, end + (1 if step > 0 else -1), step))
     if not seq:
         raise ValueError("empty plot range")
-    a = start
-    rest = [d for d in seq if d != a]
-    if not rest:
-        # Only one cohort specified; show just that cohort
-        return [(a,)]
-    return [(a,), tuple(sorted(set(rest)))]
+    return [(d,) for d in seq]
 
 
 def load_sheet(sheet: str, data_path: Path) -> pd.DataFrame:
@@ -254,7 +249,7 @@ def equalize_population_ref_to(group_km: pd.DataFrame, ref_km: pd.DataFrame) -> 
     return grp_surv
 
 
-def plot_survival(curves: Dict[Tuple[int, ...], pd.DataFrame], title: str, out_path: Path) -> None:
+def plot_survival(curves: Dict[Tuple[int, ...], pd.DataFrame], title: str, out_path: Path) -> Path:
     plt.figure(figsize=(10, 6))
     for grp, df in curves.items():
         if df.empty:
@@ -275,8 +270,30 @@ def plot_survival(curves: Dict[Tuple[int, ...], pd.DataFrame], title: str, out_p
     plt.legend()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout()
-    plt.savefig(out_path, dpi=150)
-    plt.close()
+    abs_out = out_path.resolve()
+    # Write to a temporary file then replace atomically to ensure overwrite
+    from tempfile import NamedTemporaryFile
+    tmp_dir = abs_out.parent
+    ts_tmp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    tmp_path = tmp_dir / f".{abs_out.stem}_{ts_tmp}{abs_out.suffix}"
+    try:
+        plt.savefig(tmp_path, dpi=150)
+        try:
+            import os
+            os.replace(str(tmp_path), str(abs_out))
+            final_path = abs_out
+        except Exception as e:
+            ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+            fallback = abs_out.with_name(f"{abs_out.stem}_{ts}{abs_out.suffix}")
+            print(f"[WARN] Could not replace {abs_out} ({e}); writing to {fallback}")
+            os.replace(str(tmp_path), str(fallback))
+            final_path = fallback
+    except Exception as e:
+        print(f"[ERROR] Failed to save figure: {e}")
+        final_path = abs_out
+    finally:
+        plt.close()
+    return final_path
 
 
 def main():
@@ -300,9 +317,6 @@ def main():
         group_specs = parse_groups(args.groups)
     else:
         group_specs = parse_plot_range(args.plot or "0,2,1")
-    if len(group_specs) == 1:
-        # Duplicate for plotting logic expecting two keys; second stays empty later
-        group_specs = [group_specs[0], tuple()]
 
     # Resolve input path; default to repo-root data path
     if args.input:
@@ -345,30 +359,41 @@ def main():
         km_by_group[grp] = compute_km_by_age(gdf)
 
     # Build curves per parameter
-    grp_A, grp_B = group_specs[0], (group_specs[1] if len(group_specs) > 1 else tuple())
     curves: Dict[Tuple[int, ...], pd.DataFrame] = {}
-    if args.equal_population == 1 and grp_B:
-        # Equalize populations relative to second group (assumed vaccinated)
-        ref = km_by_group[grp_B]
-        curves[grp_B] = equalize_population_ref_to(ref, ref)
-        curves[grp_A] = equalize_population_ref_to(km_by_group[grp_A], ref)
+    if args.equal_population == 1 and len(group_specs) > 0:
+        # Choose reference group: prefer highest nonzero dose in selection; else first
+        nonzero_groups = [g for g in group_specs if any(d > 0 for d in g)]
+        if nonzero_groups:
+            ref_group = max(nonzero_groups, key=lambda g: max(g))
+        else:
+            ref_group = group_specs[0]
+        ref_km = km_by_group[ref_group]
+        # Equalize each group's initial population to the reference group's N0
+        for g in group_specs:
+            if g == ref_group:
+                curves[g] = equalize_population_ref_to(ref_km, ref_km)
+            else:
+                curves[g] = equalize_population_ref_to(km_by_group[g], ref_km)
     else:
-        # Use source populations (no equalization) and aggregate survivors directly
-        def to_cohort_survivors(df: pd.DataFrame) -> pd.DataFrame:
-            df = df.copy()
-            df["survivors_age"] = df["Alive0"].fillna(0.0) * df["S"].fillna(1.0)
-            cohort = df.groupby("DateDied")["survivors_age"].sum().reset_index().sort_values("DateDied")
+        # Use source populations (no equalization)
+        def to_cohort_survivors(df_km: pd.DataFrame) -> pd.DataFrame:
+            df_km = df_km.copy()
+            df_km["survivors_age"] = df_km["Alive0"].fillna(0.0) * df_km["S"].fillna(1.0)
+            cohort = df_km.groupby("DateDied")["survivors_age"].sum().reset_index().sort_values("DateDied")
             cohort["t"] = np.arange(len(cohort), dtype=int)
             cohort.rename(columns={"survivors_age": "survivors"}, inplace=True)
             return cohort
-        curves[grp_A] = to_cohort_survivors(km_by_group[grp_A])
-        if grp_B:
-            curves[grp_B] = to_cohort_survivors(km_by_group[grp_B])
+        for g in group_specs:
+            curves[g] = to_cohort_survivors(km_by_group[g])
 
     title = f"Kaplan–Meier: {sheet}, YoB {birth_years[0]}-{birth_years[1]}"
     out_path = Path(args.out) if args.out else Path(f"validation/kaplan_meier/out/KM_{sheet}_{birth_years[0]}_{birth_years[1]}.png")
-    plot_survival(curves, title, out_path)
-    print(f"[Done] Wrote plot to {out_path}")
+    abs_out = plot_survival(curves, title, out_path)
+    # Verify file exists and report absolute path
+    if abs_out.exists():
+        print(f"[Done] Wrote plot to {abs_out}")
+    else:
+        print(f"[WARN] Save reported success but file not found at {abs_out}")
 
 
 if __name__ == "__main__":

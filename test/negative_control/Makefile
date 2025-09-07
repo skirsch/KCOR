@@ -10,11 +10,10 @@ CODE_DIR := $(ROOT)/test/negative_control/code
 SHEETS ?= 2021_24,2022_06
 SYNTH := $(DATA_DIR)/KCOR_synthetic_neg_control.xlsx
 OUT_XLSX := $(OUT_DIR)/KCOR_processed_neg_control.xlsx
-SYNTH_OUT := $(OUT_DIR)/KCOR_processed_synthetic_test.xlsx
 
-.PHONY: all run clean
+.PHONY: all clean
 
-all: $(SYNTH) run
+all: $(OUT_XLSX)
 
 $(DATA_DIR) $(OUT_DIR):
 	mkdir -p $@
@@ -22,7 +21,8 @@ $(DATA_DIR) $(OUT_DIR):
 $(SYNTH): $(SRC_CMR) $(CODE_DIR)/generate_negative_control.py | $(DATA_DIR)
 	$(PY) $(CODE_DIR)/generate_negative_control.py $(SRC_CMR) $(SYNTH) $(SHEETS)
 
-run: | $(OUT_DIR)
+# Build negative control output only if stale/missing
+$(OUT_XLSX): $(SYNTH) | $(OUT_DIR)
 	$(PY) $(ROOT)/code/KCOR.py $(SYNTH) $(OUT_XLSX) "Negative Control Test" KCOR_summary_neg_control.log
 
 clean:

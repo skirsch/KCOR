@@ -1,7 +1,8 @@
 ================================================================================
 KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-07 13:52:27
+Analysis Date: 2025-09-07 15:15:56
+Mode: Negative Control Test
 Input File: ../../test/negative_control/data/KCOR_synthetic_neg_control.xlsx
 Output File: ../../test/negative_control/out/KCOR_processed_neg_control.xlsx
 Log File: ../../test/negative_control/out/KCOR_summary_neg_control.log
@@ -26,96 +27,3 @@ Log File: ../../test/negative_control/out/KCOR_summary_neg_control.log
   YoB 1950, Dose 2: slope = -0.000635
   YoB 1960, Dose 2: slope = 0.000817
 
-[Info] Processing sheet: 2022_06
-[DEBUG] Filtered to start from enrollment date 02/07/2022: 7560 rows
-[DEBUG] Filtered to 7560 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 7560 rows
-[DEBUG] Aggregated across sexes: 1260 rows
-
-[DEBUG] Computed slopes for sheet 2022_06:
-  YoB 1940, Dose 0: slope = -0.001089
-  YoB 1950, Dose 0: slope = -0.001322
-  YoB 1960, Dose 0: slope = 0.001138
-  YoB 1940, Dose 1: slope = -0.001138
-  YoB 1950, Dose 1: slope = -0.001644
-  YoB 1960, Dose 1: slope = 0.001338
-  YoB 1940, Dose 2: slope = -0.001831
-  YoB 1950, Dose 2: slope = -0.000938
-  YoB 1960, Dose 2: slope = 0.000553
-
-
-================================================================================
-KCOR VALUES AT END OF 2022 - ALL SHEETS
-================================================================================
-
-Dose combination: 1 vs 0 [2021_24]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  ASMR (pooled)   |   1.0287 [1.011, 1.047]
-  1940            |   1.1032 [1.067, 1.141]
-  1950            |   0.9963 [0.958, 1.036]
-  1960            |   1.0115 [0.988, 1.035]
-
-Dose combination: 2 vs 0 [2021_24]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  ASMR (pooled)   |   1.0798 [1.057, 1.103]
-  1940            |   1.2507 [1.192, 1.313]
-  1950            |   1.0481 [1.005, 1.093]
-  1960            |   1.0263 [0.998, 1.055]
-
-Dose combination: 2 vs 1 [2021_24]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  ASMR (pooled)   |   1.0496 [1.028, 1.072]
-  1940            |   1.1337 [1.079, 1.191]
-  1950            |   1.0521 [1.011, 1.095]
-  1960            |   1.0146 [0.987, 1.043]
-
-Dose combination: 1 vs 0 [2022_06]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  ASMR (pooled)   |   1.0000 [0.984, 1.017]
-  1940            |   0.9929 [0.953, 1.035]
-  1950            |   1.0063 [0.967, 1.047]
-  1960            |   1.0002 [0.980, 1.021]
-
-Dose combination: 2 vs 0 [2022_06]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  ASMR (pooled)   |   1.0756 [1.055, 1.097]
-  1940            |   1.1580 [1.102, 1.217]
-  1950            |   1.0349 [0.990, 1.082]
-  1960            |   1.0660 [1.041, 1.092]
-
-Dose combination: 2 vs 1 [2022_06]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  ASMR (pooled)   |   1.0911 [1.070, 1.112]
-  1940            |   1.2430 [1.185, 1.304]
-  1950            |   1.0488 [1.003, 1.096]
-  1960            |   1.0657 [1.041, 1.092]
-
-Dose combination: 3 vs 2 [2022_06]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  No data available for this dose combination
-
-Dose combination: 3 vs 0 [2022_06]
---------------------------------------------------
-            YoB | KCOR [95% CI]
---------------------------------------------------
-  No data available for this dose combination
-================================================================================
-[Done] Wrote 3768 rows to ../../test/negative_control/out/KCOR_processed_neg_control.xlsx
-[Summary] Creating summary file: ../../test/negative_control/out/KCOR_summary.xlsx
-  - 2021_24: 3 dose combinations, 18 summary rows
-  - 2022_06: 3 dose combinations, 18 summary rows
-[Summary] Created summary with 2 enrollment periods
