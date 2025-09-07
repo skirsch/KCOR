@@ -335,9 +335,9 @@ KCOR/
 - Root `Makefile` orchestrates common tasks:
   - `make` → runs analysis (`run`) and validation
   - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
-  - `make validation` → DS-CMRR validation (delegates to `validation/DS-CMRR/Makefile run`)
+  - `make validation` → DS-CMRR + KM validation (delegates to `validation/DS-CMRR/` and `validation/kaplan_meier/`)
   - `make test` → alias to validation (reserve for unit tests if you add them later)
-- Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`) remain runnable on their own via `make -C <dir> <target>`.
+- Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) remain runnable on their own via `make -C <dir> <target>`.
 
 ## 📦 Installation & Dependencies
 
@@ -356,9 +356,8 @@ cd KCOR
 # Install dependencies
 pip install pandas numpy openpyxl
 
-# Download required data file
-# Download vax_24.csv from: https://www.nzip.cz/data/2135-covid-19-prehled-populace
-# Rename it to vax_24.csv and place it in: ../../Czech/data/vax_24.csv
+# That’s it — Czech data is included under data/Czech. Run:
+make
 ```
 
 ## 🚀 Usage
@@ -404,24 +403,7 @@ python KCORv4.py [aggregated_file] [analysis_output] [log_filename]
 
 ### Data Requirements
 
-#### Czech Data Setup
-The analysis requires Czech vaccination and mortality data:
-
-1. **Download the data file**:
-   - Visit: https://www.nzip.cz/data/2135-covid-19-prehled-populace
-   - Download the CSV file containing population and vaccination data
-   - Rename it to `vax_24.csv`
-
-2. **Place the file**:
-   - Create the directory structure: `../../Czech/data/`
-   - Place `vax_24.csv` in `../../Czech/data/vax_24.csv`
-
-3. **File structure should be**:
-   ```
-   KCOR/
-   ├── code/
-   └── ../../Czech/data/vax_24.csv
-   ```
+The Czech data files needed for running examples and validation are already included in this repository under `data/Czech/`. No additional downloads are required to run the default pipeline and validations.
 
 #### Input Data Format
 
