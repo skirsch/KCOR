@@ -1,22 +1,59 @@
+# generate_negative_control.py
+
+# Author: Steve Kirsch
+# Date: 2025-09-07
+# Version: 1.0
+# Description: This program generates the negative control test file for the KCOR analysis.
+# It is used to compare the KCOR values of the unvaccinated with the unvaccinated, but different ages.
+# It is also used to compare the KCOR values of the vaccinated with the vaccinated, but different ages.
+# Run from the main Makefile as make test
+
+# The unvaxxed appears as age 1950, so it should have the most reliable 1.0 signal.
+# The vaxxed will have differences with age, so the signal there will deviate from 1.0.
+
+# The thing to keep in mind is that the source data is not random and COVID was a non-proportional hazard
+# so we need to be careful about how we interpret these negative control tests because the signal
+# they show here is likely a real signal, not a negative control failure.
+
+# on ideal data, KCOR will always return 1.0, but on real data it will deviate from 1.0.
+
+
 import os
 import sys
 import pandas as pd
 
 
-def build_unvax_negative_control_sheet(df: pd.DataFrame) -> pd.DataFrame:
+def build_negative_control_sheet(df: pd.DataFrame, mode: str) -> pd.DataFrame:
+    """Build a synthetic sheet per README groupings.
+
+    mode:
+      - 'unvax': use Dose==0 source rows; constant YoB=1950
+      - 'vax2' : use Dose==2 source rows; constant YoB=1940
+    Mapping (target dose -> source YoB set):
+      0 -> {1930, 1935}
+      1 -> {1940, 1945}
+      2 -> {1950, 1955}
+    """
     required_cols = {"ISOweekDied", "DateDied", "YearOfBirth", "Sex", "Dose", "Alive", "Dead"}
     missing = required_cols - set(df.columns)
     if missing:
         raise ValueError(f"Input sheet missing required columns: {sorted(missing)}")
 
-    dose_to_source_yob = {0: 1930, 1: 1940, 2: 1950}
+    if mode not in {"unvax", "vax2"}:
+        raise ValueError("mode must be 'unvax' or 'vax2'")
+
+    source_dose = 0 if mode == "unvax" else 2
+    constant_yob = 1950 if mode == "unvax" else 1940
+
+    target_to_source_yobs = {0: {1930, 1935}, 1: {1940, 1945}, 2: {1950, 1955}}
+
     parts = []
-    for target_dose, source_yob in dose_to_source_yob.items():
-        src = df[(df["Dose"] == 0) & (df["YearOfBirth"] == source_yob)].copy()
+    for target_dose, yob_set in target_to_source_yobs.items():
+        src = df[(df["Dose"] == source_dose) & (df["YearOfBirth"].isin(list(yob_set)))].copy()
         if src.empty:
             continue
         src["Dose"] = target_dose
-        src["YearOfBirth"] = 1950
+        src["YearOfBirth"] = constant_yob
         parts.append(src)
 
     if not parts:
@@ -28,7 +65,7 @@ def build_unvax_negative_control_sheet(df: pd.DataFrame) -> pd.DataFrame:
     return out[["ISOweekDied", "DateDied", "YearOfBirth", "Sex", "Dose", "Alive", "Dead"]]
 
 
-def generate(input_path: str, output_path: str, sheets=None) -> None:
+def generate(input_path: str, output_path: str, mode: str = "unvax", sheets=None) -> None:
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     xls = pd.ExcelFile(input_path)
 
@@ -42,7 +79,12 @@ def generate(input_path: str, output_path: str, sheets=None) -> None:
                 df["Dose"] = pd.to_numeric(df["Dose"], errors="coerce").fillna(-1).astype(int)
             if "YearOfBirth" in df.columns:
                 df["YearOfBirth"] = pd.to_numeric(df["YearOfBirth"], errors="coerce").fillna(-1).astype(int)
-            out = build_unvax_negative_control_sheet(df)
+            if mode == "both":
+                out_unvax = build_negative_control_sheet(df, "unvax")
+                out_vax2  = build_negative_control_sheet(df, "vax2")
+                out = pd.concat([out_unvax, out_vax2], ignore_index=True)
+            else:
+                out = build_negative_control_sheet(df, mode)
             if not out.empty:
                 out.to_excel(writer, index=False, sheet_name=sh)
 
@@ -50,11 +92,14 @@ def generate(input_path: str, output_path: str, sheets=None) -> None:
 if __name__ == "__main__":
     root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     default_in = os.path.join(root, "data", "Czech", "KCOR_CMR.xlsx")
-    default_out = os.path.join(root, "test", "negative_control", "data", "KCOR_synthetic_test.xlsx")
+    default_out = os.path.join(root, "test", "negative_control", "data", "KCOR_synthetic_neg_control.xlsx")
 
     src = sys.argv[1] if len(sys.argv) >= 2 else default_in
     dst = sys.argv[2] if len(sys.argv) >= 3 else default_out
-    generate(src, dst)
-    print(f"Wrote synthetic test workbook to {dst}")
+    mode = sys.argv[3] if len(sys.argv) >= 4 else "both"
+    sheets_arg = sys.argv[4] if len(sys.argv) >= 5 else None
+    sheets = [s.strip() for s in sheets_arg.split(',')] if sheets_arg else None
+    generate(src, dst, mode, sheets)
+    print(f"Wrote synthetic ({mode}) test workbook to {dst}")
 
 

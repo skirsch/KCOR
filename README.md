@@ -337,8 +337,9 @@ KCOR/
   - `make` → runs analysis (`run`) and validation
   - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
   - `make validation` → DS-CMRR + KM validation (delegates to `validation/DS-CMRR/` and `validation/kaplan_meier/`)
-  - `make test` → builds and runs the negative-control test (delegates to `test/Makefile`)
-- Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) remain runnable on their own via `make -C <dir> <target>`.
+  - `make test` → runs both negative-control and sensitivity tests (delegates to `test/Makefile`)
+- Important: Always run these targets from the repository root so environment and output paths are consistent.
+- Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) are for advanced use only; invoking them directly may bypass root defaults and write outputs to different locations.
 
 ## Sensitivity Analysis
 
@@ -437,7 +438,7 @@ Root Makefile orchestrates both the KCOR pipeline and the validation suite.
 make            # runs analysis (run) + validation
 make run        # main KCOR pipeline
 make validation # DS-CMRR validation (single-sheet defaults)
-make test       # alias to validation
+make test       # negative-control and sensitivity tests (see test/)
 ```
 
 Notes:
