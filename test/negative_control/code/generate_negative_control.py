@@ -76,7 +76,7 @@ def build_negative_control_sheet(df: pd.DataFrame, mode: str) -> pd.DataFrame:
     return out[["ISOweekDied", "DateDied", "YearOfBirth", "Sex", "Dose", "Alive", "Dead"]]
 
 
-def generate(input_path: str, output_path: str, mode: str = "unvax", sheets=None) -> None:
+def generate(input_path: str, output_path: str, sheets=None) -> None:
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     xls = pd.ExcelFile(input_path)
 
@@ -90,13 +90,11 @@ def generate(input_path: str, output_path: str, mode: str = "unvax", sheets=None
                 df["Dose"] = pd.to_numeric(df["Dose"], errors="coerce").fillna(-1).astype(int)
             if "YearOfBirth" in df.columns:
                 df["YearOfBirth"] = pd.to_numeric(df["YearOfBirth"], errors="coerce").fillna(-1).astype(int)
-            if mode == "both":
-                out_unvax = build_negative_control_sheet(df, "unvax")
-                out_vax2  = build_negative_control_sheet(df, "vax2")
-                out_total = build_negative_control_sheet(df, "total")
-                out = pd.concat([out_unvax, out_vax2, out_total], ignore_index=True)
-            else:
-                out = build_negative_control_sheet(df, mode)
+            # Always build all three cohorts: 1950 from unvax, 1940 from vax dose 2, 1960 from TOTAL
+            out_unvax = build_negative_control_sheet(df, "unvax")
+            out_vax2  = build_negative_control_sheet(df, "vax2")
+            out_total = build_negative_control_sheet(df, "total")
+            out = pd.concat([out_unvax, out_vax2, out_total], ignore_index=True)
             if not out.empty:
                 out.to_excel(writer, index=False, sheet_name=sh)
 
@@ -108,10 +106,16 @@ if __name__ == "__main__":
 
     src = sys.argv[1] if len(sys.argv) >= 2 else default_in
     dst = sys.argv[2] if len(sys.argv) >= 3 else default_out
-    mode = sys.argv[3] if len(sys.argv) >= 4 else "both"
-    sheets_arg = sys.argv[4] if len(sys.argv) >= 5 else None
+    # Optional third argument may be sheets (comma-separated). Backward compat: if it looks like a mode word,
+    # ignore it and take sheets from the fourth argument.
+    arg3 = sys.argv[3] if len(sys.argv) >= 4 else None
+    mode_words = {"unvax","vax2","total","both","all"}
+    if arg3 and arg3 in mode_words:
+        sheets_arg = sys.argv[4] if len(sys.argv) >= 5 else None
+    else:
+        sheets_arg = arg3
     sheets = [s.strip() for s in sheets_arg.split(',')] if sheets_arg else None
-    generate(src, dst, mode, sheets)
-    print(f"Wrote synthetic ({mode}) test workbook to {dst}")
+    generate(src, dst, sheets)
+    print(f"Wrote synthetic (all cohorts) test workbook to {dst}")
 
 

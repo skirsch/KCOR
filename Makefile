@@ -9,8 +9,8 @@ VALIDATION_KM_DIR := validation/kaplan_meier
 
 .PHONY: all run validation test clean sensitivity
 
-# Default: build everything (analysis + validation)
-all: run validation
+# Default: build everything (analysis + validation + tests)
+all: run validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
 run:

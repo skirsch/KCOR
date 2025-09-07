@@ -9,7 +9,7 @@ INPUT_DATA       = $(RAW_CSV)
 CMR_OUTPUT       = ../data/$(COUNTRY)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(COUNTRY)/KCORv4.xlsx
 
-.PHONY: clean clean-all help create_dirs sensitivity
+.PHONY: clean clean-all help sensitivity
 
 # Default target - run complete KCOR pipeline
 KCOR: $(KCOR_OUTPUT)
@@ -21,7 +21,7 @@ $(KCOR_OUTPUT): $(CMR_OUTPUT) KCORv4.py
 	@echo "KCOR analysis complete!"
 
 # CMR aggregation depends on input data and KCOR_CMR.py script
-$(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | create_dirs
+$(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(COUNTRY)
 	@echo "Running KCOR CMR aggregation..."
 	python KCOR_CMR.py $(INPUT_DATA) $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
@@ -29,12 +29,12 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | create_dirs
 # Convenience target for CMR only
 CMR: $(CMR_OUTPUT)
 
-# Create output directories if they don't exist
-create_dirs:
-	@python -c "import os; os.makedirs('../data/$(COUNTRY)', exist_ok=True)"
+# Ensure output directory exists (real directory target)
+../data/$(COUNTRY):
+	@python -c "import os; os.makedirs('$@', exist_ok=True)"
 
 # Rule to inflate the raw CSV from the compressed LFS asset
-$(RAW_CSV): $(RAW_CSV_GZ) | create_dirs
+$(RAW_CSV): $(RAW_CSV_GZ) | ../data/$(COUNTRY)
 	@echo "Decompressing $(RAW_CSV_GZ) -> $(RAW_CSV) ..."
 	@gzip -dc "$<" > "$@"
 	@echo "Done."
@@ -69,7 +69,7 @@ help:
 
 ## Minimal sensitivity plumbing target (no Python changes yet)
 # Echos SA_* variables and runs normal pipeline to a separate output file to verify wiring.
-sensitivity: $(CMR_OUTPUT) KCORv4.py | create_dirs
+sensitivity: $(CMR_OUTPUT) KCORv4.py | ../data/$(COUNTRY)
 	@echo "[sensitivity] Environment:"
 	@echo "  SENSITIVITY_ANALYSIS = $(SENSITIVITY_ANALYSIS)"
 	@echo "  SA_SLOPE_START       = $(SA_SLOPE_START)"

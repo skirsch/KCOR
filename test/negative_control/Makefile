@@ -19,7 +19,7 @@ $(DATA_DIR) $(OUT_DIR):
 	mkdir -p $@
 
 $(SYNTH): | $(DATA_DIR)
-	$(PY) $(CODE_DIR)/generate_negative_control.py $(SRC_CMR) $(SYNTH) both $(SHEETS)
+	$(PY) $(CODE_DIR)/generate_negative_control.py $(SRC_CMR) $(SYNTH) $(SHEETS)
 
 run: | $(OUT_DIR)
 	$(PY) $(ROOT)/code/KCORv4.py $(SYNTH) $(OUT_XLSX) KCOR_summary_neg_control.log

@@ -231,8 +231,8 @@ def standardized_ratio(df, weights, sheet_name, anchor_weeks, dose_num_min=1, do
         se = math.sqrt(max(se2, 0.0))
         se_logs.append(se)
     out["SE_logK"] = se_logs
-    out["CI_lower"] = out["K_std"] * np.exp(-1.96 * out["SE_logK"])
-    out["CI_upper"] = out["K_std"] * np.exp( 1.96 * out["SE_logK"])
+    out["CI_lower"] = out["K_std"] * safe_exp(-1.96 * out["SE_logK"])
+    out["CI_upper"] = out["K_std"] * safe_exp( 1.96 * out["SE_logK"])
 
     out["YearOfBirth"] = 0
     out["Dose_num"] = dose_num_min
@@ -280,8 +280,8 @@ def age_specific_ratios(df, sheet_name, anchor_weeks, dose_num_min=1, dose_den_e
             se2 = (1.0/(dv+EPS)) + (1.0/(du+EPS)) + (1.0/(base_v+EPS)) + (1.0/(base_u+EPS))
             se_logs.append(math.sqrt(max(se2, 0.0)))
         m["SE_logK"] = se_logs
-        m["CI_lower"] = m["K"] * np.exp(-1.96 * m["SE_logK"])
-        m["CI_upper"] = m["K"] * np.exp( 1.96 * m["SE_logK"])
+        m["CI_lower"] = m["K"] * safe_exp(-1.96 * m["SE_logK"])
+        m["CI_upper"] = m["K"] * safe_exp( 1.96 * m["SE_logK"])
 
         for _, row in m.iterrows():
             dt = row["Date"]
