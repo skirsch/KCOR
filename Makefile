@@ -25,8 +25,9 @@ validation:
 km:
 	$(MAKE) -C $(VALIDATION_KM_DIR) run
 
-# Alias: `make test` maps to validation (keep unit tests separate if added later)
-test: validation
+# Negative-control test (delegates to test/Makefile)
+test:
+	$(MAKE) -C test all
 
 clean:
 	-$(MAKE) -C $(CODE_DIR) clean

@@ -337,7 +337,7 @@ KCOR/
   - `make` → runs analysis (`run`) and validation
   - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
   - `make validation` → DS-CMRR + KM validation (delegates to `validation/DS-CMRR/` and `validation/kaplan_meier/`)
-  - `make test` → alias to validation (reserve for unit tests if you add them later)
+  - `make test` → builds and runs the negative-control test (delegates to `test/Makefile`)
 - Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) remain runnable on their own via `make -C <dir> <target>`.
 
 ## Sensitivity Analysis
