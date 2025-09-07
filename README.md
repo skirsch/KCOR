@@ -435,10 +435,15 @@ make
 Root Makefile orchestrates both the KCOR pipeline and the validation suite.
 ```bash
 # From repo root
-make            # runs analysis (run) + validation
-make run        # main KCOR pipeline
-make validation # DS-CMRR validation (single-sheet defaults)
-make test       # negative-control and sensitivity tests (see test/)
+make                    # runs analysis (run) + validation + tests
+make run                # main KCOR pipeline
+make validation         # DS-CMRR + KM validation
+make test               # negative-control and sensitivity tests (see test/)
+
+# Dataset targeting (default DATASET=Czech)
+make DATASET=Czech
+make run DATASET=USA
+make sensitivity DATASET=Czech
 ```
 
 Notes:
@@ -516,7 +521,7 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 
 #### Visualization Capabilities
 
-**`KCORv4_analysis.xlsx`** - Complete analysis file:
+**`KCOR.xlsx`** - Complete analysis file:
 - **Filter by Cohort**: Use Excel filters to examine specific dose combinations (e.g., 2 vs 0, 3 vs 0)
 - **Filter by Age**: Focus on specific birth years or age groups
 - **Time Series Analysis**: Plot KCOR values over time for any cohort combination

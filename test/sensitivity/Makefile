@@ -7,10 +7,11 @@ MAKEFLAGS += --no-print-directory
 
 ROOT := ../..
 PY := python3
+DATASET ?= Czech
 
-CMR := $(ROOT)/data/Czech/KCOR_CMR.xlsx
+CMR := $(ROOT)/data/$(DATASET)/KCOR_CMR.xlsx
 OUT_DIR := $(ROOT)/test/sensitivity/out
-OUT_XLSX := $(OUT_DIR)/KCORv4_sensitivity_smoke.xlsx
+OUT_XLSX := $(OUT_DIR)/KCOR_sensitivity_smoke.xlsx
 
 # Defaults for sensitivity analysis (overridable from CLI)
 SA_SLOPE_START ?= 53,53,1
@@ -40,10 +41,10 @@ run: | $(OUT_DIR)
 	SA_ANCHOR_WEEKS="$(SA_ANCHOR_WEEKS)" SA_MA_TOTAL_LENGTH="$(SA_MA_TOTAL_LENGTH)" \
 	SA_CENTERED="$(SA_CENTERED)" SA_SLOPE_WINDOW_SIZE="$(SA_SLOPE_WINDOW_SIZE)" \
 	SA_FINAL_KCOR_MIN="$(SA_FINAL_KCOR_MIN)" SA_FINAL_KCOR_DATE="$(SA_FINAL_KCOR_DATE)" \
-	$(PY) $(ROOT)/code/KCOR.py $(CMR) $(OUT_XLSX) KCOR_summary_SA.log
+	$(PY) $(ROOT)/code/KCOR.py $(CMR) $(OUT_XLSX) "Sensitivity Analysis" KCOR_summary_SA.log
 
 clean:
-	rm -f $(OUT_DIR)/KCORv4_sensitivity_smoke.xlsx
+	rm -f $(OUT_DIR)/KCOR_sensitivity_smoke.xlsx
 	rm -f $(OUT_DIR)/KCOR_summary_SA.log
 	rm -f $(OUT_DIR)/KCOR_summary.xlsx
 

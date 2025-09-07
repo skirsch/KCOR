@@ -1,13 +1,14 @@
 # Makefile for KCOR analysis pipeline
 
-# Configuration - Edit these paths for different countries/datasets
-COUNTRY = Czech
+# Configuration - Dataset namespace (inherited from root Makefile)
+DATASET ?= Czech
 # Raw CSV (uncompressed) and compressed asset stored in repo
-RAW_CSV          = ../data/$(COUNTRY)/Czech-NZIP-NR-26-30-release-2024-01.csv
-RAW_CSV_GZ       = ../data/$(COUNTRY)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip
+RAW_CSV_GZ       = ../data/$(DATASET)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip
+# Keep the same base name when unzipped (…csv.gzip -> …csv)
+RAW_CSV          = $(RAW_CSV_GZ:.gzip=)
 INPUT_DATA       = $(RAW_CSV)
-CMR_OUTPUT       = ../data/$(COUNTRY)/KCOR_CMR.xlsx
-KCOR_OUTPUT      = ../data/$(COUNTRY)/KCORv4.xlsx
+CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
+KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
 
 .PHONY: clean clean-all help sensitivity
 
@@ -21,7 +22,7 @@ $(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py
 	@echo "KCOR analysis complete!"
 
 # CMR aggregation depends on input data and KCOR_CMR.py script
-$(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(COUNTRY)
+$(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@echo "Running KCOR CMR aggregation..."
 	python KCOR_CMR.py $(INPUT_DATA) $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
@@ -30,18 +31,18 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(COUNTRY)
 CMR: $(CMR_OUTPUT)
 
 # Ensure output directory exists (real directory target)
-../data/$(COUNTRY):
+../data/$(DATASET):
 	@python -c "import os; os.makedirs('$@', exist_ok=True)"
 
 # Rule to inflate the raw CSV from the compressed LFS asset
-$(RAW_CSV): $(RAW_CSV_GZ) | ../data/$(COUNTRY)
+$(RAW_CSV): $(RAW_CSV_GZ) | ../data/$(DATASET)
 	@echo "Decompressing $(RAW_CSV_GZ) -> $(RAW_CSV) ..."
 	@gzip -dc "$<" > "$@"
 	@echo "Done."
 
 # Clean up all output files for current country
 clean:
-	@echo "Cleaning up output files for $(COUNTRY)..."
+	@echo "Cleaning up output files for $(DATASET)..."
 	@python -c "import os; [os.remove(f) for f in ['$(CMR_OUTPUT)', '$(KCOR_OUTPUT)'] if os.path.exists(f)]"
 	@echo "Cleanup complete!"
 
@@ -57,19 +58,19 @@ help:
 	@echo "  KCOR      - Run complete KCOR pipeline (CMR + analysis)"
 	@echo "  CMR       - Run only CMR aggregation step"
 	@echo "  sensitivity - Smoke test sensitivity plumbing (echo SA_* and run analysis)"
-	@echo "  clean     - Remove output files for current country ($(COUNTRY))"
+	@echo "  clean     - Remove output files for current dataset ($(DATASET))"
 	@echo "  clean-all - Remove all output files for all countries"
 	@echo "  help      - Show this help message"
 	@echo ""
 	@echo "Current configuration:"
-	@echo "  Country: $(COUNTRY)"
+	@echo "  Dataset: $(DATASET)"
 	@echo "  Input:   $(INPUT_DATA)"
 	@echo "  CMR:     $(CMR_OUTPUT)"
 	@echo "  KCOR:    $(KCOR_OUTPUT)"
 
 ## Minimal sensitivity plumbing target (no Python changes yet)
 # Echos SA_* variables and runs normal pipeline to a separate output file to verify wiring.
-sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(COUNTRY)
+sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "[sensitivity] Environment:"
 	@echo "  SENSITIVITY_ANALYSIS = $(SENSITIVITY_ANALYSIS)"
 	@echo "  SA_SLOPE_START       = $(SA_SLOPE_START)"
@@ -79,5 +80,5 @@ sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(COUNTRY)
 	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
 	@echo "Running KCORv4 analysis (smoke) ..."
 	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
-		python KCOR.py $(CMR_OUTPUT) ../data/$(COUNTRY)/KCORv4_sensitivity_smoke.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
+		python KCOR.py $(CMR_OUTPUT) ../data/$(DATASET)/KCOR_sensitivity_smoke.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
 	@echo "Sensitivity plumbing check complete!"
