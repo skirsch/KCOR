@@ -791,7 +791,7 @@ The KCOR methodology has been independently validated using multiple approaches 
 
 ### Independent Validation Methods
 
-The [`validation/`](validation/) directory contains three independent validation approaches:
+The [`validation/`](validation/) directory contains four independent validation approaches:
 
 1. **GLM Validation**: A **completely different methodology** using Generalized Linear Models with **variable cohorts** rather than fixed cohorts. This approach creates output that looks nearly identical to KCOR results, providing strong independent validation.
 
@@ -809,7 +809,13 @@ The [`validation/`](validation/) directory contains three independent validation
 
    *DS-CMRR output KCOR(t) for Czech data, dose 2 vs unvaccinated (single-sheet 2021_24)*
 
-3. **Aarstad Correlation Analysis**: Independent correlation analysis of CDC excess deaths data by county, providing external validation of KCOR findings.
+3. **Kaplan–Meier Validation**: Traditional survival analysis on naturally matched cohorts (equalized initial population at enrollment) using `validation/kaplan_meier/`.
+
+   ![Kaplan–Meier survival (YoB 1940–1995, 2021_24)](validation/kaplan_meier/out/KM_2021_24_1940_1995.png)
+
+   *Observation: With naturally matched cohorts, the curves diverge with the unvaccinated cohort exhibiting lower mortality over time.*
+
+4. **Aarstad Correlation Analysis**: Independent correlation analysis of CDC excess deaths data by county, providing external validation of KCOR findings.
 
    ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
 
