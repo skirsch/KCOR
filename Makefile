@@ -42,10 +42,10 @@ clean:
 #   SA_COHORTS      = comma-separated cohorts (e.g., 2021_24,2022_06)
 # Defaults tuned to match current code settings for 2021_24:
 # SLOPE_LOOKUP_TABLE['2021_24'] = (53, 114) => offset1=53, Δt=61
-SA_SLOPE_START ?= 50,100,4   # default is 53,53,1
+SA_SLOPE_START ?= 50,84,4   # default is 53,53,1. Needs to sum to be <
 SA_SLOPE_LENGTH ?= 61,61,1   # default is 61,61,1
 SA_YOB ?= 0   # default is 0 which means ASMR pooled
-SA_COHORTS ?= 2021_24,2022_06   # default is 2021_24
+SA_COHORTS ?= 2021_24 # ,2022_06   # default is 2021_24
 SA_DOSE_PAIRS ?= 1,0;2,0
 
 # Minimal wiring: delegate to code/Makefile sensitivity target

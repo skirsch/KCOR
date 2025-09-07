@@ -227,6 +227,26 @@ try:
 except Exception:
     pass
 
+# Helpers to parse numeric triplet ranges like "start,end,step"
+def _parse_triplet_range(value: str):
+    try:
+        parts = [p.strip() for p in str(value).split(',') if p.strip()]
+        if len(parts) == 3:
+            start, end, step = map(int, parts)
+            if step <= 0:
+                step = 1
+            if start <= end:
+                return list(range(start, end + 1, step))
+            else:
+                return list(range(start, end - 1, -step))
+        elif len(parts) == 1:
+            return [int(parts[0])]
+        else:
+            # interpret as list of ints
+            return [int(p) for p in parts]
+    except Exception:
+        return None
+
 def safe_log(x, eps=EPS):
     """Safe logarithm with clipping to avoid log(0) or log(negative)."""
     return np.log(np.clip(x, eps, None))
@@ -829,6 +849,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
             df = df[df["DateDied"] >= enrollment_date]
             dual_print(f"[DEBUG] Filtered to start from enrollment date {enrollment_date.strftime('%m/%d/%Y')}: {len(df)} rows")
+            # SA pre-check: ensure max(start)+max(length) does not exceed allowed weeks to MAX_DATE_FOR_SLOPE
+            if _is_sa_mode():
+                try:
+                    sa_starts_chk = _parse_triplet_range(os.environ.get('SA_SLOPE_START', ''))
+                    sa_lengths_chk = _parse_triplet_range(os.environ.get('SA_SLOPE_LENGTH', ''))
+                    if sa_starts_chk and sa_lengths_chk:
+                        max_start = max(sa_starts_chk)
+                        max_len = max(sa_lengths_chk)
+                        max_date = datetime.strptime(MAX_DATE_FOR_SLOPE, "%Y-%m-%d")
+                        allowed_weeks = int((max_date - enrollment_date).days // 7)
+                        if (max_start + max_len) > allowed_weeks:
+                            dual_print(f"\n❌ SA configuration invalid for sheet {sh}: max(start)+max(length)={max_start}+{max_len}={max_start+max_len} > allowed {allowed_weeks} weeks (to {MAX_DATE_FOR_SLOPE}).")
+                            dual_print("   Please reduce SA_SLOPE_START/SA_SLOPE_LENGTH maxima or adjust MAX_DATE_FOR_SLOPE.")
+                            raise SystemExit(2)
+                except Exception:
+                    pass
         
         # Apply debug age filter
         if YEAR_RANGE:
@@ -872,8 +908,58 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #             print(f"    Original MR range: {mr_orig.min():.6f} to {mr_orig.max():.6f}")
         #             print(f"    Smoothed MR range: {mr_smooth.min():.6f} to {mr_smooth.max():.6f}")
         
-        # Lookup table slope calculation (using smoothed MR values)
-        slopes = compute_group_slopes_lookup(df, sh)
+        # SA: iterate slope ranges if provided; else compute once
+        sa_mode = _is_sa_mode()
+        sa_starts = _parse_triplet_range(os.environ.get('SA_SLOPE_START', '')) if sa_mode else None
+        sa_lengths = _parse_triplet_range(os.environ.get('SA_SLOPE_LENGTH', '')) if sa_mode else None
+        if sa_mode and sa_starts and sa_lengths:
+            produced_outputs = []
+            original_entry = SLOPE_LOOKUP_TABLE.get(sh)
+            for start_val in sa_starts:
+                skip_remaining_lengths = False
+                for length_val in sa_lengths:
+                    # Override lookup for this sheet with (start, length)
+                    SLOPE_LOOKUP_TABLE[sh] = (int(start_val), int(length_val))
+                    try:
+                        slopes = compute_group_slopes_lookup(df, sh)
+                    except ValueError as e:
+                        # Safety check: if this combo exceeds MAX_DATE_FOR_SLOPE, skip and mark to stop trying larger combos
+                        if DEBUG_VERBOSE:
+                            print(f"[SA] Skipping invalid slope combo start={start_val}, length={length_val}: {e}")
+                        skip_remaining_lengths = True
+                        continue
+                    # Build a copy pipeline to avoid cross-contamination
+                    df2 = df.copy()
+                    df2 = adjust_mr(df2, slopes, t0=ANCHOR_WEEKS)
+                    # Add slope and scale_factor columns (required by downstream build_kcor_rows)
+                    df2["slope"] = df2.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
+                    df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
+                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(ANCHOR_WEEKS))), axis=1)
+                    df2["hazard"] = -np.log(1 - df2["MR_adj"].clip(upper=0.999))
+                    df2["CH"] = df2.groupby(["YearOfBirth","Dose"])['hazard'].cumsum()
+                    df2["CH_actual"] = df2.groupby(["YearOfBirth","Dose"])['MR'].cumsum()
+                    df2["cumPT"] = df2.groupby(["YearOfBirth","Dose"])['PT'].cumsum()
+                    df2["cumD_adj"] = df2["CH"] * df2["cumPT"]
+                    df2["cumD_unadj"] = df2.groupby(["YearOfBirth","Dose"])['Dead'].cumsum()
+                    out_sh_sa = build_kcor_rows(df2, sh, dual_print)
+                    out_sh_sa["param_slope_start"] = int(start_val)
+                    out_sh_sa["param_slope_length"] = int(length_val)
+                    produced_outputs.append(out_sh_sa)
+                if skip_remaining_lengths:
+                    # Stop trying larger lengths for this start
+                    pass
+            # Restore original lookup table value
+            if original_entry is not None:
+                SLOPE_LOOKUP_TABLE[sh] = original_entry
+            # Append and continue to next sheet
+            if produced_outputs:
+                all_out.append(pd.concat(produced_outputs, ignore_index=True))
+            else:
+                all_out.append(build_kcor_rows(df, sh, dual_print))
+            continue
+        else:
+            # Lookup table slope calculation (using smoothed MR values)
+            slopes = compute_group_slopes_lookup(df, sh)
         
         # Debug: Show computed slopes
         if DEBUG_VERBOSE:
@@ -1268,23 +1354,29 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             sa_env_cohorts = os.environ.get('SA_COHORTS', '')
             sa_env_pairs = os.environ.get('SA_DOSE_PAIRS', '')
             sa_env_yob = os.environ.get('SA_YOB', '')
-            for (enr, dn, dd), g in data.groupby(["EnrollmentDate","Dose_num","Dose_den"], sort=False):
+            group_cols = ["EnrollmentDate","Dose_num","Dose_den"]
+            if "param_slope_start" in data.columns and "param_slope_length" in data.columns:
+                group_cols += ["param_slope_start","param_slope_length"]
+            for keys, g in data.groupby(group_cols, sort=False):
                 g2022 = g[g["Date"].dt.year == 2022]
                 if not g2022.empty:
                     target = g2022[g2022["Date"] == g2022["Date"].max()].iloc[0]
                 else:
                     target = g.iloc[-1]
-                # Derive slope anchors used for this sheet from lookup table
-                off1, slope_len = (None, None)
-                if enr in SLOPE_LOOKUP_TABLE:
-                    try:
-                        off1, slope_len = SLOPE_LOOKUP_TABLE[enr]
-                    except Exception:
-                        off1, slope_len = (None, None)
+                # Derive slope anchors used (prefer per-row params if present)
+                enr = target["EnrollmentDate"]
+                off1 = target.get("param_slope_start", None)
+                slope_len = target.get("param_slope_length", None)
+                if pd.isna(off1) or pd.isna(slope_len):
+                    if enr in SLOPE_LOOKUP_TABLE:
+                        try:
+                            off1, slope_len = SLOPE_LOOKUP_TABLE[enr]
+                        except Exception:
+                            off1, slope_len = (None, None)
                 out_records.append({
                     "EnrollmentDate": enr,
-                    "Dose_num": dn,
-                    "Dose_den": dd,
+                    "Dose_num": int(target["Dose_num"]),
+                    "Dose_den": int(target["Dose_den"]),
                     "YearOfBirth": int(target["YearOfBirth"]),
                     "Date": target["Date"].date(),
                     "KCOR": target["KCOR"],

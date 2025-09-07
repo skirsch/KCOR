@@ -4,13 +4,17 @@
 # Take the Czech .csv file and output a .xlsx file with the CMR for each dose group by week, birth cohort, sex, and vaccination status.
 # 
 # So basically this aggregates the Czech data by dose group.
-
+#
 # You can then call KCORv4 on the output file to get the KCOR for each dose group by week, birth cohort, sex, and vaccination status.
 # 
 # This is the CMR aggregation step of the KCOR pipeline.
 # It is based on the vax_24.py program which does the same thing but this uses the Nov 2024 data.
 # 
-
+# NOTE (KCORv4 correctness vs earlier versions):
+#   KCORv4 eliminates duplicate individual records before analysis (e.g., multiple COVID infections per person),
+#   so downstream KCOR death counts will be lower than earlier KCOR implementations that double-counted duplicates.
+#   The KCORv4 behavior is correct; prior KCOR totals were inflated by counting duplicate entries.
+#
 #
 # I run it from VS Code (execute the buffer). It takes about 10 minutes to run for each enrollment date.
 # Be sure you have pandas, numpy, matplotlib, and seaborn installed in your python environment.
