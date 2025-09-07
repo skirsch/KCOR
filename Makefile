@@ -42,11 +42,17 @@ clean:
 #   SA_COHORTS      = comma-separated cohorts (e.g., 2021_24,2022_06)
 # Defaults tuned to match current code settings for 2021_24:
 # SLOPE_LOOKUP_TABLE['2021_24'] = (53, 114) => offset1=53, Δt=61
-SA_SLOPE_START ?= 50,84,4   # default is 53,53,1. Needs to sum to be <
-SA_SLOPE_LENGTH ?= 61,61,1   # default is 61,61,1
-SA_YOB ?= 0   # default is 0 which means ASMR pooled
-SA_COHORTS ?= 2021_24 # ,2022_06   # default is 2021_24
-SA_DOSE_PAIRS ?= 1,0;2,0
+SA_SLOPE_START ?= 50,90,5     # Slope anchor start (weeks from enrollment): start,end,step; ex: 53,53,1
+SA_SLOPE_LENGTH ?= 26,52,26   # Slope anchor length (Δt in weeks): start,end,step; ex: 61,61,1
+SA_YOB ?= 0                   # YoB selector: 0=ASMR; or range/list (1940,1950,5) or (1940,1950,1960)
+SA_COHORTS ?= 2021_24         # Comma-separated cohorts; ex: 2021_24,2022_06
+SA_DOSE_PAIRS ?= 1,0;2,0      # Semicolon-separated dose pairs a,b; ex: 1,0;2,0;3,2
+SA_ANCHOR_WEEKS ?= 4          # Baseline week index t0 where KCOR is normalized to 1
+SA_MA_TOTAL_LENGTH ?= 8       # Total weeks for centered moving average smoothing
+SA_CENTERED ?= 1              # Centered moving average flag: 1=true, 0=false
+SA_SLOPE_WINDOW_SIZE ?= 2     # Geometric-mean window half-size around anchors (±w)
+SA_FINAL_KCOR_MIN ?= 1        # Minimum KCOR threshold at final date (scales up if below)
+SA_FINAL_KCOR_DATE ?= 4/1/24  # Date to check final KCOR for scaling (MM/DD/YY or YYYY)
 
 # Minimal wiring: delegate to code/Makefile sensitivity target
 sensitivity:
@@ -56,5 +62,5 @@ sensitivity:
 	@echo "  SA_YOB          = $(SA_YOB)"
 	@echo "  SA_COHORTS      = $(SA_COHORTS)"
 	@echo "  SA_DOSE_PAIRS   = $(SA_DOSE_PAIRS)"
-	$(MAKE) -C $(CODE_DIR) sensitivity SENSITIVITY_ANALYSIS=1 SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)"
+	$(MAKE) -C $(CODE_DIR) sensitivity SENSITIVITY_ANALYSIS=1 SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" SA_ANCHOR_WEEKS="$(SA_ANCHOR_WEEKS)" SA_MA_TOTAL_LENGTH="$(SA_MA_TOTAL_LENGTH)" SA_CENTERED="$(SA_CENTERED)" SA_SLOPE_WINDOW_SIZE="$(SA_SLOPE_WINDOW_SIZE)" SA_FINAL_KCOR_MIN="$(SA_FINAL_KCOR_MIN)" SA_FINAL_KCOR_DATE="$(SA_FINAL_KCOR_DATE)"
 

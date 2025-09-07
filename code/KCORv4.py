@@ -224,6 +224,37 @@ try:
         OVERRIDE_YOBS = _parse_sa_yob(_env_yob)
         if DEBUG_VERBOSE and OVERRIDE_YOBS:
             print(f"[DEBUG] Overriding YOB selection via SA_YOB: {OVERRIDE_YOBS}")
+    # Core method knobs
+    _env_anchor = os.environ.get('SA_ANCHOR_WEEKS')
+    if _env_anchor:
+        ANCHOR_WEEKS = int(_env_anchor)
+        if DEBUG_VERBOSE:
+            print(f"[DEBUG] Overriding ANCHOR_WEEKS via SA_ANCHOR_WEEKS: {ANCHOR_WEEKS}")
+    _env_ma = os.environ.get('SA_MA_TOTAL_LENGTH')
+    if _env_ma:
+        MA_TOTAL_LENGTH = int(_env_ma)
+        if DEBUG_VERBOSE:
+            print(f"[DEBUG] Overriding MA_TOTAL_LENGTH via SA_MA_TOTAL_LENGTH: {MA_TOTAL_LENGTH}")
+    _env_centered = os.environ.get('SA_CENTERED')
+    if _env_centered:
+        CENTERED = str(_env_centered).strip().lower() in ("1","true","yes")
+        if DEBUG_VERBOSE:
+            print(f"[DEBUG] Overriding CENTERED via SA_CENTERED: {CENTERED}")
+    _env_win = os.environ.get('SA_SLOPE_WINDOW_SIZE')
+    if _env_win:
+        SLOPE_WINDOW_SIZE = int(_env_win)
+        if DEBUG_VERBOSE:
+            print(f"[DEBUG] Overriding SLOPE_WINDOW_SIZE via SA_SLOPE_WINDOW_SIZE: {SLOPE_WINDOW_SIZE}")
+    _env_final_min = os.environ.get('SA_FINAL_KCOR_MIN')
+    if _env_final_min:
+        FINAL_KCOR_MIN = float(_env_final_min)
+        if DEBUG_VERBOSE:
+            print(f"[DEBUG] Overriding FINAL_KCOR_MIN via SA_FINAL_KCOR_MIN: {FINAL_KCOR_MIN}")
+    _env_final_date = os.environ.get('SA_FINAL_KCOR_DATE')
+    if _env_final_date:
+        FINAL_KCOR_DATE = _env_final_date
+        if DEBUG_VERBOSE:
+            print(f"[DEBUG] Overriding FINAL_KCOR_DATE via SA_FINAL_KCOR_DATE: {FINAL_KCOR_DATE}")
 except Exception:
     pass
 
