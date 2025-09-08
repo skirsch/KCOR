@@ -69,7 +69,7 @@ The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on
 
  The algorithm only does two things to process the data:
  1. Slope normalizes the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort
- 2. Computes the ratio of the cumulative hazards as a function of time
+ 2. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time providing a net/harm benefit readout at any point in time t.
 
  The algorithm depends on only three dates: birth, death, vaccination(s). 
  
