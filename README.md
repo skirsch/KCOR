@@ -65,13 +65,17 @@ The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on
  1. Decide on enrollment date(s), slope start/end dates (looking for death minimums where there is no COVID that differentially impacts the cohorts)
  2. Run the algorithm.
 
- The algorithm does two things:
+ These 3 parameters are largely dictated by the data itself. There can be multiple choices for each of these parameters, but generally, the data itself determines them. A future version of KCOR will make these decisions independently.
+
+ The algorithm only does two things to process the data:
  1. Slope normalizes the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort
  2. Computes the ratio of the cumulative hazards as a function of time
 
  The algorithm depends on only three dates: birth, death, vaccination(s). 
  
- Week resolution is fine for vaccination and deaths; 5 or 10 year ages for birth are fine. This avoids privacy excuses for not providing the data. The algorithm can also be used on summary files created by aggregating the data for specific enrollment dates, for example, as done in the KCOR_CMR.py script.
+ Week resolution is fine for vaccination and deaths; 5 or 10 year age ranges for the year of birth are fine. This avoids triggering privacy excuses for not providing the data. The algorithm can also be used on summary files created by aggregating the data for specific enrollment dates, for example, as done in the KCOR_CMR.py script. Such data summaries do not violate any privacy laws. There is no excuse for not providing these.
+
+ Note: A "baseline correction" addition to the algorithm was made to adjust the baseline for cohorts where the people got vaccinated well before the enrollment date and the deaths caused by the vaccine plateaued before the enrollment data causing an artifically high baseline death rate. This adjustment, which corrects for this, can be disabled for those who believe this "biases" the result (it negligibly impacts the aggregate results)/
 
 ### ⚙️ KCOR algorithm
 
