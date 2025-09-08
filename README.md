@@ -318,11 +318,11 @@ Where:
 KCOR/
 ├── README.md                           # This file
 ├── code/
-│   ├── KCOR.py                      # Main analysis script (v4.2)
+│   ├── KCOR.py                      # Main analysis script (v4.3)
 │   ├── KCOR_CMR.py                    # Data aggregation script
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
-│   ├── run_KCOR.bat                   # Windows batch script
-│   └── run_KCOR.ps1                   # Windows PowerShell script
+│   ├── debug/                          # Helper scripts for development/verification
+│   └── old/                            # Archived scripts
 ├── data/                               # Output files organized by country
 │   └── [country]/                     # Country-specific outputs
 ├── analysis/                           # Analysis outputs and logs
@@ -334,7 +334,7 @@ KCOR/
 ### Build structure
 
 - Root `Makefile` orchestrates common tasks:
-  - `make` → runs analysis (`run`) and validation
+  - `make` → runs variable-cohort aggregation, analysis, validation, and tests
   - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
   - `make validation` → DS-CMRR + KM + GLM validation (delegates to `validation/DS-CMRR/`, `validation/kaplan_meier/`, and `validation/GLM/`)
   - `make test` → runs both negative-control and sensitivity tests (delegates to `test/Makefile`)
@@ -384,8 +384,8 @@ You can adjust these in `test/sensitivity/Makefile`; command-line overrides are 
 - KCOR_SA.xlsx (single sheet `sensitivity`)
   - Columns: `EnrollmentDate`, `Dose_num`, `Dose_den`, `YearOfBirth`, `Date`, `KCOR`, `CI_lower`, `CI_upper`
   - For each cohort and dose pair (and selected YoB), selects the last date in 2022 if available; otherwise the latest available date.
-- KCOR_summary_SA.xlsx
-  - SA-specific summary when created; normal summaries are not overwritten.
+- KCOR_summary_SA.log
+  - SA-specific console log; normal summaries are not overwritten.
 
 ### Examples
 
@@ -404,7 +404,7 @@ make sensitivity SA_YOB=0,1940,1950
 make sensitivity SA_YOB=1940,1950,5
 ```
 
-Results are written to `analysis/<country>/KCOR_SA.xlsx`.
+Results are written to `test/sensitivity/out/KCOR_SA.xlsx`.
 
 ## 📦 Installation & Dependencies
 
@@ -451,15 +451,7 @@ Notes:
 - `make validation` delegates to `validation/DS-CMRR/Makefile run`.
 - Subdirectory Makefiles remain runnable directly; use `make -C <dir> <target>`.
 
-#### Using Windows Scripts
-```bash
-cd code
-# Option 1: Batch file
-run_KCOR.bat
-
-# Option 2: PowerShell
-.\run_KCOR.ps1
-```
+ 
 
 #### Direct Python Execution
 ```bash
@@ -468,8 +460,10 @@ cd code
 python KCOR_CMR.py [input_file] [output_file]
 
 # Step 2: KCOR analysis
-python KCOR.py [aggregated_file] [analysis_output] [log_filename]
-# Note: log_filename is optional (defaults to "KCOR_summary.log")
+python KCOR.py [aggregated_file] [analysis_output] [mode] [log_filename]
+# Notes:
+# - mode (e.g., "Primary Analysis" | "Sensitivity Analysis") is required
+# - log_filename is optional (defaults to "KCOR_summary.log")
 # Output appears both on console and in the specified log file
 ```
 
@@ -497,7 +491,7 @@ The analysis produces Excel workbooks with comprehensive methodology transparenc
 
 #### Main Output Files
 
-**`KCORv4_analysis.xlsx`** - Complete analysis with all enrollment periods combined
+**`KCOR_analysis.xlsx`** - Complete analysis with all enrollment periods combined
 This file enables users to visualize results for any cohort combination and contains:
 
 **`KCOR_summary.xlsx`** - Console-style summary by enrollment date
@@ -827,7 +821,7 @@ For detailed results including age-specific analyses and all dose combinations, 
 - **📈 Complete Analysis**: [`data/Czech/KCOR_summary.xlsx`](data/Czech/KCOR_summary.xlsx) - Age-standardized and age-specific results by enrollment cohort
 - **📊 Full Dataset**: [`data/Czech/KCORv4.xlsx`](data/Czech/KCORv4.xlsx) - Complete analysis with all intermediate calculations
 - **📋 Console Output**: [`data/Czech/KCOR_summary.log`](data/Czech/KCOR_summary.log) - Detailed console output from analysis (dual output: console + file)
- - **🧮 Interactive Plotting Workbook**: [`analysis/Czech/KCORv4_analysis.xlsx`](analysis/Czech/KCORv4_analysis.xlsx) - Excel workbook for plotting KCOR(t) curves for any cohort/dose mix
+ - **🧮 Interactive Plotting Workbook**: [`analysis/Czech/KCOR_analysis.xlsx`](analysis/Czech/KCOR_analysis.xlsx) - Excel workbook for plotting KCOR(t) curves for any cohort/dose mix
 
 ### Interpretation
 
@@ -920,7 +914,7 @@ Grok validated the code, the README, and the methodology and couldn't find any p
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License — see https://opensource.org/licenses/MIT for details.
 
 ## 📞 Contact
 
