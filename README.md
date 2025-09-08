@@ -8,7 +8,7 @@
 - [Overview](#overview)
 - [🔬 Methodology](#-methodology)
   - [🎯 Core Concept](#-core-concept)
-  - [⚙️ Analysis Pipeline](#️-analysis-pipeline)
+  - [⚙️ KCOR algorithm](#️-kcor-algorithm)
   - [Key Assumptions](#key-assumptions)
 - [🏆 KCOR vs. Traditional Epidemiological Methods](#-kcor-vs-traditional-epidemiological-methods)
 - [🏗️ Repository Structure](#️-repository-structure)
@@ -26,10 +26,11 @@
   - [🆕 Version 4.1 Enhancements](#-version-41-enhancements)
 - [📊 Results Using Czech Data](#-results-using-czech-data)
 - [🔬 Validation](#-validation)
+  - [Negative-Control Tests](#negative-control-tests)
+  - [Sensitivity Analysis](#sensitivity-analysis)
 - [Peer review](#peer-review)
 - [📄 License](#-license)
 - [📞 Contact](#-contact)
- - [Sensitivity Analysis](#sensitivity-analysis)
 
 ## Overview
 
@@ -43,6 +44,8 @@ KCOR basically allows you to run a randomized trial with respect to the death ou
 
 KCOR allows us, for the first time, to objectively answer very important societal questions such as, “Did the COVID vaccine kill more people than it saved?”
 
+The [results section](#-results-using-czech-data) shows that the vaccines caused significant net harm. The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the same data using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots.
+
 ## 🔬 Methodology
 
 ### 🎯 Core Concept
@@ -54,104 +57,9 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
  - **Baseline differences** between groups through normalization
  - **Statistical uncertainty** in the estimates through proper variance propagation
 
-### 🏆 KCOR vs. Traditional Epidemiological Methods
+ 
 
-KCOR represents a **groundbreaking advancement** in epidemiological methodology, offering unique advantages over traditional approaches for comparing mortality between cohorts:
-
-#### **Traditional Methods vs. KCOR**
-
-| **Aspect** | **Traditional Methods** | **KCOR** |
-|------------|------------------------|----------|
-| **Time-Varying Trends** | ❌ Assume static baseline rates | ✅ Dynamic slope correction |
-| **Mathematical Rigor** | ❌ Often use approximations | ✅ Discrete hazard functions |
-| **Baseline Control** | ❌ Compare absolute rates | ✅ Normalized to matched baseline |
-| **Observational Data** | ❌ Require randomized trials | ✅ Creates "virtual randomization" |
-| **Policy Questions** | ❌ Limited applicability | ✅ Direct policy evaluation |
-
-#### **Why KCOR is Superior**
-
-**🎯 Unique Problem Solving:**
-- **Traditional SMR**: Assumes static reference population rates → fails with time-varying trends
-- **KCOR**: Dynamically adjusts for secular changes, seasonal effects, and policy impacts
-
-**🔬 Mathematical Excellence:**
-- **Traditional Methods**: Use approximations or assume proportional hazards
-- **KCOR**: Uses exact discrete hazard transformation: `hazard(t) = -ln(1 - MR_adj(t))`
-
-**⚖️ Baseline Matching:**
-- **Traditional Methods**: Compare absolute rates between potentially different cohorts
-- **KCOR**: Normalizes to baseline period where cohorts are "matched" from mortality perspective
-
-**🌍 Real-World Applicability:**
-- **Traditional Methods**: Require controlled conditions or make unrealistic assumptions
-- **KCOR**: Works with observational data to answer policy-relevant questions
-
-#### **KCOR's Unique Value Proposition**
-
-KCOR is **the only method** that can:
-- ✅ Create "virtual randomization" from observational data
-- ✅ Dynamically adjust for time-varying trends affecting both cohorts  
-- ✅ Provide mathematically exact hazard-based comparisons
-- ✅ Answer policy-relevant questions using real-world data
-- ✅ Handle COVID-era complexity with multiple confounding factors
-
-**Result**: KCOR can objectively answer questions like *"Did COVID vaccines kill more people than they saved?"* using observational data—something no traditional epidemiological method can achieve.
-
-#### **Limitations of Traditional Epidemiological Methods**
-
-**📊 Standardized Mortality Ratio (SMR)**
-- ❌ Assumes static reference population rates
-- ❌ Doesn't account for time-varying trends  
-- ❌ Vulnerable to secular changes in mortality
-- ❌ Cannot handle COVID-era policy impacts
-
-**📈 Age-Period-Cohort (APC) Analysis**
-- ❌ Complex identifiability issues
-- ❌ Requires large datasets
-- ❌ Doesn't provide direct cohort comparisons
-- ❌ Difficult to interpret for policy questions
-
-**⚖️ Proportional Hazards Models**
-- ❌ Assumes proportional hazards (often violated)
-- ❌ Doesn't handle time-varying effects well
-- ❌ Requires sophisticated statistical modeling
-- ❌ Vulnerable to model misspecification
-
-**📋 Life Table Analysis**
-- ❌ Doesn't account for external time-varying factors
-- ❌ Assumes stable mortality patterns
-- ❌ Less suitable for policy evaluation
-- ❌ Cannot handle rapid changes in mortality
-
-**🎯 Competing Risks Analysis**
-- ❌ Focuses on cause-specific mortality
-- ❌ Requires detailed cause-of-death data
-- ❌ Doesn't address overall mortality differences
-- ❌ Complex interpretation for policy makers
-
-#### **The KCOR Advantage in Practice**
-
-**🔬 Scientific Rigor:**
-- KCOR provides mathematically exact comparisons using discrete hazard functions
-- Traditional methods rely on approximations that can introduce bias
-- KCOR's approach is more robust to violations of common statistical assumptions
-
-**🌍 Real-World Relevance:**
-- KCOR works with the messy, complex data of real-world policy implementation
-- Traditional methods require idealized conditions that rarely exist in practice
-- KCOR can handle the rapid changes and multiple confounding factors of the COVID era
-
-**📊 Policy Impact:**
-- KCOR directly answers policy-relevant questions using observational data
-- Traditional methods often require randomized trials that are impossible for policy evaluation
-- KCOR provides interpretable results that policymakers can understand and act upon
-
-**⚡ Practical Implementation:**
-- KCOR requires only basic demographic and mortality data (birth, death, vaccination dates)
-- Traditional methods often require extensive additional data (cause of death, detailed covariates)
-- KCOR can be applied to existing datasets without additional data collection
-
-### ⚙️ Analysis Pipeline
+### ⚙️ KCOR algorithm
 
 #### 1. Data Preprocessing
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
@@ -313,6 +221,103 @@ Where:
 - Discrete hazard function transformation provides accurate cumulative hazard estimation
 - Hazard ratios are appropriate for comparing mortality risk between groups
 
+## 🏆 KCOR vs. Traditional Epidemiological Methods
+
+KCOR represents a groundbreaking advancement in epidemiological methodology, offering unique advantages over traditional approaches for comparing mortality between cohorts:
+
+#### Traditional Methods vs. KCOR
+
+| Aspect | Traditional Methods | KCOR |
+|------------|------------------------|----------|
+| Time-Varying Trends | ❌ Assume static baseline rates | ✅ Dynamic slope correction |
+| Mathematical Rigor | ❌ Often use approximations | ✅ Discrete hazard functions |
+| Baseline Control | ❌ Compare absolute rates | ✅ Normalized to matched baseline |
+| Observational Data | ❌ Require randomized trials | ✅ Creates "virtual randomization" |
+| Policy Questions | ❌ Limited applicability | ✅ Direct policy evaluation |
+
+#### Why KCOR is Superior
+
+🎯 Unique Problem Solving:
+- Traditional SMR: Assumes static reference population rates → fails with time-varying trends
+- KCOR: Dynamically adjusts for secular changes, seasonal effects, and policy impacts
+
+🔬 Mathematical Excellence:
+- Traditional Methods: Use approximations or assume proportional hazards
+- KCOR: Uses exact discrete hazard transformation: `hazard(t) = -ln(1 - MR_adj(t))`
+
+⚖️ Baseline Matching:
+- Traditional Methods: Compare absolute rates between potentially different cohorts
+- KCOR: Normalizes to baseline period where cohorts are "matched" from mortality perspective
+
+🌍 Real-World Applicability:
+- Traditional Methods: Require controlled conditions or make unrealistic assumptions
+- KCOR: Works with observational data to answer policy-relevant questions
+
+#### KCOR's Unique Value Proposition
+
+KCOR is the only method that can:
+- ✅ Create "virtual randomization" from observational data
+- ✅ Dynamically adjust for time-varying trends affecting both cohorts  
+- ✅ Provide mathematically exact hazard-based comparisons
+- ✅ Answer policy-relevant questions using real-world data
+- ✅ Handle COVID-era complexity with multiple confounding factors
+
+Result: KCOR can objectively answer questions like "Did COVID vaccines kill more people than they saved?" using observational data—something no traditional epidemiological method can achieve.
+
+#### Limitations of Traditional Epidemiological Methods
+
+📊 Standardized Mortality Ratio (SMR)
+- ❌ Assumes static reference population rates
+- ❌ Doesn't account for time-varying trends  
+- ❌ Vulnerable to secular changes in mortality
+- ❌ Cannot handle COVID-era policy impacts
+
+📈 Age-Period-Cohort (APC) Analysis
+- ❌ Complex identifiability issues
+- ❌ Requires large datasets
+- ❌ Doesn't provide direct cohort comparisons
+- ❌ Difficult to interpret for policy questions
+
+⚖️ Proportional Hazards Models
+- ❌ Assumes proportional hazards (often violated)
+- ❌ Doesn't handle time-varying effects well
+- ❌ Requires sophisticated statistical modeling
+- ❌ Vulnerable to model misspecification
+
+📋 Life Table Analysis
+- ❌ Doesn't account for external time-varying factors
+- ❌ Assumes stable mortality patterns
+- ❌ Less suitable for policy evaluation
+- ❌ Cannot handle rapid changes in mortality
+
+🎯 Competing Risks Analysis
+- ❌ Focuses on cause-specific mortality
+- ❌ Requires detailed cause-of-death data
+- ❌ Doesn't address overall mortality differences
+- ❌ Complex interpretation for policy makers
+
+#### The KCOR Advantage in Practice
+
+🔬 Scientific Rigor:
+- KCOR provides mathematically exact comparisons using discrete hazard functions
+- Traditional methods rely on approximations that can introduce bias
+- KCOR's approach is more robust to violations of common statistical assumptions
+
+🌍 Real-World Relevance:
+- KCOR works with the messy, complex data of real-world policy implementation
+- Traditional methods require idealized conditions that rarely exist in practice
+- KCOR can handle the rapid changes and multiple confounding factors of the COVID era
+
+📊 Policy Impact:
+- KCOR directly answers policy-relevant questions using observational data
+- Traditional methods often require randomized trials that are impossible for policy evaluation
+- KCOR provides interpretable results that policymakers can understand and act upon
+
+⚡ Practical Implementation:
+- KCOR requires only basic demographic and mortality data (birth, death, vaccination dates)
+- Traditional methods often require extensive additional data (cause of death, detailed covariates)
+- KCOR can be applied to existing datasets without additional data collection
+
 ## 🏗️ Repository Structure
 
 ```
@@ -342,70 +347,41 @@ KCOR/
 - Important: Always run these targets from the repository root so environment and output paths are consistent.
 - Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) are for advanced use only; invoking them directly may bypass root defaults and write outputs to different locations.
 
-## Sensitivity Analysis
+## 🔬 Validation
 
-### Overview
+### Negative-Control Tests
 
-The repository includes a Make-driven Sensitivity Analysis (SA) mode to verify that reasonable parameter choices do not change KCOR’s conclusions. SA mode sweeps user-specified parameters and writes a compact workbook with only the requested cohorts/ages/dose-pairs.
+Builds synthetic no-signal cohorts to ensure no false positives.
+- Run: `make test`
+- Outputs: `test/negative_control/out/` (e.g., `KCOR_processed_neg_control.xlsx`, `KCOR_summary.xlsx`)
+- References: `reference_results/negative_control_tests/`
 
-### How to run
+### Sensitivity Analysis
 
-From repo root:
+Verifies that reasonable parameter choices do not change KCOR’s conclusions by sweeping user-specified parameters.
 
+How to run from repo root:
 ```bash
 make sensitivity
 ```
 
-This uses defaults defined in `test/sensitivity/Makefile` and produces SA-specific outputs without overwriting the standard analysis.
+Defaults (see `test/sensitivity/Makefile`):
+- `SA_COHORTS=2021_24`
+- `SA_DOSE_PAIRS=1,0;2,0`
+- `SA_SLOPE_START=53,53,1`
+- `SA_SLOPE_LENGTH=61,61,1`
+- `SA_YOB=0` (ASMR only)
 
-### Defaults (local Makefile)
+Key parameters:
+- `SA_COHORTS`: comma-separated sheet names (e.g., `2021_24,2022_06`)
+- `SA_DOSE_PAIRS`: semicolon-separated dose pairs (e.g., `1,0;2,0`)
+- `SA_SLOPE_START`: `start,end,step` for offset1 (e.g., `52,60,2`)
+- `SA_SLOPE_LENGTH`: `start,end,step` for Δt (e.g., `48,70,2`)
+- `SA_YOB`: `0` (ASMR) | `start,end,step` | explicit `list`
 
-- Cohorts (`SA_COHORTS`): `2021_24`
-- Dose pairs (`SA_DOSE_PAIRS`): `1,0;2,0`
-- Slope anchors:
-  - `SA_SLOPE_START=53,53,1` (offset1)
-  - `SA_SLOPE_LENGTH=61,61,1` (Δt; offset2 = 53 + 61 = 114)
-- Year-of-birth selector (`SA_YOB`): `0` (ASMR only)
-
-You can adjust these in `test/sensitivity/Makefile`; command-line overrides are optional.
-
-### Parameters
-
-- SA_COHORTS: Comma-separated sheet names to process (e.g., `2021_24,2022_06`).
-- SA_DOSE_PAIRS: Semicolon-separated list of dose pairs `a,b` (e.g., `1,0;2,0`).
-- SA_SLOPE_START: `start,end,step` for slope anchor offset1 (inclusive). Example: `52,60,2`.
-- SA_SLOPE_LENGTH: `start,end,step` for Δt = offset2 − offset1 (inclusive). Example: `48,70,2`.
-- SA_YOB:
-  - `0` → ASMR pooled only
-  - `start,end,step` → range of birth years (e.g., `1940,1950,5`)
-  - `list` → explicit list (e.g., `1940,1950,1960`)
-
-### Output
-
-- KCOR_SA.xlsx (single sheet `sensitivity`)
-  - Columns: `EnrollmentDate`, `Dose_num`, `Dose_den`, `YearOfBirth`, `Date`, `KCOR`, `CI_lower`, `CI_upper`
-  - For each cohort and dose pair (and selected YoB), selects the last date in 2022 if available; otherwise the latest available date.
-- KCOR_summary_SA.log
-  - SA-specific console log; normal summaries are not overwritten.
-
-### Examples
-
-- Use defaults (2021_24, ASMR-only, dose pairs 1:0 and 2:0):
-```bash
-make sensitivity
-```
-
-- Include a few specific ages in addition to ASMR:
-```bash
-make sensitivity SA_YOB=0,1940,1950
-```
-
-- Range of ages (e.g., 1940, 1945, 1950):
-```bash
-make sensitivity SA_YOB=1940,1950,5
-```
-
-Results are written to `test/sensitivity/out/KCOR_SA.xlsx`.
+Output:
+- `test/sensitivity/out/KCOR_SA.xlsx` (sheet `sensitivity`)
+- `test/sensitivity/out/KCOR_summary_SA.log`
 
 ## 📦 Installation & Dependencies
 
@@ -864,7 +840,7 @@ The [`validation/`](validation/) directory contains four independent validation 
 
    *Observation: With naturally matched cohorts, the curves diverge with the unvaccinated cohort exhibiting lower mortality over time.*
 
-4. **Aarstad Correlation Analysis**: Independent correlation analysis of CDC excess deaths data by county, providing external validation of KCOR findings.
+4. **Aarstad Correlation Analysis**: Independent [correlation analysis of CDC  deaths data by county](https://jarle.substack.com/p/the-covid-19-vaccine-caused-almost), providing external validation of KCOR findings.
 
    ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
 
