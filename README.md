@@ -67,9 +67,10 @@ The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on
 
  These 3 parameters are largely dictated by the data itself. There can be multiple choices for each of these parameters, but generally, the data itself determines them. A future version of KCOR will make these decisions independently.
 
- The algorithm only does two things to process the data:
+ The algorithm does 3 things to process the data:
  1. Slope normalizes the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort
  2. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time providing a net/harm benefit readout at any point in time t.
+ 3. Normalizes the ratio to the ratio at the end of a 4 week baseline period right after enrollment where there is virtually no COVID
 
  The algorithm depends on only three dates: birth, death, vaccination(s). 
  
