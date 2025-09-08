@@ -59,7 +59,19 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
  - **Baseline differences** between groups through normalization
  - **Statistical uncertainty** in the estimates through proper variance propagation
 
+The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on an enrollment date and tracks their mortality over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy (this is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review)). 
+
+ The core steps are:
+ 1. Decide on enrollment date(s), slope start/end dates (looking for death minimums where there is no COVID that differentially impacts the cohorts)
+ 2. Run the algorithm.
+
+ The algorithm does two things:
+ 1. Slope normalizes the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort
+ 2. Computes the ratio of the cumulative hazards as a function of time
+
+ The algorithm depends on only three dates: birth, death, vaccination(s). 
  
+ Week resolution is fine for vaccination and deaths; 5 or 10 year ages for birth are fine. This avoids privacy excuses for not providing the data. The algorithm can also be used on summary files created by aggregating the data for specific enrollment dates, for example, as done in the KCOR_CMR.py script.
 
 ### ⚙️ KCOR algorithm
 
@@ -331,11 +343,24 @@ KCOR/
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── debug/                          # Helper scripts for development/verification
 │   └── old/                            # Archived scripts
-├── data/                               # Output files organized by country
-│   └── [country]/                     # Country-specific outputs
-├── analysis/                           # Analysis outputs and logs
+├── data/                               # Outputs organized by country (e.g., Czech)
+│   └── [country]/                     # Country-specific outputs (KCOR.xlsx, KCOR_summary.xlsx, KCOR_CMR.xlsx)
+├── analysis/                           # Analysis artifacts and plots
+│   └── [country]/                     # e.g., analysis/Czech/KCOR_analysis.xlsx, KCOR_ASMR_dose2.png
 ├── documentation/                      # Detailed methodology documentation
 │   └── hazard_function.md             # Mathematical reasoning for hazard functions
+├── validation/                         # Independent validation suites
+│   ├── DS-CMRR/                       # Discrete Survival CMRR method
+│   ├── GLM/                           # Generalized Linear Models validation
+│   └── kaplan_meier/                  # Kaplan–Meier survival analysis
+├── test/                               # Tests orchestrated by root Makefile
+│   ├── negative_control/              # Synthetic no-signal tests
+│   └── sensitivity/                   # Parameter sweep sensitivity tests
+├── reference_results/                  # Frozen reference outputs for comparison
+│   ├── KCOR/                          # Reference KCOR outputs
+│   ├── GLM/                           # Reference GLM plots
+│   ├── DS-CMRR/                       # Reference DS-CMRR plots
+│   └── negative_control_tests/        # Reference negative-control outputs
 └── peer_review/                        # Peer review materials
 ```
 
