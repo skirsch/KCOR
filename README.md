@@ -336,7 +336,7 @@ KCOR/
 - Root `Makefile` orchestrates common tasks:
   - `make` → runs analysis (`run`) and validation
   - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
-  - `make validation` → DS-CMRR + KM validation (delegates to `validation/DS-CMRR/` and `validation/kaplan_meier/`)
+  - `make validation` → DS-CMRR + KM + GLM validation (delegates to `validation/DS-CMRR/`, `validation/kaplan_meier/`, and `validation/GLM/`)
   - `make test` → runs both negative-control and sensitivity tests (delegates to `test/Makefile`)
 - Important: Always run these targets from the repository root so environment and output paths are consistent.
 - Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) are for advanced use only; invoking them directly may bypass root defaults and write outputs to different locations.
@@ -847,9 +847,9 @@ The KCOR methodology has been independently validated using multiple approaches 
 
 The [`validation/`](validation/) directory contains four independent validation approaches:
 
-1. **GLM Validation**: A **completely different methodology** using Generalized Linear Models with **variable cohorts** rather than fixed cohorts. This approach creates output that looks nearly identical to KCOR results, providing strong independent validation.
+1. **GLM Validation**: A **completely different methodology** using Generalized Linear Models with **variable cohorts** rather than fixed cohorts. This approach creates output that looks nearly identical to KCOR results, providing strong independent validation. Defaults use 4‑week ticks with vertical grid lines.
 
-   ![GLM Validation Results](validation/GLM/GLM_plot_Czech_data.png)
+   ![GLM Validation Results](validation/GLM/out/GLM_plot_Czech_data.png)
    
    *GLM validation results showing remarkable consistency with KCOR methodology*
    
@@ -874,6 +874,20 @@ The [`validation/`](validation/) directory contains four independent validation 
    ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
 
    *Aarstad correlation analysis showing consistent patterns with KCOR methodology*
+
+### Negative-Control and Sensitivity Tests
+
+In addition to the validation suite, the repository includes:
+
+- **Negative-Control Tests** (`test/negative_control/`): Builds synthetic no-signal cohorts to ensure no false positives.
+  - Run: `make test`
+  - Outputs: `test/negative_control/out/` (e.g., `KCOR_processed_neg_control.xlsx`, `KCOR_summary.xlsx`)
+  - References: `reference_results/negative_control_tests/`
+
+- **Sensitivity Tests** (`test/sensitivity/`): Sweeps key parameters (cohorts, anchors, ages) to check stability.
+  - Run: `make test` or `make sensitivity`
+  - Outputs: `test/sensitivity/out/` (e.g., `KCOR_SA.xlsx`, `KCOR_summary_SA.log`)
+  - References: `reference_results/sensitivity/`
 
 ### Validation Objectives
 

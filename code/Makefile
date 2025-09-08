@@ -9,6 +9,7 @@ RAW_CSV          = $(RAW_CSV_GZ:.gzip=)
 INPUT_DATA       = $(RAW_CSV)
 CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
+VARIABLE_OUTPUT  = ../data/$(DATASET)/KCOR_variable.xlsx
 
 .PHONY: clean clean-all help sensitivity
 
@@ -29,6 +30,14 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 
 # Convenience target for CMR only
 CMR: $(CMR_OUTPUT)
+
+# Variable cohort aggregation (single-sheet; current dose per week)
+KCOR_variable: $(VARIABLE_OUTPUT)
+
+$(VARIABLE_OUTPUT): $(INPUT_DATA) KCOR_variable.py | ../data/$(DATASET)
+	@echo "Running KCOR variable-cohort aggregation..."
+	python KCOR_variable.py $(INPUT_DATA) $(VARIABLE_OUTPUT)
+	@echo "KCOR_variable aggregation complete!"
 
 # Ensure output directory exists (real directory target)
 ../data/$(DATASET):

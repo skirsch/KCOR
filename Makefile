@@ -6,27 +6,40 @@ MAKEFLAGS += --no-print-directory
 CODE_DIR := code
 VALIDATION_DSCMRR_DIR := validation/DS-CMRR
 VALIDATION_KM_DIR := validation/kaplan_meier
+VALIDATION_GLM_DIR := validation/GLM
 
-.PHONY: all run validation test clean sensitivity
+.PHONY: all run validation test clean sensitivity KCOR_variable
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
 
-# Default: build everything (analysis + validation + tests)
-all: run validation test
+# Default: build everything (variable-cohort + analysis + validation + tests)
+all: KCOR_variable run validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
 run:
 	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET)
 
-# Validation suite (DS-CMRR and Kaplan–Meier)
+# Variable-cohort aggregation (delegates to code/Makefile target KCOR_variable)
+KCOR_variable:
+	$(MAKE) -C $(CODE_DIR) KCOR_variable DATASET=$(DATASET)
+
+# Validation suite (DS-CMRR, Kaplan–Meier, GLM)
 validation:
 	$(MAKE) -C $(VALIDATION_DSCMRR_DIR) run DATASET=$(DATASET)
 	$(MAKE) -C $(VALIDATION_KM_DIR) run DATASET=$(DATASET)
+	$(MAKE) -C $(VALIDATION_GLM_DIR) run DATASET=$(DATASET)
 
 # Convenience target to run only Kaplan–Meier
 km:
 	$(MAKE) -C $(VALIDATION_KM_DIR) run DATASET=$(DATASET)
+
+# Convenience target to run only GLM
+glm:
+	$(MAKE) -C $(VALIDATION_GLM_DIR) run DATASET=$(DATASET)
+
+glm-compare:
+	$(MAKE) -C $(VALIDATION_GLM_DIR) compare DATASET=$(DATASET)
 
 # Negative-control test (delegates to test/Makefile)
 test:
@@ -36,6 +49,7 @@ clean:
 	-$(MAKE) -C $(CODE_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_DSCMRR_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_KM_DIR) clean DATASET=$(DATASET)
+	-$(MAKE) -C $(VALIDATION_GLM_DIR) clean DATASET=$(DATASET)
 
 
 sensitivity:
