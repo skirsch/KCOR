@@ -10,6 +10,7 @@
   - [🎯 Core Concept](#-core-concept)
   - [⚙️ Analysis Pipeline](#️-analysis-pipeline)
   - [Key Assumptions](#key-assumptions)
+- [🏆 KCOR vs. Traditional Epidemiological Methods](#-kcor-vs-traditional-epidemiological-methods)
 - [🏗️ Repository Structure](#️-repository-structure)
 - [📦 Installation & Dependencies](#-installation--dependencies)
 - [🚀 Usage](#-usage)
@@ -43,6 +44,15 @@ KCOR basically allows you to run a randomized trial with respect to the death ou
 KCOR allows us, for the first time, to objectively answer very important societal questions such as, “Did the COVID vaccine kill more people than it saved?”
 
 ## 🔬 Methodology
+
+### 🎯 Core Concept
+
+KCOR represents the ratio of cumulative hazard functions between two groups (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline period. This approach provides interpretable estimates of relative mortality risk that account for:
+
+ - **Time-varying trends** in mortality rates through slope correction
+ - **Mathematical exactness** through discrete hazard function transformation
+ - **Baseline differences** between groups through normalization
+ - **Statistical uncertainty** in the estimates through proper variance propagation
 
 ### 🏆 KCOR vs. Traditional Epidemiological Methods
 
@@ -140,15 +150,6 @@ KCOR is **the only method** that can:
 - KCOR requires only basic demographic and mortality data (birth, death, vaccination dates)
 - Traditional methods often require extensive additional data (cause of death, detailed covariates)
 - KCOR can be applied to existing datasets without additional data collection
-
-### 🎯 Core Concept
-
-KCOR represents the ratio of cumulative hazard functions between two groups (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline period. This approach provides interpretable estimates of relative mortality risk that account for:
-
-- **Time-varying trends** in mortality rates through slope correction
-- **Mathematical exactness** through discrete hazard function transformation
-- **Baseline differences** between groups through normalization
-- **Statistical uncertainty** in the estimates through proper variance propagation
 
 ### ⚙️ Analysis Pipeline
 
