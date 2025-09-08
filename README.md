@@ -44,7 +44,9 @@ KCOR basically allows you to run a randomized trial with respect to the death ou
 
 KCOR allows us, for the first time, to objectively answer very important societal questions such as, “Did the COVID vaccine kill more people than it saved?”
 
-The [results section](#-results-using-czech-data) shows that the vaccines caused significant net harm. The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the same data using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots.
+The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. Those who claimed that the COVID shots were beneficial for the elderly were guessing; the Czech data clearly shows that advice was deadly. 
+
+The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the same data using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots.
 
 The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. Nobody seems to want to look at it. I think this is because they will find the same thing I found when I looked at it using the 4 different methods described here: that the COVID vaccines caused people to die more, not less.
 
