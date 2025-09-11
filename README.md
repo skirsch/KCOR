@@ -852,18 +852,18 @@ The KCOR methodology has been independently validated using multiple approaches 
 
 ### Independent Validation Methods
 
-The [`validation/`](validation/) directory contains four independent validation approaches:
+The [`validation/`](validation/) directory contains four independent validation approaches to analyzing the Czech data: GLM, DS-CMRR, Kaplan-Meier, looking at cumulative deaths of naturally matched cohorts.
 
+Here are the KCOR results for direct comparison with other methods (such as GLM and DS-CMRR) that produce similar style curves
+
+   ![KCOR Results](analysis/Czech/KCOR_ASMR_dose2.png)
+   
 1. **GLM Validation**: A **completely different methodology** using Generalized Linear Models with **variable cohorts** rather than fixed cohorts. This approach creates output that looks nearly identical to KCOR results, providing strong independent validation. Defaults use 4‑week ticks with vertical grid lines.
 
    ![GLM Validation Results](validation/GLM/out/GLM_plot_Czech_data.png)
    
    *GLM validation results showing remarkable consistency with KCOR methodology*
    
-   ![KCOR Results](analysis/Czech/KCOR_ASMR_dose2.png)
-   
-   *KCOR results for direct comparison with GLM validation*
-
 2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
 
 This method can be used with either fixed or variable cohorts. I chose to run it against fixed cohorts because that is the more meaningful outcome, but others are free to run it against variable cohorts. 
@@ -882,7 +882,9 @@ Readout: DS-CMRR is the ratio of cumulative hazards between two pre-specified gr
 
    *Observation: With naturally matched cohorts, the curves diverge with the unvaccinated cohort exhibiting lower mortality over time.*
 
-4. **Naturally Matched Cohorts**: I also validated using naturally matched cohorts (equalized death rate and slope during the baseline period) to demonstrate that there is clear harm caused by the COVID shots. So this just confirms that KCOR directly confirms the result and also shows that the vaccine may have had a modest mortality benefit which, once again, KCOR reflects.
+4. **Naturally Matched Cohorts**: I also validated using naturally matched cohorts where the cohorts are defined such that they had very similar deaths/week during the baseline and next COVID wave to demonstrate that matched cohort will diverge when a booster shot is given to a subset of the vaccinated group (which, if the vaccine was safe, should cause deaths to decrease, not increase). 
+
+So this plot finds net harm, but possibly a modest mortality benefit. KCOR, GLM, DS-CMRR, and KM (properly interpreted) reflects the same thing as this raw data.
 
 ![Naturally matched cohorts](reference_results/analysis/naturally_matched_cohorts.png)
 
