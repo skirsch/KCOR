@@ -3,10 +3,12 @@
 # Author: Steve Kirsch
 # Date: 2025-09-07
 # Version: 1.0
+
+
 # Description: This program generates the negative control test file for the KCOR analysis.
 # It is used to compare the KCOR values of the unvaccinated with the unvaccinated, but different ages.
 # It is also used to compare the KCOR values of the vaccinated with the vaccinated, but different ages.
-# Run from the main Makefile as make test
+# Run from the main Makefile as make test,
 
 # The unvaxxed appears as age 1950, so it should have the most reliable 1.0 signal.
 # The vaxxed will have differences with age, so the signal there will deviate from 1.0.

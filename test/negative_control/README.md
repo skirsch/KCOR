@@ -43,6 +43,15 @@ So we have a code, data, out directory and a Makefile at the root. The makefile 
 
 Note: we ignore sex from the CMR file for now. These tests are for all sexes including other.
 
+
+### Results snapshots
+
+These graphs show even with 10 and 20 year age differences between the cohorts, KCOR is able to accurately normalize the mortality and find neglible differences. Only when there is a real signal will there be a difference. Do you know of any other epidemiology tool that will find no signal in these groups which have dramatically different composition? The methods I'm aware of require you to do 1:1 matching.
+
+![Negative control (10-year age difference)](analysis/neg_control_10yr_age_diff.png)
+
+![Negative control (20-year age difference)](analysis/neg_control_20yr_age_diff.png)
+
 The negative control test is made from multiple enrollment dates (specified in the Makefile).
 
 The makefile should specify the age range for each dose.

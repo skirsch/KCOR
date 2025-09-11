@@ -1,3 +1,15 @@
+#
+#   GLM.py
+#
+# Runs a GLM on the variable-cohort tallies from KCOR_variable.py.
+#
+# Usage:
+#   python GLM.py --input <input.xlsx> --sheet <sheet_name> --out-png <output.png> --out-xlsx <output.xlsx> --start-week <start_week> --end-week <end_week> --baseline-week <baseline_week> --plot <plot_type> --x-tick-step <x_tick_step> --grid-x-step <grid_x_step>
+#
+# this is a python remake of henjin_glm.R from the validation/GLM folder.
+#
+# This requires as input the variable-cohort tallies from KCOR_variable.py as noted in the KCOR_variable.py script and Makefile here.
+
 import argparse
 import os
 from typing import Optional, Tuple

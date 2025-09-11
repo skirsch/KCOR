@@ -390,6 +390,10 @@ Builds synthetic no-signal cohorts to ensure no false positives.
 - Outputs: `test/negative_control/out/` (e.g., `KCOR_processed_neg_control.xlsx`, `KCOR_summary.xlsx`)
 - References: `reference_results/negative_control_tests/`
 
+The analysis directory has human analysis of the data that shows that KCOR picks out real signals in the data that most people would have thought was perfect negative control data.
+
+For the negative control tests, KCOR is called with baseline minimum set to 0 so that the KCOR baseline is not adjusted since we aren't dealing with a known net harmful vaccine.
+
 ### Sensitivity Analysis
 
 Verifies that reasonable parameter choices do not change KCOR’s conclusions by sweeping user-specified parameters.
@@ -864,6 +868,8 @@ The [`validation/`](validation/) directory contains four independent validation 
 
 2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
 
+This method can be used with either fixed or variable cohorts. I chose to run it against fixed cohorts because that is the more meaningful outcome, but others are free to run it against variable cohorts. Question answered: “Between two groups defined at baseline, who accumulated more death risk over the window?” Readout: DS-CMRR is the ratio of cumulative hazards between two pre-specified groups—closest to a trial-like contrast.
+
    ![DS-CMRR dose 2 vs 0 (ASMR case)](validation/DS-CMRR/out/DS-CMRR_ASMR.png)
 
    *DS-CMRR output KCOR(t) for Czech data, dose 2 vs unvaccinated (single-sheet 2021_24)*
@@ -888,6 +894,12 @@ In addition to the validation suite, the repository includes:
   - Run: `make test`
   - Outputs: `test/negative_control/out/` (e.g., `KCOR_processed_neg_control.xlsx`, `KCOR_summary.xlsx`)
   - References: `reference_results/negative_control_tests/`
+
+  These two graphs below show even with 10 and 20 year age differences between the cohorts, KCOR is able to accurately normalize the mortality and find neglible differences. Only when there is a real signal will there be a difference. Do you know of any other epidemiology tool that will find no signal in these groups which have dramatically different composition? All the methods I'm aware of require you to do 1:1 matching.
+
+  ![Negative control (10-year age difference)](test/negative_control/analysis/neg_control_10yr_age_diff.png)
+
+  ![Negative control (20-year age difference)](test/negative_control/analysis/neg_control_20yr_age_diff.png)
 
 - **Sensitivity Tests** (`test/sensitivity/`): Sweeps key parameters (cohorts, anchors, ages) to check stability.
   - Run: `make test` or `make sensitivity`

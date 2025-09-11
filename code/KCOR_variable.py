@@ -3,6 +3,8 @@
 #
 # Variable-cohort weekly tally by CURRENT dose group.
 #
+# This dataset is needed for the GLM.py script because it uses variable cohorts.
+#
 # Reads the Czech population CSV (same as KCOR_CMR.py input), parses death and dose
 # weeks, and produces a single-sheet Excel with the same columns as KCOR_CMR output
 # (ISOweekDied, DateDied, YearOfBirth, Sex, Dose, Alive, Dead), except this file

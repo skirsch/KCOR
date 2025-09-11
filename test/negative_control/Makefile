@@ -21,9 +21,10 @@ $(DATA_DIR) $(OUT_DIR):
 $(SYNTH): $(SRC_CMR) $(CODE_DIR)/generate_negative_control.py | $(DATA_DIR)
 	$(PY) $(CODE_DIR)/generate_negative_control.py $(SRC_CMR) $(SYNTH) $(SHEETS)
 
-# Build negative control output only if stale/missing
+# Build negative control output only if stale/missing; turn off baseline scaling since 
+# we are not dealing with a known net harmful vaccine.
 $(OUT_XLSX): $(SYNTH) | $(OUT_DIR)
-	$(PY) $(ROOT)/code/KCOR.py $(SYNTH) $(OUT_XLSX) "Negative Control Test" KCOR_summary_neg_control.log
+	SA_FINAL_KCOR_MIN=0 $(PY) $(ROOT)/code/KCOR.py $(SYNTH) $(OUT_XLSX) KCOR_summary_neg_control.log
 
 clean:
 	rm -f $(SYNTH)
