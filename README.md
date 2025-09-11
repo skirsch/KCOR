@@ -866,7 +866,11 @@ The [`validation/`](validation/) directory contains four independent validation 
 
 2. **DS-CMRR Validation**: Discrete Survival Cumulative Mortality Rate Ratio method for independent verification
 
-This method can be used with either fixed or variable cohorts. I chose to run it against fixed cohorts because that is the more meaningful outcome, but others are free to run it against variable cohorts. Question answered: “Between two groups defined at baseline, who accumulated more death risk over the window?” Readout: DS-CMRR is the ratio of cumulative hazards between two pre-specified groups—closest to a trial-like contrast.
+This method can be used with either fixed or variable cohorts. I chose to run it against fixed cohorts because that is the more meaningful outcome, but others are free to run it against variable cohorts. 
+
+Question answered: “Between two groups defined at baseline, who accumulated more death risk over the window?” 
+
+Readout: DS-CMRR is the ratio of cumulative hazards between two pre-specified groups—closest to a trial-like contrast.
 
    ![DS-CMRR dose 2 vs 0 (ASMR case)](validation/DS-CMRR/out/DS-CMRR_ASMR.png)
 
@@ -878,7 +882,13 @@ This method can be used with either fixed or variable cohorts. I chose to run it
 
    *Observation: With naturally matched cohorts, the curves diverge with the unvaccinated cohort exhibiting lower mortality over time.*
 
-4. **Aarstad Correlation Analysis**: Independent [correlation analysis of CDC  deaths data by county](https://jarle.substack.com/p/the-covid-19-vaccine-caused-almost), providing external validation of KCOR findings.
+4. **Naturally Matched Cohorts**: I also validated using naturally matched cohorts (equalized death rate and slope during the baseline period) to demonstrate that there is clear harm caused by the COVID shots. So this just confirms that KCOR directly confirms the result and also shows that the vaccine may have had a modest mortality benefit which, once again, KCOR reflects.
+
+![Naturally matched cohorts](reference_results/analysis/naturally_matched_cohorts.png)
+
+This plot shows that with naturally matched cohorts, the curves remain aligned but when people got the boosters, it prevented their mortality from returning to baseline levels (slope of the cumulative death curve). This is why there was a negative net harm.
+
+5. **Aarstad Correlation Analysis**: Independent [correlation analysis of CDC  deaths data by county](https://jarle.substack.com/p/the-covid-19-vaccine-caused-almost), providing external validation of KCOR findings.
 
    ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
 
