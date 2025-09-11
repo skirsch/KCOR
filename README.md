@@ -381,8 +381,6 @@ KCOR/
 - Important: Always run these targets from the repository root so environment and output paths are consistent.
 - Subdirectory Makefiles (`code/`, `validation/DS-CMRR/`, `validation/kaplan_meier/`) are for advanced use only; invoking them directly may bypass root defaults and write outputs to different locations.
 
-## 🔬 Validation
-
 ### Negative-Control Tests
 
 Builds synthetic no-signal cohorts to ensure no false positives.
