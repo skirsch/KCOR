@@ -10,17 +10,21 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all run validation test clean sensitivity KCOR_variable HVE ASMR help
+.PHONY: all KCOR CMR validation test clean sensitivity KCOR_variable HVE ASMR help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
 
 # Default: build everything (variable-cohort + analysis + validation + tests)
-all: KCOR_variable run validation test
+all: KCOR_variable KCOR validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
-run:
+KCOR:
 	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET)
+
+# CMR aggregation only (delegates to code/Makefile target CMR)
+CMR:
+	$(MAKE) -C $(CODE_DIR) CMR DATASET=$(DATASET)
 
 # Variable-cohort aggregation (delegates to code/Makefile target KCOR_variable)
 KCOR_variable:
@@ -71,7 +75,8 @@ ASMR:
 help:
 	@echo "Available targets:"
 	@echo "  KCOR_variable   - Build variable-cohort aggregation (code/)"
-	@echo "  run             - Run main KCOR pipeline (code/)"
+	@echo "  KCOR            - Run main KCOR pipeline (code/)"
+	@echo "  CMR             - Run only CMR aggregation step (code/)"
 	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
 	@echo "  km              - Run only Kaplan–Meier validation"
 	@echo "  glm             - Run only GLM validation"
