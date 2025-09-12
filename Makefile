@@ -8,8 +8,9 @@ VALIDATION_DSCMRR_DIR := validation/DS-CMRR
 VALIDATION_KM_DIR := validation/kaplan_meier
 VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
+VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all run validation test clean sensitivity KCOR_variable HVE help
+.PHONY: all run validation test clean sensitivity KCOR_variable HVE ASMR help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -52,6 +53,7 @@ clean:
 	-$(MAKE) -C $(VALIDATION_KM_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_GLM_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_HVE_DIR) clean DATASET=$(DATASET)
+	-$(MAKE) -C $(VALIDATION_ASMR_DIR) clean DATASET=$(DATASET)
 
 
 sensitivity:
@@ -60,6 +62,10 @@ sensitivity:
 # HVE simulator (not part of default all)
 HVE:
 	$(MAKE) -C $(VALIDATION_HVE_DIR) run DATASET=$(DATASET)
+
+# ASMR (fixed-cohort) analysis from KCOR_CMR.xlsx (not part of default all)
+ASMR:
+	$(MAKE) -C $(VALIDATION_ASMR_DIR) run DATASET=$(DATASET)
 
 # Help target
 help:
@@ -73,6 +79,7 @@ help:
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
 	@echo "  HVE             - Run Healthy Vaccinee Effect simulation (validation/HVE)"
+	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
 	@echo "  clean           - Clean outputs"
 	@echo ""
 	@echo "Variables:"
