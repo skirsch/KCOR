@@ -9,7 +9,7 @@ VALIDATION_KM_DIR := validation/kaplan_meier
 VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 
-.PHONY: all run validation test clean sensitivity KCOR_variable HVE
+.PHONY: all run validation test clean sensitivity KCOR_variable HVE help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -60,4 +60,21 @@ sensitivity:
 # HVE simulator (not part of default all)
 HVE:
 	$(MAKE) -C $(VALIDATION_HVE_DIR) run DATASET=$(DATASET)
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  KCOR_variable   - Build variable-cohort aggregation (code/)"
+	@echo "  run             - Run main KCOR pipeline (code/)"
+	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
+	@echo "  km              - Run only Kaplan–Meier validation"
+	@echo "  glm             - Run only GLM validation"
+	@echo "  glm-compare     - Compare GLM outputs"
+	@echo "  test            - Run negative-control and sensitivity tests (test/)"
+	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
+	@echo "  HVE             - Run Healthy Vaccinee Effect simulation (validation/HVE)"
+	@echo "  clean           - Clean outputs"
+	@echo ""
+	@echo "Variables:"
+	@echo "  DATASET=<name>  - Dataset namespace (default: Czech)"
 
