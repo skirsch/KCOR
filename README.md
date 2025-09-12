@@ -174,7 +174,13 @@ Where:
 #### 6. KCOR Normalization Fine-Tuning (v4.3+)
 **Baseline Correction for Unsafe Vaccine Effects:**
 
-When unsafe vaccines create artificially high baseline mortality rates during the normalization period, KCOR values become artificially low. This feature automatically detects and corrects for this bias by adjusting the baseline anchor value:
+When unsafe vaccines create artificially high baseline mortality rates during the normalization period, KCOR values become artificially low. This feature automatically detects and corrects for this bias by adjusting the baseline anchor value to end up at a sensible value.
+
+You can easily disable this if you think it is wrong and you will get results for older age groups that the COVID vaccines reduce non-COVID ACM which we know they don't do. If this was a safe vaccine, this option wouldn't be needed. But when a vaccine increases mortality strongly before the enrollment date and then the mortality falls back to baseline, KCOR enrollment date might be at the peak harm, in which case that is baseline and the vaccine will appear to be an amazing life saver when it is just the opposite. 
+
+To avoid using this parameter, compute separate enrollment dates for each cohort which is more work.
+
+Or you can use the parameter which will provide results which are very likely much more accurate than without the parameter. Your choice.
 
 **Detection Logic:**
 1. Compute KCOR values normally using baseline normalization (week 4)
