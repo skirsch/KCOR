@@ -7,8 +7,9 @@ CODE_DIR := code
 VALIDATION_DSCMRR_DIR := validation/DS-CMRR
 VALIDATION_KM_DIR := validation/kaplan_meier
 VALIDATION_GLM_DIR := validation/GLM
+VALIDATION_HVE_DIR := validation/HVE
 
-.PHONY: all run validation test clean sensitivity KCOR_variable
+.PHONY: all run validation test clean sensitivity KCOR_variable HVE
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -50,8 +51,13 @@ clean:
 	-$(MAKE) -C $(VALIDATION_DSCMRR_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_KM_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_GLM_DIR) clean DATASET=$(DATASET)
+	-$(MAKE) -C $(VALIDATION_HVE_DIR) clean DATASET=$(DATASET)
 
 
 sensitivity:
 	$(MAKE) -C test/sensitivity all DATASET=$(DATASET)
+
+# HVE simulator (not part of default all)
+HVE:
+	$(MAKE) -C $(VALIDATION_HVE_DIR) run DATASET=$(DATASET)
 
