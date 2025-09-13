@@ -24,10 +24,14 @@ $(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py
 
 # CMR aggregation depends on input data and KCOR_CMR.py script
 TMP_CMR := /tmp/KCOR_CMR.$(DATASET).xlsx
+
+# TEMP: limit to a single enrollment date for debugging (delete this line to restore full list)
+ENROLLMENT_DATES := 2021-24
+
 $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@echo "Running KCOR CMR aggregation... (writing to $(TMP_CMR) then moving)"
 	@rm -f $(TMP_CMR)
-	python3 KCOR_CMR.py $(INPUT_DATA) $(TMP_CMR)
+	ENROLLMENT_DATES="$(ENROLLMENT_DATES)" python3 KCOR_CMR.py $(INPUT_DATA) $(TMP_CMR)
 	@echo "Wrote temporary: $(TMP_CMR)"
 	@echo "Moving $(TMP_CMR) -> $(CMR_OUTPUT)"
 	@mv -f $(TMP_CMR) $(CMR_OUTPUT)

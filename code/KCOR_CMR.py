@@ -228,6 +228,13 @@ excel_writer = pd.ExcelWriter(excel_out_path, engine='xlsxwriter')
 # because the deaths start declining in Q2 of 2024
 enrollment_dates = ['2021-13', '2021-24', '2022-06', '2022-47']  # Full set of enrollment dates
 
+# Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
+_env_dates = os.environ.get('ENROLLMENT_DATES')
+if _env_dates:
+    _parsed = [d.strip().replace('_', '-') for d in _env_dates.split(',') if d.strip()]
+    if _parsed:
+        enrollment_dates = _parsed
+
 # enrollment_dates = ['2021-24']  # For testing, just do one enrollment date
 
 ## Load the dataset with explicit types and rename columns to English
@@ -409,10 +416,37 @@ for enroll_date_str in enrollment_dates:
     dose_dist = pop_base.groupby('dose_group')['pop'].sum().sort_index()
     print(f"    Dose distribution at enrollment: " + ", ".join([f"{int(k)}={int(v)}" for k, v in dose_dist.items()]))
     
-    # Compute deaths per (WeekOfDeath, born, sex, dose_group)
-    print(f"  Computing deaths per WeekOfDeath/born/sex/dose_group...")
-    deaths = a_copy[a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()].groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='dead')
-    print(f"    Total deaths across all dose groups: {deaths['dead'].sum()}")
+    # Compute deaths per week using two classifications:
+    #  - Pre-enrollment weeks: deaths grouped by dose at time of death (variable cohorts)
+    #  - Post-enrollment weeks: deaths grouped by frozen enrollment dose (fixed cohorts)
+    print(f"  Computing deaths per week (variable pre-enrollment, fixed post-enrollment)...")
+    # Dose at death (highest dose date <= DateOfDeath)
+    death_ref = a_copy['DateOfDeath']
+    d1_at = a_copy['Date_FirstDose'].notna() & (a_copy['Date_FirstDose'] <= death_ref)
+    d2_at = a_copy['Date_SecondDose'].notna() & (a_copy['Date_SecondDose'] <= death_ref)
+    d3_at = a_copy['Date_ThirdDose'].notna() & (a_copy['Date_ThirdDose'] <= death_ref)
+    d4_at = a_copy['Date_FourthDose'].notna() & (a_copy['Date_FourthDose'] <= death_ref)
+    a_copy['dose_at_death'] = 0
+    a_copy.loc[d1_at, 'dose_at_death'] = 1
+    a_copy.loc[d2_at, 'dose_at_death'] = 2
+    a_copy.loc[d3_at, 'dose_at_death'] = 3
+    a_copy.loc[d4_at, 'dose_at_death'] = 4  # 4 = 4+
+    # Pre-enrollment deaths by dose-at-death
+    mask_deaths = a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()
+    deaths_pre = (
+        a_copy[mask_deaths]
+            .groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI', 'dose_at_death'])
+            .size()
+            .reset_index(name='dead_pre')
+    )
+    # Post-enrollment deaths by frozen enrollment dose
+    deaths_post = (
+        a_copy[mask_deaths]
+            .groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI', 'dose_group'])
+            .size()
+            .reset_index(name='dead_post')
+    )
+    print(f"    Total deaths across all dose groups: {int(deaths_post['dead_post'].sum())}")
     print(f"    Unique weeks with deaths: {len(deaths['WeekOfDeath'].unique())}")
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
     # Use all vaccination and death dates to get the full week range
@@ -442,8 +476,11 @@ for enroll_date_str in enrollment_dates:
     print(f"  Preparing output structure (vectorized)...")
     # Build the minimal observed combinations for (YearOfBirth, Sex, DCCI, Dose)
     observed_pop = pop_base.rename(columns={'dose_group': 'Dose'})[['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'pop']]
-    observed_deaths = deaths.rename(columns={'dose_group': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
-        ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead']
+    observed_deaths_pre = deaths_pre.rename(columns={'dose_at_death': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
+        ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead_pre']
+    ]
+    observed_deaths_post = deaths_post.rename(columns={'dose_group': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
+        ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead_post']
     ]
 
     # Cross join weeks with observed population combos
@@ -458,10 +495,10 @@ for enroll_date_str in enrollment_dates:
     out.rename(columns={'pop': 'Alive'}, inplace=True)
     out['Alive'] = out['Alive'].fillna(0).astype(int)
 
-    # Attach deaths for each week-row
-    out = out.merge(observed_deaths, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
-    out['Dead'] = out['dead'].fillna(0).astype(int)
-    out.drop(columns=['dead'], inplace=True)
+    # Attach both pre- and post-enrollment death counts; we'll select per-week after we build DateDied
+    out = out.merge(observed_deaths_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
+    out = out.merge(observed_deaths_post, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
+    out[['dead_pre', 'dead_post']] = out[['dead_pre', 'dead_post']].fillna(0).astype(int)
 
     out['ISOweekDied'] = out['ISOweekDied'].astype(str)
     # Optimize dtypes for speed and memory
@@ -527,7 +564,9 @@ for enroll_date_str in enrollment_dates:
     cumT.columns = ['cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']
     out = pd.concat([out, cumT], axis=1)
 
-    # Cumulative prior-week deaths per combo+dose (already merged Dead above)
+    # Build Dead using pre/post series
+    out['Dead'] = np.where(out['DateDied'] < enrollment_date, out['dead_pre'], out['dead_post']).astype(int)
+    # Cumulative prior-week deaths per combo+dose
     out['cumD_prev'] = (
         out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
            .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['Dead']
@@ -550,7 +589,8 @@ for enroll_date_str in enrollment_dates:
     out.loc[post_mask, 'cum_dead_prev'] = out.loc[post_mask].groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'], observed=True)['Dead'].cumsum().shift(fill_value=0)
     out.loc[post_mask, 'Alive'] = (out.loc[post_mask, 'Alive'] - out.loc[post_mask, 'cum_dead_prev']).clip(lower=0)
     # Drop helper columns
-    out.drop(columns=[c for c in ['cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumD_prev'] if c in out.columns], inplace=True)
+    out.drop(columns=[c for c in ['dead_pre','dead_post','cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumD_prev'] if c in out.columns], inplace=True)
+
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
 
@@ -659,10 +699,22 @@ for enroll_date_str in enrollment_dates:
     #     out = pd.concat([out, asmr_df], ignore_index=True)
     #     print(f"    Added {len(asmr_rows)} ASMR rows")
     
-    # Write to Excel sheet
+    # Write to Excel sheets (main + enrollment-week summary)
     print(f"  Writing to Excel sheet...")
     sheet_name = enroll_date_str.replace('-', '_')
     out.to_excel(excel_writer, sheet_name=sheet_name, index=False)
+    # Enrollment-week per-dose totals for quick cross-check
+    try:
+        summary = (
+            out[out['ISOweekDied'] == enroll_week_str]
+              .groupby('Dose', observed=True)[['Alive', 'Dead']]
+              .sum()
+              .reset_index()
+              .sort_values('Dose')
+        )
+        summary.to_excel(excel_writer, sheet_name=sheet_name + "_summary", index=False)
+    except Exception as e:
+        print(f"CAUTION: Failed to write summary sheet: {e}")
     
     # Format YearOfBirth column as text to avoid Excel warnings
     workbook = excel_writer.book
