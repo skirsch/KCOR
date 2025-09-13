@@ -490,11 +490,6 @@ for enroll_date_str in enrollment_dates:
     weeks_df['__k'] = 1
     out = weeks_df.merge(combos_df, on='__k', how='left').drop(columns='__k')
 
-    # Attach population to every week-row for the combo
-    out = out.merge(observed_pop, on=['YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
-    out.rename(columns={'pop': 'Alive'}, inplace=True)
-    out['Alive'] = out['Alive'].fillna(0).astype(int)
-
     # Attach both pre- and post-enrollment death counts; we'll select per-week after we build DateDied
     out = out.merge(observed_deaths_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
     out = out.merge(observed_deaths_post, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
@@ -561,30 +556,46 @@ for enroll_date_str in enrollment_dates:
 
     # Build Dead using pre/post series
     out['Dead'] = np.where(out['DateDied'] < enrollment_date, out['dead_pre'], out['dead_post']).astype(int)
-    # Cumulative prior-week deaths per combo+dose
-    out['cumD_prev'] = (
+    # Cumulative prior-week pre-enrollment deaths per combo+dose
+    out['cumPreDead_prev'] = (
         out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
-           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['Dead']
+           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead_pre']
+           .cumsum()
+           .shift(fill_value=0)
+    )
+    # Cumulative prior-week post-enrollment deaths per combo+dose
+    out['cumPostDead_prev'] = (
+        out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
+           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead_post']
            .cumsum()
            .shift(fill_value=0)
     )
 
     # Compute Alive_pre at start of week for variable cohorts using dose-specific formula
     dose_vals = out['Dose'].values
-    alive_pre = np.where(dose_vals == 0, out['base_total'] - out['cumT1_prev'] - out['cumD_prev'],
-                 np.where(dose_vals == 1, out['cumT1_prev'] - out['cumT2_prev'] - out['cumD_prev'],
-                 np.where(dose_vals == 2, out['cumT2_prev'] - out['cumT3_prev'] - out['cumD_prev'],
-                 np.where(dose_vals == 3, out['cumT3_prev'] - out['cumT4_prev'] - out['cumD_prev'],
-                                      out['cumT4_prev'] - out['cumD_prev']))))
+    alive_pre = np.where(dose_vals == 0, out['base_total'] - out['cumT1_prev'] - out['cumPreDead_prev'],
+                 np.where(dose_vals == 1, out['cumT1_prev'] - out['cumT2_prev'] - out['cumPreDead_prev'],
+                 np.where(dose_vals == 2, out['cumT2_prev'] - out['cumT3_prev'] - out['cumPreDead_prev'],
+                 np.where(dose_vals == 3, out['cumT3_prev'] - out['cumT4_prev'] - out['cumPreDead_prev'],
+                                      out['cumT4_prev'] - out['cumPreDead_prev']))))
     alive_pre = np.maximum(alive_pre, 0)
-    # Fill pre-enrollment Alive with alive_pre
-    out.loc[~post_mask, 'Alive'] = alive_pre[~post_mask]
+    # Compute Alive at enrollment week for freezing
+    out['Alive_pre'] = alive_pre
+    enroll_week_mask = out['ISOweekDied'] == enroll_week_str
+    enroll_alive = (out.loc[enroll_week_mask, ['YearOfBirth','Sex','DCCI','Dose','Alive_pre']]
+                      .rename(columns={'Alive_pre':'Alive_enroll'}))
+    out = out.merge(enroll_alive, on=['YearOfBirth','Sex','DCCI','Dose'], how='left')
+    out['Alive_enroll'] = out['Alive_enroll'].fillna(0).astype(int)
+    # Post-enrollment Alive by fixed cohorts minus post-enrollment deaths
+    alive_post = (out['Alive_enroll'] - out['cumPostDead_prev']).clip(lower=0)
+    # Select Alive by week
+    out['Alive'] = np.where(out['DateDied'] < enrollment_date, out['Alive_pre'], alive_post).astype(int)
 
     # Attrition only on post-enrollment rows (fixed cohorts)
     out.loc[post_mask, 'cum_dead_prev'] = out.loc[post_mask].groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'], observed=True)['Dead'].cumsum().shift(fill_value=0)
     out.loc[post_mask, 'Alive'] = (out.loc[post_mask, 'Alive'] - out.loc[post_mask, 'cum_dead_prev']).clip(lower=0)
     # Drop helper columns
-    out.drop(columns=[c for c in ['dead_pre','dead_post','cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumD_prev'] if c in out.columns], inplace=True)
+    out.drop(columns=[c for c in ['dead_pre','dead_post','cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumPreDead_prev','cumPostDead_prev','Alive_pre','Alive_enroll'] if c in out.columns], inplace=True)
 
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
