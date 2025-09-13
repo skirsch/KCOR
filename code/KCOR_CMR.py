@@ -474,8 +474,7 @@ for enroll_date_str in enrollment_dates:
             d += timedelta(days=7)
     all_weeks = [f"{y}-{w:02d}" for y, w in week_year_iter(min_year, min_week, max_year, max_week)]
     print(f"  Preparing output structure (vectorized)...")
-    # Build the minimal observed combinations for (YearOfBirth, Sex, DCCI, Dose)
-    observed_pop = pop_base.rename(columns={'dose_group': 'Dose'})[['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'pop']]
+    # Prepare deaths tables for merging later
     observed_deaths_pre = deaths_pre.rename(columns={'dose_at_death': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
         ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead_pre']
     ]
@@ -483,12 +482,18 @@ for enroll_date_str in enrollment_dates:
         ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead_post']
     ]
 
-    # Cross join weeks with observed population combos
+    # Build dose-agnostic grid to avoid duplicating transition counts
     weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
-    combos_df = observed_pop[['YearOfBirth', 'Sex', 'DCCI', 'Dose']].drop_duplicates()
-    combos_df['__k'] = 1
+    nodose_combos = a_copy[['YearOfBirth', 'Sex', 'DCCI']].drop_duplicates().copy()
     weeks_df['__k'] = 1
-    out = weeks_df.merge(combos_df, on='__k', how='left').drop(columns='__k')
+    nodose_combos['__k'] = 1
+    grid_nodose = weeks_df.merge(nodose_combos, on='__k', how='left').drop(columns='__k')
+
+    # Cross join with Dose 0..4 to build full output grid
+    dose_df = pd.DataFrame({'Dose': [0,1,2,3,4]})
+    dose_df['__k'] = 1
+    grid_nodose['__k'] = 1
+    out = grid_nodose.merge(dose_df, on='__k', how='left').drop(columns='__k')
 
     # Attach both pre- and post-enrollment death counts; we'll select per-week after we build DateDied
     out = out.merge(observed_deaths_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
@@ -511,12 +516,12 @@ for enroll_date_str in enrollment_dates:
     post_mask = out['DateDied'] >= enrollment_date
 
     # -------- Pre-enrollment Alive (variable cohorts at start of week) --------
-    # Base total per (YearOfBirth, Sex, DCCI)
+    # Base total per (YearOfBirth, Sex, DCCI) on nodose grid
     base_total = a_copy.groupby(['YearOfBirth', 'Sex', 'DCCI']).size().rename('base_total').reset_index()
     out = out.merge(base_total, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
     out['base_total'] = out['base_total'].fillna(0).astype(int)
 
-    # Weekly dose transitions counts per combo (to doses 1..4)
+    # Weekly dose transitions counts per combo (to doses 1..4) computed on nodose grid
     dose_week_cols = [
         ('trans_1', 'Date_FirstDose'),
         ('trans_2', 'Date_SecondDose'),
@@ -542,17 +547,21 @@ for enroll_date_str in enrollment_dates:
             transitions[col_] = 0
     transitions = transitions.fillna(0)
 
-    # Merge transitions and compute cumulative sums per combo, then shift to get prior-week totals
-    out = out.merge(transitions, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
-    out[['trans_1', 'trans_2', 'trans_3', 'trans_4']] = out[['trans_1', 'trans_2', 'trans_3', 'trans_4']].fillna(0).astype(int)
+    # Compute cumulative transitions on nodose grid
+    trans_grid = grid_nodose.merge(transitions, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
+    trans_grid[['trans_1', 'trans_2', 'trans_3', 'trans_4']] = trans_grid[['trans_1', 'trans_2', 'trans_3', 'trans_4']].fillna(0).astype(int)
     cumT = (
-        out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'ISOweekDied'])
-           .groupby(['YearOfBirth', 'Sex', 'DCCI'])[['trans_1', 'trans_2', 'trans_3', 'trans_4']]
-           .cumsum()
-           .shift(fill_value=0)
+        trans_grid.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'ISOweekDied'])
+                 .groupby(['YearOfBirth', 'Sex', 'DCCI'])[['trans_1', 'trans_2', 'trans_3', 'trans_4']] 
+                 .cumsum()
+                 .shift(fill_value=0)
     )
     cumT.columns = ['cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']
-    out = pd.concat([out, cumT], axis=1)
+    trans_grid = pd.concat([trans_grid, cumT], axis=1)
+    # Merge cumulative transitions into output grid
+    out = out.merge(trans_grid[['ISOweekDied','YearOfBirth','Sex','DCCI','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']],
+                    on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+    out[['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']] = out[['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']].fillna(0).astype(int)
 
     # Build Dead using pre/post series
     out['Dead'] = np.where(out['DateDied'] < enrollment_date, out['dead_pre'], out['dead_post']).astype(int)
