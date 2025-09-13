@@ -580,6 +580,11 @@ for enroll_date_str in enrollment_dates:
            .shift(fill_value=0)
     )
 
+    # Ensure boundary conditions at the very first week (no prior transitions/deaths)
+    first_week_str = all_weeks[0]
+    first_mask = out['ISOweekDied'] == first_week_str
+    out.loc[first_mask, ['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumPreDead_prev']] = 0
+
     # Compute Alive_pre at start of week for variable cohorts using dose-specific formula
     dose_vals = out['Dose'].values
     alive_pre = np.where(dose_vals == 0, out['base_total'] - out['cumT1_prev'] - out['cumPreDead_prev'],
