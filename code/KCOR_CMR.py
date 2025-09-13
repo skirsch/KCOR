@@ -362,6 +362,7 @@ for enroll_date_str in enrollment_dates:
     import datetime
     print(f"Processing enrollment date {enroll_date_str} at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     enrollment_date = pd.to_datetime(enroll_date_str + '-1', format='%G-%V-%u', errors='coerce')
+    enroll_week_str = enrollment_date.strftime('%G-%V')
     print(f"  Creating copy of dataset ({len(a)} records)...")
     a_copy = a.copy()
     print(f"  Keeping all records including deaths before enrollment date...")
@@ -404,6 +405,9 @@ for enroll_date_str in enrollment_dates:
     alive_at_enroll = a_copy[(a_copy['DateOfDeath'].isna()) | (a_copy['DateOfDeath'] >= enrollment_date)].copy()
     pop_base = alive_at_enroll.groupby(['YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='pop')
     print(f"    Total population across all dose groups: {pop_base['pop'].sum()}")
+    # Debug: print dose distribution at enrollment (collapsed to 0..4)
+    dose_dist = pop_base.groupby('dose_group')['pop'].sum().sort_index()
+    print(f"    Dose distribution at enrollment: " + ", ".join([f"{int(k)}={int(v)}" for k, v in dose_dist.items()]))
     
     # Compute deaths per (WeekOfDeath, born, sex, dose_group)
     print(f"  Computing deaths per WeekOfDeath/born/sex/dose_group...")
@@ -549,6 +553,16 @@ for enroll_date_str in enrollment_dates:
     out.drop(columns=[c for c in ['cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumD_prev'] if c in out.columns], inplace=True)
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
+
+    # Sanity check: Alive at enrollment week should match pop_base per Dose
+    try:
+        for d in dose_groups:
+            sum_alive = int(out[(out['ISOweekDied'] == enroll_week_str) & (out['Dose'] == d)]['Alive'].sum())
+            pop_d = int(pop_base[pop_base['dose_group'] == d]['pop'].sum())
+            if sum_alive != pop_d:
+                print(f"CAUTION: Enrollment-week Alive sum mismatch for Dose {d} at {enroll_week_str}: Alive={sum_alive} vs pop_base={pop_d}")
+    except Exception as e:
+        print(f"CAUTION: Enrollment-week Alive vs pop_base check failed: {e}")
     
     # ASMR calculation - BYPASSED for now (should be in analysis code, not summary code)
     # This computation is bypassed to keep the output file simple and avoid mixed data types
