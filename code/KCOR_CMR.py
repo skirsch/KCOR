@@ -231,6 +231,8 @@ enrollment_dates = ['2021-13', '2021-24', '2022-06', '2022-47']  # Full set of e
 # enrollment_dates = ['2021-24']  # For testing, just do one enrollment date
 
 ## Load the dataset with explicit types and rename columns to English
+import datetime as _dt
+print(f"KCOR_CMR start: {_dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print(f"  Reading the input file: {input_file}")
 
 
@@ -473,15 +475,78 @@ for enroll_date_str in enrollment_dates:
     # Overwrite population columns to reflect attrition from deaths (vectorized)
     print(f"  Computing population attrition from deaths (vectorized)...")
     out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
-    # Compute Monday date for comparison; then only attrit post-enrollment weeks
+    # Compute Monday date for comparison
     out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u'))
     post_mask = out['DateDied'] >= enrollment_date
-    # Set Alive to NaN pre-enrollment (population base is defined at enrollment)
-    out.loc[~post_mask, 'Alive'] = np.nan
-    # Attrition only on post-enrollment rows
+
+    # -------- Pre-enrollment Alive (variable cohorts at start of week) --------
+    # Base total per (YearOfBirth, Sex, DCCI)
+    base_total = a_copy.groupby(['YearOfBirth', 'Sex', 'DCCI']).size().rename('base_total').reset_index()
+    out = out.merge(base_total, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
+    out['base_total'] = out['base_total'].fillna(0).astype(int)
+
+    # Weekly dose transitions counts per combo (to doses 1..4)
+    dose_week_cols = [
+        ('trans_1', 'Date_FirstDose'),
+        ('trans_2', 'Date_SecondDose'),
+        ('trans_3', 'Date_ThirdDose'),
+        ('trans_4', 'Date_FourthDose'),
+    ]
+    trans_frames = []
+    for label, col in dose_week_cols:
+        wk = a_copy[col].dt.strftime('%G-%V')
+        t = a_copy.loc[wk.notna(), ['YearOfBirth', 'Sex', 'DCCI']].copy()
+        t['ISOweekDied'] = wk[wk.notna()].values
+        t[label] = 1
+        t = t.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[label].sum().reset_index()
+        trans_frames.append(t)
+    if len(trans_frames) > 0:
+        transitions = trans_frames[0]
+        for tf in trans_frames[1:]:
+            transitions = transitions.merge(tf, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='outer')
+    else:
+        transitions = pd.DataFrame(columns=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])
+    for col_ in ['trans_1', 'trans_2', 'trans_3', 'trans_4']:
+        if col_ not in transitions.columns:
+            transitions[col_] = 0
+    transitions = transitions.fillna(0)
+
+    # Merge transitions and compute cumulative sums per combo, then shift to get prior-week totals
+    out = out.merge(transitions, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
+    out[['trans_1', 'trans_2', 'trans_3', 'trans_4']] = out[['trans_1', 'trans_2', 'trans_3', 'trans_4']].fillna(0).astype(int)
+    cumT = (
+        out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'ISOweekDied'])
+           .groupby(['YearOfBirth', 'Sex', 'DCCI'])[['trans_1', 'trans_2', 'trans_3', 'trans_4']]
+           .cumsum()
+           .shift(fill_value=0)
+    )
+    cumT.columns = ['cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']
+    out = pd.concat([out, cumT], axis=1)
+
+    # Cumulative prior-week deaths per combo+dose (already merged Dead above)
+    out['cumD_prev'] = (
+        out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
+           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['Dead']
+           .cumsum()
+           .shift(fill_value=0)
+    )
+
+    # Compute Alive_pre at start of week for variable cohorts using dose-specific formula
+    dose_vals = out['Dose'].values
+    alive_pre = np.where(dose_vals == 0, out['base_total'] - out['cumT1_prev'] - out['cumD_prev'],
+                 np.where(dose_vals == 1, out['cumT1_prev'] - out['cumT2_prev'] - out['cumD_prev'],
+                 np.where(dose_vals == 2, out['cumT2_prev'] - out['cumT3_prev'] - out['cumD_prev'],
+                 np.where(dose_vals == 3, out['cumT3_prev'] - out['cumT4_prev'] - out['cumD_prev'],
+                                      out['cumT4_prev'] - out['cumD_prev']))))
+    alive_pre = np.maximum(alive_pre, 0)
+    # Fill pre-enrollment Alive with alive_pre
+    out.loc[~post_mask, 'Alive'] = alive_pre[~post_mask]
+
+    # Attrition only on post-enrollment rows (fixed cohorts)
     out.loc[post_mask, 'cum_dead_prev'] = out.loc[post_mask].groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'], observed=True)['Dead'].cumsum().shift(fill_value=0)
     out.loc[post_mask, 'Alive'] = (out.loc[post_mask, 'Alive'] - out.loc[post_mask, 'cum_dead_prev']).clip(lower=0)
-    out.drop(columns=['cum_dead_prev'], inplace=True)
+    # Drop helper columns
+    out.drop(columns=[c for c in ['cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumD_prev'] if c in out.columns], inplace=True)
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
     
