@@ -36,17 +36,16 @@
 #
 # To analyze the output file, use make KCOR (runs complete pipeline)
 #
-# The output file contains the CMR for each dose group by week, birth cohort, sex, DCCI, and vaccination status.
+# The output file contains the CMR for each dose group by week, birth cohort, sex, and vaccination status.
 # The output file contains multiple sheets, one for each enrollment date.
-# The data is structured with Dose and DCCI as index columns and simplified Alive/Dead value columns.
-# Each row represents a unique combination of week, birth cohort, sex, dose group, and DCCI.
+# The data is structured with Dose as an index column and simplified Alive/Dead value columns.
+# Each row represents a unique combination of week, birth cohort, sex, and dose group.
 # The output file columns are:
 #   ISOweekDied: ISO week (YYYY-WW format, e.g., 2020-10)
 #   DateDied: Monday date of the ISO week (YYYY-MM-DD format, e.g., 2020-03-02)
 #   YearOfBirth: birth year (e.g., "1970") or "ASMR" for age-standardized rows and "UNK" for unknown birth year
 #   Sex: alphabetic code (M=Male, F=Female, O=Other/Unknown)
 #   Dose: dose group (0=unvaccinated, 1=1 dose, 2=2 doses, 3=3 doses, 4=4 doses, 5=5 doses, 6=6 doses, 7=7 doses)
-#   DCCI: DCCI (Disease Comorbidity and Condition Index) value
 #   Alive: population count alive in this dose group
 #   Dead: death count in this dose group (age-standardized for ASMR rows with YearOfBirth="ASMR")
 #
@@ -237,7 +236,7 @@ print(f"  Reading the input file: {input_file}")
 
 a = pd.read_csv(
     input_file,
-    dtype=str,  # Force all columns to string to preserve ISO week format
+    dtype=str,  # preserve ISO week format and avoid type inference
     low_memory=False
 )
 
@@ -253,6 +252,19 @@ a.columns = [
     'max_Oxygen', 'bin_HFNO', 'min_HFNO', 'days_HFNO', 'max_HFNO', 'bin_MechanicalVentilation_ECMO',
     'min_MechanicalVentilation_ECMO', 'days_MechanicalVentilation_ECMO', 'max_MechanicalVentilation_ECMO',
     'Mutation', 'DateOfDeath', 'Long_COVID', 'DCCI']
+
+# Ensure DCCI is mapped into 4 buckets: 0, 1, 3 (catch-all), 5
+a['DCCI'] = pd.to_numeric(a['DCCI'], errors='coerce')
+a['DCCI'] = a['DCCI'].clip(lower=0, upper=5)
+a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([0, 1, 5]), 3).astype('Int8')
+
+# Immediately drop columns we won't use to reduce memory
+needed_cols = [
+    'Infection', 'Sex', 'YearOfBirth',
+    'Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose',
+    'DateOfDeath', 'DCCI'
+]
+a = a[needed_cols]
 
 # if you got infected more than once, it will create a duplicate record (with a different ID) so
 # remove those records so we don't double count the deaths.
@@ -304,13 +316,13 @@ a['birth_year'] = pd.to_numeric(a['birth_year'], errors='coerce')
 
 # --------- Parse all dose dates ONCE before the enrollment loop ---------
 print(f"Parsing dose date columns (one time only)...")
-# Add dose date columns if not already present
-for col in ['Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose', 'Date_FifthDose', 'Date_SixthDose', 'Date_SeventhDose']:
+# Add dose date columns if not already present (up to 4th dose only)
+for col in ['Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose']:
     if col not in a.columns:
         a[col] = pd.NaT
 
-# Use the fast vectorized ISO week parsing approach (same as KCOR.py)
-dose_date_columns = ['Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose', 'Date_FifthDose', 'Date_SixthDose', 'Date_SeventhDose']
+# Use the fast vectorized ISO week parsing approach (up to 4th dose only)
+dose_date_columns = ['Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose']
 for col in dose_date_columns:
     print(f"  Parsing {col}...")
     # Fast vectorized ISO week parsing: YYYY-WW + '-1' -> datetime (keep as Timestamp, not .date)
@@ -326,6 +338,10 @@ print(f"Converting birth years to integers (one time only)...")
 a['YearOfBirth'] = a['birth_year'].apply(lambda x: int(x) if pd.notnull(x) else -1)
 print(f"Birth year conversion complete.")
 
+# Collapse birth years to buckets: <=1920 → 1920, >=2000 → 2000, keep -1 as unknown
+known_birth_mask = a['YearOfBirth'] != -1
+a.loc[known_birth_mask, 'YearOfBirth'] = a.loc[known_birth_mask, 'YearOfBirth'].clip(lower=1920, upper=2000)
+
 # --------- NEW: Dose group analysis for multiple enrollment dates ---------
 
 ### YOU CAN RESTART HERE if code bombs out. This saves time.
@@ -336,10 +352,7 @@ dose_date_cols = [
     (1, 'Date_FirstDose'),
     (2, 'Date_SecondDose'),
     (3, 'Date_ThirdDose'),
-    (4, 'Date_FourthDose'),
-    (5, 'Date_FifthDose'),
-    (6, 'Date_SixthDose'),
-    (7, 'Date_SeventhDose'),
+    (4, 'Date_FourthDose'),  # 4 means 4+
 ]
 
 for enroll_date_str in enrollment_dates:
@@ -370,9 +383,6 @@ for enroll_date_str in enrollment_dates:
     dose2_valid = a_copy['Date_SecondDose'].notna() & (a_copy['Date_SecondDose'] <= reference_dates)
     dose3_valid = a_copy['Date_ThirdDose'].notna() & (a_copy['Date_ThirdDose'] <= reference_dates)
     dose4_valid = a_copy['Date_FourthDose'].notna() & (a_copy['Date_FourthDose'] <= reference_dates)
-    dose5_valid = a_copy['Date_FifthDose'].notna() & (a_copy['Date_FifthDose'] <= reference_dates)
-    dose6_valid = a_copy['Date_SixthDose'].notna() & (a_copy['Date_SixthDose'] <= reference_dates)
-    dose7_valid = a_copy['Date_SeventhDose'].notna() & (a_copy['Date_SeventhDose'] <= reference_dates)
     
     # Start with dose group 0 for everyone
     a_copy['dose_group'] = 0
@@ -382,20 +392,20 @@ for enroll_date_str in enrollment_dates:
     a_copy.loc[dose2_valid, 'dose_group'] = 2  
     a_copy.loc[dose3_valid, 'dose_group'] = 3
     a_copy.loc[dose4_valid, 'dose_group'] = 4
-    a_copy.loc[dose5_valid, 'dose_group'] = 5
-    a_copy.loc[dose6_valid, 'dose_group'] = 6
-    a_copy.loc[dose7_valid, 'dose_group'] = 7
+    # 4+ doses collapse to 4
     print(f"  Dose group assignment complete.")
     
-    dose_groups = [0, 1, 2, 3, 4, 5, 6, 7]
-    # Compute population base: count of people in each (born, sex, dose_group, DCCI)
-    print(f"  Computing population base...")
-    pop_base = a_copy.groupby(['YearOfBirth', 'Sex', 'dose_group', 'DCCI']).size().reset_index(name='pop')
+    dose_groups = [0, 1, 2, 3, 4]
+    # Compute population base: count of people in each (born, sex, dose_group)
+    print(f"  Computing population base (alive at enrollment)...")
+    # Freeze dose at enrollment for population base and exclude those who died before enrollment
+    alive_at_enroll = a_copy[(a_copy['DateOfDeath'].isna()) | (a_copy['DateOfDeath'] >= enrollment_date)].copy()
+    pop_base = alive_at_enroll.groupby(['YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='pop')
     print(f"    Total population across all dose groups: {pop_base['pop'].sum()}")
     
-    # Compute deaths per (WeekOfDeath, born, sex, dose_group, DCCI)
-    print(f"  Computing deaths per WeekOfDeath/born/sex/dose_group/DCCI...")
-    deaths = a_copy[a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()].groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'dose_group', 'DCCI']).size().reset_index(name='dead')
+    # Compute deaths per (WeekOfDeath, born, sex, dose_group)
+    print(f"  Computing deaths per WeekOfDeath/born/sex/dose_group...")
+    deaths = a_copy[a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()].groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='dead')
     print(f"    Total deaths across all dose groups: {deaths['dead'].sum()}")
     print(f"    Unique weeks with deaths: {len(deaths['WeekOfDeath'].unique())}")
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
@@ -406,9 +416,6 @@ for enroll_date_str in enrollment_dates:
         a_copy['Date_SecondDose'],
         a_copy['Date_ThirdDose'],
         a_copy['Date_FourthDose'],
-        a_copy['Date_FifthDose'],
-        a_copy['Date_SixthDose'],
-        a_copy['Date_SeventhDose'],
         a_copy['DateOfDeath']
     ]).dropna()
     min_week = all_dates.min().isocalendar().week
@@ -426,69 +433,57 @@ for enroll_date_str in enrollment_dates:
             # next week
             d += timedelta(days=7)
     all_weeks = [f"{y}-{w:02d}" for y, w in week_year_iter(min_year, min_week, max_year, max_week)]
-    cohorts = sorted(a_copy['YearOfBirth'].dropna().unique())
-    sexes = sorted(a_copy['Sex'].dropna().unique())
-    dcci_values = sorted(a_copy['DCCI'].dropna().unique())
-    
-    # Build MultiIndex for all (WeekOfDeath, born, sex, dose, DCCI)
-    print(f"  Building output DataFrame structure...")
-    index = pd.MultiIndex.from_product([all_weeks, cohorts, sexes, dose_groups, dcci_values], names=['ISOweekDied', 'YearOfBirth', 'Sex', 'Dose', 'DCCI'])
-    # Prepare output DataFrame
-    out = pd.DataFrame(index=index)
-    
-    print(f"  Processing dose groups...")
-    # Initialize Alive and Dead columns
-    out['Alive'] = 0
-    out['Dead'] = 0
-    
-    for d in dose_groups:
-        # deaths for this group
-        deaths_d = deaths[deaths['dose_group'] == d].set_index(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI'])['dead']
-        # pop for this group (initial for all weeks)
-        pop_d = pop_base[pop_base['dose_group'] == d].set_index(['YearOfBirth', 'Sex', 'DCCI'])['pop']
-        
-        # Fill data for this dose group
-        for week in all_weeks:
-            for cohort in cohorts:
-                for sex in sexes:
-                    for dcci in dcci_values:
-                        # Get population count
-                        pop_count = pop_d.get((cohort, sex, dcci), 0)
-                        out.loc[(week, cohort, sex, d, dcci), 'Alive'] = pop_count
-                        
-                        # Get death count
-                        death_count = deaths_d.get((week, cohort, sex, dcci), 0)
-                        out.loc[(week, cohort, sex, d, dcci), 'Dead'] = death_count
+    print(f"  Preparing output structure (vectorized)...")
+    # Build the minimal observed combinations for (YearOfBirth, Sex, DCCI, Dose)
+    observed_pop = pop_base.rename(columns={'dose_group': 'Dose'})[['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'pop']]
+    observed_deaths = deaths.rename(columns={'dose_group': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
+        ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead']
+    ]
 
-    out = out.reset_index()
+    # Cross join weeks with observed population combos
+    weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
+    combos_df = observed_pop[['YearOfBirth', 'Sex', 'DCCI', 'Dose']].drop_duplicates()
+    combos_df['__k'] = 1
+    weeks_df['__k'] = 1
+    out = weeks_df.merge(combos_df, on='__k', how='left').drop(columns='__k')
+
+    # Attach population to every week-row for the combo
+    out = out.merge(observed_pop, on=['YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
+    out.rename(columns={'pop': 'Alive'}, inplace=True)
+    out['Alive'] = out['Alive'].fillna(0).astype(int)
+
+    # Attach deaths for each week-row
+    out = out.merge(observed_deaths, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
+    out['Dead'] = out['dead'].fillna(0).astype(int)
+    out.drop(columns=['dead'], inplace=True)
+
     out['ISOweekDied'] = out['ISOweekDied'].astype(str)
-    
-    # Convert YearOfBirth to numeric values (-1 for unknown, keep as integers)
-    out['YearOfBirth'] = out['YearOfBirth'].apply(lambda x: -1 if x == -1 else x)
-    
-    out['Sex'] = out['Sex'].astype(str)
-    out['Dose'] = out['Dose'].astype(int)
-    out['DCCI'] = out['DCCI'].astype(int)
+    # Optimize dtypes for speed and memory
+    out['Sex'] = out['Sex'].astype('category')
+    out['Dose'] = out['Dose'].astype('int8')
+    out['DCCI'] = out['DCCI'].astype('Int8')
     
     # Add a readable date column (Monday of the ISO week) right after ISOweekDied
     out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u').strftime('%Y-%m-%d'))
     
-    # Reorder columns to put DateDied right after ISOweekDied and include DCCI
-    cols = ['ISOweekDied', 'DateDied', 'YearOfBirth', 'Sex', 'Dose', 'DCCI', 'Alive', 'Dead']
+    # Reorder columns to put DateDied right after ISOweekDied
+    cols = ['ISOweekDied', 'DateDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'Alive', 'Dead']
     out = out[cols]
 
     # Overwrite population columns to reflect attrition from deaths (vectorized)
-    print(f"  Computing population attrition from deaths...")
-    out = out.sort_values(['YearOfBirth', 'Sex', 'Dose', 'DCCI', 'ISOweekDied'])
-    
-    for (YearOfBirth, Sex, Dose, DCCI), group in out.groupby(['YearOfBirth', 'Sex', 'Dose', 'DCCI']):
-        pop = group['Alive'].values.astype(int)
-        dead = group['Dead'].values.astype(int)
-        alive = np.empty_like(pop)
-        alive[0] = pop[0]
-        for i in range(1, len(pop)):
-            alive[i] = max(alive[i-1] - dead[i-1], 0)
-        out.loc[group.index, 'Alive'] = alive
+    print(f"  Computing population attrition from deaths (vectorized)...")
+    out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
+    # Compute Monday date for comparison; then only attrit post-enrollment weeks
+    out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u'))
+    post_mask = out['DateDied'] >= enrollment_date
+    # Set Alive to NaN pre-enrollment (population base is defined at enrollment)
+    out.loc[~post_mask, 'Alive'] = np.nan
+    # Attrition only on post-enrollment rows
+    out.loc[post_mask, 'cum_dead_prev'] = out.loc[post_mask].groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'], observed=True)['Dead'].cumsum().shift(fill_value=0)
+    out.loc[post_mask, 'Alive'] = (out.loc[post_mask, 'Alive'] - out.loc[post_mask, 'cum_dead_prev']).clip(lower=0)
+    out.drop(columns=['cum_dead_prev'], inplace=True)
+    # Convert DateDied back to string for Excel after computations
+    out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
     
     # ASMR calculation - BYPASSED for now (should be in analysis code, not summary code)
     # This computation is bypassed to keep the output file simple and avoid mixed data types

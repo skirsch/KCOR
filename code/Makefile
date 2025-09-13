@@ -19,13 +19,19 @@ KCOR: $(KCOR_OUTPUT)
 # KCOR analysis depends on CMR output and KCOR.py script
 $(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py
 	@echo "Running KCORv4 analysis..."
-	python KCOR.py $(CMR_OUTPUT) $(KCOR_OUTPUT) "Primary Analysis" KCOR_summary.log
+	python3 KCOR.py $(CMR_OUTPUT) $(KCOR_OUTPUT) "Primary Analysis" KCOR_summary.log
 	@echo "KCOR analysis complete!"
 
 # CMR aggregation depends on input data and KCOR_CMR.py script
+TMP_CMR := /tmp/KCOR_CMR.$(DATASET).xlsx
 $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
-	@echo "Running KCOR CMR aggregation..."
-	python KCOR_CMR.py $(INPUT_DATA) $(CMR_OUTPUT)
+	@echo "Running KCOR CMR aggregation... (writing to $(TMP_CMR) then moving)"
+	@rm -f $(TMP_CMR)
+	python3 KCOR_CMR.py $(INPUT_DATA) $(TMP_CMR)
+	@echo "Wrote temporary: $(TMP_CMR)"
+	@echo "Moving $(TMP_CMR) -> $(CMR_OUTPUT)"
+	@mv -f $(TMP_CMR) $(CMR_OUTPUT)
+	@ls -lh $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
 
 # Convenience target for CMR only
@@ -36,12 +42,12 @@ KCOR_variable: $(VARIABLE_OUTPUT)
 
 $(VARIABLE_OUTPUT): $(INPUT_DATA) KCOR_variable.py | ../data/$(DATASET)
 	@echo "Running KCOR variable-cohort aggregation..."
-	python KCOR_variable.py $(INPUT_DATA) $(VARIABLE_OUTPUT)
+	python3 KCOR_variable.py $(INPUT_DATA) $(VARIABLE_OUTPUT)
 	@echo "KCOR_variable aggregation complete!"
 
 # Ensure output directory exists (real directory target)
 ../data/$(DATASET):
-	@python -c "import os; os.makedirs('$@', exist_ok=True)"
+	@python3 -c "import os; os.makedirs('$@', exist_ok=True)"
 
 # Rule to inflate the raw CSV from the compressed LFS asset
 $(RAW_CSV): $(RAW_CSV_GZ) | ../data/$(DATASET)
@@ -52,13 +58,13 @@ $(RAW_CSV): $(RAW_CSV_GZ) | ../data/$(DATASET)
 # Clean up all output files for current country
 clean:
 	@echo "Cleaning up output files for $(DATASET)..."
-	@python -c "import os; [os.remove(f) for f in ['$(CMR_OUTPUT)', '$(KCOR_OUTPUT)'] if os.path.exists(f)]"
+	@python3 -c "import os; [os.remove(f) for f in ['$(CMR_OUTPUT)', '$(KCOR_OUTPUT)'] if os.path.exists(f)]"
 	@echo "Cleanup complete!"
 
 # Clean up all output files for all countries
 clean-all:
 	@echo "Cleaning up all output files..."
-	@python -c "import shutil, os; shutil.rmtree('../data') if os.path.exists('../data') else None"
+	@python3 -c "import shutil, os; shutil.rmtree('../data') if os.path.exists('../data') else None"
 	@echo "Cleanup complete!"
 
 # Help target
@@ -88,7 +94,7 @@ sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "  SA_COHORTS           = $(SA_COHORTS)"
 	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
 	@echo "Running KCOR sensitivity analysis ..."
-	@python -c "import os; os.makedirs('../test/sensitivity/out', exist_ok=True)"
+	@python3 -c "import os; os.makedirs('../test/sensitivity/out', exist_ok=True)"
 	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
-		python KCOR.py $(CMR_OUTPUT) ../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
+		python3 KCOR.py $(CMR_OUTPUT) ../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
 	@echo "Sensitivity run complete! Output: test/sensitivity/out/KCOR_SA.xlsx"
