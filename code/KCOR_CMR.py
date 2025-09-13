@@ -447,7 +447,7 @@ for enroll_date_str in enrollment_dates:
             .reset_index(name='dead_post')
     )
     print(f"    Total deaths across all dose groups: {int(deaths_post['dead_post'].sum())}")
-    print(f"    Unique weeks with deaths: {len(deaths['WeekOfDeath'].unique())}")
+    print(f"    Unique weeks with deaths: {len(a_copy.loc[mask_deaths, 'WeekOfDeath'].dropna().unique())}")
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
     # Use all vaccination and death dates to get the full week range
     print(f"  Computing week range for entire study period (including pre-enrollment)...")
@@ -506,18 +506,13 @@ for enroll_date_str in enrollment_dates:
     out['Dose'] = out['Dose'].astype('int8')
     out['DCCI'] = out['DCCI'].astype('Int8')
     
-    # Add a readable date column (Monday of the ISO week) right after ISOweekDied
-    out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u').strftime('%Y-%m-%d'))
-    
-    # Reorder columns to put DateDied right after ISOweekDied
-    cols = ['ISOweekDied', 'DateDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'Alive', 'Dead']
-    out = out[cols]
+    # Add DateDied as Timestamp (we'll convert to string just before writing)
+    out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u'))
 
     # Overwrite population columns to reflect attrition from deaths (vectorized)
     print(f"  Computing population attrition from deaths (vectorized)...")
     out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'ISOweekDied'])
-    # Compute Monday date for comparison
-    out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u'))
+    # DateDied already computed above as Timestamp
     post_mask = out['DateDied'] >= enrollment_date
 
     # -------- Pre-enrollment Alive (variable cohorts at start of week) --------
