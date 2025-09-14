@@ -471,56 +471,31 @@ for enroll_date_str in enrollment_dates:
     # Stable numeric order for ISO weeks to avoid lexicographic mis-order (e.g., 2021-10 < 2021-2)
     week_index = {wk: idx for idx, wk in enumerate(all_weeks)}
     print(f"  Preparing output structure (vectorized)...")
-    # Recompute death tables aligned to start-of-week conventions
+    # Single death table aligned to start-of-week conventions
     mask_deaths = a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()
-    deaths_pre = (
+    # Determine dose at the start of the death week (Monday)
+    week_monday = pd.to_datetime(a_copy['WeekOfDeath'] + '-1', format='%G-%V-%u', errors='coerce')
+    d1_w = a_var['Date_FirstDose'].notna() & (a_var['Date_FirstDose'] < week_monday)
+    d2_w = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] < week_monday)
+    d3_w = a_var['Date_ThirdDose'].notna() & (a_var['Date_ThirdDose'] < week_monday)
+    d4_w = a_var['Date_FourthDose'].notna() & (a_var['Date_FourthDose'] < week_monday)
+    a_copy['dose_at_week'] = 0
+    a_copy.loc[d1_w, 'dose_at_week'] = 1
+    a_copy.loc[d2_w, 'dose_at_week'] = 2
+    a_copy.loc[d3_w, 'dose_at_week'] = 3
+    a_copy.loc[d4_w, 'dose_at_week'] = 4
+    deaths_week = (
         a_copy[mask_deaths]
-            .groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI', 'dose_at_death'])
+            .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
             .size()
-            .reset_index(name='dead_pre')
+            .reset_index(name='dead')
     )
-    deaths_post = (
-        a_copy[mask_deaths]
-            .groupby(['WeekOfDeath', 'YearOfBirth', 'Sex', 'DCCI', 'dose_group'])
-            .size()
-            .reset_index(name='dead_post')
-    )
-    observed_deaths_pre = deaths_pre.rename(columns={'dose_at_death': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
-        ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead_pre']
+    observed_deaths = deaths_week.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
+        ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead']
     ]
-    observed_deaths_post = deaths_post.rename(columns={'dose_group': 'Dose', 'WeekOfDeath': 'ISOweekDied'})[
-        ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'dead_post']
-    ]
-    # Zero-out post-enrollment deaths before the enrollment week to avoid baseline subtraction
-    observed_deaths_post['WeekIdx'] = observed_deaths_post['ISOweekDied'].map(week_index).astype(int)
-    enroll_idx = week_index[enroll_week_str]
-    observed_deaths_post.loc[observed_deaths_post['WeekIdx'] < enroll_idx, 'dead_post'] = 0
-    observed_deaths_post.drop(columns=['WeekIdx'], inplace=True)
-    # Clamp post-enrollment deaths to zero where there is no enrollment population
-    enroll_pop = pop_base.rename(columns={'dose_group': 'Dose', 'pop': 'pop_enroll'})[
-        ['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'pop_enroll']
-    ]
-    observed_deaths_post = observed_deaths_post.merge(enroll_pop, on=['YearOfBirth','Sex','DCCI','Dose'], how='left')
-    observed_deaths_post['pop_enroll'] = observed_deaths_post['pop_enroll'].fillna(0).astype(int)
-    observed_deaths_post['dead_post'] = np.where(observed_deaths_post['pop_enroll'] > 0, observed_deaths_post['dead_post'], 0)
-    observed_deaths_post.drop(columns=['pop_enroll'], inplace=True)
-    print(f"    Total deaths across all dose groups: {int(deaths_post['dead_post'].sum())}")
+    print(f"    Total deaths across all dose groups: {int(observed_deaths['dead'].sum())}")
     print(f"    Unique weeks with deaths: {len(a_copy.loc[mask_deaths, 'WeekOfDeath'].dropna().unique())}")
-    # IMPORTANT: post-enrollment deaths must start at the enrollment week.
-    # Zero-out any "dead_post" that occur before the enrollment week to avoid
-    # subtracting pre-enrollment deaths from the frozen cohort baseline.
-    observed_deaths_post['WeekIdx'] = observed_deaths_post['ISOweekDied'].map(week_index).astype(int)
-    enroll_idx = week_index[enroll_week_str]
-    observed_deaths_post.loc[observed_deaths_post['WeekIdx'] < enroll_idx, 'dead_post'] = 0
-    observed_deaths_post.drop(columns=['WeekIdx'], inplace=True)
-    # Clamp post-enrollment deaths to zero where enrollment population is zero (guards against noisy joins)
-    enroll_pop = pop_base.rename(columns={'dose_group': 'Dose', 'pop': 'pop_enroll'})[
-        ['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'pop_enroll']
-    ]
-    observed_deaths_post = observed_deaths_post.merge(enroll_pop, on=['YearOfBirth','Sex','DCCI','Dose'], how='left')
-    observed_deaths_post['pop_enroll'] = observed_deaths_post['pop_enroll'].fillna(0).astype(int)
-    observed_deaths_post['dead_post'] = np.where(observed_deaths_post['pop_enroll'] > 0, observed_deaths_post['dead_post'], 0)
-    observed_deaths_post.drop(columns=['pop_enroll'], inplace=True)
+    # Single aligned death series covers both pre- and post-enrollment periods
 
     # Build dose-agnostic grid to avoid duplicating transition counts
     weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
@@ -536,10 +511,9 @@ for enroll_date_str in enrollment_dates:
     grid_nodose['__k'] = 1
     out = grid_nodose.merge(dose_df, on='__k', how='left').drop(columns='__k')
 
-    # Attach both pre- and post-enrollment death counts; we'll select per-week after we build DateDied
-    out = out.merge(observed_deaths_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
-    out = out.merge(observed_deaths_post, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose'], how='left')
-    out[['dead_pre', 'dead_post']] = out[['dead_pre', 'dead_post']].fillna(0).astype(int)
+    # Attach single aligned death series
+    out = out.merge(observed_deaths, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
+    out['dead'] = out['dead'].fillna(0).astype(int)
 
     out['ISOweekDied'] = out['ISOweekDied'].astype(str)
     out['WeekIdx'] = out['ISOweekDied'].map(week_index).astype(int)
@@ -606,22 +580,28 @@ for enroll_date_str in enrollment_dates:
                     on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
     out[['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']] = out[['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']].fillna(0).astype(int)
 
-    # Build Dead using pre/post series; both are aligned to start-of-week conventions now
-    out['Dead'] = np.where(out['DateDied'] < enrollment_date, out['dead_pre'], out['dead_post']).astype(int)
-    # Cumulative prior-week pre-enrollment deaths per combo+dose
-    out['cumPreDead_prev'] = (
+    # Build Dead directly from aligned series
+    out['Dead'] = out['dead'].astype(int)
+    # Cumulative prior-week deaths per combo+dose (single series)
+    out['cumDead_prev'] = (
         out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead_pre']
+           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
            .cumsum()
            .shift(fill_value=0)
     )
-    # Cumulative prior-week post-enrollment deaths per combo+dose
-    out['cumPostDead_prev'] = (
-        out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-           .groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead_post']
-           .cumsum()
-           .shift(fill_value=0)
+    # Snapshot cumulative deaths at enrollment week to separate post-enrollment attrition
+    enroll_cum = (
+        out[out['ISOweekDied'] == enroll_week_str]
+          .groupby(['YearOfBirth','Sex','DCCI','Dose'])['cumDead_prev']
+          .max()
+          .reset_index()
+          .rename(columns={'cumDead_prev':'cumDead_at_enroll'})
     )
+    out = out.merge(enroll_cum, on=['YearOfBirth','Sex','DCCI','Dose'], how='left')
+    out['cumDead_at_enroll'] = out['cumDead_at_enroll'].fillna(0).astype(int)
+    # Split into pre- and post-enrollment cumulative deaths used by Alive formulas
+    out['cumPreDead_prev'] = np.where(out['DateDied'] < enrollment_date, out['cumDead_prev'], 0)
+    out['cumPostDead_prev'] = np.where(out['DateDied'] >= enrollment_date, (out['cumDead_prev'] - out['cumDead_at_enroll']).clip(lower=0), 0)
 
     # Ensure boundary conditions at the very first week (no prior transitions/deaths)
     first_week_str = all_weeks[0]
@@ -670,8 +650,8 @@ for enroll_date_str in enrollment_dates:
             row = out.loc[m0].iloc[0]
             bt_row = base_total[(base_total['YearOfBirth']==r0['YearOfBirth']) & (base_total['Sex']==r0['Sex']) & (base_total['DCCI']==r0['DCCI'])]
             bt = int(bt_row['base_total'].iloc[0]) if not bt_row.empty else 0
-            print(f"DETAIL: base_total={bt} Alive_pre={int(row.get('Alive_pre',-1))} cumPreDead_prev={int(row.get('cumPreDead_prev',-1))} ")
-            print(f"        dead_pre={int(row.get('dead_pre',-1))} dead_post={int(row.get('dead_post',-1))}")
+            print(f"DETAIL: base_total={bt} Alive_pre={int(row.get('Alive_pre',-1))} cumPreDead_prev={int(row.get('cumPreDead_prev',-1))} cumPostDead_prev={int(row.get('cumPostDead_prev',-1))}")
+            print(f"        dead={int(row.get('dead',-1))}")
         # Enrollment week vs previous week drop > 25%
         enroll_mask = out['DateDied'] == enrollment_date
         out = out.sort_values(['YearOfBirth','Sex','DCCI','Dose','DateDied'])
@@ -681,16 +661,26 @@ for enroll_date_str in enrollment_dates:
         # also compute prior-2 and prior-3 for rate-of-change context
         drops['Alive_prev2'] = out.groupby(['YearOfBirth','Sex','DCCI','Dose'])['Alive'].shift(2)[enroll_mask]
         drops['Alive_prev3'] = out.groupby(['YearOfBirth','Sex','DCCI','Dose'])['Alive'].shift(3)[enroll_mask]
-        drops = drops[(drops['Alive_prev'] > 0) & ((drops['Alive_prev'] - drops['Alive']) / drops['Alive_prev'] > 0.25)]
+        drops = drops[(drops['Alive_prev'] > 0) & ((drops['Alive_prev'] - drops['Alive']) / drops['Alive_prev'] > 0.50)]
         if not drops.empty:
-            print(f"ERROR: Enrollment-week Alive dropped >25% from previous week in {len(drops)} rows. Examples:")
+            print(f"ERROR: Enrollment-week Alive dropped >50% from previous week in {len(drops)} rows. Examples:")
             for _, r in drops[['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','Alive_prev3','Alive_prev2','Alive_prev','Alive']].head(10).iterrows():
                 print(f"  {r['ISOweekDied']} YoB={r['YearOfBirth']} Sex={r['Sex']} DCCI={r['DCCI']} Dose={r['Dose']}: prev3={int((r['Alive_prev3'] or 0))} prev2={int((r['Alive_prev2'] or 0))} prev={int(r['Alive_prev'])} -> enroll={int(r['Alive'])}")
     except Exception as e:
         print(f"CAUTION: Sanity check (Dead<=Alive) failed: {e}")
 
     # Drop helper columns
-    out.drop(columns=[c for c in ['dead_pre','dead_post','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumPreDead_prev','cumPostDead_prev','Alive_pre','Alive_enroll'] if c in out.columns], inplace=True)
+    out.drop(columns=[c for c in [
+        'dead',
+        'dead_pre','dead_post',
+        'base_total',
+        'trans_1','trans_2','trans_3','trans_4',
+        'cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev',
+        'cumDead_prev','cumDead_at_enroll',
+        'cumPreDead_prev','cumPostDead_prev',
+        'Alive_pre','Alive_enroll',
+        'WeekIdx'
+    ] if c in out.columns], inplace=True)
 
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')

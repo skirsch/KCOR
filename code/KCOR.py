@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 """
-KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.3
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.4
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
 hazards between different dose groups, normalized to 1 at a baseline period.
@@ -117,7 +117,7 @@ def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.3"                # KCOR version number
+VERSION = "v4.4"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -133,6 +133,9 @@ VERSION = "v4.3"                # KCOR version number
 # v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
 #        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KCOR_MIN parameters
 #        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
+# v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
+#        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
+#        - Added slope lookup entry for 2022_47 consistent with MAX_DATE_FOR_SLOPE
 
 # Core KCOR methodology parameters
 ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
@@ -150,9 +153,20 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ra
 SLOPE_LOOKUP_TABLE = {
     '2021_13': (64, 61),  # (start_offset, length) where offset2 = start + length
     '2021_24': (53, 61),  # (start_offset, length) weeks from enrollment for slope calculation
-    '2022_06': (19, 92)   # These dates chosen during "quiet periods" with minimal differential events
+    '2022_06': (19, 92),  # These dates chosen during "quiet periods" with minimal differential events
+    '2022_47': (28, 43)    # Late-2022 cohort anchors within allowed window to 2024-04-01
 }
 SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points total) for geometric mean
+
+# Reporting date lookup for KCOR summary/console per cohort (sheet name)
+# For the first three cohorts, use end of 2022; for 2022_47, use one year later (end of 2023)
+KCOR_REPORTING_DATE = {
+    '2021-13': '2022-12-31',
+    '2021_13': '2022-12-31',
+    '2021_24': '2022-12-31',
+    '2022_06': '2022-12-31',
+    '2022_47': '2023-12-31',
+}
 
 # DATA SMOOTHING:
 # Apply moving average before slope calculation to reduce noise and improve stability
@@ -161,7 +175,7 @@ CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each poin
 
 # Processing parameters
 YEAR_RANGE = (1920, 2000)       # Process age groups from start to end year (inclusive)
-ENROLLMENT_DATES = ['2021_24', '2022_06']  # List of enrollment dates (sheet names) to process (set to None to process all)
+ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrollment dates (sheet names) to process (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # ----------------------------------------------------------
@@ -308,7 +322,7 @@ def get_dose_pairs(sheet_name):
     if OVERRIDE_DOSE_PAIRS is not None:
         return OVERRIDE_DOSE_PAIRS
 
-    if sheet_name == "2021-13":
+    if sheet_name in ("2021-13", "2021_13"):
         # Early 2021 sheet: max dose is 2, only doses 0, 1, 2
         return [(1,0), (2,0), (2,1)]
     elif sheet_name == "2021_24":
@@ -317,6 +331,9 @@ def get_dose_pairs(sheet_name):
     elif sheet_name == "2022_06":
         # 2022 sheet: includes dose 3 comparisons
         return [(1,0), (2,0), (2,1), (3,2), (3,0)]
+    elif sheet_name == "2022_47":
+        # Late 2022 sheet: focus on 4th dose comparisons per v4.4 requirements
+        return [(4,3), (4,2), (4,1), (4,0)]
     else:
         # Default: max dose is 2
         return [(1,0), (2,0), (2,1)]
@@ -1202,67 +1219,73 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
 
 
-    # Report KCOR values at end of 2022 for each dose combo and age for ALL sheets
+    # Report KCOR values at reporting dates for each dose combo and age for ALL sheets
     dual_print("\n" + "="*80)
-    dual_print("KCOR VALUES AT END OF 2022 - ALL SHEETS")
+    dual_print("KCOR VALUES AT REPORTING DATES - ALL SHEETS")
     dual_print("="*80)
     
-    # Filter for end of 2022 (last date in 2022) for ALL sheets
-    combined["Date"] = pd.to_datetime(combined["Date"])
-    combined_2022 = combined[combined["Date"].dt.year == 2022]
+    # Ensure Date is datetime
+    combined["Date"] = pd.to_datetime(combined["Date"]) 
     
-    if not combined_2022.empty:
-        # Get the last date in 2022
-        last_date_2022 = combined_2022["Date"].max()
-        print(f"Last date in 2022: {last_date_2022.strftime('%Y-%m-%d')}")
-        print(f"Sheet: 2021_24")
+    # Iterate through each sheet and report at its configured reporting date
+    for sheet_name in sorted(combined["EnrollmentDate"].unique()):
+        target_str = KCOR_REPORTING_DATE.get(sheet_name)
+        if target_str:
+            try:
+                target_dt = pd.to_datetime(target_str)
+            except Exception:
+                target_dt = None
+        else:
+            target_dt = None
+        sheet_data_all = combined[combined["EnrollmentDate"] == sheet_name]
+        if sheet_data_all.empty:
+            continue
+        # Choose the closest available date to the configured reporting date; fallback to latest
+        if target_dt is not None and not sheet_data_all.empty:
+            diffs = (sheet_data_all["Date"] - target_dt).abs()
+            idxmin = diffs.idxmin()
+            report_date = sheet_data_all.loc[idxmin, "Date"]
+        else:
+            report_date = sheet_data_all["Date"].max()
+        dual_print(f"\nSheet: {sheet_name} — Reporting date: {report_date.strftime('%Y-%m-%d')}")
+        dual_print("=" * 60)
+        end_data = sheet_data_all[sheet_data_all["Date"] == report_date]
         
-        # Filter for that specific date
-        end_2022_data = combined_2022[combined_2022["Date"] == last_date_2022]
+        # Get dose pairs for this specific sheet
+        dose_pairs = get_dose_pairs(sheet_name)
         
-        # Group by sheets and dose combinations
-        for sheet_name in sorted(end_2022_data["EnrollmentDate"].unique()):
-            print(f"\nSheet: {sheet_name}")
-            print("=" * 60)
+        for (dose_num, dose_den) in dose_pairs:
+            dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
+            dual_print("-" * 50)
+            dual_print(f"{'YoB':>15} | KCOR [95% CI]")
+            dual_print("-" * 50)
             
-            # Get dose pairs for this specific sheet
-            dose_pairs = get_dose_pairs(sheet_name)
+            # Get data for this dose combination and sheet at reporting date
+            dose_data = end_data[
+                (end_data["Dose_num"] == dose_num) & 
+                (end_data["Dose_den"] == dose_den)
+            ]
             
-            for (dose_num, dose_den) in dose_pairs:
-                dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
-                dual_print("-" * 50)
-                dual_print(f"{'YoB':>15} | KCOR [95% CI]")
-                dual_print("-" * 50)
-                
-                # Get data for this dose combination and sheet
-                dose_data = end_2022_data[
-                    (end_2022_data["EnrollmentDate"] == sheet_name) &
-                    (end_2022_data["Dose_num"] == dose_num) & 
-                    (end_2022_data["Dose_den"] == dose_den)
-                ]
-                
-                if dose_data.empty:
-                    dual_print("  No data available for this dose combination")
-                    continue
-                
-                # Show results by age (including ASMR = 0)
-                for age in sorted(dose_data["YearOfBirth"].unique()):
-                    age_data = dose_data[dose_data["YearOfBirth"] == age]
-                    if not age_data.empty:
-                        kcor_val = age_data["KCOR"].iloc[0]
-                        ci_lower = age_data["CI_lower"].iloc[0]
-                        ci_upper = age_data["CI_upper"].iloc[0]
-                        
-                        if age == 0:
-                            age_label = "ASMR (pooled)"
-                        elif age == -1:
-                            age_label = "(unknown)"
-                        else:
-                            age_label = f"{age}"
-                        
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
-    else:
-        dual_print("No data available for 2022 in any sheet")
+            if dose_data.empty:
+                dual_print("  No data available for this dose combination")
+                continue
+            
+            # Show results by age (including ASMR = 0)
+            for age in sorted(dose_data["YearOfBirth"].unique()):
+                age_data = dose_data[dose_data["YearOfBirth"] == age]
+                if not age_data.empty:
+                    kcor_val = age_data["KCOR"].iloc[0]
+                    ci_lower = age_data["CI_lower"].iloc[0]
+                    ci_upper = age_data["CI_upper"].iloc[0]
+                    
+                    if age == 0:
+                        age_label = "ASMR (pooled)"
+                    elif age == -1:
+                        age_label = "(unknown)"
+                    else:
+                        age_label = f"{age}"
+                    
+                    dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
     
     dual_print("="*80)
 
@@ -1511,21 +1534,34 @@ def create_summary_file(combined_data, out_path, dual_print):
                 for sheet_name in sorted(sheets):
                     sheet_data = combined_data[combined_data["EnrollmentDate"] == sheet_name].copy()
                     
-                    # Use same logic as console output: filter for end of 2022
+                    # Use reporting date per cohort (sheet) similar to console output
                     sheet_data["Date"] = pd.to_datetime(sheet_data["Date"])
-                    sheet_2022 = sheet_data[sheet_data["Date"].dt.year == 2022]
-                    
-                    if sheet_2022.empty:
-                        # If no 2022 data, use latest data for each dose combination and age group
-                        latest_data = sheet_data.groupby(["YearOfBirth", "Dose_num", "Dose_den"]).last().reset_index()
+                    target_str = KCOR_REPORTING_DATE.get(sheet_name)
+                    if target_str:
+                        try:
+                            target_dt = pd.to_datetime(target_str)
+                        except Exception:
+                            target_dt = None
                     else:
-                        # Get the last date in 2022 for this sheet
-                        last_date_2022 = sheet_2022["Date"].max()
-                        # Filter for that specific date
-                        latest_data = sheet_2022[sheet_2022["Date"] == last_date_2022]
+                        target_dt = None
+                    if target_dt is not None and not sheet_data.empty:
+                        diffs = (sheet_data["Date"] - target_dt).abs()
+                        idxmin = diffs.idxmin()
+                        report_date = sheet_data.loc[idxmin, "Date"]
+                    else:
+                        report_date = sheet_data["Date"].max()
+                    latest_data = sheet_data[sheet_data["Date"] == report_date]
                     
                     # Create summary format similar to console output
                     summary_rows = []
+                    # Insert a header noting reporting date for this sheet
+                    summary_rows.append({
+                        "Dose_Combination": f"Reporting date: {report_date.strftime('%Y-%m-%d')}",
+                        "YearOfBirth": "",
+                        "KCOR": "",
+                        "CI_Lower": "",
+                        "CI_Upper": ""
+                    })
                     
                     # Get unique dose pairs for this sheet
                     dose_pairs = latest_data[["Dose_num", "Dose_den"]].drop_duplicates().sort_values(["Dose_num", "Dose_den"])

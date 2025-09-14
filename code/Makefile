@@ -30,6 +30,9 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@rm -f $(TMP_CMR)
 	python3 KCOR_CMR.py $(INPUT_DATA) $(TMP_CMR)
 	@echo "Wrote temporary: $(TMP_CMR)"
+	@ls -lh $(TMP_CMR)
+	@# Guard: do not move a zero-byte temp file
+	@test -s $(TMP_CMR) || (echo "ERROR: Temp CMR file is zero bytes. Skipping move and failing target." && exit 1)
 	@echo "Moving $(TMP_CMR) -> $(CMR_OUTPUT)"
 	@mv -f $(TMP_CMR) $(CMR_OUTPUT)
 	@ls -lh $(CMR_OUTPUT)

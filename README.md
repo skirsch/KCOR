@@ -1,4 +1,4 @@
-# KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v4.4 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -351,7 +351,7 @@ Result: KCOR can objectively answer questions like "Did COVID vaccines kill more
 KCOR/
 ├── README.md                           # This file
 ├── code/
-│   ├── KCOR.py                      # Main analysis script (v4.3)
+│   ├── KCOR.py                      # Main analysis script (v4.4)
 │   ├── KCOR_CMR.py                    # Data aggregation script
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── debug/                          # Helper scripts for development/verification
@@ -564,7 +564,7 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation
 
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process
-ENROLLMENT_DATES = ["2021_24", "2022_06"]  # Enrollment dates (sheet names) to process
+ENROLLMENT_DATES = ["2021_13", "2021_24", "2022_06", "2022_47"]  # Enrollment dates (sheet names) to process
 ```
 
 ### Sheet-Specific Configuration
@@ -574,6 +574,7 @@ The script automatically determines dose pairs based on sheet names:
 - **2021-13**: Doses 0, 1, 2 → Comparisons: (1,0), (2,0), (2,1)
 - **2021_24**: Doses 0, 1, 2 → Comparisons: (1,0), (2,0), (2,1)
 - **2022_06**: Doses 0, 1, 2, 3 → Comparisons: (1,0), (2,0), (2,1), (3,2), (3,0)
+ - **2022_47**: Doses 0, 1, 2, 3, 4+ → Comparisons: (4,3), (4,2), (4,1), (4,0)
 
 ## 📊 Interpretation
 
