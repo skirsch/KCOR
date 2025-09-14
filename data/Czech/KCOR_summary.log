@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-13 19:43:03
+Analysis Date: 2025-09-13 21:06:56
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -11,7 +11,7 @@ Log File: ../data/Czech/KCOR_summary.log
 [DEBUG] Limiting to age range: 1920-2000
 [DEBUG] Limiting to enrollment dates: ['2021_24', '2022_06']
 [Info] Processing sheet: 2021_24
-[DEBUG] Filtered to start from enrollment date 06/14/2021: 174870 rows
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 118320 rows
 [DEBUG] Filtered to 118320 rows for ages 1920-2000
 [DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 70992 rows
 [DEBUG] Aggregated across sexes: 8874 rows
@@ -70,7 +70,7 @@ Log File: ../data/Czech/KCOR_summary.log
   YoB 2000, Dose 2: slope = 0.000000
 
 [Info] Processing sheet: 2022_06
-[DEBUG] Filtered to start from enrollment date 02/07/2022: 140700 rows
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 95200 rows
 [DEBUG] Filtered to 95200 rows for ages 1920-2000
 [DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 76160 rows
 [DEBUG] Aggregated across sexes: 9520 rows

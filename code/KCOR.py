@@ -635,7 +635,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
     weights = {}
     df_sorted = df.sort_values("DateDied")
     
-    # Define quiet baseline window W (first 4 distinct weeks, same as before)
+    # Define quiet baseline window W using the agreed range: first 4 distinct weeks from the sheet start
     quiet_window_dates = df_sorted.drop_duplicates(subset=["DateDied"]).head(4)["DateDied"].tolist()
     quiet_data = df_sorted[df_sorted["DateDied"].isin(quiet_window_dates)]
     
@@ -718,9 +718,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     continue
                 kstar = k / k0
                 
-                # Apply scale factor if available for this age group and dose combination
-                scale_factor = scale_factors.get((yob, num, den), 1.0)
-                kstar = kstar * scale_factor
+                # ASMR pooled values should not be scaled; use raw kstar
                 
                 logs.append(safe_log(kstar))
                 wts.append(weights.get(yob, 0.0))
