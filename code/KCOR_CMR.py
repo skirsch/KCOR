@@ -347,10 +347,6 @@ print(f"Converting birth years to integers (one time only)...")
 a['YearOfBirth'] = a['birth_year'].apply(lambda x: int(x) if pd.notnull(x) else -1)
 print(f"Birth year conversion complete.")
 
-# Collapse birth years to buckets: <=1920 → 1920, >=2000 → 2000, keep -1 as unknown
-known_birth_mask = a['YearOfBirth'] != -1
-a.loc[known_birth_mask, 'YearOfBirth'] = a.loc[known_birth_mask, 'YearOfBirth'].clip(lower=1920, upper=2000)
-
 # --------- NEW: Dose group analysis for multiple enrollment dates ---------
 
 ### YOU CAN RESTART HERE if code bombs out. This saves time.
@@ -388,11 +384,16 @@ for enroll_date_str in enrollment_dates:
         enrollment_date
     )
     
-    # Create boolean masks for each dose being valid (not null and <= reference_date)
-    dose1_valid = a_copy['Date_FirstDose'].notna() & (a_copy['Date_FirstDose'] <= reference_dates)
-    dose2_valid = a_copy['Date_SecondDose'].notna() & (a_copy['Date_SecondDose'] <= reference_dates)
-    dose3_valid = a_copy['Date_ThirdDose'].notna() & (a_copy['Date_ThirdDose'] <= reference_dates)
-    dose4_valid = a_copy['Date_FourthDose'].notna() & (a_copy['Date_FourthDose'] <= reference_dates)
+    # Freeze cohort moves after enrollment by zeroing post-enrollment dose dates
+    a_var = a_copy.copy()
+    for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
+        a_var.loc[a_var[_col] > enrollment_date, _col] = pd.NaT
+
+    # Create boolean masks for each dose being valid (not null and <= reference_date) on the truncated dates
+    dose1_valid = a_var['Date_FirstDose'].notna() & (a_var['Date_FirstDose'] <= reference_dates)
+    dose2_valid = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] <= reference_dates)
+    dose3_valid = a_var['Date_ThirdDose'].notna() & (a_var['Date_ThirdDose'] <= reference_dates)
+    dose4_valid = a_var['Date_FourthDose'].notna() & (a_var['Date_FourthDose'] <= reference_dates)
     
     # Start with dose group 0 for everyone
     a_copy['dose_group'] = 0
@@ -421,11 +422,11 @@ for enroll_date_str in enrollment_dates:
     #  - Post-enrollment weeks: deaths grouped by frozen enrollment dose (fixed cohorts)
     print(f"  Computing deaths per week (variable pre-enrollment, fixed post-enrollment)...")
     # Dose at death (highest dose date <= DateOfDeath)
-    death_ref = a_copy['DateOfDeath']
-    d1_at = a_copy['Date_FirstDose'].notna() & (a_copy['Date_FirstDose'] <= death_ref)
-    d2_at = a_copy['Date_SecondDose'].notna() & (a_copy['Date_SecondDose'] <= death_ref)
-    d3_at = a_copy['Date_ThirdDose'].notna() & (a_copy['Date_ThirdDose'] <= death_ref)
-    d4_at = a_copy['Date_FourthDose'].notna() & (a_copy['Date_FourthDose'] <= death_ref)
+    death_ref = a_var['DateOfDeath']
+    d1_at = a_var['Date_FirstDose'].notna() & (a_var['Date_FirstDose'] <= death_ref)
+    d2_at = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] <= death_ref)
+    d3_at = a_var['Date_ThirdDose'].notna() & (a_var['Date_ThirdDose'] <= death_ref)
+    d4_at = a_var['Date_FourthDose'].notna() & (a_var['Date_FourthDose'] <= death_ref)
     a_copy['dose_at_death'] = 0
     a_copy.loc[d1_at, 'dose_at_death'] = 1
     a_copy.loc[d2_at, 'dose_at_death'] = 2
@@ -530,8 +531,8 @@ for enroll_date_str in enrollment_dates:
     ]
     trans_frames = []
     for label, col in dose_week_cols:
-        wk = a_copy[col].dt.strftime('%G-%V')
-        t = a_copy.loc[wk.notna(), ['YearOfBirth', 'Sex', 'DCCI']].copy()
+        wk = a_var[col].dt.strftime('%G-%V')
+        t = a_var.loc[wk.notna(), ['YearOfBirth', 'Sex', 'DCCI']].copy()
         t['ISOweekDied'] = wk[wk.notna()].values
         t[label] = 1
         t = t.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[label].sum().reset_index()
@@ -605,11 +606,30 @@ for enroll_date_str in enrollment_dates:
     # Select Alive by week
     out['Alive'] = np.where(out['DateDied'] < enrollment_date, out['Alive_pre'], alive_post).astype(int)
 
-    # Attrition only on post-enrollment rows (fixed cohorts)
-    out.loc[post_mask, 'cum_dead_prev'] = out.loc[post_mask].groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'], observed=True)['Dead'].cumsum().shift(fill_value=0)
-    out.loc[post_mask, 'Alive'] = (out.loc[post_mask, 'Alive'] - out.loc[post_mask, 'cum_dead_prev']).clip(lower=0)
+    # Sanity checks
+    try:
+        bad = out[out['Dead'] > out['Alive']]
+        if not bad.empty:
+            sample = bad[['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','Alive','Dead']].head(10)
+            print(f"ERROR: Dead > Alive in {len(bad)} rows. First 10:")
+            for _, r in sample.iterrows():
+                print(f"  {r['ISOweekDied']} YoB={r['YearOfBirth']} Sex={r['Sex']} DCCI={r['DCCI']} Dose={r['Dose']}: Alive={r['Alive']} Dead={r['Dead']}")
+        # Enrollment week vs previous week drop > 25%
+        enroll_mask = out['DateDied'] == enrollment_date
+        out = out.sort_values(['YearOfBirth','Sex','DCCI','Dose','DateDied'])
+        prev_alive = out.groupby(['YearOfBirth','Sex','DCCI','Dose'])['Alive'].shift(1)
+        drops = out[enroll_mask].copy()
+        drops['Alive_prev'] = prev_alive[enroll_mask]
+        drops = drops[(drops['Alive_prev'] > 0) & ((drops['Alive_prev'] - drops['Alive']) / drops['Alive_prev'] > 0.25)]
+        if not drops.empty:
+            print(f"ERROR: Enrollment-week Alive dropped >25% from previous week in {len(drops)} rows. Examples:")
+            for _, r in drops[['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','Alive_prev','Alive']].head(10).iterrows():
+                print(f"  {r['ISOweekDied']} YoB={r['YearOfBirth']} Sex={r['Sex']} DCCI={r['DCCI']} Dose={r['Dose']}: prev={int(r['Alive_prev'])} -> enroll={int(r['Alive'])}")
+    except Exception as e:
+        print(f"CAUTION: Sanity check (Dead<=Alive) failed: {e}")
+
     # Drop helper columns
-    out.drop(columns=[c for c in ['dead_pre','dead_post','cum_dead_prev','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumPreDead_prev','cumPostDead_prev','Alive_pre','Alive_enroll'] if c in out.columns], inplace=True)
+    out.drop(columns=[c for c in ['dead_pre','dead_post','base_total','trans_1','trans_2','trans_3','trans_4','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev','cumPreDead_prev','cumPostDead_prev','Alive_pre','Alive_enroll'] if c in out.columns], inplace=True)
 
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')

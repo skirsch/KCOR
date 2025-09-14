@@ -729,9 +729,22 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 if Dv > EPS and Du > EPS:
                     var_terms.append((weights.get(yob,0.0)**2) * (1.0/Dv + 1.0/Du))
 
+            # Pool only over valid, finite entries; ignore NaNs/inf entirely
             if logs and sum(wts) > 0:
-                logK = np.average(logs, weights=wts)
-                Kpool = float(safe_exp(logK))
+                logs_arr = np.array(logs, dtype=float)
+                wts_arr = np.array(wts, dtype=float)
+                valid_mask = np.isfinite(logs_arr) & (wts_arr > 0)
+                if np.any(valid_mask):
+                    logs_arr = logs_arr[valid_mask]
+                    wts_arr = wts_arr[valid_mask]
+                    # Re-normalize weights among valid ages to avoid implicit down-weighting
+                    w_sum = wts_arr.sum()
+                    if w_sum <= 0:
+                        continue
+                    logK = np.average(logs_arr, weights=wts_arr)
+                    Kpool = float(safe_exp(logK))
+                else:
+                    continue
                 
                 # Correct pooled KCOR 95% CI calculation based on baseline uncertainty
                 # For pooled results, we need to account for baseline uncertainty across all age groups
@@ -744,7 +757,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     if len(gvn) > ANCHOR_WEEKS and len(gdn) > ANCHOR_WEEKS:
                         baseline_num = gvn["cumD_adj"].iloc[ANCHOR_WEEKS]
                         baseline_den = gdn["cumD_adj"].iloc[ANCHOR_WEEKS]
-                        if baseline_num > EPS and baseline_den > EPS:
+                        if np.isfinite(baseline_num) and np.isfinite(baseline_den) and baseline_num > EPS and baseline_den > EPS:
                             # Add baseline uncertainty for this age group (weighted)
                             weight = weights.get(yob, 0.0)
                             baseline_uncertainty += (weight**2) * (1.0/baseline_num + 1.0/baseline_den)
