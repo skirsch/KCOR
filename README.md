@@ -26,6 +26,7 @@
   - [🆕 Version 4.1 Enhancements](#-version-41-enhancements)
 - [📊 Results Using Czech Data](#-results-using-czech-data)
 - [🔬 Validation](#-validation)
+  - [Independent Validation Methods](#independent-validation-methods)
   - [Negative-Control Tests](#negative-control-tests)
   - [Sensitivity Analysis](#sensitivity-analysis)
 - [Peer review](#peer-review)
