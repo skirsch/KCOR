@@ -441,6 +441,85 @@ def compute_group_slopes_lookup(df, sheet_name, logger=None):
     
     return slopes
 
+def compute_death_slopes_lookup(df, sheet_name, logger=None):
+    """Slope per (YearOfBirth,Dose) using deaths/week (not MR).
+    
+    Uses the same lookup-table anchor windows as MR-based slopes, but
+    computes geometric means over weekly death counts within each window.
+    """
+    slopes = {}
+    
+    # Get lookup table values for this sheet
+    if sheet_name not in SLOPE_LOOKUP_TABLE:
+        print(f"[WARNING] No lookup table entry for sheet {sheet_name}, using default death-slope 0.0")
+        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+            slopes[(yob,dose)] = 0.0
+        return slopes
+    
+    start_offset, length = SLOPE_LOOKUP_TABLE[sheet_name]
+    offset1 = start_offset
+    offset2 = start_offset + length
+    T = length
+    
+    # Validate that lookup table dates don't extend beyond MAX_DATE_FOR_SLOPE
+    from datetime import datetime, timedelta
+    max_date = datetime.strptime(MAX_DATE_FOR_SLOPE, "%Y-%m-%d")
+    
+    if "_" in sheet_name:
+        year_str, week_str = sheet_name.split("_")
+        enrollment_year = int(year_str)
+        enrollment_week = int(week_str)
+        jan1 = datetime(enrollment_year, 1, 1)
+        days_to_monday = (7 - jan1.weekday()) % 7
+        if days_to_monday == 0 and jan1.weekday() != 0:
+            days_to_monday = 7
+        first_monday = jan1 + timedelta(days=days_to_monday)
+        enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
+        lookup_date1 = enrollment_date + timedelta(weeks=offset1)
+        lookup_date2 = enrollment_date + timedelta(weeks=offset2)
+        if lookup_date1 > max_date or lookup_date2 > max_date:
+            error_msg = (
+                f"ERROR: Death-slope lookup dates extend beyond {MAX_DATE_FOR_SLOPE}. "
+                f"Sheet {sheet_name} enrollment: {enrollment_date.strftime('%Y-%m-%d')}, "
+                f"offsets ({offset1}, {offset2}) weeks -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
+            )
+            raise ValueError(error_msg)
+        if logger:
+            logger.info(
+                f"[DEBUG] Death-slope lookup validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
+                f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
+            )
+        else:
+            print(
+                f"[DEBUG] Death-slope lookup validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
+                f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
+            )
+    
+    for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+        g_sorted = g.sort_values("t")
+        
+        window1_start = max(0, offset1 - SLOPE_WINDOW_SIZE)
+        window1_end = offset1 + SLOPE_WINDOW_SIZE
+        w1 = g_sorted[(g_sorted["t"] >= window1_start) & (g_sorted["t"] <= window1_end)]
+        
+        window2_start = max(0, offset2 - SLOPE_WINDOW_SIZE)
+        window2_end = offset2 + SLOPE_WINDOW_SIZE
+        w2 = g_sorted[(g_sorted["t"] >= window2_start) & (g_sorted["t"] <= window2_end)]
+        
+        # Filter to positive weekly deaths for geometric mean
+        d1 = w1["Dead"][w1["Dead"] > EPS].values
+        d2 = w2["Dead"][w2["Dead"] > EPS].values
+        if len(d1) == 0 or len(d2) == 0:
+            slopes[(yob, dose)] = 0.0
+            continue
+        log_A = np.mean(np.log(d1))
+        log_B = np.mean(np.log(d2))
+        slope = (log_B - log_A) / T
+        slope = np.clip(slope, -10.0, 10.0)
+        slopes[(yob, dose)] = slope
+    
+    return slopes
+
 def adjust_mr(df, slopes, t0=ANCHOR_WEEKS):
     """Multiplicative slope removal on MR with anchoring at week index t0."""
     def f(row):
@@ -841,6 +920,139 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
         "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
     ])
 
+def build_kcor_o_rows(df, sheet_name):
+    """Compute KCOR_o based on death-based slope adjustment and cumulative adjusted deaths.
+    
+    Steps:
+      1) Compute death-based slopes via lookup windows.
+      2) Adjust weekly deaths using multiplicative slope removal anchored at week ANCHOR_WEEKS.
+      3) Compute cumulative adjusted deaths per (YearOfBirth, Dose).
+      4) For each dose pair and age, compute the ratio of cumulative deaths, then normalize by its
+         value at week ANCHOR_WEEKS to make it 1 at that anchor week.
+    """
+    # Compute death-based slopes
+    death_slopes = compute_death_slopes_lookup(df, sheet_name)
+    
+    # Time index already exists; ensure sorting
+    df = df.sort_values(["YearOfBirth","Dose","DateDied"]).copy()
+    
+    # Apply slope correction to weekly deaths using death-based slopes
+    def apply_death_slope(row):
+        b = death_slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
+        scale = safe_exp(-np.clip(b, -10.0, 10.0) * (row["t"] - float(ANCHOR_WEEKS)))
+        return row["Dead"] * scale
+    df["Dead_adj_o"] = df.apply(apply_death_slope, axis=1)
+    
+    # Cumulative adjusted deaths per group
+    df["cumD_o"] = df.groupby(["YearOfBirth","Dose"])['Dead_adj_o'].cumsum()
+    
+    out_rows = []
+    by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
+    dose_pairs = get_dose_pairs(sheet_name)
+    for yob in df["YearOfBirth"].unique():
+        for num, den in dose_pairs:
+            gv = by_age_dose.get((yob, num))
+            gu = by_age_dose.get((yob, den))
+            if gv is None or gu is None:
+                continue
+            gv_unique = gv[["DateDied","ISOweekDied","cumD_o"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","cumD_o"]].drop_duplicates(subset=["DateDied"], keep="first")
+            merged = pd.merge(gv_unique, gu_unique, on="DateDied", suffixes=("_num","_den"), how="inner").sort_values("DateDied")
+            if merged.empty:
+                continue
+            # Raw ratio of cumulative adjusted deaths
+            valid = merged["cumD_o_den"] > EPS
+            merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
+            # Normalize at anchor week index (week 4 or first)
+            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            k0 = merged["K_raw_o"].iloc[t0_idx]
+            if not (np.isfinite(k0) and k0 > EPS):
+                k0 = 1.0
+            merged["KCOR_o"] = np.where(np.isfinite(merged["K_raw_o"]), merged["K_raw_o"] / k0, np.nan)
+            out = merged[["DateDied","ISOweekDied_num","KCOR_o"]].copy()
+            out["EnrollmentDate"] = sheet_name
+            out["YearOfBirth"] = yob
+            out["Dose_num"] = num
+            out["Dose_den"] = den
+            out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
+            out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+            out_rows.append(out)
+    if out_rows:
+        return pd.concat(out_rows, ignore_index=True)
+    return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR_o"])
+
+def build_kcor_o_deaths_details(df, sheet_name):
+    """For each dose pair and age, output deaths/week, adjusted deaths/week, cumulative adjusted deaths,
+    and normalized cumulative ratio (normalized to 1 at week ANCHOR_WEEKS).
+
+    Columns:
+      EnrollmentDate, Date, ISOweekDied, YearOfBirth, Dose_num, Dose_den,
+      Dead_num, Dead_adj_num, cumD_num, Dead_den, Dead_adj_den, cumD_den,
+      K_raw_o, KCOR_o
+    """
+    # Compute death-based slopes and adjusted deaths
+    death_slopes = compute_death_slopes_lookup(df, sheet_name)
+    df = df.sort_values(["YearOfBirth","Dose","DateDied"]).copy()
+
+    def apply_death_slope(row):
+        b = death_slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
+        scale = safe_exp(-np.clip(b, -10.0, 10.0) * (row["t"] - float(ANCHOR_WEEKS)))
+        return row["Dead"] * scale
+    df["Dead_adj_o"] = df.apply(apply_death_slope, axis=1)
+    df["cumD_o"] = df.groupby(["YearOfBirth","Dose"])['Dead_adj_o'].cumsum()
+
+    out_rows = []
+    by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
+    dose_pairs = get_dose_pairs(sheet_name)
+    for yob in df["YearOfBirth"].unique():
+        for num, den in dose_pairs:
+            gv = by_age_dose.get((yob, num))
+            gu = by_age_dose.get((yob, den))
+            if gv is None or gu is None:
+                continue
+            gv_unique = gv[["DateDied","ISOweekDied","Dead","Dead_adj_o","cumD_o"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","Dead","Dead_adj_o","cumD_o"]].drop_duplicates(subset=["DateDied"], keep="first")
+            merged = pd.merge(
+                gv_unique, gu_unique, on="DateDied", suffixes=("_num","_den"), how="inner"
+            ).sort_values("DateDied")
+            if merged.empty:
+                continue
+            valid = merged["cumD_o_den"] > EPS
+            merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
+            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            k0 = merged["K_raw_o"].iloc[t0_idx]
+            if not (np.isfinite(k0) and k0 > EPS):
+                k0 = 1.0
+            merged["KCOR_o"] = np.where(np.isfinite(merged["K_raw_o"]), merged["K_raw_o"] / k0, np.nan)
+
+            out = merged[[
+                "DateDied","ISOweekDied_num",
+                "Dead_num","Dead_adj_o_num","cumD_o_num",
+                "Dead_den","Dead_adj_o_den","cumD_o_den",
+                "K_raw_o","KCOR_o"
+            ]].copy()
+            out["EnrollmentDate"] = sheet_name
+            out["YearOfBirth"] = yob
+            out["Dose_num"] = num
+            out["Dose_den"] = den
+            out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date",
+                                "cumD_o_num":"cumD_num","cumD_o_den":"cumD_den",
+                                "Dead_adj_o_num":"Dead_adj_num","Dead_adj_o_den":"Dead_adj_den"}, inplace=True)
+            out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+            out_rows.append(out)
+    if out_rows:
+        cols = [
+            "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
+            "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
+            "K_raw_o","KCOR_o"
+        ]
+        return pd.concat(out_rows, ignore_index=True)[cols]
+    return pd.DataFrame(columns=[
+        "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
+        "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
+        "K_raw_o","KCOR_o"
+    ])
+
 def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log"):
     
     # Set up dual output (console + file)
@@ -874,6 +1086,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     xls = pd.ExcelFile(src_path)
     all_out = []
+    pair_deaths_all = []
     
     # Apply processing filters
     sheets_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else xls.sheet_names
@@ -1020,6 +1233,15 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         except Exception:
                             globals()['FINAL_KCOR_MIN'] = prev_final_min
                         out_sh_sa = build_kcor_rows(df2, sh, dual_print)
+                        # Compute KCOR_o and merge into SA output
+                        kcor_o_sa = build_kcor_o_rows(df2, sh)
+                        if not kcor_o_sa.empty and not out_sh_sa.empty:
+                            out_sh_sa = pd.merge(
+                                out_sh_sa,
+                                kcor_o_sa,
+                                on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
+                                how="left"
+                            )
                         out_sh_sa["param_slope_start"] = int(start_val)
                         out_sh_sa["param_slope_length"] = int(length_val)
                         out_sh_sa["param_final_kcor_min"] = float(globals().get('FINAL_KCOR_MIN', 1.0))
@@ -1197,7 +1419,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #     print()
 
         out_sh = build_kcor_rows(df, sh, dual_print)
+        # Compute KCOR_o on prepared df and merge into output
+        kcor_o = build_kcor_o_rows(df, sh)
+        if not kcor_o.empty and not out_sh.empty:
+            out_sh = pd.merge(
+                out_sh,
+                kcor_o,
+                on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
+                how="left"
+            )
         all_out.append(out_sh)
+        # Collect per-pair deaths details for new output sheet
+        pair_details = build_kcor_o_deaths_details(df, sh)
+        if not pair_details.empty:
+            pair_deaths_all.append(pair_details)
 
     # Combine all results
     combined = pd.concat(all_out, ignore_index=True).sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
@@ -1257,7 +1492,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI]")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_o")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date
@@ -1277,6 +1512,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     kcor_val = age_data["KCOR"].iloc[0]
                     ci_lower = age_data["CI_lower"].iloc[0]
                     ci_upper = age_data["CI_upper"].iloc[0]
+                    # KCOR_o may be missing for pooled rows; print '-' in that case
+                    try:
+                        kcor_o_val = age_data.get("KCOR_o", pd.Series([np.nan])).iloc[0]
+                    except Exception:
+                        kcor_o_val = np.nan
+                    kcor_o_str = "-" if not (isinstance(kcor_o_val, (int, float)) and np.isfinite(kcor_o_val)) else f"{kcor_o_val:.4f}"
                     
                     if age == 0:
                         age_label = "ASMR (pooled)"
@@ -1285,7 +1526,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         age_label = f"{age}"
                     
-                    dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}]")
+                    dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_o_str}")
     
     dual_print("="*80)
 
@@ -1393,6 +1634,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     all_data = combined.copy()
                     all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
                     all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
+
+                    # Add dose_pair_deaths details sheet
+                    if pair_deaths_all:
+                        pair_deaths_df = pd.concat(pair_deaths_all, ignore_index=True)
+                    else:
+                        pair_deaths_df = pd.DataFrame(columns=[
+                            "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
+                            "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
+                            "K_raw_o","KCOR_o"
+                        ])
+                    pair_deaths_df.to_excel(writer, index=False, sheet_name="dose_pair_deaths")
                 
                 # If we get here, the file was written successfully
                 dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
