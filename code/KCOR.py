@@ -138,7 +138,11 @@ VERSION = "v4.4"                # KCOR version number
 #        - Added slope lookup entry for 2022_47 consistent with MAX_DATE_FOR_SLOPE
 
 # Core KCOR methodology parameters
-ANCHOR_WEEKS = 4                # Baseline week where KCOR is normalized to 1 (typically week 4)
+# Historical: ANCHOR_WEEKS was used for both slope anchoring and KCOR baseline.
+# New behavior: slope anchored at enrollment (t=0), KCOR baseline normalization at week 1.
+ANCHOR_WEEKS = 4                # Legacy value (kept for backward-compatibility in logs/comments)
+SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
+KCOR_BASELINE_INDEX = 1         # Normalize KCOR at week 1 (leave week 0 as-is)
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 
 # KCOR normalization fine-tuning parameters
@@ -520,8 +524,8 @@ def compute_death_slopes_lookup(df, sheet_name, logger=None):
     
     return slopes
 
-def adjust_mr(df, slopes, t0=ANCHOR_WEEKS):
-    """Multiplicative slope removal on MR with anchoring at week index t0."""
+def adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T):
+    """Multiplicative slope removal on MR with anchoring at week index t0 (enrollment)."""
     def f(row):
         b = slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
         return row["MR"] * safe_exp(-b * (row["t"] - float(t0)))
@@ -629,7 +633,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                                       merged["CH_num"] / merged["CH_den"], 
                                       np.nan)
             
-            # Get baseline K_raw value (week 4)
+            # Get baseline K_raw value at week 4 (usual baseline period)
             t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
             baseline_k_raw = merged["K_raw"].iloc[t0_idx]
             if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
@@ -682,7 +686,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             #     print()
 
             # Correct KCOR 95% CI calculation based on baseline uncertainty
-            # Get baseline death counts at anchor week (week 4)
+            # Get baseline death counts at week 4
             t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
             baseline_num = merged["cumD_adj_num"].iloc[t0_idx]
             baseline_den = merged["cumD_adj_den"].iloc[t0_idx]
@@ -939,7 +943,8 @@ def build_kcor_o_rows(df, sheet_name):
     # Apply slope correction to weekly deaths using death-based slopes
     def apply_death_slope(row):
         b = death_slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
-        scale = safe_exp(-np.clip(b, -10.0, 10.0) * (row["t"] - float(ANCHOR_WEEKS)))
+        # Anchor slope normalization at enrollment week (t0 = 0)
+        scale = safe_exp(-np.clip(b, -10.0, 10.0) * row["t"])
         return row["Dead"] * scale
     df["Dead_adj_o"] = df.apply(apply_death_slope, axis=1)
     
@@ -996,7 +1001,8 @@ def build_kcor_o_deaths_details(df, sheet_name):
 
     def apply_death_slope(row):
         b = death_slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
-        scale = safe_exp(-np.clip(b, -10.0, 10.0) * (row["t"] - float(ANCHOR_WEEKS)))
+        # Anchor slope normalization at enrollment week (t0 = 0)
+        scale = safe_exp(-np.clip(b, -10.0, 10.0) * row["t"])
         return row["Dead"] * scale
     df["Dead_adj_o"] = df.apply(apply_death_slope, axis=1)
     df["cumD_o"] = df.groupby(["YearOfBirth","Dose"])['Dead_adj_o'].cumsum()
@@ -1274,7 +1280,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         dual_print(f"  YoB {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
             dual_print()
         
-        df = adjust_mr(df, slopes, t0=ANCHOR_WEEKS)
+        df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
         
         # Debug: Show MR values week by week, especially weeks with no deaths
         # if DEBUG_VERBOSE:
@@ -1306,7 +1312,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             slope = slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
             # Clip slope to prevent overflow
             slope = np.clip(slope, -10.0, 10.0)
-            scale_factor = safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
+            scale_factor = safe_exp(-slope * (row["t"] - float(SLOPE_ANCHOR_T)))
             return row["MR"] * scale_factor
         
         # Add slope and scale factor columns for transparency

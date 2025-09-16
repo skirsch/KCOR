@@ -73,7 +73,7 @@ The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on
  The algorithm does 3 things to process the data:
  1. Slope normalizes the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort
  2. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time providing a net/harm benefit readout at any point in time t.
- 3. Normalizes the ratio to the ratio at the end of a 4 week baseline period right after enrollment where there is virtually no COVID
+ 3. Normalizes the ratio to the ratio at the end of a 4‑week baseline period (week 4). Week 0 (enrollment week) is left unscaled; slope is applied from week 1 onward
 
  The algorithm depends on only three dates: birth, death, vaccination(s). 
  
@@ -111,8 +111,8 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 - **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
 
 #### 3. Mortality Rate Adjustment
-- **Exponential Slope Removal**: `MR_adj = MR × e^{-slope × (t - t0)}`
-- **Baseline Normalization**: t0 = baseline week (typically week 4) where KCOR is normalized to 1
+- **Exponential Slope Removal**: `MR_adj = MR × e^{-slope × (t - tₑ)}`
+- **Anchoring**: tₑ = enrollment week index (tₑ = 0)
 - **Dose-Specific Slopes**: Each dose-age combination gets its own slope for adjustment
 
 #### 4. KCOR Computation (Enhanced v4.1)
@@ -139,7 +139,7 @@ Where MR_adj is clipped to 0.999 to avoid log(0).
 
 $$\text{CH}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
 
-**Step 4: KCOR as Hazard Ratio**
+**Step 4: KCOR as Hazard Ratio (Baseline at Week 4)**
 
 **KCOR Formula:**
 
@@ -148,7 +148,8 @@ $$\text{KCOR}(t) = \frac{\text{CH}_v(t) / \text{CH}_u(t)}{\text{CH}_v(t_0) / \te
 Where:
 - **r** = Calculated slope for the specific dose-age combination
 - **MR(t)** = Raw mortality rate at time t
-- **t₀** = Baseline time for normalization (typically week 4)
+- **tₑ** = Enrollment week index (0)
+- **t₀** = Baseline for normalization (week 4; KCOR(t₀) = 1)
 - **CH(t)** = Cumulative hazard at time t (sum of discrete hazards)
 - **Mathematical Enhancement**: Discrete cumulative-hazard transform provides more exact CH calculation than simple summation
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
@@ -184,7 +185,7 @@ To avoid using this parameter, compute separate enrollment dates for each cohort
 Or you can use the parameter which will provide results which are very likely much more accurate than without the parameter. Your choice.
 
 **Detection Logic:**
-1. Compute KCOR values normally using baseline normalization (week 4)
+1. Compute KCOR values normally using enrollment-based baseline normalization (week 1)
 2. Check KCOR value at specified final date (default: April 1, 2024)
 3. If final KCOR < threshold (default: 1.0), adjust scale factor = 1/final_KCOR
 4. Apply adjusted scale factor to all KCOR computations
@@ -521,13 +522,18 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 - **`dose_pairs`**: KCOR values for all dose comparisons with complete methodology transparency
 - **Columns**: Sheet, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den, KCOR, CI_lower, CI_upper, 
   MR_num, MR_adj_num, CH_num, CH_actual_num, hazard_num, slope_num, scale_factor_num, MR_smooth_num, t_num,
-  MR_den, MR_adj_den, CH_den, CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
+  MR_den, MR_adj_den, CH_den, CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den,
+  KCOR_o (optional death-based cumulative-deaths ratio, normalized at week 1)
 
-#### Debug Sheet
+#### Debug & Details Sheets
 - **`by_dose`**: Individual dose curves with complete methodology transparency
 - **Columns**: Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, Cum_MR, Cum_MR_Actual, Hazard, 
   Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
   Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
+
+- **`dose_pair_deaths`**: Per-pair weekly and cumulative death details supporting KCOR_o
+- **Columns**: EnrollmentDate, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den,
+  Dead_num, Dead_adj_num, cumD_num, Dead_den, Dead_adj_den, cumD_den, K_raw_o, KCOR_o
 
 #### About Sheet
 - **Metadata**: Version information, methodology overview, and analysis parameters
