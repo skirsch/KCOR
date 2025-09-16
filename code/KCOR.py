@@ -146,7 +146,7 @@ KCOR_BASELINE_INDEX = 1         # Normalize KCOR at week 1 (leave week 0 as-is)
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 
 # KCOR normalization fine-tuning parameters
-FINAL_KCOR_MIN = 1              # Minimum KCOR value threshold for scaling
+FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
 FINAL_KCOR_DATE = "4/1/24"      # Date to check for KCOR scaling (MM/DD/YY format)
 
 # Date limitations for data quality - prevents using unreliable data beyond this date
@@ -1087,6 +1087,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"Input File: {src_path}")
         dual_print(f"Output File: {out_path}")
         dual_print(f"Log File: {log_file_display}")
+
+    # Configuration parameter dump (always show effective values)
+    dual_print("-"*80)
+    dual_print("Configuration Parameters (effective):")
+    dual_print(f"  FINAL_KCOR_MIN        = {FINAL_KCOR_MIN}")
+    dual_print(f"  FINAL_KCOR_DATE       = {FINAL_KCOR_DATE}")
+    dual_print(f"  MAX_DATE_FOR_SLOPE    = {MAX_DATE_FOR_SLOPE}")
+    dual_print(f"  ANCHOR_WEEKS          = {ANCHOR_WEEKS}")
+    dual_print(f"  SLOPE_ANCHOR_T        = {SLOPE_ANCHOR_T}")
+    dual_print(f"  KCOR_BASELINE_INDEX   = {KCOR_BASELINE_INDEX}")
+    dual_print(f"  SLOPE_WINDOW_SIZE     = {SLOPE_WINDOW_SIZE}")
+    dual_print(f"  MA_TOTAL_LENGTH       = {MA_TOTAL_LENGTH}")
+    dual_print(f"  CENTERED              = {CENTERED}")
+    dual_print(f"  YEAR_RANGE            = {YEAR_RANGE}")
+    dual_print(f"  ENROLLMENT_DATES      = {ENROLLMENT_DATES}")
+    dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
+    dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
+    dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
+    dual_print(f"  SLOPE_LOOKUP_TABLE    = {SLOPE_LOOKUP_TABLE}")
+    dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print("="*80)
     dual_print("")
     
@@ -1554,6 +1574,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Input File",
                         "Output File",
                         "",
+                        "Configuration Parameters (effective):",
+                        "  FINAL_KCOR_MIN",
+                        "  FINAL_KCOR_DATE",
+                        "  MAX_DATE_FOR_SLOPE",
+                        "  ANCHOR_WEEKS",
+                        "  SLOPE_ANCHOR_T",
+                        "  KCOR_BASELINE_INDEX",
+                        "  SLOPE_WINDOW_SIZE",
+                        "  MA_TOTAL_LENGTH",
+                        "  CENTERED",
+                        "  YEAR_RANGE",
+                        "  ENROLLMENT_DATES",
+                        "  DEBUG_VERBOSE",
+                        "  OVERRIDE_DOSE_PAIRS",
+                        "  OVERRIDE_YOBS",
+                        "",
                         "Methodology Information:",
                         "",
                         "1. Data Preprocessing:",
@@ -1592,6 +1628,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         src_path,
                         out_path,
+                        "",
+                        f"",
+                        f"{FINAL_KCOR_MIN}",
+                        f"{FINAL_KCOR_DATE}",
+                        f"{MAX_DATE_FOR_SLOPE}",
+                        f"{ANCHOR_WEEKS}",
+                        f"{SLOPE_ANCHOR_T}",
+                        f"{KCOR_BASELINE_INDEX}",
+                        f"{SLOPE_WINDOW_SIZE}",
+                        f"{MA_TOTAL_LENGTH}",
+                        f"{CENTERED}",
+                        f"{YEAR_RANGE}",
+                        f"{ENROLLMENT_DATES}",
+                        f"{DEBUG_VERBOSE}",
+                        f"{OVERRIDE_DOSE_PAIRS}",
+                        f"{OVERRIDE_YOBS}",
                         "",
                         "",
                         "",

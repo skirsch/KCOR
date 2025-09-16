@@ -173,21 +173,27 @@ Where:
 - **1.96**: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-#### 6. KCOR Normalization Fine-Tuning (v4.3+)
-**Baseline Correction for Unsafe Vaccine Effects:**
+#### 6. KCOR Normalization Fine-Tuning (v4.3+): Disabled by default
+**Optional Baseline Correction for Unsafe Vaccine Effects:**
 
-When unsafe vaccines create artificially high baseline mortality rates during the normalization period, KCOR values become artificially low. This feature automatically detects and corrects for this bias by adjusting the baseline anchor value to end up at a sensible value.
+When unsafe vaccines create artificially high baseline mortality rates during the normalization period, KCOR assumes this is just normal mortality for the vaccinated. This may cause KCOR values at the end of the study period to be less than 1, making it appear that that an unsafe vaccine saved lives when in reality what was happening is that the mortality increase caused by the vaccine was just ephemeral and the enrollment date happened to correspond to peak mortality. 
 
-You can easily disable this if you think it is wrong and you will get results for older age groups that the COVID vaccines reduce non-COVID ACM which we know they don't do. If this was a safe vaccine, this option wouldn't be needed. But when a vaccine increases mortality strongly before the enrollment date and then the mortality falls back to baseline, KCOR enrollment date might be at the peak harm, in which case that is baseline and the vaccine will appear to be an amazing life saver when it is just the opposite. 
+This situation happens when the vaccine is unsafe and the enrollment date is many weeks after most people in that age group got their shots. So the KCOR value for those age groups are artifically low.
 
-To avoid using this parameter, compute separate enrollment dates for each cohort which is more work.
+This optional feature (which is disabled by default) corrects for this bias by adjusting the KCOR scaling  to end up at a sensible final value, e.g., 1 for an unsafe vaccine.
 
-Or you can use the parameter which will provide results which are very likely much more accurate than without the parameter. Your choice.
+This feature is disabled by default since it creates a bias. It can be enabled if you want to get more accurate ASMR final values that would not be affected by this limitation. 
+
+So for most accurate results, use multiple enrollment dates to determine the KCOR values for different aged cohorts when the cohorts are vaccinated over a wide calendar range. 
+
+The parameter is just a quick way to get more realistic KCOR values without having to examine multiple cohorts.
+
+In the future, we'll automatically create fixed cohorts enrollment date for every 10 year age group to account for calendar staggered vaccine rollouts.
 
 **Detection Logic:**
 1. Compute KCOR values normally using enrollment-based baseline normalization (week 1)
 2. Check KCOR value at specified final date (default: April 1, 2024)
-3. If final KCOR < threshold (default: 1.0), adjust scale factor = 1/final_KCOR
+3. If final KCOR < threshold (= FINAL_KCOR_MIN; default: 0 disables scaling), adjust scale factor = 1/final_KCOR
 4. Apply adjusted scale factor to all KCOR computations
 
 **Scaling Formula:**
@@ -201,7 +207,7 @@ Where:
 
 **Configuration Parameters:**
 ```python
-FINAL_KCOR_MIN = 1              # Minimum KCOR threshold for scaling
+FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
 FINAL_KCOR_DATE = "4/1/24"      # Date to check for scaling (MM/DD/YY format)
 ```
 
@@ -212,7 +218,7 @@ FINAL_KCOR_DATE = "4/1/24"      # Date to check for scaling (MM/DD/YY format)
 - **Transparent Process**: BEFORE/AFTER anchor values logged for full transparency
 - **Conservative Approach**: Only scales when clear evidence of baseline bias exists
 
-#### 7. Age Standardization (Option 2+ - Enhanced v4.2)
+#### 7. Age Standardization 
 **Expected-Deaths Weighting for ASMR Pooling:**
 
 The age-standardized KCOR uses expected-deaths weights that properly reflect actual mortality burden:
@@ -224,7 +230,7 @@ Where:
 - **KCORᵢ(t)** = KCOR value for age group i at time t
 - **ln(KCORᵢ(t))** = Natural logarithm of KCOR for age group i
 
-**Expected-Deaths Weight Calculation (Option 2+):**
+**Expected-Deaths Weight Calculation:**
 
 $$w_i = \frac{h_i \times \text{PT}_i(W)}{\sum_j h_j \times \text{PT}_j(W)}$$
 
@@ -561,7 +567,7 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 
 ```python
 # Core methodology
-ANCHOR_WEEKS = 4                    # Baseline week for KCOR normalization
+ANCHOR_WEEKS = 4                    # Baseline week for KCOR normalization (Note that week # 0 is the first week)
 SLOPE_WINDOW_SIZE = 2               # Window size for slope calculation (±2 weeks)
 MA_TOTAL_LENGTH = 8                 # Moving average length (8 weeks)
 CENTERED = True                     # Use centered moving average
@@ -570,7 +576,7 @@ CENTERED = True                     # Use centered moving average
 MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation
 
 # Analysis scope
-YEAR_RANGE = (1920, 2000)          # Birth year range to process
+YEAR_RANGE = (1920, 2000)          # Birth year range to process. Deaths outside the extremes are NOT combined.
 ENROLLMENT_DATES = ["2021_13", "2021_24", "2022_06", "2022_47"]  # Enrollment dates (sheet names) to process
 ```
 
@@ -737,7 +743,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ### KCOR Normalization Fine-Tuning
 - **Automatic Detection**: Checks KCOR values on specified final date (default: April 1, 2024)
-- **Baseline Correction**: Scales all KCOR values when minimum KCOR < threshold (default: 1.0)
+- **Baseline Correction**: Scales all KCOR values when KCOR_final < FINAL_KCOR_MIN (default: 0 disables scaling)
 - **Unsafe Vaccine Fix**: Corrects for artificially high baseline mortality rates during normalization
 - **Transparent Process**: Scaling factor is logged for full methodology transparency
 - **Conservative Approach**: Only applies when clear evidence of baseline bias exists

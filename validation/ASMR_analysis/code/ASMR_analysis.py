@@ -4,6 +4,15 @@
 
 # this analysis assumes that the vaccine didn't raise the baseline mortality rate of the vaccinated before the enrollment date
 # which obviously isn't true. So this analysis is a datapoint but it doesn't mean that the vaccine was safe or not.
+# This analysis is also not very accurate since it doesn't take into account the baseline correction feature of KCOR.
+
+# this is a quick and dirty analysis to get a sense of the ASMR values for the vaccinated and unvaccinated cohorts.
+# this is a STANDALONE analysis and not part of the KCOR pipeline.
+# you can call this from the command line or use the Makefile: 
+# python ASMR_analysis.py --input ../data/Czech/KCOR_CMR.xlsx --sheet 2021_24 --baseline 2021-06-14 --last_date 2024-04-01 --out_dir ../data/Czech/ASMR_analysis --bands 50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,90-94,95-99
+# or make ASMR
+# the output will be in the ../data/Czech/ASMR_analysis directory
+
 
 import argparse
 import pandas as pd
