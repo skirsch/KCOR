@@ -37,15 +37,27 @@
 
 KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality risk between different vaccination groups while accounting for underlying mortality rate time trend differences. This repository contains the complete analysis pipeline for computing KCOR values from mortality data.
 
-Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc. and normalize the mortality rate so that if there is no external signal applied that might differentially impact their mortality, both cohorts would die over time with identical mortality rates.
+Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc. and normalize their baseline mortality rates so that if there is no external signal applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates.
 
-That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more deaths.
+That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more cumulative deaths as a function of t. This means, given a specific time endpoint, we can show if the intervention was net harm, net benefit, or neutral as of that endpoint. 
 
-KCOR basically allows you to run a randomized trial with respect to the death outcome, using retrospective observational data. No 1:1 matching is required. No cause of death is needed. You just need 3 dates per person: birth, death, vaccination(s).
+So we can answer questions such as, "Was the COVID vaccine net beneficial by the end of 2022?" and the answer would tell you whether the benefits (e.g., lives saved during COVID) outweighed the risks (e.g., people who died prematurely because the vaccine was unsafe).
+
+This is important because not a single epidemiologist in the entire world has been able to take the a record level dataset (such as the Czech data) and answer that question. That is an epic failure of epidemiology.
+
+Therefore, a methodolgy that can accurately make such an assessment is an existential threat to the field. This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by top US epidemiologist Yale Professor Harvey Risch (h-index 119).
+
+KCOR basically allows you to run a randomized trial with respect to the death outcome, using retrospective observational data. No 1:1 cohort matching is required. No cause of death is needed. KCOR uses just 3 dates per person: birth, death, and dates of vaccination(s). That's it.
+
+KCOR is objective. It does not have a bias. It doesn't have a belief in vaccine. It simply compares mortality rates between cohorts.
+
+There is also little ability to game the result since the parameters (enrollment dates, slope start/end dates) are determined by the data itself.
 
 KCOR allows us, for the first time, to objectively answer very important societal questions such as, “Did the COVID vaccine kill more people than it saved?”
 
-The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. Those who claimed that the COVID shots were beneficial for the elderly were guessing; the Czech data clearly shows that advice was deadly. 
+The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
+
+Those who claimed that the COVID shots were beneficial for the elderly were guessing; the Czech data clearly shows that advice was deadly (especially using the earlier enrollment date). 
 
 The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the same data using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots.
 
