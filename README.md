@@ -45,7 +45,9 @@ KCOR enables us, for the first time, to objectively answer critically important 
 
 This is important because not a single epidemiologist in the entire world has been able to take any record level dataset (such as the Czech data) and answer that crucial question. That is an epic failure of epidemiology.
 
-Therefore, a methodolgy that can accurately make such an assessment is an existential threat to the field. This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
+Grok wrote, "KCOR addresses a real gap: traditional epidemiology often struggles with net benefit assessments in retrospective data without randomization."
+
+Therefore, any methodolgy that can accurately make such an risk/benefit assessment is a threat to the field because it will reveal that previous assessments done with traditional epidemiology methods were all flat out wrong (e.g., studies claiming the COVID vaccine were beneficial). This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
 
 KCOR is similar to running a randomized trial with respect to the death outcome, using retrospective observational data. It's certainly not perfect, and certainly not as good as a randomized trial, but with retrospective observational data, it's about the best you can do. No 1:1 cohort matching is required. No cause of death is needed. KCOR uses just 3 dates per person: birth, death, and dates of vaccination(s). That's it.
 
@@ -55,13 +57,15 @@ There is also little ability to game the result since the parameters (enrollment
 
 The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
 
-Those who claimed that the COVID shots were beneficial for the elderly were guessing; the Czech data clearly shows that such advice was deadly (see the one dose response with the earlier enrollment date). 
+Those who claimed that the COVID shots were beneficial for the elderly were speculating based on no data; they shouldn't have done that. The Czech data clearly shows that such advice was deadly (see the one dose response with the earlier enrollment date). 
 
 The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the same data using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots.
 
 The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. KCOR reveals why.
 
 You can see the [full summary of the results for the Czech data here](data/Czech/KCOR_summary.log).
+
+There isn't a legitimate critique of KCOR that I'm aware of. Grok claimed KCOR is mathematically sound, but that KCOR relies on assumptions about the data that are clearly wrong, such as you can normalize slope mortality for frail cohorts. At first it tried to argue that even for ideal Gompertz cohorts, KCOR would fail. So I had it compute the mortality rate change for age 80 with frailty 3 and it realized there was a 1.6% differential after 2 years. I pointed out KCOR is averaged out over that period so the error would be half that amount. And then I pointed out that the slope computation is done over a year period in the center so the net error would be even smaller since it would error one way early and the other way later. Next it said, well what about the flu and other mortality disruptions. I said the ONLY calendar disruption that moves the KCOR curves was COVID and it gave the vaccine the benefit of the doubt because KCOR assumes proportional hazards which are violated by the COVID virus (it kills the frail disproportionally more than would be predicted by the mortality ratio). So scratch that argument. Then the final argument was there is no possible way a 80-90 year old unvaccinated cohort could be slope normalized with an exponential because of the massive mix of frailty and depletion. So I showed it that [the actual Czech data](analysis/Czech/KCOR_80_90_uvax_slope.png) could be fit with a straight line and that decimated its set of arguments. So much for the debunk attempts. People have these preconceived notions of how frail cohorts die and it turns out that in the real world, it's pretty darn linear over a 2 year period. 
 
 ## 🔬 Methodology
 
