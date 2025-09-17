@@ -235,6 +235,15 @@ if _env_dates:
     if _parsed:
         enrollment_dates = _parsed
 
+# Process latest enrollment first to avoid any chance of state leakage across runs
+try:
+    _ed_sorted = sorted(enrollment_dates, key=lambda s: pd.to_datetime(s + '-1', format='%G-%V-%u'), reverse=True)
+    if _ed_sorted != enrollment_dates:
+        print(f"Reordering enrollment dates (latest first): {', '.join(_ed_sorted)}")
+        enrollment_dates = _ed_sorted
+except Exception as _e_sort:
+    print(f"CAUTION: Could not sort enrollment dates: {_e_sort}")
+
 # enrollment_dates = ['2021-24']  # For testing, just do one enrollment date
 
 ## Load the dataset with explicit types and rename columns to English

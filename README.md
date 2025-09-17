@@ -591,7 +591,9 @@ MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation
 
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process. Deaths outside the extremes are NOT combined.
-ENROLLMENT_DATES = ["2021_13", "2021_24", "2022_06", "2022_47"]  # Enrollment dates (sheet names) to process
+# the following dates correspond to  3/29/21, 6/15/21, 2/7/22, 11/21/22
+ENROLLMENT_DATES = ["2021_13", "2021_24", "2022_06", "2022_47"]  # ISO Year-week Enrollment dates (sheet names to process
+
 ```
 
 ### Sheet-Specific Configuration
