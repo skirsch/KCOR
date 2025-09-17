@@ -39,29 +39,29 @@ KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for 
 
 Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc. and normalize their baseline mortality rates so that if there is no external signal applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates.
 
-That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more cumulative deaths as a function of t. This means, given a specific time endpoint, we can show if the intervention was net harm, net benefit, or neutral as of that endpoint. 
+That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more cumulative deaths as a function of t. This means, given a specific time, we can show if an intervention was net harm, net benefit, or neutral as of that time. 
 
-So we can answer questions such as, "Was the COVID vaccine net beneficial by the end of 2022?" and the answer would tell you whether the benefits (e.g., lives saved during COVID) outweighed the risks (e.g., people who died prematurely because the vaccine was unsafe).
+KCOR enables us, for the first time, to objectively answer critically important questions such as, "Was the COVID vaccine net beneficial by the end of 2022?" KCOR tells you whether the benefits (e.g., lives saved during COVID) outweighed the risks (e.g., people who who were killed by the vaccine).
 
-This is important because not a single epidemiologist in the entire world has been able to take the a record level dataset (such as the Czech data) and answer that question. That is an epic failure of epidemiology.
+This is important because not a single epidemiologist in the entire world has been able to take any record level dataset (such as the Czech data) and answer that crucial question. That is an epic failure of epidemiology.
 
-Therefore, a methodolgy that can accurately make such an assessment is an existential threat to the field. This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by top US epidemiologist Yale Professor Harvey Risch (h-index 119).
+Therefore, a methodolgy that can accurately make such an assessment is an existential threat to the field. This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
 
-KCOR basically allows you to run a randomized trial with respect to the death outcome, using retrospective observational data. No 1:1 cohort matching is required. No cause of death is needed. KCOR uses just 3 dates per person: birth, death, and dates of vaccination(s). That's it.
+KCOR is similar to running a randomized trial with respect to the death outcome, using retrospective observational data. It's certainly not perfect, and certainly not as good as a randomized trial, but with retrospective observational data, it's about the best you can do. No 1:1 cohort matching is required. No cause of death is needed. KCOR uses just 3 dates per person: birth, death, and dates of vaccination(s). That's it.
 
-KCOR is objective. It does not have a bias. It doesn't have a belief in vaccine. It simply compares mortality rates between cohorts.
+KCOR is objective. It does not have a bias. It doesn't have a belief in vaccine safety. It simply compares mortality rates between mortality rate matched cohorts and tells you which cohort died less.
 
 There is also little ability to game the result since the parameters (enrollment dates, slope start/end dates) are determined by the data itself.
 
-KCOR allows us, for the first time, to objectively answer very important societal questions such as, “Did the COVID vaccine kill more people than it saved?”
-
 The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
 
-Those who claimed that the COVID shots were beneficial for the elderly were guessing; the Czech data clearly shows that advice was deadly (especially using the earlier enrollment date). 
+Those who claimed that the COVID shots were beneficial for the elderly were guessing; the Czech data clearly shows that such advice was deadly (see the one dose response with the earlier enrollment date). 
 
 The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the same data using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots.
 
-The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. Nobody seems to want to look at it. I think this is because they will find the same thing I found when I looked at it using the 4 different methods described here: that the COVID vaccines caused people to die more, not less.
+The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. KCOR reveals why.
+
+You can see the [full summary of the results for the Czech data here](data/Czech/KCOR_summary.log).
 
 ## 🔬 Methodology
 
@@ -77,21 +77,21 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
 The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on an enrollment date and tracks their mortality over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy (this is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review)). 
 
  The core steps are:
- 1. Decide on enrollment date(s), slope start/end dates (looking for death minimums where there is no COVID that differentially impacts the cohorts)
+ 1. Decide on the enrollment date(s), slope start/end dates (looking for death minimums where there is no COVID that differentially impacts the cohorts). The enrollment dates are chosen when most of a cohort under interest has been vaccinated. The slope dates are quiet periods when mortality is in a trough (quiet periods). 
  2. Run the algorithm.
 
- These 3 parameters are largely dictated by the data itself. There can be multiple choices for each of these parameters, but generally, the data itself determines them. A future version of KCOR will make these decisions independently.
+ These 3 parameters above are largely dictated by the data itself. There can be multiple choices for each of these parameters, but generally, the data itself determines them. A future version of KCOR will be able to make these decisions independently from the data. For now, they are made manually. 
 
  The algorithm does 3 things to process the data:
- 1. Slope normalizes the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort
- 2. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time providing a net/harm benefit readout at any point in time t.
- 3. Normalizes the ratio to the ratio at the end of a 4‑week baseline period (week 4). Week 0 (enrollment week) is left unscaled; slope is applied from week 1 onward
+ 1. Slope normalizes the weekly mortality rates of the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort. Week 0 (enrollment week) is left unscaled; mortality rate slope normalization is applied from week 1 onward.
+ 2. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time which provides a net/harm benefit readout at any point in time t. KCOR uses the discrete hazard function transform to enable this.
+ 3. Normalizes the final ratio to the ratio at the end of a 4‑week baseline period (week 4). 
 
  The algorithm depends on only three dates: birth, death, vaccination(s). 
  
- Week resolution is fine for vaccination and deaths; 5 or 10 year age ranges for the year of birth are fine. This avoids triggering privacy excuses for not providing the data. The algorithm can also be used on summary files created by aggregating the data for specific enrollment dates, for example, as done in the KCOR_CMR.py script. Such data summaries do not violate any privacy laws. There is no excuse for not providing these.
+ Weekly resolution is fine for vaccination and deaths; 5 or 10 year age ranges for the year of birth are fine. This avoids triggering privacy excuses for not providing the data. The algorithm can also be used on summary files created by aggregating the data for specific enrollment dates, for example, as done in the KCOR_CMR.py script. Such data summaries do not violate any privacy laws. There is no excuse for not providing these.
 
- Note: A "baseline correction" addition to the algorithm was made to adjust the baseline for cohorts where the people got vaccinated well before the enrollment date and the deaths caused by the vaccine plateaued before the enrollment data causing an artifically high baseline death rate. This adjustment, which corrects for this, can be disabled for those who believe this "biases" the result (it negligibly impacts the aggregate results)/
+ Note: An optional "baseline correction" addition to the algorithm was made to adjust the baseline for cohorts where the people got vaccinated well before the enrollment date. This is disabled by default so that the results are truly unbiased.
 
 ### ⚙️ KCOR algorithm
 
@@ -119,27 +119,25 @@ Where:
 
 $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 
-- **Consistency**: Same anchor points used for all doses to ensure comparability
+- **Consistency**: Same anchor points used for all doses for a given enrollment date to ensure comparability
 - **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
 
-#### 3. Mortality Rate Adjustment
-- **Exponential Slope Removal**: `MR_adj = MR × e^{-slope × (t - tₑ)}`
-- **Anchoring**: tₑ = enrollment week index (tₑ = 0)
-- **Dose-Specific Slopes**: Each dose-age combination gets its own slope for adjustment
-
-#### 4. KCOR Computation (Enhanced v4.1)
-**Three-Step Process:**
-
-1. **Individual MR Adjustment**: Apply slope correction to each mortality rate
-2. **Hazard Transform**: Convert adjusted mortality rates to discrete hazard functions for mathematical exactness  
-3. **Cumulative Hazard**: Compute CH as cumulative sum of hazard functions
-4. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to baseline
-
-**Step 1: Mortality Rate Adjustment**
+#### 3. Mortality Rate Adjustment Using the Computed Slopes
+- **Individual MR Adjustment**: Apply slope correction to each mortality rate to create an adjusted mortality rate: 
 
 $$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
 
-**Step 2: Discrete Hazard Function Transform**
+- **Anchoring**: tₑ = enrollment week index (tₑ = 0)
+- **Dose-Specific Slopes**: For a given enrollment date, each dose-age combination gets its own slope for adjustment
+
+#### 4. KCOR Computation 
+**Three-Step Process:**
+
+1. **Hazard Transform**: Convert adjusted mortality rates to discrete hazard functions for mathematical exactness  
+2. **Cumulative Hazard**: Compute CH as cumulative sum of hazard functions
+3. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to baseline
+
+**Step 1: Discrete Hazard Function Transform**
 
 $$\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))$$
 
@@ -147,11 +145,11 @@ Where MR_adj is clipped to 0.999 to avoid log(0).
 
 > **📚 Mathematical Reasoning**: For a detailed explanation of why KCOR uses discrete hazard functions and the mathematical derivation behind this approach, see [Hazard Function Methodology](documentation/hazard_function.md).
 
-**Step 3: Cumulative Hazard (CH)**
+**Step 2: Cumulative Hazard (CH)**
 
 $$\text{CH}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
 
-**Step 4: KCOR as Hazard Ratio (Baseline at Week 4)**
+**Step 3: KCOR as Hazard Ratio (Baseline at Week 4)**
 
 **KCOR Formula:**
 
