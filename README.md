@@ -97,11 +97,11 @@ The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on
 
 #### 1. Data Preprocessing
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
-- **Sex Aggregation**: Mortality data is aggregated across sexes for each (YearOfBirth, Dose, DateDied) combination
+- **Sex Aggregation**: Mortality data is aggregated across sexes for each (YearOfBirth, Dose, DateDied. DCCI) combination
 - **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
 #### 2. Slope Calculation (Lookup Table Method)
-- **Anchor Points**: Uses predefined time points (e.g., weeks 53 and 114 for 2021_24, weeks 19 and 111 for 2022_06)
+- **Anchor Points**: Uses predefined time points (e.g., weeks 53 and 114 for 2021_24)
 - **Window Approach**: For each anchor point, creates a ±2 week window (5 points total)
 - **Geometric Mean**: Calculates geometric mean of smoothed MR values within each window
 
@@ -122,8 +122,8 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 - **Consistency**: Same anchor points used for all doses for a given enrollment date to ensure comparability
 - **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
 
-#### 3. Mortality Rate Adjustment Using the Computed Slopes
-- **Individual MR Adjustment**: Apply slope correction to each mortality rate to create an adjusted mortality rate: 
+#### 3. Mortality Rate Adjustment Using the Computed Slopes (r)
+- **Individual MR Adjustment**: Apply slope correction to each mortality rate for a given enrollment, age, dose combination to create an adjusted mortality rate: 
 
 $$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
 
