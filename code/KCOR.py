@@ -1726,7 +1726,36 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
                     # Then write About and optional debug sheet
-                    about_df = pd.DataFrame(about_data)
+                    # Ensure About 'Field' and 'Value' arrays are the same length
+                    # by constructing them explicitly and padding Values as needed
+                    fields = about_data["Field"]
+                    values = [
+                        VERSION,
+                        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        src_path,
+                        out_path,
+                        "",
+                        "",
+                        f"{FINAL_KCOR_MIN}",
+                        f"{FINAL_KCOR_DATE}",
+                        f"{MAX_DATE_FOR_SLOPE}",
+                        f"{ANCHOR_WEEKS}",
+                        f"{SLOPE_ANCHOR_T}",
+                        f"{KCOR_BASELINE_INDEX}",
+                        f"{SLOPE_WINDOW_SIZE}",
+                        f"{MA_TOTAL_LENGTH}",
+                        f"{CENTERED}",
+                        f"{YEAR_RANGE}",
+                        f"{ENROLLMENT_DATES}",
+                        f"{DEBUG_VERBOSE}",
+                        f"{OVERRIDE_DOSE_PAIRS}",
+                        f"{OVERRIDE_YOBS}",
+                    ]
+                    if len(values) < len(fields):
+                        values.extend([""] * (len(fields) - len(values)))
+                    elif len(values) > len(fields):
+                        values = values[:len(fields)]
+                    about_df = pd.DataFrame({"Field": fields, "Value": values})
                     about_df.to_excel(writer, index=False, sheet_name="About")
                     if DEBUG_VERBOSE:
                         debug_df.to_excel(writer, index=False, sheet_name="by_dose")
@@ -1745,9 +1774,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 # Move temp file into place (atomic on POSIX; best-effort on Windows)
                 try:
                     os.replace(tmp_path, out_path)
-                except PermissionError:
-                    # If target is open in Excel, replacement will fail
-                    raise
+                except OSError as e:
+                    # Handle cross-device move (EXDEV) by copy + replace
+                    if getattr(e, 'errno', None) == 18 or 'cross-device' in str(e).lower():
+                        shutil.copyfile(tmp_path, out_path)
+                        os.remove(tmp_path)
+                    else:
+                        # If target is open in Excel, replacement will fail with PermissionError on Windows
+                        raise
                 dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
                 break
                 
