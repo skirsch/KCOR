@@ -984,6 +984,8 @@ As you can imagine, it's like pulling teeth to get any credible epidemiologist t
 Epidemiologist and Administrator  
 McCullough Foundation
 
+### Grok review
+
 Grok claimed KCOR is mathematically sound, but that KCOR is fundamentally flawed because relies on assumptions about the data that are clearly wrong, such as that you can normalize slope mortality for frail cohorts. 
 
 At first, Grok tried to argue that even for ideal Gompertz cohorts, KCOR would fail. So I had it compute the mortality rate change for age 80 with frailty 3 (which is more extreme than real life) and it realized there was only a 1.6% differential after 2 years. I pointed out KCOR is averaged out over that period so the error would be half that amount. I also pointed out that the slope computation is done over a year period in the center so the net error would be even smaller since it would error one way early and the other way later which further reduces the error.
