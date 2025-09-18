@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.4
@@ -90,6 +89,8 @@ from pathlib import Path
 import warnings
 import logging
 from datetime import datetime
+import tempfile
+import shutil
 
 # Dependencies: pandas, numpy, openpyxl
 
@@ -1572,7 +1573,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     if not _is_sa_mode():
         while retry_count < max_retries:
             try:
-                with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+                # Write to /tmp (when available) to avoid slow/locked Windows target paths, then move atomically
+                tmp_dir = "/tmp" if os.path.isdir("/tmp") else os.path.dirname(out_path) or "."
+                # Ensure suffix remains .xlsx so engine selection works
+                base_no_ext, _ = os.path.splitext(os.path.basename(out_path))
+                tmp_base = base_no_ext + ".tmp.xlsx"
+                tmp_path = os.path.join(tmp_dir, tmp_base)
+                with pd.ExcelWriter(tmp_path, engine="openpyxl") as writer:
                     # Add About sheet first
                     about_data = {
                     "Field": [
@@ -1710,23 +1717,19 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "",
                         "",
-                        "",
                         ""
                     ]
                     }
-                    about_df = pd.DataFrame(about_data)
-                    about_df.to_excel(writer, index=False, sheet_name="About")
-                    
-                    # Add debug sheet (working format)
-                    if DEBUG_VERBOSE:
-                        debug_df.to_excel(writer, index=False, sheet_name="by_dose")
-                    
-                    # Individual sheets removed - everything is now in the dose_pairs sheet
-                    
-                    # Ensure dose_pairs sheet Date column stays as date objects
+                    # Write main data first to ensure at least one visible sheet exists
                     all_data = combined.copy()
                     all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
                     all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
+
+                    # Then write About and optional debug sheet
+                    about_df = pd.DataFrame(about_data)
+                    about_df.to_excel(writer, index=False, sheet_name="About")
+                    if DEBUG_VERBOSE:
+                        debug_df.to_excel(writer, index=False, sheet_name="by_dose")
 
                     # Add dose_pair_deaths details sheet
                     if pair_deaths_all:
@@ -1739,7 +1742,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         ])
                     pair_deaths_df.to_excel(writer, index=False, sheet_name="dose_pair_deaths")
                 
-                # If we get here, the file was written successfully
+                # Move temp file into place (atomic on POSIX; best-effort on Windows)
+                try:
+                    os.replace(tmp_path, out_path)
+                except PermissionError:
+                    # If target is open in Excel, replacement will fail
+                    raise
                 dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
                 break
                 
