@@ -88,7 +88,7 @@ import pandas as pd
 from pathlib import Path
 import warnings
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import tempfile
 import shutil
 
@@ -136,7 +136,7 @@ VERSION = "v4.4"                # KCOR version number
 #        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
 # v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
 #        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
-#        - Added slope lookup entry for 2022_47 consistent with MAX_DATE_FOR_SLOPE
+#        - Added slope lookup entry for 2022_47 (legacy; dynamic anchors now default)
 
 # Core KCOR methodology parameters
 # Historical: ANCHOR_WEEKS was used for both slope anchoring and KCOR baseline.
@@ -151,11 +151,16 @@ MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized
 FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
 FINAL_KCOR_DATE = "4/1/24"      # Date to check for KCOR scaling (MM/DD/YY format)
 
-# Date limitations for data quality - prevents using unreliable data beyond this date
-MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation input ranges
+# Removed MAX_DATE_FOR_SLOPE: dynamic anchors specify calendar dates directly
 
 # SLOPE CALCULATION METHODOLOGY:
 # Uses lookup table with window-based geometric mean approach for robust slope estimation
+# the anchor points are chosen during "quiet periods" with minimal differential events
+# (legacy comment retained for context; fixed max date no longer used)
+#
+# IMPORTANT:
+# the points should be chosen using the SMOOTHED_RAW_MR values to find the quiet periods, not the raw MR values
+#
 SLOPE_LOOKUP_TABLE = {
     '2021_13': (64, 61),  # (start_offset, length) where offset2 = start + length
     '2021_24': (53, 61),  # (start_offset, length) weeks from enrollment for slope calculation
@@ -163,6 +168,14 @@ SLOPE_LOOKUP_TABLE = {
     '2022_47': (28, 43)    # Late-2022 cohort anchors within allowed window to 2024-04-01
 }
 SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points total) for geometric mean
+
+# Dynamic anchor selection (preferred over lookup in normal runs)
+# Candidates are calendar quiet periods (ISO year-week). The first anchor must be
+# at least MIN_ANCHOR_GAP_WEEKS after enrollment; the second must be at least
+# MIN_ANCHOR_SEPARATION_WEEKS after the first. Both are configurable.
+QUIET_ANCHOR_ISO_WEEKS = ["2022-25", "2023-28", "2024-15"]
+MIN_ANCHOR_GAP_WEEKS = 26
+MIN_ANCHOR_SEPARATION_WEEKS = 39
 
 # Reporting date lookup for KCOR summary/console per cohort (sheet name)
 # For the first three cohorts, use end of 2022; for 2022_47, use one year later (end of 2023)
@@ -360,9 +373,7 @@ def compute_group_slopes_lookup(df, sheet_name, logger=None):
     offset2 = start_offset + length
     T = length  # Time difference between the two points
     
-    # Validate that lookup table dates don't extend beyond MAX_DATE_FOR_SLOPE
-    from datetime import datetime
-    max_date = datetime.strptime(MAX_DATE_FOR_SLOPE, "%Y-%m-%d")
+    # Legacy check removed: MAX_DATE_FOR_SLOPE no longer used
     
     # Get enrollment date from sheet name (e.g., "2021_24" -> 2021, week 24)
     if "_" in sheet_name:
@@ -383,12 +394,7 @@ def compute_group_slopes_lookup(df, sheet_name, logger=None):
         lookup_date1 = enrollment_date + timedelta(weeks=offset1)
         lookup_date2 = enrollment_date + timedelta(weeks=offset2)
         
-        # Check if lookup dates extend beyond MAX_DATE_FOR_SLOPE
-        if lookup_date1 > max_date or lookup_date2 > max_date:
-            error_msg = f"ERROR: Lookup table dates extend beyond {MAX_DATE_FOR_SLOPE}. "
-            error_msg += f"Sheet {sheet_name} enrollment: {enrollment_date.strftime('%Y-%m-%d')}, "
-            error_msg += f"offsets ({offset1}, {offset2}) weeks -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
-            raise ValueError(error_msg)
+        # No fixed max-date check; anchors are chosen dynamically elsewhere in normal flow
         
         if logger:
             logger.info(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
@@ -447,6 +453,104 @@ def compute_group_slopes_lookup(df, sheet_name, logger=None):
     
     return slopes
 
+def _parse_iso_year_week(s: str):
+    from datetime import datetime
+    y, w = s.split("-")
+    # ISO week to date: Monday of that ISO week
+    return datetime.fromisocalendar(int(y), int(w), 1)
+
+def select_dynamic_anchor_offsets(enrollment_date, df_dates):
+    """Select offsets (weeks from enrollment) for two anchors based on calendar quiet weeks.
+
+    - First anchor: first candidate date ≥ enrollment_date + MIN_ANCHOR_GAP_WEEKS
+    - Second anchor: first candidate ≥ first_anchor + MIN_ANCHOR_SEPARATION_WEEKS
+    Returns (offset1, offset2) in weeks. If not found, returns (None, None).
+    """
+    from datetime import timedelta
+    candidates = [_parse_iso_year_week(s) for s in QUIET_ANCHOR_ISO_WEEKS]
+    # Snap candidate to the nearest available df date on/after candidate
+    df_dates_sorted = sorted(set(pd.to_datetime(df_dates).dt.date))
+    def next_available(d):
+        for dt in df_dates_sorted:
+            if pd.to_datetime(dt) >= d:
+                return pd.to_datetime(dt)
+        return None
+    first_earliest = enrollment_date + timedelta(weeks=int(MIN_ANCHOR_GAP_WEEKS))
+    first = None
+    for c in candidates:
+        if c >= first_earliest:
+            na = next_available(c)
+            if na is not None:
+                first = na
+                break
+    if first is None:
+        return (None, None)
+    second_earliest = first + timedelta(weeks=int(MIN_ANCHOR_SEPARATION_WEEKS))
+    second = None
+    for c in candidates:
+        if c >= second_earliest:
+            na = next_available(c)
+            if na is not None:
+                second = na
+                break
+    if second is None:
+        return (None, None)
+    # Compute week offsets from enrollment (floor to integer weeks)
+    offset1 = int((first - enrollment_date).days // 7)
+    offset2 = int((second - enrollment_date).days // 7)
+    return (offset1, offset2)
+
+def compute_group_slopes_dynamic(df, sheet_name, dual_print_fn=None):
+    """Compute slopes using dynamic anchors derived from QUIET_ANCHOR_ISO_WEEKS.
+
+    Falls back to 0.0 slopes if anchors cannot be selected.
+    """
+    from datetime import datetime, timedelta
+    slopes = {}
+    # Derive enrollment date from sheet name
+    enrollment_date = None
+    if "_" in sheet_name:
+        year_str, week_str = sheet_name.split("_")
+        try:
+            year = int(year_str)
+            week = int(week_str)
+            enrollment_date = datetime.fromisocalendar(year, week, 1)
+        except Exception:
+            enrollment_date = None
+    if enrollment_date is None:
+        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+            slopes[(yob,dose)] = 0.0
+        return slopes
+    # Choose anchors
+    off1, off2 = select_dynamic_anchor_offsets(enrollment_date, df["DateDied"])    
+    if off1 is None or off2 is None or off2 <= off1:
+        if dual_print_fn:
+            dual_print_fn(f"[WARN] Dynamic anchors not found for {sheet_name}; using slope 0.0")
+        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+            slopes[(yob,dose)] = 0.0
+        return slopes
+    T = off2 - off1
+    # Log anchors
+    if dual_print_fn:
+        a1 = (enrollment_date + pd.to_timedelta(off1, unit='W')).date()
+        a2 = (enrollment_date + pd.to_timedelta(off2, unit='W')).date()
+        dual_print_fn(f"[INFO] {sheet_name} dynamic anchors: t={off1} ({a1}), t={off2} ({a2}), Δt={T} weeks")
+    # Compute slopes using smoothed MR within ± window around each offset
+    for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
+        g_sorted = g.sort_values("t")
+        w1s, w1e = max(0, off1 - SLOPE_WINDOW_SIZE), off1 + SLOPE_WINDOW_SIZE
+        w2s, w2e = max(0, off2 - SLOPE_WINDOW_SIZE), off2 + SLOPE_WINDOW_SIZE
+        p1 = g_sorted[(g_sorted["t"] >= w1s) & (g_sorted["t"] <= w1e)]
+        p2 = g_sorted[(g_sorted["t"] >= w2s) & (g_sorted["t"] <= w2e)]
+        vals1 = p1["MR_smooth"][p1["MR_smooth"] > EPS].values
+        vals2 = p2["MR_smooth"][p2["MR_smooth"] > EPS].values
+        if len(vals1) == 0 or len(vals2) == 0:
+            slopes[(yob,dose)] = 0.0
+            continue
+        slope = (np.mean(np.log(vals2)) - np.mean(np.log(vals1))) / T
+        slopes[(yob,dose)] = float(np.clip(slope, -10.0, 10.0))
+    return slopes
+
 def compute_death_slopes_lookup(df, sheet_name, logger=None):
     """Slope per (YearOfBirth,Dose) using deaths/week (not MR).
     
@@ -467,9 +571,7 @@ def compute_death_slopes_lookup(df, sheet_name, logger=None):
     offset2 = start_offset + length
     T = length
     
-    # Validate that lookup table dates don't extend beyond MAX_DATE_FOR_SLOPE
-    from datetime import datetime, timedelta
-    max_date = datetime.strptime(MAX_DATE_FOR_SLOPE, "%Y-%m-%d")
+    # Legacy check removed: MAX_DATE_FOR_SLOPE no longer used
     
     if "_" in sheet_name:
         year_str, week_str = sheet_name.split("_")
@@ -483,13 +585,7 @@ def compute_death_slopes_lookup(df, sheet_name, logger=None):
         enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
         lookup_date1 = enrollment_date + timedelta(weeks=offset1)
         lookup_date2 = enrollment_date + timedelta(weeks=offset2)
-        if lookup_date1 > max_date or lookup_date2 > max_date:
-            error_msg = (
-                f"ERROR: Death-slope lookup dates extend beyond {MAX_DATE_FOR_SLOPE}. "
-                f"Sheet {sheet_name} enrollment: {enrollment_date.strftime('%Y-%m-%d')}, "
-                f"offsets ({offset1}, {offset2}) weeks -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
-            )
-            raise ValueError(error_msg)
+        # No fixed max-date check; anchors are chosen dynamically elsewhere in normal flow
         if logger:
             logger.info(
                 f"[DEBUG] Death-slope lookup validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
@@ -1100,7 +1196,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print("Configuration Parameters (effective):")
     dual_print(f"  FINAL_KCOR_MIN        = {FINAL_KCOR_MIN}")
     dual_print(f"  FINAL_KCOR_DATE       = {FINAL_KCOR_DATE}")
-    dual_print(f"  MAX_DATE_FOR_SLOPE    = {MAX_DATE_FOR_SLOPE}")
     dual_print(f"  ANCHOR_WEEKS          = {ANCHOR_WEEKS}")
     dual_print(f"  SLOPE_ANCHOR_T        = {SLOPE_ANCHOR_T}")
     dual_print(f"  KCOR_BASELINE_INDEX   = {KCOR_BASELINE_INDEX}")
@@ -1113,7 +1208,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
-    dual_print(f"  SLOPE_LOOKUP_TABLE    = {SLOPE_LOOKUP_TABLE}")
+    dual_print(f"  QUIET_ANCHOR_ISO_WEEKS= {QUIET_ANCHOR_ISO_WEEKS}")
+    dual_print(f"  MIN_ANCHOR_GAP_WEEKS  = {MIN_ANCHOR_GAP_WEEKS}")
+    dual_print(f"  MIN_ANCHOR_SEPARATION_WEEKS = {MIN_ANCHOR_SEPARATION_WEEKS}")
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print("="*80)
     dual_print("")
@@ -1161,7 +1258,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
             df = df[df["DateDied"] >= enrollment_date]
             dual_print(f"[DEBUG] Filtered to start from enrollment date {enrollment_date.strftime('%m/%d/%Y')}: {len(df)} rows")
-            # SA pre-check: ensure max(start)+max(length) does not exceed allowed weeks to MAX_DATE_FOR_SLOPE
+            # SA pre-check: ensure max(start)+max(length) does not exceed available data window
             if _is_sa_mode():
                 try:
                     sa_starts_chk = _parse_triplet_range(os.environ.get('SA_SLOPE_START', ''))
@@ -1169,11 +1266,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     if sa_starts_chk and sa_lengths_chk:
                         max_start = max(sa_starts_chk)
                         max_len = max(sa_lengths_chk)
-                        max_date = datetime.strptime(MAX_DATE_FOR_SLOPE, "%Y-%m-%d")
-                        allowed_weeks = int((max_date - enrollment_date).days // 7)
+                        last_date = pd.to_datetime(df["DateDied"]).max()
+                        allowed_weeks = int((last_date - enrollment_date).days // 7)
                         if (max_start + max_len) > allowed_weeks:
-                            dual_print(f"\n❌ SA configuration invalid for sheet {sh}: max(start)+max(length)={max_start}+{max_len}={max_start+max_len} > allowed {allowed_weeks} weeks (to {MAX_DATE_FOR_SLOPE}).")
-                            dual_print("   Please reduce SA_SLOPE_START/SA_SLOPE_LENGTH maxima or adjust MAX_DATE_FOR_SLOPE.")
+                            dual_print(f"\n❌ SA configuration invalid for sheet {sh}: max(start)+max(length)={max_start}+{max_len}={max_start+max_len} > allowed {allowed_weeks} weeks (to {last_date.date()}).")
+                            dual_print("   Please reduce SA_SLOPE_START/SA_SLOPE_LENGTH maxima.")
                             raise SystemExit(2)
                 except Exception:
                     pass
@@ -1235,7 +1332,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     try:
                         slopes = compute_group_slopes_lookup(df, sh)
                     except ValueError as e:
-                        # Safety check: if this combo exceeds MAX_DATE_FOR_SLOPE, skip and mark to stop trying larger combos
+                        # Safety check for invalid slope combo; skip and mark to stop trying larger combos
                         if DEBUG_VERBOSE:
                             print(f"[SA] Skipping invalid slope combo start={start_val}, length={length_val}: {e}")
                         skip_remaining_lengths = True
@@ -1294,8 +1391,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 all_out.append(build_kcor_rows(df, sh, dual_print))
             continue
         else:
-            # Lookup table slope calculation (using smoothed MR values)
-            slopes = compute_group_slopes_lookup(df, sh)
+            # Dynamic anchor slope calculation (default). Use lookup as fallback only if desired.
+            slopes = compute_group_slopes_dynamic(df, sh, dual_print)
         
         # Debug: Show computed slopes
         if DEBUG_VERBOSE:
@@ -1591,7 +1688,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Configuration Parameters (effective):",
                         "  FINAL_KCOR_MIN",
                         "  FINAL_KCOR_DATE",
-                        "  MAX_DATE_FOR_SLOPE",
                         "  ANCHOR_WEEKS",
                         "  SLOPE_ANCHOR_T",
                         "  KCOR_BASELINE_INDEX",
@@ -1674,7 +1770,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"",
                         f"{FINAL_KCOR_MIN}",
                         f"{FINAL_KCOR_DATE}",
-                        f"{MAX_DATE_FOR_SLOPE}",
                         f"{ANCHOR_WEEKS}",
                         f"{SLOPE_ANCHOR_T}",
                         f"{KCOR_BASELINE_INDEX}",
@@ -1738,7 +1833,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         f"{FINAL_KCOR_MIN}",
                         f"{FINAL_KCOR_DATE}",
-                        f"{MAX_DATE_FOR_SLOPE}",
                         f"{ANCHOR_WEEKS}",
                         f"{SLOPE_ANCHOR_T}",
                         f"{KCOR_BASELINE_INDEX}",
@@ -1870,7 +1964,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "param_slope_window_size": SLOPE_WINDOW_SIZE,
                     "param_final_kcor_min": param_final_min,
                     "param_final_kcor_date": FINAL_KCOR_DATE,
-                    "param_max_date_for_slope": MAX_DATE_FOR_SLOPE,
                     "param_slope_start": off1,
                     "param_slope_length": slope_len,
                     "param_sa_cohorts": sa_env_cohorts,

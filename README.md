@@ -80,10 +80,17 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
  - **Baseline differences** between groups through normalization
  - **Statistical uncertainty** in the estimates through proper variance propagation
 
-The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on an enrollment date and tracks their mortality over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy (this is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review)). 
+The KCOR algorithm uses fixed cohorts defined by their vaccine status (# of shots) on an enrollment date and tracks their mortality over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy (this is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review)). 
+
+KCOR relies on a very simple engineering approximation that can be easily validated using Gompertz mortality with depletion and frailty: over a two year period, even a 90 year old cohort with frailty 2 will die on nearly a straight line (less than 1.6% deviation over a year). If you now mix together cohorts with different frailties, the mortality rate of the combined cohort (e.g., an unvaccinated cohort of 90 year olds) is well-approximated by a single exponential—and KCOR’s slope-normalization behave as intended. The accuracy increases with cohorts younger than 90 years old.
+
+A [concise visual guide to KCOR](documentation/KCOR_Visual_Guide.pdf) describes each of the KCOR steps with a concrete example. The document was prepared by an honest epidemiologist who chooses to remain confidential for fear of being fired for not supporting the "safe and effective" narrative. 
+
+There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Paper.docx) for submission to medical journals.
 
  The core steps are:
- 1. Decide on the enrollment date(s), slope start/end dates (looking for death minimums where there is no COVID that differentially impacts the cohorts). The enrollment dates are chosen when most of a cohort under interest has been vaccinated. The slope dates are quiet periods when mortality is in a trough (quiet periods). 
+ 1. Decide on the enrollment date(s), slope start/end dates. The enrollment dates are chosen when most of a cohort under interest has been vaccinated. The two slope dates are two widely separated quiet periods when the smoothed mortality (smoothing is done with a centered window) is in a trough (quiet periods with no COVID that might affect differential mortality). 
+
  2. Run the algorithm.
 
  These 3 parameters above are largely dictated by the data itself. There can be multiple choices for each of these parameters, but generally, the data itself determines them. A future version of KCOR will be able to make these decisions independently from the data. For now, they are made manually. 
@@ -106,10 +113,15 @@ The algorithm uses fixed cohorts defined by their vaccine status (# of shots) on
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (YearOfBirth, Dose, DateDied. DCCI) combination
 - **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
-#### 2. Slope Calculation (Lookup Table Method)
-- **Anchor Points**: Uses predefined time points (e.g., weeks 53 and 114 for 2021_24)
-- **Window Approach**: For each anchor point, creates a ±2 week window (5 points total)
-- **Geometric Mean**: Calculates geometric mean of smoothed MR values within each window
+#### 2. Slope Calculation (Dynamic Quiet-Period Anchors)
+- **Quiet-Period Calendar Candidates**: `2022-25`, `2023-28`, `2024-15` (ISO year-week)
+- **Automatic Anchor Selection**:
+  - First anchor = first candidate date that is at least `MIN_ANCHOR_GAP_WEEKS` (default: 26) after enrollment
+  - Second anchor = first candidate date at least `MIN_ANCHOR_SEPARATION_WEEKS` (default: 39) after the first
+  - Each anchor snaps forward to the next available data date on or after the candidate
+- **Window Approach**: Around each anchor, use a ±`SLOPE_WINDOW_SIZE` week window (default: 2) for stability
+- **Geometric Mean on Smoothed MR**: Compute geometric mean over `MR_smooth` in each window; slope is `r = (1/Δt) × ln(B̃/Ã)`
+- **Logging**: Chosen anchor dates and Δt are printed for each enrollment cohort in the log
 
 **Slope Formula:**
 
@@ -588,13 +600,15 @@ SLOPE_WINDOW_SIZE = 2               # Window size for slope calculation (±2 wee
 MA_TOTAL_LENGTH = 8                 # Moving average length (8 weeks)
 CENTERED = True                     # Use centered moving average
 
-# Data quality limits
-MAX_DATE_FOR_SLOPE = "2024-04-01"  # Maximum date for slope calculation
-
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process. Deaths outside the extremes are NOT combined.
 # the following dates correspond to  3/29/21, 6/15/21, 2/7/22, 11/21/22
 ENROLLMENT_DATES = ["2021_13", "2021_24", "2022_06", "2022_47"]  # ISO Year-week Enrollment dates (sheet names to process
+
+# Dynamic slope anchors (quiet-period calendar picks)
+QUIET_ANCHOR_ISO_WEEKS = ["2022-25", "2023-28", "2024-15"]
+MIN_ANCHOR_GAP_WEEKS = 26             # min weeks after enrollment for first anchor
+MIN_ANCHOR_SEPARATION_WEEKS = 39      # min weeks between first and second anchors
 
 ```
 
