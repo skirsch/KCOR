@@ -87,3 +87,62 @@ Configuration Parameters (effective):
   YoB 1995, Dose 2: slope = -0.005661
   YoB 2000, Dose 2: slope = 0.000000
 
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 126150 rows
+[DEBUG] Filtered to 118320 rows for ages 1920-2000
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 70992 rows
+[DEBUG] Aggregated across sexes: 8874 rows
+
+[DEBUG] Computed slopes for sheet 2021_24:
+  YoB 1920, Dose 0: slope = -0.004453
+  YoB 1925, Dose 0: slope = -0.004233
+  YoB 1930, Dose 0: slope = -0.001571
+  YoB 1935, Dose 0: slope = -0.001475
+  YoB 1940, Dose 0: slope = -0.003626
+  YoB 1945, Dose 0: slope = -0.001115
+  YoB 1950, Dose 0: slope = -0.001401
+  YoB 1955, Dose 0: slope = 0.000408
+  YoB 1960, Dose 0: slope = -0.000866
+  YoB 1965, Dose 0: slope = -0.001065
+  YoB 1970, Dose 0: slope = -0.000521
+  YoB 1975, Dose 0: slope = 0.000027
+  YoB 1980, Dose 0: slope = 0.001336
+  YoB 1985, Dose 0: slope = 0.000815
+  YoB 1990, Dose 0: slope = -0.000816
+  YoB 1995, Dose 0: slope = -0.003552
+  YoB 2000, Dose 0: slope = -0.001072
+  YoB 1920, Dose 1: slope = 0.000517
+  YoB 1925, Dose 1: slope = -0.001742
+  YoB 1930, Dose 1: slope = 0.001284
+  YoB 1935, Dose 1: slope = -0.001176
+  YoB 1940, Dose 1: slope = 0.001069
+  YoB 1945, Dose 1: slope = 0.001254
+  YoB 1950, Dose 1: slope = 0.002074
+  YoB 1955, Dose 1: slope = 0.000670
+  YoB 1960, Dose 1: slope = 0.002698
+  YoB 1965, Dose 1: slope = 0.005185
+  YoB 1970, Dose 1: slope = 0.002743
+  YoB 1975, Dose 1: slope = 0.001738
+  YoB 1980, Dose 1: slope = 0.006556
+  YoB 1985, Dose 1: slope = 0.013097
+  YoB 1990, Dose 1: slope = 0.000135
+  YoB 1995, Dose 1: slope = 0.012313
+  YoB 2000, Dose 1: slope = 0.024516
+  YoB 1920, Dose 2: slope = 0.000955
+  YoB 1925, Dose 2: slope = 0.001785
+  YoB 1930, Dose 2: slope = 0.002695
+  YoB 1935, Dose 2: slope = 0.000864
+  YoB 1940, Dose 2: slope = 0.001896
+  YoB 1945, Dose 2: slope = 0.002820
+  YoB 1950, Dose 2: slope = 0.001537
+  YoB 1955, Dose 2: slope = 0.002017
+  YoB 1960, Dose 2: slope = 0.000469
+  YoB 1965, Dose 2: slope = 0.002927
+  YoB 1970, Dose 2: slope = 0.005298
+  YoB 1975, Dose 2: slope = 0.003226
+  YoB 1980, Dose 2: slope = 0.000282
+  YoB 1985, Dose 2: slope = 0.010700
+  YoB 1990, Dose 2: slope = -0.009365
+  YoB 1995, Dose 2: slope = 0.006830
+  YoB 2000, Dose 2: slope = 0.000000
+
