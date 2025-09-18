@@ -994,7 +994,7 @@ Then the final argument was there is no possible way a 80-90 year old unvaccinat
 
 Grok could have said something like "before using KCOR, validate that the cohorts under study can be accurately adjusted with a simple exponential." If people did that, they'd be pleasantly surprised that there is no flaw. But instead, Grok simply dismissed KCOR as flawed because it assumes KCOR must be flawed because it conflicts with the "safe and effective" narrative. 
 
-People have these preconceived notions of how frail cohorts die, but it turns out that in the real world, the underlying mortality trend is nearly linear over a 2 year period and most all hazards are proportional to mortality (COVID being the rare exception where KCOR will give a conservative harm estimate). If needed, KCOR can easily be adapted using piecewise slope normalization if it is necessary to get extreme accuracy for very old and frail cohorts with extremely high depletion. Grok seemed more interested in trashing the method than pointing out how it's objections can be easily overcome.
+In the real world, the underlying mortality trend is nearly linear over a 2 year period for most all cohorts of interest and most all hazards are proportional to mortality (COVID being the rare exception where KCOR will give a conservative harm estimate). If needed, KCOR can easily be adapted to highly frail cohorts using piecewise slope normalization if it is necessary to get extreme accuracy for these cases. Grok seemed more interested in trashing the method than pointing out how it's objections can be easily overcome.
 
 ## 📄 License
 
