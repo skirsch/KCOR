@@ -139,12 +139,11 @@ VERSION = "v4.4"                # KCOR version number
 #        - Added slope lookup entry for 2022_47 (legacy; dynamic anchors now default)
 
 # Core KCOR methodology parameters
-# Historical: ANCHOR_WEEKS was used for both slope anchoring and KCOR baseline.
-# New behavior: slope anchored at enrollment (t=0), KCOR baseline normalization at week 1.
-ANCHOR_WEEKS = 4                # Legacy value (kept for backward-compatibility in logs/comments)
+# KCOR baseline normalization week (KCOR == 1 at this week; weeks counted from enrollment t=0)
+KCOR_NORMALIZATION_WEEK = 4     # default week 4 which is the 5th week of cumulated data. See also SKIP_WEEKS.
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
-KCOR_BASELINE_INDEX = 1         # Normalize KCOR at week 1 (leave week 0 as-is)
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
+SKIP_WEEKS = 0                  # Start accumulating hazards/statistics from this week index (0 = from enrollment)
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 
 # KCOR normalization fine-tuning parameters
@@ -153,20 +152,8 @@ FINAL_KCOR_DATE = "4/1/24"      # Date to check for KCOR scaling (MM/DD/YY forma
 
 # Removed MAX_DATE_FOR_SLOPE: dynamic anchors specify calendar dates directly
 
-# SLOPE CALCULATION METHODOLOGY:
-# Uses lookup table with window-based geometric mean approach for robust slope estimation
-# the anchor points are chosen during "quiet periods" with minimal differential events
-# (legacy comment retained for context; fixed max date no longer used)
-#
-# IMPORTANT:
-# the points should be chosen using the SMOOTHED_RAW_MR values to find the quiet periods, not the raw MR values
-#
-SLOPE_LOOKUP_TABLE = {
-    '2021_13': (64, 61),  # (start_offset, length) where offset2 = start + length
-    '2021_24': (53, 61),  # (start_offset, length) weeks from enrollment for slope calculation
-    '2022_06': (19, 92),  # These dates chosen during "quiet periods" with minimal differential events
-    '2022_47': (28, 43)    # Late-2022 cohort anchors within allowed window to 2024-04-01
-}
+# SLOPE CALCULATION METHODOLOGY (Dynamic by default):
+# Anchors are chosen from QUIET_ANCHOR_ISO_WEEKS subject to gap/separation rules.
 SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points total) for geometric mean
 
 # Dynamic anchor selection (preferred over lookup in normal runs)
@@ -260,9 +247,9 @@ try:
     # Core method knobs
     _env_anchor = os.environ.get('SA_ANCHOR_WEEKS')
     if _env_anchor:
-        ANCHOR_WEEKS = int(_env_anchor)
+        KCOR_NORMALIZATION_WEEK = int(_env_anchor)
         if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding ANCHOR_WEEKS via SA_ANCHOR_WEEKS: {ANCHOR_WEEKS}")
+            print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEK via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEK}")
     _env_ma = os.environ.get('SA_MA_TOTAL_LENGTH')
     if _env_ma:
         MA_TOTAL_LENGTH = int(_env_ma)
@@ -358,101 +345,12 @@ def get_dose_pairs(sheet_name):
         return [(1,0), (2,0), (2,1)]
 
 def compute_group_slopes_lookup(df, sheet_name, logger=None):
-    """Slope per (YearOfBirth,Dose) using lookup table method."""
+    """[Deprecated] Lookup-based slopes removed. Use compute_group_slopes_dynamic instead."""
     slopes = {}
-    
-    # Get lookup table values for this sheet
-    if sheet_name not in SLOPE_LOOKUP_TABLE:
-        print(f"[WARNING] No lookup table entry for sheet {sheet_name}, using default slope 0.0")
-        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-            slopes[(yob,dose)] = 0.0
+    for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+        slopes[(yob, dose)] = 0.0
         return slopes
     
-    start_offset, length = SLOPE_LOOKUP_TABLE[sheet_name]
-    offset1 = start_offset
-    offset2 = start_offset + length
-    T = length  # Time difference between the two points
-    
-    # Legacy check removed: MAX_DATE_FOR_SLOPE no longer used
-    
-    # Get enrollment date from sheet name (e.g., "2021_24" -> 2021, week 24)
-    if "_" in sheet_name:
-        year_str, week_str = sheet_name.split("_")
-        enrollment_year = int(year_str)
-        enrollment_week = int(week_str)
-        
-        # Calculate enrollment date
-        from datetime import timedelta
-        jan1 = datetime(enrollment_year, 1, 1)
-        days_to_monday = (7 - jan1.weekday()) % 7
-        if days_to_monday == 0 and jan1.weekday() != 0:
-            days_to_monday = 7
-        first_monday = jan1 + timedelta(days=days_to_monday)
-        enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
-        
-        # Calculate lookup dates
-        lookup_date1 = enrollment_date + timedelta(weeks=offset1)
-        lookup_date2 = enrollment_date + timedelta(weeks=offset2)
-        
-        # No fixed max-date check; anchors are chosen dynamically elsewhere in normal flow
-        
-        if logger:
-            logger.info(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
-                  f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})")
-        else:
-            print(f"[DEBUG] Lookup table validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
-                  f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})")
-    
-    for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-        g_sorted = g.sort_values("t")
-        
-        # Get window of points around offset1 (anchor point 1)
-        window1_start = max(0, offset1 - SLOPE_WINDOW_SIZE)
-        window1_end = offset1 + SLOPE_WINDOW_SIZE
-        window1_points = g_sorted[(g_sorted["t"] >= window1_start) & (g_sorted["t"] <= window1_end)]
-        
-        # Get window of points around offset2 (anchor point 2)
-        window2_start = max(0, offset2 - SLOPE_WINDOW_SIZE)
-        window2_end = offset2 + SLOPE_WINDOW_SIZE
-        window2_points = g_sorted[(g_sorted["t"] >= window2_start) & (g_sorted["t"] <= window2_end)]
-        
-        if window1_points.empty or window2_points.empty:
-            slopes[(yob,dose)] = 0.0
-            # if DEBUG_VERBOSE and (yob, dose) in [(1940, 0), (1940, 2)]:
-            #     print(f"  [DEBUG] Missing lookup points for Age {yob}, Dose {dose}: t={offset1} or t={offset2}")
-            continue
-        
-        # Calculate geometric mean of MR values in each window
-        # Filter out non-positive values for geometric mean calculation
-        mr1_values = window1_points["MR_smooth"][window1_points["MR_smooth"] > EPS].values
-        mr2_values = window2_points["MR_smooth"][window2_points["MR_smooth"] > EPS].values
-        
-        if len(mr1_values) == 0 or len(mr2_values) == 0:
-            slopes[(yob,dose)] = 0.0
-            continue
-        
-        # Direct geometric mean calculation (more efficient than exp(mean(log)))
-        # Log of geometric mean = mean of logs
-        log_A = np.mean(np.log(mr1_values))  # Log of geometric mean of MR in window1
-        log_B = np.mean(np.log(mr2_values))  # Log of geometric mean of MR in window2
-        
-        # Calculate exponential slope: slope = (log_B - log_A) / T
-        slope = (log_B - log_A) / T
-        
-        # Clip extreme slopes to prevent overflow in exp() calculations
-        slope = np.clip(slope, -10.0, 10.0)
-        
-        slopes[(yob,dose)] = slope
-        
-        # Debug: Show lookup table calculation
-        # if DEBUG_VERBOSE and (yob, dose) in [(1940, 0), (1940, 2)]:
-        #     print(f"  [DEBUG] Lookup slope calculation for Age {yob}, Dose {dose}:")
-        #     print(f"    Point 1: t={offset1}, MR={B:.6f}")
-        #     print(f"    Point 2: t={offset2}, MR={A:.6f}")
-        #     print(f"    T={T}, slope = ln({B:.6f}/{A:.6f})/{T} = {slope:.6f}")
-    
-    return slopes
-
 def _parse_iso_year_week(s: str):
     from datetime import datetime
     y, w = s.split("-")
@@ -466,7 +364,7 @@ def select_dynamic_anchor_offsets(enrollment_date, df_dates):
     - Second anchor: first candidate ≥ first_anchor + MIN_ANCHOR_SEPARATION_WEEKS
     Returns (offset1, offset2) in weeks. If not found, returns (None, None).
     """
-    from datetime import timedelta
+    # 'from datetime import timedelta' already declared at top of function
     candidates = [_parse_iso_year_week(s) for s in QUIET_ANCHOR_ISO_WEEKS]
     # Snap candidate to the nearest available df date on/after candidate
     df_dates_sorted = sorted(set(pd.to_datetime(df_dates).dt.date))
@@ -519,15 +417,15 @@ def compute_group_slopes_dynamic(df, sheet_name, dual_print_fn=None):
             enrollment_date = None
     if enrollment_date is None:
         for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-            slopes[(yob,dose)] = 0.0
+            slopes[(yob, dose)] = 0.0
         return slopes
     # Choose anchors
-    off1, off2 = select_dynamic_anchor_offsets(enrollment_date, df["DateDied"])    
+    off1, off2 = select_dynamic_anchor_offsets(enrollment_date, df["DateDied"])
     if off1 is None or off2 is None or off2 <= off1:
         if dual_print_fn:
             dual_print_fn(f"[WARN] Dynamic anchors not found for {sheet_name}; using slope 0.0")
         for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-            slopes[(yob,dose)] = 0.0
+            slopes[(yob, dose)] = 0.0
         return slopes
     T = off2 - off1
     # Log anchors
@@ -545,81 +443,17 @@ def compute_group_slopes_dynamic(df, sheet_name, dual_print_fn=None):
         vals1 = p1["MR_smooth"][p1["MR_smooth"] > EPS].values
         vals2 = p2["MR_smooth"][p2["MR_smooth"] > EPS].values
         if len(vals1) == 0 or len(vals2) == 0:
-            slopes[(yob,dose)] = 0.0
+            slopes[(yob, dose)] = 0.0
             continue
         slope = (np.mean(np.log(vals2)) - np.mean(np.log(vals1))) / T
-        slopes[(yob,dose)] = float(np.clip(slope, -10.0, 10.0))
+        slopes[(yob, dose)] = float(np.clip(slope, -10.0, 10.0))
     return slopes
 
 def compute_death_slopes_lookup(df, sheet_name, logger=None):
-    """Slope per (YearOfBirth,Dose) using deaths/week (not MR).
-    
-    Uses the same lookup-table anchor windows as MR-based slopes, but
-    computes geometric means over weekly death counts within each window.
-    """
+    """[Deprecated] Deaths-based lookup slopes removed. Using 0.0 slopes here."""
     slopes = {}
-    
-    # Get lookup table values for this sheet
-    if sheet_name not in SLOPE_LOOKUP_TABLE:
-        print(f"[WARNING] No lookup table entry for sheet {sheet_name}, using default death-slope 0.0")
-        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-            slopes[(yob,dose)] = 0.0
-        return slopes
-    
-    start_offset, length = SLOPE_LOOKUP_TABLE[sheet_name]
-    offset1 = start_offset
-    offset2 = start_offset + length
-    T = length
-    
-    # Legacy check removed: MAX_DATE_FOR_SLOPE no longer used
-    
-    if "_" in sheet_name:
-        year_str, week_str = sheet_name.split("_")
-        enrollment_year = int(year_str)
-        enrollment_week = int(week_str)
-        jan1 = datetime(enrollment_year, 1, 1)
-        days_to_monday = (7 - jan1.weekday()) % 7
-        if days_to_monday == 0 and jan1.weekday() != 0:
-            days_to_monday = 7
-        first_monday = jan1 + timedelta(days=days_to_monday)
-        enrollment_date = first_monday + timedelta(weeks=enrollment_week-1)
-        lookup_date1 = enrollment_date + timedelta(weeks=offset1)
-        lookup_date2 = enrollment_date + timedelta(weeks=offset2)
-        # No fixed max-date check; anchors are chosen dynamically elsewhere in normal flow
-        if logger:
-            logger.info(
-                f"[DEBUG] Death-slope lookup validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
-                f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
-            )
-        else:
-            print(
-                f"[DEBUG] Death-slope lookup validation: {sheet_name} enrollment {enrollment_date.strftime('%Y-%m-%d')}, "
-                f"offsets ({offset1}, {offset2}) -> dates ({lookup_date1.strftime('%Y-%m-%d')}, {lookup_date2.strftime('%Y-%m-%d')})"
-            )
-    
     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-        g_sorted = g.sort_values("t")
-        
-        window1_start = max(0, offset1 - SLOPE_WINDOW_SIZE)
-        window1_end = offset1 + SLOPE_WINDOW_SIZE
-        w1 = g_sorted[(g_sorted["t"] >= window1_start) & (g_sorted["t"] <= window1_end)]
-        
-        window2_start = max(0, offset2 - SLOPE_WINDOW_SIZE)
-        window2_end = offset2 + SLOPE_WINDOW_SIZE
-        w2 = g_sorted[(g_sorted["t"] >= window2_start) & (g_sorted["t"] <= window2_end)]
-        
-        # Filter to positive weekly deaths for geometric mean
-        d1 = w1["Dead"][w1["Dead"] > EPS].values
-        d2 = w2["Dead"][w2["Dead"] > EPS].values
-        if len(d1) == 0 or len(d2) == 0:
-            slopes[(yob, dose)] = 0.0
-            continue
-        log_A = np.mean(np.log(d1))
-        log_B = np.mean(np.log(d2))
-        slope = (log_B - log_A) / T
-        slope = np.clip(slope, -10.0, 10.0)
-        slopes[(yob, dose)] = slope
-    
+        slopes[(yob, dose)] = 0.0
     return slopes
 
 def adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T):
@@ -666,7 +500,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
       - MR = Dead / PT
       - MR_adj slope-removed via QR (for smoothing, not CH calculation)
       - CH = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
-      - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week ANCHOR_WEEKS if available
+      - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week KCOR_NORMALIZATION_WEEK if available
               - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
     """
@@ -732,7 +566,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                                       np.nan)
             
             # Get baseline K_raw value at week 4 (usual baseline period)
-            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
             baseline_k_raw = merged["K_raw"].iloc[t0_idx]
             if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
                 baseline_k_raw = 1.0
@@ -785,7 +619,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
 
             # Correct KCOR 95% CI calculation based on baseline uncertainty
             # Get baseline death counts at week 4
-            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
             baseline_num = merged["cumD_adj_num"].iloc[t0_idx]
             baseline_den = merged["cumD_adj_den"].iloc[t0_idx]
             
@@ -893,7 +727,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
             if gvn.empty or gdn.empty:
                 continue
-            t0_idx = ANCHOR_WEEKS if len(gvn) > ANCHOR_WEEKS and len(gdn) > ANCHOR_WEEKS else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK if len(gvn) > KCOR_NORMALIZATION_WEEK and len(gdn) > KCOR_NORMALIZATION_WEEK else 0
             c1 = gvn["CH"].iloc[t0_idx]
             c0 = gdn["CH"].iloc[t0_idx]
             if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
@@ -955,9 +789,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                         continue
                     gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
                     gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
-                    if len(gvn) > ANCHOR_WEEKS and len(gdn) > ANCHOR_WEEKS:
-                        baseline_num = gvn["cumD_adj"].iloc[ANCHOR_WEEKS]
-                        baseline_den = gdn["cumD_adj"].iloc[ANCHOR_WEEKS]
+                    if len(gvn) > KCOR_NORMALIZATION_WEEK and len(gdn) > KCOR_NORMALIZATION_WEEK:
+                        baseline_num = gvn["cumD_adj"].iloc[KCOR_NORMALIZATION_WEEK]
+                        baseline_den = gdn["cumD_adj"].iloc[KCOR_NORMALIZATION_WEEK]
                         if np.isfinite(baseline_num) and np.isfinite(baseline_den) and baseline_num > EPS and baseline_den > EPS:
                             # Add baseline uncertainty for this age group (weighted)
                             weight = weights.get(yob, 0.0)
@@ -1021,7 +855,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
 
     if out_rows or pooled_rows:
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
-        return pd.DataFrame(columns=[
+    return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
         "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
         "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
@@ -1032,10 +866,10 @@ def build_kcor_o_rows(df, sheet_name):
     
     Steps:
       1) Compute death-based slopes via lookup windows.
-      2) Adjust weekly deaths using multiplicative slope removal anchored at week ANCHOR_WEEKS.
+      2) Adjust weekly deaths using multiplicative slope removal anchored at week KCOR_NORMALIZATION_WEEK.
       3) Compute cumulative adjusted deaths per (YearOfBirth, Dose).
       4) For each dose pair and age, compute the ratio of cumulative deaths, then normalize by its
-         value at week ANCHOR_WEEKS to make it 1 at that anchor week.
+         value at week KCOR_NORMALIZATION_WEEK to make it 1 at that anchor week.
     """
     # Compute death-based slopes
     death_slopes = compute_death_slopes_lookup(df, sheet_name)
@@ -1072,7 +906,7 @@ def build_kcor_o_rows(df, sheet_name):
             valid = merged["cumD_o_den"] > EPS
             merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
             # Normalize at anchor week index (week 4 or first)
-            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
             k0 = merged["K_raw_o"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -1091,7 +925,7 @@ def build_kcor_o_rows(df, sheet_name):
 
 def build_kcor_o_deaths_details(df, sheet_name):
     """For each dose pair and age, output deaths/week, adjusted deaths/week, cumulative adjusted deaths,
-    and normalized cumulative ratio (normalized to 1 at week ANCHOR_WEEKS).
+    and normalized cumulative ratio (normalized to 1 at week KCOR_NORMALIZATION_WEEK).
 
     Columns:
       EnrollmentDate, Date, ISOweekDied, YearOfBirth, Dose_num, Dose_den,
@@ -1128,7 +962,7 @@ def build_kcor_o_deaths_details(df, sheet_name):
                 continue
             valid = merged["cumD_o_den"] > EPS
             merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
-            t0_idx = ANCHOR_WEEKS if len(merged) > ANCHOR_WEEKS else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
             k0 = merged["K_raw_o"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -1196,9 +1030,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print("Configuration Parameters (effective):")
     dual_print(f"  FINAL_KCOR_MIN        = {FINAL_KCOR_MIN}")
     dual_print(f"  FINAL_KCOR_DATE       = {FINAL_KCOR_DATE}")
-    dual_print(f"  ANCHOR_WEEKS          = {ANCHOR_WEEKS}")
+    dual_print(f"  KCOR_NORMALIZATION_WEEK = {KCOR_NORMALIZATION_WEEK}")
     dual_print(f"  SLOPE_ANCHOR_T        = {SLOPE_ANCHOR_T}")
-    dual_print(f"  KCOR_BASELINE_INDEX   = {KCOR_BASELINE_INDEX}")
+    dual_print(f"  SKIP_WEEKS            = {SKIP_WEEKS}")
     dual_print(f"  SLOPE_WINDOW_SIZE     = {SLOPE_WINDOW_SIZE}")
     dual_print(f"  MA_TOTAL_LENGTH       = {MA_TOTAL_LENGTH}")
     dual_print(f"  CENTERED              = {CENTERED}")
@@ -1323,14 +1157,33 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         sa_lengths = _parse_triplet_range(os.environ.get('SA_SLOPE_LENGTH', '')) if sa_mode else None
         if sa_mode and sa_starts and sa_lengths:
             produced_outputs = []
-            original_entry = SLOPE_LOOKUP_TABLE.get(sh)
             for start_val in sa_starts:
                 skip_remaining_lengths = False
                 for length_val in sa_lengths:
-                    # Override lookup for this sheet with (start, length)
-                    SLOPE_LOOKUP_TABLE[sh] = (int(start_val), int(length_val))
                     try:
-                        slopes = compute_group_slopes_lookup(df, sh)
+                        # Build slopes using explicit offsets relative to enrollment
+                        # Emulate lookup behavior by using two offsets (start, start+length)
+                        # Create a transient slope function using the same geometry as dynamic method
+                        def slopes_from_offsets(df_local, start_off, len_off):
+                            Tloc = int(len_off)
+                            off1loc = int(start_off)
+                            off2loc = off1loc + Tloc
+                            slopes_loc = {}
+                            for (yob, dose), g in df_local.groupby(["YearOfBirth","Dose"], sort=False):
+                                g_sorted = g.sort_values("t")
+                                w1s, w1e = max(0, off1loc - SLOPE_WINDOW_SIZE), off1loc + SLOPE_WINDOW_SIZE
+                                w2s, w2e = max(0, off2loc - SLOPE_WINDOW_SIZE), off2loc + SLOPE_WINDOW_SIZE
+                                p1 = g_sorted[(g_sorted["t"] >= w1s) & (g_sorted["t"] <= w1e)]
+                                p2 = g_sorted[(g_sorted["t"] >= w2s) & (g_sorted["t"] <= w2e)]
+                                v1 = p1["MR_smooth"][p1["MR_smooth"] > EPS].values
+                                v2 = p2["MR_smooth"][p2["MR_smooth"] > EPS].values
+                                if len(v1) == 0 or len(v2) == 0 or Tloc <= 0:
+                                    slopes_loc[(yob,dose)] = 0.0
+                                    continue
+                                s = (np.mean(np.log(v2)) - np.mean(np.log(v1))) / Tloc
+                                slopes_loc[(yob,dose)] = float(np.clip(s, -10.0, 10.0))
+                            return slopes_loc
+                        slopes = slopes_from_offsets(df, int(start_val), int(length_val))
                     except ValueError as e:
                         # Safety check for invalid slope combo; skip and mark to stop trying larger combos
                         if DEBUG_VERBOSE:
@@ -1339,17 +1192,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         continue
                     # Build a copy pipeline to avoid cross-contamination
                     df2 = df.copy()
-                    df2 = adjust_mr(df2, slopes, t0=ANCHOR_WEEKS)
+                    df2 = adjust_mr(df2, slopes, t0=KCOR_NORMALIZATION_WEEK)
                     # Add slope and scale_factor columns (required by downstream build_kcor_rows)
                     df2["slope"] = df2.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
                     df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
-                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(ANCHOR_WEEKS))), axis=1)
+                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK))), axis=1)
                     df2["hazard"] = -np.log(1 - df2["MR_adj"].clip(upper=0.999))
-                    df2["CH"] = df2.groupby(["YearOfBirth","Dose"])['hazard'].cumsum()
-                    df2["CH_actual"] = df2.groupby(["YearOfBirth","Dose"])['MR'].cumsum()
-                    df2["cumPT"] = df2.groupby(["YearOfBirth","Dose"])['PT'].cumsum()
+                    # Apply SKIP_WEEKS: start accumulation at this week index
+                    df2["hazard_eff"] = np.where(df2["t"] >= float(SKIP_WEEKS), df2["hazard"], 0.0)
+                    df2["MR_eff"] = np.where(df2["t"] >= float(SKIP_WEEKS), df2["MR"], 0.0)
+                    df2["CH"] = df2.groupby(["YearOfBirth","Dose"]) ['hazard_eff'].cumsum()
+                    df2["CH_actual"] = df2.groupby(["YearOfBirth","Dose"]) ['MR_eff'].cumsum()
+                    df2["cumPT"] = df2.groupby(["YearOfBirth","Dose"]) ['PT'].cumsum()
                     df2["cumD_adj"] = df2["CH"] * df2["cumPT"]
-                    df2["cumD_unadj"] = df2.groupby(["YearOfBirth","Dose"])['Dead'].cumsum()
+                    df2["cumD_unadj"] = df2.groupby(["YearOfBirth","Dose"]) ['Dead'].cumsum()
                     # Sweep FINAL_KCOR_MIN if provided as range
                     sa_final_mins = _parse_triplet_range(os.environ.get('SA_FINAL_KCOR_MIN', ''))
                     if not sa_final_mins:
@@ -1381,9 +1237,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 if skip_remaining_lengths:
                     # Stop trying larger lengths for this start
                     pass
-            # Restore original lookup table value
-            if original_entry is not None:
-                SLOPE_LOOKUP_TABLE[sh] = original_entry
             # Append and continue to next sheet
             if produced_outputs:
                 all_out.append(pd.concat(produced_outputs, ignore_index=True))
@@ -1391,7 +1244,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 all_out.append(build_kcor_rows(df, sh, dual_print))
             continue
         else:
-            # Dynamic anchor slope calculation (default). Use lookup as fallback only if desired.
+            # Dynamic anchor slope calculation (default).
             slopes = compute_group_slopes_dynamic(df, sh, dual_print)
         
         # Debug: Show computed slopes
@@ -1446,7 +1299,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Clip extreme slope values to prevent overflow
         df["slope"] = np.clip(df["slope"], -10.0, 10.0)  # Reasonable bounds for mortality slopes
         
-        df["scale_factor"] = df.apply(lambda row: safe_exp(-df["slope"].iloc[row.name] * (row["t"] - float(ANCHOR_WEEKS))), axis=1)
+        df["scale_factor"] = df.apply(lambda row: safe_exp(-df["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK))), axis=1)
         
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         
@@ -1454,18 +1307,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Clip MR_adj to avoid log(0) and ensure numerical stability
         df["hazard"] = -np.log(1 - df["MR_adj"].clip(upper=0.999))
         
+        # Apply SKIP_WEEKS to accumulation start
+        df["hazard_eff"] = np.where(df["t"] >= float(SKIP_WEEKS), df["hazard"], 0.0)
+        df["MR_eff"] = np.where(df["t"] >= float(SKIP_WEEKS), df["MR"], 0.0)
+        
         # Calculate cumulative hazard (mathematically exact, not approximation)
-        df["CH"] = df.groupby(["YearOfBirth","Dose"])["hazard"].cumsum()
+        df["CH"] = df.groupby(["YearOfBirth","Dose"]) ["hazard_eff"].cumsum()
         
         # Keep unadjusted data for comparison
-        df["CH_actual"] = df.groupby(["YearOfBirth","Dose"])["MR"].cumsum()
+        df["CH_actual"] = df.groupby(["YearOfBirth","Dose"]) ["MR_eff"].cumsum()
         
         # Keep cumD_adj for backward compatibility (now represents adjusted cumulative deaths)
-        df["cumPT"] = df.groupby(["YearOfBirth","Dose"])["PT"].cumsum()
+        df["cumPT"] = df.groupby(["YearOfBirth","Dose"]) ["PT"].cumsum()
         df["cumD_adj"] = df["CH"] * df["cumPT"]
         
         # Keep unadjusted data for comparison
-        df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"])["Dead"].cumsum()
+        df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"]) ["Dead"].cumsum()
         
         # Collect debug data for this sheet (after all columns are created)
         if DEBUG_VERBOSE:
@@ -1499,7 +1356,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     # Calculate smoothed adjusted MR using the slope
                     # Use the actual age from the row for slope lookup
                     slope = slopes.get((row["YearOfBirth"], dose), 0.0)
-                    smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(ANCHOR_WEEKS)))
+                    smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(KCOR_NORMALIZATION_WEEK)))
                     
                     debug_data.append({
                         "EnrollmentDate": sh,  # Add enrollment date column
@@ -1688,9 +1545,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Configuration Parameters (effective):",
                         "  FINAL_KCOR_MIN",
                         "  FINAL_KCOR_DATE",
-                        "  ANCHOR_WEEKS",
+                        "  KCOR_NORMALIZATION_WEEK",
                         "  SLOPE_ANCHOR_T",
-                        "  KCOR_BASELINE_INDEX",
                         "  SLOPE_WINDOW_SIZE",
                         "  MA_TOTAL_LENGTH",
                         "  CENTERED",
@@ -1770,9 +1626,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"",
                         f"{FINAL_KCOR_MIN}",
                         f"{FINAL_KCOR_DATE}",
-                        f"{ANCHOR_WEEKS}",
+                        f"{KCOR_NORMALIZATION_WEEK}",
                         f"{SLOPE_ANCHOR_T}",
-                        f"{KCOR_BASELINE_INDEX}",
                         f"{SLOPE_WINDOW_SIZE}",
                         f"{MA_TOTAL_LENGTH}",
                         f"{CENTERED}",
@@ -1781,8 +1636,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"{DEBUG_VERBOSE}",
                         f"{OVERRIDE_DOSE_PAIRS}",
                         f"{OVERRIDE_YOBS}",
-                        "",
-                        "",
                         "",
                         "",
                         "",
@@ -1833,9 +1686,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         f"{FINAL_KCOR_MIN}",
                         f"{FINAL_KCOR_DATE}",
-                        f"{ANCHOR_WEEKS}",
+                        f"{KCOR_NORMALIZATION_WEEK}",
                         f"{SLOPE_ANCHOR_T}",
-                        f"{KCOR_BASELINE_INDEX}",
                         f"{SLOPE_WINDOW_SIZE}",
                         f"{MA_TOTAL_LENGTH}",
                         f"{CENTERED}",
@@ -1936,11 +1788,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 enr = target["EnrollmentDate"]
                 off1 = target.get("param_slope_start", None)
                 slope_len = target.get("param_slope_length", None)
+                # If explicit SA offsets were not provided, dynamic anchors were used
                 if pd.isna(off1) or pd.isna(slope_len):
-                    if enr in SLOPE_LOOKUP_TABLE:
-                        try:
-                            off1, slope_len = SLOPE_LOOKUP_TABLE[enr]
-                        except Exception:
                             off1, slope_len = (None, None)
                 # Use row-level param_final_kcor_min when available
                 param_final_min = target.get("param_final_kcor_min", FINAL_KCOR_MIN)
@@ -1958,7 +1807,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "CI_lower": target["CI_lower"],
                     "CI_upper": target["CI_upper"],
                     # Memorialize key parameters
-                    "param_anchor_weeks": ANCHOR_WEEKS,
+                    "param_normalization_week": KCOR_NORMALIZATION_WEEK,
                     "param_ma_total_length": MA_TOTAL_LENGTH,
                     "param_centered": int(bool(CENTERED)),
                     "param_slope_window_size": SLOPE_WINDOW_SIZE,

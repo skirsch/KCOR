@@ -168,6 +168,13 @@ Where MR_adj is clipped to 0.999 to avoid log(0).
 $$\text{CH}(t) = \sum_{i=0}^{t} \text{hazard}(i)$$
 
 **Step 3: KCOR as Hazard Ratio (Baseline at Week 4)**
+By default, KCOR cumulate hazards for 5 weeks (week 0 to week 4) and uses the cumulated hazard ratio at that time to establish a reference hazard ratio where KCOR=1. Increasing this parameter will reduce the CI's (which are largely determine by the number of weeks used to establish the baseline ratio), but it will also result in the method missing vaccine harms (the baseline is done during low to no COVID so it won't miss any benefits). So 5 was a reasonable compromise. 
+
+KCOR starts accumulating hazards on the enrollment date to capture a baseline mortality as close to vaccination as possible. The Czech data had no signs of dynamic HVE with KCOR fixed cohort enrollment dates since the enrollment dates are chosen after 80% of the cohort being studied has been vaccinated. 
+
+Dynamic HVE is caused by people who are going to die shortly declining to be vaccinated. It looks like two highways merging if you look at a plot of deaths per week.
+
+If examination of the deaths/week data shows signs of dynamic HVE, then you can either shift the enrollment date later, or set SKIP_WEEKS to a value other than 0. Setting SKIP_WEEKS >3 would be highly unusual since event time-series plots for vaccines rarely (if ever) have dynamic HVE lasting over 3 weeks. In the case of COVID, if anything, HVE would be very small since even people who were dying wanted to see their familty and the familty would demand vaccination.
 
 **KCOR Formula:**
 
@@ -599,6 +606,7 @@ ANCHOR_WEEKS = 4                    # Baseline week for KCOR normalization (Note
 SLOPE_WINDOW_SIZE = 2               # Window size for slope calculation (±2 weeks)
 MA_TOTAL_LENGTH = 8                 # Moving average length (8 weeks)
 CENTERED = True                     # Use centered moving average
+SKIP_WEEKS = 0                      # Start accumulating hazards/statistics at this week index (0 = from enrollment)
 
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process. Deaths outside the extremes are NOT combined.
