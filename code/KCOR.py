@@ -144,6 +144,7 @@ ANCHOR_WEEKS = 4                # Legacy value (kept for backward-compatibility 
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 KCOR_BASELINE_INDEX = 1         # Normalize KCOR at week 1 (leave week 0 as-is)
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
+MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 
 # KCOR normalization fine-tuning parameters
 FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
@@ -718,6 +719,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
                           "MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
                           "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"]].copy()
+
+            # Scale MR fields for display (annualized per 100,000)
+            for col in ["MR_num","MR_adj_num","MR_den","MR_adj_den","MR_smooth_num","MR_smooth_den"]:
+                if col in out.columns:
+                    out[col] = out[col] * MR_DISPLAY_SCALE
             out["EnrollmentDate"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
@@ -918,7 +924,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
 
     if out_rows or pooled_rows:
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
-    return pd.DataFrame(columns=[
+        return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
         "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
         "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
@@ -1102,6 +1108,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  CENTERED              = {CENTERED}")
     dual_print(f"  YEAR_RANGE            = {YEAR_RANGE}")
     dual_print(f"  ENROLLMENT_DATES      = {ENROLLMENT_DATES}")
+    # MR is computed in annualized per 100k units; no additional display scaling applied
     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
@@ -1192,7 +1199,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
         
         df = df.sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
-        # person-time proxy and MR
+        # person-time proxy and MR (internal probability per week)
         df["PT"]   = df["Alive"].astype(float).clip(lower=0.0)
         df["Dead"] = df["Dead"].astype(float).clip(lower=0.0)
         df["MR"]   = np.where(df["PT"] > 0, df["Dead"]/(df["PT"] + EPS), np.nan)
@@ -1618,6 +1625,34 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "Output Sheets:",
                         "- dose_pairs: KCOR values for all dose comparisons",
+                        "  Columns (dose_pairs):",
+                        "    - EnrollmentDate: Enrollment period identifier (e.g., 2021_24)",
+                        "    - ISOweekDied: ISO week number of death",
+                        "    - Date: Calendar date",
+                        "    - YearOfBirth: Birth year (0 indicates ASMR pooled across ages)",
+                        "    - Dose_num: Numerator dose group",
+                        "    - Dose_den: Denominator dose group",
+                        "    - KCOR: Hazard ratio (CH_num/CH_den) normalized to baseline (unitless)",
+                        "    - CI_lower: 95% lower confidence bound for KCOR",
+                        "    - CI_upper: 95% upper confidence bound for KCOR",
+                        "    - MR_num: Weekly mortality rate (annualized per 100,000 for display)",
+                        "    - MR_adj_num: Slope-adjusted MR for numerator (annualized per 100,000)",
+                        "    - CH_num: Cumulative hazard for numerator (unitless)",
+                        "    - CH_actual_num: Cumulative sum of unadjusted weekly MR for numerator (unitless)",
+                        "    - hazard_num: Discrete hazard for numerator (unitless)",
+                        "    - slope_num: Estimated slope used for numerator",
+                        "    - scale_factor_num: exp(-slope*(t - t0)) used for numerator",
+                        "    - MR_smooth_num: Smoothed MR for numerator (annualized per 100,000)",
+                        "    - t_num: Week index from enrollment for numerator",
+                        "    - MR_den: Weekly mortality rate for denominator (annualized per 100,000)",
+                        "    - MR_adj_den: Slope-adjusted MR for denominator (annualized per 100,000)",
+                        "    - CH_den: Cumulative hazard for denominator (unitless)",
+                        "    - CH_actual_den: Cumulative sum of unadjusted weekly MR for denominator (unitless)",
+                        "    - hazard_den: Discrete hazard for denominator (unitless)",
+                        "    - slope_den: Estimated slope used for denominator",
+                        "    - scale_factor_den: exp(-slope*(t - t0)) used for denominator",
+                        "    - MR_smooth_den: Smoothed MR for denominator (annualized per 100,000)",
+                        "    - t_den: Week index from enrollment for denominator",
                         "- by_dose: Individual dose curves with complete methodology transparency", 
                         "- About: This metadata sheet",
                         "",
