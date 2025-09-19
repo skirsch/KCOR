@@ -2,7 +2,7 @@
 
 ## Overview
 
-KCOR uses discrete hazard function transformation to compute cumulative mortality risk with mathematical exactness. This document explains the mathematical reasoning behind this approach and why it's superior to simple mortality rate summation.
+KCOR uses the discrete-time hazard function transformation to precisely compute cumulative mortality risk with mathematical exactness. This document explains the mathematical reasoning behind this approach and why it's superior to simple mortality rate summation (which is mathematically nonsensical even though for small values it works).
 
 ## The Problem with Simple Mortality Rate Summation
 
@@ -54,7 +54,7 @@ Where:
 
 ### Discrete Time Transform
 
-For **discrete time periods** (like weekly data), we use:
+For **discrete time periods** (i.e., weekly data rather than continuous data), we use:
 
 ```
 hazard(t) = -ln(1 - MR_adj(t))
@@ -87,6 +87,8 @@ The hazard function is the negative of the log survival:
 hazard(t) = -ln(1 - MR_adj(t))
 ```
 
+hazard(t) is always between 0 and positive infinity because MR_adj(t) is a probability between 0 and 1. It's generally much closer to 0 most of the time except for when a cohort is fully depleted. Before computing h(t) we ensure that MR_adj(t) is clipped to a maximum value of .999.
+
 ### Step 5: Cumulative Hazard
 
 The cumulative hazard is:
@@ -96,7 +98,7 @@ H(t) = Σ hazard(i) = -ln(S(t))
 
 ## Why This is Mathematically Exact
 
-The discrete hazard transform gives us the **exact cumulative hazard** because:
+The discrete-time hazard transform gives us the **exact cumulative hazard** because:
 
 1. **It accounts for the compounding effect** of survival over time
 2. **It properly handles the probability mathematics** of sequential events

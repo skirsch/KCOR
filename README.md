@@ -75,6 +75,10 @@ There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Revie
 
 The bottom line is that KCOR works extremely well with real world cohorts of sufficient size like the Czech Republic 11M record level dataset. It is very easy to validate the key KCOR assumption of an exponential mortality rate before applying the method.
 
+Martin Kulldorff wrote, "“When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views.”
+
+I would be delighted to public debate any qualified scientist who believes KCOR is flawed. This would end the debate. No takers unfortunately. 
+
 ## 🔬 Methodology
 
 ### 🎯 Core Concept
@@ -683,12 +687,13 @@ And for dose 3 vs. dose 2 (2022_06 cohort):
 - **Debug Friendly**: Easy to spot-check individual values and calculations
 
 ### Discrete Hazard Function Transform (v4.1)
-- **Mathematical Enhancement**: More exact CH calculation than simple summation of mortality rates
+See [Hazard Function Methodology](documentation/hazard_function.md) for detailed derivation but basically the concept is you can cumulate deaths, but not hazard probabilities. Using the log transform eanbles you to cumulative mortality rate hazard via simple addition, the same way you'd cumulate deaths. Because mortality rate is slight more stable than deaths, using the discrete hazard function transform on mortality rates gives you a more accurate result.
+- **Mathematical Enhancement**: More exact cumulative hazard (CH) calculation than simple summation of mortality rates (which is mathematically incorrect)
 - **Hazard Function**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping to avoid log(0)
 - **Cumulative Process**: `CH(t) = sum(hazard(i))` for i=0 to t (cumulative hazard)
 - **Numerical Stability**: Handles edge cases with proper bounds and clipping
 - **Hazard Ratio**: KCOR computed as ratio of cumulative hazards, normalized to baseline
-- **Mathematical Rigor**: See [Hazard Function Methodology](documentation/hazard_function.md) for detailed derivation
+
 
 ### Error Handling & User Experience
 - **File Access Protection**: Automatic retry when Excel files are open
