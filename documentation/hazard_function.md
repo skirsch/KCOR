@@ -1,8 +1,12 @@
-# Hazard Function Methodology in KCOR
+# Discrete-time Hazard Function Tranformation Methodology in KCOR
 
 ## Overview
 
-KCOR uses the discrete-time hazard function transformation to precisely compute cumulative mortality risk with mathematical exactness. This document explains the mathematical reasoning behind this approach and why it's superior to simple mortality rate summation (which is mathematically nonsensical even though for small values it works).
+KCOR uses the discrete-time hazard function transformation to precisely compute cumulative mortality risk with mathematical exactness. 
+
+This document explains the mathematical reasoning behind this approach and why it's superior to simple mortality rate summation (which is mathematically nonsensical even though for small values it works).
+
+It basically allows you to sum up hazards like you'd sum up deaths per week. Summing hazards is a much more accurate way to compare mortality between groups because mortality rate more closely tracks an exponential than deaths per week.
 
 ## The Problem with Simple Mortality Rate Summation
 
