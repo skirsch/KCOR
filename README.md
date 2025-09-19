@@ -56,21 +56,25 @@ KCOR is objective. It does not have a bias. It doesn't have a belief in vaccine 
 
 There is also little ability to game the result since the parameters (enrollment dates, slope start/end dates) are determined by the data itself.
 
-### Grok review
+### Grok now recommends KCOR as a legitimate method for assessing vaccine harm/benefit in observational data.
 
 Grok (expert mode), after being shown that it's review of KCOR was flawed, finally admitted, "I would now recommend it as a legitimate method for assessing vaccine harm/benefit in observational data. It's particularly valuable in settings like the Czech or Qatar datasets, where traditional matching/Cox struggles with residual HVE and unobserved confounders, as KCOR's empirical measurement and normalization offer a transparent, minimal-assumption alternative that aligns with survival analysis principles while being robust to time-varying trends." 
 
 Here is [the full discussion with Grok](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381).
 
+### Results on the Czech record level data show extreme net harm
+
+The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. KCOR reveals why.
+
 The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
 
 Those who claimed that the COVID shots were beneficial for the elderly were speculating based on no data; they shouldn't have done that. The Czech data clearly shows that such advice was deadly (see the one dose response with the earlier enrollment date). 
 
-The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the results using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots. In fact, the DS-CMRR and GLM plots are very similar in shape to the KCOR plots. 
-
-The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. KCOR reveals why.
-
 You can see the [full summary of the results for the Czech data here](data/Czech/KCOR_summary.log).
+
+### Validation
+
+The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the results using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots. In fact, the DS-CMRR and GLM plots are very similar in shape to the KCOR plots. 
 
 There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Review section](#peer-review) for details.
 
@@ -91,9 +95,9 @@ In general, these limitations cause KCOR to be a **conservative estimator of har
 
 3. **Non-proportional hazards:** KCOR, in its current form, does not yet adjust for non-proportional hazards where the mortality differences in people with the SAME age (e.g., 5 year age band for the Czech data) are not proportional to their baseline mortality. This is particularly important for the COVID vaccine where the mortality increase in response to a virus wave is extremely sensitive to unmeasurable confounders. KCOR will *overstate* the net benefit during virus periods giving 100% credit to the vaccine when in fact, the protective effect could be 100% due to selection bias causing the unvaccinated to have higher fraility than would be assumed from the DCCI values. For example, the relative mortality increase of two 90 year olds during COVID waves, one vaccinated, the other unvaccinated, is be remarkably different. The percentage of that differential mortality increase from COVID credited to the COVID vaccine vs. differential frailty created by the selection bias is the subject of disagreement. Scientists supportive of the COVID vaccine are unwilling to actually debate this topic in a public forum so this remains unresolved. It is an "untouchable" subject because resolving the issue could cause the public to distrust mainstream scientists. There are ways to assess this, e.g., by looking at whole population cumulative deaths during vaccine rollout which was during a COVID wave to look for a "knee" in the curve. If the vaccine really worked, there will be a knee at the time the shots rolled out. If the COVID benefit was all selection bias, there will be no knee.
 
-4. **Harm during baselien period:** KCOR needs a baseline period when there is no COVID to assess the relative mortality rates of the cohorts under study when there is not an external intervention that is supposed to cause a differential response.  But if the vaccine is unsafe, it will increase mortality in this period to an artifically high level. This will always cause KCOR to *understate* the true harm of the vaccine.
+4. **Harm during baseline period:** KCOR needs a baseline period when there is no COVID to assess the relative mortality rates of the cohorts under study when there is not an external intervention that is supposed to cause a differential response.  But if the vaccine is unsafe, it will increase mortality in this period to an artifically high level. This will always cause KCOR to *understate* the true harm of the vaccine.
 
-5. **Late enrollment:** If an enrollment date is chosen that is relatively distant from after most people a cohort have been vaccinated and the vaccine significantly increases non-COVID ACM (NCACM) that then plateaus as with the COVID shots, KCOR will miss this for those older cohorts and show a neutral or even a net benefit. It's important to interpret the results in light of this, e.g., for older cohorts, the earlier enrollment dates will be more reliable indicators of risk/benefit.
+5. **Late enrollment:** If an enrollment date is chosen that is relatively distant from after most people a cohort have been vaccinated and the vaccine significantly increases non-COVID ACM (NCACM) that then plateaus as with the COVID shots, KCOR will miss this for those older cohorts and show a neutral or even a net benefit. It's important to interpret the results in light of this, e.g., for older cohorts, the earlier enrollment dates will be more reliable indicators of risk/benefit. Another example is when looking at the second booster enrollment date, comparing Dose 2 with Dose 0 will give a flat line because KCOR will interpret the higher plateau of the vaccinated as normal (since it only has a very delayed enrollment date, well past the 12 month harm window of the vaccine). This doesn't mean Dose 2 was safe. It just means that the harms relative to Dose from the enrollment date onward are a flat line, which in itself is a nice negative control test. So the most interesting comparison for Dose 4 is against Dose 3 and against Dose 0. Comparing Doses 3 and under with earlier Doses is likely to give a neutral comparison.
 
 6. **Dynamic HVE:** In general, because KCOR uses a calendar time-series (the x axis is a calendar date) rather than event time-series (where the x axis is time since the injection), dynamic HVE is virtually non-existent because most all the people got vaccinated well before the enrollment date. Dynamic HVE is caused when people avoid getting vaccinated because they are going to die. This transfers deaths from the vaccinated cohort to the less vaccinated cohort, e.g., 3 dose to 2 dose. We can show by plotting deaths per week that the Dose 2,1, and 0 cohorts all track each other post booster enrollment. This falsifies claims of dynamic HVE. Another way to test for this is to run the algorithm with DYNAMIC_HVE_SKIP_WEEKS set to 1 or 2 and see if it materially change the results. If there is an effect, increasing DYNAMIC_HVE_SKIP_WEEKS will make the vaccine look safer because dynamic HVE would set an artifically low baseline for the vaccinated. The default for DYNAMIC_HVE_SKIP_WEEKS is 0 because dynamic HVE is negligible. For event time-series, HVE is generally insigificant by week 3, so using a value of 2 is a reasonable sensitivity test to assess this effect. However, if the vaccine increases NCACM for a period post-shot like the COVID vaccine does, increasing this value will likely result in artifically increasing vaccine safety (lowering all the KCOR numbers). Therefore, testing the dynamic HVE effect by inspection of the deaths/week curves of the cohorts post enrollment is the best way and the clearest is post-booster rather than post-primary two shots because there is only the 1 cohort that would accept the deferred deaths and there are two cohorts to compare to for what "baseline" should look like (dose 1 and 0 groups).
 
@@ -112,9 +116,13 @@ The KCOR algorithm uses fixed cohorts defined by their vaccine status (# of shot
 
 KCOR relies on a very simple engineering approximation that can be easily validated using Gompertz mortality with depletion and frailty: over a two year period, even a 90 year old cohort with frailty 2 will die on nearly a straight line (less than 1.6% deviation over a year). If you now mix together cohorts with different frailties, the mortality rate of the combined cohort (e.g., an unvaccinated cohort of 90 year olds) is well-approximated by a single exponential—and KCOR's slope-normalization behave as intended. The accuracy increases with cohorts younger than 90 years old. KCOR simply can't be invalidated using Gompertz mortality. So unless Gompertz mortality with depletion is overturned, KCOR is not invalidated.
 
+### Visual guide
 A [concise, easy to understand, visual guide to KCOR](documentation/KCOR_Visual_Guide.pdf) describes each of the KCOR steps using a concrete example. The document was prepared by an honest epidemiologist who chooses to remain confidential for fear of being fired for not supporting the "safe and effective" narrative. 
 
+### KCOR paper
 There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Paper.docx) for submission to medical journals.
+
+### Parameter selection and the algorithm
 
  The core steps are:
  1. Decide on the enrollment date(s), slope start/end dates. The enrollment dates are chosen when most of a cohort under interest has been vaccinated. The two slope dates are two widely separated quiet periods when the smoothed mortality (smoothing is done with a centered window) is in a trough (quiet periods with no COVID that might affect differential mortality). 
@@ -1037,7 +1045,7 @@ As you can imagine, it's like pulling teeth to get any credible epidemiologist t
 Epidemiologist and Administrator  
 McCullough Foundation
 
-### Grok review
+### Grok review of KCOR
 
 Grok claimed KCOR is mathematically sound, but in a later discussion claimed that KCOR is fundamentally flawed because relies on assumptions about the data that are clearly wrong, such as that you can normalize slope mortality for frail cohorts. 
 
@@ -1051,7 +1059,7 @@ Grok could have said something like "before using KCOR, validate that the cohort
 
 In the real world, the underlying mortality trend is nearly linear over a 2 year period for most all cohorts of interest and most all hazards are proportional to mortality (COVID being the rare exception where KCOR will give a conservative harm estimate). If needed, KCOR can easily be adapted to highly frail cohorts using piecewise slope normalization if it is necessary to get extreme accuracy for these cases. Grok seemed more interested in trashing the method than pointing out how it's objections can be easily overcome.
 
-Here is [the full discussion with Grok showing it lacked actual evidence that falsifies KCOR](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381) and finally said that it would recommend KCOR ([see Grok Review](#grok-review))
+Here is [the full discussion with Grok showing it lacked actual evidence that falsifies KCOR](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381) and finally said that it would recommend KCOR ([see Grok Review](#grok-now-recommends-kcor-as-a-legitimate-method-for-assessing-vaccine-harmbenefit-in-observational-data))
 
 ## 📄 License
 
