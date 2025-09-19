@@ -55,6 +55,12 @@ KCOR is objective. It does not have a bias. It doesn't have a belief in vaccine 
 
 There is also little ability to game the result since the parameters (enrollment dates, slope start/end dates) are determined by the data itself.
 
+### <a id="grok-review"></a>
+
+Grok (expert mode), after being shown that it's review of KCOR was flawed, finally admitted, "I would now recommend it as a legitimate method for assessing vaccine harm/benefit in observational data. It's particularly valuable in settings like the Czech or Qatar datasets, where traditional matching/Cox struggles with residual HVE and unobserved confounders, as KCOR's empirical measurement and normalization offer a transparent, minimal-assumption alternative that aligns with survival analysis principles while being robust to time-varying trends." 
+
+Here is [the full discussion with Grok showing how I changed its mind and its admission of actual evidence that falsifies KCOR](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381).
+
 The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
 
 Those who claimed that the COVID shots were beneficial for the elderly were speculating based on no data; they shouldn't have done that. The Czech data clearly shows that such advice was deadly (see the one dose response with the earlier enrollment date). 
@@ -830,17 +836,16 @@ The KCOR analysis of Czech vaccination and mortality data reveals significant fi
 
 | **DOSE** | **KCOR** | **95% CI** | **Risk Increase** | **Enrollment** |
 |----------|----------|------------|-------------------|----------------|
-| **1** | 1.0516 | [1.022, 1.082] | +5.2% | 2021_24 |
-| **2** | 1.2579 | [1.232, 1.285] | +25.8% | 2021_24 |
-| **3** | 1.5487 | [1.518, 1.580] | +54.9% | 2022_06 |
+| **1** | 1.0453 | [1.016, 1.075] | +4.5% | 2021_24 |
+| **2** | 1.2091 | [1.184, 1.235] | +20.9% | 2021_24 |
+| **3** | 1.6354 | [1.603, 1.668] | +63.5% | 2022_06 |
 
 ### Key Findings
 
-- **Dose 1 shows significant harm** - 5.2% increased mortality (2021_24) and 11.9% (2022_06)
-- **Dose 2 shows significant harm** with 25.8% increased mortality (2021_24) and 5.0% (2022_06)
-- **Dose 3 shows severe harm** with 49.4% increased mortality vs dose 2 and 54.9% vs dose 0
-- **Dose-dependent accelerating mortality** - risk increases dramatically with additional doses
-- **All confidence intervals exclude 1.0**, indicating statistically significant harm across all dose levels
+- **Dose 1 shows small harm** - 4.5% increased mortality (2021_24; significant). The 2022_06 cohort estimate (1.0156) is not statistically significant (CI includes 1.0).
+- **Dose 2 shows significant harm** with 20.9% increased mortality (2021_24) and 6.5% (2022_06)
+- **Dose 3 shows severe harm** with 53.5% increased mortality vs dose 2 and 63.5% vs dose 0 (2022_06), both highly significant
+- **Dose-dependent accelerating mortality** - risk increases with additional doses
 
 ### ⚠️ Important Note on Dose 1 Harm Estimates
 
@@ -859,17 +864,17 @@ The results reveal a **dose-dependent accelerating mortality pattern**:
 
 | **Dose** | **KCOR (2021_24)** | **Risk Increase** | **Pattern** |
 |----------|-------------------|-------------------|-------------|
-| **1 vs 0** | 1.0516 | +5.2% | **Moderate harm** |
-| **2 vs 0** | 1.2579 | +25.8% | **Significant harm** |
-| **2 vs 1** | 1.2435 | +24.4% | **Significant harm** |
+| **1 vs 0** | 1.0453 | +4.5% | **Small harm (significant)** |
+| **2 vs 0** | 1.2091 | +20.9% | **Significant harm** |
+| **2 vs 1** | 1.1568 | +15.7% | **Significant harm** |
 
 | **Dose** | **KCOR (2022_06)** | **Risk Increase** | **Pattern** |
 |----------|-------------------|-------------------|-------------|
-| **1 vs 0** | 1.1194 | +11.9% | **Moderate harm** |
-| **2 vs 0** | 1.0502 | +5.0% | **Moderate harm** |
-| **2 vs 1** | 1.0697 | +7.0% | **Moderate harm** |
-| **3 vs 2** | 1.4941 | +49.4% | **Severe harm** |
-| **3 vs 0** | 1.5487 | +54.9% | **Severe harm** |
+| **1 vs 0** | 1.0156 | +1.6% | **Small (not significant)** |
+| **2 vs 0** | 1.0654 | +6.5% | **Moderate harm** |
+| **2 vs 1** | 1.0490 | +4.9% | **Small–moderate harm** |
+| **3 vs 2** | 1.5350 | +53.5% | **Severe harm** |
+| **3 vs 0** | 1.6354 | +63.5% | **Severe harm** |
 
 **Key Insights**:
 
@@ -1008,7 +1013,7 @@ McCullough Foundation
 
 ### Grok review
 
-Grok claimed KCOR is mathematically sound, but that KCOR is fundamentally flawed because relies on assumptions about the data that are clearly wrong, such as that you can normalize slope mortality for frail cohorts. 
+Grok claimed KCOR is mathematically sound, but in a later discussion claimed that KCOR is fundamentally flawed because relies on assumptions about the data that are clearly wrong, such as that you can normalize slope mortality for frail cohorts. 
 
 At first, Grok tried to argue that even for ideal Gompertz cohorts, KCOR would fail. So I had it compute the mortality rate change for age 80 with frailty 3 (which is more extreme than real life) and it realized there was only a 1.6% differential after 2 years. I pointed out KCOR is averaged out over that period so the error would be half that amount. I also pointed out that the slope computation is done over a year period in the center so the net error would be even smaller since it would error one way early and the other way later which further reduces the error.
 
@@ -1019,6 +1024,8 @@ Then the final argument was there is no possible way a 80-90 year old unvaccinat
 Grok could have said something like "before using KCOR, validate that the cohorts under study can be accurately adjusted with a simple exponential." If people did that, they'd be pleasantly surprised that there is no flaw. But instead, Grok simply dismissed KCOR as flawed because it assumes KCOR must be flawed because it conflicts with the "safe and effective" narrative. 
 
 In the real world, the underlying mortality trend is nearly linear over a 2 year period for most all cohorts of interest and most all hazards are proportional to mortality (COVID being the rare exception where KCOR will give a conservative harm estimate). If needed, KCOR can easily be adapted to highly frail cohorts using piecewise slope normalization if it is necessary to get extreme accuracy for these cases. Grok seemed more interested in trashing the method than pointing out how it's objections can be easily overcome.
+
+Here is [the full discussion with Grok showing it lacked actual evidence that falsifies KCOR](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381) and finally said that it would recommend KCOR ([see Grok Review](#grok-review))
 
 ## 📄 License
 
