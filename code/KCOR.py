@@ -140,10 +140,10 @@ VERSION = "v4.4"                # KCOR version number
 
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at this week; weeks counted from enrollment t=0)
-KCOR_NORMALIZATION_WEEK = 4     # default week 4 which is the 5th week of cumulated data. See also SKIP_WEEKS.
+KCOR_NORMALIZATION_WEEK = 4     # default week 4 which is the 5th week of cumulated data. See also DYNAMIC_HVE_SKIP_WEEKS.
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
-SKIP_WEEKS = 0                  # Start accumulating hazards/statistics from this week index (0 = from enrollment)
+DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 
 # KCOR normalization fine-tuning parameters
@@ -1032,7 +1032,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  FINAL_KCOR_DATE       = {FINAL_KCOR_DATE}")
     dual_print(f"  KCOR_NORMALIZATION_WEEK = {KCOR_NORMALIZATION_WEEK}")
     dual_print(f"  SLOPE_ANCHOR_T        = {SLOPE_ANCHOR_T}")
-    dual_print(f"  SKIP_WEEKS            = {SKIP_WEEKS}")
+    dual_print(f"  DYNAMIC_HVE_SKIP_WEEKS = {DYNAMIC_HVE_SKIP_WEEKS}")
     dual_print(f"  SLOPE_WINDOW_SIZE     = {SLOPE_WINDOW_SIZE}")
     dual_print(f"  MA_TOTAL_LENGTH       = {MA_TOTAL_LENGTH}")
     dual_print(f"  CENTERED              = {CENTERED}")
@@ -1198,9 +1198,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
                     df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK))), axis=1)
                     df2["hazard"] = -np.log(1 - df2["MR_adj"].clip(upper=0.999))
-                    # Apply SKIP_WEEKS: start accumulation at this week index
-                    df2["hazard_eff"] = np.where(df2["t"] >= float(SKIP_WEEKS), df2["hazard"], 0.0)
-                    df2["MR_eff"] = np.where(df2["t"] >= float(SKIP_WEEKS), df2["MR"], 0.0)
+                    # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
+                    df2["hazard_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["hazard"], 0.0)
+                    df2["MR_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["MR"], 0.0)
                     df2["CH"] = df2.groupby(["YearOfBirth","Dose"]) ['hazard_eff'].cumsum()
                     df2["CH_actual"] = df2.groupby(["YearOfBirth","Dose"]) ['MR_eff'].cumsum()
                     df2["cumPT"] = df2.groupby(["YearOfBirth","Dose"]) ['PT'].cumsum()
@@ -1307,9 +1307,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Clip MR_adj to avoid log(0) and ensure numerical stability
         df["hazard"] = -np.log(1 - df["MR_adj"].clip(upper=0.999))
         
-        # Apply SKIP_WEEKS to accumulation start
-        df["hazard_eff"] = np.where(df["t"] >= float(SKIP_WEEKS), df["hazard"], 0.0)
-        df["MR_eff"] = np.where(df["t"] >= float(SKIP_WEEKS), df["MR"], 0.0)
+        # Apply DYNAMIC_HVE_SKIP_WEEKS to accumulation start
+        df["hazard_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["hazard"], 0.0)
+        df["MR_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["MR"], 0.0)
         
         # Calculate cumulative hazard (mathematically exact, not approximation)
         df["CH"] = df.groupby(["YearOfBirth","Dose"]) ["hazard_eff"].cumsum()

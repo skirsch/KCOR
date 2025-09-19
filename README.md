@@ -6,6 +6,7 @@
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [⚠️Limitations](#️-limitations)
 - [🔬 Methodology](#-methodology)
   - [🎯 Core Concept](#-core-concept)
   - [⚙️ KCOR algorithm](#️-kcor-algorithm)
@@ -45,7 +46,7 @@ Grok wrote, "KCOR addresses a real gap: traditional epidemiology often struggles
 
 Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc. and normalize their baseline mortality rates so that if there is no external signal applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates.
 
-That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more cumulative deaths as a function of t. This means, given a specific time, we can show if an intervention was net harm, net benefit, or neutral as of that time. 
+That's what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more cumulative deaths as a function of t. This means, given a specific time, we can show if an intervention was net harm, net benefit, or neutral as of that time. 
 
 Therefore, any methodolgy that can accurately make such an risk/benefit assessment is a threat to the field because it will reveal that previous assessments done with traditional epidemiology methods were all flat out wrong (e.g., studies claiming the COVID vaccine were beneficial). This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
 
@@ -75,9 +76,26 @@ There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Revie
 
 The bottom line is that KCOR works extremely well with real world cohorts of sufficient size like the Czech Republic 11M record level dataset. It is very easy to validate the key KCOR assumption of an exponential mortality rate before applying the method.
 
-Martin Kulldorff wrote, "“When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views.”
-
 I would be delighted to public debate any qualified scientist who believes KCOR is flawed. This would end the debate. No takers unfortunately. 
+
+Martin Kulldorff wrote, "When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views.”
+
+## ⚠️ Limitations
+There are 6 key limitations of the method that users should be aware of. 
+
+In general, these limitations cause KCOR to be a **conservative estimator of harm**. This means if KCOR finds a harm signal, like it does in the Czech dataset, the actual harm is actually greater than KCOR indicates because KCOR tends to *understate* harms and *overstate* benefits as specifically described below.
+
+1. Cohorts aged 90 and older with significant frailty will not be as accurate as cohorts of younger ages because the core assumption of a single exponential mortality rate starts to become less true. Estimates from these cohorts may be inaccurate by more than 1%.
+
+2. KCOR uses fixed cohorts defined at specific enrollment dates. All of those cohorts may change their vaccine status over time and that is not reflected in the analysis. The enrollment dates are generally chosen after 80% to 90% of the people likely to die have been vaccinated to minimize this impact. For a vaccine which reduces risk of death, this has the effect of reducing the magnitude of the harm or benefit because the cohorts will not be as differentiated later in time. So KCOR will *understate* the harm and *understate* the benefits.
+
+3. **Non-proportional hazards:** KCOR, in its current form, does not yet adjust for non-proportional hazards where the mortality differences in people with the SAME age (e.g., 5 year age band for the Czech data) are not proportional to their baseline mortality. This is particularly important for the COVID vaccine where the mortality increase in response to a virus wave is extremely sensitive to unmeasurable confounders. KCOR will *overstate* the net benefit during virus periods giving 100% credit to the vaccine when in fact, the protective effect could be 100% due to selection bias causing the unvaccinated to have higher fraility than would be assumed from the DCCI values. For example, the relative mortality increase of two 90 year olds during COVID waves, one vaccinated, the other unvaccinated, is be remarkably different. The percentage of that differential mortality increase from COVID credited to the COVID vaccine vs. differential frailty created by the selection bias is the subject of disagreement. Scientists supportive of the COVID vaccine are unwilling to actually debate this topic in a public forum so this remains unresolved. It is an "untouchable" subject because resolving the issue could cause the public to distrust mainstream scientists. There are ways to assess this, e.g., by looking at whole population cumulative deaths during vaccine rollout which was during a COVID wave to look for a "knee" in the curve. If the vaccine really worked, there will be a knee at the time the shots rolled out. If the COVID benefit was all selection bias, there will be no knee.
+
+4. **Harm during baselien period:** KCOR needs a baseline period when there is no COVID to assess the relative mortality rates of the cohorts under study when there is not an external intervention that is supposed to cause a differential response.  But if the vaccine is unsafe, it will increase mortality in this period to an artifically high level. This will always cause KCOR to *understate* the true harm of the vaccine.
+
+5. **Late enrollment:** If an enrollment date is chosen that is relatively distant from after most people a cohort have been vaccinated and the vaccine significantly increases non-COVID ACM (NCACM) that then plateaus as with the COVID shots, KCOR will miss this for those older cohorts and show a neutral or even a net benefit. It's important to interpret the results in light of this, e.g., for older cohorts, the earlier enrollment dates will be more reliable indicators of risk/benefit.
+
+6. **Dynamic HVE:** In general, because KCOR uses a calendar time-series (the x axis is a calendar date) rather than event time-series (where the x axis is time since the injection), dynamic HVE is virtually non-existent because most all the people got vaccinated well before the enrollment date. Dynamic HVE is caused when people avoid getting vaccinated because they are going to die. This transfers deaths from the vaccinated cohort to the less vaccinated cohort, e.g., 3 dose to 2 dose. We can show by plotting deaths per week that the Dose 2,1, and 0 cohorts all track each other post booster enrollment. This falsifies claims of dynamic HVE. Another way to test for this is to run the algorithm with DYNAMIC_HVE_SKIP_WEEKS set to 1 or 2 and see if it materially change the results. If there is an effect, increasing DYNAMIC_HVE_SKIP_WEEKS will make the vaccine look safer because dynamic HVE would set an artifically low baseline for the vaccinated. The default for DYNAMIC_HVE_SKIP_WEEKS is 0 because dynamic HVE is negligible. For event time-series, HVE is generally insigificant by week 3, so using a value of 2 is a reasonable sensitivity test to assess this effect. However, if the vaccine increases NCACM for a period post-shot like the COVID vaccine does, increasing this value will likely result in artifically increasing vaccine safety (lowering all the KCOR numbers). Therefore, testing the dynamic HVE effect by inspection of the deaths/week curves of the cohorts post enrollment is the best way and the clearest is post-booster rather than post-primary two shots because there is only the 1 cohort that would accept the deferred deaths and there are two cohorts to compare to for what "baseline" should look like (dose 1 and 0 groups).
 
 ## 🔬 Methodology
 
@@ -92,7 +110,7 @@ KCOR represents the ratio of cumulative hazard functions between two groups (e.g
 
 The KCOR algorithm uses fixed cohorts defined by their vaccine status (# of shots) on an enrollment date and tracks their mortality over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy (this is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review)). 
 
-KCOR relies on a very simple engineering approximation that can be easily validated using Gompertz mortality with depletion and frailty: over a two year period, even a 90 year old cohort with frailty 2 will die on nearly a straight line (less than 1.6% deviation over a year). If you now mix together cohorts with different frailties, the mortality rate of the combined cohort (e.g., an unvaccinated cohort of 90 year olds) is well-approximated by a single exponential—and KCOR’s slope-normalization behave as intended. The accuracy increases with cohorts younger than 90 years old. KCOR simply can't be invalidated using Gompertz mortality. So unless Gompertz mortality with depletion is overturned, KCOR is not invalidated.
+KCOR relies on a very simple engineering approximation that can be easily validated using Gompertz mortality with depletion and frailty: over a two year period, even a 90 year old cohort with frailty 2 will die on nearly a straight line (less than 1.6% deviation over a year). If you now mix together cohorts with different frailties, the mortality rate of the combined cohort (e.g., an unvaccinated cohort of 90 year olds) is well-approximated by a single exponential—and KCOR's slope-normalization behave as intended. The accuracy increases with cohorts younger than 90 years old. KCOR simply can't be invalidated using Gompertz mortality. So unless Gompertz mortality with depletion is overturned, KCOR is not invalidated.
 
 A [concise, easy to understand, visual guide to KCOR](documentation/KCOR_Visual_Guide.pdf) describes each of the KCOR steps using a concrete example. The document was prepared by an honest epidemiologist who chooses to remain confidential for fear of being fired for not supporting the "safe and effective" narrative. 
 
@@ -184,7 +202,7 @@ KCOR starts accumulating hazards on the enrollment date to capture a baseline mo
 
 Dynamic HVE is caused by people who are going to die shortly declining to be vaccinated. It looks like two highways merging if you look at a plot of deaths per week.
 
-If examination of the deaths/week data shows signs of dynamic HVE, then you can either shift the enrollment date later, or set SKIP_WEEKS to a value other than 0. Setting SKIP_WEEKS >3 would be highly unusual since event time-series plots for vaccines rarely (if ever) have dynamic HVE lasting over 3 weeks. In the case of COVID, if anything, HVE would be very small since even people who were dying wanted to see their familty and the familty would demand vaccination.
+If examination of the deaths/week data shows signs of dynamic HVE, then you can either shift the enrollment date later, or set DYNAMIC_HVE_SKIP_WEEKS to a value other than 0. Setting DYNAMIC_HVE_SKIP_WEEKS >3 would be highly unusual since event time-series plots for vaccines rarely (if ever) have dynamic HVE lasting over 3 weeks. In the case of COVID, if anything, HVE would be very small since even people who were dying wanted to see their familty and the familty would demand vaccination.
 
 **KCOR Formula:**
 
@@ -453,7 +471,7 @@ For the negative control tests, KCOR is called with baseline minimum set to 0 so
 
 ### Sensitivity Analysis
 
-Verifies that reasonable parameter choices do not change KCOR’s conclusions by sweeping user-specified parameters.
+Verifies that reasonable parameter choices do not change KCOR's conclusions by sweeping user-specified parameters.
 
 How to run from repo root:
 ```bash
@@ -495,7 +513,7 @@ cd KCOR
 # Install dependencies
 pip install pandas numpy openpyxl
 
-# That’s it — Czech data is included under data/Czech. Run:
+# That's it — Czech data is included under data/Czech. Run:
 make
 ```
 
@@ -616,7 +634,7 @@ ANCHOR_WEEKS = 4                    # Baseline week for KCOR normalization (Note
 SLOPE_WINDOW_SIZE = 2               # Window size for slope calculation (±2 weeks)
 MA_TOTAL_LENGTH = 8                 # Moving average length (8 weeks)
 CENTERED = True                     # Use centered moving average
-SKIP_WEEKS = 0                      # Start accumulating hazards/statistics at this week index (0 = from enrollment)
+DYNAMIC_HVE_SKIP_WEEKS = 0           # Start accumulating hazards/statistics at this week index (0 = from enrollment)
 
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process. Deaths outside the extremes are NOT combined.
@@ -938,7 +956,7 @@ Here are the KCOR results for direct comparison with other methods (such as GLM 
 
 This method can be used with either fixed or variable cohorts. I chose to run it against fixed cohorts because that is the more meaningful outcome, but others are free to run it against variable cohorts. 
 
-Question answered: “Between two groups defined at baseline, who accumulated more death risk over the window?” 
+Question answered: "Between two groups defined at baseline, who accumulated more death risk over the window?" 
 
 Readout: DS-CMRR is the ratio of cumulative hazards between two pre-specified groups—closest to a trial-like contrast.
 
@@ -1010,7 +1028,7 @@ As you can imagine, it's like pulling teeth to get any credible epidemiologist t
 - Yale Professor Harvey Risch review (PDF): [`peer_review/KCOR_Risch_review.pdf`](peer_review/KCOR_Risch_review.pdf)
 - Grok assessment: [Grok validated](https://grok.com/share/c2hhcmQtMg%3D%3D_6bda87e0-f4b7-49b7-a6b7-3cf48fc453b2) the methodology, the documentation, and the implementation. It said the math was sound, but it didn't think people actually died per Gompertz mortality. It didn't have a real world counterexample.
 
-“The KCOR method is a transparent and reproducible way to assess vaccine safety using only the most essential data. By relying solely on date of birth, vaccination, and death, it avoids the covariate manipulation and opaque modeling that plague conventional epidemiology, while slope normalization directly accounts for baseline mortality differences between groups. Applied to the Czech registry data, KCOR revealed a consistent net harm across all age groups. Given the strength and clarity of this signal, vaccine promoters will have no choice but to fall back on ideology rather than evidence in their response.”
+"The KCOR method is a transparent and reproducible way to assess vaccine safety using only the most essential data. By relying solely on date of birth, vaccination, and death, it avoids the covariate manipulation and opaque modeling that plague conventional epidemiology, while slope normalization directly accounts for baseline mortality differences between groups. Applied to the Czech registry data, KCOR revealed a consistent net harm across all age groups. Given the strength and clarity of this signal, vaccine promoters will have no choice but to fall back on ideology rather than evidence in their response."
 
  — Nicolas Hulscher, MPH  
 Epidemiologist and Administrator  
