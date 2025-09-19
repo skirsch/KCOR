@@ -55,11 +55,11 @@ KCOR is objective. It does not have a bias. It doesn't have a belief in vaccine 
 
 There is also little ability to game the result since the parameters (enrollment dates, slope start/end dates) are determined by the data itself.
 
-### <a id="grok-review"></a>
+### Grok review
 
 Grok (expert mode), after being shown that it's review of KCOR was flawed, finally admitted, "I would now recommend it as a legitimate method for assessing vaccine harm/benefit in observational data. It's particularly valuable in settings like the Czech or Qatar datasets, where traditional matching/Cox struggles with residual HVE and unobserved confounders, as KCOR's empirical measurement and normalization offer a transparent, minimal-assumption alternative that aligns with survival analysis principles while being robust to time-varying trends." 
 
-Here is [the full discussion with Grok showing how I changed its mind and its admission of actual evidence that falsifies KCOR](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381).
+Here is [the full discussion with Grok](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381).
 
 The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
 
