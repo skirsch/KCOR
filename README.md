@@ -842,7 +842,7 @@ The KCOR analysis of Czech vaccination and mortality data reveals significant fi
 
 ### Key Findings
 
-- **Dose 1 shows small harm** - 4.5% increased mortality (2021_24; significant). The 2022_06 cohort estimate (1.0156) is not statistically significant (CI includes 1.0).
+- **Dose 1 shows small harm** - 4.5% increased mortality (2021_24; significant). The 2022_06 cohort estimate (1.0156) is not statistically significant (CI includes 1.0) because most of the harm happens within 6 months of the shot which was long ago in that cohort. Looking at Dose 1 much closer to vaccination gives a very large signal (over 40%) See the [summary log](data/czech/KCOR_summary.log) for details.
 - **Dose 2 shows significant harm** with 20.9% increased mortality (2021_24) and 6.5% (2022_06)
 - **Dose 3 shows severe harm** with 53.5% increased mortality vs dose 2 and 63.5% vs dose 0 (2022_06), both highly significant
 - **Dose-dependent accelerating mortality** - risk increases with additional doses
