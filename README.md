@@ -636,6 +636,9 @@ MA_TOTAL_LENGTH = 8                 # Moving average length (8 weeks)
 CENTERED = True                     # Use centered moving average
 DYNAMIC_HVE_SKIP_WEEKS = 0           # Start accumulating hazards/statistics at this week index (0 = from enrollment)
 
+# Age bucketing
+AGE_RANGE = 10                      # YearOfBirth bucket size for aggregation (5 or 10). Default: 10
+
 # Analysis scope
 YEAR_RANGE = (1920, 2000)          # Birth year range to process. Deaths outside the extremes are NOT combined.
 # the following dates correspond to  3/29/21, 6/15/21, 2/7/22, 11/21/22

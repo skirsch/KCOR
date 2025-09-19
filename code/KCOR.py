@@ -141,6 +141,7 @@ VERSION = "v4.4"                # KCOR version number
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at this week; weeks counted from enrollment t=0)
 KCOR_NORMALIZATION_WEEK = 4     # default week 4 which is the 5th week of cumulated data. See also DYNAMIC_HVE_SKIP_WEEKS.
+AGE_RANGE = 10                  # Bucket size for YearOfBirth aggregation (e.g., 10 -> 1920, 1930, ..., 2000)
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
@@ -1033,6 +1034,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  KCOR_NORMALIZATION_WEEK = {KCOR_NORMALIZATION_WEEK}")
     dual_print(f"  SLOPE_ANCHOR_T        = {SLOPE_ANCHOR_T}")
     dual_print(f"  DYNAMIC_HVE_SKIP_WEEKS = {DYNAMIC_HVE_SKIP_WEEKS}")
+    dual_print(f"  AGE_RANGE             = {AGE_RANGE}")
     dual_print(f"  SLOPE_WINDOW_SIZE     = {SLOPE_WINDOW_SIZE}")
     dual_print(f"  MA_TOTAL_LENGTH       = {MA_TOTAL_LENGTH}")
     dual_print(f"  CENTERED              = {CENTERED}")
@@ -1123,6 +1125,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
         
         # Aggregate across sexes for each dose/date/age combination
+        # Optionally bucket YearOfBirth into AGE_RANGE-year bins (e.g., 10 -> 1920, 1930, ...)
+        try:
+            if int(AGE_RANGE) and int(AGE_RANGE) > 1:
+                df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
+        except Exception:
+            pass
         df = df.groupby(["YearOfBirth", "Dose", "DateDied"]).agg({
             "ISOweekDied": "first",
             "Alive": "sum",
