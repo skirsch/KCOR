@@ -231,8 +231,9 @@ Where:
 - $z=1.96$: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-> [!Summary]
-
+> [!TIP]
+> Here's a quick summary
+>
 > Pick $t_e$ as the enrollment time, that is when we start tracking mortality rates.
 >
 > Mortality rates over time of each cohort are individually adjusted to neutralize the slope over time. This allows all cohorts, regardless of age or frailty, to be fairly compared. 
