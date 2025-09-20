@@ -129,7 +129,7 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 
 > [!NOTE]
 >
-> I think we need some kind of picture here to show schematically what's happening. For now, see [KCOR Visual Guide](documentation/KCOR_Visual_Guide.pdf)
+> See [KCOR Visual Guide](documentation/KCOR_Visual_Guide.pdf) for a nice visual guide of KCOR.
 
 #### 1. Data Preprocessing
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
