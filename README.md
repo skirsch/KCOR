@@ -89,16 +89,16 @@ I would be delighted to public debate any qualified scientist who believes KCOR 
 
 ### 🎯 Core Concept
 
-##### KCOR represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline period. This approach provides interpretable estimates of relative mortality risk that account for:
+KCOR$(t)$ represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
 
  - **Time-varying trends** in mortality rates through slope correction
  - **Mathematical exactness** through discrete hazard function transformation
  - **Baseline differences** between groups through normalization
  - **Statistical uncertainty** in the estimates through proper variance propagation
 
-The KCOR algorithm uses fixed cohorts defined by their vaccine status (# of shots) on an enrollment date and tracks their mortality over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy (this is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review)). 
+The KCOR algorithm uses fixed cohorts defined by their vaccine status (i.e., # of shots) on an enrollment date and tracks the mortality rate of each cohort over time. It relies on Gompertz mortality with depletion which is industry standard. It turns out that any large group of people will die with a net mortality rate that can be approximated by a single exponential with high accuracy. This is the "engineering approximation" epidemiologist Harvey Risch refers to in his [review](#peer-review).
 
-KCOR relies on a very simple engineering approximation that can be easily validated using Gompertz mortality with depletion and frailty: over a two year period, even a 90 year old cohort with frailty 2 will die on nearly a straight line (less than 1.6% deviation over a year). If you now mix together cohorts with different frailties, the mortality rate of the combined cohort (e.g., an unvaccinated cohort of 90 year olds) is well-approximated by a single exponential—and KCOR's slope-normalization behave as intended. The accuracy increases with cohorts younger than 90 years old. KCOR simply can't be invalidated using Gompertz mortality. So unless Gompertz mortality with depletion is overturned, KCOR is not invalidated.
+For example, over a two year period, even a 90 year old cohort with frailty 2 will die on nearly a straight line (less than 1.6% deviation over a year). If you now mix together cohorts with different frailties, the mortality rate of the combined cohort (e.g., an unvaccinated cohort of 90 year olds) is well-approximated by a single exponential—and KCOR's slope-normalization behave as intended. The accuracy increases as the age of the cohort decreases. KCOR can't be invalidated using Gompertz mortality because the worse case is actually that the entire mix is at the extreme end of frailty.  So unless Gompertz mortality with depletion is overturned (whidh is highly unlikely), KCOR is not invalidated.
 
 ### Visual guide
 A [concise, easy to understand, visual guide to KCOR](documentation/KCOR_Visual_Guide.pdf) describes each of the KCOR steps using a concrete example. The document was prepared by an honest epidemiologist who chooses to remain confidential for fear of being fired for not supporting the "safe and effective" narrative. 
