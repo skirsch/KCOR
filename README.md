@@ -231,7 +231,7 @@ Where:
 - $z=1.96$: 95% confidence level multiplier (standard normal distribution)
 - **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
 
-> [!Quick summary]
+> [!Summary]
 
 > Pick $t_e$ as the enrollment time, that is when we start tracking mortality rates.
 >
