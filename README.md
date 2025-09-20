@@ -754,7 +754,7 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 #### Visualization Capabilities
 
 **`KCOR.xlsx`** - Complete analysis file:
-- **Filter by Cohort**: Use Excel filters to examine specific dose combinations (e.g., 2 vs 0, 3 vs 0)
+- **Filter by Cohort**: Use Excel filters to examine specific dose combinations (e.g., 3 vs 0)
 - **Filter by Age**: Focus on specific birth years or age groups
 - **Time Series Analysis**: Plot KCOR values over time for any cohort combination
 - **Confidence Intervals**: Visualize uncertainty bounds alongside point estimates
@@ -966,10 +966,8 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Conservative Approach**: Only applies when clear evidence of baseline bias exists
 
 #### New Results Pattern
-- **Dose 1 vs 0 (2021_24)**: KCOR = 1.05 (5.2% increased mortality risk)
+- **Dose 1 vs 0 (2021_24)**: KCOR = 1.05 (4.81% increased mortality risk)
 - **Dose 2 vs 0 (2021_24)**: KCOR = 1.26 (25.8% increased mortality risk)
-- **Dose 1 vs 0 (2022_06)**: KCOR = 1.12 (11.9% increased mortality risk)
-- **Dose 2 vs 0 (2022_06)**: KCOR = 1.05 (5.0% increased mortality risk)
 - **Dose 3 vs 0 (2022_06)**: KCOR = 1.55 (54.9% increased mortality risk)
 - **Pattern**: Dose-dependent accelerating mortality with cohort-specific effects
 
@@ -1003,7 +1001,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ### Summary of Age-Standardized Mortality Ratio (ASMR) Results
 
-The KCOR analysis of Czech vaccination and mortality data reveals significant findings across all dose levels compared to unvaccinated individuals. **Version 4.2 uses corrected expected-deaths weighting** that properly reflects actual mortality burden:
+The KCOR analysis of Czech vaccination and mortality data reveals significant findings across all dose levels compared to unvaccinated individuals:
 
 | **DOSE** | **KCOR** | **95% CI** | **Risk Increase** | **Enrollment** |
 |----------|----------|------------|-------------------|----------------|
@@ -1017,35 +1015,6 @@ The KCOR analysis of Czech vaccination and mortality data reveals significant fi
 - **Dose 2 shows significant harm** with 20.9% increased mortality (2021_24) and 6.5% (2022_06)
 - **Dose 3 shows severe harm** with 53.5% increased mortality vs dose 2 and 63.5% vs dose 0 (2022_06), both highly significant
 - **Dose-dependent accelerating mortality** - risk increases with additional doses
-
-### ⚠️ Important Note on Dose 1 Harm Estimates for older cohorts in the 2021_24 and subsequent enrollment periods
-
-**The Dose 1 harm estimates are likely CONSERVATIVE (underestimated)** due to the enrollment period timing:
-
-- **Enrollment starts months after first doses**: The analysis begins enrollment periods (2021_24, 2022_06) many months after the first COVID-19 vaccine doses were administered to elderly populations
-- **Early harm missed**: Any immediate or early-term mortality effects from Dose 1 that occurred before the enrollment periods are not captured in this analysis
-- **Baseline period protection**: The enrollment period was deliberately chosen to start after major COVID-19 waves to ensure accurate baseline mortality rate calculations
-- **Conservative interpretation**: This means the true harm from Dose 1 is likely higher than the neutral effect (KCOR ≈ 1.0) shown in these results
-
-This conservative bias is particularly important for understanding the true cumulative impact of COVID-19 vaccination on mortality risk.
-
-### 🎯 Dose-Dependent Accelerating Mortality Pattern
-
-The results reveal a **dose-dependent accelerating mortality pattern**:
-
-| **Dose** | **KCOR (2021_24)** | **Risk Increase** | **Pattern** |
-|----------|-------------------|-------------------|-------------|
-| **1 vs 0** | 1.0453 | +4.5% | **Small harm (significant)** |
-| **2 vs 0** | 1.2091 | +20.9% | **Significant harm** |
-| **2 vs 1** | 1.1568 | +15.7% | **Significant harm** |
-
-| **Dose** | **KCOR (2022_06)** | **Risk Increase** | **Pattern** |
-|----------|-------------------|-------------------|-------------|
-| **1 vs 0** | 1.0156 | +1.6% | **Small (not significant)** |
-| **2 vs 0** | 1.0654 | +6.5% | **Moderate harm** |
-| **2 vs 1** | 1.0490 | +4.9% | **Small–moderate harm** |
-| **3 vs 2** | 1.5350 | +53.5% | **Severe harm** |
-| **3 vs 0** | 1.6354 | +63.5% | **Severe harm** |
 
 **Key Insights**:
 
@@ -1063,14 +1032,26 @@ The results reveal a **dose-dependent accelerating mortality pattern**:
 
 This **dose-dependent accelerating mortality pattern** provides compelling evidence of cumulative vaccine toxicity rather than simple linear dose-response effects.
 
+### ⚠️ Important Note on Dose 1 Harm Estimates for older cohorts in the 2021_24 and subsequent enrollment periods
+
+**The Dose 1 harm estimates are likely CONSERVATIVE (underestimated)** due to the enrollment period timing:
+
+- **Enrollment starts months after first doses**: The analysis begins enrollment periods (2021_24, 2022_06) many months after the first COVID-19 vaccine doses were administered to elderly populations
+- **Early harm missed**: Any immediate or early-term mortality effects from Dose 1 that occurred before the enrollment periods are not captured in this analysis
+- **Baseline period protection**: The enrollment period was deliberately chosen to start after major COVID-19 waves to ensure accurate baseline mortality rate calculations
+- **Conservative interpretation**: This means the true harm from Dose 1 is likely higher than the neutral effect (KCOR ≈ 1.0) shown in these results
+
+This conservative bias is particularly important for understanding the true cumulative impact of COVID-19 vaccination on mortality risk.
+
 ### Complete Results
 
 For detailed results including age-specific analyses and all dose combinations, see the comprehensive analysis files:
 
+- **CMR Analysis**: [`analysis/Czech/KCOR_CMR_analysis.xlsx`](analysis/Czech/KCOR_CMR_analysis.xlsx)
 - **📈 Complete Analysis**: [`data/Czech/KCOR_summary.xlsx`](data/Czech/KCOR_summary.xlsx) - Age-standardized and age-specific results by enrollment cohort
 - **📊 Full Dataset**: [`data/Czech/KCOR.xlsx`](data/Czech/KCOR.xlsx) - Complete analysis with all intermediate calculations
 - **📋 Console Output**: [`data/Czech/KCOR_summary.log`](data/Czech/KCOR_summary.log) - Detailed console output from analysis (dual output: console + file)
- - **🧮 Interactive Plotting Workbook**: [`analysis/Czech/KCOR_analysis.xlsx`](analysis/Czech/KCOR_analysis.xlsx) - Excel workbook for plotting KCOR(t) curves for any cohort/dose mix
+ - **🧮 KCOR Interactive Plotting Workbook**: [`analysis/Czech/KCOR_analysis.xlsx`](analysis/Czech/KCOR_analysis.xlsx) - Excel workbook for plotting KCOR(t) curves for any cohort/dose mix
 
 ### Interpretation
 
