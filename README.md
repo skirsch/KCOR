@@ -9,7 +9,7 @@
 - [🔬 Methodology](#methodology)
   - [🎯 Core Concept](#core-concept)
   - [⚙️ KCOR algorithm](#️kcor-algorithm)
-  - [Math science description](#math-science-description)
+  - [Mathematical and statistical description](#mathematical-and-statistical-description)
   - [Key Assumptions](#key-assumptions)
 - [⚠️Limitations](#️limitations)
 - [🏆 KCOR vs. Traditional Epidemiological Methods](#kcor-vs-traditional-epidemiological-methods)
@@ -234,13 +234,13 @@ Where:
 > [!TIP]
 > Here's a quick summary
 >
-> Pick $t_e$ as the enrollment time, that is when we start tracking mortality rates.
+> 1. Pick $t_e$ as the enrollment time, that is when we start tracking mortality rates. Pick 2 or 3 slope anchor dates when deaths are low.
 >
-> Mortality rates over time of each cohort are individually adjusted to neutralize the slope over time. This allows all cohorts, regardless of age or frailty, to be fairly compared. 
+> 2. Adjust the mortality rates of each cohort to neutralize the slope over time. This allows all cohorts, regardless of age or frailty, to be fairly compared. 
 >
-> We do a discrete-time hazard transform to transform mortality rates into a hazard function, $hazard(t)$ that we can cumulate.
-
-> We then compute the ratio of the cumulative hazard function at each time $t$ and scale by the value at week 4 (config: `ANCHOR_WEEKS = 4`).
+> 3. Do a discrete-time hazard transform to transform mortality rates into a hazard function, hazard$(t)$. that we can cumulate.
+>
+> 4. Compute the ratio of the cumulative hazard function at each time $t$ of the cohorts of interest. Scale by the value at week 4 (config: `ANCHOR_WEEKS = 4`). So KCOR on week 4 will be 1. The 4 weeks gives us time to match baseline mortality of the cohorts during a period where there is no COVID virus so there should not be a differential response.
 
 #### 6. KCOR Normalization Fine-Tuning (v4.3+): Disabled by default
 **Optional Baseline Correction for Unsafe Vaccine Effects:**
@@ -317,11 +317,11 @@ Where:
 - **Mathematical Correctness**: ASMR now reflects actual mortality impact, not population size
 - **Robust Implementation**: Uses pooled quiet baseline window with smoothed mortality rates
 
-### Math science description
+### Mathematical and statistical description
 
 KCOR is a defined estimand (a baseline-normalized cumulative-hazard ratio) computed through explicit transformations. With its assumptions stated and diagnostics enforced, it supports a fully rigorous, math-science presentation. The only subjective choices (anchors, smoothing) can be specified as reproducible selection rules with sensitivity analyses—squarely in the standards of methodological papers.
 
-KCOR is absolutely amenable to a rigorous math/science description. It’s not “just a heuristic”; it’s a pipeline of well-defined statistical transforms with explicit assumptions. The only “heuristic” bits (like choosing quiet anchor windows or a smoothing span) can be formalized as estimators/selection rules.
+KCOR is not “just a heuristic”; it’s a pipeline of well-defined statistical transforms with explicit assumptions. The only “heuristic” bits (like choosing quiet anchor windows or a smoothing span) can be formalized as estimators/selection rules.
 
 ## KCOR is a rigorous method (not “just a heuristic”)
 
@@ -332,40 +332,40 @@ choices (e.g., “quiet” anchor windows) can be formalized as selection rules 
 ### Formal definition (discrete time)
 
 Let:
-- \(g \in \{v,u\}\) index two fixed cohorts (numerator \(v\), denominator \(u\)).
-- \(t\) be calendar-time weeks (with enrollment at \(t_e=0\)).
-- \(m_{g,t}\in[0,1)\) the observed weekly mortality rate among those at risk at the start of week \(t\).
+- $g \in \{v,u\}$ index two fixed cohorts (numerator $v$, denominator $u$).
+- $t$ be calendar-time weeks (with enrollment at $t_e=0$).
+- $m_{g,t}\in[0,1)$ the observed weekly mortality rate among those at risk at the start of week $t$.
 
 **Baseline model (log-rate decomposition)**
-\[
-\log m_{g,t} \;=\; \alpha_g \;+\; r_g\,t \;+\; \delta_t \;+\; \varepsilon_{g,t},
-\]
-where \(r_g\) is the cohort-specific baseline slope, \(\delta_t\) is a **common** calendar-time factor
-(seasonality/waves), and \(\varepsilon_{g,t}\) is noise.
+$$
+\log m_{g,t} = \alpha_g + r_g\,t + \delta_t + \varepsilon_{g,t},
+$$
+where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** calendar-time factor
+(seasonality/waves), and $\varepsilon_{g,t}$ is noise.
 
 **Slope estimation via quiet anchors**
-Choose two quiet, non-differential windows \(B_1,B_2\) (each of length \(w\)), and define
-\[
-\hat r_g \;=\; \frac{\overline{\log m_{g,t}}_{t\in B_2}-\overline{\log m_{g,t}}_{t\in B_1}}
+Choose two quiet, non-differential windows $B_1,B_2$ (each of length $w$), and define
+$$
+\hat r_g = \frac{\overline{\log m_{g,t}}_{t\in B_2}-\overline{\log m_{g,t}}_{t\in B_1}}
 {\overline t_{B_2}-\overline t_{B_1}}.
-\]
-(Under the model, the common \(\delta_t\) cancels to first order.)
+$$
+(Under the model, the common $\delta_t$ cancels to first order.)
 
 **Slope-normalization**
-\[
-m^{\text{adj}}_{g,t} \;=\; m_{g,t}\,\exp\!\big[-\hat r_g\, (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
-\]
+$$
+m^{\text{adj}}_{g,t} = m_{g,t}\,\exp\!\big[-\hat r_g\, (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
+$$
 
 **Discrete hazard and cumulative hazard**
-\[
-h_{g,t} \;=\; -\ln\!\big(1-m^{\text{adj}}_{g,t}\big)\in[0,\infty),\qquad
-H_g(t) \;=\;\sum_{i\le t} h_{g,i}.
-\]
+$$
+h_{g,t} = -\ln\!\big(1-m^{\text{adj}}_{g,t}\big)\in[0,\infty),\qquad
+H_g(t) = \sum_{i\le t} h_{g,i}.
+$$
 
-**KCOR (baseline-normalized CH ratio at \(t_0\))**
-\[
-\mathrm{KCOR}(t) \;=\; \frac{H_v(t)/H_u(t)}{H_v(t_0)/H_u(t_0)}.
-\]
+**KCOR (baseline-normalized CH ratio at $t_0$)**
+$$
+\mathrm{KCOR}(t) = \frac{H_v(t)/H_u(t)}{H_v(t_0)/H_u(t_0)}.
+$$
 
 > [!NOTE]
 > KCOR is **invariant** to the log base and any **common multiplicative scaling** of rates: such constants
@@ -373,33 +373,33 @@ H_g(t) \;=\;\sum_{i\le t} h_{g,i}.
 
 ### Assumptions (to be checked on the data)
 
-1. **Exponential baseline** within the analysis window: \(\log m_{g,t}\) is approximately linear in \(t\).
-2. **Quiet, non-differential anchors** \(B_1,B_2\): no cohort-specific shocks inside these windows.
+1. **Exponential baseline** within the analysis window: $\log m_{g,t}$ is approximately linear in $t$.
+2. **Quiet, non-differential anchors** $B_1,B_2$: no cohort-specific shocks inside these windows.
 3. **Fixed cohorts** at enrollment (avoid time-varying composition effects).
 4. **Common-time perturbations** mostly affect both cohorts proportionally (reduced by slope-normalization).
 
 ### Properties (what you can state)
 
-- **Cancellation of common drift/level.** Slope-normalization removes smooth \(\delta_t\) drift; baseline
+- **Cancellation of common drift/level.** Slope-normalization removes smooth $\delta_t$ drift; baseline
   normalization removes level. Residual bias is bounded by non-parallelism of log-MR lines in anchors.
-- **Treatment-effect link.** If post-adjustment hazards follow \(h_{v,t}=\rho(t)\,h_{u,t}\) with constant \(\rho\),
-  then KCOR is constant. Time-variation in \(\rho(t)\) is reflected by the KCOR curve.
-- **Small-rate regime.** For small \(m\), \(h\approx m\), so \(H_g(t)\) approximates the sum of adjusted rates.
+- **Treatment-effect link.** If post-adjustment hazards follow $h_{v,t}=\rho(t)\,h_{u,t}$ with constant $\rho$,
+  then KCOR is constant. Time-variation in $\rho(t)$ is reflected by the KCOR curve.
+- **Small-rate regime.** For small $m$, $h\approx m$, so $H_g(t)$ approximates the sum of adjusted rates.
   KCOR then approximates the ratio of those sums (still baseline-normalized).
 
 ### Uncertainty and confidence intervals
 
-With count data, a standard approximation is \(\mathrm{Var}[H_g(t)]\approx H_g(t)\).
+With count data, a standard approximation is $\mathrm{Var}[H_g(t)]\approx H_g(t)$.
 Then by the delta method,
-\[
+$$
 \mathrm{Var}\!\big[\ln \mathrm{KCOR}(t)\big]
 \;\approx\;
 \frac{1}{H_v(t)}+\frac{1}{H_u(t)}+\frac{1}{H_v(t_0)}+\frac{1}{H_u(t_0)}.
-\]
-A \(95\%\) CI is
-\[
+$$
+A $95\%$ CI is
+$$
 \mathrm{KCOR}(t)\times \exp\!\Big(\pm 1.96\,\sqrt{\mathrm{Var}[\ln \mathrm{KCOR}(t)]}\Big).
-\]
+$$
 
 ### From “heuristics” to reproducible procedure
 
@@ -407,16 +407,16 @@ A \(95\%\) CI is
   of log-linear fits and (ii) slope differences between cohorts, subject to no epidemic flags.
 - **Smoothing span.** Select moving-average span \(k\) by minimizing out-of-anchor AIC or via small
   cross-validation restricted to quiet weeks.
-- **Diagnostics as tests.** Require (a) high \(R^2\) for log-linear fits in anchors,
-  (b) a tiny quadratic term in \(\log m_{g,t} = \beta_0+\beta_1 t + \beta_2 t^2\) over quiet ranges,
-  (c) stability under anchor shifts (\(\pm\)1–2 weeks).
+- **Diagnostics as tests.** Require (a) high $R^2$ for log-linear fits in anchors,
+  (b) a tiny quadratic term in $\log m_{g,t} = \beta_0+\beta_1 t + \beta_2 t^2$ over quiet ranges,
+  (c) stability under anchor shifts ($\pm$1–2 weeks).
 
 ### Practical checklist
 
-- Verify **parallel-lines** behavior (log-MR vs. \(t\)) within anchors for both cohorts.
-- Check **baseline stability**: after normalization, KCOR should be ~1 near \(t_0\).
-- Run **anchor sensitivity** and **placebo enrollment** (shift \(t_e\)) analyses.
-- Include **negative controls** (random splits → KCOR \(\approx 1\)) when feasible.
+- Verify **parallel-lines** behavior (log-MR vs. $t$) within anchors for both cohorts.
+- Check **baseline stability**: after normalization, KCOR should be ~1 near $t_0$.
+- Run **anchor sensitivity** and **placebo enrollment** (shift $t_e$) analyses.
+- Include **negative controls** (random splits → KCOR $\approx 1$) when feasible.
 
 ### Key Assumptions
 
