@@ -81,9 +81,9 @@ There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Revie
 
 The bottom line is that KCOR works extremely well with real world cohorts of sufficient size like the Czech Republic 11M record level dataset. It is very easy to validate the key KCOR assumption of an exponential mortality rate before applying the method.
 
-Martin Kulldorff wrote, “When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views.”
+[CDC ACIP Chair Martin Kulldorff said at the ACIP meeting](https://x.com/TheChiefNerd/status/1968692539344441575), “When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views.”
 
-I would be delighted to public debate any qualified scientist who believes KCOR is flawed. This would end the debate. No takers unfortunately. 
+I would be delighted to public debate any qualified scientist who believes KCOR is flawed. This would end the debate. No takers unfortunately. This has nothing to do with me or the KCOR method. Kulldorff made the same offer about vaccines and nobody would debate him.
 
 ## 🔬 Methodology
 
