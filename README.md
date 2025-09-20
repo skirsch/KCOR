@@ -6,34 +6,34 @@
 ## 📋 Table of Contents
 
 - [Overview](#overview)
-- [🔬 Methodology](#methodology)
-  - [🎯 Core Concept](#core-concept)
-  - [⚙️ KCOR algorithm](#️kcor-algorithm)
+- [🔬 Methodology](#-methodology)
+  - [🎯 Core Concept](#-core-concept)
+  - [⚙️ KCOR algorithm](#️-kcor-algorithm)
   - [Mathematical and statistical description](#mathematical-and-statistical-description)
   - [Key Assumptions](#key-assumptions)
-- [⚠️Limitations](#️limitations)
-- [🏆 KCOR vs. Traditional Epidemiological Methods](#kcor-vs-traditional-epidemiological-methods)
-- [🏗️ Repository Structure](#️repository-structure)
-- [📦 Installation & Dependencies](#installation--dependencies)
-- [🚀 Usage](#usage)
-- [⚙️ Configuration](#️configuration)
-- [📊 Interpretation](#interpretation)
-- [🔧 Advanced Features](#advanced-features)
-- [🚨 Troubleshooting](#troubleshooting)
-- [🤝 Contributing](#contributing)
-- [📚 Citation](#citation)
+- [⚠️Limitations](#️-limitations)
+- [🏆 KCOR vs. Traditional Epidemiological Methods](#-kcor-vs-traditional-epidemiological-methods)
+- [🏗️ Repository Structure](#️-repository-structure)
+- [📦 Installation & Dependencies](#-installation--dependencies)
+- [🚀 Usage](#-usage)
+- [⚙️ Configuration](#️-configuration)
+- [📊 Interpretation](#-interpretation)
+- [🔧 Advanced Features](#-advanced-features)
+- [🚨 Troubleshooting](#-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [📚 Citation](#-citation)
 - [Version History](#version-history)
-  - [🆕 Version 4.3](#version-43)
-  - [🆕 Version 4.2](#version-42)
-  - [🆕 Version 4.1](#version-41)
-- [📊 Results Using Czech Data](#results-using-czech-data)
-- [🔬 Validation](#validation)
+  - [🆕 Version 4.3](#-version-43)
+  - [🆕 Version 4.2](#-version-42)
+  - [🆕 Version 4.1](#-version-41)
+- [📊 Results Using Czech Data](#-results-using-czech-data)
+- [🔬 Validation](#-validation)
   - [Independent Validation Methods](#independent-validation-methods)
   - [Negative-Control Tests](#negative-control-tests)
   - [Sensitivity Analysis](#sensitivity-analysis)
 - [Peer review](#peer-review)
-- [📄 License](#license)
-- [📞 Contact](#contact)
+- [📄 License](#-license)
+- [📞 Contact](#-contact)
 
 ## Overview
 
@@ -323,7 +323,7 @@ KCOR is a defined estimand (a baseline-normalized cumulative-hazard ratio) compu
 
 KCOR is not “just a heuristic”; it’s a pipeline of well-defined statistical transforms with explicit assumptions. The only “heuristic” bits (like choosing quiet anchor windows or a smoothing span) can be formalized as estimators/selection rules.
 
-## KCOR is a rigorous method (not “just a heuristic”)
+#### KCOR is a rigorous method (not “just a heuristic”)
 
 KCOR is a **baseline-normalized cumulative-hazard ratio** computed from **discrete-time hazards** after
 **cohort-wise slope normalization**. The steps and assumptions can be stated precisely; the few subjective
@@ -337,32 +337,39 @@ Let:
 - $m_{g,t}\in[0,1)$ the observed weekly mortality rate among those at risk at the start of week $t$.
 
 **Baseline model (log-rate decomposition)**
+
 $$
 \log m_{g,t} = \alpha_g + r_g\,t + \delta_t + \varepsilon_{g,t},
 $$
+ 
 where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** calendar-time factor
 (seasonality/waves), and $\varepsilon_{g,t}$ is noise.
 
 **Slope estimation via quiet anchors**
 Choose two quiet, non-differential windows $B_1,B_2$ (each of length $w$), and define
+
 $$
 \hat r_g = \frac{\overline{\log m_{g,t}}_{t\in B_2}-\overline{\log m_{g,t}}_{t\in B_1}}
 {\overline t_{B_2}-\overline t_{B_1}}.
 $$
+
 (Under the model, the common $\delta_t$ cancels to first order.)
 
 **Slope-normalization**
+
 $$
 m^{\text{adj}}_{g,t} = m_{g,t}\,\exp\!\big[-\hat r_g\, (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
 $$
 
 **Discrete hazard and cumulative hazard**
+
 $$
 h_{g,t} = -\ln\!\big(1-m^{\text{adj}}_{g,t}\big)\in[0,\infty),\qquad
 H_g(t) = \sum_{i\le t} h_{g,i}.
 $$
 
 **KCOR (baseline-normalized CH ratio at $t_0$)**
+
 $$
 \mathrm{KCOR}(t) = \frac{H_v(t)/H_u(t)}{H_v(t_0)/H_u(t_0)}.
 $$
@@ -391,12 +398,15 @@ $$
 
 With count data, a standard approximation is $\mathrm{Var}[H_g(t)]\approx H_g(t)$.
 Then by the delta method,
+
 $$
 \mathrm{Var}\!\big[\ln \mathrm{KCOR}(t)\big]
 \;\approx\;
 \frac{1}{H_v(t)}+\frac{1}{H_u(t)}+\frac{1}{H_v(t_0)}+\frac{1}{H_u(t_0)}.
 $$
+
 A $95\%$ CI is
+
 $$
 \mathrm{KCOR}(t)\times \exp\!\Big(\pm 1.96\,\sqrt{\mathrm{Var}[\ln \mathrm{KCOR}(t)]}\Big).
 $$
@@ -911,9 +921,11 @@ If you use KCOR in your research, please cite:
 
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
-## 🆕 Version 4.3
+## Version history
 
-### Major Improvements
+### 🆕 Version 4.3
+
+#### Major Improvements
 - **Improved KCOR Scaling Logic**: Fixed baseline normalization adjustment to properly scale the scale factor
 - **Corrected Scaling Application**: Scaling now applied to the scale factor, not individual KCOR values
 - **Enhanced Parameter Management**: Single ENROLLMENT_DATES parameter replaces DEBUG_SHEET_ONLY
@@ -922,16 +934,16 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Preserved Relationships**: All K_raw relationships maintained while correcting baseline bias
 - **Updated Examples**: README examples updated with latest KCOR values from current analysis
 
-### KCOR Scaling Fix (v4.3)
+#### KCOR Scaling Fix (v4.3)
 - **Before (v4.2)**: Scaling applied to individual KCOR values after computation
 - **After (v4.3)**: Scaling applied to the scale factor during computation
 - **Logic**: Check final KCOR value, if < threshold, adjust scale factor by 1/final_KCOR
 - **Result**: Proper baseline correction while preserving all relative relationships
 - **Transparency**: Original and adjusted scale factors logged for full methodology transparency
 
-## 🆕 Version 4.2
+### 🆕 Version 4.2
 
-### Major Improvements
+#### Major Improvements
 - **Option 2+ Expected-Deaths Weighting**: Fixed ASMR pooling to properly reflect death burden
 - **Corrected ASMR Values**: ASMR now reflects actual mortality impact, not population size
 - **Dose-Dependent Pattern Discovery**: Revealed accelerating mortality pattern (1→2→3 doses)
@@ -940,20 +952,20 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Enhanced Documentation**: Complete explanation of Option 2+ methodology
 - **KCOR Normalization Fine-Tuning**: Automatic baseline correction for unsafe vaccine effects
 
-### ASMR Pooling Fix (Option 2+)
+#### ASMR Pooling Fix (Option 2+)
 - **Before (v4.1)**: Weights = person-time only → over-weighted young people
 - **After (v4.2)**: Weights = hazard × person-time → properly weighted by death burden
 - **Formula**: `w_a ∝ h_a × PT_a(W)` where h_a = smoothed mean MR in quiet window
 - **Result**: ASMR values now reflect actual mortality impact rather than population size
 
-### KCOR Normalization Fine-Tuning
+#### KCOR Normalization Fine-Tuning
 - **Automatic Detection**: Checks KCOR values on specified final date (default: April 1, 2024)
 - **Baseline Correction**: Scales all KCOR values when KCOR_final < FINAL_KCOR_MIN (default: 0 disables scaling)
 - **Unsafe Vaccine Fix**: Corrects for artificially high baseline mortality rates during normalization
 - **Transparent Process**: Scaling factor is logged for full methodology transparency
 - **Conservative Approach**: Only applies when clear evidence of baseline bias exists
 
-### New Results Pattern
+#### New Results Pattern
 - **Dose 1 vs 0 (2021_24)**: KCOR = 1.05 (5.2% increased mortality risk)
 - **Dose 2 vs 0 (2021_24)**: KCOR = 1.26 (25.8% increased mortality risk)
 - **Dose 1 vs 0 (2022_06)**: KCOR = 1.12 (11.9% increased mortality risk)
@@ -961,9 +973,9 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Dose 3 vs 0 (2022_06)**: KCOR = 1.55 (54.9% increased mortality risk)
 - **Pattern**: Dose-dependent accelerating mortality with cohort-specific effects
 
-## 🆕 Version 4.1
+### 🆕 Version 4.1
 
-### Major Improvements
+#### Major Improvements
 - **Discrete Hazard Function Transform**: Enhanced mathematical exactness in CH calculation using hazard functions
 - **Hazard Ratio Methodology**: KCOR computed as ratio of cumulative hazards with proper normalization
 - **Complete Methodology Transparency**: All intermediate values included in output
@@ -972,14 +984,14 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Cross-Platform Build**: Windows-compatible Makefile and scripts
 - **Version Documentation**: Complete change history in code
 
-### New Output Columns
+#### New Output Columns
 - **Hazard Values**: `hazard_num/den` - Discrete hazard function results
 - **Slope Values**: `slope_num/den` - Slope used for each cohort
 - **Scale Factors**: `scale_factor_num/den` - `exp(-slope × (t - t0))` values
 - **Time Indices**: `t_num/den` - Time index (weeks from enrollment)
 - **Smoothed MR**: `MR_smooth_num/den` - Smoothed MR values used for slope calculation
 
-### Mathematical Enhancements
+#### Mathematical Enhancements
 - **Four-Step Process**: MR_adj → hazard → cumsum(hazard) → hazard ratio for KCOR
 - **Hazard Function Transform**: `hazard(t) = -ln(1 - MR_adj(t))` with proper clipping
 - **Cumulative Hazard**: `CH(t) = sum(hazard(i))` for mathematical exactness
