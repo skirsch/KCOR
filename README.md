@@ -901,7 +901,7 @@ The KCOR analysis of Czech vaccination and mortality data reveals significant fi
 - **Dose 3 shows severe harm** with 53.5% increased mortality vs dose 2 and 63.5% vs dose 0 (2022_06), both highly significant
 - **Dose-dependent accelerating mortality** - risk increases with additional doses
 
-### ⚠️ Important Note on Dose 1 Harm Estimates
+### ⚠️ Important Note on Dose 1 Harm Estimates for older cohorts in the 2021_24 and subsequent enrollment periods
 
 **The Dose 1 harm estimates are likely CONSERVATIVE (underestimated)** due to the enrollment period timing:
 
