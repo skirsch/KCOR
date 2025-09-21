@@ -89,7 +89,7 @@ I would be delighted to public debate any qualified scientist who believes KCOR 
 
 ### 🎯 Core Concept
 
-KCOR$(t)$ represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
+KCOR $(t)$ represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
 
  - **Time-varying trends** in mortality rates through slope correction
  - **Mathematical exactness** through discrete hazard function transformation
