@@ -41,13 +41,20 @@ KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for 
 
 KCOR enables us, for the first time, to objectively answer critically important questions such as, "Was the COVID vaccine net beneficial by the end of 2022?" KCOR tells you whether the benefits (e.g., lives saved during COVID) outweighed the risks (e.g., people who who were killed by the vaccine) at any time $t$.
 
-This is important because as of September 19, 2025, not a single epidemiologist in the entire world has been able to take any record level dataset (such as the Czech data) and provide a clear answer that crucial question. **That is an epic failure of epidemiology.**
+KCOR is important because as of September 19, 2025, not a single epidemiologist in the entire world has been able to take any record level dataset (such as the Czech data) and provide a clear answer that crucial question. **That is an epic failure of epidemiology.**
 
 Grok wrote, "KCOR addresses a real gap: traditional epidemiology often struggles with net benefit assessments in retrospective data without randomization." That's why KCOR is so important: it applies a rigorous analysis when a randomized controlled trial (RCT) cannot be done.
 
 Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc., and normalize their baseline mortality rates so that if there is no external effect applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates.
 
-That’s what KCOR does. Once the cohorts are precisely matched from a mortality rate point of view, we can simply cumulate the adjusted hazards and see which cohort had more cumulative deaths as a function of $t$. This means, given a specific time, we can show if an intervention was net harm, net benefit, or neutral as of that time. 
+That’s what KCOR does. 
+
+1. Pick an enrollment date after most people are vaccinated with the dose of interest
+2. Calculate the the mortality rate (MR) slopes of each cohort and use that to adjust the MR normalize relative to a neutral slope.
+3. You do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards)
+4. You cumulate the hazards for each cohort and compare the ratio of cumulative outcomes to the ratio 4 weeks after enrollment to assess cumulative net harm/benefit of the intervention at any time $t$.
+
+It's no more complicated than that.
 
 Therefore, any methodology that can accurately make such a risk/benefit assessment is a threat to the field because it will reveal that previous assessments done with traditional epidemiological methods were all flat out wrong (e.g., studies claiming the COVID vaccine were beneficial). This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
 
@@ -89,7 +96,7 @@ I would be delighted to public debate any qualified scientist who believes KCOR 
 
 ### 🎯 Core Concept
 
-KCOR $(t)$ represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
+KCOR(*t*) represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
 
  - **Time-varying trends** in mortality rates through slope correction
  - **Mathematical exactness** through discrete hazard function transformation
