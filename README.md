@@ -45,9 +45,9 @@ KCOR is important because as of September 19, 2025, not a single epidemiologist 
 
 Grok wrote, "KCOR addresses a real gap: traditional epidemiology often struggles with net benefit assessments in retrospective data without randomization." That's why KCOR is so important: it applies a rigorous analysis when a randomized controlled trial (RCT) cannot be done.
 
-Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc., and normalize their baseline mortality rates so that if there is no external effect applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates.
+Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc., and normalize their baseline mortality rates so that if there is no external effect applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates. You could then compare their results to see which cohort did better. That's the core idea.
 
-That’s what KCOR does. 
+Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
 2. Calculate the the mortality rate (MR) slopes of each cohort and use that to adjust the MR normalize relative to a neutral slope.
@@ -245,7 +245,7 @@ Where:
 >
 > 2. Adjust the mortality rates of each cohort to neutralize the slope over time. This allows all cohorts, regardless of age or frailty, to be fairly compared. 
 >
-> 3. Do a discrete-time hazard transform to transform mortality rates into a hazard function, hazard$(t)$. that we can cumulate.
+> 3. Do a discrete-time hazard transform to transform mortality rates into a hazard function, hazard(*t*). that we can cumulate.
 >
 > 4. Compute the ratio of the cumulative hazard function at each time $t$ of the cohorts of interest. Scale by the value at week 4 (config: `ANCHOR_WEEKS = 4`). So KCOR on week 4 will be 1. The 4 weeks gives us time to match baseline mortality of the cohorts during a period where there is no COVID virus so there should not be a differential response.
 
@@ -426,7 +426,7 @@ $$
   cross-validation restricted to quiet weeks.
 - **Diagnostics as tests.** Require (a) high $R^2$ for log-linear fits in anchors,
   (b) a tiny quadratic term in $\log m_{g,t} = \beta_0+\beta_1 t + \beta_2 t^2$ over quiet ranges,
-  (c) stability under anchor shifts ($\pm$1–2 weeks).
+  (c) stability under anchor shifts ( $\pm$ 1–2 weeks).
 
 ### Practical checklist
 
