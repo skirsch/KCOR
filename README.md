@@ -50,13 +50,14 @@ Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc
 Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
-2. Calculate the the mortality rate (MR) slopes of each cohort and use that to adjust the MR normalize relative to a neutral slope.
-3. You do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards)
-4. You cumulate the hazards for each cohort and compare the ratio of cumulative outcomes to the ratio 4 weeks after enrollment to assess cumulative net harm/benefit of the intervention at any time $t$.
+2. Calculate the the mortality rate (MR) slopes of each cohort (per age range) and use that to adjust the MR to a neutral slope.
+3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards)
+4. Cumulate the hazards for each cohort and scale the ratio of cumulative hazards to the ratio 4 weeks after enrollment (baseline time).
+5. The ratio of cumulative hazards as a function of $t$ normalized to the baseline ratio is a measure of the net harm/benefit of the intervention at any time $t$, relatieve to the baseline time.
 
-It's no more complicated than that.
+It's no more complicated than that. It's simple. Common sense. Mathematically precise.
 
-Therefore, any methodology that can accurately make such a risk/benefit assessment is a threat to the field because it will reveal that previous assessments done with traditional epidemiological methods were all flat out wrong (e.g., studies claiming the COVID vaccine were beneficial). This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
+Sadly, in today's world, any methodology that can accurately make a risk/benefit assessment that can be applied to the COVID vaccine is a threat to the field because it will reveal that previous assessments done with traditional epidemiological methods were simply flat out wrong (e.g., studies claiming the COVID vaccine were beneficial). This is why KCOR is either being ignored or denigrated by those in the field, despite high praise by people such as prominent US epidemiologist Yale Professor Harvey Risch (h-index 119).
 
 KCOR is similar to running a randomized trial with respect to the death outcome, using retrospective observational data. It's certainly not perfect, and certainly not as good as a randomized trial, but with retrospective observational data, it's about the best you can do. No 1:1 cohort matching is required. No cause of death is needed. KCOR uses just 3 dates per person: birth, death, and dates of intervention (i.e., vaccination). That's it.
 
