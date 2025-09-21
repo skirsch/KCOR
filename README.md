@@ -31,7 +31,7 @@
   - [Independent Validation Methods](#independent-validation-methods)
   - [Negative-Control Tests](#negative-control-tests)
   - [Sensitivity Analysis](#sensitivity-analysis)
-- [Peer review](#peer-review)
+- [Peer review](#peer-reviews)
 - [📄 License](#-license)
 - [📞 Contact](#-contact)
 
@@ -1157,7 +1157,7 @@ The validation studies confirm:
 
 For detailed validation results and methodology comparisons, see the [`validation/`](validation/) directory.
 
-## Peer review
+## Peer reviews
 
 Harvey Risch, with an h-index of 119, is arguably one of the top epidemiologists in the world. He reviewed an earlier version of KCOR and I made a transcript of the Zoom call. The bottom line is he didn't find any flaws in the methodology but noted that it would be hard to convince the epidemiology community because it is an engineering approach to making the harm/benefit assessment (he used the term "heuristic").
 
