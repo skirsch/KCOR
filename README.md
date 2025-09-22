@@ -50,10 +50,11 @@ Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc
 Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
-2. Calculate the the mortality rate (MR) slopes of each cohort (per age range) and use that to adjust the MR to a neutral slope.
-3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards)
-4. Cumulate the hazards for each cohort and scale the ratio of cumulative hazards to the ratio 4 weeks after enrollment (baseline time).
-5. The ratio of cumulative hazards as a function of $t$ normalized to the baseline ratio is a measure of the net harm/benefit of the intervention at any time $t$, relatieve to the baseline time.
+2. Calculate the the mortality rate (MR) slopes of each cohort (per age range); use that to adjust each cohort's MR(t) to a neutral slope.
+3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards). So MR(t) --> h(t)
+4. Cumulate the hazards for each cohort. Then plot the ratio as a function of time.
+5. Scale the entire graph by the value at week 4 (which allows enough data to get a reasonable baseline with relatively modest Poisson noise)
+6. The graph is KCOR(t): a measure of the CUMULATIVE net harm/benefit of the intervention at any time $t$, relatieve to the baseline time picked in the previous step.
 
 It's no more complicated than that. It's simple. Common sense. Mathematically precise.
 
