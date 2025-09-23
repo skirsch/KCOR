@@ -41,7 +41,7 @@ KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for 
 
 KCOR is based on a well-established epidemiological method (Cumulative Mortality Rate Ratio aka CMRR). It only adds one thing: per cohort mortality rate slope normalization. The latter is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes cohorts to be on different parts of the Gompertz-mortality-with-depletion curve. 
 
-But once you slope normalize (which is based on the instantaneous mortality rate), you cannot apply that normalization to the CMRR methodology; you must switch to a discrete-time hazard transform to do this properly. [Read the latter part of this chat for details](https://chatgpt.com/share/68d2fb6c-450c-8009-887b-aeb21f3fde7d) as well as this [mini-tutorial on the discrete-time hazard transform](documentation/hazard_function.md).
+But once you slope normalize (which computes an adjustment to the instantaneous mortality rate at each time $t$), you cannot apply that normalization to the CMRR methodology (since CMRR is cumulative, not instantaneous); you must switch to a discrete-time hazard transform to do this properly. [Read the CMRR part of this chat for details](https://chatgpt.com/share/68d2fb6c-450c-8009-887b-aeb21f3fde7d) as well as this [mini-tutorial on the discrete-time hazard transform](documentation/hazard_function.md).
 
 KCOR's key assumptions are applicable to most datasets and can be easily verified. In particular, the COVID shots are claimed to be "safe and effective" which means all the key KCOR assumptions apply. 
 
