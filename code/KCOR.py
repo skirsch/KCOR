@@ -945,6 +945,22 @@ def build_kcor_o_deaths_details(df, sheet_name):
     df["Dead_adj_o"] = df.apply(apply_death_slope, axis=1)
     df["cumD_o"] = df.groupby(["YearOfBirth","Dose"])['Dead_adj_o'].cumsum()
 
+    # Compute enrollment-week Alive per (YearOfBirth, Dose)
+    # alive0_map[(YearOfBirth, Dose)] = Alive at t == 0
+    try:
+        first_rows = (
+            df.sort_values(["YearOfBirth","Dose","t"])\
+              .groupby(["YearOfBirth","Dose"], sort=False)
+              .first()
+              .reset_index()
+        )
+        alive0_map = {
+            (int(r["YearOfBirth"]), int(r["Dose"])): float(r.get("Alive", np.nan))
+            for _, r in first_rows.iterrows()
+        }
+    except Exception:
+        alive0_map = {}
+
     out_rows = []
     by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
     dose_pairs = get_dose_pairs(sheet_name)
@@ -969,11 +985,23 @@ def build_kcor_o_deaths_details(df, sheet_name):
                 k0 = 1.0
             merged["KCOR_o"] = np.where(np.isfinite(merged["K_raw_o"]), merged["K_raw_o"] / k0, np.nan)
 
+            # Add CMRR = (cumD_num/cumD_den) * (Alive_den0/Alive_num0)
+            alive_num0 = float(alive0_map.get((yob, num), np.nan))
+            alive_den0 = float(alive0_map.get((yob, den), np.nan))
+            const_ratio = np.nan
+            if np.isfinite(alive_num0) and np.isfinite(alive_den0) and alive_num0 > EPS:
+                const_ratio = alive_den0 / alive_num0
+            merged["CMRR"] = np.where(
+                np.isfinite(merged["K_raw_o"]) & np.isfinite(const_ratio),
+                merged["K_raw_o"] * const_ratio,
+                np.nan,
+            )
+
             out = merged[[
                 "DateDied","ISOweekDied_num",
                 "Dead_num","Dead_adj_o_num","cumD_o_num",
                 "Dead_den","Dead_adj_o_den","cumD_o_den",
-                "K_raw_o","KCOR_o"
+                "K_raw_o","KCOR_o","CMRR"
             ]].copy()
             out["EnrollmentDate"] = sheet_name
             out["YearOfBirth"] = yob
@@ -988,13 +1016,13 @@ def build_kcor_o_deaths_details(df, sheet_name):
         cols = [
             "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
             "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
-            "K_raw_o","KCOR_o"
+            "K_raw_o","KCOR_o","CMRR"
         ]
         return pd.concat(out_rows, ignore_index=True)[cols]
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
         "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
-        "K_raw_o","KCOR_o"
+        "K_raw_o","KCOR_o","CMRR"
     ])
 
 def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log"):
@@ -1721,7 +1749,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         pair_deaths_df = pd.DataFrame(columns=[
                             "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
                             "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
-                            "K_raw_o","KCOR_o"
+                            "K_raw_o","KCOR_o","CMRR"
                         ])
                     pair_deaths_df.to_excel(writer, index=False, sheet_name="dose_pair_deaths")
                 
