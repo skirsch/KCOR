@@ -404,7 +404,8 @@ for enroll_date_str in enrollment_dates:
     _bypass_freeze = str(os.environ.get('BYPASS_FREEZE','')).strip().lower() in ('1','true','yes')
     if not _bypass_freeze:
         for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
-            a_var.loc[a_var[_col] > enrollment_date, _col] = pd.NaT
+            # Freeze transitions on or after enrollment Monday to keep fixed cohorts post-enrollment
+            a_var.loc[a_var[_col] >= enrollment_date, _col] = pd.NaT
 
     # Create boolean masks for each dose being valid (not null and <= reference_date) on the truncated dates
     dose1_valid = a_var['Date_FirstDose'].notna() & (a_var['Date_FirstDose'] <= reference_dates)
@@ -493,6 +494,7 @@ for enroll_date_str in enrollment_dates:
     a_copy.loc[d2_w, 'dose_at_week'] = 2
     a_copy.loc[d3_w, 'dose_at_week'] = 3
     a_copy.loc[d4_w, 'dose_at_week'] = 4
+    # Attribute all deaths by dose at start of week (variable cohorts), with post-enrollment transitions frozen
     deaths_week = (
         a_copy[mask_deaths]
             .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
