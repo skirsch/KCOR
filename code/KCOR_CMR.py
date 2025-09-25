@@ -379,7 +379,7 @@ for enroll_date_str in enrollment_dates:
     a_copy = a.copy()
     # Restrict processing to birth years within [1920, 2000] inclusive, but keep -1 (unknown)
     before = len(a_copy)
-    a_copy = a_copy[((a_copy['YearOfBirth'] >= 1920) & (a_copy['YearOfBirth'] <= 2000)) | (a_copy['YearOfBirth'] == -1)]
+    a_copy = a_copy[((a_copy['YearOfBirth'] >= 1920) & (a_copy['YearOfBirth'] <= 2005)) | (a_copy['YearOfBirth'] == -1)]
     after = len(a_copy)
     print(f"  Filtered YearOfBirth to 1920-2000: kept {after}/{before} records")
     print(f"  Keeping all records including deaths before enrollment date...")
