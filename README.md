@@ -39,6 +39,12 @@
 
 KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality differences between cohorts receiving an intervention (e.g., vaccinated with 3 doses vs. unvaccinated) while accounting for underlying cohort all-cause mortality differences (e.g., mortality rates and slope over time of those mortality rates). 
 
+The method is simple: 
+1. select enrollment dates and slope dates appropriate to the dataset, 
+2. slope normalize each cohort to the reference dates, 
+3. cumulate adjusted death hazards, 
+4. take the ratio of the cumulative death hazard of the cohorts you want to compare.
+
 KCOR is based on a well-established epidemiological method (Cumulative Mortality Rate Ratio aka CMRR). It only adds one thing: per cohort mortality rate slope normalization. The latter is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes cohorts to be on different parts of the Gompertz-mortality-with-depletion curve where the slopes can be dramatically different. Few epidemiologists have ever seen the [Gompertz with depletion slope plot](documentation/Gompertz_with_slope.png) so here it is. HVE (which from a simplistic point of view changes your effective age) means any two cohorts being compared can have vastly different slopes as you can see from the plot.
 
 But once you slope normalize (which computes an adjustment to the instantaneous mortality rate at each time $t$), you cannot apply that normalization to the CMRR methodology (since CMRR is cumulative, not instantaneous); you must switch to a discrete-time hazard transform to do this properly. [Read the CMRR part of this chat for details](https://chatgpt.com/share/68d2fb6c-450c-8009-887b-aeb21f3fde7d) as well as this [mini-tutorial on the discrete-time hazard transform](documentation/hazard_function.md).
