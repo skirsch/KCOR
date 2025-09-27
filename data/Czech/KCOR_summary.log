@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.4 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-24 10:21:09
+Analysis Date: 2025-09-27 00:27:28
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -65,6 +65,15 @@ Configuration Parameters (effective):
   YoB 1980, Dose 2: slope = 0.017227
   YoB 1990, Dose 2: slope = 0.007070
   YoB 2000, Dose 2: slope = 0.000000
+  YoB 1920, total slope = -0.000521
+  YoB 1930, total slope = 0.000116
+  YoB 1940, total slope = 0.000848
+  YoB 1950, total slope = 0.000553
+  YoB 1960, total slope = 0.000788
+  YoB 1970, total slope = 0.001421
+  YoB 1980, total slope = 0.002346
+  YoB 1990, total slope = 0.002604
+  YoB 2000, total slope = 0.003768
 
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 133110 rows
@@ -101,6 +110,15 @@ Configuration Parameters (effective):
   YoB 1980, Dose 2: slope = 0.006615
   YoB 1990, Dose 2: slope = 0.004360
   YoB 2000, Dose 2: slope = 0.000000
+  YoB 1920, total slope = -0.000480
+  YoB 1930, total slope = 0.000152
+  YoB 1940, total slope = 0.001088
+  YoB 1950, total slope = 0.000779
+  YoB 1960, total slope = 0.001405
+  YoB 1970, total slope = 0.001884
+  YoB 1980, total slope = 0.003263
+  YoB 1990, total slope = 0.002457
+  YoB 2000, total slope = 0.003388
 
 [Info] Processing sheet: 2022_06
 [DEBUG] Filtered to start from enrollment date 02/07/2022: 107100 rows
@@ -146,6 +164,15 @@ Configuration Parameters (effective):
   YoB 1980, Dose 3: slope = -0.008418
   YoB 1990, Dose 3: slope = -0.008658
   YoB 2000, Dose 3: slope = -0.036602
+  YoB 1920, total slope = 0.000701
+  YoB 1930, total slope = 0.002425
+  YoB 1940, total slope = 0.001757
+  YoB 1950, total slope = 0.000204
+  YoB 1960, total slope = 0.000245
+  YoB 1970, total slope = -0.001536
+  YoB 1980, total slope = -0.003395
+  YoB 1990, total slope = -0.005646
+  YoB 2000, total slope = -0.013407
 
 [Info] Processing sheet: 2022_47
 [DEBUG] Filtered to start from enrollment date 11/21/2022: 75735 rows
@@ -200,6 +227,15 @@ Configuration Parameters (effective):
   YoB 1980, Dose 4: slope = -0.029586
   YoB 1990, Dose 4: slope = -0.002053
   YoB 2000, Dose 4: slope = 0.000000
+  YoB 1920, total slope = 0.000670
+  YoB 1930, total slope = 0.002383
+  YoB 1940, total slope = 0.001715
+  YoB 1950, total slope = 0.000296
+  YoB 1960, total slope = 0.000172
+  YoB 1970, total slope = -0.001285
+  YoB 1980, total slope = -0.002643
+  YoB 1990, total slope = -0.005517
+  YoB 2000, total slope = -0.012796
 
 
 ================================================================================

@@ -20,6 +20,10 @@ METHODOLOGY OVERVIEW:
    - Slope = ln(B/A) / T where A = geometric mean at first anchor, B = geometric mean at second anchor
    - Same anchor points used for all doses to ensure comparability
    - Anchor dates chosen during "quiet periods" with no differential events (COVID waves, policy changes, etc.)
+   - Total slope (reporting metric): For each birth-decade group, compute an Alive-weighted average
+     of dose-specific slopes at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \),
+     where \(A_d\) is the Alive count at t = 0 for dose d. This is printed for diagnostics and
+     summary only; it does not alter KCOR computations.
 
 3. MORTALITY RATE ADJUSTMENT:
    - Applies exponential slope removal: MR_adj = MR × exp(-slope × (t - t0))
@@ -1323,8 +1327,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 else:
                     dual_print(f"  YoB {yob}, total slope = -")
 
-            dual_print()
-        
+            # done printing total slopes so we can print the note on how to interpret it
+            dual_print("\nNote that the total slope can be a smoking gun diagnostic metric. People over 85 should have negative total slopes")
+            dual_print("\nwhile young people should have positive total slopes that should not exceed 0.0015 if the vaccine is safe.\n
+
+
         df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
         
         # Debug: Show MR values week by week, especially weeks with no deaths
