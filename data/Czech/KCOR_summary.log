@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.4 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-27 00:27:28
+Analysis Date: 2025-09-27 12:26:26
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -17,7 +17,7 @@ Configuration Parameters (effective):
   SLOPE_WINDOW_SIZE     = 2
   MA_TOTAL_LENGTH       = 8
   CENTERED              = True
-  YEAR_RANGE            = (1920, 2000)
+  YEAR_RANGE            = (1920, 2009)
   ENROLLMENT_DATES      = ['2021_13', '2021_24', '2022_06', '2022_47']
   DEBUG_VERBOSE         = True
   OVERRIDE_DOSE_PAIRS   = None
@@ -28,12 +28,12 @@ Configuration Parameters (effective):
   KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
 ================================================================================
 
-[DEBUG] Limiting to age range: 1920-2000
+[DEBUG] Limiting to age range: 1920-2009
 [DEBUG] Limiting to enrollment dates: ['2021_13', '2021_24', '2022_06', '2022_47']
 [Info] Processing sheet: 2021_13
 [DEBUG] Filtered to start from enrollment date 03/29/2021: 141525 rows
-[DEBUG] Filtered to 125800 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 75480 rows
+[DEBUG] Filtered to 133200 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 79920 rows
 [DEBUG] Aggregated across sexes: 4995 rows
 [INFO] 2021_13 dynamic anchors: t=64 (2022-06-20), t=119 (2023-07-10), Δt=55 weeks
 
@@ -46,7 +46,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 0: slope = 0.001178
   YoB 1980, Dose 0: slope = 0.001901
   YoB 1990, Dose 0: slope = 0.002549
-  YoB 2000, Dose 0: slope = 0.003809
+  YoB 2000, Dose 0: slope = -0.000307
   YoB 1920, Dose 1: slope = 0.000867
   YoB 1930, Dose 1: slope = 0.000062
   YoB 1940, Dose 1: slope = 0.002133
@@ -65,20 +65,23 @@ Configuration Parameters (effective):
   YoB 1980, Dose 2: slope = 0.017227
   YoB 1990, Dose 2: slope = 0.007070
   YoB 2000, Dose 2: slope = 0.000000
-  YoB 1920, total slope = -0.000521
-  YoB 1930, total slope = 0.000116
-  YoB 1940, total slope = 0.000848
-  YoB 1950, total slope = 0.000553
-  YoB 1960, total slope = 0.000788
-  YoB 1970, total slope = 0.001421
-  YoB 1980, total slope = 0.002346
-  YoB 1990, total slope = 0.002604
-  YoB 2000, total slope = 0.003768
+  YoB 1920, total slope = -0.000521  % vaxxed=58  (u,v)=(17291, 24009)
+  YoB 1930, total slope = 0.000116  % vaxxed=66  (u,v)=(108468, 208980)
+  YoB 1940, total slope = 0.000848  % vaxxed=43  (u,v)=(535775, 407907)
+  YoB 1950, total slope = 0.000553  % vaxxed=10  (u,v)=(1146274, 124352)
+  YoB 1960, total slope = 0.000788  % vaxxed=10  (u,v)=(1166254, 129324)
+  YoB 1970, total slope = 0.001421  % vaxxed=8  (u,v)=(1580142, 131298)
+  YoB 1980, total slope = 0.002346  % vaxxed=5  (u,v)=(1359745, 72486)
+  YoB 1990, total slope = 0.002604  % vaxxed=4  (u,v)=(1112039, 44473)
+  YoB 2000, total slope = -0.000305  % vaxxed=1  (u,v)=(1042593, 5337)
+
+Note that the total slope can be a smoking gun diagnostic metric. 
+Total slopes should range from .002 to -.002 for a safe vaccine.
 
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 133110 rows
-[DEBUG] Filtered to 118320 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 70992 rows
+[DEBUG] Filtered to 125280 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 75168 rows
 [DEBUG] Aggregated across sexes: 4698 rows
 [INFO] 2021_24 dynamic anchors: t=53 (2022-06-20), t=108 (2023-07-10), Δt=55 weeks
 
@@ -91,7 +94,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 0: slope = -0.000085
   YoB 1980, Dose 0: slope = 0.000405
   YoB 1990, Dose 0: slope = 0.002004
-  YoB 2000, Dose 0: slope = 0.002308
+  YoB 2000, Dose 0: slope = -0.001467
   YoB 1920, Dose 1: slope = -0.003542
   YoB 1930, Dose 1: slope = -0.000762
   YoB 1940, Dose 1: slope = 0.001182
@@ -110,20 +113,23 @@ Configuration Parameters (effective):
   YoB 1980, Dose 2: slope = 0.006615
   YoB 1990, Dose 2: slope = 0.004360
   YoB 2000, Dose 2: slope = 0.000000
-  YoB 1920, total slope = -0.000480
-  YoB 1930, total slope = 0.000152
-  YoB 1940, total slope = 0.001088
-  YoB 1950, total slope = 0.000779
-  YoB 1960, total slope = 0.001405
-  YoB 1970, total slope = 0.001884
-  YoB 1980, total slope = 0.003263
-  YoB 1990, total slope = 0.002457
-  YoB 2000, total slope = 0.003388
+  YoB 1920, total slope = -0.000480  % vaxxed=71  (u,v)=(11340, 27811)
+  YoB 1930, total slope = 0.000152  % vaxxed=81  (u,v)=(59085, 251361)
+  YoB 1940, total slope = 0.001088  % vaxxed=82  (u,v)=(169274, 766292)
+  YoB 1950, total slope = 0.000779  % vaxxed=75  (u,v)=(316378, 949449)
+  YoB 1960, total slope = 0.001405  % vaxxed=63  (u,v)=(475613, 818224)
+  YoB 1970, total slope = 0.001884  % vaxxed=55  (u,v)=(761808, 948849)
+  YoB 1980, total slope = 0.003263  % vaxxed=37  (u,v)=(899514, 532469)
+  YoB 1990, total slope = 0.002457  % vaxxed=19  (u,v)=(937986, 218424)
+  YoB 2000, total slope = -0.000754  % vaxxed=5  (u,v)=(997230, 50679)
+
+Note that the total slope can be a smoking gun diagnostic metric. 
+Total slopes should range from .002 to -.002 for a safe vaccine.
 
 [Info] Processing sheet: 2022_06
 [DEBUG] Filtered to start from enrollment date 02/07/2022: 107100 rows
-[DEBUG] Filtered to 95200 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 76160 rows
+[DEBUG] Filtered to 100800 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 80640 rows
 [DEBUG] Aggregated across sexes: 5040 rows
 [INFO] 2022_06 dynamic anchors: t=74 (2023-07-10), t=113 (2024-04-08), Δt=39 weeks
 
@@ -136,7 +142,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 0: slope = -0.002412
   YoB 1980, Dose 0: slope = -0.003539
   YoB 1990, Dose 0: slope = -0.003980
-  YoB 2000, Dose 0: slope = 0.006395
+  YoB 2000, Dose 0: slope = 0.000368
   YoB 1920, Dose 1: slope = 0.001725
   YoB 1930, Dose 1: slope = 0.000327
   YoB 1940, Dose 1: slope = 0.004021
@@ -145,7 +151,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 1: slope = 0.009618
   YoB 1980, Dose 1: slope = 0.010966
   YoB 1990, Dose 1: slope = 0.020415
-  YoB 2000, Dose 1: slope = -0.021322
+  YoB 2000, Dose 1: slope = -0.007104
   YoB 1920, Dose 2: slope = -0.002159
   YoB 1930, Dose 2: slope = 0.001089
   YoB 1940, Dose 2: slope = 0.000410
@@ -154,7 +160,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 2: slope = -0.000183
   YoB 1980, Dose 2: slope = -0.002014
   YoB 1990, Dose 2: slope = -0.011207
-  YoB 2000, Dose 2: slope = -0.017291
+  YoB 2000, Dose 2: slope = -0.006542
   YoB 1920, Dose 3: slope = 0.000279
   YoB 1930, Dose 3: slope = 0.002997
   YoB 1940, Dose 3: slope = 0.002120
@@ -163,21 +169,24 @@ Configuration Parameters (effective):
   YoB 1970, Dose 3: slope = -0.003568
   YoB 1980, Dose 3: slope = -0.008418
   YoB 1990, Dose 3: slope = -0.008658
-  YoB 2000, Dose 3: slope = -0.036602
-  YoB 1920, total slope = 0.000701
-  YoB 1930, total slope = 0.002425
-  YoB 1940, total slope = 0.001757
-  YoB 1950, total slope = 0.000204
-  YoB 1960, total slope = 0.000245
-  YoB 1970, total slope = -0.001536
-  YoB 1980, total slope = -0.003395
-  YoB 1990, total slope = -0.005646
-  YoB 2000, total slope = -0.013407
+  YoB 2000, Dose 3: slope = -0.042568
+  YoB 1920, total slope = 0.000701  % vaxxed=79  (u,v)=(6742, 25271)
+  YoB 1930, total slope = 0.002425  % vaxxed=88  (u,v)=(35371, 252148)
+  YoB 1940, total slope = 0.001757  % vaxxed=90  (u,v)=(93174, 817874)
+  YoB 1950, total slope = 0.000204  % vaxxed=86  (u,v)=(169821, 1081798)
+  YoB 1960, total slope = 0.000245  % vaxxed=79  (u,v)=(266299, 1022121)
+  YoB 1970, total slope = -0.001536  % vaxxed=76  (u,v)=(418011, 1290099)
+  YoB 1980, total slope = -0.003395  % vaxxed=68  (u,v)=(463431, 967590)
+  YoB 1990, total slope = -0.005646  % vaxxed=65  (u,v)=(406232, 749799)
+  YoB 2000, total slope = -0.006910  % vaxxed=59  (u,v)=(433934, 613790)
+
+Note that the total slope can be a smoking gun diagnostic metric. 
+Total slopes should range from .002 to -.002 for a safe vaccine.
 
 [Info] Processing sheet: 2022_47
 [DEBUG] Filtered to start from enrollment date 11/21/2022: 75735 rows
-[DEBUG] Filtered to 67320 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2, 3, 4] (max dose 4): 67320 rows
+[DEBUG] Filtered to 71280 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3, 4] (max dose 4): 71280 rows
 [DEBUG] Aggregated across sexes: 4455 rows
 [INFO] 2022_47 dynamic anchors: t=33 (2023-07-10), t=72 (2024-04-08), Δt=39 weeks
 
@@ -190,7 +199,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 0: slope = -0.002263
   YoB 1980, Dose 0: slope = -0.003352
   YoB 1990, Dose 0: slope = -0.004510
-  YoB 2000, Dose 0: slope = 0.006395
+  YoB 2000, Dose 0: slope = -0.000218
   YoB 1920, Dose 1: slope = -0.002362
   YoB 1930, Dose 1: slope = -0.000384
   YoB 1940, Dose 1: slope = 0.004375
@@ -199,7 +208,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 1: slope = 0.010797
   YoB 1980, Dose 1: slope = 0.013958
   YoB 1990, Dose 1: slope = 0.016476
-  YoB 2000, Dose 1: slope = -0.005629
+  YoB 2000, Dose 1: slope = 0.008589
   YoB 1920, Dose 2: slope = -0.000626
   YoB 1930, Dose 2: slope = 0.001961
   YoB 1940, Dose 2: slope = 0.001697
@@ -208,7 +217,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 2: slope = 0.000037
   YoB 1980, Dose 2: slope = -0.002972
   YoB 1990, Dose 2: slope = -0.006584
-  YoB 2000, Dose 2: slope = -0.017773
+  YoB 2000, Dose 2: slope = -0.011355
   YoB 1920, Dose 3: slope = 0.000011
   YoB 1930, Dose 3: slope = 0.002883
   YoB 1940, Dose 3: slope = 0.001215
@@ -217,7 +226,7 @@ Configuration Parameters (effective):
   YoB 1970, Dose 3: slope = -0.002013
   YoB 1980, Dose 3: slope = -0.003403
   YoB 1990, Dose 3: slope = -0.012198
-  YoB 2000, Dose 3: slope = -0.030719
+  YoB 2000, Dose 3: slope = -0.009039
   YoB 1920, Dose 4: slope = 0.000489
   YoB 1930, Dose 4: slope = 0.002424
   YoB 1940, Dose 4: slope = 0.003272
@@ -227,15 +236,18 @@ Configuration Parameters (effective):
   YoB 1980, Dose 4: slope = -0.029586
   YoB 1990, Dose 4: slope = -0.002053
   YoB 2000, Dose 4: slope = 0.000000
-  YoB 1920, total slope = 0.000670
-  YoB 1930, total slope = 0.002383
-  YoB 1940, total slope = 0.001715
-  YoB 1950, total slope = 0.000296
-  YoB 1960, total slope = 0.000172
-  YoB 1970, total slope = -0.001285
-  YoB 1980, total slope = -0.002643
-  YoB 1990, total slope = -0.005517
-  YoB 2000, total slope = -0.012796
+  YoB 1920, total slope = 0.000670  % vaxxed=81  (u,v)=(4747, 20096)
+  YoB 1930, total slope = 0.002383  % vaxxed=89  (u,v)=(29755, 231739)
+  YoB 1940, total slope = 0.001715  % vaxxed=90  (u,v)=(86740, 796080)
+  YoB 1950, total slope = 0.000296  % vaxxed=87  (u,v)=(164073, 1071661)
+  YoB 1960, total slope = 0.000172  % vaxxed=80  (u,v)=(261694, 1020720)
+  YoB 1970, total slope = -0.001285  % vaxxed=76  (u,v)=(412512, 1292756)
+  YoB 1980, total slope = -0.002643  % vaxxed=68  (u,v)=(456849, 973197)
+  YoB 1990, total slope = -0.005517  % vaxxed=65  (u,v)=(399235, 756407)
+  YoB 2000, total slope = -0.005683  % vaxxed=59  (u,v)=(426359, 621152)
+
+Note that the total slope can be a smoking gun diagnostic metric. 
+Total slopes should range from .002 to -.002 for a safe vaccine.
 
 
 ================================================================================
@@ -258,7 +270,7 @@ Dose combination: 1 vs 0 [2021_13]
   1970            |   1.2856 [0.955, 1.730] | 1.5774
   1980            |   1.5204 [0.811, 2.851] | 1.6374
   1990            |   1.9119 [0.000, 19.119] | 0.0323
-  2000            |   6.6914 [0.000, 66.914] | 0.0358
+  2000            |   7.9660 [0.000, 79.660] | 0.0246
 
 Dose combination: 2 vs 0 [2021_13]
 --------------------------------------------------
@@ -273,7 +285,7 @@ Dose combination: 2 vs 0 [2021_13]
   1970            |   1.2708 [0.908, 1.778] | 1.3932
   1980            |   0.3440 [0.229, 0.517] | 0.6550
   1990            |   1.6347 [0.668, 4.002] | 2.0445
-  2000            |   2.6556 [0.000, 26.556] | 0.0098
+  2000            |   3.1674 [0.000, 31.674] | 0.0067
 
 Dose combination: 2 vs 1 [2021_13]
 --------------------------------------------------
@@ -288,7 +300,7 @@ Dose combination: 2 vs 1 [2021_13]
   1970            |   0.9885 [0.634, 1.541] | 0.8832
   1980            |   0.2263 [0.108, 0.474] | 0.4000
   1990            |   0.7738 [0.000, 7.738] | 1.2414
-  2000            |   0.3969 [0.000, 3.969] | 0.2727
+  2000            |   0.3976 [0.000, 3.976] | 0.2727
 
 Sheet: 2021_24 — Reporting date: 2023-01-02
 ============================================================
@@ -297,7 +309,7 @@ Dose combination: 1 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.0841 [1.055, 1.114] | -
+  ASMR (pooled)   |   1.0814 [1.052, 1.112] | -
   1920            |   0.9338 [0.844, 1.033] | 0.9983
   1930            |   1.0141 [0.959, 1.072] | 1.1319
   1940            |   1.1232 [1.072, 1.177] | 1.3025
@@ -306,13 +318,13 @@ Dose combination: 1 vs 0 [2021_24]
   1970            |   1.0609 [0.941, 1.197] | 1.2326
   1980            |   0.6321 [0.505, 0.792] | 0.8600
   1990            |   3.5740 [1.456, 8.775] | 4.0000
-  2000            |   0.6728 [0.264, 1.711] | 1.2695
+  2000            |   0.4953 [0.196, 1.250] | 1.0925
 
 Dose combination: 2 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.1996 [1.174, 1.226] | -
+  ASMR (pooled)   |   1.1986 [1.173, 1.225] | -
   1920            |   0.8674 [0.816, 0.922] | 1.1768
   1930            |   1.0733 [1.035, 1.113] | 1.3184
   1940            |   1.2762 [1.230, 1.324] | 1.5379
@@ -321,13 +333,13 @@ Dose combination: 2 vs 0 [2021_24]
   1970            |   1.2546 [1.060, 1.485] | 1.4255
   1980            |   0.9778 [0.717, 1.334] | 1.2365
   1990            |   0.9727 [0.610, 1.551] | 1.0698
-  2000            |   1.4530 [0.584, 3.613] | 1.3203
+  2000            |   1.1109 [0.450, 2.740] | 1.1799
 
 Dose combination: 2 vs 1 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.1066 [1.075, 1.139] | -
+  ASMR (pooled)   |   1.1084 [1.077, 1.141] | -
   1920            |   0.9289 [0.842, 1.025] | 1.1788
   1930            |   1.0584 [1.004, 1.116] | 1.1647
   1940            |   1.1362 [1.084, 1.191] | 1.1808
@@ -336,7 +348,7 @@ Dose combination: 2 vs 1 [2021_24]
   1970            |   1.1826 [0.978, 1.430] | 1.1565
   1980            |   1.5469 [1.081, 2.214] | 1.4379
   1990            |   0.2722 [0.101, 0.731] | 0.2674
-  2000            |   2.1597 [0.614, 7.598] | 1.0400
+  2000            |   2.2428 [0.638, 7.890] | 1.0800
 
 Sheet: 2022_06 — Reporting date: 2023-01-02
 ============================================================
@@ -345,7 +357,7 @@ Dose combination: 1 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.0348 [0.990, 1.082] | -
+  ASMR (pooled)   |   1.0350 [0.990, 1.082] | -
   1920            |   1.3341 [1.094, 1.627] | 1.3976
   1930            |   1.1327 [1.039, 1.235] | 1.1609
   1940            |   0.8772 [0.815, 0.944] | 0.9723
@@ -354,13 +366,13 @@ Dose combination: 1 vs 0 [2022_06]
   1970            |   0.7500 [0.631, 0.891] | 0.9636
   1980            |   0.7943 [0.595, 1.061] | 1.0707
   1990            |   0.6889 [0.445, 1.065] | 1.1050
-  2000            |   2.6272 [1.068, 6.465] | 1.4000
+  2000            |   2.0390 [0.830, 5.010] | 1.7518
 
 Dose combination: 2 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.0725 [1.049, 1.097] | -
+  ASMR (pooled)   |   1.0718 [1.048, 1.096] | -
   1920            |   1.0736 [0.995, 1.158] | 0.9386
   1930            |   1.0693 [1.026, 1.115] | 1.0748
   1940            |   0.9997 [0.961, 1.040] | 1.0139
@@ -369,13 +381,13 @@ Dose combination: 2 vs 0 [2022_06]
   1970            |   1.1055 [0.989, 1.236] | 1.1590
   1980            |   1.0913 [0.903, 1.319] | 1.1285
   1990            |   1.6620 [1.236, 2.235] | 1.3583
-  2000            |   4.2222 [2.364, 7.541] | 2.4000
+  2000            |   1.6744 [1.140, 2.459] | 1.4234
 
 Dose combination: 2 vs 1 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.0364 [0.991, 1.084] | -
+  ASMR (pooled)   |   1.0355 [0.991, 1.083] | -
   1920            |   0.8047 [0.658, 0.984] | 0.6716
   1930            |   0.9440 [0.865, 1.030] | 0.9258
   1940            |   1.1396 [1.059, 1.226] | 1.0428
@@ -384,13 +396,13 @@ Dose combination: 2 vs 1 [2022_06]
   1970            |   1.4739 [1.231, 1.764] | 1.2028
   1980            |   1.3740 [1.008, 1.873] | 1.0540
   1990            |   2.4128 [1.512, 3.851] | 1.2293
-  2000            |   1.6071 [0.599, 4.311] | 1.7143
+  2000            |   0.8212 [0.326, 2.067] | 0.8125
 
 Dose combination: 3 vs 2 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.5170 [1.486, 1.548] | -
+  ASMR (pooled)   |   1.5190 [1.488, 1.551] | -
   1920            |   1.3936 [1.298, 1.496] | 1.5656
   1930            |   1.4506 [1.398, 1.505] | 1.5795
   1940            |   1.7165 [1.658, 1.777] | 1.8182
@@ -399,13 +411,13 @@ Dose combination: 3 vs 2 [2022_06]
   1970            |   1.5340 [1.342, 1.753] | 1.4168
   1980            |   1.2405 [0.982, 1.567] | 1.0594
   1990            |   0.9926 [0.660, 1.493] | 1.0824
-  2000            |   0.6674 [0.333, 1.337] | 0.3889
+  2000            |   2.0372 [1.152, 3.603] | 0.7692
 
 Dose combination: 3 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_o
 --------------------------------------------------
-  ASMR (pooled)   |   1.6269 [1.595, 1.659] | -
+  ASMR (pooled)   |   1.6281 [1.596, 1.661] | -
   1920            |   1.4961 [1.406, 1.592] | 1.4695
   1930            |   1.5511 [1.498, 1.607] | 1.6976
   1940            |   1.7160 [1.657, 1.778] | 1.8434
@@ -414,7 +426,7 @@ Dose combination: 3 vs 0 [2022_06]
   1970            |   1.6958 [1.498, 1.919] | 1.6420
   1980            |   1.3538 [1.102, 1.663] | 1.1956
   1990            |   1.6497 [1.138, 2.392] | 1.4702
-  2000            |   2.8179 [1.601, 4.961] | 0.9333
+  2000            |   3.4111 [2.008, 5.795] | 1.0949
 
 Sheet: 2022_47 — Reporting date: 2024-01-01
 ============================================================
@@ -432,7 +444,7 @@ Dose combination: 4 vs 3 [2022_47]
   1970            |   2.9288 [2.136, 4.017] | 1.8924
   1980            |   1.7269 [1.217, 2.450] | 0.8042
   1990            |   0.6454 [0.372, 1.119] | 0.8409
-  2000            |   1.7436 [0.000, 17.436] | 0.1316
+  2000            |   3.7594 [0.000, 37.594] | 0.1087
 
 Dose combination: 4 vs 2 [2022_47]
 --------------------------------------------------
@@ -447,7 +459,7 @@ Dose combination: 4 vs 2 [2022_47]
   1970            |   3.5269 [2.565, 4.850] | 2.1518
   1980            |   1.6784 [1.181, 2.385] | 0.7753
   1990            |   0.8258 [0.480, 1.421] | 0.9306
-  2000            |   2.3521 [0.000, 23.521] | 0.0610
+  2000            |   3.5630 [0.000, 35.630] | 0.0467
 
 Dose combination: 4 vs 1 [2022_47]
 --------------------------------------------------
@@ -462,7 +474,7 @@ Dose combination: 4 vs 1 [2022_47]
   1970            |   5.0675 [3.583, 7.168] | 2.3925
   1980            |   1.4727 [0.907, 2.392] | 0.4433
   1990            |   1.5354 [0.804, 2.932] | 0.9127
-  2000            |   3.8004 [0.000, 38.004] | 0.4167
+  2000            |   4.9146 [0.000, 49.146] | 0.3846
 
 Dose combination: 4 vs 0 [2022_47]
 --------------------------------------------------
@@ -477,7 +489,7 @@ Dose combination: 4 vs 0 [2022_47]
   1970            |   3.1916 [2.328, 4.376] | 2.0694
   1980            |   1.5789 [1.124, 2.217] | 0.7343
   1990            |   0.6202 [0.362, 1.062] | 0.6609
-  2000            |   4.0061 [0.000, 40.061] | 0.0694
+  2000            |   4.1845 [0.000, 41.845] | 0.0373
 ================================================================================
 [Done] Wrote 21730 rows to ../data/Czech/KCOR.xlsx
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx

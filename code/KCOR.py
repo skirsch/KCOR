@@ -185,7 +185,9 @@ MA_TOTAL_LENGTH = 8  # Total length of centered moving average (8 weeks = 4 week
 CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each point) to minimize lag
 
 # Processing parameters
-YEAR_RANGE = (1920, 2000)       # Process age groups from start to end year (inclusive)
+# NOTE: the 2009 cutoff is because for 10 year processing of the 2000 age group, if we set it to 
+# 2000, the 2000 group would NOT include the 2005 cohort. This way, we get 10 year age groups for all the cohorts.
+YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inclusive)
 ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrollment dates (sheet names) to process (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
@@ -1315,21 +1317,37 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             for yob in sorted(df["YearOfBirth"].unique()):
                 numerator = 0.0
                 denominator = 0.0
+                alive_vax = 0.0
+                alive_total = 0.0
                 for dose in range(max_dose + 1):
                     if (yob, dose) in slopes:
                         w = float(alive0_map.get((yob, dose), 0.0))
                         if np.isfinite(w) and w > 0.0:
                             numerator += w * float(slopes.get((yob, dose), 0.0))
                             denominator += w
+                            alive_total += w
+                            if dose >= 1:
+                                alive_vax += w
+                pct_vax = (alive_vax / alive_total * 100.0) if alive_total > EPS else np.nan
+                alive_unvax = float(alive0_map.get((yob, 0), 0.0))
+                if not np.isfinite(alive_unvax) or alive_unvax < 0.0:
+                    alive_unvax = 0.0
                 if denominator > EPS:
                     total_slope = numerator / denominator
-                    dual_print(f"  YoB {yob}, total slope = {total_slope:.6f}")
+                    if np.isfinite(pct_vax):
+                        # this is the normal line printed out.
+                        dual_print(f"  YoB {yob}, total slope = {total_slope:.6f}  % vaxxed={pct_vax:.0f}  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
+                    else:
+                        dual_print(f"  YoB {yob}, total slope = {total_slope:.6f}  % vaxxed=-  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
                 else:
-                    dual_print(f"  YoB {yob}, total slope = -")
+                    if np.isfinite(pct_vax):
+                        dual_print(f"  YoB {yob}, total slope = -  % vaxxed={pct_vax:.0f}  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
+                    else:
+                        dual_print(f"  YoB {yob}, total slope = -  % vaxxed=-  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
 
             # done printing total slopes so we can print the note on how to interpret it
-            dual_print("\nNote that the total slope can be a smoking gun diagnostic metric. People over 85 should have negative total slopes")
-            dual_print("\nwhile young people should have positive total slopes that should not exceed 0.0015 if the vaccine is safe.\n")
+            dual_print("\nNote that the total slope can be a smoking gun diagnostic metric. ")
+            dual_print("Total slopes should range from .002 to -.002 for a safe vaccine.\n")
 
 
         df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
