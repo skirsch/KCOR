@@ -1292,6 +1292,37 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 for yob in sorted(df["YearOfBirth"].unique()):
                     if (yob, dose) in slopes:
                         dual_print(f"  YoB {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
+
+            # Total slope by YoB (Alive-weighted at enrollment week t=0 across included doses)
+            try:
+                first_rows = (
+                    df.sort_values(["YearOfBirth","Dose","t"])\
+                      .groupby(["YearOfBirth","Dose"], sort=False)
+                      .first()
+                      .reset_index()
+                )
+                alive0_map = {
+                    (int(r["YearOfBirth"]), int(r["Dose"])): float(r.get("Alive", np.nan))
+                    for _, r in first_rows.iterrows()
+                }
+            except Exception:
+                alive0_map = {}
+
+            for yob in sorted(df["YearOfBirth"].unique()):
+                numerator = 0.0
+                denominator = 0.0
+                for dose in range(max_dose + 1):
+                    if (yob, dose) in slopes:
+                        w = float(alive0_map.get((yob, dose), 0.0))
+                        if np.isfinite(w) and w > 0.0:
+                            numerator += w * float(slopes.get((yob, dose), 0.0))
+                            denominator += w
+                if denominator > EPS:
+                    total_slope = numerator / denominator
+                    dual_print(f"  YoB {yob}, total slope = {total_slope:.6f}")
+                else:
+                    dual_print(f"  YoB {yob}, total slope = -")
+
             dual_print()
         
         df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
