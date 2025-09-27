@@ -91,9 +91,9 @@ The [results section](#-results-using-czech-data) shows that the COVID vaccines 
 
 Those who claimed that the COVID shots were beneficial for the elderly were speculating based on no data; they shouldn't have done that. The Czech data clearly shows that such advice was deadly (see the one dose response with the earlier enrollment date). 
 
-You can see the [full summary of the results for the Czech data here](data/Czech/KCOR_summary.log). The total slope computation is the alive (at enrollment) weighted sum of the slopes. This total sum should reflect the population slope at that age. These full population slopes range from -0.002 (oldest people) to +0.002 (youngest people). So this is a quick way to assess vaccine safety if the full cohort slope deviates from the norms. 
+You can see the [full summary of the results for the Czech data here](data/Czech/KCOR_summary.log). The total slope computation is the alive (at enrollment) weighted sum of the slopes. This total sum should reflect the population slope at that age. These full population slopes, if the vaccines is safe, range from -0.002 (oldest people) to +0.002 (youngest people). So this is a quick way to assess vaccine safety if the full cohort slope deviates from the norms. 
 
-We can also compute these same slopes from the all-cause death plots for each age chort. This is actually the simplest way to see if there is a safety problem. You ask, "Is the FULL population of a given age dying with the expected slope fir that age (e.g., in non-COVID periods) after the vaccine is given?" No HVE confounding for that test.
+The only attack I'm aware of on the KCOR results for the Czech data is that "this is due to a long lasting dynamic HVE which is depressing deaths in the vaccinated for 18 weeks." But dynamic HVE is only significant for old cohorts because the % of young cohorts who are near death is vanishingly small. The KCOR results do not get worse with older age. And the event time-series plots show the death increases happen regardless of age (see the `deaths.xlsx` file in my Czech repo). So I think these results are hard to dispute.
 
 ### Validation
 
