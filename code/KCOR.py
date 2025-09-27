@@ -1329,7 +1329,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
             # done printing total slopes so we can print the note on how to interpret it
             dual_print("\nNote that the total slope can be a smoking gun diagnostic metric. People over 85 should have negative total slopes")
-            dual_print("\nwhile young people should have positive total slopes that should not exceed 0.0015 if the vaccine is safe.\n
+            dual_print("\nwhile young people should have positive total slopes that should not exceed 0.0015 if the vaccine is safe.\n")
 
 
         df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
