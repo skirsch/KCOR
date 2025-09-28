@@ -11,7 +11,8 @@
   - [⚙️ KCOR algorithm](#️-kcor-algorithm)
   - [Mathematical and statistical description](#mathematical-and-statistical-description)
   - [Key Assumptions](#key-assumptions)
-- [⚠️Limitations](#️-limitations)
+  - [⚠️Limitations](#️-limitations)
+  - [Causal inference](#causal-inference)
 - [🏆 KCOR vs. Traditional Epidemiological Methods](#-kcor-vs-traditional-epidemiological-methods)
 - [🏗️ Repository Structure](#️-repository-structure)
 - [📦 Installation & Dependencies](#-installation--dependencies)
@@ -53,6 +54,11 @@ KCOR's key assumptions are applicable to most datasets and can be easily verifie
 
 > [!NOTE]
 > You **cannot claim the COVID vaccine is safe and effective if the KCOR results show net harm**. This is the single most important point. People will claim that the KCOR results cannot be correct for the COVID vaccines (because KCOR shows massive harm), but unless they acknowledge the COVID vaccines are unsafe, they will be unable to discredit the KCOR results because no assumption will be violated. You cannot have it both ways. KCOR basically forces epidemiologists to confront the truth.
+
+You cannot make causal inference on observation data without causal assumptions. The KCOR causal assumption is simple: 
+
+> After fixed enrollment and slope normalization, any systematic divergence in mortality between the vaccinated and unvaccinated cohorts reflects > causal effects of the vaccine (benefit or harm), not residual confounding or selection.
+See [causal inference](#causal-inference) for details.
 
 This repository contains the complete analysis pipeline for computing KCOR values for the COVID vaccine from mortality data, but the method is general purpose and can be used for any intervention and outcome, but it is  extremely well suited for making objective mortality risk-benefit assessments for vaccines in particular because it very effectively neutralizes the very problematic "healthy vaccinee effect (HVE)" which cannot be neutralized using the standard epidemiological tools such as 1:1 matching.
 
@@ -357,7 +363,7 @@ KCOR is a **baseline-normalized cumulative-hazard ratio** computed from **discre
 **cohort-wise slope normalization**. The steps and assumptions can be stated precisely; the few subjective
 choices (e.g., “quiet” anchor windows) can be formalized as selection rules with sensitivity analyses.
 
-### Formal definition (discrete time)
+#### Formal definition (discrete time)
 
 Let:
 - $g \in \{v,u\}$ index two fixed cohorts (numerator $v$, denominator $u$).
@@ -406,14 +412,14 @@ $$
 > KCOR is **invariant** to the log base and any **common multiplicative scaling** of rates: such constants
 > rescale hazards by a factor that cancels in the ratio and again at the baseline normalization.
 
-### Assumptions (to be checked on the data)
+#### Assumptions (to be checked on the data)
 
 1. **Exponential baseline** within the analysis window: $\log m_{g,t}$ is approximately linear in $t$.
 2. **Quiet, non-differential anchors** $B_1,B_2$: no cohort-specific shocks inside these windows.
 3. **Fixed cohorts** at enrollment (avoid time-varying composition effects).
 4. **Common-time perturbations** mostly affect both cohorts proportionally (reduced by slope-normalization).
 
-### Properties (what you can state)
+#### Properties (what you can state)
 
 - **Cancellation of common drift/level.** Slope-normalization removes smooth $\delta_t$ drift; baseline
   normalization removes level. Residual bias is bounded by non-parallelism of log-MR lines in anchors.
@@ -422,7 +428,7 @@ $$
 - **Small-rate regime.** For small $m$, $h\approx m$, so $H_g(t)$ approximates the sum of adjusted rates.
   KCOR then approximates the ratio of those sums (still baseline-normalized).
 
-### Uncertainty and confidence intervals
+#### Uncertainty and confidence intervals
 
 With count data, a standard approximation is $\mathrm{Var}[H_g(t)]\approx H_g(t)$.
 Then by the delta method,
@@ -439,7 +445,7 @@ $$
 \mathrm{KCOR}(t)\times \exp\!\Big(\pm 1.96\,\sqrt{\mathrm{Var}[\ln \mathrm{KCOR}(t)]}\Big).
 $$
 
-### From “heuristics” to reproducible procedure
+#### From “heuristics” to reproducible procedure
 
 - **Anchor selection rule.** Choose \(B_1,B_2\) (length \(w\)) to *minimize* (i) pooled residual variance
   of log-linear fits and (ii) slope differences between cohorts, subject to no epidemic flags.
@@ -449,7 +455,7 @@ $$
   (b) a tiny quadratic term in $\log m_{g,t} = \beta_0+\beta_1 t + \beta_2 t^2$ over quiet ranges,
   (c) stability under anchor shifts ( $\pm$ 1–2 weeks).
 
-### Practical checklist
+#### Practical checklist
 
 - Verify **parallel-lines** behavior (log-MR vs. $t$) within anchors for both cohorts.
 - Check **baseline stability**: after normalization, KCOR should be ~1 near $t_0$.
@@ -465,7 +471,7 @@ $$
 - Discrete hazard function transformation provides accurate cumulative hazard estimation
 - Hazard ratios are appropriate for comparing mortality risk between groups
 
-## ⚠️ Limitations
+### ⚠️ Limitations
 There are 7 limitations of the method that users should be aware of. These are typically limitations that would apply anytime you are analyzing retrospective data. 
 
 For exmaple suppose you have a vaccine which instantly increases everyone's ACM by 5% on the day of the shot. KCOR, because it's generally a conservative estimator of harm, would treat that vaccine as perfectly safe. Similarly, if that vaccine linearly and uniformly raised people's mortality over time, KCOR would also think that that vaccine is perfectly safe. Why? Because KCOR infers the mortality of cohort through observation. There is no simple way to distinguish a small uniform over time effect from the mortality of the cohort. 
@@ -497,6 +503,17 @@ The default for `DYNAMIC_HVE_SKIP_WEEKS` is 0 because dynamic HVE is negligible.
 Therefore, testing for dynamic HVE by inspection of the deaths/week curves of the cohorts post enrollment is the best way. The clearest is post-booster rather than post-primary two shots because there is only the 1 cohort that would accept the deferred deaths and there are two cohorts to compare to for what "baseline" should look like (dose 1 and 0 groups).
 
 7. **Dangerous vaccines:** Suppose you have a vaccine which increases mortality strongly for 6 months, and then in the next 6 months the effect reverses back to baseline. If your slope anchor points are within the triangle, the KCOR values can be impacted in either direction. This is why it's important to choose anchor points outside the harm time ranges. If you have a vaccine which increases mortality monotonically over time, KCOR normalizes this slope to 1 and treats the vaccine as perfectly safe as it has no clear way to distinguish baseline mortality from baseline mortality + vaccine added mortality. This is where having a table of slope correction limits allow us to avoid being impacted by unsafe vaccines. The slope limits can also be computed relative to the vaccinated slope compared to the normal population slope of the cohort. So for exmaple, say all 85 year olds in the population normally die on a flat slope. We can look at the relative sizes of the vaccinated vs. unvaccinated cohorts, measure the mortality of the unvaccinated cohorts, and then mathematically derive the expected slope of the vaccinated cohort to get an estimator of the true slope for the vaccinated.
+
+### Causal inference
+It is a fundamental principle of causal inference that causal conclusions cannot be drawn from observational data without making causal assumptions. KCOR does not eliminate the need for such assumptions; rather, it makes them explicit, narrower in scope, and empirically testable.
+
+In conventional epidemiologic methods such as Cox regression or generalized linear models, causal interpretation relies on strong and often implicit assumptions, including proportional hazards and the absence of unmeasured confounding throughout follow-up. By contrast, KCOR leverages fixed cohort enrollment and slope normalization to control for the static healthy vaccinee effect (HVE) that typically confounds vaccine mortality analyses. By selecting cohorts at a single enrollment date, KCOR freezes selection bias at baseline and avoids dynamic HVE effects that arise in rolling-enrollment designs. Slope normalization uses the stable Gompertz mortality structure to neutralize baseline frailty differences between groups, allowing post-enrollment divergence in mortality curves to be interpreted more cleanly.
+
+The key causal identifying assumption is that, after slope normalization, any systematic divergence in mortality between vaccinated and unvaccinated fixed cohorts reflects causal effects of vaccination, rather than residual confounding or selection. This requires assuming (i) no substantial unmeasured time-varying confounders arise after enrollment, and (ii) the baseline mortality slope differences between cohorts are stable over time. These assumptions are transparent and testable: for example, pre-wave mortality behavior can be examined to detect violations as well the mortality behavior in the more fragile unvaccinated group over the entire period.
+
+The Czech record-level dataset is particularly well suited for KCOR, because it includes vaccination and death dates for the entire population, enabling precise fixed-cohort definitions and pre-enrollment slope checks. Under these conditions, KCOR provides a framework in which causal interpretations rest on clearly articulated, limited assumptions, rather than on opaque model specifications.
+
+ChatGPT provided a [more detailed analysis on this assumption and causality](https://chatgpt.com/share/68d99b22-75d8-8009-b0a3-9caa2d8cc8fc).
 
 ## 🏆 KCOR vs. Traditional Epidemiological Methods
 
