@@ -42,11 +42,13 @@ KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for 
 
 The method is simple: 
 1. select enrollment dates and slope dates appropriate to the dataset, 
-2. slope normalize each cohort to the reference dates, 
+2. slope normalize the slope of the mortality rates over time of each cohort to the reference dates,
 3. cumulate adjusted death hazards, 
 4. take the ratio of the cumulative death hazard of the cohorts you want to compare.
 
-KCOR is based on a well-established epidemiological method (Cumulative Mortality Rate Ratio aka CMRR). It only adds one thing: per cohort mortality rate slope normalization. The latter is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes cohorts to be on different parts of the Gompertz-mortality-with-depletion curve where the slopes can be dramatically different. Few epidemiologists have ever seen the [Gompertz with depletion slope plot](documentation/Gompertz_with_slope.png) so here it is. HVE (which from a simplistic point of view changes your effective age) means any two cohorts being compared can have vastly different slopes as you can see from the plot.
+KCOR is based on a well-established epidemiological method (Cumulative Mortality Rate Ratio aka CMRR). It ostensibly adds one thing: per cohort mortality rate slope normalization. Slope normalization of the mortality rate over time is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes cohorts *of identical age* to be on different parts of the Gompertz-mortality-with-frailty-and-depletion curve where the slopes can be dramatically different due to previously unappreciated large frailty differences between the two cohorts that cannot be adjusted for using standard epi methods as demonstrated in the [Qatar paper](https://elifesciences.org/articles/103690#content) where the most meticulous 1:1 matching ever done in a study plus standard Cox adjustments failed to "adjust away" the mortality differences that would allow the cohorts to be fairly compared; a large HVE bias was still present.
+
+Few epidemiologists have ever seen the [Gompertz with depletion slope plot](documentation/Gompertz_with_slope.png) so here it is. HVE (which from a simplistic point of view changes your effective age) means any two cohorts being compared can have vastly different slopes as you can see from the plot.
 
 But once you slope normalize (which computes an adjustment to the instantaneous mortality rate at each time $t$), you cannot apply that normalization to the CMRR methodology (since CMRR is cumulative, not instantaneous); you must switch to a discrete-time hazard transform to do this properly. [Read the CMRR part of this chat for details](https://chatgpt.com/share/68d2fb6c-450c-8009-887b-aeb21f3fde7d) as well as this [mini-tutorial on the discrete-time hazard transform](documentation/hazard_function.md).
 
