@@ -191,6 +191,8 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrollment dates (sheet names) to process (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
+# Skip slope normalization for cohorts with YearOfBirth <= this threshold
+SLOPE_NORMALIZE_YOB_LE = 1900
 # ----------------------------------------------------------
 
 # Optional overrides via environment for sensitivity/plumbing without CLI changes
@@ -287,6 +289,14 @@ try:
         FINAL_KCOR_DATE = _env_final_date
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding FINAL_KCOR_DATE via SA_FINAL_KCOR_DATE: {FINAL_KCOR_DATE}")
+    _env_skip_yob = os.environ.get('SA_SLOPE_NORMALIZE_YOB_LE')
+    if _env_skip_yob:
+        try:
+            SLOPE_NORMALIZE_YOB_LE = int(_env_skip_yob)
+            if DEBUG_VERBOSE:
+                print(f"[DEBUG] Overriding SLOPE_NORMALIZE_YOB_LE via SA_SLOPE_NORMALIZE_YOB_LE: {SLOPE_NORMALIZE_YOB_LE}")
+        except Exception:
+            pass
 except Exception:
     pass
 
@@ -1082,6 +1092,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  MIN_ANCHOR_GAP_WEEKS  = {MIN_ANCHOR_GAP_WEEKS}")
     dual_print(f"  MIN_ANCHOR_SEPARATION_WEEKS = {MIN_ANCHOR_SEPARATION_WEEKS}")
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
+    dual_print(f"  SLOPE_NORMALIZE_YOB_LE= {SLOPE_NORMALIZE_YOB_LE}")
     dual_print("="*80)
     dual_print("")
     
@@ -1350,7 +1361,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             dual_print("Total slopes should range from .002 to -.002 for a safe vaccine.\n")
 
 
-        df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
+        # Apply slope normalization except for YoB <= SLOPE_NORMALIZE_YOB_LE
+        if int(SLOPE_NORMALIZE_YOB_LE) >= 0:
+            df = df.copy()
+            mask_skip = df["YearOfBirth"] <= int(SLOPE_NORMALIZE_YOB_LE)
+            df_do = df[~mask_skip].copy()
+            df_skip = df[mask_skip].copy()
+            if not df_do.empty:
+                df_do = adjust_mr(df_do, slopes, t0=SLOPE_ANCHOR_T)
+            # For skipped YoB, keep MR_adj equal to MR (no slope normalization)
+            if not df_skip.empty:
+                df_skip["MR_adj"] = df_skip["MR"].values
+            df = pd.concat([df_do, df_skip], ignore_index=True).sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
+        else:
+            df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
         
         # Debug: Show MR values week by week, especially weeks with no deaths
         # if DEBUG_VERBOSE:
