@@ -1403,6 +1403,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
         # Apply slope correction to each individual MR value
         def apply_slope_correction_to_mr(row):
+            # Respect skip setting: leave MR unadjusted for YoB <= threshold
+            try:
+                if int(row.get("YearOfBirth", 9999)) <= int(SLOPE_NORMALIZE_YOB_LE):
+                    return row["MR"]
+            except Exception:
+                pass
             slope = slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
             # Clip slope to prevent overflow
             slope = np.clip(slope, -10.0, 10.0)
@@ -1415,7 +1421,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Clip extreme slope values to prevent overflow
         df["slope"] = np.clip(df["slope"], -10.0, 10.0)  # Reasonable bounds for mortality slopes
         
-        df["scale_factor"] = df.apply(lambda row: safe_exp(-df["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK))), axis=1)
+        def _scale_factor_row(row):
+            try:
+                if int(row.get("YearOfBirth", 9999)) <= int(SLOPE_NORMALIZE_YOB_LE):
+                    return 1.0
+            except Exception:
+                pass
+            return safe_exp(-row["slope"] * (row["t"] - float(KCOR_NORMALIZATION_WEEK)))
+        df["scale_factor"] = df.apply(_scale_factor_row, axis=1)
         
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         

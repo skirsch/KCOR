@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.4 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-27 12:26:26
+Analysis Date: 2025-09-28 15:22:25
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -26,6 +26,7 @@ Configuration Parameters (effective):
   MIN_ANCHOR_GAP_WEEKS  = 26
   MIN_ANCHOR_SEPARATION_WEEKS = 39
   KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
+  SLOPE_NORMALIZE_YOB_LE= 1900
 ================================================================================
 
 [DEBUG] Limiting to age range: 1920-2009
