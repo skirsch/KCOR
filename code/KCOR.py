@@ -194,6 +194,8 @@ DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # Skip slope normalization for cohorts with YearOfBirth <= this threshold
 # Set this to 1900 for NO normalization at all. Set this to 2020 to normalize all cohorts.
 SLOPE_NORMALIZE_YOB_LE = 1900
+# Czech unvaccinated MR adjustment toggle (1=enabled, 0=disabled)
+CZECH_UNVACCINATED_MR_ADJUSTMENT = 1
 # ----------------------------------------------------------
 
 # Optional overrides via environment for sensitivity/plumbing without CLI changes
@@ -290,6 +292,14 @@ try:
         FINAL_KCOR_DATE = _env_final_date
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding FINAL_KCOR_DATE via SA_FINAL_KCOR_DATE: {FINAL_KCOR_DATE}")
+    _env_czech = os.environ.get('CZECH_UNVACCINATED_MR_ADJUSTMENT')
+    if _env_czech is not None:
+        try:
+            CZECH_UNVACCINATED_MR_ADJUSTMENT = int(_env_czech)
+            if DEBUG_VERBOSE:
+                print(f"[DEBUG] CZECH_UNVACCINATED_MR_ADJUSTMENT set to: {CZECH_UNVACCINATED_MR_ADJUSTMENT}")
+        except Exception:
+            pass
     _env_skip_yob = os.environ.get('SA_SLOPE_NORMALIZE_YOB_LE')
     if _env_skip_yob:
         try:
@@ -1420,8 +1430,29 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
-        # Clip MR_adj to avoid log(0) and ensure numerical stability
-        df["hazard"] = -np.log(1 - df["MR_adj"].clip(upper=0.999))
+        # Optional Czech unvax MR correction at MR level for Dose 0 only
+        if int(CZECH_UNVACCINATED_MR_ADJUSTMENT) == 1:
+            try:
+                # Compute per-(YoB) slopes for D1 and D0 from existing 'slope' column
+                slope_d1 = df[df["Dose"] == 1].groupby("YearOfBirth")["slope"].first()
+                slope_d0 = df[df["Dose"] == 0].groupby("YearOfBirth")["slope"].first()
+                slope_adj = (np.minimum(0.002, slope_d1).fillna(0.0) - slope_d0.fillna(0.0))
+                # Apply only positive adjustments to Dose 0 rows, from t_e onward
+                def _czech_mr(row):
+                    if row["Dose"] == 0:
+                        a = float(slope_adj.get(row["YearOfBirth"], 0.0))
+                        if a > 0:
+                            return row["MR"] * safe_exp(+a * (row["t"] - float(SLOPE_ANCHOR_T)))
+                    return row["MR"]
+                df["MR_czech"] = df.apply(_czech_mr, axis=1)
+                mr_used = df["MR_czech"]
+            except Exception:
+                mr_used = df["MR"]
+        else:
+            mr_used = df["MR"]
+
+        # Clip to avoid log(0) and ensure numerical stability
+        df["hazard"] = -np.log(1 - np.clip(mr_used, None, 0.999))
         
         # Apply DYNAMIC_HVE_SKIP_WEEKS to accumulation start
         df["hazard_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["hazard"], 0.0)
