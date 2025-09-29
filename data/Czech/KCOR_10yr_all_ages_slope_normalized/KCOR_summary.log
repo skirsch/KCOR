@@ -498,3 +498,7 @@ Dose combination: 4 vs 0 [2022_47]
   - 2022_06: 5 dose combinations, 61 summary rows
   - 2022_47: 4 dose combinations, 49 summary rows
 [Summary] Created summary with 4 enrollment periods
+
+
+
+Secondly, the code has it doing the opposite of what I want. shouldn't it be a > rather than <= ? If it is satisfied, it is bypassing slope normalizing.

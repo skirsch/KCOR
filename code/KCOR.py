@@ -192,6 +192,7 @@ ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrol
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # Skip slope normalization for cohorts with YearOfBirth <= this threshold
+# Set this to 1900 for NO normalization at all. Set this to 2020 to normalize all cohorts.
 SLOPE_NORMALIZE_YOB_LE = 1900
 # ----------------------------------------------------------
 
@@ -1357,24 +1358,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         dual_print(f"  YoB {yob}, total slope = -  % vaxxed=-  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
 
             # done printing total slopes so we can print the note on how to interpret it
-            dual_print("\nNote that the total slope can be a smoking gun diagnostic metric. ")
-            dual_print("Total slopes should range from .002 to -.002 for a safe vaccine.\n")
+            dual_print("\nSanity check: All comoputed slopes should be positive since people don't get younger.")
+            
 
-
-        # Apply slope normalization except for YoB <= SLOPE_NORMALIZE_YOB_LE
-        if int(SLOPE_NORMALIZE_YOB_LE) >= 0:
-            df = df.copy()
-            mask_skip = df["YearOfBirth"] <= int(SLOPE_NORMALIZE_YOB_LE)
-            df_do = df[~mask_skip].copy()
-            df_skip = df[mask_skip].copy()
-            if not df_do.empty:
-                df_do = adjust_mr(df_do, slopes, t0=SLOPE_ANCHOR_T)
-            # For skipped YoB, keep MR_adj equal to MR (no slope normalization)
-            if not df_skip.empty:
-                df_skip["MR_adj"] = df_skip["MR"].values
-            df = pd.concat([df_do, df_skip], ignore_index=True).sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
-        else:
-            df = adjust_mr(df, slopes, t0=SLOPE_ANCHOR_T)
+        # Slope normalization is applied later via apply_slope_correction_to_mr with skip logic
         
         # Debug: Show MR values week by week, especially weeks with no deaths
         # if DEBUG_VERBOSE:
@@ -1403,9 +1390,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
         # Apply slope correction to each individual MR value
         def apply_slope_correction_to_mr(row):
-            # Respect skip setting: leave MR unadjusted for YoB <= threshold
+            # Respect setting: normalize ONLY for YoB <= threshold; skip for higher YoB
             try:
-                if int(row.get("YearOfBirth", 9999)) <= int(SLOPE_NORMALIZE_YOB_LE):
+                if int(row.get("YearOfBirth", 9999)) > int(SLOPE_NORMALIZE_YOB_LE):
                     return row["MR"]
             except Exception:
                 pass
@@ -1423,7 +1410,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         def _scale_factor_row(row):
             try:
-                if int(row.get("YearOfBirth", 9999)) <= int(SLOPE_NORMALIZE_YOB_LE):
+                if int(row.get("YearOfBirth", 9999)) > int(SLOPE_NORMALIZE_YOB_LE):
                     return 1.0
             except Exception:
                 pass

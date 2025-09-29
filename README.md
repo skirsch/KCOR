@@ -125,6 +125,24 @@ I would be delighted to public debate any qualified scientist who believes KCOR 
 
 ### 🎯 Core Concept
 
+We observe that:
+1. Human beings die with a mortality rate (hazard function) that monontonically increases over time at a relatively constant rate. See [Fig 1 from data from the Human Mortality Database](https://pubmed.ncbi.nlm.nih.gov/24534516/).
+2. Any mixture of human beings (different ages, frailty mix) will have a characteristic mortality rate that monotonically increases over time at a relatively constant rate.
+
+KCOR makes the hypothesis that we can compare cumulative mortality differences between two cohorts by computing the hazard function each week, doing a discrete-time hazard transform of the mortality rate, and taking the ratio of the cumulative sums of the hazard functions.
+
+Random noise does not cause drift in the result. 
+
+Factors that can affect the accuracy of the computation:
+
+1. The slopes differ (e.g., different frailty distributions),
+
+2. There’s late-life deceleration in one cohort,
+
+3. Measurement noise at low weekly death counts.
+
+The simplest way to validate the hypothesis is to use the method to compare the unvaccinated cohort at one age with the unvaccinated cohort of another age and compare the vaccinated cohort of one age with the vaccinated cohort of another age. Both should yield a nearly flat result.
+
 KCOR(*t*) represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
 
  - **Time-varying trends** in mortality rates through slope correction
