@@ -76,9 +76,10 @@ Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
 2. Calculate the the mortality rate (MR) slopes of each cohort (per age range); use that to adjust each cohort's MR(t) to a neutral slope.
-3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards). So MR(t) --> h(t)
-4. Cumulate the hazards for each cohort. Then plot the ratio as a function of time.
-5. Scale the entire graph by the value at week 4 (which allows enough data to get a reasonable baseline with relatively modest Poisson noise)
+3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards). So MR(t) --> h(t). Most values of MR are small so the result is virtually the same value if you did it right.
+4. Compute the CUMULATIVE hazards for each cohort for each week. 
+5. Compute the ratio of the cumulative hazards of the two cohorts of interest
+6. Scale that ratio by the value of the ratio at week 4 (which allows enough data to get a reasonable baseline with relatively modest Poisson noise)
 6. The graph is KCOR(t): a measure of the CUMULATIVE net harm/benefit of the intervention at any time $t$, relatieve to the baseline time picked in the previous step.
 
 It's no more complicated than that. It's simple. Common sense. Mathematically precise.
@@ -129,7 +130,7 @@ We observe that:
 1. Human beings die with a mortality rate (hazard function) that monontonically increases over time at a relatively constant rate. See [Fig 1 from data from the Human Mortality Database](https://pubmed.ncbi.nlm.nih.gov/24534516/).
 2. Any mixture of human beings (different ages, frailty mix) will have a characteristic mortality rate that monotonically increases over time at a relatively constant rate.
 
-KCOR makes the hypothesis that we can compare cumulative mortality differences between two cohorts by computing the hazard function each week, doing a discrete-time hazard transform of the mortality rate, and taking the ratio of the cumulative sums of the hazard functions.
+KCOR makes the hypothesis that we can compare cumulative mortality differences between two cohorts by computing the mortality rate each week, doing a discrete-time hazard transform of the mortality rate, and taking the ratio of the cumulative hazard functions as a function of t (CHvax/CHunvax).
 
 Random noise does not cause drift in the result. 
 
