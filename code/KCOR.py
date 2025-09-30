@@ -159,6 +159,13 @@ DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from thi
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
+# Slope-from-Integral Normalization (SIN) configuration
+SIN_ENABLED = 1                 # Primary normalization method (set to 1 to enable SIN)
+SIN_WINDOW_START_ISO = "2023-18"  # ISO year-week start of window W
+SIN_WINDOW_END_ISO   = "2023-44"  # ISO year-week end of window W
+SIN_M_AVG_WEEKS = 4            # m for start-of-window average
+SIN_X_MAX = 2.0                # clamp for Newton root solve in integral ratio equation
+
 # KCOR normalization fine-tuning parameters
 FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
 FINAL_KCOR_DATE = "4/1/24"      # Date to check for KCOR scaling (MM/DD/YY format)
@@ -1114,6 +1121,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  SLOPE_NORMALIZE_YOB_LE= {SLOPE_NORMALIZE_YOB_LE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
+    dual_print(f"  SIN_ENABLED           = {SIN_ENABLED}")
+    dual_print(f"  SIN_WINDOW            = ({SIN_WINDOW_START_ISO}, {SIN_WINDOW_END_ISO})")
     dual_print("="*80)
     dual_print("")
     
@@ -1441,6 +1450,73 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
+        # Optional: Apply SIN (Slope-from-Integral Normalization) per cohort before building hazards
+        if int(SIN_ENABLED) == 1:
+            try:
+                # Map ISO year-week to dates and to t indices present in df
+                # Build per-(YoB,Dose) hazards on weekly grid
+                df_sin = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
+                # Weekly hazard from MR (already per-week) with clipping for stability
+                df_sin["h"] = df_sin["MR"].clip(lower=0.0, upper=0.999)
+                # Build integer t per group
+                df_sin["t_week"] = df_sin.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
+                # Determine window indices W from calendar ISO year-week strings
+                def iso_to_date(isostr):
+                    y, w = isostr.split("-")
+                    return datetime.fromisocalendar(int(y), int(w), 1).date()
+                w_start_date = iso_to_date(SIN_WINDOW_START_ISO)
+                w_end_date = iso_to_date(SIN_WINDOW_END_ISO)
+                # Map calendar to nearest available t within each group
+                beta_vals = {}
+                for (yob, dose), g in df_sin.groupby(["YearOfBirth","Dose"], sort=False):
+                    if g.empty:
+                        continue
+                    # find closest indices to window dates
+                    dts = pd.to_datetime(g["DateDied"]).dt.date
+                    try:
+                        t_a = int(np.argmin(np.abs(pd.to_datetime(dts) - pd.to_datetime(w_start_date))))
+                        t_b = int(np.argmin(np.abs(pd.to_datetime(dts) - pd.to_datetime(w_end_date))))
+                    except Exception:
+                        continue
+                    if t_b <= t_a:
+                        continue
+                    L = t_b - t_a + 1
+                    m = max(1, int(SIN_M_AVG_WEEKS))
+                    hW = g["h"].iloc[t_a:t_b+1].to_numpy()
+                    if len(hW) < max(L, m) or float(hW.sum()) <= 0.0:
+                        continue
+                    h0 = float(np.mean(hW[:m]))
+                    if h0 <= 0.0:
+                        continue
+                    r = float(hW.sum()) / (L * h0)
+                    if abs(r - 1.0) < 1e-6:
+                        beta = 0.0
+                    else:
+                        # Solve (exp(x)-1)/x = r with Newton, clamp to [-XMAX, XMAX]
+                        x = 2.0 * (r - 1.0)
+                        for _ in range(8):
+                            ex = math.exp(x)
+                            f = (ex - 1.0) / (x if x != 0.0 else 1e-12) - r
+                            fp = (x * ex - (ex - 1.0)) / ((x if x != 0.0 else 1e-12) ** 2)
+                            if fp == 0.0:
+                                break
+                            step = f / fp
+                            x -= step
+                            if abs(step) < 1e-10:
+                                break
+                        x = max(min(x, float(SIN_X_MAX)), -float(SIN_X_MAX))
+                        beta = x / L
+                    beta_vals[(yob, dose)] = beta
+                # Apply SIN de-trending to hazards
+                def apply_sin_row(row):
+                    b = float(beta_vals.get((row["YearOfBirth"], row["Dose"]), 0.0))
+                    # center at midpoint of window (approximate by SLOPE_ANCHOR_T or KCOR_NORMALIZATION_WEEK)
+                    t0 = float(KCOR_NORMALIZATION_WEEK)
+                    return max(0.0, row["MR"]) * safe_exp(-b * (row["t"] - t0))
+                df["MR"] = df.apply(apply_sin_row, axis=1)
+            except Exception as e:
+                if DEBUG_VERBOSE:
+                    dual_print(f"[SIN] Warning: SIN failed with error: {e}. Proceeding without SIN.")
         # Optional Czech unvax MR correction at MR level for Dose 0 only
         if int(CZECH_UNVACCINATED_MR_ADJUSTMENT) == 1:
             try:
