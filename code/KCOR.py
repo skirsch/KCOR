@@ -1388,7 +1388,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         dual_print(f"  YoB {yob}, total slope = -  % vaxxed=-  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
 
             # done printing total slopes so we can print the note on how to interpret it
-            dual_print("\nSanity check: All comoputed slopes should be positive since people don't get younger.")
+            dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
             
 
         # Slope normalization is applied later via apply_slope_correction_to_mr with skip logic
