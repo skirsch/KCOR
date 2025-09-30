@@ -25,6 +25,7 @@ No need for slope normalization, Czech unvax MR correction, skip weeks, or anyth
 
 
 Use these enrollments and doses: “2021_13, 2021_24: doses 0–2; 2022_06: 0–3; 2022_47: 0–4 
+
 - Output spec:
   - File: `data/negative_control_test_summary.xlsx`
   - Sheet: one sheet with columns `EnrollmentDate, YoB1, YoB2, Dose, KCOR`, `CI_Lower, CI_Upper`.

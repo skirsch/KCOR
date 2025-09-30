@@ -157,7 +157,7 @@ SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
-NEGATIVE_CONTROL_MODE = 0       # When 1, run negative-control age comparisons and skip normal output
+NEGATIVE_CONTROL_MODE = 1       # When 1, run negative-control age comparisons and skip normal output
 
 # KCOR normalization fine-tuning parameters
 FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
@@ -201,9 +201,10 @@ DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to proce
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # Skip slope normalization for cohorts with YearOfBirth <= this threshold
 # Set this to 1900 for NO normalization at all. Set this to 2020 to normalize all cohorts.
-SLOPE_NORMALIZE_YOB_LE = 1900
+SLOPE_NORMALIZE_YOB_LE = 0    # do NOT normalize. Not needed unless your data is pathological.
 # Czech unvaccinated MR adjustment toggle (1=enabled, 0=disabled)
-CZECH_UNVACCINATED_MR_ADJUSTMENT = 1
+CZECH_UNVACCINATED_MR_ADJUSTMENT = 1  # should be set to 1 for Czech data due to undercounting of unvaccinated deaths over time (or overcouning the population)
+
 # ----------------------------------------------------------
 
 # Optional overrides via environment for sensitivity/plumbing without CLI changes
@@ -1112,6 +1113,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  MIN_ANCHOR_SEPARATION_WEEKS = {MIN_ANCHOR_SEPARATION_WEEKS}")
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  SLOPE_NORMALIZE_YOB_LE= {SLOPE_NORMALIZE_YOB_LE}")
+    dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     dual_print("="*80)
     dual_print("")
     
@@ -1494,6 +1496,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 "MR": "mean",
                 "MR_adj": "mean",
                 "CH": "mean",
+                "CH_actual": "mean",
                 "hazard": "mean",
                 "t": "first"
             }).reset_index().sort_values(["DateDied", "YearOfBirth"])
@@ -1519,6 +1522,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "MR": row["MR"],
                         "MR_adj": row["MR_adj"],
                         "Cum_MR": row["CH"],
+                        "Cum_MR_Actual": row["CH_actual"],
                         "Hazard": row["hazard"],
                         "Slope": slope_val,
                         "Scale_Factor": np.nan,
@@ -1589,8 +1593,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     continue
                 # pick closest date to target; else latest
                 if target_dt is not None:
-                    diffs = (data_sheet["Date"] - target_dt).abs()
-                    report_date = data_sheet.loc[diffs.idxmin(), "Date"]
+                    diffs = (data_sheet["Date"] - target_dt)
+                    # robust absolute difference for older pandas versions
+                    idxmin = int(np.argmin(np.abs(diffs.to_numpy())))
+                    report_date = data_sheet.iloc[idxmin]["Date"]
                 else:
                     report_date = data_sheet["Date"].max()
                 end_data = data_sheet[data_sheet["Date"] == report_date]
@@ -1620,7 +1626,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         k_series = k_raw / baseline
                         # pick KCOR at reporting date (~closest available)
                         # closest row to report_date
-                        idx_closest = (pivot.index - report_date).abs().argmin()
+                        td = (pivot.index - report_date)
+                        idx_closest = int(np.argmin(np.abs(td.to_numpy())))
                         k_val = float(k_series.iloc[idx_closest]) if len(k_series) > idx_closest else np.nan
                         neg_rows.append({
                             "EnrollmentDate": sheet_name,
@@ -1630,14 +1637,19 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "KCOR": k_val
                         })
             neg_df = pd.DataFrame(neg_rows)
-            out_dir = os.path.dirname(out_path) or "."
-            out_file = os.path.join(out_dir, "negative_control_test_summary.xlsx")
+            # Write next to cohort outputs: ../data/Czech/negative_control_test_summary.xlsx
+            czech_dir = os.path.dirname(out_path) or "."
+            os.makedirs(czech_dir, exist_ok=True)
+            out_file = os.path.join(czech_dir, "negative_control_test_summary.xlsx")
             with pd.ExcelWriter(out_file, engine='openpyxl') as writer:
                 neg_df.to_excel(writer, index=False, sheet_name="negative_control")
             dual_print(f"[NegativeControl] Wrote {len(neg_df)} rows to {out_file}")
+            dual_print("[NegativeControl] Skipping normal workbook/summary outputs.")
             return combined
         except Exception as e:
             dual_print(f"[NegativeControl] Error creating summary: {e}")
+            # In NC mode, do not proceed with normal outputs even on error
+            return combined
     
     # Create debug DataFrame from collected data
     if DEBUG_VERBOSE:
