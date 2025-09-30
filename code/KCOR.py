@@ -157,6 +157,7 @@ SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
+NEGATIVE_CONTROL_MODE = 0       # When 1, run negative-control age comparisons and skip normal output
 
 # KCOR normalization fine-tuning parameters
 FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
@@ -1117,6 +1118,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     xls = pd.ExcelFile(src_path)
     all_out = []
     pair_deaths_all = []
+    by_dose_nc_all = []
     
     # Apply processing filters
     sheets_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else xls.sheet_names
@@ -1479,58 +1481,51 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"]) ["Dead"].cumsum()
         
         # Collect debug data for this sheet (after all columns are created)
-        if DEBUG_VERBOSE:
-            dose_pairs = get_dose_pairs(sh)
-            max_dose = max(max(pair) for pair in dose_pairs)
-            for dose in range(max_dose + 1):
-                # Get all data for this dose (not aggregated by date yet)
-                dose_df = df[df["Dose"] == dose]
-                
-                # Aggregate across sexes for each dose/date/age combination
-                dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
-                    "ISOweekDied": "first",
-                    "Dead": "sum",
-                    "Alive": "sum", 
-                    "PT": "sum",
-                    "MR": "mean",  # Average MR across sexes
-                    "MR_adj": "mean",  # Average MR_adj across sexes
-                    "CH": "mean",  # Average CH across sexes
-                    "CH_actual": "mean",  # Average CH_actual across sexes
-                    "hazard": "mean",  # Average hazard across sexes
-                    "slope": "mean",  # Average slope across sexes
-                    "scale_factor": "mean",  # Average scale factor across sexes
-                    "cumD_adj": "sum",  # Sum cumulative deaths
-                    "cumD_unadj": "sum",  # Sum unadjusted cumulative deaths
-                    "cumPT": "sum",  # Sum cumulative person-time
-                    "MR_smooth": "mean",  # Average smoothed MR across sexes
-                    "t": "first"  # Time index (should be same for all sexes
-                }).reset_index().sort_values(["DateDied", "YearOfBirth"])
-                
+        # Build per-dose per-age aggregates (needed for negative-control direct age comparisons)
+        dose_pairs = get_dose_pairs(sh)
+        max_dose = max(max(pair) for pair in dose_pairs)
+        for dose in range(max_dose + 1):
+            dose_df = df[df["Dose"] == dose]
+            dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
+                "ISOweekDied": "first",
+                "Dead": "sum",
+                "Alive": "sum",
+                "PT": "sum",
+                "MR": "mean",
+                "MR_adj": "mean",
+                "CH": "mean",
+                "hazard": "mean",
+                "t": "first"
+            }).reset_index().sort_values(["DateDied", "YearOfBirth"])
+            # Collect minimal columns for NC
+            if not dose_data.empty:
+                tmp = dose_data[["DateDied","YearOfBirth","CH","t"]].copy()
+                tmp["EnrollmentDate"] = sh
+                tmp["Dose"] = dose
+                by_dose_nc_all.append(tmp)
+            # Populate debug_data when requested
+            if DEBUG_VERBOSE:
                 for _, row in dose_data.iterrows():
-                    # Calculate smoothed adjusted MR using the slope
-                    # Use the actual age from the row for slope lookup
-                    slope = slopes.get((row["YearOfBirth"], dose), 0.0)
-                    smoothed_adj_mr = row["MR_smooth"] * safe_exp(-slope * (row["t"] - float(KCOR_NORMALIZATION_WEEK)))
-                    
+                    slope_val = slopes.get((row["YearOfBirth"], dose), 0.0)
+                    smoothed_adj_mr = row.get("MR", np.nan)  # already averaged
                     debug_data.append({
-                        "EnrollmentDate": sh,  # Add enrollment date column
-                        "Date": row["DateDied"].date(),  # Use standard pandas date format (was working perfectly - DON'T TOUCH)
-                        "YearOfBirth": row["YearOfBirth"],  # Add year of birth column
-                        "Dose": dose,  # Add dose column
+                        "EnrollmentDate": sh,
+                        "Date": row["DateDied"].date(),
+                        "YearOfBirth": row["YearOfBirth"],
+                        "Dose": dose,
                         "ISOweek": row["ISOweekDied"],
                         "Dead": row["Dead"],
                         "Alive": row["Alive"],
                         "MR": row["MR"],
                         "MR_adj": row["MR_adj"],
                         "Cum_MR": row["CH"],
-                        "Cum_MR_Actual": row["CH_actual"],
                         "Hazard": row["hazard"],
-                        "Slope": row["slope"],
-                        "Scale_Factor": row["scale_factor"],
-                        "Cumu_Adj_Deaths": row["cumD_adj"],
-                        "Cumu_Unadj_Deaths": row["cumD_unadj"],
-                        "Cumu_Person_Time": row["cumPT"],
-                        "Smoothed_Raw_MR": row["MR_smooth"],
+                        "Slope": slope_val,
+                        "Scale_Factor": np.nan,
+                        "Cumu_Adj_Deaths": np.nan,
+                        "Cumu_Unadj_Deaths": np.nan,
+                        "Cumu_Person_Time": row["PT"],
+                        "Smoothed_Raw_MR": np.nan,
                         "Smoothed_Adjusted_MR": smoothed_adj_mr,
                         "Time_Index": row["t"]
                     })
@@ -1578,6 +1573,71 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
     # Combine all results
     combined = pd.concat(all_out, ignore_index=True).sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
+
+    # Negative control mode: output summarized KCOR by (EnrollmentDate, YoB1, YoB2=YoB1+10, Dose)
+    if int(NEGATIVE_CONTROL_MODE) == 1:
+        try:
+            neg_rows = []
+            combined["Date"] = pd.to_datetime(combined["Date"])
+            # Prepare per-dose, per-age cumulative hazard time series from earlier aggregation
+            by_dose_nc = pd.concat(by_dose_nc_all, ignore_index=True) if by_dose_nc_all else pd.DataFrame()
+            for sheet_name in sorted(combined["EnrollmentDate"].unique()):
+                target_str = KCOR_REPORTING_DATE.get(sheet_name)
+                target_dt = pd.to_datetime(target_str) if target_str else None
+                data_sheet = combined[combined["EnrollmentDate"] == sheet_name]
+                if data_sheet.empty:
+                    continue
+                # pick closest date to target; else latest
+                if target_dt is not None:
+                    diffs = (data_sheet["Date"] - target_dt).abs()
+                    report_date = data_sheet.loc[diffs.idxmin(), "Date"]
+                else:
+                    report_date = data_sheet["Date"].max()
+                end_data = data_sheet[data_sheet["Date"] == report_date]
+                # doses present in by_dose_nc for this sheet
+                doses = sorted(by_dose_nc[by_dose_nc["EnrollmentDate"] == sheet_name]["Dose"].unique()) if not by_dose_nc.empty else []
+                # age pairs YoB1 in 1920..1980, YoB2=YoB1+10
+                yob_all = sorted([y for y in end_data["YearOfBirth"].unique() if y > 0])
+                for yob1 in range(1920, 1990, 10):
+                    yob2 = yob1 + 10
+                    if yob1 not in yob_all or yob2 not in yob_all:
+                        continue
+                    for dose in doses:
+                        # Direct KCOR: CH(dose,yob1)/CH(dose,yob2), baseline-normalized at week 4
+                        ts = by_dose_nc[(by_dose_nc["EnrollmentDate"] == sheet_name) & (by_dose_nc["Dose"] == dose) & (by_dose_nc["YearOfBirth"].isin([yob1, yob2]))]
+                        if ts["YearOfBirth"].nunique() != 2 or ts.empty:
+                            continue
+                        # Align by date and compute ratio
+                        pivot = ts.pivot_table(index="DateDied", columns="YearOfBirth", values="CH")
+                        pivot = pivot.dropna()
+                        if pivot.empty or yob1 not in pivot.columns or yob2 not in pivot.columns:
+                            continue
+                        pivot = pivot.sort_index()
+                        # Choose t0 index (KCOR_NORMALIZATION_WEEK from start)
+                        t0_idx = min(KCOR_NORMALIZATION_WEEK, len(pivot) - 1) if len(pivot) > 0 else 0
+                        k_raw = pivot[yob1] / pivot[yob2]
+                        baseline = k_raw.iloc[t0_idx] if len(k_raw) > t0_idx and np.isfinite(k_raw.iloc[t0_idx]) and k_raw.iloc[t0_idx] > EPS else 1.0
+                        k_series = k_raw / baseline
+                        # pick KCOR at reporting date (~closest available)
+                        # closest row to report_date
+                        idx_closest = (pivot.index - report_date).abs().argmin()
+                        k_val = float(k_series.iloc[idx_closest]) if len(k_series) > idx_closest else np.nan
+                        neg_rows.append({
+                            "EnrollmentDate": sheet_name,
+                            "YoB1": yob1,
+                            "YoB2": yob2,
+                            "Dose": int(dose),
+                            "KCOR": k_val
+                        })
+            neg_df = pd.DataFrame(neg_rows)
+            out_dir = os.path.dirname(out_path) or "."
+            out_file = os.path.join(out_dir, "negative_control_test_summary.xlsx")
+            with pd.ExcelWriter(out_file, engine='openpyxl') as writer:
+                neg_df.to_excel(writer, index=False, sheet_name="negative_control")
+            dual_print(f"[NegativeControl] Wrote {len(neg_df)} rows to {out_file}")
+            return combined
+        except Exception as e:
+            dual_print(f"[NegativeControl] Error creating summary: {e}")
     
     # Create debug DataFrame from collected data
     if DEBUG_VERBOSE:

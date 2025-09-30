@@ -69,7 +69,7 @@ KCOR enables us, for the first time, to objectively answer critically important 
 
 KCOR is important because as of September 19, 2025, not a single epidemiologist in the entire world has been able to take any record level dataset (such as the Czech data) and provide a clear answer that crucial question. **That is an epic failure of epidemiology.**
 
-Grok wrote, "KCOR addresses a real gap: traditional epidemiology often struggles with net benefit assessments in retrospective data without randomization." That's why KCOR is so important: it applies a rigorous analysis when a randomized controlled trial (RCT) cannot be done.
+KCOR addresses a real gap: traditional epidemiology often struggles with net benefit assessments in retrospective data without randomization. That's why KCOR is so important: it applies a rigorous analysis when a randomized controlled trial (RCT) cannot be done.
 
 Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc., and normalize their baseline mortality rates so that if there is no external effect applied that might *differentially* impact their mortality, both cohorts would die over time with identical mortality rates. You could then compare their results to see which cohort did better. That's the core idea.
 
@@ -115,7 +115,11 @@ The only attack I'm aware of on the KCOR results for the Czech data is that "thi
 
 The [validation section](#-validation) covers the sensitivity tests, negative control tests, and validation of the results using three different methods: DS-CMRR, GLM, and Kaplan-Meier survival plots. In fact, the DS-CMRR and GLM plots are very similar in shape to the KCOR plots. 
 
-There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Review section](#peer-review) for details.
+The NEGATIVE_CONTROL_MODE can be set to 1 to perform negative control tests that serve a dual purpose:
+1. validate the algorithm and implementation work, and 
+2. validate the quality of the dataset under test.
+
+There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Review section](#peer-review) for details. 
 
 The bottom line is that KCOR works extremely well with real world cohorts of sufficient size like the Czech Republic 11M record level dataset. It is very easy to validate the key KCOR assumption of an exponential mortality rate before applying the method.
 
@@ -130,6 +134,7 @@ I would be delighted to public debate any qualified scientist who believes KCOR 
 We observe that:
 1. Human beings die with a mortality rate (hazard function) that monontonically increases over time at a relatively constant rate. See [Fig 1 from data from the Human Mortality Database](https://pubmed.ncbi.nlm.nih.gov/24534516/).
 2. Any mixture of human beings (different ages, frailty mix) will have a characteristic mortality rate that monotonically increases over time at a relatively constant rate.
+3. Most all hazards are proportional to mortality enabling us to take the ratio of cum hazards and get a flat line. 
 
 KCOR makes the hypothesis that we can compare cumulative mortality differences between two cohorts by computing the mortality rate each week, doing a discrete-time hazard transform of the mortality rate, and taking the ratio of the cumulative hazard functions as a function of t (CHvax/CHunvax).
 
@@ -139,11 +144,13 @@ Factors that can affect the accuracy of the computation:
 
 1. The slopes differ (e.g., different frailty distributions),
 
-2. There’s late-life deceleration in one cohort,
+2. Significant late-life deceleration in one cohort,
 
-3. Measurement noise at low weekly death counts.
+3. Non-proportional hazards, COVID being the only one I'm aware of. This gives people who take the vaccine a huge "apparent advantage" because of HVE (the vaccinated have lower mortality thus lower expression of COVID harm). Thus, KCOR is a CONSERVATIVE estimator of harm.
 
 The simplest way to validate the hypothesis is to use the method to compare the unvaccinated cohort at one age with the unvaccinated cohort of another age and compare the vaccinated cohort of one age with the vaccinated cohort of another age. Both should yield a nearly flat result.
+
+Another way is simply to observe real life cohorts as in the Japan data: the cum hazard for the unvaccinated is a perfectly straight line. It is really stunning. 
 
 KCOR(*t*) represents the ratio of cumulative hazard functions between two cohorts (e.g., vaccinated vs. unvaccinated), normalized to 1 at a baseline point. This approach provides interpretable estimates of relative mortality risk that account for:
 
