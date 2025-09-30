@@ -157,7 +157,7 @@ SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
-NEGATIVE_CONTROL_MODE = 1       # When 1, run negative-control age comparisons and skip normal output
+NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
 # KCOR normalization fine-tuning parameters
 FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
