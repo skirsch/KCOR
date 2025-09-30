@@ -42,9 +42,10 @@ KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for 
 
 The method is simple: 
 1. select enrollment dates and slope dates appropriate to the dataset, 
-2. slope normalize the slope of the mortality rates over time of each cohort to the reference dates,
-3. cumulate adjusted death hazards, 
-4. take the ratio of the cumulative death hazard of the cohorts you want to compare.
+2. Compute the mortality rate at each week.
+3. Transform using the discrete-time hazard function to hazard(t)
+3. Cmulate adjusted death hazards, 
+4. take the ratio of the cumulative hazards of the cohorts you want to compare and normalize so week 5=1
 
 KCOR is based on a well-established epidemiological method (Cumulative Mortality Rate Ratio aka CMRR). It ostensibly adds one thing: per cohort mortality rate slope normalization. Slope normalization of the mortality rate over time is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes relatively large cohorts *of identical age* to be on *different* parts of the Gompertz-mortality-with-frailty-and-depletion curve where the slopes can be dramatically different due to previously unappreciated large frailty differences between the two cohorts that cannot be adjusted for using standard epi methods as demonstrated in the [Qatar paper](https://elifesciences.org/articles/103690#content) where the most meticulous 1:1 matching ever done in a study plus standard Cox adjustments failed to "adjust away" the mortality differences that would allow the cohorts to be fairly compared; a large HVE bias was still present.
 
@@ -75,7 +76,7 @@ Suppose you could take any two cohorts, regardless of age, sex, frailty mix, etc
 Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
-2. Calculate the the mortality rate (MR) slopes of each cohort (per age range); use that to adjust each cohort's MR(t) to a neutral slope.
+2. Calculate the the mortality rate (MR) slopes of each cohort (per age range).
 3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards). So MR(t) --> h(t). Most values of MR are small so the result is virtually the same value if you did it right.
 4. Compute the CUMULATIVE hazards for each cohort for each week. 
 5. Compute the ratio of the cumulative hazards of the two cohorts of interest
@@ -169,10 +170,9 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 
  These 3 parameters above are largely dictated by the data itself. There can be multiple choices for each of these parameters, but generally, the data itself determines them. A future version of KCOR will be able to make these decisions independently from the data. For now, they are made manually. 
 
- The algorithm does 3 things to process the data:
- 1. Slope normalizes the weekly mortality rates of the cohorts being studied using the slope start/end dates to assess baseline mortality slope of the cohort. Week 0 (enrollment week) is left unscaled; mortality rate slope normalization is applied from week 1 onward.
- 2. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time which provides a net/harm benefit readout at any point in time $t$. KCOR uses the discrete hazard function transform to enable this.
- 3. Normalizes the final ratio to the ratio at the end of a 4‑week baseline period (week 4). 
+ The algorithm does 2 things to process the data:
+1. Computes the ratio of the cumulative hazards of the cohorts relative to each other as a function of time which provides a net/harm benefit readout at any point in time $t$. KCOR uses the discrete hazard function transform to enable this.
+ 2. Normalizes the final ratio to the ratio at the end of a 4‑week baseline period (the 5th week is normalized to 1). 
 
  The algorithm depends on only three dates: birth, death, vaccination(s). 
 
@@ -219,6 +219,7 @@ $$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
 - **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
 
 #### 3. Mortality Rate Adjustment Using the Computed Slopes (r)
+NOTE: This step was REMOVED. It is not needed because even for people over 100, the mortality rate growth per month is extremely constant. You only need to do slope adjustment if your mortality rates are pathological, e.g., declining over time due to data collection issues. We see this in the Czech data for the unvaccinated cohort.
 - **Individual MR Adjustment**: Apply slope correction to each mortality rate for a given enrollment, age, dose combination to create an adjusted mortality rate: 
 
 $$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
@@ -297,52 +298,8 @@ Where:
 >
 > 4. Compute the ratio of the cumulative hazard function at each time $t$ of the cohorts of interest. Scale by the value at week 4 (config: `ANCHOR_WEEKS = 4`). So KCOR on week 4 will be 1. The 4 weeks gives us time to match baseline mortality of the cohorts during a period where there is no COVID virus so there should not be a differential response.
 
-#### 6. KCOR Normalization Fine-Tuning (v4.3+): Disabled by default
-**Optional Baseline Correction for Unsafe Vaccine Effects:**
 
-When unsafe vaccines create artificially high baseline mortality rates during the normalization period, KCOR assumes this is just normal mortality for the vaccinated. This may cause KCOR values at the end of the study period to be less than 1, making it appear that that an unsafe vaccine saved lives when in reality what was happening is that the mortality increase caused by the vaccine was just ephemeral and the enrollment date happened to correspond to peak mortality. 
-
-This situation happens when the vaccine is unsafe and the enrollment date is many weeks after most people in that age group got their shots. So the KCOR value for those age groups are artifically low.
-
-This optional feature (which is disabled by default) corrects for this bias by adjusting the KCOR scaling to end up at a sensible final value, e.g., 1 for an unsafe vaccine.
-
-This feature is disabled by default since it creates a bias. It can be enabled if you want to get more accurate ASMR final values that would not be affected by this limitation. 
-
-So for most accurate results, use multiple enrollment dates to determine the KCOR values for different aged cohorts when the cohorts are vaccinated over a wide calendar range. 
-
-The parameter is just a quick way to get more realistic KCOR values without having to examine multiple cohorts.
-
-In the future, we'll automatically create fixed cohorts enrollment date for every 10 year age group to account for calendar staggered vaccine rollouts.
-
-**Detection Logic:**
-1. Compute KCOR values normally using enrollment-based baseline normalization (week 1)
-2. Check KCOR value at specified final date (default: April 1, 2024)
-3. If final KCOR < threshold (= FINAL_KCOR_MIN; default: 0 disables scaling), adjust scale factor = 1/final_KCOR
-4. Apply adjusted scale factor to all KCOR computations
-
-**Scaling Formula:**
-
-$$\text{KCOR}(t) = \frac{\text{Kraw}(t)}{\text{baseline}_\text{Kraw}} \times \text{scale}_\text{factor}$$
-
-Where:
-- $\text{KCOR}(t_f)$ = KCOR value at the specified final date with original normalization
-- **Scale factor** = ${1}/{\text{KCOR}(t_f)}$ when $\text{KCOR}(t_f) < threshold$
-- **Applied to**: Scale factor only (preserves all K_raw relationships)
-
-**Configuration Parameters:**
-```python
-FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
-FINAL_KCOR_DATE = "4/1/24"      # Date to check for scaling (MM/DD/YY format)
-```
-
-**Key Benefits:**
-- **Corrects Baseline Bias**: Fixes artificially low KCOR values due to unsafe vaccine effects
-- **Automatic Detection**: Only applies scaling when needed (KCOR < threshold)
-- **Preserves Relationships**: Maintains relative differences between all time points
-- **Transparent Process**: BEFORE/AFTER anchor values logged for full transparency
-- **Conservative Approach**: Only scales when clear evidence of baseline bias exists
-
-#### 7. Age Standardization 
+#### 6. Age Standardization 
 **Expected-Deaths Weighting for ASMR Pooling:**
 
 The age-standardized KCOR uses expected-deaths weights that properly reflect actual mortality burden:
@@ -399,6 +356,9 @@ $$
  
 where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** calendar-time factor
 (seasonality/waves), and $\varepsilon_{g,t}$ is noise.
+
+[!NOTE]
+> Slope normalization was never needed. It is only useful if you data is problematic, e.g., mortality rates don't increase over time in every cohort.
 
 **Slope estimation via quiet anchors**
 Choose two quiet, non-differential windows $B_1,B_2$ (each of length $w$), and define

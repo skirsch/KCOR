@@ -25,6 +25,13 @@ METHODOLOGY OVERVIEW:
      where \(A_d\) is the Alive count at t = 0 for dose d. This is printed for diagnostics and
      summary only; it does not alter KCOR computations.
 
+   - Czech unvaccinated MR correction (optional; default ON via CZECH_UNVACCINATED_MR_ADJUSTMENT=1):
+     For each birth-decade (YoB), compute \(\text{adj} = \min(0.002, r_{d=1}) - r_{d=0}\) using the same
+     two-anchor slope method. If \(\text{adj} > 0\), adjust ONLY dose 0 weekly mortality rates after enrollment
+     by \( \text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{\text{adj}(t - t_e)} \). This increases the
+     unvaccinated slope modestly to account for Czech data undercounting of unvaccinated ages (per
+     documentation/Czech_unvaxxed_MR.md). This logic runs independently of SLOPE_NORMALIZE_YOB_LE.
+
 3. MORTALITY RATE ADJUSTMENT:
    - Applies exponential slope removal: MR_adj = MR × exp(-slope × (t - t0))
    - t0 = baseline week (typically week 4) where KCOR is normalized to 1
