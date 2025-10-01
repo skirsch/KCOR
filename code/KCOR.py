@@ -150,8 +150,7 @@ SIN_M_AVG_WEEKS = 4            # m for start-of-window average
 SIN_X_MAX = 2.0                # clamp for Newton root solve in integral ratio equation
 
 # KCOR normalization fine-tuning parameters
-FINAL_KCOR_MIN = 0              # Setting to 0 DISABLES scaling based on the final value
-FINAL_KCOR_DATE = "4/1/24"      # Date to check for KCOR scaling (MM/DD/YY format)
+# Removed FINAL_KCOR_MIN/FINAL_KCOR_DATE scaling
 
 # Removed MAX_DATE_FOR_SLOPE: dynamic anchors specify calendar dates directly
 
@@ -178,9 +177,7 @@ KCOR_REPORTING_DATE = {
 }
 
 # DATA SMOOTHING:
-# Apply moving average before slope calculation to reduce noise and improve stability
-MA_TOTAL_LENGTH = 8  # Total length of centered moving average (8 weeks = 4 weeks on either side)
-CENTERED = True      # Use centered MA (4 weeks before + 4 weeks after each point) to minimize lag
+# Moving-average smoothing parameters removed
 
 # Processing parameters
 # NOTE: the 2009 cutoff is because for 10 year processing of the 2000 age group, if we set it to 
@@ -189,9 +186,7 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrollment dates (sheet names) to process (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
-# Skip slope normalization for cohorts with YearOfBirth <= this threshold
-# Set this to 1900 for NO normalization at all. Set this to 2020 to normalize all cohorts.
-SLOPE_NORMALIZE_YOB_LE = 0    # do NOT normalize. Not needed unless your data is pathological.
+# Slope normalization threshold removed; normalization controlled by SIN_ENABLED only
 # Czech unvaccinated MR adjustment toggle (1=enabled, 0=disabled)
 CZECH_UNVACCINATED_MR_ADJUSTMENT = 1  # should be set to 1 for Czech data due to undercounting of unvaccinated deaths over time (or overcouning the population)
 
@@ -261,36 +256,13 @@ try:
         KCOR_NORMALIZATION_WEEK = int(_env_anchor)
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEK via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEK}")
-    _env_ma = os.environ.get('SA_MA_TOTAL_LENGTH')
-    if _env_ma:
-        MA_TOTAL_LENGTH = int(_env_ma)
-        if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding MA_TOTAL_LENGTH via SA_MA_TOTAL_LENGTH: {MA_TOTAL_LENGTH}")
-    _env_centered = os.environ.get('SA_CENTERED')
-    if _env_centered:
-        CENTERED = str(_env_centered).strip().lower() in ("1","true","yes")
-        if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding CENTERED via SA_CENTERED: {CENTERED}")
+    # removed MA smoothing env overrides
     _env_win = os.environ.get('SA_SLOPE_WINDOW_SIZE')
     if _env_win:
         SLOPE_WINDOW_SIZE = int(_env_win)
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding SLOPE_WINDOW_SIZE via SA_SLOPE_WINDOW_SIZE: {SLOPE_WINDOW_SIZE}")
-    _env_final_min = os.environ.get('SA_FINAL_KCOR_MIN')
-    if _env_final_min:
-        # If a range/list is provided (e.g., "0,1,1"), defer handling to SA loop
-        try:
-            if ',' not in _env_final_min.strip():
-                FINAL_KCOR_MIN = float(_env_final_min)
-                if DEBUG_VERBOSE:
-                    print(f"[DEBUG] Overriding FINAL_KCOR_MIN via SA_FINAL_KCOR_MIN: {FINAL_KCOR_MIN}")
-        except Exception:
-            pass
-    _env_final_date = os.environ.get('SA_FINAL_KCOR_DATE')
-    if _env_final_date:
-        FINAL_KCOR_DATE = _env_final_date
-        if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding FINAL_KCOR_DATE via SA_FINAL_KCOR_DATE: {FINAL_KCOR_DATE}")
+    # removed FINAL_KCOR env overrides
     _env_czech = os.environ.get('CZECH_UNVACCINATED_MR_ADJUSTMENT')
     if _env_czech is not None:
         try:
@@ -299,14 +271,7 @@ try:
                 print(f"[DEBUG] CZECH_UNVACCINATED_MR_ADJUSTMENT set to: {CZECH_UNVACCINATED_MR_ADJUSTMENT}")
         except Exception:
             pass
-    _env_skip_yob = os.environ.get('SA_SLOPE_NORMALIZE_YOB_LE')
-    if _env_skip_yob:
-        try:
-            SLOPE_NORMALIZE_YOB_LE = int(_env_skip_yob)
-            if DEBUG_VERBOSE:
-                print(f"[DEBUG] Overriding SLOPE_NORMALIZE_YOB_LE via SA_SLOPE_NORMALIZE_YOB_LE: {SLOPE_NORMALIZE_YOB_LE}")
-        except Exception:
-            pass
+    # removed SA_SLOPE_NORMALIZE_YOB_LE
 except Exception:
     pass
 
@@ -495,7 +460,7 @@ def safe_sqrt(x, eps=EPS):
     return np.sqrt(np.clip(x, eps, None))
 
 
-def apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED):
+def apply_moving_average(df, window=None, centered=None):
     """Apply centered moving average smoothing to MR values before quantile regression.
     
     Args:
@@ -504,18 +469,8 @@ def apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED):
     """
     df_smooth = df.copy()
     
-    for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-        # Sort by time to ensure proper order
-        g_sorted = g.sort_values("t")
-        
-        # Apply centered moving average to MR values
-        if centered:
-            g_sorted["MR_smooth"] = g_sorted["MR"].rolling(window=window, center=True, min_periods=1).mean()
-        else:
-            g_sorted["MR_smooth"] = g_sorted["MR"].rolling(window=window, center=False, min_periods=1).mean()
-        
-        # Update the original dataframe
-        df_smooth.loc[g_sorted.index, "MR_smooth"] = g_sorted["MR_smooth"]
+    # Deprecated: return df unchanged, with MR_smooth equal to MR for compatibility
+    df_smooth["MR_smooth"] = df_smooth.get("MR", np.nan)
     
     return df_smooth
 
@@ -536,8 +491,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
     by_age_dose = {(y,d): g.sort_values("DateDied")
                    for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
     
-    # Store scale factors for ASMR computation
-    scale_factors = {}  # {(age, dose_num, dose_den): scale_factor}
+    # Scale factors logic removed (FINAL_KCOR_* deprecated)
 
     # -------- per-age KCOR rows --------
     dose_pairs = get_dose_pairs(sheet_name)
@@ -598,38 +552,10 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
                 baseline_k_raw = 1.0
             
-            # Check if KCOR at FINAL_KCOR_DATE needs scaling adjustment
-            scale_factor = 1.0  # Default: no scaling
-            
-            # Parse the final KCOR date
-            try:
-                final_date = pd.to_datetime(FINAL_KCOR_DATE, format="%m/%d/%y")
-            except:
-                try:
-                    final_date = pd.to_datetime(FINAL_KCOR_DATE, format="%m/%d/%Y")
-                except:
-                    final_date = None
-            
-            if final_date is not None:
-                # Check if we have data for the final date
-                final_date_data = merged[merged["DateDied"] == final_date]
-                if not final_date_data.empty:
-                    # Compute what KCOR would be at final date with current baseline
-                    final_k_raw = final_date_data["K_raw"].iloc[0]
-                    if np.isfinite(final_k_raw):
-                        final_kcor = final_k_raw / baseline_k_raw
-                        
-                        # If final KCOR is below minimum, adjust scaling factor
-                        if final_kcor < FINAL_KCOR_MIN:
-                            scale_factor = 1.0 / final_kcor
-            
-            # Save scale factor for ASMR computation
-            scale_factors[(yob, num, den)] = scale_factor
-            
-            # Compute final KCOR values using adjusted scale factor
-            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
-                                     (merged["K_raw"] / baseline_k_raw) * scale_factor, 
-                                     np.nan)
+            # Compute final KCOR values normalized to baseline (no extra scaling)
+            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]),
+                                      merged["K_raw"] / baseline_k_raw,
+                                      np.nan)
             
             # Debug: Check for suspiciously large KCOR values
             # if merged["KCOR"].max() > 10:
@@ -1083,15 +1009,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Configuration parameter dump (always show effective values)
     dual_print("-"*80)
     dual_print("Configuration Parameters (effective):")
-    dual_print(f"  FINAL_KCOR_MIN        = {FINAL_KCOR_MIN}")
-    dual_print(f"  FINAL_KCOR_DATE       = {FINAL_KCOR_DATE}")
+    # Removed FINAL_KCOR parameters
     dual_print(f"  KCOR_NORMALIZATION_WEEK = {KCOR_NORMALIZATION_WEEK}")
     # Anchor-based slope parameters removed
     dual_print(f"  DYNAMIC_HVE_SKIP_WEEKS = {DYNAMIC_HVE_SKIP_WEEKS}")
     dual_print(f"  AGE_RANGE             = {AGE_RANGE}")
     # Legacy slope window removed
-    dual_print(f"  MA_TOTAL_LENGTH       = {MA_TOTAL_LENGTH}")
-    dual_print(f"  CENTERED              = {CENTERED}")
+    # Moving-average parameters removed
     dual_print(f"  YEAR_RANGE            = {YEAR_RANGE}")
     dual_print(f"  ENROLLMENT_DATES      = {ENROLLMENT_DATES}")
     # MR is computed in annualized per 100k units; no additional display scaling applied
@@ -1100,7 +1024,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
-    dual_print(f"  SLOPE_NORMALIZE_YOB_LE= {SLOPE_NORMALIZE_YOB_LE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     dual_print(f"  SIN_ENABLED           = {SIN_ENABLED}")
     dual_print(f"  SIN_WINDOW            = ({SIN_WINDOW_START_ISO}, {SIN_WINDOW_END_ISO})")
@@ -1204,11 +1127,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["t"]    = df.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
 
         # Apply centered moving average smoothing before quantile regression
-        df = apply_moving_average(df, window=MA_TOTAL_LENGTH, centered=CENTERED)
+        df = apply_moving_average(df)
         
         # Debug: Show effect of moving average
         # if DEBUG_VERBOSE:
-        #     print(f"\n[DEBUG] Centered moving average smoothing (total length={MA_TOTAL_LENGTH} weeks, centered={CENTERED}):")
+        #     print(f"\n[DEBUG] Centered moving average smoothing (deprecated):")
         #     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
         #         if len(g) > 0:
         #             mr_orig = g["MR"].values
@@ -1272,34 +1195,19 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     df2["cumPT"] = df2.groupby(["YearOfBirth","Dose"]) ['PT'].cumsum()
                     df2["cumD_adj"] = df2["CH"] * df2["cumPT"]
                     df2["cumD_unadj"] = df2.groupby(["YearOfBirth","Dose"]) ['Dead'].cumsum()
-                    # Sweep FINAL_KCOR_MIN if provided as range
-                    sa_final_mins = _parse_triplet_range(os.environ.get('SA_FINAL_KCOR_MIN', ''))
-                    if not sa_final_mins:
-                        try:
-                            sa_final_mins = [float(FINAL_KCOR_MIN)]
-                        except Exception:
-                            sa_final_mins = [1.0]
-                    prev_final_min = globals().get('FINAL_KCOR_MIN', 1.0)
-                    for _final_min in sa_final_mins:
-                        try:
-                            globals()['FINAL_KCOR_MIN'] = float(_final_min)
-                        except Exception:
-                            globals()['FINAL_KCOR_MIN'] = prev_final_min
-                        out_sh_sa = build_kcor_rows(df2, sh, dual_print)
-                        # Compute KCOR_o and merge into SA output
-                        kcor_o_sa = build_kcor_o_rows(df2, sh)
-                        if not kcor_o_sa.empty and not out_sh_sa.empty:
-                            out_sh_sa = pd.merge(
-                                out_sh_sa,
-                                kcor_o_sa,
-                                on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
-                                how="left"
-                            )
-                        out_sh_sa["param_slope_start"] = int(start_val)
-                        out_sh_sa["param_slope_length"] = int(length_val)
-                        out_sh_sa["param_final_kcor_min"] = float(globals().get('FINAL_KCOR_MIN', 1.0))
-                        produced_outputs.append(out_sh_sa)
-                    globals()['FINAL_KCOR_MIN'] = prev_final_min
+                    out_sh_sa = build_kcor_rows(df2, sh, dual_print)
+                    # Compute KCOR_o and merge into SA output
+                    kcor_o_sa = build_kcor_o_rows(df2, sh)
+                    if not kcor_o_sa.empty and not out_sh_sa.empty:
+                        out_sh_sa = pd.merge(
+                            out_sh_sa,
+                            kcor_o_sa,
+                            on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
+                            how="left"
+                        )
+                    out_sh_sa["param_slope_start"] = int(start_val)
+                    out_sh_sa["param_slope_length"] = int(length_val)
+                    produced_outputs.append(out_sh_sa)
                 if skip_remaining_lengths:
                     # Stop trying larger lengths for this start
                     pass
@@ -1406,29 +1314,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["MR_adj"] = df["MR"]
         # Bug diagnostics for specific cohort/date (requested):
         # Log Alive, Dead, MR (raw) and MR_adj for YoB=1950, Dose=2 on 2022-01-10 and 2022-01-17 in 2021_13 sheet
-        if sh == "2021_13":
-            try:
-                yob_dbg = 1950
-                dose_dbg = 2
-                slope_dbg = float(slopes.get((yob_dbg, dose_dbg), np.nan))
-                slope_str = f"{slope_dbg:.6f}" if np.isfinite(slope_dbg) else "NaN"
-                dual_print(f"[DBG-BUG] Sheet {sh}: YoB {yob_dbg}, Dose {dose_dbg}, estimated slope = {slope_str}")
-                target_dates = [pd.Timestamp("2022-01-10"), pd.Timestamp("2022-01-17")]
-                for td in target_dates:
-                    sel = df[(df["YearOfBirth"] == yob_dbg) & (df["Dose"] == dose_dbg) & (df["DateDied"] == td)]
-                    if not sel.empty:
-                        r = sel.iloc[0]
-                        alive_v = float(r.get("Alive", np.nan))
-                        dead_v = float(r.get("Dead", np.nan))
-                        mr_v = float(r.get("MR", np.nan))
-                        mr_adj_v = float(r.get("MR_adj", np.nan))
-                        dual_print(
-                            f"[DBG-BUG] {td.date()} — Alive={alive_v:.0f}, Dead={dead_v:.0f}, MR={mr_v:.8f}, MR_adj={mr_adj_v:.8f}"
-                        )
-                    else:
-                        dual_print(f"[DBG-BUG] {td.date()} — no row found for YoB {yob_dbg}, Dose {dose_dbg}")
-            except Exception as e:
-                dual_print(f"[DBG-BUG] Error emitting diagnostics: {e}")
+        # removed temporary diagnostics
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
         # Optional: Apply SIN (Slope-from-Integral Normalization) per cohort before building hazards
@@ -1498,29 +1384,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Clip to avoid log(0) and ensure numerical stability
         df["hazard"] = -np.log(1 - np.clip(mr_used, None, 0.999))
         # Extra bug diagnostics for the 1950/Dose2 cohort on two dates — include hazard and CH
-        if sh == "2021_13":
-            try:
-                yob_dbg = 1950
-                dose_dbg = 2
-                # If SIN is active, show beta too
-                beta_dbg = None
-                try:
-                    beta_dbg = float(beta_vals.get((yob_dbg, dose_dbg), np.nan))
-                except Exception:
-                    beta_dbg = None
-                if beta_dbg is not None and np.isfinite(beta_dbg):
-                    dual_print(f"[DBG-BUG] SIN beta for YoB {yob_dbg}, Dose {dose_dbg}: {beta_dbg:.8f}")
-                for td in [pd.Timestamp("2022-01-10"), pd.Timestamp("2022-01-17")]:
-                    sel = df[(df["YearOfBirth"] == yob_dbg) & (df["Dose"] == dose_dbg) & (df["DateDied"] == td)]
-                    if not sel.empty:
-                        r = sel.iloc[0]
-                        dual_print(
-                            f"[DBG-BUG] {td.date()} — t={int(r['t'])}, hazard={float(r['hazard']):.10f}, CH_so_far={float(r['CH']) if 'CH' in df.columns else float('nan'):.10f}"
-                        )
-                    else:
-                        dual_print(f"[DBG-BUG] {td.date()} — no row for hazard/CH diagnostics")
-            except Exception as e:
-                dual_print(f"[DBG-BUG] Error emitting hazard/CH diagnostics: {e}")
+        # removed temporary diagnostics
         
         # Apply DYNAMIC_HVE_SKIP_WEEKS to accumulation start
         df["hazard_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["hazard"], 0.0)
@@ -1828,13 +1692,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Output File",
                         "",
                         "Configuration Parameters (effective):",
-                        "  FINAL_KCOR_MIN",
-                        "  FINAL_KCOR_DATE",
+                        # FINAL_KCOR fields removed
                         "  KCOR_NORMALIZATION_WEEK",
                         "  SLOPE_ANCHOR_T",
                         "  SLOPE_WINDOW_SIZE",
-                        "  MA_TOTAL_LENGTH",
-                        "  CENTERED",
+                        # removed MA params
                         "  YEAR_RANGE",
                         "  ENROLLMENT_DATES",
                         "  DEBUG_VERBOSE",
@@ -1909,13 +1771,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         out_path,
                         "",
                         f"",
-                        f"{FINAL_KCOR_MIN}",
-                        f"{FINAL_KCOR_DATE}",
+                        "",
+                        "",
                         f"{KCOR_NORMALIZATION_WEEK}",
                         f"{SLOPE_ANCHOR_T}",
                         f"{SLOPE_WINDOW_SIZE}",
-                        f"{MA_TOTAL_LENGTH}",
-                        f"{CENTERED}",
+                        # removed MA params
                         f"{YEAR_RANGE}",
                         f"{ENROLLMENT_DATES}",
                         f"{DEBUG_VERBOSE}",
@@ -1969,13 +1830,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         out_path,
                         "",
                         "",
-                        f"{FINAL_KCOR_MIN}",
-                        f"{FINAL_KCOR_DATE}",
+                        "",
+                        "",
                         f"{KCOR_NORMALIZATION_WEEK}",
                         f"{SLOPE_ANCHOR_T}",
                         f"{SLOPE_WINDOW_SIZE}",
-                        f"{MA_TOTAL_LENGTH}",
-                        f"{CENTERED}",
+                        # removed MA params
                         f"{YEAR_RANGE}",
                         f"{ENROLLMENT_DATES}",
                         f"{DEBUG_VERBOSE}",
@@ -2061,8 +1921,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             group_cols = ["EnrollmentDate","Dose_num","Dose_den"]
             if "param_slope_start" in data.columns and "param_slope_length" in data.columns:
                 group_cols += ["param_slope_start","param_slope_length"]
-            if "param_final_kcor_min" in data.columns:
-                group_cols += ["param_final_kcor_min"]
+            # removed param_final_kcor_min grouping
             for keys, g in data.groupby(group_cols, sort=False):
                 g2022 = g[g["Date"].dt.year == 2022]
                 if not g2022.empty:
@@ -2076,12 +1935,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 # If explicit SA offsets were not provided, dynamic anchors were used
                 if pd.isna(off1) or pd.isna(slope_len):
                             off1, slope_len = (None, None)
-                # Use row-level param_final_kcor_min when available
-                param_final_min = target.get("param_final_kcor_min", FINAL_KCOR_MIN)
-                try:
-                    param_final_min = float(param_final_min)
-                except Exception:
-                    param_final_min = FINAL_KCOR_MIN
                 out_records.append({
                     "EnrollmentDate": enr,
                     "Dose_num": int(target["Dose_num"]),
@@ -2093,11 +1946,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "CI_upper": target["CI_upper"],
                     # Memorialize key parameters
                     "param_normalization_week": KCOR_NORMALIZATION_WEEK,
-                    "param_ma_total_length": MA_TOTAL_LENGTH,
-                    "param_centered": int(bool(CENTERED)),
+                    # removed MA params
                     "param_slope_window_size": SLOPE_WINDOW_SIZE,
-                    "param_final_kcor_min": param_final_min,
-                    "param_final_kcor_date": FINAL_KCOR_DATE,
                     "param_slope_start": off1,
                     "param_slope_length": slope_len,
                     "param_sa_cohorts": sa_env_cohorts,
