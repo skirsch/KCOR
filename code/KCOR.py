@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.4
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.6
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
 hazards between different dose groups, normalized to 1 at a baseline period.
@@ -13,38 +13,20 @@ METHODOLOGY OVERVIEW:
    - Aggregate mortality data across sexes for each (YearOfBirth, Dose, DateDied) combination
    - Apply 8-week centered moving average to raw mortality rates for smoothing
 
-2. SLOPE CALCULATION (Lookup Table Method):
-   - Uses predefined anchor points (e.g., weeks 53 and 114 from enrollment for 2021_24)
-   - For each anchor point, creates a ±2 week window (5 points total)
-   - Calculates geometric mean of smoothed MR values within each window
-   - Slope = ln(B/A) / T where A = geometric mean at first anchor, B = geometric mean at second anchor
-   - Same anchor points used for all doses to ensure comparability
-   - Anchor dates chosen during "quiet periods" with no differential events (COVID waves, policy changes, etc.)
-   - Total slope (reporting metric): For each birth-decade group, compute an Alive-weighted average
-     of dose-specific slopes at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \),
-     where \(A_d\) is the Alive count at t = 0 for dose d. This is printed for diagnostics and
-     summary only; it does not alter KCOR computations.
+2. SLOPE METRICS (Reporting only):
+   - Total slope (diagnostic): For each birth-decade group, Alive-weighted average of dose-specific slopes
+     at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+     not alter KCOR computations.
 
-   - Czech unvaccinated MR correction (optional; default ON via CZECH_UNVACCINATED_MR_ADJUSTMENT=1):
-     For each birth-decade (YoB), compute \(\text{adj} = \min(0.002, r_{d=1}) - r_{d=0}\) using the same
-     two-anchor slope method. If \(\text{adj} > 0\), adjust ONLY dose 0 weekly mortality rates after enrollment
-     by \( \text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{\text{adj}(t - t_e)} \). This increases the
-     unvaccinated slope modestly to account for Czech data undercounting of unvaccinated ages (per
-     documentation/Czech_unvaxxed_MR.md). This logic runs independently of SLOPE_NORMALIZE_YOB_LE.
+3. NORMALIZATION AND HAZARDS:
+   - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
+   - When enabled, Slope-from-Integral Normalization (SIN) estimates a cohort-level slope parameter but applies
+     normalization at the hazard level only. Raw MR values are never modified by normalization.
+   - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
-3. MORTALITY RATE ADJUSTMENT:
-   - Applies exponential slope removal: MR_adj = MR × exp(-slope × (t - t0))
-   - t0 = baseline week (typically week 4) where KCOR is normalized to 1
-   - Each dose-age combination gets its own slope for adjustment
-
-4. KCOR COMPUTATION (v4.1+):
-   - KCOR = (CH_num / CH_den) / (CH_num_baseline / CH_den_baseline)
-   - CH = slope-corrected cumulative hazard (mathematically exact)
-   - Step 1: Apply slope correction to individual MR: MR_adj = MR × exp(-slope × (t - t0))
-   - Step 2: Apply discrete cumulative-hazard transform: hazard = -ln(1 - MR_adj)
-   - Step 3: Calculate cumulative hazard: CH = cumsum(hazard)
-   - Baseline values taken at week 4 (or first available week)
-   - Results in KCOR = 1 at baseline, showing relative risk over time
+4. KCOR COMPUTATION:
+   - KCOR = (CH_num / CH_den) normalized to 1 at week KCOR_NORMALIZATION_WEEK (or first available week).
+   - CH is the cumulative sum of weekly hazards.
 
 5. UNCERTAINTY QUANTIFICATION:
    - 95% confidence intervals using proper uncertainty propagation
@@ -62,7 +44,6 @@ METHODOLOGY OVERVIEW:
 
 KEY ASSUMPTIONS:
 - Mortality rates follow exponential trends during observation period
-- No differential events affect dose groups differently during anchor periods
 - Baseline period (week 4) represents "normal" conditions
 - Person-time = Alive (survivor function approximation)
 
@@ -87,9 +68,9 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends. Version 4.2
-includes corrected ASMR pooling using expected-deaths weights that properly reflect
-actual mortality burden rather than population size.
+between vaccination groups while accounting for underlying time trends. Version 4.5
+removes legacy anchor-based slope adjustments and Czech-specific corrections in favor of
+SIN-at-hazard (optional) and direct hazard computation from raw MR.
 """
 import sys
 import math
@@ -129,7 +110,7 @@ def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.4"                # KCOR version number
+VERSION = "v4.5"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -148,6 +129,8 @@ VERSION = "v4.4"                # KCOR version number
 # v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
 #        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
 #        - Added slope lookup entry for 2022_47 (legacy; dynamic anchors now default)
+# v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
+#        - SIN-at-hazard (optional) and direct hazard computation from raw MR.
 
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at this week; weeks counted from enrollment t=0)
@@ -379,8 +362,8 @@ def get_dose_pairs(sheet_name):
         # Mid 2021 sheet: max dose is 2, only doses 0, 1, 2
         return [(1,0), (2,0), (2,1)]
     elif sheet_name == "2022_06":
-        # 2022 sheet: includes dose 3 comparisons
-        return [(1,0), (2,0), (2,1), (3,2), (3,0)]
+        # 2022 sheet: includes dose 3 comparisons (add 3 vs 1)
+        return [(1,0), (2,0), (2,1), (3,2), (3,1), (3,0)]
     elif sheet_name == "2022_47":
         # Late 2022 sheet: focus on 4th dose comparisons per v4.4 requirements
         return [(4,3), (4,2), (4,1), (4,0)]
@@ -1103,10 +1086,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  FINAL_KCOR_MIN        = {FINAL_KCOR_MIN}")
     dual_print(f"  FINAL_KCOR_DATE       = {FINAL_KCOR_DATE}")
     dual_print(f"  KCOR_NORMALIZATION_WEEK = {KCOR_NORMALIZATION_WEEK}")
-    dual_print(f"  SLOPE_ANCHOR_T        = {SLOPE_ANCHOR_T}")
+    # Anchor-based slope parameters removed
     dual_print(f"  DYNAMIC_HVE_SKIP_WEEKS = {DYNAMIC_HVE_SKIP_WEEKS}")
     dual_print(f"  AGE_RANGE             = {AGE_RANGE}")
-    dual_print(f"  SLOPE_WINDOW_SIZE     = {SLOPE_WINDOW_SIZE}")
+    # Legacy slope window removed
     dual_print(f"  MA_TOTAL_LENGTH       = {MA_TOTAL_LENGTH}")
     dual_print(f"  CENTERED              = {CENTERED}")
     dual_print(f"  YEAR_RANGE            = {YEAR_RANGE}")
@@ -1115,9 +1098,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
-    dual_print(f"  QUIET_ANCHOR_ISO_WEEKS= {QUIET_ANCHOR_ISO_WEEKS}")
-    dual_print(f"  MIN_ANCHOR_GAP_WEEKS  = {MIN_ANCHOR_GAP_WEEKS}")
-    dual_print(f"  MIN_ANCHOR_SEPARATION_WEEKS = {MIN_ANCHOR_SEPARATION_WEEKS}")
+    # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  SLOPE_NORMALIZE_YOB_LE= {SLOPE_NORMALIZE_YOB_LE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
@@ -1147,6 +1128,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df = pd.read_excel(src_path, sheet_name=sh)
         # prep
         df["DateDied"] = pd.to_datetime(df["DateDied"])
+        # (Removed temporary diagnostics)
         
         # Filter out unreasonably large birth years (keep -1 for "not available")
         df = df[df["YearOfBirth"] <= 2020]
@@ -1391,7 +1373,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
             
 
-        # Slope normalization is applied later via apply_slope_correction_to_mr with skip logic
+        # Slope normalization (legacy) has been removed; SIN (if enabled) applies only at hazard level.
         
         # Debug: Show MR values week by week, especially weeks with no deaths
         # if DEBUG_VERBOSE:
@@ -1418,36 +1400,35 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #     
         #     print()
 
-        # Apply slope correction to each individual MR value
-        def apply_slope_correction_to_mr(row):
-            # Respect setting: normalize ONLY for YoB <= threshold; skip for higher YoB
+        # Remove legacy slope-adjusted columns and scale factors; keep raw MR only
+        df["slope"] = 0.0
+        df["scale_factor"] = 1.0
+        df["MR_adj"] = df["MR"]
+        # Bug diagnostics for specific cohort/date (requested):
+        # Log Alive, Dead, MR (raw) and MR_adj for YoB=1950, Dose=2 on 2022-01-10 and 2022-01-17 in 2021_13 sheet
+        if sh == "2021_13":
             try:
-                if int(row.get("YearOfBirth", 9999)) > int(SLOPE_NORMALIZE_YOB_LE):
-                    return row["MR"]
-            except Exception:
-                pass
-            slope = slopes.get((row["YearOfBirth"], row["Dose"]), 0.0)
-            # Clip slope to prevent overflow
-            slope = np.clip(slope, -10.0, 10.0)
-            scale_factor = safe_exp(-slope * (row["t"] - float(SLOPE_ANCHOR_T)))
-            return row["MR"] * scale_factor
-        
-        # Add slope and scale factor columns for transparency
-        df["slope"] = df.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
-        
-        # Clip extreme slope values to prevent overflow
-        df["slope"] = np.clip(df["slope"], -10.0, 10.0)  # Reasonable bounds for mortality slopes
-        
-        def _scale_factor_row(row):
-            try:
-                if int(row.get("YearOfBirth", 9999)) > int(SLOPE_NORMALIZE_YOB_LE):
-                    return 1.0
-            except Exception:
-                pass
-            return safe_exp(-row["slope"] * (row["t"] - float(KCOR_NORMALIZATION_WEEK)))
-        df["scale_factor"] = df.apply(_scale_factor_row, axis=1)
-        
-        df["MR_adj"] = df.apply(apply_slope_correction_to_mr, axis=1)
+                yob_dbg = 1950
+                dose_dbg = 2
+                slope_dbg = float(slopes.get((yob_dbg, dose_dbg), np.nan))
+                slope_str = f"{slope_dbg:.6f}" if np.isfinite(slope_dbg) else "NaN"
+                dual_print(f"[DBG-BUG] Sheet {sh}: YoB {yob_dbg}, Dose {dose_dbg}, estimated slope = {slope_str}")
+                target_dates = [pd.Timestamp("2022-01-10"), pd.Timestamp("2022-01-17")]
+                for td in target_dates:
+                    sel = df[(df["YearOfBirth"] == yob_dbg) & (df["Dose"] == dose_dbg) & (df["DateDied"] == td)]
+                    if not sel.empty:
+                        r = sel.iloc[0]
+                        alive_v = float(r.get("Alive", np.nan))
+                        dead_v = float(r.get("Dead", np.nan))
+                        mr_v = float(r.get("MR", np.nan))
+                        mr_adj_v = float(r.get("MR_adj", np.nan))
+                        dual_print(
+                            f"[DBG-BUG] {td.date()} — Alive={alive_v:.0f}, Dead={dead_v:.0f}, MR={mr_v:.8f}, MR_adj={mr_adj_v:.8f}"
+                        )
+                    else:
+                        dual_print(f"[DBG-BUG] {td.date()} — no row found for YoB {yob_dbg}, Dose {dose_dbg}")
+            except Exception as e:
+                dual_print(f"[DBG-BUG] Error emitting diagnostics: {e}")
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
         # Optional: Apply SIN (Slope-from-Integral Normalization) per cohort before building hazards
@@ -1456,8 +1437,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 # Map ISO year-week to dates and to t indices present in df
                 # Build per-(YoB,Dose) hazards on weekly grid
                 df_sin = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
-                # Weekly hazard from MR (already per-week) with clipping for stability
-                df_sin["h"] = df_sin["MR"].clip(lower=0.0, upper=0.999)
+                # Weekly hazard from MR (convert to hazard; clip for stability)
+                df_sin["h"] = -np.log(1 - df_sin["MR"].clip(lower=0.0, upper=0.999))
                 # Build integer t per group
                 df_sin["t_week"] = df_sin.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
                 # Determine window indices W from calendar ISO year-week strings
@@ -1507,39 +1488,39 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         x = max(min(x, float(SIN_X_MAX)), -float(SIN_X_MAX))
                         beta = x / L
                     beta_vals[(yob, dose)] = beta
-                # Apply SIN de-trending to hazards
-                def apply_sin_row(row):
-                    b = float(beta_vals.get((row["YearOfBirth"], row["Dose"]), 0.0))
-                    # center at midpoint of window (approximate by SLOPE_ANCHOR_T or KCOR_NORMALIZATION_WEEK)
-                    t0 = float(KCOR_NORMALIZATION_WEEK)
-                    return max(0.0, row["MR"]) * safe_exp(-b * (row["t"] - t0))
-                df["MR"] = df.apply(apply_sin_row, axis=1)
+                # Note: Do NOT modify raw MR. SIN is applied later at the hazard level.
             except Exception as e:
                 if DEBUG_VERBOSE:
                     dual_print(f"[SIN] Warning: SIN failed with error: {e}. Proceeding without SIN.")
-        # Optional Czech unvax MR correction at MR level for Dose 0 only
-        if int(CZECH_UNVACCINATED_MR_ADJUSTMENT) == 1:
-            try:
-                # Compute per-(YoB) slopes for D1 and D0 from existing 'slope' column
-                slope_d1 = df[df["Dose"] == 1].groupby("YearOfBirth")["slope"].first()
-                slope_d0 = df[df["Dose"] == 0].groupby("YearOfBirth")["slope"].first()
-                slope_adj = (np.minimum(0.002, slope_d1).fillna(0.0) - slope_d0.fillna(0.0))
-                # Apply only positive adjustments to Dose 0 rows, from t_e onward
-                def _czech_mr(row):
-                    if row["Dose"] == 0:
-                        a = float(slope_adj.get(row["YearOfBirth"], 0.0))
-                        if a > 0:
-                            return row["MR"] * safe_exp(+a * (row["t"] - float(SLOPE_ANCHOR_T)))
-                    return row["MR"]
-                df["MR_czech"] = df.apply(_czech_mr, axis=1)
-                mr_used = df["MR_czech"]
-            except Exception:
-                mr_used = df["MR"]
-        else:
-            mr_used = df["MR"]
+        # Czech-specific MR correction removed; use raw MR moving forward
+        mr_used = df["MR"]
 
         # Clip to avoid log(0) and ensure numerical stability
         df["hazard"] = -np.log(1 - np.clip(mr_used, None, 0.999))
+        # Extra bug diagnostics for the 1950/Dose2 cohort on two dates — include hazard and CH
+        if sh == "2021_13":
+            try:
+                yob_dbg = 1950
+                dose_dbg = 2
+                # If SIN is active, show beta too
+                beta_dbg = None
+                try:
+                    beta_dbg = float(beta_vals.get((yob_dbg, dose_dbg), np.nan))
+                except Exception:
+                    beta_dbg = None
+                if beta_dbg is not None and np.isfinite(beta_dbg):
+                    dual_print(f"[DBG-BUG] SIN beta for YoB {yob_dbg}, Dose {dose_dbg}: {beta_dbg:.8f}")
+                for td in [pd.Timestamp("2022-01-10"), pd.Timestamp("2022-01-17")]:
+                    sel = df[(df["YearOfBirth"] == yob_dbg) & (df["Dose"] == dose_dbg) & (df["DateDied"] == td)]
+                    if not sel.empty:
+                        r = sel.iloc[0]
+                        dual_print(
+                            f"[DBG-BUG] {td.date()} — t={int(r['t'])}, hazard={float(r['hazard']):.10f}, CH_so_far={float(r['CH']) if 'CH' in df.columns else float('nan'):.10f}"
+                        )
+                    else:
+                        dual_print(f"[DBG-BUG] {td.date()} — no row for hazard/CH diagnostics")
+            except Exception as e:
+                dual_print(f"[DBG-BUG] Error emitting hazard/CH diagnostics: {e}")
         
         # Apply DYNAMIC_HVE_SKIP_WEEKS to accumulation start
         df["hazard_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["hazard"], 0.0)
@@ -1565,10 +1546,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for dose in range(max_dose + 1):
             dose_df = df[df["Dose"] == dose]
             dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
-                "ISOweekDied": "first",
-                "Dead": "sum",
-                "Alive": "sum",
-                "PT": "sum",
+                    "ISOweekDied": "first",
+                    "Dead": "sum",
+                    "Alive": "sum", 
+                    "PT": "sum",
                 "MR": "mean",
                 "MR_adj": "mean",
                 "CH": "mean",
@@ -1609,6 +1590,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "Smoothed_Adjusted_MR": smoothed_adj_mr,
                         "Time_Index": row["t"]
                     })
+        
+        # (Removed temporary diagnostics)
         
         # Debug: Print detailed CH calculation info
         # if DEBUG_VERBOSE:

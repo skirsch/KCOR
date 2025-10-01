@@ -1,4 +1,4 @@
-# KCOR v4.4 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -198,41 +198,18 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
 - **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
-#### 2. Slope Calculation (Dynamic Quiet-Period Anchors)
-- **Quiet-Period Calendar Candidates**: `2022-25`, `2023-28`, `2024-15` (ISO year-week)
-- **Automatic Anchor Selection**:
-  - First anchor = first candidate date that is at least `MIN_ANCHOR_GAP_WEEKS` (default: 26) after enrollment
-  - Second anchor = first candidate date at least `MIN_ANCHOR_SEPARATION_WEEKS` (default: 39) after the first
-  - Each anchor snaps forward to the next available data date on or after the candidate
-- **Window Approach**: Around each anchor, use a ±`SLOPE_WINDOW_SIZE` week window (default: 2) for stability
-- **Geometric Mean on Smoothed MR**: Compute geometric mean over `MR_smooth` in each window; slope is `r = (1/Δt) × ln(B̃/Ã)`
-- **Logging**: Chosen anchor dates and Δt are printed for each enrollment cohort in the log
-
-**Slope Formula:**
-
-$$r = \frac{1}{\Delta t} \ln\left(\frac{\tilde{B}}{\tilde{A}}\right)$$
-
-Where:
-- **Ã** = Geometric mean of MR values in window around first anchor: $$\tilde{A} = \text{GM}(MR_{t \in [t_0-w, t_0+w]})$$
-- **B̃** = Geometric mean of MR values in window around second anchor: $$\tilde{B} = \text{GM}(MR_{t \in [t_1-w, t_1+w]})$$
-- **Δt** = Time difference between anchor points (in weeks)
-- **w** = Window size (default: 2 weeks)
-
-**Geometric Mean Calculation:**
-
-$$\text{GM}(x_1, x_2, \ldots, x_n) = e^{\frac{1}{n} \sum_{i=1}^{n} \ln(x_i)}$$
-
-- **Consistency**: Same anchor points used for all doses for a given enrollment date to ensure comparability
-- **Quiet Periods**: Anchor dates chosen during periods with minimal differential events (COVID waves, policy changes, etc.)
-
-#### 3. Mortality Rate Adjustment Using the Computed Slopes (r)
-NOTE: This step was REMOVED. It is not needed because even for people over 100, the mortality rate growth per month is extremely constant. You only need to do slope adjustment if your mortality rates are pathological, e.g., declining over time due to data collection issues. We see this in the Czech data for the unvaccinated cohort.
-- **Individual MR Adjustment**: Apply slope correction to each mortality rate for a given enrollment, age, dose combination to create an adjusted mortality rate: 
-
-$$\text{MR}_{\text{adj}}(t) = \text{MR}(t) \times e^{-r(t - t_0)}$$
-
-- **Anchoring**: $t_e$ = enrollment week index ($t_e = 0$)
-- **Dose-Specific Slopes**: For a given enrollment date, each dose-age combination gets its own slope for adjustment
+#### 2. Slope-from-Integral Normalization (SIN) — New Primary Method (v4.6)
+- Window W = [t_a, t_b] per cohort, chosen from quiet weeks.
+- Inputs: m (start-week average), L = t_b - t_a + 1, t0 (week 4), x_max clamp, Newton iters, tolerance.
+- Compute:
+  - h = -ln(1 - MR) with clipping (convert MR to hazards).
+  - hbar_k0 = mean of first m hazards in W; H_kW = sum of hazards over W.
+  - r_k = H_kW / (L * hbar_k0).
+  - Solve (e^x - 1)/x = r_k (Newton; clamp by x_max), then beta_hat_k = x/L.
+- Flatten: apply exp(-beta_hat_k * (t - t0)) at hazard stage only → htilde_k(t).
+- Rebuild: Htilde_k = cumsum(htilde_k); KCOR computed on Htilde series; normalize at week 4.
+- Edge cases: zero hazards, tiny PT, stable Newton updates.
+- Important: Raw MR is never modified; normalization is applied only to hazards. When SIN=0, hazards are built directly from MR.
 
 #### 4. KCOR Computation 
 **Three-Step Process:**
@@ -365,7 +342,7 @@ where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** ca
 (seasonality/waves), and $\varepsilon_{g,t}$ is noise.
 
 [!NOTE]
-> Slope normalization was never needed. It is only useful if you data is problematic, e.g., mortality rates don't increase over time in every cohort.
+> Slope normalization is required for fair comparisons across cohorts with different baseline frailty mixes; v4.6 uses SIN to estimate and remove cohort-level trend at the hazard stage without altering raw MR.
 
 **Slope estimation via quiet anchors**
 Choose two quiet, non-differential windows $B_1,B_2$ (each of length $w$), and define
@@ -606,7 +583,7 @@ Result: KCOR can objectively answer questions like "Did COVID vaccines kill more
 KCOR/
 ├── README.md                           # This file
 ├── code/
-│   ├── KCOR.py                      # Main analysis script (v4.4)
+│   ├── KCOR.py                      # Main analysis script (v4.6)
 │   ├── KCOR_CMR.py                    # Data aggregation script
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── debug/                          # Helper scripts for development/verification
@@ -963,6 +940,21 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Version history
+
+### 🆕 Version 4.6
+
+#### Major Improvements
+- Replaced legacy anchor-based slope normalization with Slope-from-Integral Normalization (SIN) as the primary method
+- Normalization now applies at the hazard stage only; raw MR values are never modified
+- Removed Czech-specific unvaccinated MR adjustment and all anchor/windows parameters from defaults
+- Cleaned console/log parameter dump to reflect SIN parameters only
+- Added missing 3 vs 1 comparison for the 2022_06 cohort
+
+#### SIN Summary
+- Define window W = [t_a, t_b] per cohort; compute h = -ln(1 - MR)
+- hbar_k0 = mean of first m hazards; H_kW = sum of hazards over W; r_k = H_kW/(L*hbar_k0)
+- Solve (e^x - 1)/x = r_k → x; set beta_hat_k = x/L
+- Flatten hazards by exp(-beta_hat_k*(t - t0)) and compute KCOR on cumulative hazards; normalize at week 4
 
 ### 🆕 Version 4.3
 
