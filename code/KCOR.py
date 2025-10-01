@@ -939,6 +939,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # slope2 windows (global)
     dual_print(f"  SLOPE2_W1            = (2022-24, 2022-36)")
     dual_print(f"  SLOPE2_W2            = (2023-24, 2023-36)")
+    dual_print(f"  SLOPE2_W3            = (2024-12, 2024-20)")
+    dual_print(f"  SLOPE2 selection     = W1/W2 unless enrollment_date > start(W1), then W2/W3")
     dual_print("="*80)
     dual_print("")
     
@@ -1240,8 +1242,23 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 weeks.append(f"{iso.year}-{int(iso.week):02d}")
                 cur = cur + timedelta(weeks=1)
             return weeks
-        W1_ISO = ("2022-24", "2022-36")
-        W2_ISO = ("2023-24", "2023-36")
+        # Choose windows per enrollment date: default W1/W2; if enrollment after W1 start, use W2/W3
+        BASE_W1 = ("2022-24", "2022-36")
+        BASE_W2 = ("2023-24", "2023-36")
+        BASE_W3 = ("2024-12", "2024-20")
+        # Determine enrollment date (Monday of sheet week)
+        try:
+            year_str, week_str = sh.split("_") if "_" in sh else sh.split("-")
+            enroll_dt = datetime.fromisocalendar(int(year_str), int(week_str), 1)
+        except Exception:
+            enroll_dt = None
+        w1_start_dt = datetime.fromisocalendar(int(BASE_W1[0].split("-")[0]), int(BASE_W1[0].split("-")[1]), 1)
+        if enroll_dt is not None and enroll_dt > w1_start_dt:
+            W1_ISO = BASE_W2
+            W2_ISO = BASE_W3
+        else:
+            W1_ISO = BASE_W1
+            W2_ISO = BASE_W2
         W1_weeks = _iso_week_list(*W1_ISO)
         W2_weeks = _iso_week_list(*W2_ISO)
         # Build weekly hazard by ISO week for each cohort
