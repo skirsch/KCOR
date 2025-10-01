@@ -44,12 +44,14 @@ The method is simple:
 1. select enrollment dates and slope dates appropriate to the dataset, 
 2. Compute the mortality rate at each week.
 3. Transform using the discrete-time hazard function to hazard(t)
-3. Cmulate adjusted death hazards, 
-4. take the ratio of the cumulative hazards of the cohorts you want to compare and normalize so week 5=1
+4. Slope adjust the hazard(t) for each cohort to a flat slope so the cohorts can be compared
+5. Cmulate adjusted hazards, 
+6. take the ratio of the cumulative hazards of the cohorts you want to compare and normalize so the ratio on week 5=1
 
-KCOR is based on a well-established epidemiological method (Cumulative Mortality Rate Ratio aka CMRR). It ostensibly adds one thing: per cohort mortality rate slope normalization. Slope normalization of the mortality rate over time is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes relatively large cohorts *of identical age* to be on *different* parts of the Gompertz-mortality-with-frailty-and-depletion curve where the slopes can be dramatically different due to previously unappreciated large frailty differences between the two cohorts that cannot be adjusted for using standard epi methods as demonstrated in the [Qatar paper](https://elifesciences.org/articles/103690#content) where the most meticulous 1:1 matching ever done in a study plus standard Cox adjustments failed to "adjust away" the mortality differences that would allow the cohorts to be fairly compared; a large HVE bias was still present.
+KCOR is on a simple principle: people's mortality rate tends to increase over time at a very predictable rate as noted [in this paper](https://pubmed.ncbi.nlm.nih.gov/24534516/) and shown below: ![Mortality rate vs. age](documentation/mortality_rate_vs_age_from_HMD.jpg).
 
-Few epidemiologists have ever seen the [Gompertz with depletion slope plot](documentation/Gompertz_with_slope.png) so here it is. HVE (which from a *simplistic* point of view changes your effective age) means any two cohorts being compared can have vastly different mortality rate slope over time. For example, a young cohort typically will *increase* their mortality rate about 6.9% over a year. Older cohorts, when you factor in depletion and frailty, will typically have a very high absolute mortality rate, but will *decrease* their mortality rate change over time.
+
+ However, mixing cohorts with diverse frailty can change the slope of a cohort. Therefore, for vax vs. unvax comparisons, slope normalization of the mortality rate over time is required to properly analyze vaccination mortality data due to the static healthy vaccinee effect (HVE) which causes relatively large cohorts *of identical age* to be on *different* parts of the Gompertz-mortality-with-frailty-and-depletion curve where the slopes can be dramatically different due to previously unappreciated large frailty differences between the two cohorts that cannot be adjusted for using standard epi methods as demonstrated in the [Qatar paper](https://elifesciences.org/articles/103690#content) where the most meticulous 1:1 matching ever done in a study plus standard Cox adjustments failed to "adjust away" the mortality differences that would allow the cohorts to be fairly compared; a large HVE bias was still present.
 
 But once you slope normalize (which computes an adjustment to the instantaneous mortality rate at each time $t$), you cannot apply that normalization to the CMRR methodology (since CMRR is cumulative, not instantaneous); you must switch to a discrete-time hazard transform to do this properly. [Read the CMRR part of this chat for details](https://chatgpt.com/share/68d2fb6c-450c-8009-887b-aeb21f3fde7d) as well as this [mini-tutorial on the discrete-time hazard transform](documentation/hazard_function.md).
 
@@ -198,17 +200,20 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
 - **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
-#### 2. Slope-from-Integral Normalization (SIN) — New Primary Method (v4.6)
-- Window W = [t_a, t_b] per cohort, chosen from quiet weeks.
-- Inputs: m (only for display/diagnostics if needed), L = t_b - t_a + 1, x_max clamp (not used in slope mode).
-- Compute:
-  - h = -ln(1 - MR) with clipping (convert MR to hazards).
-  - Set t_ref = mean(t) over W (window midpoint; for even L, the average of the two center weeks).
-  - Fit β̂ as the OLS slope of log h(t) on t within W (using h>0 only).
-- Flatten (slope-only): apply h̃(t) = h(t) · exp(−β̂ · (t − t_ref)) at the hazard stage only.
-- Rebuild: Ĥ = cumsum(h̃); KCOR computed on Ĥ; normalize at week 4 (baseline) at the ratio stage only.
-- Edge cases: if all hazards in W are 0 or nonpositive (no signal), set β̂ = 0 for that cohort (skip normalization silently).
-- Important: Raw MR is never modified; normalization is applied only to hazards. When SIN=0, hazards are built directly from MR.
+#### 2. Slope normalization (slope2) — Primary Method (v4.6)
+- Fixed global windows in ISO year-week:
+  - W1 = [2022-24, 2022-36]
+  - W2 = [2023-24, 2023-36]
+  - W3 = [2024-12, 2024-20]
+- Window selection rule per enrollment sheet: use W1/W2 unless the enrollment date is after start(W1); in that case use W2/W3.
+- Compute hazards h(t) = −ln(1 − MR(t)) with clipping.
+- For each (YoB, Dose):
+  - Let Wm1 = mean hazard over the first selected window; Wm2 = mean hazard over the second selected window (arithmetic means; missing weeks treated as 0). If either mean is ≤ 0 or the separation is invalid, set β = 0.
+  - Define β = (ln Wm2 − ln Wm1) / Δweeks, where Δweeks is the center-to-center distance (in weeks) between the two windows.
+- Apply origin-anchored de-trending at the hazard level only:
+  - h_adj(t) = h(t) · e^{−β · t}, with t = weeks from enrollment (t = 0 at enrollment).
+- KCOR is computed from cumulative adjusted hazards; baseline normalization at week 4.
+- Raw MR is never modified; all slope normalization operates on hazards.
 
 #### 4. KCOR Computation 
 **Three-Step Process:**
@@ -282,35 +287,16 @@ Where:
 > 4. Compute the ratio of the cumulative hazard function at each time $t$ of the cohorts of interest. Scale by the value at week 4 (config: `ANCHOR_WEEKS = 4`). So KCOR on week 4 will be 1. The 4 weeks gives us time to match baseline mortality of the cohorts during a period where there is no COVID virus so there should not be a differential response.
 
 
-#### 6. Age Standardization 
-**Expected-Deaths Weighting for ASMR Pooling:**
+#### 6. Age Standardization (ASMR: direct standardization → then ratio)
 
-The age-standardized KCOR uses expected-deaths weights that properly reflect actual mortality burden:
+- Fix age weights w_a (sum to 1) from the pooled baseline age distribution (first 4 distinct weeks).
+- Within each age a and dose k, compute weekly hazards after slope2: h_{k,a}(t).
+- Age-standardize hazards by dose: h^{std}_k(t) = \sum_a w_a h_{k,a}(t).
+- Accumulate to standardized cumulative hazards H^{std}_k(t) = \sum_{u\le t} h^{std}_k(u).
+- Convert to standardized risks R^{std}_k(t) = 1 − e^{−H^{std}_k(t)}.
+- Form the age-standardized KCOR curve: KCOR_{pooled}(t) = R^{std}_{dose}(t) / R^{std}_{ref}(t).
 
-$$\text{KCOR}_{\text{ASMR}}(t) = e^{\sum\limits_i w_i \ln(\text{KCOR}_i(t))}$$
-
-Where:
-- $w_i$ = Expected-deaths weight for age group $i$
-- $\text{KCOR}_i(t)$ = $\text{KCOR}$ value for age group $i$ at time $t$
-- $\ln(KCOR_i(t))$ = Natural logarithm of $\text{KCOR}$ for age group $i$
-
-**Expected-Deaths Weight Calculation:**
-
-$$w_i = \frac{h_i \times \text{PT}_i(W)}{\sum\limits_j h_j \times \text{PT}_j(W)}$$
-
-Where:
-- $h_i$ = Smoothed mean mortality rate for age group $i$ in quiet window $W$
-- $\text{PT}_i(W)$ = Person-time for age group $i$ in quiet window $W$
-- $W$ = Quiet baseline window (first 4 distinct weeks)
-- **Normalization**: Weights sum to 1.0 across all age groups
-
-**Key Improvements (v4.2):**
-
-- **Death Burden Focus**: Weights based on expected deaths (hazard × person-time) rather than just person-time
-- **Elderly Properly Weighted**: Age groups with higher death rates get appropriate weight
-- **Young Under-Weighted**: Age groups with low death rates get reduced weight
-- **Mathematical Correctness**: ASMR now reflects actual mortality impact, not population size
-- **Robust Implementation**: Uses pooled quiet baseline window with smoothed mortality rates
+This replaces the previous pooled-log method. The label in logs/output now reads “ASMR (direct)”.
 
 ### Mathematical and statistical description
 

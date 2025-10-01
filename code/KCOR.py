@@ -110,7 +110,7 @@ def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.5"                # KCOR version number
+VERSION = "v4.6"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
