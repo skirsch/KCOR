@@ -128,7 +128,7 @@ VERSION = "v4.5"                # KCOR version number
 #        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
 # v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
 #        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
-#        - Added slope lookup entry for 2022_47 (legacy; dynamic anchors now default)
+#        - Slope calculation simplified to single-window method (no dynamic anchors)
 # v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
 #        - SIN-at-hazard (optional) and direct hazard computation from raw MR.
 
@@ -152,19 +152,13 @@ SIN_X_MAX = 2.0                # clamp for Newton root solve in integral ratio e
 # KCOR normalization fine-tuning parameters
 # Removed FINAL_KCOR_MIN/FINAL_KCOR_DATE scaling
 
-# Removed MAX_DATE_FOR_SLOPE: dynamic anchors specify calendar dates directly
+# Dynamic anchors removed
 
-# SLOPE CALCULATION METHODOLOGY (Dynamic by default):
-# Anchors are chosen from QUIET_ANCHOR_ISO_WEEKS subject to gap/separation rules.
-SLOPE_WINDOW_SIZE = 2  # Window size: use anchor point ± 2 weeks (5 points total) for geometric mean
+# SLOPE CALCULATION METHODOLOGY (Simple window-based):
+# Uses end-vs-start windows of width SLOPE_WINDOW_SIZE to estimate trend.
+SLOPE_WINDOW_SIZE = 2  # Window half-width; we use 2*w+1 points at each end
 
-# Dynamic anchor selection (preferred over lookup in normal runs)
-# Candidates are calendar quiet periods (ISO year-week). The first anchor must be
-# at least MIN_ANCHOR_GAP_WEEKS after enrollment; the second must be at least
-# MIN_ANCHOR_SEPARATION_WEEKS after the first. Both are configurable.
-QUIET_ANCHOR_ISO_WEEKS = ["2022-25", "2023-28", "2024-15"]
-MIN_ANCHOR_GAP_WEEKS = 26
-MIN_ANCHOR_SEPARATION_WEEKS = 39
+# Dynamic anchor selection removed; slopes are computed using a single-series fit
 
 # Reporting date lookup for KCOR summary/console per cohort (sheet name)
 # For the first three cohorts, use end of 2022; for 2022_47, use one year later (end of 2023)
@@ -257,11 +251,7 @@ try:
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEK via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEK}")
     # removed MA smoothing env overrides
-    _env_win = os.environ.get('SA_SLOPE_WINDOW_SIZE')
-    if _env_win:
-        SLOPE_WINDOW_SIZE = int(_env_win)
-        if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding SLOPE_WINDOW_SIZE via SA_SLOPE_WINDOW_SIZE: {SLOPE_WINDOW_SIZE}")
+    # removed SA_SLOPE_WINDOW_SIZE override
     # removed FINAL_KCOR env overrides
     _env_czech = os.environ.get('CZECH_UNVACCINATED_MR_ADJUSTMENT')
     if _env_czech is not None:
@@ -330,8 +320,11 @@ def get_dose_pairs(sheet_name):
         # 2022 sheet: includes dose 3 comparisons (add 3 vs 1)
         return [(1,0), (2,0), (2,1), (3,2), (3,1), (3,0)]
     elif sheet_name == "2022_47":
-        # Late 2022 sheet: focus on 4th dose comparisons per v4.4 requirements
-        return [(4,3), (4,2), (4,1), (4,0)]
+        # Late 2022 sheet: include all combinations from 2022_06 plus 4 vs lower doses
+        return [
+            (1,0), (2,0), (2,1), (3,2), (3,1), (3,0),
+            (4,3), (4,2), (4,1), (4,0)
+        ]
     else:
         # Default: max dose is 2
         return [(1,0), (2,0), (2,1)]
@@ -350,95 +343,29 @@ def _parse_iso_year_week(s: str):
     return datetime.fromisocalendar(int(y), int(w), 1)
 
 def select_dynamic_anchor_offsets(enrollment_date, df_dates):
-    """Select offsets (weeks from enrollment) for two anchors based on calendar quiet weeks.
-
-    - First anchor: first candidate date ≥ enrollment_date + MIN_ANCHOR_GAP_WEEKS
-    - Second anchor: first candidate ≥ first_anchor + MIN_ANCHOR_SEPARATION_WEEKS
-    Returns (offset1, offset2) in weeks. If not found, returns (None, None).
-    """
-    # 'from datetime import timedelta' already declared at top of function
-    candidates = [_parse_iso_year_week(s) for s in QUIET_ANCHOR_ISO_WEEKS]
-    # Snap candidate to the nearest available df date on/after candidate
-    df_dates_sorted = sorted(set(pd.to_datetime(df_dates).dt.date))
-    def next_available(d):
-        for dt in df_dates_sorted:
-            if pd.to_datetime(dt) >= d:
-                return pd.to_datetime(dt)
-        return None
-    first_earliest = enrollment_date + timedelta(weeks=int(MIN_ANCHOR_GAP_WEEKS))
-    first = None
-    for c in candidates:
-        if c >= first_earliest:
-            na = next_available(c)
-            if na is not None:
-                first = na
-                break
-    if first is None:
-        return (None, None)
-    second_earliest = first + timedelta(weeks=int(MIN_ANCHOR_SEPARATION_WEEKS))
-    second = None
-    for c in candidates:
-        if c >= second_earliest:
-            na = next_available(c)
-            if na is not None:
-                second = na
-                break
-    if second is None:
-        return (None, None)
-    # Compute week offsets from enrollment (floor to integer weeks)
-    offset1 = int((first - enrollment_date).days // 7)
-    offset2 = int((second - enrollment_date).days // 7)
-    return (offset1, offset2)
+    """Deprecated; dynamic anchors removed. Return (None, None)."""
+    return (None, None)
 
 def compute_group_slopes_dynamic(df, sheet_name, dual_print_fn=None):
-    """Compute slopes using dynamic anchors derived from QUIET_ANCHOR_ISO_WEEKS.
-
-    Falls back to 0.0 slopes if anchors cannot be selected.
-    """
-    from datetime import datetime, timedelta
+    """Dynamic anchors removed; compute slopes via simple end-vs-start windows."""
     slopes = {}
-    # Derive enrollment date from sheet name
-    enrollment_date = None
-    if "_" in sheet_name:
-        year_str, week_str = sheet_name.split("_")
-        try:
-            year = int(year_str)
-            week = int(week_str)
-            enrollment_date = datetime.fromisocalendar(year, week, 1)
-        except Exception:
-            enrollment_date = None
-    if enrollment_date is None:
-        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-            slopes[(yob, dose)] = 0.0
-        return slopes
-    # Choose anchors
-    off1, off2 = select_dynamic_anchor_offsets(enrollment_date, df["DateDied"])
-    if off1 is None or off2 is None or off2 <= off1:
-        if dual_print_fn:
-            dual_print_fn(f"[WARN] Dynamic anchors not found for {sheet_name}; using slope 0.0")
-        for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-            slopes[(yob, dose)] = 0.0
-        return slopes
-    T = off2 - off1
-    # Log anchors
-    if dual_print_fn:
-        a1 = (enrollment_date + pd.to_timedelta(off1, unit='W')).date()
-        a2 = (enrollment_date + pd.to_timedelta(off2, unit='W')).date()
-        dual_print_fn(f"[INFO] {sheet_name} dynamic anchors: t={off1} ({a1}), t={off2} ({a2}), Δt={T} weeks")
-    # Compute slopes using smoothed MR within ± window around each offset
     for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
         g_sorted = g.sort_values("t")
-        w1s, w1e = max(0, off1 - SLOPE_WINDOW_SIZE), off1 + SLOPE_WINDOW_SIZE
-        w2s, w2e = max(0, off2 - SLOPE_WINDOW_SIZE), off2 + SLOPE_WINDOW_SIZE
-        p1 = g_sorted[(g_sorted["t"] >= w1s) & (g_sorted["t"] <= w1e)]
-        p2 = g_sorted[(g_sorted["t"] >= w2s) & (g_sorted["t"] <= w2e)]
-        vals1 = p1["MR_smooth"][p1["MR_smooth"] > EPS].values
-        vals2 = p2["MR_smooth"][p2["MR_smooth"] > EPS].values
-        if len(vals1) == 0 or len(vals2) == 0:
+        if len(g_sorted) < 2:
             slopes[(yob, dose)] = 0.0
             continue
-        slope = (np.mean(np.log(vals2)) - np.mean(np.log(vals1))) / T
-        slopes[(yob, dose)] = float(np.clip(slope, -10.0, 10.0))
+        w = int(max(1, SLOPE_WINDOW_SIZE))
+        start_block = g_sorted.head(2*w + 1)
+        end_block = g_sorted.tail(2*w + 1)
+        v1 = start_block["MR_smooth"][start_block["MR_smooth"] > EPS].values
+        v2 = end_block["MR_smooth"][end_block["MR_smooth"] > EPS].values
+        if len(v1) == 0 or len(v2) == 0:
+            slopes[(yob, dose)] = 0.0
+            continue
+        T = max(1, int(end_block["t"].max() - start_block["t"].min()))
+        s = (np.mean(np.log(v2)) - np.mean(np.log(v1))) / T
+        slopes[(yob, dose)] = float(np.clip(s, -10.0, 10.0))
+    # No dynamic-anchor logging
     return slopes
 
 def compute_death_slopes_lookup(df, sheet_name, logger=None):
@@ -1932,7 +1859,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 enr = target["EnrollmentDate"]
                 off1 = target.get("param_slope_start", None)
                 slope_len = target.get("param_slope_length", None)
-                # If explicit SA offsets were not provided, dynamic anchors were used
+                # Offsets optional; dynamic anchors removed
                 if pd.isna(off1) or pd.isna(slope_len):
                             off1, slope_len = (None, None)
                 out_records.append({
