@@ -1140,52 +1140,52 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Debug slope lines suppressed
 
         # Total slope by YoB (Alive-weighted at enrollment week t=0 across included doses)
-            try:
-                first_rows = (
-                    df.sort_values(["YearOfBirth","Dose","t"])\
-                      .groupby(["YearOfBirth","Dose"], sort=False)
-                      .first()
-                      .reset_index()
-                )
-                alive0_map = {
-                    (int(r["YearOfBirth"]), int(r["Dose"])): float(r.get("Alive", np.nan))
-                    for _, r in first_rows.iterrows()
-                }
-            except Exception:
-                alive0_map = {}
+        try:
+            first_rows = (
+                df.sort_values(["YearOfBirth","Dose","t"])\
+                  .groupby(["YearOfBirth","Dose"], sort=False)
+                  .first()
+                  .reset_index()
+            )
+            alive0_map = {
+                (int(r["YearOfBirth"]), int(r["Dose"])): float(r.get("Alive", np.nan))
+                for _, r in first_rows.iterrows()
+            }
+        except Exception:
+            alive0_map = {}
 
-            for yob in sorted(df["YearOfBirth"].unique()):
-                numerator = 0.0
-                denominator = 0.0
-                alive_vax = 0.0
-                alive_total = 0.0
-                # Collect alive counts per dose present at t=0 for this YoB
-                dose_alive = []  # list of (dose, alive_count)
-                for dose in range(max_dose + 1):
-                    if (yob, dose) in slopes:
-                        w = float(alive0_map.get((yob, dose), 0.0))
-                        if np.isfinite(w) and w > 0.0:
-                            numerator += w * float(slopes.get((yob, dose), 0.0))
-                            denominator += w
-                            alive_total += w
-                            if dose >= 1:
-                                alive_vax += w
-                            dose_alive.append((dose, w))
-                pct_vax = (alive_vax / alive_total * 100.0) if alive_total > EPS else np.nan
-                if alive_total > EPS and dose_alive:
-                    percents = [f"{(w / alive_total * 100.0):.0f}%" for (dose, w) in dose_alive]
-                    alive_str = " ".join(percents)
-                else:
-                    alive_str = "-"
-                total_str = f" total={int(alive_total)}" if alive_total > EPS else ""
-                if np.isfinite(pct_vax):
-                    dual_print(f"  YoB {yob}, % vaxxed={pct_vax:.0f}  alive_by_dose= {alive_str}{total_str}")
-                else:
-                    dual_print(f"  YoB {yob}, % vaxxed=-  alive_by_dose= {alive_str}{total_str}")
+        for yob in sorted(df["YearOfBirth"].unique()):
+            numerator = 0.0
+            denominator = 0.0
+            alive_vax = 0.0
+            alive_total = 0.0
+            # Collect alive counts per dose present at t=0 for this YoB
+            dose_alive = []  # list of (dose, alive_count)
+            for dose in range(max_dose + 1):
+                if (yob, dose) in slopes:
+                    w = float(alive0_map.get((yob, dose), 0.0))
+                    if np.isfinite(w) and w > 0.0:
+                        numerator += w * float(slopes.get((yob, dose), 0.0))
+                        denominator += w
+                        alive_total += w
+                        if dose >= 1:
+                            alive_vax += w
+                        dose_alive.append((dose, w))
+            pct_vax = (alive_vax / alive_total * 100.0) if alive_total > EPS else np.nan
+            if alive_total > EPS and dose_alive:
+                percents = [f"{(w / alive_total * 100.0):.0f}%" for (dose, w) in dose_alive]
+                alive_str = " ".join(percents)
+            else:
+                alive_str = "-"
+            total_str = f" total={int(alive_total)}" if alive_total > EPS else ""
+            if np.isfinite(pct_vax):
+                dual_print(f"  YoB {yob}, % vaxxed={pct_vax:.0f}  alive_by_dose= {alive_str}{total_str}")
+            else:
+                dual_print(f"  YoB {yob}, % vaxxed=-  alive_by_dose= {alive_str}{total_str}")
 
-            # done printing total slopes so we can print the note on how to interpret it
-            # dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
-            
+        # done printing total slopes so we can print the note on how to interpret it
+        # dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
+        
 
         # Slope normalization (legacy) has been removed; SIN (if enabled) applies only at hazard level.
         
@@ -1620,7 +1620,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     beta_den = beta_map.get((sheet_name, key_age, int(dose_den)), np.nan)
                     
                     if age == 0:
-                        age_label = "ASMR (pooled)"
+                        age_label = "ASMR (direct)"
                     elif age == -1:
                         age_label = "(unknown)"
                     else:
@@ -2034,7 +2034,7 @@ def create_summary_file(combined_data, out_path, dual_print):
                         for _, row in dose_data.iterrows():
                             age = row["YearOfBirth"]
                             if age == 0:
-                                age_label = "ASMR (pooled)"
+                                age_label = "ASMR (direct)"
                             elif age == -1:
                                 age_label = "(unknown)"
                             else:
