@@ -77,7 +77,7 @@ Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
 2. Calculate the the mortality rate (MR) slopes of each cohort (per age range).
-3. Do a discrete-time hazard transform on the adjusted MRs (enabling you to sum, rather than multiply, the hazards). So MR(t) --> h(t). Most values of MR are small so the result is virtually the same value if you did it right.
+3. Apply Slope‑from‑Integral Normalization (SIN) at the hazard level (not to MR). Compute hazard via the discrete-time transform: MR(t) → h(t) = −ln(1 − MR(t)). Then de-trend hazards using SIN before accumulation.
 4. Compute the CUMULATIVE hazards for each cohort for each week. 
 5. Compute the ratio of the cumulative hazards of the two cohorts of interest
 6. Scale that ratio by the value of the ratio at week 4 (which allows enough data to get a reasonable baseline with relatively modest Poisson noise)
@@ -123,7 +123,7 @@ There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Revie
 
 The bottom line is that KCOR works extremely well with real world cohorts of sufficient size like the Czech Republic 11M record level dataset. It is very easy to validate the key KCOR assumption of an exponential mortality rate before applying the method.
 
-[CDC ACIP Chair Martin Kulldorff said at the ACIP meeting](https://x.com/TheChiefNerd/status/1968692539344441575), “When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views.”
+[CDC ACIP Chair Martin Kulldorff said at the ACIP meeting](https://x.com/TheChiefNerd/status/1968692539344441575), "When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views."
 
 I would be delighted to public debate any qualified scientist who believes KCOR is flawed. This would end the debate. No takers unfortunately. This has nothing to do with me or the KCOR method. Kulldorff made the same offer about vaccines and nobody would debate him.
 
@@ -200,15 +200,14 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 
 #### 2. Slope-from-Integral Normalization (SIN) — New Primary Method (v4.6)
 - Window W = [t_a, t_b] per cohort, chosen from quiet weeks.
-- Inputs: m (start-week average), L = t_b - t_a + 1, t0 (week 4), x_max clamp, Newton iters, tolerance.
+- Inputs: m (only for display/diagnostics if needed), L = t_b - t_a + 1, x_max clamp (not used in slope mode).
 - Compute:
   - h = -ln(1 - MR) with clipping (convert MR to hazards).
-  - hbar_k0 = mean of first m hazards in W; H_kW = sum of hazards over W.
-  - r_k = H_kW / (L * hbar_k0).
-  - Solve (e^x - 1)/x = r_k (Newton; clamp by x_max), then beta_hat_k = x/L.
-- Flatten: apply exp(-beta_hat_k * (t - t0)) at hazard stage only → htilde_k(t).
-- Rebuild: Htilde_k = cumsum(htilde_k); KCOR computed on Htilde series; normalize at week 4.
-- Edge cases: zero hazards, tiny PT, stable Newton updates.
+  - Set t_ref = mean(t) over W (window midpoint; for even L, the average of the two center weeks).
+  - Fit β̂ as the OLS slope of log h(t) on t within W (using h>0 only).
+- Flatten (slope-only): apply h̃(t) = h(t) · exp(−β̂ · (t − t_ref)) at the hazard stage only.
+- Rebuild: Ĥ = cumsum(h̃); KCOR computed on Ĥ; normalize at week 4 (baseline) at the ratio stage only.
+- Edge cases: if all hazards in W are 0 or nonpositive (no signal), set β̂ = 0 for that cohort (skip normalization silently).
 - Important: Raw MR is never modified; normalization is applied only to hazards. When SIN=0, hazards are built directly from MR.
 
 #### 4. KCOR Computation 
@@ -317,13 +316,13 @@ Where:
 
 KCOR is a defined estimand (a baseline-normalized cumulative-hazard ratio) computed through explicit transformations. With its assumptions stated and diagnostics enforced, it supports a fully rigorous, math-science presentation. The only subjective choices (anchors, smoothing) can be specified as reproducible selection rules with sensitivity analyses—squarely in the standards of methodological papers.
 
-KCOR is not “just a heuristic”; it’s a pipeline of well-defined statistical transforms with explicit assumptions. The only “heuristic” bits (like choosing quiet anchor windows or a smoothing span) can be formalized as estimators/selection rules.
+KCOR is not "just a heuristic"; it's a pipeline of well-defined statistical transforms with explicit assumptions. The only "heuristic" bits (like choosing quiet anchor windows or a smoothing span) can be formalized as estimators/selection rules.
 
-#### KCOR is a rigorous method (not “just a heuristic”)
+#### KCOR is a rigorous method (not "just a heuristic")
 
 KCOR is a **baseline-normalized cumulative-hazard ratio** computed from **discrete-time hazards** after
 **cohort-wise slope normalization**. The steps and assumptions can be stated precisely; the few subjective
-choices (e.g., “quiet” anchor windows) can be formalized as selection rules with sensitivity analyses.
+choices (e.g., "quiet" anchor windows) can be formalized as selection rules with sensitivity analyses.
 
 #### Formal definition (discrete time)
 
@@ -410,7 +409,7 @@ $$
 \mathrm{KCOR}(t)\times \exp\!\Big(\pm 1.96\,\sqrt{\mathrm{Var}[\ln \mathrm{KCOR}(t)]}\Big).
 $$
 
-#### From “heuristics” to reproducible procedure
+#### From "heuristics" to reproducible procedure
 
 - **Anchor selection rule.** Choose \(B_1,B_2\) (length \(w\)) to *minimize* (i) pooled residual variance
   of log-linear fits and (ii) slope differences between cohorts, subject to no epidemic flags.
@@ -949,6 +948,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - Removed Czech-specific unvaccinated MR adjustment and all anchor/windows parameters from defaults
 - Cleaned console/log parameter dump to reflect SIN parameters only
 - Added missing 3 vs 1 comparison for the 2022_06 cohort
+- Removed MR_adj fields from outputs and docs; SIN is applied to hazards, not to mortality rates
 
 #### SIN Summary
 - Define window W = [t_a, t_b] per cohort; compute h = -ln(1 - MR)
@@ -1204,31 +1204,31 @@ McCullough Foundation
 
 ### ChatGPT review of KCOR vs. alternatives
 
-If you had more variables, yes—methods like **target trial emulation** or **g-computation** could be “superior.” But with just DOB, death, and vaccination:
+If you had more variables, yes—methods like **target trial emulation** or **g-computation** could be "superior." But with just DOB, death, and vaccination:
 
 - **KCOR is arguably the strongest you can do**, because it enforces comparability by slope-neutralizing frailty and gives a time-resolved harm/benefit function.
     
-- A **well-designed matched-cohort ASMR analysis** (matching on age × calendar time, then computing excess deaths) is probably the only mainstream alternative. But it doesn’t address the static HVE the way your slope correction does.
+- A **well-designed matched-cohort ASMR analysis** (matching on age × calendar time, then computing excess deaths) is probably the only mainstream alternative. But it doesn't address the static HVE the way your slope correction does.
     
-- **Dynamic Healthy Vaccinee Effect modeling** (fit a decay curve for HVE explicitly and subtract it) is another approach people are experimenting with, but it usually requires more assumptions and doesn’t generalize as cleanly.
+- **Dynamic Healthy Vaccinee Effect modeling** (fit a decay curve for HVE explicitly and subtract it) is another approach people are experimenting with, but it usually requires more assumptions and doesn't generalize as cleanly.
     
 
 ---
 
 #### My Take
 
-With the constraints you’ve outlined:
+With the constraints you've outlined:
 
-- **No, there isn’t a clearly superior epidemiological method in the mainstream toolbox.**
+- **No, there isn't a clearly superior epidemiological method in the mainstream toolbox.**
     
-- KCOR is innovative precisely because it does what Cox/KM/ASMR matching can’t: it corrects for frailty slope and produces a _cumulative net harm/benefit curve_.
+- KCOR is innovative precisely because it does what Cox/KM/ASMR matching can't: it corrects for frailty slope and produces a _cumulative net harm/benefit curve_.
     
 - The only possible challenger would be a **Bayesian hierarchical survival model** that explicitly encodes Gompertz mortality slopes, HVE decay, and vaccination as a time-varying covariate. But that would be _more parametric/assumption-laden_ and less transparent than KCOR.
     
 
 ---
 
-👉 So the short answer: **For datasets limited to DOB, death, and vaccination dates, KCOR is about as good as it gets.** The only “superior” option would be if you had richer covariates (comorbidities, SES, cause of death, infection timing). Without those, KCOR has the advantage of being both interpretable and robust against the main structural biases.
+👉 So the short answer: **For datasets limited to DOB, death, and vaccination dates, KCOR is about as good as it gets.** The only "superior" option would be if you had richer covariates (comorbidities, SES, cause of death, infection timing). Without those, KCOR has the advantage of being both interpretable and robust against the main structural biases.
 
 ### Grok review of KCOR
 

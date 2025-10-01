@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3s
 """
 KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.6
 
@@ -124,7 +124,7 @@ VERSION = "v4.5"                # KCOR version number
 #        - Uses pooled quiet baseline window with smoothed mortality rates
 #        - ASMR now reflects actual mortality impact rather than population size
 # v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
-#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KCOR_MIN parameters
+#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KOR_MIN parameters
 #        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
 # v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
 #        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
@@ -143,14 +143,11 @@ MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
 # Slope-from-Integral Normalization (SIN) configuration
-SIN_ENABLED = 1                 # Primary normalization method (set to 1 to enable SIN)
-SIN_WINDOW_START_ISO = "2023-18"  # ISO year-week start of window W
-SIN_WINDOW_END_ISO   = "2023-44"  # ISO year-week end of window W
-SIN_M_AVG_WEEKS = 4            # m for start-of-window average
-SIN_X_MAX = 2.0                # clamp for Newton root solve in integral ratio equation
+SLOPE2_W1_ISO = ("2022-24", "2022-36")
+SLOPE2_W2_ISO = ("2023-24", "2023-36")
 
 # KCOR normalization fine-tuning parameters
-# Removed FINAL_KCOR_MIN/FINAL_KCOR_DATE scaling
+# Removed FINAL_KCOR_MIN/FINAL_KOR_DATE scaling
 
 # Dynamic anchors removed
 
@@ -180,9 +177,8 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrollment dates (sheet names) to process (set to None to process all)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
-# Slope normalization threshold removed; normalization controlled by SIN_ENABLED only
-# Czech unvaccinated MR adjustment toggle (1=enabled, 0=disabled)
-CZECH_UNVACCINATED_MR_ADJUSTMENT = 1  # should be set to 1 for Czech data due to undercounting of unvaccinated deaths over time (or overcouning the population)
+# Slope normalization uses slope2 fixed windows; SIN removed
+# removed legacy Czech unvaccinated MR adjustment toggle
 
 # ----------------------------------------------------------
 
@@ -253,14 +249,7 @@ try:
     # removed MA smoothing env overrides
     # removed SA_SLOPE_WINDOW_SIZE override
     # removed FINAL_KCOR env overrides
-    _env_czech = os.environ.get('CZECH_UNVACCINATED_MR_ADJUSTMENT')
-    if _env_czech is not None:
-        try:
-            CZECH_UNVACCINATED_MR_ADJUSTMENT = int(_env_czech)
-            if DEBUG_VERBOSE:
-                print(f"[DEBUG] CZECH_UNVACCINATED_MR_ADJUSTMENT set to: {CZECH_UNVACCINATED_MR_ADJUSTMENT}")
-        except Exception:
-            pass
+    # Legacy CZECH_UNVACCINATED_MR_ADJUSTMENT removed
     # removed SA_SLOPE_NORMALIZE_YOB_LE
 except Exception:
     pass
@@ -480,9 +469,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 baseline_k_raw = 1.0
             
             # Compute final KCOR values normalized to baseline (no extra scaling)
-            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]),
+            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
                                       merged["K_raw"] / baseline_k_raw,
-                                      np.nan)
+                                     np.nan)
             
             # Debug: Check for suspiciously large KCOR values
             # if merged["KCOR"].max() > 10:
@@ -528,13 +517,10 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             merged["CI_upper"] = np.clip(merged["CI_upper"], merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
-                          "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"]].copy()
+                          "MR_num","CH_num","hazard_num","t_num",
+                          "MR_den","CH_den","hazard_den","t_den"]].copy()
 
-            # Scale MR fields for display (annualized per 100,000)
-            for col in ["MR_num","MR_adj_num","MR_den","MR_adj_den","MR_smooth_num","MR_smooth_den"]:
-                if col in out.columns:
-                    out[col] = out[col] * MR_DISPLAY_SCALE
+            # MR fields are written raw; no display scaling
             out["EnrollmentDate"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
@@ -720,7 +706,6 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     "hazard_num": np.nan,
                     "slope_num": np.nan,
                     "scale_factor_num": np.nan,
-                    "MR_smooth_num": np.nan,
                     "t_num": np.nan,
                     "MR_den": np.nan,
                     "MR_adj_den": np.nan,
@@ -729,7 +714,6 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     "hazard_den": np.nan,
                     "slope_den": np.nan,
                     "scale_factor_den": np.nan,
-                    "MR_smooth_den": np.nan,
                     "t_den": np.nan
                 })
 
@@ -737,8 +721,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","MR_num","MR_adj_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","MR_smooth_num","t_num",
-        "MR_den","MR_adj_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","MR_smooth_den","t_den"
+        "KCOR","CI_lower","CI_upper","MR_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","t_num",
+        "MR_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","t_den"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -952,8 +936,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
-    dual_print(f"  SIN_ENABLED           = {SIN_ENABLED}")
-    dual_print(f"  SIN_WINDOW            = ({SIN_WINDOW_START_ISO}, {SIN_WINDOW_END_ISO})")
+    # slope2 windows (global)
+    dual_print(f"  SLOPE2_W1            = (2022-24, 2022-36)")
+    dual_print(f"  SLOPE2_W2            = (2023-24, 2023-36)")
     dual_print("="*80)
     dual_print("")
     
@@ -972,6 +957,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Initialize debug data collection (will be populated inside sheet loop)
     debug_data = []
+    # Store slope2 betas per (EnrollmentDate, YoB, Dose) for later summary printing
+    beta_map = {}
     
     for sh in sheets_to_process:
         dual_print(f"[Info] Processing sheet: {sh}")
@@ -1148,17 +1135,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             # Dynamic anchor slope calculation (default).
             slopes = compute_group_slopes_dynamic(df, sh, dual_print)
         
-        # Debug: Show computed slopes
-        if DEBUG_VERBOSE:
-            dual_print(f"\n[DEBUG] Computed slopes for sheet {sh}:")
-            dose_pairs = get_dose_pairs(sh)
-            max_dose = max(max(pair) for pair in dose_pairs)
-            for dose in range(max_dose + 1):
-                for yob in sorted(df["YearOfBirth"].unique()):
-                    if (yob, dose) in slopes:
-                        dual_print(f"  YoB {yob}, Dose {dose}: slope = {slopes[(yob, dose)]:.6f}")
+        # Debug slope lines suppressed
 
-            # Total slope by YoB (Alive-weighted at enrollment week t=0 across included doses)
+        # Total slope by YoB (Alive-weighted at enrollment week t=0 across included doses)
             try:
                 first_rows = (
                     df.sort_values(["YearOfBirth","Dose","t"])\
@@ -1178,6 +1157,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 denominator = 0.0
                 alive_vax = 0.0
                 alive_total = 0.0
+                # Collect alive counts per dose present at t=0 for this YoB
+                dose_alive = []  # list of (dose, alive_count)
                 for dose in range(max_dose + 1):
                     if (yob, dose) in slopes:
                         w = float(alive0_map.get((yob, dose), 0.0))
@@ -1187,25 +1168,21 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             alive_total += w
                             if dose >= 1:
                                 alive_vax += w
+                            dose_alive.append((dose, w))
                 pct_vax = (alive_vax / alive_total * 100.0) if alive_total > EPS else np.nan
-                alive_unvax = float(alive0_map.get((yob, 0), 0.0))
-                if not np.isfinite(alive_unvax) or alive_unvax < 0.0:
-                    alive_unvax = 0.0
-                if denominator > EPS:
-                    total_slope = numerator / denominator
-                    if np.isfinite(pct_vax):
-                        # this is the normal line printed out.
-                        dual_print(f"  YoB {yob}, total slope = {total_slope:.6f}  % vaxxed={pct_vax:.0f}  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
-                    else:
-                        dual_print(f"  YoB {yob}, total slope = {total_slope:.6f}  % vaxxed=-  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
+                if alive_total > EPS and dose_alive:
+                    percents = [f"{(w / alive_total * 100.0):.0f}%" for (dose, w) in dose_alive]
+                    alive_str = " ".join(percents)
                 else:
-                    if np.isfinite(pct_vax):
-                        dual_print(f"  YoB {yob}, total slope = -  % vaxxed={pct_vax:.0f}  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
-                    else:
-                        dual_print(f"  YoB {yob}, total slope = -  % vaxxed=-  (u,v)=({int(alive_unvax)}, {int(alive_vax)})")
+                    alive_str = "-"
+                total_str = f" total={int(alive_total)}" if alive_total > EPS else ""
+                if np.isfinite(pct_vax):
+                    dual_print(f"  YoB {yob}, % vaxxed={pct_vax:.0f}  alive_by_dose= {alive_str}{total_str}")
+                else:
+                    dual_print(f"  YoB {yob}, % vaxxed=-  alive_by_dose= {alive_str}{total_str}")
 
             # done printing total slopes so we can print the note on how to interpret it
-            dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
+            # dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
             
 
         # Slope normalization (legacy) has been removed; SIN (if enabled) applies only at hazard level.
@@ -1245,71 +1222,89 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
         # Optional: Apply SIN (Slope-from-Integral Normalization) per cohort before building hazards
-        if int(SIN_ENABLED) == 1:
+        beta_vals = {}
+        # slope2: two fixed ISO-week windows, compute mean hazards, derive beta, origin-anchored
+        # Define helper functions for ISO week ranges and centers
+        def _iso_to_date(isostr: str):
+            y, w = isostr.split("-")
+            return datetime.fromisocalendar(int(y), int(w), 1)
+        def _iso_week_list(start_iso: str, end_iso: str):
+            start_dt = _iso_to_date(start_iso)
+            end_dt = _iso_to_date(end_iso)
+            if end_dt < start_dt:
+                raise RuntimeError("slope2 window end before start")
+            weeks = []
+            cur = start_dt
+            while cur <= end_dt:
+                iso = cur.isocalendar()
+                weeks.append(f"{iso.year}-{int(iso.week):02d}")
+                cur = cur + timedelta(weeks=1)
+            return weeks
+        W1_ISO = ("2022-24", "2022-36")
+        W2_ISO = ("2023-24", "2023-36")
+        W1_weeks = _iso_week_list(*W1_ISO)
+        W2_weeks = _iso_week_list(*W2_ISO)
+        # Build weekly hazard by ISO week for each cohort
+        df_tmp = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
+        df_tmp["h"] = -np.log(1 - df_tmp["MR"].clip(lower=0.0, upper=0.999))
+        # annotate iso label per row (Monday of ISO week)
+        iso_parts = df_tmp["DateDied"].dt.isocalendar()
+        df_tmp["iso_label"] = iso_parts.year.astype(str) + "-" + iso_parts.week.astype(str).str.zfill(2)
+        for (yob, dose), g in df_tmp.groupby(["YearOfBirth","Dose"], sort=False):
+            # mean hazard per iso week (if multiple days exist in same iso week)
+            weekly = g.groupby("iso_label")["h"].mean().to_dict()
+            w1_vals = [float(weekly.get(lbl, 0.0)) for lbl in W1_weeks]
+            w2_vals = [float(weekly.get(lbl, 0.0)) for lbl in W2_weeks]
+            if len(w1_vals) == 0 or len(w2_vals) == 0:
+                beta_vals[(yob, dose)] = 0.0
+                continue
+            Wm1 = float(np.mean(w1_vals))
+            Wm2 = float(np.mean(w2_vals))
+            if Wm1 <= 0.0 or Wm2 <= 0.0:
+                beta_vals[(yob, dose)] = 0.0
+                continue
+            # centers as midpoints of the window date ranges (avoid numpy mean on datetimes)
+            _w1_start_dt = _iso_to_date(W1_ISO[0])
+            _w1_end_dt = _iso_to_date(W1_ISO[1])
+            _w2_start_dt = _iso_to_date(W2_ISO[0])
+            _w2_end_dt = _iso_to_date(W2_ISO[1])
+            c1 = _w1_start_dt + (_w1_end_dt - _w1_start_dt) / 2
+            c2 = _w2_start_dt + (_w2_end_dt - _w2_start_dt) / 2
+            delta_weeks = (c2 - c1).days / 7.0
+            if delta_weeks <= 0:
+                beta_vals[(yob, dose)] = 0.0
+                continue
+            beta = (np.log(Wm2) - np.log(Wm1)) / float(delta_weeks)
+            beta_vals[(yob, dose)] = float(beta)
+        # Persist betas for this sheet for later summary printing
+        for (yob_k, dose_k), bval in beta_vals.items():
             try:
-                # Map ISO year-week to dates and to t indices present in df
-                # Build per-(YoB,Dose) hazards on weekly grid
-                df_sin = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
-                # Weekly hazard from MR (convert to hazard; clip for stability)
-                df_sin["h"] = -np.log(1 - df_sin["MR"].clip(lower=0.0, upper=0.999))
-                # Build integer t per group
-                df_sin["t_week"] = df_sin.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
-                # Determine window indices W from calendar ISO year-week strings
-                def iso_to_date(isostr):
-                    y, w = isostr.split("-")
-                    return datetime.fromisocalendar(int(y), int(w), 1).date()
-                w_start_date = iso_to_date(SIN_WINDOW_START_ISO)
-                w_end_date = iso_to_date(SIN_WINDOW_END_ISO)
-                # Map calendar to nearest available t within each group
-                beta_vals = {}
-                for (yob, dose), g in df_sin.groupby(["YearOfBirth","Dose"], sort=False):
-                    if g.empty:
-                        continue
-                    # find closest indices to window dates
-                    dts = pd.to_datetime(g["DateDied"]).dt.date
-                    try:
-                        t_a = int(np.argmin(np.abs(pd.to_datetime(dts) - pd.to_datetime(w_start_date))))
-                        t_b = int(np.argmin(np.abs(pd.to_datetime(dts) - pd.to_datetime(w_end_date))))
-                    except Exception:
-                        continue
-                    if t_b <= t_a:
-                        continue
-                    L = t_b - t_a + 1
-                    m = max(1, int(SIN_M_AVG_WEEKS))
-                    hW = g["h"].iloc[t_a:t_b+1].to_numpy()
-                    if len(hW) < max(L, m) or float(hW.sum()) <= 0.0:
-                        continue
-                    h0 = float(np.mean(hW[:m]))
-                    if h0 <= 0.0:
-                        continue
-                    r = float(hW.sum()) / (L * h0)
-                    if abs(r - 1.0) < 1e-6:
-                        beta = 0.0
-                    else:
-                        # Solve (exp(x)-1)/x = r with Newton, clamp to [-XMAX, XMAX]
-                        x = 2.0 * (r - 1.0)
-                        for _ in range(8):
-                            ex = math.exp(x)
-                            f = (ex - 1.0) / (x if x != 0.0 else 1e-12) - r
-                            fp = (x * ex - (ex - 1.0)) / ((x if x != 0.0 else 1e-12) ** 2)
-                            if fp == 0.0:
-                                break
-                            step = f / fp
-                            x -= step
-                            if abs(step) < 1e-10:
-                                break
-                        x = max(min(x, float(SIN_X_MAX)), -float(SIN_X_MAX))
-                        beta = x / L
-                    beta_vals[(yob, dose)] = beta
-                # Note: Do NOT modify raw MR. SIN is applied later at the hazard level.
-            except Exception as e:
-                if DEBUG_VERBOSE:
-                    dual_print(f"[SIN] Warning: SIN failed with error: {e}. Proceeding without SIN.")
+                beta_map[(sh, int(yob_k), int(dose_k))] = float(bval)
+            except Exception:
+                beta_map[(sh, yob_k, dose_k)] = float(bval)
+
+        # Note: Do NOT modify raw MR. Normalization is applied later at the hazard level.
         # Czech-specific MR correction removed; use raw MR moving forward
         mr_used = df["MR"]
 
         # Clip to avoid log(0) and ensure numerical stability
-        df["hazard"] = -np.log(1 - np.clip(mr_used, None, 0.999))
+        df["hazard_raw"] = -np.log(1 - np.clip(mr_used, None, 0.999))
+        # Initialize adjusted hazard equal to raw
+        df["hazard_adj"] = df["hazard_raw"]
+        # Apply SIN de-trending at hazard level, if available (single normalization only)
+        if isinstance(beta_vals, dict) and len(beta_vals) > 0:
+            try:
+                df["_beta_sin"] = df.apply(lambda r: float(beta_vals.get((r["YearOfBirth"], r["Dose"]), 0.0)), axis=1)
+                # Origin-anchored (enrollment-based) adjustment: h_adj(t) = h(t) * exp(-beta * t)
+                scale = np.exp(-df["_beta_sin"] * df["t"])
+                df["hazard_adj"] = df["hazard_adj"] * scale
+                # Numerical safety: floor at tiny epsilon
+                df["hazard_adj"] = np.clip(df["hazard_adj"], 0.0, None)
+                df.drop(columns=["_beta_sin"], inplace=True)
+            except Exception:
+                pass
+        # Backward compatibility: keep 'hazard' as the adjusted hazard used in KCOR
+        df["hazard"] = df["hazard_adj"]
         # Extra bug diagnostics for the 1950/Dose2 cohort on two dates — include hazard and CH
         # removed temporary diagnostics
         
@@ -1319,6 +1314,30 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Calculate cumulative hazard (mathematically exact, not approximation)
         df["CH"] = df.groupby(["YearOfBirth","Dose"]) ["hazard_eff"].cumsum()
+
+        # Debug: print CH_raw vs CH_adj for specific cohort on request (restricted to SIN window)
+        try:
+            if sh in ("2021_24", "2021-24"):
+                dbg_mask = (df["YearOfBirth"] == 1940) & (df["Dose"] == 1)
+                target = df[dbg_mask].sort_values("t")
+                if not target.empty:
+                    # Restrict to SIN window indices for this cohort when available
+                    ta_tb = None
+                    target_win = target.copy()
+                    hraw_eff = target_win["hazard_raw"].to_numpy()
+                    hadj_eff = target_win["hazard_adj"].to_numpy()
+                    ch_raw_dbg = np.cumsum(hraw_eff)
+                    ch_adj_dbg = np.cumsum(hadj_eff)
+                    beta_dbg = beta_vals.get((1940, 1), np.nan) if isinstance(beta_vals, dict) else np.nan
+                    pass
+                    # CSV header
+                    # dual_print("SLOPE2_DEBUG,EnrollmentDate,YearOfBirth,Dose,Date,t,CH_raw,CH_adj,beta")
+                    dates_iso = pd.to_datetime(target_win["DateDied"]).dt.date.astype(str).tolist()
+                    for d_i, t_i, cr, ca in zip(dates_iso, target_win["t"].tolist(), ch_raw_dbg.tolist(), ch_adj_dbg.tolist()):
+                        # dual_print(f"SLOPE2_DEBUG,{sh},1940,1,{d_i},{int(t_i)},{cr:.6f},{ca:.6f},{beta_dbg}")
+                        pass
+        except Exception:
+            pass
         
         # Keep unadjusted data for comparison
         df["CH_actual"] = df.groupby(["YearOfBirth","Dose"]) ["MR_eff"].cumsum()
@@ -1337,15 +1356,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for dose in range(max_dose + 1):
             dose_df = df[df["Dose"] == dose]
             dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
-                    "ISOweekDied": "first",
-                    "Dead": "sum",
-                    "Alive": "sum", 
-                    "PT": "sum",
+                "ISOweekDied": "first",
+                "Dead": "sum",
+                "Alive": "sum", 
+                "PT": "sum",
                 "MR": "mean",
-                "MR_adj": "mean",
                 "CH": "mean",
                 "CH_actual": "mean",
+                "hazard_raw": "mean",
+                "hazard_adj": "mean",
                 "hazard": "mean",
+                "cumD_unadj": "mean",
                 "t": "first"
             }).reset_index().sort_values(["DateDied", "YearOfBirth"])
             # Collect minimal columns for NC
@@ -1354,33 +1375,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 tmp["EnrollmentDate"] = sh
                 tmp["Dose"] = dose
                 by_dose_nc_all.append(tmp)
-            # Populate debug_data when requested
-            if DEBUG_VERBOSE:
-                for _, row in dose_data.iterrows():
-                    slope_val = slopes.get((row["YearOfBirth"], dose), 0.0)
-                    smoothed_adj_mr = row.get("MR", np.nan)  # already averaged
-                    debug_data.append({
-                        "EnrollmentDate": sh,
-                        "Date": row["DateDied"].date(),
-                        "YearOfBirth": row["YearOfBirth"],
-                        "Dose": dose,
-                        "ISOweek": row["ISOweekDied"],
-                        "Dead": row["Dead"],
-                        "Alive": row["Alive"],
-                        "MR": row["MR"],
-                        "MR_adj": row["MR_adj"],
-                        "Cum_MR": row["CH"],
-                        "Cum_MR_Actual": row["CH_actual"],
-                        "Hazard": row["hazard"],
-                        "Slope": slope_val,
-                        "Scale_Factor": np.nan,
-                        "Cumu_Adj_Deaths": np.nan,
-                        "Cumu_Unadj_Deaths": np.nan,
-                        "Cumu_Person_Time": row["PT"],
-                        "Smoothed_Raw_MR": np.nan,
-                        "Smoothed_Adjusted_MR": smoothed_adj_mr,
-                        "Time_Index": row["t"]
-                    })
+            # Populate debug_data (by_dose) for all doses
+            for _, row in dose_data.iterrows():
+                slope_val = slopes.get((row["YearOfBirth"], dose), 0.0)
+                debug_data.append({
+                    "EnrollmentDate": sh,
+                    "Date": row["DateDied"].date(),
+                    "YearOfBirth": row["YearOfBirth"],
+                    "Dose": dose,
+                    "ISOweek": row["ISOweekDied"],
+                    "Dead": row["Dead"],
+                    "Alive": row["Alive"],
+                    "MR": row["MR"],
+                    # removed Cum_MR and Cum_MR_Actual per request
+                    "Hazard": row["hazard_raw"],
+                    "Hazard_adj": row["hazard_adj"],
+                    "Slope": slope_val,
+                    "Cum_deaths": row["cumD_unadj"],
+                    "Cumu_Person_Time": row["PT"],
+                    "Time_Index": row["t"]
+                })
         
         # (Removed temporary diagnostics)
         
@@ -1583,6 +1597,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         kcor_o_val = np.nan
                     kcor_o_str = "-" if not (isinstance(kcor_o_val, (int, float)) and np.isfinite(kcor_o_val)) else f"{kcor_o_val:.4f}"
                     
+                    # Fetch betas used for numerator and denominator cohorts for this age from the stored map
+                    key_age = int(age) if pd.notna(age) else age
+                    beta_num = beta_map.get((sheet_name, key_age, int(dose_num)), np.nan)
+                    beta_den = beta_map.get((sheet_name, key_age, int(dose_den)), np.nan)
+                    
                     if age == 0:
                         age_label = "ASMR (pooled)"
                     elif age == -1:
@@ -1590,7 +1609,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         age_label = f"{age}"
                     
-                    dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_o_str}")
+                    if age == 0:
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_o_str}")
+                    else:
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_o_str}  (beta_num={beta_num:.6f}, beta_den={beta_den:.6f})")
     
     dual_print("="*80)
 
@@ -1669,7 +1691,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "    - CI_lower: 95% lower confidence bound for KCOR",
                         "    - CI_upper: 95% upper confidence bound for KCOR",
                         "    - MR_num: Weekly mortality rate (annualized per 100,000 for display)",
-                        "    - MR_adj_num: Slope-adjusted MR for numerator (annualized per 100,000)",
+                        "    - MR_num: Weekly mortality rate for numerator (annualized per 100,000)",
                         "    - CH_num: Cumulative hazard for numerator (unitless)",
                         "    - CH_actual_num: Cumulative sum of unadjusted weekly MR for numerator (unitless)",
                         "    - hazard_num: Discrete hazard for numerator (unitless)",
@@ -1678,7 +1700,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "    - MR_smooth_num: Smoothed MR for numerator (annualized per 100,000)",
                         "    - t_num: Week index from enrollment for numerator",
                         "    - MR_den: Weekly mortality rate for denominator (annualized per 100,000)",
-                        "    - MR_adj_den: Slope-adjusted MR for denominator (annualized per 100,000)",
+                        "    - MR_den: Weekly mortality rate for denominator (annualized per 100,000)",
                         "    - CH_den: Cumulative hazard for denominator (unitless)",
                         "    - CH_actual_den: Cumulative sum of unadjusted weekly MR for denominator (unitless)",
                         "    - hazard_den: Discrete hazard for denominator (unitless)",
@@ -1742,7 +1764,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     ]
                     }
                     # Write main data first to ensure at least one visible sheet exists
+                    # Drop deprecated/unused columns from dose_pairs before writing
+                    drop_cols = [
+                        "MR_adj_num","MR_adj_den",
+                        "CH_actual_num","CH_actual_den",
+                        "slope_num","slope_den",
+                        "scale_factor_num","scale_factor_den",
+                        "MR_smooth_num","MR_smooth_den"
+                    ]
                     all_data = combined.copy()
+                    for c in drop_cols:
+                        if c in all_data.columns:
+                            all_data.drop(columns=[c], inplace=True)
                     all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
                     all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
@@ -1775,8 +1808,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         values = values[:len(fields)]
                     about_df = pd.DataFrame({"Field": fields, "Value": values})
                     about_df.to_excel(writer, index=False, sheet_name="About")
-                    if DEBUG_VERBOSE:
-                        debug_df.to_excel(writer, index=False, sheet_name="by_dose")
+                    # Always write by_dose sheet (trim to used columns)
+                    by_dose_cols = [
+                        "EnrollmentDate","Date","YearOfBirth","Dose","ISOweek",
+                        "Dead","Alive","MR","Hazard","Hazard_adj","Cum_deaths","Cumu_Person_Time","Time_Index"
+                    ]
+                    debug_trim = debug_df[[c for c in by_dose_cols if c in debug_df.columns]].copy()
+                    debug_trim.to_excel(writer, index=False, sheet_name="by_dose")
 
                     # Add dose_pair_deaths details sheet
                     if pair_deaths_all:
