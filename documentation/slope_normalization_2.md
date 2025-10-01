@@ -22,6 +22,9 @@ Apply h_adj(t)=h(t)·e^{−β·t} from enrollment forward where t is the week nu
 
 W1=[2022-24, 2022-36]
 W2=[2023-24, 2023-36]
+W3=[2024-12, 2024-20]
+
+For enrollment dates after W1 start, use W2 and W3 as the weeks, i.e., use the next two available windows that are at least 6 months post enrollment.
 
 Inclusive of endpoints. Use that for ALL computations. If there is no hazard data on a week available, just assume it is zero.
 

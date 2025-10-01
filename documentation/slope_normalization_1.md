@@ -1,4 +1,4 @@
-# KCOR slope normalization spec
+# KCOR slope normalization spec SIN method (obsolete)
 
 Slope-from-Integral Normalization (SIN)
 Version: 1.0 — 2025-09-30
