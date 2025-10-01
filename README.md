@@ -79,8 +79,8 @@ Here's how it works in a little greater detail:
 
 1. Pick an enrollment date after most people are vaccinated with the dose of interest
 2. Calculate the the mortality rate (MR) slopes of each cohort (per age range).
-3. Apply Slope‑from‑Integral Normalization (SIN) at the hazard level (not to MR). Compute hazard via the discrete-time transform: MR(t) → h(t) = −ln(1 − MR(t)). Then de-trend hazards using SIN before accumulation.
-4. Compute the CUMULATIVE hazards for each cohort for each week. 
+3. Compute hazard via the discrete-time transform: MR(t) → h(t) = −ln(1 − MR(t)). Then de-trend hazards using slope normalization before accumulation.
+4. Compute the CUMULATIVE adjusted hazards for each cohort for each week. 
 5. Compute the ratio of the cumulative hazards of the two cohorts of interest
 6. Scale that ratio by the value of the ratio at week 4 (which allows enough data to get a reasonable baseline with relatively modest Poisson noise)
 6. The graph is KCOR(t): a measure of the CUMULATIVE net harm/benefit of the intervention at any time $t$, relatieve to the baseline time picked in the previous step.
@@ -111,7 +111,7 @@ Those who claimed that the COVID shots were beneficial for the elderly were spec
 
 You can see the [full summary of the results for the Czech data here](data/Czech/KCOR_summary.log). The total slope computation is the alive (at enrollment) weighted sum of the slopes. This total sum should reflect the population slope at that age. These full population slopes, if the vaccines is safe, range from -0.002 (oldest people) to +0.002 (youngest people). So this is a quick way to assess vaccine safety if the full cohort slope deviates from the norms. 
 
-The only attack I'm aware of on the KCOR results for the Czech data is that "this is due to a long lasting dynamic HVE which is depressing deaths in the vaccinated for 18 weeks." But dynamic HVE is only significant for old cohorts because the % of young cohorts who are near death is vanishingly small. The KCOR results do not get worse with older age. And the event time-series plots show the death increases happen regardless of age (see the `deaths.xlsx` file in my Czech repo). So I think these results are hard to dispute.
+The only attack I'm aware of on the KCOR results for the Czech data is that "this is due to a long lasting dynamic HVE which is depressing deaths in the vaccinated for 18 weeks." But dynamic HVE is only significant for old cohorts because the % of young cohorts who are near death is vanishingly small. The KCOR results do not get worse with older age. And the event time-series plots show the death increases happen regardless of age (see the `deaths.xlsx` file in my Czech repo). So I think these results are hard to dispute. The most convincing proof is KCOR of Dose 3 v 0 compared to Dose 2 v 0. If there is HVE, these curves are mirror images. They aren't; the 2 v 0 curve is flat, exactly what you'd expect with no HVE. You can do the same test for the second booster (4 v 0 vs. 3 v 0); it's stunning.
 
 ### Validation
 
