@@ -121,7 +121,7 @@ The NEGATIVE_CONTROL_MODE can be set to 1 to perform negative control tests that
 1. validate the algorithm and implementation work, and 
 2. validate the quality of the dataset under test.
 
-There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Review section](#peer-review) for details. 
+There isn't a legitimate critique of KCOR that I'm aware of. See the [Peer Review section](#peer-reviews) for details. 
 
 The bottom line is that KCOR works extremely well with real world cohorts of sufficient size like the Czech Republic 11M record level dataset. It is very easy to validate the key KCOR assumption of an exponential mortality rate before applying the method.
 
@@ -1187,6 +1187,10 @@ McCullough Foundation
 "KCOR cuts through the complication and obfuscation that epidemiologists tend to add to their models. A good model is as simple (and explainable) as it needs to be, but no simpler. Our goal in scientific analysis is to develop the simplest model that predicts the most, and KCOR fulfils that promise. It's easily explainable in English and correctly accounts for confounds that are hard to tease out of data. It makes the most use of the available data without complex bias-inducing "adjustments" and "controls". Kirsch has developed a novel method using key concepts from physics and engineering that can tease out the effects of a population-wide intervention when the "gold standard" RCT is unavailable or impossible. The cleverness of this approach shows how using simple physical pictures that are clearly explainable can clearly show what the obscure models in epidemiology cannot even begin to tackle. Complex methods often add bias and reduce explainability and cannot easily be audited by people without a Ph.D. in statistics. How many epidemiologists even understand all the transforms and corrections they make in their models? Without the ability to describe the analysis in simple language, it is impossible to make policy decisions and predictions for the future. Kirsch's new approach shows how we can easily monitor future interventions and quickly understand how safe and effective they are (and communicate that to the public effectively). It should be a standard tool in the public health toolbox. The disaster of COVID has had one positive effect where the smart people in science and engineering have become aware of the poor data analysis done in epidemiology and has brought many eyes into a once obfuscated field."
 
 - US government epidemiologist who wants to keep his job
+
+"For analyzing data such as from Czech government sources, where detailed comorbidity and cause of death information is not available, I'm not aware of any method that is likely to yield a more accurate result than KCOR."
+
+- Epidemiologist with 12 years experience who wants to keep his job. [Full review here](/peer_review/KCOR%20review%20by%20epidemiologistv2.docx).
 
 ### ChatGPT review of KCOR vs. alternatives
 

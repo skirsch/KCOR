@@ -6,10 +6,13 @@ DATASET ?= Czech
 RAW_CSV_GZ       = ../data/$(DATASET)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip
 # Keep the same base name when unzipped (…csv.gzip -> …csv)
 RAW_CSV          = $(RAW_CSV_GZ:.gzip=)
-INPUT_DATA       = $(RAW_CSV)
+# Prefer standardized per-dataset records.csv when available, else fall back to RAW_CSV
+RECORDS_CSV      = ../data/$(DATASET)/records.csv
+INPUT_DATA       = $(if $(wildcard $(RECORDS_CSV)),$(RECORDS_CSV),$(RAW_CSV))
 CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
 VARIABLE_OUTPUT  = ../data/$(DATASET)/KCOR_variable.xlsx
+
 
 .PHONY: clean clean-all help sensitivity
 

@@ -91,6 +91,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import sys
+from typing import Optional
 
 # Czech Reference Population for ASMR calculation (by 5-year birth cohorts)
 # Source: Czech demographic data
@@ -252,11 +253,49 @@ print(f"KCOR_CMR start: {_dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print(f"  Reading the input file: {input_file}")
 
 
-a = pd.read_csv(
-    input_file,
-    dtype=str,  # preserve ISO week format and avoid type inference
-    low_memory=False
-)
+def _read_csv_flex(path: str) -> pd.DataFrame:
+    """Read CSV with robust delimiter/encoding handling.
+
+    Tries common delimiters and encodings. Returns as strings to preserve ISO week formats.
+    """
+    # Try fast path first (standard comma, UTF-8/BOM)
+    try:
+        df = pd.read_csv(path, dtype=str, low_memory=False, encoding='utf-8')
+        if df.shape[1] > 1:
+            return df
+    except Exception:
+        pass
+    for enc in ("utf-8-sig", None, "latin1"):
+        # Attempt a few delimiter strategies, preferring exact separators first
+        attempts = (
+            {"sep": ","},
+            {"sep": ";", "engine": "python"},
+            {"sep": "\t", "engine": "python"},
+            {"sep": None, "engine": "python"},  # sniff
+        )
+        for opts in attempts:
+            try:
+                common_kwargs = {"dtype": str, "encoding": enc}
+                # low_memory is only valid for the C engine; omit for python engine
+                if opts.get("engine") != "python":
+                    common_kwargs["low_memory"] = False
+                df = pd.read_csv(path, **opts, **common_kwargs)
+                if df.shape[1] > 1:
+                    return df
+            except Exception:
+                continue
+    # Final fallback: return whatever we could parse (likely 1 column); caller will validate
+    return pd.read_csv(path, dtype=str, engine='python', sep=None)
+
+a = _read_csv_flex(input_file)
+
+# Validate column count before renaming; FOIA or alternate sources may use different delimiters/encodings
+expected_col_count = 53
+if a.shape[1] != expected_col_count:
+    print(f"ERROR: Input parsed into {a.shape[1]} columns, expected {expected_col_count}.\n"
+          f"       This usually indicates a delimiter or encoding mismatch.\n"
+          f"       First row preview: {a.head(1).to_dict(orient='records')}")
+    sys.exit(1)
 
 # rename the columns in English (same as KCOR.py)
 a.columns = [
@@ -305,7 +344,8 @@ a['Sex'] = a['Sex'].apply(sex_to_alpha)
 
 # Debug: Check data quality after Sex conversion
 print(f"Records after Sex conversion: {len(a)}")
-print(f"Sex distribution: {a['Sex'].value_counts()}")
+print("Sex distribution:")
+print(a['Sex'].value_counts())
 
 
 

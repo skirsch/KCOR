@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-10-01 14:51:24
+Analysis Date: 2025-10-01 22:22:33
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -40,6 +40,8 @@ Configuration Parameters (effective):
   YoB 1980, % vaxxed=5  alive_by_dose= 95% 2% 3% total=1432231
   YoB 1990, % vaxxed=4  alive_by_dose= 96% 2% 2% total=1156512
   YoB 2000, % vaxxed=1  alive_by_dose= 99% 0% 0% total=1047930
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=1,W1_present=13,W2_present=13,Wm1=2.435431e-05,Wm2=0.000000e+00,reason=nonpositive_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=2,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=1.066648e-04,reason=nonpositive_means
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 133110 rows
 [DEBUG] Filtered to 125280 rows for ages 1920-2009
@@ -82,6 +84,7 @@ Configuration Parameters (effective):
   YoB 1980, % vaxxed=68  alive_by_dose= 32% 6% 28% 32% 2% total=1430046
   YoB 1990, % vaxxed=65  alive_by_dose= 35% 8% 31% 26% 1% total=1155642
   YoB 2000, % vaxxed=59  alive_by_dose= 41% 4% 39% 17% 0% total=1047511
+SLOPE2_DIAG,EnrollmentDate=2022_47,YoB=2000,Dose=4,W1_present=13,W2_present=9,Wm1=4.073237e-05,Wm2=0.000000e+00,reason=nonpositive_means
 
 ================================================================================
 KCOR VALUES AT REPORTING DATES - ALL SHEETS

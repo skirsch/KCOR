@@ -1267,32 +1267,75 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # annotate iso label per row (Monday of ISO week)
         iso_parts = df_tmp["DateDied"].dt.isocalendar()
         df_tmp["iso_label"] = iso_parts.year.astype(str) + "-" + iso_parts.week.astype(str).str.zfill(2)
+        # Sheet-level coverage diagnostics and early abort if a required window has no coverage
+        try:
+            data_first = pd.to_datetime(df_tmp["DateDied"]).min()
+            data_last = pd.to_datetime(df_tmp["DateDied"]).max()
+            present_labels = set(df_tmp["iso_label"].unique().tolist())
+            w1_present = sum(1 for lbl in W1_weeks if lbl in present_labels)
+            w2_present = sum(1 for lbl in W2_weeks if lbl in present_labels)
+            dual_print(
+                f"SLOPE2_DATA_RANGE,EnrollmentDate={sh},first={data_first.date() if pd.notna(data_first) else 'NA'},last={data_last.date() if pd.notna(data_last) else 'NA'}"
+            )
+            dual_print(
+                f"SLOPE2_WINDOW_COVERAGE,EnrollmentDate={sh},W1_present={w1_present}/{len(W1_weeks)},W2_present={w2_present}/{len(W2_weeks)},W1={W1_ISO[0]}..{W1_ISO[1]},W2={W2_ISO[0]}..{W2_ISO[1]}"
+            )
+            if w1_present == 0 or w2_present == 0:
+                dual_print(
+                    f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_required_window — dataset lacks coverage in one or both slope windows"
+                )
+                raise RuntimeError(
+                    f"slope2: dataset for {sh} lacks coverage in required window(s): W1_present={w1_present}, W2_present={w2_present}"
+                )
+        except Exception:
+            pass
+        any_beta_nonzero = False
         for (yob, dose), g in df_tmp.groupby(["YearOfBirth","Dose"], sort=False):
             # mean hazard per iso week (if multiple days exist in same iso week)
             weekly = g.groupby("iso_label")["h"].mean().to_dict()
             w1_vals = [float(weekly.get(lbl, 0.0)) for lbl in W1_weeks]
             w2_vals = [float(weekly.get(lbl, 0.0)) for lbl in W2_weeks]
+            present_w1 = sum(1 for lbl in W1_weeks if lbl in weekly)
+            present_w2 = sum(1 for lbl in W2_weeks if lbl in weekly)
+            reason = None
             if len(w1_vals) == 0 or len(w2_vals) == 0:
                 beta_vals[(yob, dose)] = 0.0
-                continue
-            Wm1 = float(np.mean(w1_vals))
-            Wm2 = float(np.mean(w2_vals))
-            if Wm1 <= 0.0 or Wm2 <= 0.0:
-                beta_vals[(yob, dose)] = 0.0
-                continue
-            # centers as midpoints of the window date ranges (avoid numpy mean on datetimes)
-            _w1_start_dt = _iso_to_date(W1_ISO[0])
-            _w1_end_dt = _iso_to_date(W1_ISO[1])
-            _w2_start_dt = _iso_to_date(W2_ISO[0])
-            _w2_end_dt = _iso_to_date(W2_ISO[1])
-            c1 = _w1_start_dt + (_w1_end_dt - _w1_start_dt) / 2
-            c2 = _w2_start_dt + (_w2_end_dt - _w2_start_dt) / 2
-            delta_weeks = (c2 - c1).days / 7.0
-            if delta_weeks <= 0:
-                beta_vals[(yob, dose)] = 0.0
-                continue
-            beta = (np.log(Wm2) - np.log(Wm1)) / float(delta_weeks)
-            beta_vals[(yob, dose)] = float(beta)
+                reason = "no_windows"
+            else:
+                Wm1 = float(np.mean(w1_vals))
+                Wm2 = float(np.mean(w2_vals))
+                _w1_start_dt = _iso_to_date(W1_ISO[0])
+                _w1_end_dt = _iso_to_date(W1_ISO[1])
+                _w2_start_dt = _iso_to_date(W2_ISO[0])
+                _w2_end_dt = _iso_to_date(W2_ISO[1])
+                c1 = _w1_start_dt + (_w1_end_dt - _w1_start_dt) / 2
+                c2 = _w2_start_dt + (_w2_end_dt - _w2_start_dt) / 2
+                delta_weeks = (c2 - c1).days / 7.0
+                if Wm1 <= 0.0 or Wm2 <= 0.0:
+                    beta_vals[(yob, dose)] = 0.0
+                    reason = "nonpositive_means"
+                elif delta_weeks <= 0:
+                    beta_vals[(yob, dose)] = 0.0
+                    reason = "invalid_delta"
+                else:
+                    beta = (np.log(Wm2) - np.log(Wm1)) / float(delta_weeks)
+                    beta_vals[(yob, dose)] = float(beta)
+                    if abs(beta) > 0.0:
+                        any_beta_nonzero = True
+            # Diagnostic when beta is zero for this cohort
+            if float(beta_vals.get((yob, dose), 0.0)) == 0.0:
+                try:
+                    dual_print(
+                        f"SLOPE2_DIAG,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},W1_present={present_w1},W2_present={present_w2},Wm1={float(np.mean(w1_vals)) if w1_vals else float('nan'):.6e},Wm2={float(np.mean(w2_vals)) if w2_vals else float('nan'):.6e},reason={reason}"
+                    )
+                except Exception:
+                    pass
+        # If all betas are zero for this sheet, emit a one-line notice with chosen windows
+        if not any_beta_nonzero:
+            try:
+                dual_print(f"SLOPE2_ALL_ZERO,EnrollmentDate={sh},W1={W1_ISO[0]}..{W1_ISO[1]},W2={W2_ISO[0]}..{W2_ISO[1]} — no valid slope2 signal (check data coverage in those windows)")
+            except Exception:
+                pass
         # Persist betas for this sheet for later summary printing
         for (yob_k, dose_k), bval in beta_vals.items():
             try:
