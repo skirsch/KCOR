@@ -40,13 +40,13 @@
 
 KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality differences between cohorts receiving an intervention (e.g., vaccinated with 3 doses vs. unvaccinated) while accounting for underlying cohort all-cause mortality differences (e.g., mortality rates and slope over time of those mortality rates). 
 
-The method is simple: 
-1. select enrollment dates and slope dates appropriate to the dataset, 
+The method is can be fully explained in 6 steps:
+1. select enrollment dates and two sets of slope normalization window dates appropriate to the dataset which are ideally 1 year apart and each 12 weeks long, 
 2. Compute the mortality rate at each week.
 3. Transform using the discrete-time hazard function to hazard(t)
-4. Slope adjust the hazard(t) for each cohort to a flat slope so the cohorts can be compared
-5. Cmulate adjusted hazards, 
-6. take the ratio of the cumulative hazards of the cohorts you want to compare and normalize so the ratio on week 5=1
+4. Slope adjust the hazard(t) for each cohort to a flat slope so the cohorts can be compared. The slope adjustment uses the two windows periods defined earlier. The computation for the slope of hazard(t) for each cohort is done by taking the mean of the hazard function in both window periods and computing the exponential slope, a simple and exact computation: log(h2)-log(h1)/(t2-t1) where h1 and h2 are the hazard function mean over the two windows and t2-t1 is the number of weeks between the centers of the two windows.
+5. Cumulate adjusted hazards for each cohort separately as a function of $t$, 
+6. Take the ratio of the cumulative adjusted hazards of the cohorts you want to compare and normalize so the ratio on the 5th data week is 1 (the data on the enrollment week itself is the first week).
 
 KCOR is on a simple principle: people's mortality rate tends to increase over time at a very predictable rate as noted [in this paper](https://pubmed.ncbi.nlm.nih.gov/24534516/) and shown below: ![Mortality rate vs. age](documentation/mortality_rate_vs_age_from_HMD.jpg).
 

@@ -1314,6 +1314,31 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 if Wm1 <= 0.0 or Wm2 <= 0.0:
                     beta_vals[(yob, dose)] = 0.0
                     reason = "nonpositive_means"
+                    # Print detailed window data for debugging
+                    try:
+                        def _print_window_details(window_name: str, labels: list):
+                            for lbl in labels:
+                                sub = g[g["iso_label"] == lbl]
+                                if sub.empty:
+                                    dual_print(
+                                        f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT=0,Dead=0,MR=nan,hazard=nan"
+                                    )
+                                    continue
+                                pt_sum = float(sub["PT"].sum()) if "PT" in sub.columns else float(sub["Alive"].sum())
+                                dead_sum = float(sub["Dead"].sum())
+                                mr_w = (dead_sum / pt_sum) if pt_sum > 0.0 else np.nan
+                                if np.isnan(mr_w) or mr_w >= 1.0 or mr_w < 0.0:
+                                    mr_clipped = np.nan if np.isnan(mr_w) else np.clip(mr_w, 0.0, 0.999)
+                                else:
+                                    mr_clipped = mr_w
+                                hazard_w = (-np.log(1 - mr_clipped)) if (isinstance(mr_clipped, float) and mr_clipped >= 0.0 and mr_clipped < 1.0) else np.nan
+                                dual_print(
+                                    f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT={pt_sum:.6f},Dead={dead_sum:.6f},MR={(mr_w if not np.isnan(mr_w) else float('nan')):.6e},hazard={(hazard_w if not np.isnan(hazard_w) else float('nan')):.6e}"
+                                )
+                        _print_window_details("W1", W1_weeks)
+                        _print_window_details("W2", W2_weeks)
+                    except Exception:
+                        pass
                 elif delta_weeks <= 0:
                     beta_vals[(yob, dose)] = 0.0
                     reason = "invalid_delta"
