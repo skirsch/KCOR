@@ -20,8 +20,8 @@ METHODOLOGY OVERVIEW:
 
 3. NORMALIZATION AND HAZARDS:
    - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
-   - When enabled, Slope-from-Integral Normalization (SIN) estimates a cohort-level slope parameter but applies
-     normalization at the hazard level only. Raw MR values are never modified by normalization.
+   - Slope normalization uses the slope2 method: estimate a cohort-level beta from fixed windows and
+     apply origin-anchored normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
 4. KCOR COMPUTATION:
@@ -68,9 +68,8 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends. Version 4.5
-removes legacy anchor-based slope adjustments and Czech-specific corrections in favor of
-SIN-at-hazard (optional) and direct hazard computation from raw MR.
+between vaccination groups while accounting for underlying time trends. Version 4.6
+uses slope2 (fixed-window, hazard-level normalization) and direct hazard computation from raw MR.
 """
 import sys
 import math
@@ -130,7 +129,7 @@ VERSION = "v4.6"                # KCOR version number
 #        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
 #        - Slope calculation simplified to single-window method (no dynamic anchors)
 # v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
-#        - SIN-at-hazard (optional) and direct hazard computation from raw MR.
+#        - slope2 hazard-level normalization and direct hazard computation from raw MR.
 
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at this week; weeks counted from enrollment t=0)
@@ -142,9 +141,7 @@ DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from thi
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
-# Slope-from-Integral Normalization (SIN) configuration
-SLOPE2_W1_ISO = ("2022-24", "2022-36")
-SLOPE2_W2_ISO = ("2023-24", "2023-36")
+# slope2 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
 
 # KCOR normalization fine-tuning parameters
 # Removed FINAL_KCOR_MIN/FINAL_KOR_DATE scaling
@@ -421,8 +418,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             if gv is None or gu is None:
                 continue
             # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
             
             merged = pd.merge(
                 gv_unique,
@@ -516,11 +513,21 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             merged["CI_lower"] = np.clip(merged["CI_lower"], 0, merged["KCOR"] * 10)
             merged["CI_upper"] = np.clip(merged["CI_upper"], merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
+            # Build explicit hazard columns: unadjusted from hazard_raw_*, adjusted from hazard_adj_*
+            merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
+            merged["hazard_den"] = merged.get("hazard_raw_den", np.nan)
+            merged["hazard_adj_num"] = merged.get("hazard_adj_num", np.nan)
+            merged["hazard_adj_den"] = merged.get("hazard_adj_den", np.nan)
+            # Order: unadjusted first, then adjusted
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "MR_num","CH_num","hazard_num","t_num",
-                          "MR_den","CH_den","hazard_den","t_den"]].copy()
+                          "CH_num","hazard_num","hazard_adj_num","t_num",
+                          "CH_den","hazard_den","hazard_adj_den","t_den"]].copy()
 
             # MR fields are written raw; no display scaling
+            # Remove redundant merged suffix columns like *_den copies of ISOweek
+            if "ISOweekDied_den" in out.columns and "ISOweekDied" not in out.columns:
+                out.rename(columns={"ISOweekDied_num":"ISOweekDied"}, inplace=True)
+                out.drop(columns=[c for c in out.columns if c.endswith("_den") and c.startswith("ISOweekDied")], inplace=True)
             out["EnrollmentDate"] = sheet_name
             out["YearOfBirth"] = yob
             out["Dose_num"] = num
@@ -699,21 +706,14 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     "KCOR": Kpool,
                     "CI_lower": CI_lower,
                     "CI_upper": CI_upper,
-                    "MR_num": np.nan,
-                    "MR_adj_num": np.nan,
+                    # Keep schema consistent with dose_pairs rows; pooled ASMR has no per-age hazards/CH
                     "CH_num": np.nan,
-                    "CH_actual_num": np.nan,
+                    "hazard_adj_num": np.nan,
                     "hazard_num": np.nan,
-                    "slope_num": np.nan,
-                    "scale_factor_num": np.nan,
                     "t_num": np.nan,
-                    "MR_den": np.nan,
-                    "MR_adj_den": np.nan,
                     "CH_den": np.nan,
-                    "CH_actual_den": np.nan,
+                    "hazard_adj_den": np.nan,
                     "hazard_den": np.nan,
-                    "slope_den": np.nan,
-                    "scale_factor_den": np.nan,
                     "t_den": np.nan
                 })
 
@@ -721,8 +721,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","MR_num","CH_num","CH_actual_num","hazard_num","slope_num","scale_factor_num","t_num",
-        "MR_den","CH_den","CH_actual_den","hazard_den","slope_den","scale_factor_den","t_den"
+        "KCOR","CI_lower","CI_upper","CH_num","hazard_adj_num","hazard_num","t_num",
+        "CH_den","hazard_adj_den","hazard_den","t_den"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -940,6 +940,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  SLOPE2_W1            = (2022-24, 2022-36)")
     dual_print(f"  SLOPE2_W2            = (2023-24, 2023-36)")
     dual_print(f"  SLOPE2_W3            = (2024-12, 2024-20)")
+    dual_print(f"  SLOPE2_W4            = (2022-42, 2022-48)  [fallback second window if W2 has no data]")
     dual_print(f"  SLOPE2 selection     = W1/W2 unless enrollment_date > start(W1), then W2/W3")
     dual_print("="*80)
     dual_print("")
@@ -1187,7 +1188,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
         
 
-        # Slope normalization (legacy) has been removed; SIN (if enabled) applies only at hazard level.
+        # Slope normalization (legacy) has been removed; slope2 applies only at hazard level.
         
         # Debug: Show MR values week by week, especially weeks with no deaths
         # if DEBUG_VERBOSE:
@@ -1223,7 +1224,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # removed temporary diagnostics
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
-        # Optional: Apply SIN (Slope-from-Integral Normalization) per cohort before building hazards
+        # Apply slope2 normalization: origin-anchored hazard de-trending using fixed-window beta per cohort
         beta_vals = {}
         # slope2: two fixed ISO-week windows, compute mean hazards, derive beta, origin-anchored
         # Define helper functions for ISO week ranges and centers
@@ -1246,6 +1247,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         BASE_W1 = ("2022-24", "2022-36")
         BASE_W2 = ("2023-24", "2023-36")
         BASE_W3 = ("2024-12", "2024-20")
+        BASE_W4 = ("2022-42", "2022-48")  # fallback second window when selected W2 has zero hazards
         # Determine enrollment date (Monday of sheet week)
         try:
             year_str, week_str = sh.split("_") if "_" in sh else sh.split("-")
@@ -1259,8 +1261,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         else:
             W1_ISO = BASE_W1
             W2_ISO = BASE_W2
+        # Announce selected window pair for this enrollment (sheet-level)
+        try:
+            fallback_info = f",fallback_W4={BASE_W4[0]}..{BASE_W4[1]}" if (W1_ISO == BASE_W1 and W2_ISO == BASE_W2) else ""
+            dual_print(
+                f"SLOPE2_WINDOW_PAIR,EnrollmentDate={sh},pair={W1_ISO[0]}..{W1_ISO[1]} vs {W2_ISO[0]}..{W2_ISO[1]}{fallback_info}"
+            )
+        except Exception:
+            pass
         W1_weeks = _iso_week_list(*W1_ISO)
         W2_weeks = _iso_week_list(*W2_ISO)
+        W4_weeks = _iso_week_list(*BASE_W4)
         # Build weekly hazard by ISO week for each cohort
         df_tmp = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
         df_tmp["h"] = -np.log(1 - df_tmp["MR"].clip(lower=0.0, upper=0.999))
@@ -1274,19 +1285,30 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             present_labels = set(df_tmp["iso_label"].unique().tolist())
             w1_present = sum(1 for lbl in W1_weeks if lbl in present_labels)
             w2_present = sum(1 for lbl in W2_weeks if lbl in present_labels)
-            dual_print(
-                f"SLOPE2_DATA_RANGE,EnrollmentDate={sh},first={data_first.date() if pd.notna(data_first) else 'NA'},last={data_last.date() if pd.notna(data_last) else 'NA'}"
-            )
-            dual_print(
-                f"SLOPE2_WINDOW_COVERAGE,EnrollmentDate={sh},W1_present={w1_present}/{len(W1_weeks)},W2_present={w2_present}/{len(W2_weeks)},W1={W1_ISO[0]}..{W1_ISO[1]},W2={W2_ISO[0]}..{W2_ISO[1]}"
-            )
-            if w1_present == 0 or w2_present == 0:
+            w4_present = sum(1 for lbl in W4_weeks if lbl in present_labels)
+            if str(os.environ.get("SLOPE2_LOG_COVERAGE", "")).strip().lower() in ("1","true","yes"): 
                 dual_print(
-                    f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_required_window — dataset lacks coverage in one or both slope windows"
+                    f"SLOPE2_DATA_RANGE,EnrollmentDate={sh},first={data_first.date() if pd.notna(data_first) else 'NA'},last={data_last.date() if pd.notna(data_last) else 'NA'}"
                 )
-                raise RuntimeError(
-                    f"slope2: dataset for {sh} lacks coverage in required window(s): W1_present={w1_present}, W2_present={w2_present}"
+                dual_print(
+                    f"SLOPE2_WINDOW_COVERAGE,EnrollmentDate={sh},W1_present={w1_present}/{len(W1_weeks)},W2_present={w2_present}/{len(W2_weeks)},W4_present={w4_present}/{len(W4_weeks)},W1={W1_ISO[0]}..{W1_ISO[1]},W2={W2_ISO[0]}..{W2_ISO[1]},W4={BASE_W4[0]}..{BASE_W4[1]}"
                 )
+            # If we are using (W1,W2), allow W4 as fallback if W2 has zero coverage.
+            using_w1w2 = (W1_ISO == BASE_W1 and W2_ISO == BASE_W2)
+            if w1_present == 0:
+                dual_print(f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_W1 — dataset lacks coverage in W1 {W1_ISO[0]}..{W1_ISO[1]}")
+                raise RuntimeError(f"slope2: dataset for {sh} lacks coverage in W1 (present={w1_present})")
+            if using_w1w2:
+                if w2_present == 0 and w4_present == 0:
+                    dual_print(f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_W2_or_W4 — dataset lacks coverage in both W2 and W4")
+                    raise RuntimeError(f"slope2: dataset for {sh} lacks coverage in W2 and W4 (W2_present={w2_present}, W4_present={w4_present})")
+            else:
+                # Using (W2,W3) selection; keep the existing strict coverage rule for the chosen windows
+                if w2_present == 0:
+                    dual_print(f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_selected_W1 — dataset lacks coverage in selected first window {W1_ISO[0]}..{W1_ISO[1]}")
+                    raise RuntimeError(f"slope2: dataset for {sh} lacks coverage in selected first window (present={w2_present})")
+                w3_weeks = _iso_week_list(*W2_ISO)  # here W2_ISO acts as second window in (W2,W3)
+                # Note: w3_present reuses w2_present variable semantics here; keep strict check via earlier w2_present
         except Exception:
             pass
         any_beta_nonzero = False
@@ -1304,10 +1326,27 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             else:
                 Wm1 = float(np.mean(w1_vals))
                 Wm2 = float(np.mean(w2_vals))
+                # Fallback W4 (sheet-level, once): if any cohort needs fallback, switch the entire enrollment's second window to W4
+                used_w4 = False
+                if Wm2 <= 0.0 and (W1_ISO == BASE_W1 and W2_ISO == BASE_W2):
+                    # Switch second window for all cohorts in this sheet
+                    W2_ISO = BASE_W4
+                    W2_weeks = _iso_week_list(*W2_ISO)
+                    w4_vals = [float(weekly.get(lbl, 0.0)) for lbl in W2_weeks]
+                    Wm2 = float(np.mean(w4_vals)) if len(w4_vals) > 0 else 0.0
+                    used_w4 = True
+                    try:
+                        dual_print(f"SLOPE2_FALLBACK,EnrollmentDate={sh},using=W4,{BASE_W4[0]}..{BASE_W4[1]} (applies to all cohorts)")
+                    except Exception:
+                        pass
                 _w1_start_dt = _iso_to_date(W1_ISO[0])
                 _w1_end_dt = _iso_to_date(W1_ISO[1])
-                _w2_start_dt = _iso_to_date(W2_ISO[0])
-                _w2_end_dt = _iso_to_date(W2_ISO[1])
+                if used_w4:
+                    _w2_start_dt = _iso_to_date(BASE_W4[0])
+                    _w2_end_dt = _iso_to_date(BASE_W4[1])
+                else:
+                    _w2_start_dt = _iso_to_date(W2_ISO[0])
+                    _w2_end_dt = _iso_to_date(W2_ISO[1])
                 c1 = _w1_start_dt + (_w1_end_dt - _w1_start_dt) / 2
                 c2 = _w2_start_dt + (_w2_end_dt - _w2_start_dt) / 2
                 delta_weeks = (c2 - c1).days / 7.0
@@ -1316,27 +1355,28 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     reason = "nonpositive_means"
                     # Print detailed window data for debugging
                     try:
-                        def _print_window_details(window_name: str, labels: list):
-                            for lbl in labels:
-                                sub = g[g["iso_label"] == lbl]
-                                if sub.empty:
+                        if str(os.environ.get("SLOPE2_LOG_DETAIL", "")).strip().lower() in ("1","true","yes"):
+                            def _print_window_details(window_name: str, labels: list):
+                                for lbl in labels:
+                                    sub = g[g["iso_label"] == lbl]
+                                    if sub.empty:
+                                        dual_print(
+                                            f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT=0,Dead=0,MR=nan,hazard=nan"
+                                        )
+                                        continue
+                                    pt_sum = float(sub["PT"].sum()) if "PT" in sub.columns else float(sub["Alive"].sum())
+                                    dead_sum = float(sub["Dead"].sum())
+                                    mr_w = (dead_sum / pt_sum) if pt_sum > 0.0 else np.nan
+                                    if np.isnan(mr_w) or mr_w >= 1.0 or mr_w < 0.0:
+                                        mr_clipped = np.nan if np.isnan(mr_w) else np.clip(mr_w, 0.0, 0.999)
+                                    else:
+                                        mr_clipped = mr_w
+                                    hazard_w = (-np.log(1 - mr_clipped)) if (isinstance(mr_clipped, float) and mr_clipped >= 0.0 and mr_clipped < 1.0) else np.nan
                                     dual_print(
-                                        f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT=0,Dead=0,MR=nan,hazard=nan"
+                                        f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT={pt_sum:.6f},Dead={dead_sum:.6f},MR={(mr_w if not np.isnan(mr_w) else float('nan')):.6e},hazard={(hazard_w if not np.isnan(hazard_w) else float('nan')):.6e}"
                                     )
-                                    continue
-                                pt_sum = float(sub["PT"].sum()) if "PT" in sub.columns else float(sub["Alive"].sum())
-                                dead_sum = float(sub["Dead"].sum())
-                                mr_w = (dead_sum / pt_sum) if pt_sum > 0.0 else np.nan
-                                if np.isnan(mr_w) or mr_w >= 1.0 or mr_w < 0.0:
-                                    mr_clipped = np.nan if np.isnan(mr_w) else np.clip(mr_w, 0.0, 0.999)
-                                else:
-                                    mr_clipped = mr_w
-                                hazard_w = (-np.log(1 - mr_clipped)) if (isinstance(mr_clipped, float) and mr_clipped >= 0.0 and mr_clipped < 1.0) else np.nan
-                                dual_print(
-                                    f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT={pt_sum:.6f},Dead={dead_sum:.6f},MR={(mr_w if not np.isnan(mr_w) else float('nan')):.6e},hazard={(hazard_w if not np.isnan(hazard_w) else float('nan')):.6e}"
-                                )
-                        _print_window_details("W1", W1_weeks)
-                        _print_window_details("W2", W2_weeks)
+                            _print_window_details("W1", W1_weeks)
+                            _print_window_details("W2", W2_weeks)
                     except Exception:
                         pass
                 elif delta_weeks <= 0:
@@ -1376,16 +1416,16 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["hazard_raw"] = -np.log(1 - np.clip(mr_used, None, 0.999))
         # Initialize adjusted hazard equal to raw
         df["hazard_adj"] = df["hazard_raw"]
-        # Apply SIN de-trending at hazard level, if available (single normalization only)
+        # Apply slope2 de-trending at hazard level (single normalization only)
         if isinstance(beta_vals, dict) and len(beta_vals) > 0:
             try:
-                df["_beta_sin"] = df.apply(lambda r: float(beta_vals.get((r["YearOfBirth"], r["Dose"]), 0.0)), axis=1)
+                df["_beta_slope2"] = df.apply(lambda r: float(beta_vals.get((r["YearOfBirth"], r["Dose"]), 0.0)), axis=1)
                 # Origin-anchored (enrollment-based) adjustment: h_adj(t) = h(t) * exp(-beta * t)
-                scale = np.exp(-df["_beta_sin"] * df["t"])
+                scale = np.exp(-df["_beta_slope2"] * df["t"])
                 df["hazard_adj"] = df["hazard_adj"] * scale
                 # Numerical safety: floor at tiny epsilon
                 df["hazard_adj"] = np.clip(df["hazard_adj"], 0.0, None)
-                df.drop(columns=["_beta_sin"], inplace=True)
+                df.drop(columns=["_beta_slope2"], inplace=True)
             except Exception:
                 pass
         # Backward compatibility: keep 'hazard' as the adjusted hazard used in KCOR
@@ -1400,7 +1440,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Calculate cumulative hazard (mathematically exact, not approximation)
         df["CH"] = df.groupby(["YearOfBirth","Dose"]) ["hazard_eff"].cumsum()
 
-        # Debug: print CH_raw vs CH_adj for specific cohort on request (restricted to SIN window)
+        # Debug: print CH_raw vs CH_adj for specific cohort on request (restricted to slope2 window)
         try:
             if sh in ("2021_24", "2021-24"):
                 dbg_mask = (df["YearOfBirth"] == 1940) & (df["Dose"] == 1)
@@ -1440,20 +1480,21 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         max_dose = max(max(pair) for pair in dose_pairs)
         for dose in range(max_dose + 1):
             dose_df = df[df["Dose"] == dose]
-            dose_data = dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
-                "ISOweekDied": "first",
-                "Dead": "sum",
-                "Alive": "sum", 
-                "PT": "sum",
-                "MR": "mean",
-                "CH": "mean",
-                "CH_actual": "mean",
-                "hazard_raw": "mean",
-                "hazard_adj": "mean",
-                "hazard": "mean",
-                "cumD_unadj": "mean",
-                "t": "first"
-            }).reset_index().sort_values(["DateDied", "YearOfBirth"])
+            dose_data = (
+                dose_df.groupby(["DateDied", "YearOfBirth"]).agg({
+                    "ISOweekDied": "first",
+                    "Dead": "sum",
+                    "Alive": "sum",
+                    "PT": "sum",
+                    "MR": "mean",
+                    "CH": "mean",
+                    "CH_actual": "mean",
+                    "hazard_raw": "mean",
+                    "hazard_adj": "mean",
+                    "cumD_unadj": "mean",
+                    "t": "first",
+                }).reset_index().sort_values(["DateDied", "YearOfBirth"]) 
+            )
             # Collect minimal columns for NC
             if not dose_data.empty:
                 tmp = dose_data[["DateDied","YearOfBirth","CH","t"]].copy()
@@ -1923,7 +1964,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         # If target is open in Excel, replacement will fail with PermissionError on Windows
                         raise
-                dual_print(f"[Done] Wrote {len(combined)} rows to {out_path}")
+                dual_print(f"[Done] Wrote {len(combined)} rows to {out_path} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 break
                 
             except PermissionError as e:
