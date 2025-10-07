@@ -427,15 +427,16 @@ $$
 - Hazard ratios are appropriate for comparing mortality risk between groups
 
 ### ⚠️ Limitations
-There are 7 limitations of the method that users should be aware of. These are typically limitations that would apply anytime you are analyzing retrospective data. 
+There are 8 limitations of the method that users should be aware of. These are typically limitations that would apply anytime you are analyzing retrospective data. 
 
-For exmaple suppose you have a vaccine which instantly increases everyone's ACM by 5% on the day of the shot. KCOR, because it's generally a conservative estimator of harm, would treat that vaccine as perfectly safe. Similarly, if that vaccine linearly and uniformly raised people's mortality over time, KCOR would also think that that vaccine is perfectly safe. Why? Because KCOR infers the mortality of cohort through observation. There is no simple way to distinguish a small uniform over time effect from the mortality of the cohort. 
+The single msot important thing to keep in mind is that we are told that the COVID vaccines are perfectly safe and 90% effective. So pretty much all the limitations below don't apply (HVE always applies but it is negligible for the COVID vaccine). If the COVID vaccines are as safe as claimed, KCOR is extremely accurate. You cannot have it both ways here. KCOR forces you to confront the truth. It's either safe and KCOR applies, or it is unsafe and KCOR's results are subject to the limitations below.
+
+In general, these limitations cause KCOR to be a **conservative estimator of harm**. This means if KCOR finds a harm signal, like it does in the Czech dataset, the actual harm is actually greater than KCOR indicates because KCOR tends to *understate* harms and *overstate* benefits as specifically described below.
+
+For exmaple suppose you have a vaccine which instantly increases everyone's ACM by 5% on the day of the shot. KCOR, because it's generally a conservative estimator of harm since it trusts the value in a baseline period shortly after vaccination, would treat that vaccine as perfectly safe. Similarly, if that vaccine linearly and uniformly raised people's mortality over time, KCOR would also think that that vaccine is perfectly safe. Why? Because KCOR infers the mortality of cohort through observation. There is no simple way to distinguish a small uniform over time effect from the mortality of the cohort. 
 
 There are a variety of things you can do to limit these sorts of errors (the most effective being establishing "no effect" slope ranges for various cohorts, e.g,. a vaccinated 60 year old should have a slope between x and y). This can make the limitations listed below be very managable.
 
-Also, one very important thing to keep in mind is that we are told that the COVID vaccines are perfectly safe and 90% effective. So the limitations below about unsafe vaccines, deaths during baseline, etc simply don't apply if you know what i mean. So KCOR can be used to falsify such assumptions. If the COVID vaccines are as safe as claimed, KCOR is extremely accurate. You cannot have it both ways here. KCOR forces you to confront the truth.
-
-In general, these limitations cause KCOR to be a **conservative estimator of harm**. This means if KCOR finds a harm signal, like it does in the Czech dataset, the actual harm is actually greater than KCOR indicates because KCOR tends to *understate* harms and *overstate* benefits as specifically described below.
 
 1. **Exponential fit assumption:** Cohorts aged 90 and older with significant frailty will not be as accurate as cohorts of younger ages because the core assumption of a single exponential mortality rate starts to become less true. Estimates from these cohorts may be inaccurate by more than 1%. Grok did a compuation for age 90 with a frailty mix of 1-4 and [found less than a 1.6% per year error from the exponential assumption](https://grok.com/share/c2hhcmQtMg%3D%3D_924f6b7d-543f-4ebb-bc82-7cfd8eef297c).
 
