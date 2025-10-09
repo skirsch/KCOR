@@ -429,6 +429,7 @@ $$
 ### ⚠️ Limitations
 There are 8 limitations of the method that users should be aware of. These are typically limitations that would apply anytime you are analyzing retrospective data. 
 
+[!NOTE]
 The single msot important thing to keep in mind is that we are told that the COVID vaccines are perfectly safe and 90% effective. So pretty much all the limitations below don't apply (HVE always applies but it is negligible for the COVID vaccine). If the COVID vaccines are as safe as claimed, KCOR is extremely accurate. You cannot have it both ways here. KCOR forces you to confront the truth. It's either safe and KCOR applies, or it is unsafe and KCOR's results are subject to the limitations below.
 
 In general, these limitations cause KCOR to be a **conservative estimator of harm**. This means if KCOR finds a harm signal, like it does in the Czech dataset, the actual harm is actually greater than KCOR indicates because KCOR tends to *understate* harms and *overstate* benefits as specifically described below.
