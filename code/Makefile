@@ -41,6 +41,14 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@ls -lh $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
 
+# New: KRF adapter target
+.PHONY: KCOR_from_krf
+CMR_from_krf: | ../data/$(DATASET)
+	@echo "Adapting KRF CSV to Czech-like input..."
+	@python3 krf_adapter.py ../data/$(DATASET)/krf.csv ../data/$(DATASET)/records.csv
+	@echo "Running KCOR CMR aggregation on adapted input..."
+	$(MAKE) CMR DATASET=$(DATASET)
+
 # Convenience target for CMR only
 CMR: $(CMR_OUTPUT)
 
@@ -79,6 +87,7 @@ help:
 	@echo "Available targets:"
 	@echo "  KCOR      - Run complete KCOR pipeline (CMR + analysis)"
 	@echo "  CMR       - Run only CMR aggregation step"
+	@echo "  CMR_from_krf - Run CMR aggregation step on KRF data; specify DATASET=japan to use Japan KRF data"
 	@echo "  sensitivity - Smoke test sensitivity plumbing (echo SA_* and run analysis)"
 	@echo "  clean     - Remove output files for current dataset ($(DATASET))"
 	@echo "  clean-all - Remove all output files for all countries"

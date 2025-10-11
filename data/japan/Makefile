@@ -5,10 +5,10 @@ ifeq ($(OS),Windows_NT)
 endif
 
 INPUT ?= hamamatsu.csv.gz
-OUTPUT ?= japan_krf.csv
+OUTPUT ?= krf.csv  # default output file name so that the CMR_from_krf.py script works
 # Sidecar is analysis metadata; keep distinct from converter CONFIG to avoid overwriting
 SIDECAR ?= japan_krf.sidecar.yaml
-OBS_END ?= 2024-12-31
+OBS_END ?= 2025-12-31
 BIRTH_BAND_YEARS ?= 5
 REFERENCE_DATE ?= earliest_vdate
 START_DATE ?=
