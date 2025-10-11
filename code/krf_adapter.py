@@ -74,9 +74,8 @@ def main() -> None:
     if 'Sex' in krf.columns:
         out['Sex'] = krf['Sex'].map(sex_map).fillna("")
 
-    # DCCI if present
-    if 'DCCI' in krf.columns:
-        out['DCCI'] = krf['DCCI'].fillna("")
+    # DCCI: Japan has no DCCI; set explicit UNKNOWN = -1 for all rows
+    out['DCCI'] = '-1'
 
     # DeathDate to ISO week string (YYYY-WW)
     out['DateOfDeath'] = to_iso_week_str(krf['DeathDate'])

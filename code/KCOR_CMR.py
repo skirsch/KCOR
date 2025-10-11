@@ -310,10 +310,13 @@ a.columns = [
     'min_MechanicalVentilation_ECMO', 'days_MechanicalVentilation_ECMO', 'max_MechanicalVentilation_ECMO',
     'Mutation', 'DateOfDeath', 'Long_COVID', 'DCCI']
 
-# Ensure DCCI is mapped into 4 buckets: 0, 1, 3 (catch-all), 5
+# Ensure DCCI buckets with explicit UNKNOWN = -1 (do NOT map blanks to 3)
+# Keep only the known buckets {0,1,5}; anything else (including blanks/NaN) becomes -1
 a['DCCI'] = pd.to_numeric(a['DCCI'], errors='coerce')
-a['DCCI'] = a['DCCI'].clip(lower=0, upper=5)
-a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([0, 1, 5]), 3).astype('Int8')
+# Map blanks/NaN to -1 first
+a['DCCI'] = a['DCCI'].where(a['DCCI'].notna(), -1)
+# Keep only known buckets {0,1,5}; anything else becomes -1
+a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([0, 1, 5, -1]), -1).astype('Int8')
 
 # Immediately drop columns we won't use to reduce memory
 needed_cols = [
@@ -321,13 +324,15 @@ needed_cols = [
     'Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose',
     'DateOfDeath', 'DCCI'
 ]
-a = a[needed_cols]
+# Take only needed columns as a fresh copy to avoid chained-assignment warnings
+a = a.loc[:, needed_cols].copy()
 
 # if you got infected more than once, it will create a duplicate record (with a different ID) so
 # remove those records so we don't double count the deaths.
 
 # Remove records where Infection > 1
-a = a[(a['Infection'].fillna(0).astype(int) <= 1)]
+# Filter to single-infection rows as a fresh copy
+a = a[(a['Infection'].fillna(0).astype(int) <= 1)].copy()
 
 # Convert Sex to alphabetic codes: M, F, O
 def sex_to_alpha(sex_val):
@@ -419,7 +424,7 @@ for enroll_date_str in enrollment_dates:
     a_copy = a.copy()
     # Restrict processing to birth years within [1920, 2000] inclusive, but keep -1 (unknown)
     before = len(a_copy)
-    a_copy = a_copy[((a_copy['YearOfBirth'] >= 1920) & (a_copy['YearOfBirth'] <= 2005)) | (a_copy['YearOfBirth'] == -1)]
+    a_copy = a_copy[((a_copy['YearOfBirth'] >= 1920) & (a_copy['YearOfBirth'] <= 2005)) | (a_copy['YearOfBirth'] == -1)].copy()
     after = len(a_copy)
     print(f"  Filtered YearOfBirth to 1920-2000: kept {after}/{before} records")
     print(f"  Keeping all records including deaths before enrollment date...")
