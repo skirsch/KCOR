@@ -306,8 +306,8 @@ def build_output(df: pd.DataFrame, reference_date_arg: str, start_date: Optional
                  "第一三共": "O", "アストラゼネカ": "O", "武田": "O", "ノババックス": "O", "AstraZeneca": "O", "Novavax": "O", "Other": "O"}
     df["Brand"] = df.get("mfg", "").map(brand_map).fillna("O")
 
-    # Earliest death date per ID
-    death_series = pd.concat([dod, ldd], axis=1).min(axis=1)
+    # Death date per row: prefer DoD; fall back to last_dose_died only if DoD is missing
+    death_series = dod.where(dod.notna(), ldd)
 
     # Deduplicate same-day doses and sort
     dose_df = df[["ID", "vdate_parsed", "Brand"]].dropna(subset=["vdate_parsed"]).drop_duplicates(subset=["ID", "vdate_parsed"]).sort_values(["ID", "vdate_parsed"])  # type: ignore
@@ -360,15 +360,19 @@ def build_output(df: pd.DataFrame, reference_date_arg: str, start_date: Optional
         ah = age_high_series.reindex(ref_year.index)
         yob = (ref_year - ah).astype("Int64")
 
-    # Death per ID (min non-null)
+    # Death per ID (min in case of duplicates across rows)
     tmp = pd.DataFrame({"ID": df["ID"], "death": death_series})
     death_per_id = tmp.groupby("ID")["death"].min()
 
     # Assemble output
     out = wide.reset_index()
-    out["YearOfBirth"] = yob.reindex(out.index).astype("Int64").astype(str).replace({"<NA>": ""}) if yob is not None else ""
-    out["DeathDate"] = death_per_id.reindex(out.index)
-    out["Sex"] = sex_by_id.reindex(out.index).fillna("")
+    # Map per-ID fields to avoid index mismatches
+    if yob is not None:
+        out["YearOfBirth"] = out["ID"].map(yob).astype("Int64").astype(str).replace({"<NA>": ""})
+    else:
+        out["YearOfBirth"] = ""
+    out["DeathDate"] = out["ID"].map(death_per_id)
+    out["Sex"] = out["ID"].map(sex_by_id).fillna("")
     out["DCCI"] = ""
     out["CensorDate"] = ""
 
