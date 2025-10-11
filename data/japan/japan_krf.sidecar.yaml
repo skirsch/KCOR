@@ -1,0 +1,4 @@
+schema: KRF-1.0
+timezone: local
+observationEndDate: '2024-12-31'
+birthBandYears: 5
