@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-10-02 22:32:23
+Analysis Date: 2025-10-11 16:17:15
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -42,8 +42,9 @@ Configuration Parameters (effective):
   YoB 1990, % vaxxed=4  alive_by_dose= 96% 2% 2% total=1156512
   YoB 2000, % vaxxed=1  alive_by_dose= 99% 0% 0% total=1047930
 SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_13,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
+SLOPE2_FALLBACK,EnrollmentDate=2021_13,using=W4,2022-42..2022-48 (applies to all cohorts)
 SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=1,W1_present=13,W2_present=13,Wm1=2.435431e-05,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=2,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=1.066648e-04,reason=nonpositive_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=6.587832e-05,reason=nonpositive_means
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 133110 rows
 [DEBUG] Filtered to 125280 rows for ages 1920-2009
@@ -437,7 +438,7 @@ Dose combination: 4 vs 0 [2022_47]
   1990            |   0.7350 [0.429, 1.258] | 0.6609  (beta_num=-0.003741, beta_den=0.000059)
   2000            |   3.7414 [0.000, 37.414] | 0.0373  (beta_num=0.000000, beta_den=-0.004036)
 ================================================================================
-[Done] Wrote 29070 rows to ../data/Czech/KCOR.xlsx
+[Done] Wrote 29070 rows to ../data/Czech/KCOR.xlsx at 2025-10-11 16:19:09
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 37 summary rows
   - 2021_24: 3 dose combinations, 37 summary rows
