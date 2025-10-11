@@ -68,7 +68,18 @@ def main() -> None:
 
     # Map straightforward fields
     out['ID'] = krf['ID'].astype(str)
-    out['YearOfBirth'] = krf['YearOfBirth'].astype(str)
+    # Convert YearOfBirth numeric to 5-year bin labels (e.g., 1950-1954)
+    try:
+        yob_num = pd.to_numeric(krf['YearOfBirth'], errors='coerce')
+        cohort_start = (yob_num // 5) * 5
+        cohort_end = cohort_start + 4
+        out['YearOfBirth'] = pd.Series(
+            [f"{int(s)}-{int(e)}" if pd.notna(s) else "" for s, e in zip(cohort_start, cohort_end)],
+            index=krf.index,
+            dtype=object,
+        )
+    except Exception:
+        out['YearOfBirth'] = krf['YearOfBirth'].astype(str)
     # Sex: KRF M/F/O → Czech numeric codes: 1 male, 2 female, else blank
     sex_map = {'M': '1', 'F': '2'}
     if 'Sex' in krf.columns:

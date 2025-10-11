@@ -66,6 +66,12 @@ def parse_args() -> argparse.Namespace:
         help="Timezone label to record in sidecar (default: local)",
     )
     parser.add_argument(
+        "--age60-to-yob",
+        dest="age60_to_yob",
+        default=None,
+        help="Optional anchor: map age 60 to this YearOfBirth (e.g., 1965)",
+    )
+    parser.add_argument(
         "--start-date",
         default=None,
         help="Only include doses on/after this date (YYYY-MM-DD)",
@@ -267,7 +273,7 @@ def build_person_record(group: pd.DataFrame, reference_date_arg: str) -> Dict[st
     return record
 
 
-def build_output(df: pd.DataFrame, reference_date_arg: str, start_date: Optional[str], end_date: Optional[str]) -> pd.DataFrame:
+def build_output(df: pd.DataFrame, reference_date_arg: str, start_date: Optional[str], end_date: Optional[str], age60_to_yob: Optional[str] = None) -> pd.DataFrame:
     df = df.fillna("")
 
     # Preserve first-appearance order of each ID (to match legacy output ordering)
@@ -358,7 +364,18 @@ def build_output(df: pd.DataFrame, reference_date_arg: str, start_date: Optional
         ref_year = ref_date_per_id.dt.year
         # align indices
         ah = age_high_series.reindex(ref_year.index)
-        yob = (ref_year - ah).astype("Int64")
+        # raw YOB from ref year and upper bound of age band
+        yob_raw = (ref_year - ah)
+        # Optional anchor: shift so that 60yo at ref_year maps to Age60toYOB
+        if age60_to_yob:
+            try:
+                anchor_series = pd.to_numeric(pd.Series([age60_to_yob] * len(ref_year), index=ref_year.index), errors="coerce")
+                shift = anchor_series - (ref_year - 60)
+                yob_raw = yob_raw + shift
+            except Exception:
+                pass
+        # Bucket to 5-year cohort lower bound (e.g., 1950, 1955, ...)
+        yob = ((yob_raw // 5) * 5).astype("Int64")
 
     # Death per ID (min in case of duplicates across rows)
     tmp = pd.DataFrame({"ID": df["ID"], "death": death_series})
@@ -438,6 +455,8 @@ def main() -> None:
         args.reference_date = cfg.get("referenceDate", args.reference_date)
         args.start_date = cfg.get("startDate", args.start_date)
         args.end_date = cfg.get("endDate", args.end_date)
+        # Optional anchor mapping from YAML (e.g., Age60toYOB: 1965)
+        args.age60_to_yob = cfg.get("Age60toYOB", args.age60_to_yob)
 
     input_path = args.input
     output_path = args.output
@@ -453,7 +472,7 @@ def main() -> None:
     keep_cols = [c for c in EXPECTED_HEADERS if c in df.columns]
     df = df[keep_cols]
 
-    out_df = build_output(df, args.reference_date, args.start_date, args.end_date)
+    out_df = build_output(df, args.reference_date, args.start_date, args.end_date, age60_to_yob=args.age60_to_yob)
     write_output_csv(out_df, output_path)
 
     # Avoid overwriting the converter config YAML if sidecar path equals config path

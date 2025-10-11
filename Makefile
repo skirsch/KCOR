@@ -10,10 +10,13 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf validation test clean sensitivity KCOR_variable HVE ASMR help
+.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
+# Defaults for adapter/convert flows
+CONVERT_DATASET ?= japan
+KRF_DATASET ?= japan
 
 # Default: build everything (variable-cohort + analysis + validation + tests)
 all: KCOR_variable KCOR validation test
@@ -28,7 +31,11 @@ CMR:
 
 # Run CMR on KRF input by adapting to Czech-like format first
 CMR_from_krf:
-	$(MAKE) -C $(CODE_DIR) CMR_from_krf DATASET=$(DATASET)
+	$(MAKE) -C $(CODE_DIR) CMR_from_krf DATASET=$(KRF_DATASET)
+
+# Dataset converter (delegates to data/<DATASET>/Makefile)
+convert:
+	$(MAKE) -C data/$(CONVERT_DATASET) convert
 
 # Variable-cohort aggregation (delegates to code/Makefile target KCOR_variable)
 KCOR_variable:
@@ -82,6 +89,7 @@ help:
 	@echo "  KCOR            - Run main KCOR pipeline (code/)"
 	@echo "  CMR             - Run only CMR aggregation step (code/)"
 	@echo "  CMR_from_krf    - Adapt KRF CSV to Czech-like and run CMR (code/)"
+	@echo "  convert         - Run dataset converter (data/$(DATASET)/)"
 	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
 	@echo "  km              - Run only Kaplan–Meier validation"
 	@echo "  glm             - Run only GLM validation"
@@ -93,5 +101,7 @@ help:
 	@echo "  clean           - Clean outputs"
 	@echo ""
 	@echo "Variables:"
-	@echo "  DATASET=<name>  - Dataset namespace (default: Czech)"
+	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
+	@echo "  CONVERT_DATASET=<nm>  - Converter dataset (default: japan)"
+	@echo "  KRF_DATASET=<nm>      - KRF adapter dataset for CMR_from_krf (default: japan)"
 

@@ -1093,17 +1093,12 @@ These results demonstrate a **dose-dependent accelerating mortality pattern** th
 This pattern shows that **all doses cause statistically significant harm** with **no protective benefit** at any dose level. The analysis reveals **cumulative damage with accelerating mortality risk** for each additional dose. This finding is consistent across different enrollment cohorts and age groups, providing robust evidence of dose-dependent vaccine toxicity in the Czech population.
 
 ## 📊 Results Using Japan data from Hamamatsu
-After getting the [Hamamatsu data](covid-vaccine-jp.iwmtyss.com/VRS.zip) which I put in the `data/japan` directory, in that directory run:
+After getting the [Hamamatsu data](covid-vaccine-jp.iwmtyss.com/VRS.zip) which I put in the `data/japan` directory, in the root directory run:
 
 ```
-  make convert
-```
-This produces output in the KCOR Record File (KRF) format.
-
-Then go to the repo root and type:
-```
-  make CMR_from_krf DATASET=japan   # this converts to Czech format and call make CMR
-  make KCOR DATASET=japan           # we now have a KCOR_CMR.xlsx input file so do as normal
+  make convert                      # convert the .gz source to KRF format defaults to japan
+  make CMR_from_krf                 # this converts krf to Czech format and call make CMR to create the CMR file
+  make KCOR DATASET=japan           # when done, we now have a KCOR_CMR.xlsx input file so do as normal
 ```
 
 ## 🔬 Validation

@@ -511,9 +511,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
 
             # Ensure we are not writing into a view (avoid chained-assignment errors)
             merged = merged.copy()
-            # Clip CI bounds to reasonable values (use pandas clip and .loc assignment)
-            merged.loc[:, "CI_lower"] = merged["CI_lower"].clip(lower=0, upper=merged["KCOR"] * 10)
-            merged.loc[:, "CI_upper"] = merged["CI_upper"].clip(lower=merged["KCOR"] * 0.1, upper=merged["KCOR"] * 10)
+            # Clip CI bounds to reasonable values using NumPy to avoid chained-assignment traps
+            _lower = (merged["KCOR"] * 0.1).to_numpy()
+            _upper = (merged["KCOR"] * 10).to_numpy()
+            merged.loc[:, "CI_lower"] = np.clip(merged["CI_lower"].to_numpy(), 0, _upper)
+            merged.loc[:, "CI_upper"] = np.clip(merged["CI_upper"].to_numpy(), _lower, _upper)
 
             # Build explicit hazard columns: unadjusted from hazard_raw_*, adjusted from hazard_adj_*
             merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
