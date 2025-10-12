@@ -463,6 +463,8 @@ Therefore, testing for dynamic HVE by inspection of the deaths/week curves of th
 
 8. **Vaccine harm and mortality recovery is mostly time limited:** We use slope normalization that starts (whenever possible) more than a year after the vaccine intervention. If the vaccine is still causing harm, or if the harm is rapidly declining over time, this might bias the results in either direction. The easist way to validate the assumption is to look at the event time-series plots for the vaccinated cohort. For the COVID vaccine we consistently see a 6-9 month steady rise, then plateau that fluctuates seasonally as expected. This is an excellent indicator that the assumption is correct. Another way is to look at the normalized hazard(t) over time and see that it looks flat.
 
+9. **Too little data:** If there are any weeks with zero deaths in any of the cohorts you are comparing, you have too little data to use KCOR on that cohort. KCOR loves lots of data. Generally, KCOR will not be reliable on datasets of 1M or less. Datasets of 10M people or more are highly recommended. If a slope correction is large in either direction, it's a sure sign of too little data. This generally happens when the underlying mortality rate cureves are not relatively smooth. The Hamamatsu dataset shows this effect effect in spades, even in the more populated cohorts.
+
 
 ### Causal inference
 It is a fundamental principle of causal inference that causal conclusions cannot be drawn from observational data without making causal assumptions. KCOR does not eliminate the need for such assumptions; rather, it makes them explicit, narrower in scope, and empirically testable.
@@ -1100,6 +1102,7 @@ After getting the [Hamamatsu data](covid-vaccine-jp.iwmtyss.com/VRS.zip) which I
   make CMR_from_krf                 # this converts krf to Czech format and call make CMR to create the CMR file
   make KCOR DATASET=japan           # when done, we now have a KCOR_CMR.xlsx input file so do as normal
 ```
+Unfortunately, there is too little data for most cohorts to be usable, especially younger cohorts.
 
 ## 🔬 Validation
 
