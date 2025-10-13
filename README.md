@@ -56,6 +56,8 @@ The method is can be fully explained in 6 steps:
 
 That's it. That's the entire method. It's that simple.
 
+It's like comparing two mutual funds. One mutual fund had million dollars AUM and had a 20% return over a year. But the other mutual fund had 500K AUM and a 22% return over a year but there was 20% currency inflation in that mutual fund. KCOR effectively neutralizes the inflation, and compares the cumulative net asset values of the two funds over time. It is no more complicated than that. 
+
 KCOR is on a simple principle: people's mortality rate tends to increase over time at a very predictable rate as noted [in this paper](https://pubmed.ncbi.nlm.nih.gov/24534516/) and shown below: ![Mortality rate vs. age](documentation/mortality_rate_vs_age_from_HMD.jpg).
 
  However, mixing cohorts with diverse frailty can change the slope of a cohort which remains quite steady over a 1 to 2 year interval. Note that the sum of lines with different slopes is a line.
