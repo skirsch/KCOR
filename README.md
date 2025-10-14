@@ -801,7 +801,6 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 ```python
 # Core methodology
 ANCHOR_WEEKS = 4                    # Baseline week for KCOR normalization (Note that week # 0 is the first week)
-SLOPE_WINDOW_SIZE = 2               # Window size for slope calculation (±2 weeks)
 MA_TOTAL_LENGTH = 8                 # Moving average length (8 weeks)
 CENTERED = True                     # Use centered moving average
 DYNAMIC_HVE_SKIP_WEEKS = 0           # Start accumulating hazards/statistics at this week index (0 = from enrollment)

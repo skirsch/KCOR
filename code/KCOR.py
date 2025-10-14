@@ -148,11 +148,7 @@ NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons an
 
 # Dynamic anchors removed
 
-# SLOPE CALCULATION METHODOLOGY (Simple window-based):
-# Uses end-vs-start windows of width SLOPE_WINDOW_SIZE to estimate trend.
-SLOPE_WINDOW_SIZE = 2  # Window half-width; we use 2*w+1 points at each end
-
-# Dynamic anchor selection removed; slopes are computed using a single-series fit
+# Legacy simple window-based slope calculation removed (SLOPE_WINDOW_SIZE obsolete)
 
 # Reporting date lookup for KCOR summary/console per cohort (sheet name)
 # For the first three cohorts, use end of 2022; for 2022_47, use one year later (end of 2023)
@@ -333,25 +329,10 @@ def select_dynamic_anchor_offsets(enrollment_date, df_dates):
     return (None, None)
 
 def compute_group_slopes_dynamic(df, sheet_name, dual_print_fn=None):
-    """Dynamic anchors removed; compute slopes via simple end-vs-start windows."""
+    """Deprecated: return zero slopes; slope2 handles normalization at hazard level."""
     slopes = {}
-    for (yob, dose), g in df.groupby(["YearOfBirth","Dose"], sort=False):
-        g_sorted = g.sort_values("t")
-        if len(g_sorted) < 2:
-            slopes[(yob, dose)] = 0.0
-            continue
-        w = int(max(1, SLOPE_WINDOW_SIZE))
-        start_block = g_sorted.head(2*w + 1)
-        end_block = g_sorted.tail(2*w + 1)
-        v1 = start_block["MR_smooth"][start_block["MR_smooth"] > EPS].values
-        v2 = end_block["MR_smooth"][end_block["MR_smooth"] > EPS].values
-        if len(v1) == 0 or len(v2) == 0:
-            slopes[(yob, dose)] = 0.0
-            continue
-        T = max(1, int(end_block["t"].max() - start_block["t"].min()))
-        s = (np.mean(np.log(v2)) - np.mean(np.log(v1))) / T
-        slopes[(yob, dose)] = float(np.clip(s, -10.0, 10.0))
-    # No dynamic-anchor logging
+    for (yob, dose), _ in df.groupby(["YearOfBirth","Dose"], sort=False):
+        slopes[(yob, dose)] = 0.0
     return slopes
 
 def compute_death_slopes_lookup(df, sheet_name, logger=None):
@@ -428,6 +409,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             ).sort_values("DateDied")
             if merged.empty:
                 continue
+            # Ensure standalone frame (not a slice) to avoid chained-assignment warnings downstream
+            merged = merged.reset_index(drop=True).copy(deep=True)
                 
             # Debug: Print detailed info for each date
             # if DEBUG_VERBOSE:
@@ -493,6 +476,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             # because the scaling factor affects the normalization but not the underlying
             # death count uncertainties, which are what drive the CI calculation
             
+            # Work on a deep copy to avoid chained-assignment warnings
+            merged = merged.copy(deep=True)
+
             # Calculate variance components for each time point
             # Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
             # Using binomial uncertainty: Var[D] ≈ D for death counts
@@ -504,18 +490,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 (baseline_den + EPS) / (baseline_den + EPS)**2                        # Var[baseline_den]/baseline_den²
             )
             
-            # Calculate 95% CI bounds on log scale, then exponentiate
+            # Calculate 95% CI bounds on log scale, then exponentiate, with clipping applied at creation
             # CI = exp(log(KCOR) ± 1.96 * SE_logKCOR)
-            merged["CI_lower"] = merged["KCOR"] * safe_exp(-1.96 * merged["SE_logKCOR"])
-            merged["CI_upper"] = merged["KCOR"] * safe_exp(1.96 * merged["SE_logKCOR"])
-
-            # Ensure we are not writing into a view (avoid chained-assignment errors)
-            merged = merged.copy()
-            # Clip CI bounds to reasonable values using NumPy to avoid chained-assignment traps
-            _lower = (merged["KCOR"] * 0.1).to_numpy()
-            _upper = (merged["KCOR"] * 10).to_numpy()
-            merged.loc[:, "CI_lower"] = np.clip(merged["CI_lower"].to_numpy(), 0, _upper)
-            merged.loc[:, "CI_upper"] = np.clip(merged["CI_upper"].to_numpy(), _lower, _upper)
+            _ci_lower_raw = merged["KCOR"] * safe_exp(-1.96 * merged["SE_logKCOR"])
+            _ci_upper_raw = merged["KCOR"] * safe_exp(1.96 * merged["SE_logKCOR"])
+            merged["CI_lower"] = np.clip(_ci_lower_raw, 0, merged["KCOR"] * 10)
+            merged["CI_upper"] = np.clip(_ci_upper_raw, merged["KCOR"] * 0.1, merged["KCOR"] * 10)
 
             # Build explicit hazard columns: unadjusted from hazard_raw_*, adjusted from hazard_adj_*
             merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
@@ -1081,8 +1061,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             slopes_loc = {}
                             for (yob, dose), g in df_local.groupby(["YearOfBirth","Dose"], sort=False):
                                 g_sorted = g.sort_values("t")
-                                w1s, w1e = max(0, off1loc - SLOPE_WINDOW_SIZE), off1loc + SLOPE_WINDOW_SIZE
-                                w2s, w2e = max(0, off2loc - SLOPE_WINDOW_SIZE), off2loc + SLOPE_WINDOW_SIZE
+                                # Use explicit windows defined by [start, end] inclusive around offsets
+                                w1s, w1e = off1loc, off1loc
+                                w2s, w2e = off2loc, off2loc
                                 p1 = g_sorted[(g_sorted["t"] >= w1s) & (g_sorted["t"] <= w1e)]
                                 p2 = g_sorted[(g_sorted["t"] >= w2s) & (g_sorted["t"] <= w2e)]
                                 v1 = p1["MR_smooth"][p1["MR_smooth"] > EPS].values
@@ -1330,6 +1311,24 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             else:
                 Wm1 = float(np.mean(w1_vals))
                 Wm2 = float(np.mean(w2_vals))
+                # Strict error on negative mean hazards; log offending dates and values
+                if Wm1 < 0.0 or Wm2 < 0.0:
+                    try:
+                        dual_print(
+                            f"SLOPE2_NEGATIVE_MEAN,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},Wm1={Wm1:.6e},Wm2={Wm2:.6e}"
+                        )
+                        def _log_negatives(window_name: str, labels: list):
+                            for lbl in labels:
+                                hv = float(weekly.get(lbl, 0.0))
+                                if hv < 0.0:
+                                    dual_print(
+                                        f"SLOPE2_NEG_HAZARD,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},hazard={hv:.6e}"
+                                    )
+                        _log_negatives("W1", W1_weeks)
+                        _log_negatives("W2", W2_weeks)
+                    except Exception:
+                        pass
+                    raise RuntimeError("slope2: negative mean hazard detected; see log for details")
                 # Fallback W4 (sheet-level, once): if any cohort needs fallback, switch the entire enrollment's second window to W4
                 used_w4 = False
                 if Wm2 <= 0.0 and (W1_ISO == BASE_W1 and W2_ISO == BASE_W2):
@@ -1356,10 +1355,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 delta_weeks = (c2 - c1).days / 7.0
                 if Wm1 <= 0.0 or Wm2 <= 0.0:
                     beta_vals[(yob, dose)] = 0.0
-                    reason = "nonpositive_means"
-                    # Print detailed window data for debugging
-                    try:
-                        if str(os.environ.get("SLOPE2_LOG_DETAIL", "")).strip().lower() in ("1","true","yes"):
+                    reason = "negative_means" if (Wm1 < 0.0 or Wm2 < 0.0) else "zero_means"
+                    # Only log details for truly negative means (not zero)
+                    if Wm1 < 0.0 or Wm2 < 0.0:
+                        try:
+                            nonpos_flags = []
+                            if Wm1 < 0.0:
+                                nonpos_flags.append(f"W1_mean={Wm1:.6e}")
+                            if Wm2 < 0.0:
+                                nonpos_flags.append(f"W2_mean={Wm2:.6e}")
+                            dual_print(
+                                f"SLOPE2_NONPOSITIVE_MEANS,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},{' '.join(nonpos_flags)}"
+                            )
                             def _print_window_details(window_name: str, labels: list):
                                 for lbl in labels:
                                     sub = g[g["iso_label"] == lbl]
@@ -1379,10 +1386,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                     dual_print(
                                         f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT={pt_sum:.6f},Dead={dead_sum:.6f},MR={(mr_w if not np.isnan(mr_w) else float('nan')):.6e},hazard={(hazard_w if not np.isnan(hazard_w) else float('nan')):.6e}"
                                     )
-                            _print_window_details("W1", W1_weeks)
-                            _print_window_details("W2", W2_weeks)
-                    except Exception:
-                        pass
+                            if Wm1 < 0.0:
+                                _print_window_details("W1", W1_weeks)
+                            if Wm2 < 0.0:
+                                _print_window_details("W2", W2_weeks)
+                        except Exception:
+                            pass
                 elif delta_weeks <= 0:
                     beta_vals[(yob, dose)] = 0.0
                     reason = "invalid_delta"
@@ -1774,7 +1783,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         # FINAL_KCOR fields removed
                         "  KCOR_NORMALIZATION_WEEK",
                         "  SLOPE_ANCHOR_T",
-                        "  SLOPE_WINDOW_SIZE",
+                        # "  SLOPE_WINDOW_SIZE",  # obsolete
                         # removed MA params
                         "  YEAR_RANGE",
                         "  ENROLLMENT_DATES",
@@ -1854,7 +1863,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         f"{KCOR_NORMALIZATION_WEEK}",
                         f"{SLOPE_ANCHOR_T}",
-                        f"{SLOPE_WINDOW_SIZE}",
+                        f"",
                         # removed MA params
                         f"{YEAR_RANGE}",
                         f"{ENROLLMENT_DATES}",
@@ -1924,7 +1933,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         f"{KCOR_NORMALIZATION_WEEK}",
                         f"{SLOPE_ANCHOR_T}",
-                        f"{SLOPE_WINDOW_SIZE}",
+                        f"",
                         # removed MA params
                         f"{YEAR_RANGE}",
                         f"{ENROLLMENT_DATES}",
@@ -2042,7 +2051,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     # Memorialize key parameters
                     "param_normalization_week": KCOR_NORMALIZATION_WEEK,
                     # removed MA params
-                    "param_slope_window_size": SLOPE_WINDOW_SIZE,
+                    # "param_slope_window_size" obsolete with slope2; keep empty for backward-compat headers
                     "param_slope_start": off1,
                     "param_slope_length": slope_len,
                     "param_sa_cohorts": sa_env_cohorts,

@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-10-11 16:02:44
+Analysis Date: 2025-10-13 17:02:40
 Mode: Primary Analysis
 Input File: ../data/japan/KCOR_CMR.xlsx
 Output File: ../data/japan/KCOR.xlsx
@@ -42,17 +42,17 @@ Configuration Parameters (effective):
   YoB 1990, % vaxxed=1  alive_by_dose= 99% 1% 0% total=68907
   YoB 2000, % vaxxed=0  alive_by_dose= 100% total=42936
 SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_13,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1930,Dose=1,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=3.578463e-03,reason=nonpositive_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1930,Dose=1,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=3.578463e-03,reason=zero_means
 SLOPE2_FALLBACK,EnrollmentDate=2021_13,using=W4,2022-42..2022-48 (applies to all cohorts)
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1940,Dose=1,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1940,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1950,Dose=1,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1950,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1960,Dose=1,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1960,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1970,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1980,Dose=2,W1_present=13,W2_present=7,Wm1=4.459321e-04,Wm2=0.000000e+00,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1990,Dose=2,W1_present=13,W2_present=7,Wm1=7.654101e-04,Wm2=0.000000e+00,reason=nonpositive_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1940,Dose=1,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1940,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1950,Dose=1,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1950,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1960,Dose=1,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1960,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1970,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1980,Dose=2,W1_present=13,W2_present=7,Wm1=4.459321e-04,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1990,Dose=2,W1_present=13,W2_present=7,Wm1=7.654101e-04,Wm2=0.000000e+00,reason=zero_means
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 28620 rows
 [DEBUG] Filtered to 28620 rows for ages 1920-2009
@@ -69,7 +69,7 @@ SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1990,Dose=2,W1_present=13,W2_present=7,Wm
   YoB 2000, % vaxxed=0  alive_by_dose= 100% 0% total=42936
 SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_24,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
 SLOPE2_FALLBACK,EnrollmentDate=2021_24,using=W4,2022-42..2022-48 (applies to all cohorts)
-SLOPE2_DIAG,EnrollmentDate=2021_24,YoB=2000,Dose=1,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=nonpositive_means
+SLOPE2_DIAG,EnrollmentDate=2021_24,YoB=2000,Dose=1,W1_present=13,W2_present=13,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
 [Info] Processing sheet: 2022_06
 [DEBUG] Filtered to start from enrollment date 02/07/2022: 22500 rows
 [DEBUG] Filtered to 22500 rows for ages 1920-2009
@@ -86,8 +86,8 @@ SLOPE2_DIAG,EnrollmentDate=2021_24,YoB=2000,Dose=1,W1_present=13,W2_present=13,W
   YoB 2000, % vaxxed=77  alive_by_dose= 23% 1% 76% total=42901
 SLOPE2_WINDOW_PAIR,EnrollmentDate=2022_06,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
 SLOPE2_FALLBACK,EnrollmentDate=2022_06,using=W4,2022-42..2022-48 (applies to all cohorts)
-SLOPE2_DIAG,EnrollmentDate=2022_06,YoB=1950,Dose=1,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=2.016840e-03,reason=nonpositive_means
-SLOPE2_DIAG,EnrollmentDate=2022_06,YoB=1960,Dose=1,W1_present=13,W2_present=7,Wm1=7.692372e-04,Wm2=0.000000e+00,reason=nonpositive_means
+SLOPE2_DIAG,EnrollmentDate=2022_06,YoB=1950,Dose=1,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=2.016840e-03,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2022_06,YoB=1960,Dose=1,W1_present=13,W2_present=7,Wm1=7.692372e-04,Wm2=0.000000e+00,reason=zero_means
 [Info] Processing sheet: 2022_47
 [DEBUG] Filtered to start from enrollment date 11/21/2022: 15120 rows
 [DEBUG] Filtered to 15120 rows for ages 1920-2009
@@ -450,7 +450,7 @@ Dose combination: 4 vs 0 [2022_47]
   1990            |   0.3023 [0.175, 0.522] | 0.3988  (beta_num=0.035113, beta_den=0.015493)
   2000            |   0.4643 [0.000, 4.643] | 2.6471  (beta_num=0.063555, beta_den=0.025073)
 ================================================================================
-[Done] Wrote 25761 rows to ../data/japan/KCOR.xlsx at 2025-10-11 16:03:39
+[Done] Wrote 25761 rows to ../data/japan/KCOR.xlsx at 2025-10-13 17:03:34
 [Summary] Creating summary file: ../data/japan/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 37 summary rows
   - 2021_24: 3 dose combinations, 37 summary rows
