@@ -45,3 +45,4 @@ SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_13,pair=2022-24..2022-36 vs 2023-24..2023
 SLOPE2_FALLBACK,EnrollmentDate=2021_13,using=W4,2022-42..2022-48 (applies to all cohorts)
 SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=1,W1_present=13,W2_present=13,Wm1=2.435431e-05,Wm2=0.000000e+00,reason=zero_means
 SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=2000,Dose=2,W1_present=13,W2_present=7,Wm1=0.000000e+00,Wm2=6.587832e-05,reason=zero_means
+[Info] Processing sheet: 2021_24
