@@ -298,10 +298,10 @@ $$
 
 where $d_{g,\tau}$ is deaths and $a_{g,\tau}$ is person‑time (Alive) in week $\tau$.
 
-The 95\% CI is
+The 95% CI is
 
 $$
-\mathrm{CI}_{95\%}(t)=\left[\mathrm{KCOR}(t) \cdot  e^{-1.96 \cdot \mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\log K}(t)}\right].
+\mathrm{CI}_{95 \\%}(t)=\left[\mathrm{KCOR}(t) \cdot  e^{-1.96 \cdot \mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\log K}(t)}\right].
 $$
 
 **ASMR (pooled across ages)**
@@ -318,10 +318,10 @@ $$
 \mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)}.
 $$
 
-The 95\% CI is
+The 95% CI is
 
 $$
-\mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t) \cdot e^{-1.96 \cdot \mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\text{total}}}\right].
+\mathrm{CI}_{95 \\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t) \cdot e^{-1.96 \cdot \mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\text{total}}}\right].
 $$
 
 Notes:
