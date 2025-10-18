@@ -495,8 +495,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             _ci_upper_raw = merged["KCOR"] * safe_exp(1.96 * merged["SE_logKCOR"])
             merged["CI_lower"] = np.clip(_ci_lower_raw, 0, merged["KCOR"] * 10)
             merged["CI_upper"] = np.clip(_ci_upper_raw, merged["KCOR"] * 0.1, merged["KCOR"] * 10)
-            # Blank CI at baseline week to avoid infinite/unstable intervals
-            merged.loc[t0_idx, ["CI_lower", "CI_upper"]] = np.nan
+            # Blank CI for all weeks up to and including baseline (t <= t0)
+            merged.loc[merged.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
 
             # Build explicit hazard columns: unadjusted from hazard_raw_*, adjusted from hazard_adj_*
             merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
@@ -683,8 +683,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 # Calculate 95% CI bounds on log scale, then exponentiate
                 CI_lower = Kpool * safe_exp(-1.96 * SE_total)
                 CI_upper = Kpool * safe_exp(1.96 * SE_total)
-                # Blank CI at baseline week to avoid infinite/unstable intervals
-                if (dt == all_dates[min(KCOR_NORMALIZATION_WEEK, len(all_dates)-1)]):
+                # Blank CI at baseline and earlier dates (t <= t0) to avoid infinite/unstable intervals
+                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEK, len(all_dates)-1)]:
                     CI_lower = np.nan
                     CI_upper = np.nan
                 
