@@ -9,7 +9,9 @@ The second most important rule is that using \text in a subscript or superscript
 
 Make sure open and close braces match up.
 
-Using `\%` will not work. You'd need to use `\\%` instead to get a % sign to appear in the text.
+Using `\%` will not work. You'd need to use two backslashes `\\%` instead to get a % sign to appear in the text.
+
+For all other characters, backslash works, but not %. 
 
 
 ## Math delimiters GitHub accepts

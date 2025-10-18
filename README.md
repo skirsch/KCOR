@@ -276,7 +276,7 @@ Where:
 #### 5. Uncertainty Quantification
 **95% Confidence Intervals (Nelson–Aalen, post‑anchor):**
 
-We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let \(t_0\) be the baseline week (week 4). For group \(g\in\{v,u\}\), define the post‑anchor increment \(\Delta CH_g(t)=CH_g(t)-CH_g(t_0)\).
+We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let $t_0$ be the baseline week (week 4). For group $g\in\{v,u\}$, define the post‑anchor increment $\Delta CH_g(t)=CH_g(t)-CH_g(t_0)$.
 
 Per‑age cohorts
 
@@ -284,18 +284,18 @@ $$
 \mathrm{SE}_{\log K}(t) \approx \sqrt{ \frac{\mathrm{Var}[\Delta CH_v(t)]}{(\Delta CH_v(t))^2} + \frac{\mathrm{Var}[\Delta CH_u(t)]}{(\Delta CH_u(t))^2} }.
 $$
 
-Using Nelson–Aalen increments with slope normalization factor \(s(\tau)=h^{adj}_g(\tau)/h^{raw}_g(\tau)\):
+Using Nelson–Aalen increments with slope normalization factor $s(\tau)=h^{adj}_g(\tau)/h^{raw}_g(\tau)$:
 
 $$
 \mathrm{Var}[\Delta CH_g(t)] \approx \sum_{\tau=t_0+1}^{t} \frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2,
 $$
 
-where \(d_{g,\tau}\) is deaths and \(a_{g,\tau}\) is person‑time (Alive) in week \(\tau\).
+where $d_{g,\tau}$ is deaths and $a_{g,\tau}$ is person‑time (Alive) in week $\tau$.
 
 The 95\% CI is
 
 $$
-\mathrm{CI}_{95\%}(t)=\left[\,\mathrm{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\right].
+\mathrm{CI}_{95\\%}(t)=\left[\,\mathrm{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\right].
 $$
 
 ASMR (pooled across ages)
@@ -315,21 +315,8 @@ $$
 The 95\% CI is
 
 $$
-\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)=\left[\,K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\right].
+\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\right].
 $$
-
-ok try this
-
-
-$$
-\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)
-= \left[
-K_{\mathrm{pool}}(t)\, \exp\!\bigl(-1.96\,\mathrm{SE}_{\text{total}}\bigr),
-\; K_{\mathrm{pool}}(t)\, \exp\!\bigl(+1.96\,\mathrm{SE}_{\text{total}}\bigr)
-\right].
-$$
-
-
 
 Notes:
 - This replaces the prior baseline‑terms formula. Variance is now computed from post‑anchor increments only, matching the plotting interval.
