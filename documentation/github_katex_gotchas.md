@@ -9,6 +9,8 @@ The second most important rule is that using \text in a subscript or superscript
 
 Make sure open and close braces match up.
 
+Using `\%` will not work. You'd need to use `\\%` instead to get a % sign to appear in the text.
+
 
 ## Math delimiters GitHub accepts
 - **Inline:** `$ … $` or `\(...\)`

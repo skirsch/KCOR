@@ -315,31 +315,11 @@ $$
 The 95\% CI is
 
 $$
-\mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)=\left[\,K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\right].
+\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)=\left[\,K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\right].
 $$
 
 ok try this
 
-
-$$
-\mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)
-= \left[
-K_{\mathrm{pool}}(t)\, \exp\!\bigl(-1.96\,\mathrm{SE}_{\text{total}}\bigr),
-\; K_{\mathrm{pool}}(t)\, \exp\!\bigl(+1.96\,\mathrm{SE}_{\text{total}}\bigr)
-\right].
-$$
-
-exactly as said:
-
-$$
-\mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)
-= \left[
-K_{\mathrm{pool}}(t)\, \exp\!\bigl(-1.96\,\mathrm{SE}_{\text{total}}\bigr),
-\; K_{\mathrm{pool}}(t)\, \exp\!\bigl(+1.96\,\mathrm{SE}_{\text{total}}\bigr)
-\right].
-$$
-
-and with extra \
 
 $$
 \mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)
@@ -427,7 +407,7 @@ where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** ca
 (seasonality/waves), and $\varepsilon_{g,t}$ is noise.
 
 > [!NOTE]
-> Slope normalization is required for fair comparisons across cohorts with different baseline frailty mixes; v4.6 uses SIN to estimate and remove cohort-level trend at the hazard stage without altering raw MR.
+> Slope normalization is required for fair comparisons across cohorts with different baseline frailty mixes; v4.6 uses the slope2 method (fixed quiet windows, hazard-level normalization) to estimate and remove cohort-level trend without altering raw MR.
 
 **Slope estimation via quiet anchors**
 Choose two quiet, non-differential windows $B_1,B_2$ (each of length $w$), and define
