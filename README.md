@@ -364,6 +364,30 @@ Notes:
   $$
 
 
+### test section
+ Age-standardize hazards by dose:
+
+  \[
+  h^{\mathrm{std}}_k(t) = \sum_a w_a\, h_{k,a}(t)
+  \]
+
+- Accumulate to standardized cumulative hazards:
+
+  \[
+  H^{\mathrm{std}}_k(t) = \sum_{u\le t} h^{\mathrm{std}}_k(u)
+  \]
+
+- Convert to standardized risks:
+
+  \[
+  R^{\mathrm{std}}_k(t) = 1 - e^{-H^{\mathrm{std}}_k(t)}
+  \]
+
+- Form the age-standardized KCOR curve:
+
+  \[
+  \mathrm{KCOR}_{\mathrm{pool}}(t) = \frac{R^{\mathrm{std}}_{\mathrm{dose}}(t)}{R^{\mathrm{std}}_{\mathrm{ref}}(t)}
+  \]
 
 ### Mathematical and statistical description
 
