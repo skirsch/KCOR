@@ -320,13 +320,15 @@ $$
 
 ok try this
 
+
 $$
 \mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)
-= \left[\,
-K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},
-\; K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}
-\,\right].
+= \left[
+K_{\mathrm{pool}}(t)\, \exp\!\bigl(-1.96\,\mathrm{SE}_{\text{total}}\bigr),
+\; K_{\mathrm{pool}}(t)\, \exp\!\bigl(+1.96\,\mathrm{SE}_{\text{total}}\bigr)
+\right].
 $$
+
 
 Notes:
 - This replaces the prior baseline‑terms formula. Variance is now computed from post‑anchor increments only, matching the plotting interval.

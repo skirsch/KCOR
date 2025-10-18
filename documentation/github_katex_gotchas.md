@@ -1,5 +1,15 @@
 # KaTeX on GitHub: Rules & Gotchas
 
+
+most important rule is that `$$` to start and end math must ALWAYS start in column 1 and be on their own lines.
+
+These lines must have a blank line before the `$$` and after the closing one.
+
+The second most important rule is that using \text in a subscript or superscript will not work.
+
+Make sure open and close braces match up.
+
+
 ## Math delimiters GitHub accepts
 - **Inline:** `$ … $` or `\(...\)`
 - **Display:** `$$ … $$` or `\[…\]`
