@@ -276,21 +276,6 @@ Where:
 #### 5. Uncertainty Quantification
 **95% Confidence Intervals (Nelson–Aalen, post‑anchor):**
 
-thin test
-
-
-$$
-\exp\\!\left(-x\right),\quad \ln\\!\left(1 - p\right)
-$$
-
-$$
-\exp!\left(-x\right),\quad \ln\\!\left(1 - p\right)
-$$
-
-$$
-\exp\left(-x\right),\quad \ln\\!\left(1 - p\right)
-$$
-
 We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let $t_0$ be the baseline week (week 4). For group $g\in\{v,u\}$, define the post‑anchor increment $\Delta CH_g(t)=CH_g(t)-CH_g(t_0)$.
 
 Per‑age cohorts
@@ -318,7 +303,7 @@ ASMR (pooled across ages)
 Let \(w_a\) be the expected‑deaths weights (sum to 1). Aggregate per‑age log‑variance contributions:
 
 $$
-\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)=\sum_{a} w_a^2\!\left(\frac{\mathrm{Var}[\Delta CH_{v,a}(t)]}{(\Delta CH_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta CH_{u,a}(t)]}{(\Delta CH_{u,a}(t))^2}\right),
+\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)=\sum_{a} w_a^2\left(\frac{\mathrm{Var}[\Delta CH_{v,a}(t)]}{(\Delta CH_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta CH_{u,a}(t)]}{(\Delta CH_{u,a}(t))^2}\right),
 $$
 
 then
@@ -424,13 +409,13 @@ $$
 **Slope-normalization**
 
 $$
-m^{\text{adj}}_{g,t} = m_{g,t}\,\exp\!\big[-\hat r_g\, (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
+m^{\text{adj}}_{g,t} = m_{g,t}\,\exp\big[-\hat r_g\, (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
 $$
 
 **Discrete hazard and cumulative hazard**
 
 $$
-h_{g,t} = -\ln\!\big(1-m^{\text{adj}}_{g,t}\big)\in[0,\infty),\qquad
+h_{g,t} = -\ln\big(1-m^{\text{adj}}_{g,t}\big)\in[0,\infty),\qquad
 H_g(t) = \sum_{i\le t} h_{g,i}.
 $$
 

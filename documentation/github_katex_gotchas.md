@@ -14,6 +14,9 @@ Using `\%` will not work. You'd need to use two backslashes `\\%` instead to get
 For all other characters, backslash works, but not %. 
 
 
+`\!` will NOT create a thin space but print as is. So do not use this.
+
+
 ## Math delimiters GitHub accepts
 - **Inline:** `$ … $` or `\(...\)`
 - **Display:** `$$ … $$` or `\[…\]`
