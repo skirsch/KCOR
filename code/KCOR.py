@@ -399,8 +399,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             if gv is None or gu is None:
                 continue
             # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
             
             merged = pd.merge(
                 gv_unique,
@@ -466,29 +466,28 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             #         print(f"    Date: {row['DateDied']}, CH_num: {row['CH_num']:.6f}, CH_den: {row['CH_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
             #     print()
 
-            # Correct KCOR 95% CI calculation based on baseline uncertainty
-            # Get baseline death counts at week 4
+            # KCOR 95% CI using post-anchor increments (Nelson–Aalen), adjusted for slope-normalization
+            # Anchor index
             t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
-            baseline_num = merged["cumD_adj_num"].iloc[t0_idx]
-            baseline_den = merged["cumD_adj_den"].iloc[t0_idx]
-            
-            # Note: The baseline uncertainty calculation doesn't need scaling adjustment
-            # because the scaling factor affects the normalization but not the underlying
-            # death count uncertainties, which are what drive the CI calculation
-            
-            # Work on a deep copy to avoid chained-assignment warnings
-            merged = merged.copy(deep=True)
-
-            # Calculate variance components for each time point
-            # Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
-            # Using binomial uncertainty: Var[D] ≈ D for death counts
-            
-            merged["SE_logKCOR"] = safe_sqrt(
-                (merged["cumD_adj_num"] + EPS) / (merged["cumD_adj_num"] + EPS)**2 +  # Var[cumD_num]/cumD_num²
-                (merged["cumD_adj_den"] + EPS) / (merged["cumD_adj_den"] + EPS)**2 +  # Var[cumD_den]/cumD_den²
-                (baseline_num + EPS) / (baseline_num + EPS)**2 +                      # Var[baseline_num]/baseline_num²
-                (baseline_den + EPS) / (baseline_den + EPS)**2                        # Var[baseline_den]/baseline_den²
-            )
+            # Post-anchor cumulative hazard increments
+            dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
+            dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
+            # Slope-normalization scale per week: s = hazard_adj / hazard_raw
+            s_num = (merged.get("hazard_adj_num", np.nan) / (merged.get("hazard_raw_num", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+            s_den = (merged.get("hazard_adj_den", np.nan) / (merged.get("hazard_raw_den", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+            # Nelson–Aalen incremental variances, scaled by s^2
+            var_inc_num = (merged.get("Dead_num", 0.0).astype(float) / (merged.get("Alive_num", 0.0).astype(float) + EPS)**2) * (s_num.astype(float)**2)
+            var_inc_den = (merged.get("Dead_den", 0.0).astype(float) / (merged.get("Alive_den", 0.0).astype(float) + EPS)**2) * (s_den.astype(float)**2)
+            # Cumulative from anchor forward (exclude anchor point)
+            var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
+            var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
+            var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+            var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+            # SE on log scale
+            denom_num = np.maximum(np.abs(dCH_num.values), EPS)
+            denom_den = np.maximum(np.abs(dCH_den.values), EPS)
+            se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
+            merged["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
             
             # Calculate 95% CI bounds on log scale, then exponentiate, with clipping applied at creation
             # CI = exp(log(KCOR) ± 1.96 * SE_logKCOR)
@@ -638,24 +637,42 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 else:
                     continue
                 
-                # Correct pooled KCOR 95% CI calculation based on baseline uncertainty
-                # For pooled results, we need to account for baseline uncertainty across all age groups
-                baseline_uncertainty = 0.0
+                # Pooled CI via weighted aggregation of per-age log-variance using post-anchor ΔCH (Nelson–Aalen)
+                var_terms = []
                 for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
                     if yob not in anchors:
                         continue
                     gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
                     gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
-                    if len(gvn) > KCOR_NORMALIZATION_WEEK and len(gdn) > KCOR_NORMALIZATION_WEEK:
-                        baseline_num = gvn["cumD_adj"].iloc[KCOR_NORMALIZATION_WEEK]
-                        baseline_den = gdn["cumD_adj"].iloc[KCOR_NORMALIZATION_WEEK]
-                        if np.isfinite(baseline_num) and np.isfinite(baseline_den) and baseline_num > EPS and baseline_den > EPS:
-                            # Add baseline uncertainty for this age group (weighted)
-                            weight = weights.get(yob, 0.0)
-                            baseline_uncertainty += (weight**2) * (1.0/baseline_num + 1.0/baseline_den)
-                
-                # Calculate total uncertainty including baseline
-                total_uncertainty = sum(var_terms) + baseline_uncertainty
+                    if gvn.empty or gdn.empty:
+                        continue
+                    gvn_upto = gvn[gvn["DateDied"] <= dt]
+                    gdn_upto = gdn[gdn["DateDied"] <= dt]
+                    if len(gvn_upto) == 0 or len(gdn_upto) == 0:
+                        continue
+                    t0_idx_age = KCOR_NORMALIZATION_WEEK if len(gvn_upto) > KCOR_NORMALIZATION_WEEK and len(gdn_upto) > KCOR_NORMALIZATION_WEEK else 0
+                    # ΔCH at dt
+                    dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
+                    dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
+                    # Scale factors s = hazard_adj / hazard_raw
+                    s_num_age = (gvn_upto["hazard_adj"] / (gvn_upto["hazard_raw"] + EPS)).to_numpy()
+                    s_den_age = (gdn_upto["hazard_adj"] / (gdn_upto["hazard_raw"] + EPS)).to_numpy()
+                    # NA variance increments
+                    var_inc_num_age = (gvn_upto["Dead"].astype(float) / (gvn_upto["Alive"].astype(float) + EPS)**2).to_numpy() * (s_num_age**2)
+                    var_inc_den_age = (gdn_upto["Dead"].astype(float) / (gdn_upto["Alive"].astype(float) + EPS)**2).to_numpy() * (s_den_age**2)
+                    # Cumulative from anchor forward
+                    csum_num = np.cumsum(var_inc_num_age)
+                    csum_den = np.cumsum(var_inc_den_age)
+                    var_cum_num_age = float(csum_num[-1] - csum_num[t0_idx_age]) if csum_num.size > 0 else 0.0
+                    var_cum_den_age = float(csum_den[-1] - csum_den[t0_idx_age]) if csum_den.size > 0 else 0.0
+                    # Per-age log-variance contribution
+                    denom_num_age = max(abs(dCH_num_age), EPS)
+                    denom_den_age = max(abs(dCH_den_age), EPS)
+                    var_log_age = (var_cum_num_age / (denom_num_age**2)) + (var_cum_den_age / (denom_den_age**2))
+                    w = weights.get(yob, 0.0)
+                    var_terms.append((w**2) * var_log_age)
+                # Final pooled SE on log scale
+                total_uncertainty = sum(var_terms)
                 SE_total = safe_sqrt(total_uncertainty) / sum(wts)
                 
                 # Clip SE to prevent overflow (using reasonable bound)

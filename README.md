@@ -42,6 +42,8 @@ KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for 
 
 KCOR uses fixed cohorts defined at an enrollment date chosen post vaccination and during a low to no COVID period. KCOR tracks the mortality rates of the cohorts over time to assess cumulative mortality ratios between the cohorts. If the intervention is safe, the cumulative hazard ratios between the cohorts will be a flat line. KCOR normalizes BOTH the mortality rates AND the mortality slopes over time in order to create a fair comparison. 
 
+KCOR is simple enough to fully implement in an Excel spreadsheet, including slope normalization and computation of CIs. This is useful for resolving ambiguities in the description of the algorithm. See the [example](/example/) directory where you can see it in action with real data.
+
 In short, KCOR turns epidemiology upside down by precisely matching mortality curves of the two cohorts being compared rather than 1:1 demographic makeup of the cohorts. That's the key insight. And it works because human beings have extremely constant baseline mortality rates that increase at a known constant, predictable rate (around 8% per year).
 
 KCOR results with the Czech data are devastating for the "safe and effective" narrative because they are so consistent across age groups and vaccine doses. The results show similar harms using data from Japan. KCOR showed a vaccine benefit (which may have exclusively been caused by non-proportional hazards), but the harms consistently outweighed the benefits. In short, KCOR shows 
@@ -272,23 +274,39 @@ Where:
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
 
 #### 5. Uncertainty Quantification
-**95% Confidence Interval Calculation:**
+**95% Confidence Intervals (Nelson–Aalen, post‑anchor):**
 
-The variance of KCOR is calculated using proper uncertainty propagation for the hazard ratio:
+We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let \(t_0\) be the baseline week (week 4). For group \(g\in\{v,u\}\), define the post‑anchor increment \(\Delta CH_g(t)=CH_g(t)-CH_g(t_0)\).
 
-$$\text{Var}[\ln(\text{KCOR}(t))] = \frac{\text{Var}[\text{CH}_v(t)]}{\text{CH}_v(t)^2} + \frac{\text{Var}[\text{CH}_u(t)]}{\text{CH}_u(t)^2} + \frac{\text{Var}[\text{CH}_v(t_0)]}{\text{CH}_v(t_0)^2} + \frac{\text{Var}[\text{CH}_u(t_0)]}{\text{CH}_u(t_0)^2}$$
+- Per‑age cohorts:
+\[
+\mathrm{SE}_{\log K}(t)\;\approx\;\sqrt{\;\frac{\mathrm{Var}[\Delta CH_v(t)]}{(\Delta CH_v(t))^2}\; +\;\frac{\mathrm{Var}[\Delta CH_u(t)]}{(\Delta CH_u(t))^2}\;}\,.
+\]
+Using Nelson–Aalen increments with slope normalization factor \(s(\tau)=h^{adj}_g(\tau)/h^{raw}_g(\tau)\):
+\[
+\mathrm{Var}[\Delta CH_g(t)]\;\approx\;\sum_{\tau=t_0+1}^{t}\; \frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2,
+\]
+where \(d_{g,\tau}\) is deaths and \(a_{g,\tau}\) is person‑time (Alive) in week \(\tau\).
 
-**Confidence Interval Bounds:**
+The 95% CI is
+\[
+\text{CI}_{95\%}(t)=\big[\,\text{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\; \text{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\big].
+\]
 
-$$\text{CI}_{\text{lower}}(t) = \text{KCOR}(t) \times e^{-z \sqrt{\text{Var}[\ln(\text{KCOR}(t))]}}$$
+- ASMR (pooled across ages):
+Let \(w_a\) be the expected‑deaths weights (sum to 1). Aggregate per‑age log‑variance contributions:
+\[
+\mathrm{Var}_{\log}^{\,(pooled)}(t)\;=\;\sum_{a}\; w_a^2\,\Big(\frac{\mathrm{Var}[\Delta CH_{v,a}(t)]}{(\Delta CH_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta CH_{u,a}(t)]}{(\Delta CH_{u,a}(t))^2}\Big),
+\]
+then \(\mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{\,(pooled)}(t)}\). The 95% CI is
+\[
+\text{CI}_{95\%}^{\,(ASMR)}(t)=\big[\,K_{pool}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\; K_{pool}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\big].
+\]
 
-$$\text{CI}_{\text{upper}}(t) = \text{KCOR}(t) \times e^{z \sqrt{\text{Var}[\ln(\text{KCOR}(t))]}}$$
-
-Where:
-- $\text{Var}[\text{CH}] ≈ \text{CH}$: Using Poisson variance approximation for cumulative hazard (sum of hazards)
-- $\text{Var}[\ln(KCOR)]$: Variance on log scale for proper uncertainty propagation of hazard ratio
-- $z=1.96$: 95% confidence level multiplier (standard normal distribution)
-- **Log-Scale Calculation**: CI bounds calculated on log scale then exponentiated for proper asymmetry
+Notes:
+- This replaces the prior baseline‑terms formula. Variance is now computed from post‑anchor increments only, matching the plotting interval.
+- Slope normalization is propagated into variance via \(s(\tau)^2\) per week.
+- All bounds are computed on the log scale and exponentiated.
 
 > [!TIP]
 > Here's a quick summary
@@ -393,22 +411,24 @@ $$
 - **Small-rate regime.** For small $m$, $h\approx m$, so $H_g(t)$ approximates the sum of adjusted rates.
   KCOR then approximates the ratio of those sums (still baseline-normalized).
 
-#### Uncertainty and confidence intervals
+#### Uncertainty and confidence intervals (updated)
 
-With count data, a standard approximation is $\mathrm{Var}[H_g(t)]\approx H_g(t)$.
-Then by the delta method,
+We now compute CIs from post‑anchor cumulative‑hazard increments using the Nelson–Aalen variance with slope‑normalization propagated via the weekly scaling factor \(s(\tau)=h^{adj}/h^{raw}\). For each cohort \(g\):
 
-$$
-\mathrm{Var}\!\big[\ln \mathrm{KCOR}(t)\big]
-\;\approx\;
-\frac{1}{H_v(t)}+\frac{1}{H_u(t)}+\frac{1}{H_v(t_0)}+\frac{1}{H_u(t_0)}.
-$$
+\[\Delta H_g(t)=H_g(t)-H_g(t_0),\qquad
+\mathrm{Var}[\Delta H_g(t)]\;\approx\;\sum_{\tau=t_0+1}^{t}\;\frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2.\]
 
-A $95\%$ CI is
+Per‑age SE on the log scale:
 
-$$
-\mathrm{KCOR}(t)\times \exp\!\Big(\pm 1.96\,\sqrt{\mathrm{Var}[\ln \mathrm{KCOR}(t)]}\Big).
-$$
+\[\mathrm{SE}_{\log K}(t)=\sqrt{\frac{\mathrm{Var}[\Delta H_v(t)]}{\Delta H_v(t)^2}+\frac{\mathrm{Var}[\Delta H_u(t)]}{\Delta H_u(t)^2}}.\]
+
+Pooled (ASMR) log‑variance uses expected‑deaths weights \(w_a\) (sum to 1):
+
+\[\mathrm{Var}_{\log}^{\,(pooled)}(t)=\sum_a w_a^2\left(\frac{\mathrm{Var}[\Delta H_{v,a}(t)]}{\Delta H_{v,a}(t)^2}+\frac{\mathrm{Var}[\Delta H_{u,a}(t)]}{\Delta H_{u,a}(t)^2}\right),\quad \mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{\,(pooled)}(t)}.\]
+
+95% CI in both cases:
+
+\[\mathrm{KCOR}(t)\times e^{\pm 1.96\,\mathrm{SE}},\quad \text{where }\mathrm{SE}\in\{\mathrm{SE}_{\log K},\,\mathrm{SE}_{\text{total}}\}.\]
 
 #### From "heuristics" to reproducible procedure
 
@@ -603,6 +623,8 @@ KCOR/
 │   └── [country]/                     # e.g., analysis/Czech/KCOR_analysis.xlsx, KCOR_ASMR_dose2.png
 ├── documentation/                      # Detailed methodology documentation
 │   └── hazard_function.md             # Mathematical reasoning for hazard functions
+├── example/                           # Spreadsheet example computing KCOR (slope norm + CIs)
+│   └── KCOR_sample_computation_194x.xlsx  # End-to-end KCOR in Excel
 ├── validation/                         # Independent validation suites
 │   ├── DS-CMRR/                       # Discrete Survival CMRR method
 │   ├── GLM/                           # Generalized Linear Models validation
@@ -891,14 +913,9 @@ See [Hazard Function Methodology](documentation/hazard_function.md) for detailed
 - **Version Documentation**: Complete change history in code
 - **Cross-Platform**: Windows-compatible Makefile and scripts
 
-### Moving Average Smoothing
-- **8-week centered MA**: Reduces noise while preserving trend information
-- **Configurable**: Window size and centering can be adjusted
-- **Pre-slope**: Applied before slope calculation for stability
-
 ### Window-Based Slope Estimation
-- **Robust Anchoring**: Uses multiple time points around each anchor
-- **Geometric Mean**: Appropriate for multiplicative processes like mortality
+- **Robust Anchoring**: Use two long anchor window
+- **Arithmetic Mean**: Appropriate for hazards which are added
 - **Consistent Comparison**: Same anchor points across all dose groups
 
 ### Confidence Interval Calculation
@@ -952,18 +969,11 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 ### 🆕 Version 4.6
 
 #### Major Improvements
-- Replaced legacy anchor-based slope normalization with Slope-from-Integral Normalization (SIN) as the primary method
+- Simplified two window slope normalization using 
 - Normalization now applies at the hazard stage only; raw MR values are never modified
 - Removed Czech-specific unvaccinated MR adjustment and all anchor/windows parameters from defaults
 - Cleaned console/log parameter dump to reflect SIN parameters only
 - Added missing 3 vs 1 comparison for the 2022_06 cohort
-- Removed MR_adj fields from outputs and docs; SIN is applied to hazards, not to mortality rates
-
-#### SIN Summary
-- Define window W = [t_a, t_b] per cohort; compute h = -ln(1 - MR)
-- hbar_k0 = mean of first m hazards; H_kW = sum of hazards over W; r_k = H_kW/(L*hbar_k0)
-- Solve (e^x - 1)/x = r_k → x; set beta_hat_k = x/L
-- Flatten hazards by exp(-beta_hat_k*(t - t0)) and compute KCOR on cumulative hazards; normalize at week 4
 
 ### 🆕 Version 4.3
 
