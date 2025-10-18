@@ -38,7 +38,7 @@
 
 ## Overview
 
-KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality differences between two cohorts (e.g., vaccinated vs. unvaccinated) in retrospective observational data using a unique approach with does not require traditional 1:1 matching of the cohorts. All you need to know is just 3 types of date: birth, death, date(s) of intervention. This makes the method amenable to public record-level datasets such as from the Czech Republic. It can accurately determine the cumulative net benefit/harm of an intervention as of a specific point in time (e.g., end of 2022). Given a sufficient number of records (such as the 11M records in the Czech dataset) it can accurately answer key societal questions such as "Did the COVID vaccine save more lives on a net basis?" in an objective manner.
+KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality differences between two cohorts (e.g., vaccinated vs. unvaccinated) in retrospective observational data using a unique approach which does not require traditional 1:1 matching of the cohorts. All you need to know is just 3 types of date: birth, death, date(s) of intervention. This makes the method amenable to public record-level datasets such as from the Czech Republic. It can accurately determine the cumulative net benefit/harm of an intervention as of a specific point in time (e.g., end of 2022). Given a sufficient number of records (such as the 11M records in the Czech dataset) it can accurately answer key societal questions such as "Did the COVID vaccine save more lives on a net basis?" in an objective manner.
 
 KCOR uses fixed cohorts defined at an enrollment date chosen post vaccination and during a low to no COVID period. KCOR tracks the mortality rates of the cohorts over time to assess cumulative mortality ratios between the cohorts. If the intervention is safe, the cumulative hazard ratios between the cohorts will be a flat line. KCOR normalizes BOTH the mortality rates AND the mortality slopes over time in order to create a fair comparison. 
 
@@ -278,30 +278,45 @@ Where:
 
 We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let \(t_0\) be the baseline week (week 4). For group \(g\in\{v,u\}\), define the post‑anchor increment \(\Delta CH_g(t)=CH_g(t)-CH_g(t_0)\).
 
-- Per‑age cohorts:
-\[
-\mathrm{SE}_{\log K}(t)\;\approx\;\sqrt{\;\frac{\mathrm{Var}[\Delta CH_v(t)]}{(\Delta CH_v(t))^2}\; +\;\frac{\mathrm{Var}[\Delta CH_u(t)]}{(\Delta CH_u(t))^2}\;}\,.
-\]
+Per‑age cohorts
+
+$$
+\mathrm{SE}_{\log K}(t) \approx \sqrt{ \frac{\mathrm{Var}[\Delta CH_v(t)]}{(\Delta CH_v(t))^2} + \frac{\mathrm{Var}[\Delta CH_u(t)]}{(\Delta CH_u(t))^2} }.
+$$
+
 Using Nelson–Aalen increments with slope normalization factor \(s(\tau)=h^{adj}_g(\tau)/h^{raw}_g(\tau)\):
-\[
-\mathrm{Var}[\Delta CH_g(t)]\;\approx\;\sum_{\tau=t_0+1}^{t}\; \frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2,
-\]
+
+$$
+\mathrm{Var}[\Delta CH_g(t)] \approx \sum_{\tau=t_0+1}^{t} \frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2,
+$$
+
 where \(d_{g,\tau}\) is deaths and \(a_{g,\tau}\) is person‑time (Alive) in week \(\tau\).
 
-The 95% CI is
-\[
-\text{CI}_{95\%}(t)=\big[\,\text{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\; \text{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\big].
-\]
+The 95\% CI is
 
-- ASMR (pooled across ages):
+$$
+\text{CI}_{95\%}(t)=\big[\,\text{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\; \text{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\big].
+$$
+
+ASMR (pooled across ages)
+
 Let \(w_a\) be the expected‑deaths weights (sum to 1). Aggregate per‑age log‑variance contributions:
-\[
-\mathrm{Var}_{\log}^{\,(pooled)}(t)\;=\;\sum_{a}\; w_a^2\,\Big(\frac{\mathrm{Var}[\Delta CH_{v,a}(t)]}{(\Delta CH_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta CH_{u,a}(t)]}{(\Delta CH_{u,a}(t))^2}\Big),
-\]
-then \(\mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{\,(pooled)}(t)}\). The 95% CI is
-\[
-\text{CI}_{95\%}^{\,(ASMR)}(t)=\big[\,K_{pool}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\; K_{pool}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\big].
-\]
+
+$$
+\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)=\sum_{a} w_a^2\!\left(\frac{\mathrm{Var}[\Delta CH_{v,a}(t)]}{(\Delta CH_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta CH_{u,a}(t)]}{(\Delta CH_{u,a}(t))^2}\right),
+$$
+
+then
+
+$$
+\mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)}.
+$$
+
+The 95\% CI is
+
+$$
+\text{CI}_{95\%}^{(\mathrm{ASMR})}(t)=\big[\,K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\; K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\big].
+$$
 
 Notes:
 - This replaces the prior baseline‑terms formula. Variance is now computed from post‑anchor increments only, matching the plotting interval.
@@ -322,12 +337,12 @@ Notes:
 
 #### 6. Age Standardization (ASMR: direct standardization → then ratio)
 
-- Fix age weights w_a (sum to 1) from the pooled baseline age distribution (first 4 distinct weeks).
-- Within each age a and dose k, compute weekly hazards after slope2: h_{k,a}(t).
-- Age-standardize hazards by dose: h^{std}_k(t) = \sum_a w_a h_{k,a}(t).
-- Accumulate to standardized cumulative hazards H^{std}_k(t) = \sum_{u\le t} h^{std}_k(u).
-- Convert to standardized risks R^{std}_k(t) = 1 − e^{−H^{std}_k(t)}.
-- Form the age-standardized KCOR curve: KCOR_{pooled}(t) = R^{std}_{dose}(t) / R^{std}_{ref}(t).
+- Fix age weights $w_a$ (sum to 1) from the pooled baseline age distribution (first 4 distinct weeks).
+- Within each age $a$ and dose $k$, compute weekly hazards after slope2: $h_{k,a}(t)$.
+- Age-standardize hazards by dose: $h^{\text{std}}_k(t) = \sum_a w_a\, h_{k,a}(t)$.
+- Accumulate to standardized cumulative hazards $H^{\text{std}}_k(t) = \sum_{u\le t} h^{\text{std}}_k(u)$.
+- Convert to standardized risks $R^{\text{std}}_k(t) = 1 - e^{-H^{\text{std}}_k(t)}$.
+- Form the age-standardized KCOR curve: $\mathrm{KCOR}_{\text{pooled}}(t) = R^{\text{std}}_{\text{dose}}(t) / R^{\text{std}}_{\text{ref}}(t)$.
 
 This replaces the previous pooled-log method. The label in logs/output now reads “ASMR (direct)”.
 
