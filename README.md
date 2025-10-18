@@ -283,6 +283,14 @@ $$
 \exp\\!\left(-x\right),\quad \ln\\!\left(1 - p\right)
 $$
 
+$$
+\exp!\left(-x\right),\quad \ln\\!\left(1 - p\right)
+$$
+
+$$
+\exp\left(-x\right),\quad \ln\\!\left(1 - p\right)
+$$
+
 We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let $t_0$ be the baseline week (week 4). For group $g\in\{v,u\}$, define the post‑anchor increment $\Delta CH_g(t)=CH_g(t)-CH_g(t_0)$.
 
 Per‑age cohorts
