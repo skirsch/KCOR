@@ -428,22 +428,37 @@ $$
 
 #### Uncertainty and confidence intervals (updated)
 
-We now compute CIs from post‑anchor cumulative‑hazard increments using the Nelson–Aalen variance with slope‑normalization propagated via the weekly scaling factor \(s(\tau)=h^{adj}/h^{raw}\). For each cohort \(g\):
+We now compute CIs from post‑anchor cumulative‑hazard increments using the Nelson–Aalen variance with slope‑normalization propagated via the weekly scaling factor $s(\tau)=h^{adj}/h^{raw}$. For each cohort $g$:
 
-\[\Delta H_g(t)=H_g(t)-H_g(t_0),\qquad
-\mathrm{Var}[\Delta H_g(t)]\;\approx\;\sum_{\tau=t_0+1}^{t}\;\frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2.\]
+$$
+\Delta H_g(t)=H_g(t)-H_g(t_0)
+$$
+
+$$
+\mathrm{Var}[\Delta H_g(t)]\;\approx\;\sum_{\tau=t_0+1}^{t}\;\frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2.
+$$
 
 Per‑age SE on the log scale:
 
-\[\mathrm{SE}_{\log K}(t)=\sqrt{\frac{\mathrm{Var}[\Delta H_v(t)]}{\Delta H_v(t)^2}+\frac{\mathrm{Var}[\Delta H_u(t)]}{\Delta H_u(t)^2}}.\]
+$$
+\mathrm{SE}_{\log K}(t)=\sqrt{\frac{\mathrm{Var}[\Delta H_v(t)]}{\Delta H_v(t)^2}+\frac{\mathrm{Var}[\Delta H_u(t)]}{\Delta H_u(t)^2}}.
+$$
 
-Pooled (ASMR) log‑variance uses expected‑deaths weights \(w_a\) (sum to 1):
+Pooled (ASMR) log‑variance uses expected‑deaths weights $w_a$ (sum to 1):
 
-\[\mathrm{Var}_{\log}^{\,(pooled)}(t)=\sum_a w_a^2\left(\frac{\mathrm{Var}[\Delta H_{v,a}(t)]}{\Delta H_{v,a}(t)^2}+\frac{\mathrm{Var}[\Delta H_{u,a}(t)]}{\Delta H_{u,a}(t)^2}\right),\quad \mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{\,(pooled)}(t)}.\]
+$$
+\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)=\sum_a w_a^2\left(\frac{\mathrm{Var}[\Delta H_{v,a}(t)]}{\Delta H_{v,a}(t)^2}+\frac{\mathrm{Var}[\Delta H_{u,a}(t)]}{\Delta H_{u,a}(t)^2}\right),
+$$
+
+$$
+\mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)}.
+$$
 
 95% CI in both cases:
 
-\[\mathrm{KCOR}(t)\times e^{\pm 1.96\,\mathrm{SE}},\quad \text{where }\mathrm{SE}\in\{\mathrm{SE}_{\log K},\,\mathrm{SE}_{\text{total}}\}.\]
+$$
+\mathrm{KCOR}(t)\times e^{\pm 1.96\,\mathrm{SE}},\quad \text{where }\mathrm{SE}\in\{\mathrm{SE}_{\log K},\,\mathrm{SE}_{\text{total}}\}.
+$$
 
 #### From "heuristics" to reproducible procedure
 
