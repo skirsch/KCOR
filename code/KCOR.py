@@ -683,14 +683,15 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 # Calculate 95% CI bounds on log scale, then exponentiate
                 CI_lower = Kpool * safe_exp(-1.96 * SE_total)
                 CI_upper = Kpool * safe_exp(1.96 * SE_total)
-                # Blank CI at baseline and earlier dates (t <= t0) to avoid infinite/unstable intervals
-                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEK, len(all_dates)-1)]:
-                    CI_lower = np.nan
-                    CI_upper = np.nan
-                
+
                 # Clip CI bounds to reasonable values
                 CI_lower = max(0, min(CI_lower, Kpool * 10))
                 CI_upper = max(Kpool * 0.1, min(CI_upper, Kpool * 10))
+
+                # After clipping: blank CI at baseline and earlier dates (t <= t0)
+                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEK, len(all_dates)-1)]:
+                    CI_lower = np.nan
+                    CI_upper = np.nan
                 
 
                 

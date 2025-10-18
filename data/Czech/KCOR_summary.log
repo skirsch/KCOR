@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-10-17 22:09:39
+Analysis Date: 2025-10-17 22:39:58
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -438,7 +438,7 @@ Dose combination: 4 vs 0 [2022_47]
   1990            |   0.7350 [0.454, 1.188] | 0.6609  (beta_num=-0.003741, beta_den=0.000059)
   2000            |   3.7414 [1.528, 9.159] | 0.0373  (beta_num=0.000000, beta_den=-0.004036)
 ================================================================================
-[Done] Wrote 29070 rows to ../data/Czech/KCOR.xlsx at 2025-10-17 22:12:13
+[Done] Wrote 29070 rows to ../data/Czech/KCOR.xlsx at 2025-10-17 22:42:32
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 37 summary rows
   - 2021_24: 3 dose combinations, 37 summary rows
