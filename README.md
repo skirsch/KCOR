@@ -278,7 +278,7 @@ Where:
 
 We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let $t_0$ be the baseline week (week 4). For group $g\in\{v,u\}$, define the post‑anchor increment $\Delta CH_g(t)=CH_g(t)-CH_g(t_0)$.
 
-Per‑age cohorts
+**Per‑age cohorts**
 
 $$
 \mathrm{SE}_{\log K}(t) \approx \sqrt{ \frac{\mathrm{Var}[\Delta CH_v(t)]}{(\Delta CH_v(t))^2} + \frac{\mathrm{Var}[\Delta CH_u(t)]}{(\Delta CH_u(t))^2} }.
@@ -287,7 +287,7 @@ $$
 Using Nelson–Aalen increments with slope normalization factor $s(\tau)=h^{adj}_g(\tau)/h^{raw}_g(\tau)$:
 
 $$
-\mathrm{Var}[\Delta CH_g(t)] \approx \sum_{\tau=t_0+1}^{t} \frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2,
+\mathrm{Var}[\Delta CH_g(t)] \approx \sum_{\tau=t_0+1}^{t} \frac{d_{g,\tau}}{a_{g,\tau}^2}\bigl(s_g(\tau)\bigr)^2,
 $$
 
 where $d_{g,\tau}$ is deaths and $a_{g,\tau}$ is person‑time (Alive) in week $\tau$.
@@ -295,10 +295,10 @@ where $d_{g,\tau}$ is deaths and $a_{g,\tau}$ is person‑time (Alive) in week $
 The 95\% CI is
 
 $$
-\mathrm{CI}_{95\\%}(t)=\left[\,\mathrm{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\right].
+\mathrm{CI}_{95\\%}(t)=\left[\mathrm{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\right].
 $$
 
-ASMR (pooled across ages)
+**ASMR (pooled across ages)**
 
 Let \(w_a\) be the expected‑deaths weights (sum to 1). Aggregate per‑age log‑variance contributions:
 
