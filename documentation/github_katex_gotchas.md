@@ -14,7 +14,11 @@ Using `\%` will not work. You'd need to use two backslashes `\\%` instead to get
 For all other characters, backslash works, but not %. 
 
 
-`\!` will NOT create a thin space but print as is. So do not use this.
+`\!` will NOT create a thin space but print as is. So do not use this. And `\;` won't work either. Remove this usage.
+
+`\,` also which is a multiplier (?) will print as a comma!
+
+use \cdot for multiply to show that.
 
 
 ## Math delimiters GitHub accepts

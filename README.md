@@ -295,7 +295,7 @@ where $d_{g,\tau}$ is deaths and $a_{g,\tau}$ is person‑time (Alive) in week $
 The 95\% CI is
 
 $$
-\mathrm{CI}_{95\\%}(t)=\left[\mathrm{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\right].
+\mathrm{CI}_{95\\%}(t)=\left[\mathrm{KCOR}(t) \cdot  e^{-1.96 \cdot \mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\log K}(t)}\right].
 $$
 
 **ASMR (pooled across ages)**
@@ -315,7 +315,7 @@ $$
 The 95\% CI is
 
 $$
-\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\right].
+\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t) \cdot e^{-1.96 \cdot \mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\text{total}}}\right].
 $$
 
 Notes:
@@ -342,7 +342,7 @@ Notes:
 - Age-standardize hazards by dose:
 
 $$
-  h^{std}_k(t) = \sum_a w_a\, h_{k,a}(t)
+  h^{std}_k(t) = \sum_a w_a \cdot  h_{k,a}(t)
 $$
 
 - Accumulate to standardized cumulative hazards:
@@ -387,7 +387,7 @@ Let:
 **Baseline model (log-rate decomposition)**
 
 $$
-\log m_{g,t} = \alpha_g + r_g\,t + \delta_t + \varepsilon_{g,t},
+\log m_{g,t} = \alpha_g + r_g \cdot t + \delta_t + \varepsilon_{g,t},
 $$
  
 where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** calendar-time factor
@@ -409,7 +409,7 @@ $$
 **Slope-normalization**
 
 $$
-m^{\text{adj}}_{g,t} = m_{g,t}\,\exp\big[-\hat r_g\, (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
+m^{\text{adj}}_{g,t} = m_{g,t} \cdot \exp\big[-\hat r_g \cdot  (t-t_e)\big]\quad\text{(clip to }<1\text{)}.
 $$
 
 **Discrete hazard and cumulative hazard**
@@ -440,7 +440,7 @@ $$
 
 - **Cancellation of common drift/level.** Slope-normalization removes smooth $\delta_t$ drift; baseline
   normalization removes level. Residual bias is bounded by non-parallelism of log-MR lines in anchors.
-- **Treatment-effect link.** If post-adjustment hazards follow $h_{v,t}=\rho(t)\,h_{u,t}$ with constant $\rho$,
+- **Treatment-effect link.** If post-adjustment hazards follow $h_{v,t}=\rho(t) \cdot h_{u,t}$ with constant $\rho$,
   then KCOR is constant. Time-variation in $\rho(t)$ is reflected by the KCOR curve.
 - **Small-rate regime.** For small $m$, $h\approx m$, so $H_g(t)$ approximates the sum of adjusted rates.
   KCOR then approximates the ratio of those sums (still baseline-normalized).
@@ -454,7 +454,7 @@ $$
 $$
 
 $$
-\mathrm{Var}[\Delta H_g(t)]\;\approx\;\sum_{\tau=t_0+1}^{t}\;\frac{d_{g,\tau}}{a_{g,\tau}^2}\,\big(s_g(\tau)\big)^2.
+\mathrm{Var}[\Delta H_g(t)]\;\approx\sum_{\tau=t_0+1}^{t}\frac{d_{g,\tau}}{a_{g,\tau}^2} \cdot \bigl(s_g(\tau)\bigr)^2.
 $$
 
 Per‑age SE on the log scale:
@@ -476,7 +476,7 @@ $$
 95% CI in both cases:
 
 $$
-\mathrm{KCOR}(t)\times e^{\pm 1.96\,\mathrm{SE}},\quad \text{where }\mathrm{SE}\in\{\mathrm{SE}_{\log K},\,\mathrm{SE}_{\text{total}}\}.
+\mathrm{KCOR}(t)\times e^{\pm 1.96 \cdot \mathrm{SE}},\quad \text{where }\mathrm{SE}\in\{\mathrm{SE}_{\log K}, \cdot \mathrm{SE}_{\text{total}}\}.
 $$
 
 #### From "heuristics" to reproducible procedure
