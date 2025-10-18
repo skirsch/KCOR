@@ -295,7 +295,7 @@ where \(d_{g,\tau}\) is deaths and \(a_{g,\tau}\) is person‑time (Alive) in we
 The 95\% CI is
 
 $$
-\text{CI}_{95\%}(t)=\big[\,\text{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\; \text{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\big].
+\mathrm{CI}_{95\%}(t)=\left[\,\mathrm{KCOR}(t)\, e^{-1.96\,\mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t)\, e^{+1.96\,\mathrm{SE}_{\log K}(t)}\,\right].
 $$
 
 ASMR (pooled across ages)
@@ -315,7 +315,7 @@ $$
 The 95\% CI is
 
 $$
-\text{CI}_{95\%}^{(\mathrm{ASMR})}(t)=\big[\,K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\; K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\big].
+\mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)=\left[\,K_{\mathrm{pool}}(t)\, e^{-1.96\,\mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t)\, e^{+1.96\,\mathrm{SE}_{\text{total}}}\,\right].
 $$
 
 Notes:
@@ -339,12 +339,31 @@ Notes:
 
 - Fix age weights $w_a$ (sum to 1) from the pooled baseline age distribution (first 4 distinct weeks).
 - Within each age $a$ and dose $k$, compute weekly hazards after slope2: $h_{k,a}(t)$.
-- Age-standardize hazards by dose: $h^{\text{std}}_k(t) = \sum_a w_a\, h_{k,a}(t)$.
-- Accumulate to standardized cumulative hazards $H^{\text{std}}_k(t) = \sum_{u\le t} h^{\text{std}}_k(u)$.
-- Convert to standardized risks $R^{\text{std}}_k(t) = 1 - e^{-H^{\text{std}}_k(t)}$.
-- Form the age-standardized KCOR curve: $\mathrm{KCOR}_{\text{pooled}}(t) = R^{\text{std}}_{\text{dose}}(t) / R^{\text{std}}_{\text{ref}}(t)$.
+- Age-standardize hazards by dose:
 
-This replaces the previous pooled-log method. The label in logs/output now reads “ASMR (direct)”.
+  $$
+  h^{\text{std}}_k(t) = \sum_a w_a\, h_{k,a}(t)
+  $$
+
+- Accumulate to standardized cumulative hazards:
+
+  $$
+  H^{\text{std}}_k(t) = \sum_{u\le t} h^{\text{std}}_k(u)
+  $$
+
+- Convert to standardized risks:
+
+  $$
+  R^{\text{std}}_k(t) = 1 - e^{-H^{\text{std}}_k(t)}
+  $$
+
+- Form the age-standardized KCOR curve:
+
+  $$
+  \mathrm{KCOR}_{\text{pooled}}(t) = \frac{R^{\text{std}}_{\text{dose}}(t)}{R^{\text{std}}_{\text{ref}}(t)}
+  $$
+
+
 
 ### Mathematical and statistical description
 
