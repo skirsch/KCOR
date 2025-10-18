@@ -393,7 +393,7 @@ $$
 where $r_g$ is the cohort-specific baseline slope, $\delta_t$ is a **common** calendar-time factor
 (seasonality/waves), and $\varepsilon_{g,t}$ is noise.
 
-[!NOTE]
+> [!NOTE]
 > Slope normalization is required for fair comparisons across cohorts with different baseline frailty mixes; v4.6 uses SIN to estimate and remove cohort-level trend at the hazard stage without altering raw MR.
 
 **Slope estimation via quiet anchors**
