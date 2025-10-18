@@ -319,6 +319,7 @@ $$
 $$
 
 ok try this
+
 $$
 \mathrm{CI}_{95\%}^{(\mathrm{ASMR})}(t)
 = \left[\,
