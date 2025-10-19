@@ -236,12 +236,14 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 **Three-Step Process:**
 
 1. **Hazard Transform**: Convert adjusted mortality rates to discrete hazard functions for mathematical exactness  
-2. **Cumulative Hazard**: Compute $\text{CH}(t)$ as cumulative sum of hazard functions
+2. **Cumulative Hazard**: Compute $\text{H}(t)$ as cumulative sum of hazard functions
 3. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to baseline
 
 **Step 1: Discrete Hazard Function Transform**
 
-$$\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))$$
+$$
+\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))
+$$
 
 Where $\text{MR}_{adj}$ is clipped to $0.999$ to avoid $\ln(0)$.
 
@@ -249,7 +251,9 @@ Where $\text{MR}_{adj}$ is clipped to $0.999$ to avoid $\ln(0)$.
 
 **Step 2: Cumulative Hazard (CH)**
 
-$$\text{CH}(t) = \sum\limits_{i=0}^{t} \text{hazard}(t_i)$$
+$$
+\text{H}(t) = \sum\limits_{i=0}^{t} \text{hazard}(t_i)
+$$
 
 **Step 3: KCOR as Hazard Ratio (Baseline at Week 4)**
 By default, KCOR cumulate hazards for 5 weeks (week 0 to week 4) and uses the cumulated hazard ratio at that time to establish a reference hazard ratio where KCOR=1. Increasing this parameter will reduce the CI's (which are largely determine by the number of weeks used to establish the baseline ratio), but it will also result in the method missing vaccine harms (the baseline is done during low to no COVID so it won't miss any benefits). So 5 was a reasonable compromise. 
@@ -262,40 +266,42 @@ If examination of the deaths/week data shows signs of dynamic HVE, then you can 
 
 **KCOR Formula:**
 
-$$\text{KCOR}(t) = \frac{\text{CH}_v(t) / \text{CH}_u(t)}{\text{CH}_v(t_0) / \text{CH}_u(t_0)}$$
+$$
+\text{KCOR}(t) = \frac{\text{H}_v(t) / \text{H}_u(t)}{\text{H}_v(t_0) / \text{H}_u(t_0)}
+$$
 
 Where:
 - $r$ = Calculated slope for the specific dose-age combination
 - $\text{MR}(t)$ = Raw mortality rate at time $t$
 - $t_e$ = Enrollment week index 0
 - $t_0$ = Baseline for normalization (week 4; $\text{KCOR}(t_0) = 1$)
-- $\text{CH}(t)$ = Cumulative hazard at time $t$ (sum of discrete hazards)
+- $\text{H}(t)$ = Cumulative hazard at time $t$ (sum of discrete hazards)
 - **Mathematical Enhancement**: Discrete cumulative-hazard transform provides more exact CH calculation than simple summation
 - **Interpretation**: KCOR = 1 at baseline, showing relative risk evolution over time
 
 #### 5. Uncertainty Quantification
 **95% Confidence Intervals (Nelson–Aalen, post‑anchor):**
 
-We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let $t_0$ be the baseline week (week 4). For group $g\in\{v,u\}$, define the post‑anchor increment $\Delta CH_g(t)=CH_g(t)-CH_g(t_0)$.
+We compute CIs on the log scale using post‑anchor cumulative‑hazard increments and the Nelson–Aalen variance, adjusted for slope‑normalization. Let $t_0$ be the baseline week (week 4). For group $g\in\{v,u\}$, define the post‑anchor increment $\Delta H_g(t)=CH_g(t)-CH_g(t_0)$.
 
 **Per‑age cohorts**
 
 $$
-\mathrm{SE}_{\log K}(t) \approx \sqrt{ \frac{\mathrm{Var}[\Delta CH_v(t)]}{(\Delta CH_v(t))^2} + \frac{\mathrm{Var}[\Delta CH_u(t)]}{(\Delta CH_u(t))^2} }.
+\mathrm{SE}_{\log K}(t) \approx \sqrt{ \frac{\mathrm{Var}[\Delta H_v(t)]}{(\Delta H_v(t))^2} + \frac{\mathrm{Var}[\Delta H_u(t)]}{(\Delta H_u(t))^2} }.
 $$
 
 Using Nelson–Aalen increments with slope normalization factor $s(\tau)=h^{adj}_g(\tau)/h^{raw}_g(\tau)$:
 
 $$
-\mathrm{Var}[\Delta CH_g(t)] \approx \sum_{\tau=t_0+1}^{t} \frac{d_{g,\tau}}{a_{g,\tau}^2}\bigl(s_g(\tau)\bigr)^2,
+\mathrm{Var}[\Delta H_g(t)] \approx \sum_{\tau=t_0+1}^{t} \frac{d_{g,\tau}}{a_{g,\tau}^2}\bigl(s_g(\tau)\bigr)^2,
 $$
 
 where $d_{g,\tau}$ is deaths and $a_{g,\tau}$ is person‑time (Alive) in week $\tau$.
 
-The 95\% CI is
+The 95% CI is
 
 $$
-\mathrm{CI}_{95\\%}(t)=\left[\mathrm{KCOR}(t) \cdot  e^{-1.96 \cdot \mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\log K}(t)}\right].
+\mathrm{CI}_{95 \\%}(t)=\left[\mathrm{KCOR}(t) \cdot  e^{-1.96 \cdot \mathrm{SE}_{\log K}(t)},\ \mathrm{KCOR}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\log K}(t)}\right].
 $$
 
 **ASMR (pooled across ages)**
@@ -303,7 +309,7 @@ $$
 Let \(w_a\) be the expected‑deaths weights (sum to 1). Aggregate per‑age log‑variance contributions:
 
 $$
-\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)=\sum_{a} w_a^2\left(\frac{\mathrm{Var}[\Delta CH_{v,a}(t)]}{(\Delta CH_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta CH_{u,a}(t)]}{(\Delta CH_{u,a}(t))^2}\right),
+\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)=\sum_{a} w_a^2\left(\frac{\mathrm{Var}[\Delta H_{v,a}(t)]}{(\Delta H_{v,a}(t))^2}+\frac{\mathrm{Var}[\Delta H_{u,a}(t)]}{(\Delta H_{u,a}(t))^2}\right),
 $$
 
 then
@@ -312,10 +318,10 @@ $$
 \mathrm{SE}_{\text{total}}=\sqrt{\mathrm{Var}_{\log}^{(\mathrm{pooled})}(t)}.
 $$
 
-The 95\% CI is
+The 95% CI is
 
 $$
-\mathrm{CI}_{95\\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t) \cdot e^{-1.96 \cdot \mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\text{total}}}\right].
+\mathrm{CI}_{95 \\%}^{(\mathrm{ASMR})}(t)=\left[K_{\mathrm{pool}}(t) \cdot e^{-1.96 \cdot \mathrm{SE}_{\text{total}}},\ K_{\mathrm{pool}}(t) \cdot  e^{+1.96 \cdot \mathrm{SE}_{\text{total}}}\right].
 $$
 
 Notes:
@@ -342,25 +348,25 @@ Notes:
 - Age-standardize hazards by dose:
 
 $$
-  h^{std}_k(t) = \sum_a w_a \cdot  h_{k,a}(t)
+h^{std}_k(t) = \sum_a w_a \cdot  h_{k,a}(t)
 $$
 
 - Accumulate to standardized cumulative hazards:
 
 $$
-  H^{std}_k(t) = \sum_{u\le t} h^{std}_k(u)
+H^{std}_k(t) = \sum_{u\le t} h^{std}_k(u)
 $$
 
 - Convert to standardized risks:
 
 $$
-  R^{std}_k(t) = 1 - e^{-H^{std}_k(t)}
+R^{std}_k(t) = 1 - e^{-H^{std}_k(t)}
 $$
 
 - Form the age-standardized KCOR curve:
 
 $$
-  \mathrm{KCOR}_{pool}(t) = \frac{R^{std}_{dose}(t)}{R^{std}_{ref}(t)}
+\mathrm{KCOR}_{pool}(t) = \frac{R^{std}_{dose}(t)}{R^{std}_{ref}(t)}
 $$
 
 
@@ -454,7 +460,7 @@ $$
 $$
 
 $$
-\mathrm{Var}[\Delta H_g(t)]\;\approx\sum_{\tau=t_0+1}^{t}\frac{d_{g,\tau}}{a_{g,\tau}^2} \cdot \bigl(s_g(\tau)\bigr)^2.
+\mathrm{Var}[\Delta H_g(t)] \approx\sum_{\tau=t_0+1}^{t}\frac{d_{g,\tau}}{a_{g,\tau}^2} \cdot \bigl(s_g(\tau)\bigr)^2.
 $$
 
 Per‑age SE on the log scale:
