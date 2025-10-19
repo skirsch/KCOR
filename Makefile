@@ -14,9 +14,6 @@ VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
-# Defaults for adapter/convert flows
-CONVERT_DATASET ?= japan
-KRF_DATASET ?= japan
 
 # Default: build everything (variable-cohort + analysis + validation + tests)
 all: KCOR_variable KCOR validation test
@@ -31,11 +28,11 @@ CMR:
 
 # Run CMR on KRF input by adapting to Czech-like format first
 CMR_from_krf:
-	$(MAKE) -C $(CODE_DIR) CMR_from_krf DATASET=$(KRF_DATASET)
+	$(MAKE) -C $(CODE_DIR) CMR_from_krf DATASET=$(DATASET)
 
 # Dataset converter (delegates to data/<DATASET>/Makefile)
 convert:
-	$(MAKE) -C data/$(CONVERT_DATASET) convert
+	$(MAKE) -C data/$(DATASET) convert
 
 # Variable-cohort aggregation (delegates to code/Makefile target KCOR_variable)
 KCOR_variable:
@@ -102,6 +99,4 @@ help:
 	@echo ""
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
-	@echo "  CONVERT_DATASET=<nm>  - Converter dataset (default: japan)"
-	@echo "  KRF_DATASET=<nm>      - KRF adapter dataset for CMR_from_krf (default: japan)"
 
