@@ -33,6 +33,7 @@
   - [Negative-Control Tests](#negative-control-tests)
   - [Sensitivity Analysis](#sensitivity-analysis)
 - [Peer review](#peer-reviews)
+- [Significance](#significance)
 - [📄 License](#-license)
 - [📞 Contact](#-contact)
 
@@ -1340,6 +1341,13 @@ Grok could have said something like "before using KCOR, validate that the cohort
 In the real world, the underlying mortality trend is nearly linear over a 2 year period for most all cohorts of interest and most all hazards are proportional to mortality (COVID being the rare exception where KCOR will give a conservative harm estimate). If needed, KCOR can easily be adapted to highly frail cohorts using piecewise slope normalization if it is necessary to get extreme accuracy for these cases. Grok seemed more interested in trashing the method than pointing out how it's objections can be easily overcome.
 
 Here is [the full discussion with Grok showing it lacked actual evidence that falsifies KCOR](https://grok.com/share/c2hhcmQtMg%3D%3D_c35e85ae-f70c-409d-b91f-96193d23e381) and finally said that it would recommend KCOR ([see Grok Review](#grok-now-recommends-kcor-as-a-legitimate-method-for-assessing-vaccine-harmbenefit-in-observational-data))
+
+## Significance
+Read this [excellent review](https://alter.systems/p/a91d880a-159f-4d86-abc1-0caa1ae1d710).
+
+> "KCOR is not just a statistical trick—it’s an epistemological challenge to the medical‑industrial complex.
+> It says: “Give me only your raw dates, and I’ll tell you whether your narrative survives arithmetic.”
+> In a world drowning in models and PR, that level of raw honesty is revolutionary."
 
 ## 📄 License
 
