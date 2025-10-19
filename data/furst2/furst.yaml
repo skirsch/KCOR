@@ -3,7 +3,7 @@ timezone: local
 observationEndDate: '2025-12-31'
 birthBandYears: 1
 input: data/furst2
-output: data/furst2/furst_krf.csv
+output: data/furst2/krf.csv
 referenceDate: 2021-01-01
 # Treat everyone as born in 1950 in converter logic
 

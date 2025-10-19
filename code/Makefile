@@ -2,13 +2,16 @@
 
 # Configuration - Dataset namespace (inherited from root Makefile)
 DATASET ?= Czech
-# Raw CSV (uncompressed) and compressed asset stored in repo
+# Paths for inputs
+RECORDS_CSV      = ../data/$(DATASET)/records.csv
+# Optional KRF input produced by dataset converters
+RECORDS_KRF      = ../data/$(DATASET)/krf.csv
+# Raw Czech CSV (compressed asset) — used only for datasets that ship this file
 RAW_CSV_GZ       = ../data/$(DATASET)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip
 # Keep the same base name when unzipped (…csv.gzip -> …csv)
 RAW_CSV          = $(RAW_CSV_GZ:.gzip=)
-# Prefer standardized per-dataset records.csv when available, else fall back to RAW_CSV
-RECORDS_CSV      = ../data/$(DATASET)/records.csv
-INPUT_DATA       = $(if $(wildcard $(RECORDS_CSV)),$(RECORDS_CSV),$(RAW_CSV))
+# Always target the standardized records.csv as input; provide a single rule to build it
+INPUT_DATA       = $(RECORDS_CSV)
 CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
 VARIABLE_OUTPUT  = ../data/$(DATASET)/KCOR_variable.xlsx
@@ -41,7 +44,31 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@ls -lh $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
 
-# New: KRF adapter target
+# Build standardized records.csv from available inputs (prefer krf.csv)
+$(RECORDS_CSV): | ../data/$(DATASET)
+	@set -e; \
+	if [ -f "$(RECORDS_KRF)" ]; then \
+	  echo "Adapting KRF CSV to Czech-like input..."; \
+	  python3 krf_adapter.py $(RECORDS_KRF) $(RECORDS_CSV); \
+	  echo "Wrote: $(RECORDS_CSV) from $(RECORDS_KRF)"; \
+	elif [ -f "$(RAW_CSV)" ] || [ -f "$(RAW_CSV_GZ)" ]; then \
+	  if [ -f "$(RAW_CSV_GZ)" ]; then \
+	    echo "Decompressing $(RAW_CSV_GZ) -> $(RAW_CSV) ..."; \
+	    gzip -dc "$(RAW_CSV_GZ)" > "$(RAW_CSV)"; \
+	  fi; \
+	  echo "Using raw CSV as standardized input (dataset ships Czech-format raw file)"; \
+	  cp "$(RAW_CSV)" "$(RECORDS_CSV)"; \
+	else \
+	  echo "ERROR: No input found. Provide $(RECORDS_KRF) or $(RAW_CSV_GZ)."; \
+	  exit 1; \
+	fi
+
+# If krf.csv is missing, build it via the dataset converter
+$(RECORDS_KRF):
+	@echo "Building KRF via dataset converter in data/$(DATASET)..."
+	@$(MAKE) -C ../data/$(DATASET) convert
+
+# Keep convenience target to run CMR on KRF explicitly
 .PHONY: KCOR_from_krf
 CMR_from_krf: | ../data/$(DATASET)
 	@echo "Adapting KRF CSV to Czech-like input..."
@@ -64,11 +91,7 @@ $(VARIABLE_OUTPUT): $(INPUT_DATA) KCOR_variable.py | ../data/$(DATASET)
 ../data/$(DATASET):
 	@python3 -c "import os; os.makedirs('$@', exist_ok=True)"
 
-# Rule to inflate the raw CSV from the compressed LFS asset
-$(RAW_CSV): $(RAW_CSV_GZ) | ../data/$(DATASET)
-	@echo "Decompressing $(RAW_CSV_GZ) -> $(RAW_CSV) ..."
-	@gzip -dc "$<" > "$@"
-	@echo "Done."
+# Raw CSV inflation handled inside the unified records.csv rule above
 
 # Clean up all output files for current country
 clean:

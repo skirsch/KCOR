@@ -6,8 +6,8 @@ endif
 
 # Defaults mirror japan's makefile
 INPUT ?= .
-OUTPUT ?= furst_krf.csv
-SIDECAR ?= furst_krf.sidecar.yaml
+OUTPUT ?= krf.csv
+SIDECAR ?= krf.sidecar.yaml
 OBS_END ?= 2025-12-31
 BIRTH_BAND_YEARS ?= 1
 REFERENCE_DATE ?= 2021-01-01
