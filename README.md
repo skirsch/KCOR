@@ -45,7 +45,9 @@ KCOR uses fixed cohorts defined at an enrollment date chosen post vaccination an
 
 KCOR is simple enough to fully implement in an Excel spreadsheet, including slope normalization and computation of CIs. This is useful for resolving ambiguities in the description of the algorithm. See the [example](/example/) directory where you can see it in action with real data.
 
-In short, KCOR turns epidemiology upside down by precisely matching mortality curves of the two cohorts being compared rather than 1:1 demographic makeup of the cohorts. That's the key insight. And it works because human beings have extremely constant baseline mortality rates that increase at a known constant, predictable rate (around 8% per year).
+In short, KCOR turns epidemiology upside down by precisely matching mortality curves of the two cohorts being compared rather than 1:1 demographic makeup of the cohorts. That's the key insight. And it works because human beings have extremely constant baseline mortality rates that increase at a known constant, predictable rate (around 8.5% per year).
+
+Most importantly, nobody has been able to attack the method. To attack the method, you have to actually identify which step is wrong and explain why it is wrong. Nobody can do that. Note that the slope normalization step can be ommitted with substantially similar results.
 
 KCOR results with the Czech data are devastating for the "safe and effective" narrative because they are so consistent across age groups and vaccine doses. The results show similar harms using data from Japan. KCOR showed a vaccine benefit (which may have exclusively been caused by non-proportional hazards), but the harms consistently outweighed the benefits. In short, KCOR shows 
 
