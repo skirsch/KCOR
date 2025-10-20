@@ -845,7 +845,7 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
 - **Columns**: Sheet, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den, KCOR, CI_lower, CI_upper, 
   MR_num, MR_adj_num, CH_num, CH_actual_num, hazard_num, slope_num, scale_factor_num, MR_smooth_num, t_num,
   MR_den, MR_adj_den, CH_den, CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den,
-  KCOR_o (optional death-based cumulative-deaths ratio, normalized at week 1)
+  KCOR_ns (KCOR w/o slope normalization step)
 
 #### Debug & Details Sheets
 - **`by_dose`**: Individual dose curves with complete methodology transparency
@@ -853,9 +853,9 @@ This file provides one sheet per enrollment period (e.g., 2021_24, 2022_06) form
   Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
   Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
 
-- **`dose_pair_deaths`**: Per-pair weekly and cumulative death details supporting KCOR_o
+- **`dose_pair_deaths`**: Per-pair weekly and cumulative death details supporting KCOR_ns
 - **Columns**: EnrollmentDate, ISOweekDied, Date, YearOfBirth, Dose_num, Dose_den,
-  Dead_num, Dead_adj_num, cumD_num, Dead_den, Dead_adj_den, cumD_den, K_raw_o, KCOR_o
+  Dead_num, Dead_adj_num, cumD_num, Dead_den, Dead_adj_den, cumD_den, K_raw_o, KCOR_ns
 
 #### About Sheet
 - **Metadata**: Version information, methodology overview, and analysis parameters

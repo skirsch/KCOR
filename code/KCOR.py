@@ -795,6 +795,60 @@ def build_kcor_o_rows(df, sheet_name):
         return pd.concat(out_rows, ignore_index=True)
     return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR_o"])
 
+def build_kcor_ns_rows(df, sheet_name):
+    """Compute KCOR_ns assuming zero slopes for all cohorts (no slope normalization).
+
+    Method:
+      - Use raw discrete hazard (hazard_raw) without slope adjustment.
+      - Apply the same accumulation start rule (DYNAMIC_HVE_SKIP_WEEKS) as standard KCOR.
+      - Compute cumulative raw hazard CH_ns per (YearOfBirth, Dose).
+      - For each age and dose pair, compute K_raw_ns = CH_ns_num / CH_ns_den and
+        normalize to 1 at week KCOR_NORMALIZATION_WEEK -> KCOR_ns.
+    """
+    # Ensure needed columns and sorting; work on a copy to avoid side effects
+    df_ns = df.sort_values(["YearOfBirth","Dose","DateDied"]).copy()
+    # Accumulation start consistent with main KCOR path, but using hazard_raw
+    df_ns["hazard_eff_ns"] = np.where(df_ns["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df_ns.get("hazard_raw", np.nan), 0.0)
+    # Cumulative raw hazard per cohort/dose
+    df_ns["CH_ns"] = df_ns.groupby(["YearOfBirth","Dose"]) ["hazard_eff_ns"].cumsum()
+
+    out_rows = []
+    by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df_ns.groupby(["YearOfBirth","Dose"], sort=False)}
+    dose_pairs = get_dose_pairs(sheet_name)
+    for yob in df_ns["YearOfBirth"].unique():
+        for num, den in dose_pairs:
+            gv = by_age_dose.get((yob, num))
+            gu = by_age_dose.get((yob, den))
+            if gv is None or gu is None:
+                continue
+            gv_unique = gv[["DateDied","ISOweekDied","CH_ns"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","CH_ns"]].drop_duplicates(subset=["DateDied"], keep="first")
+            merged = pd.merge(gv_unique, gu_unique, on="DateDied", suffixes=("_num","_den"), how="inner").sort_values("DateDied")
+            if merged.empty:
+                continue
+            # Raw ratio of cumulative raw hazards
+            valid = merged["CH_ns_den"] > EPS
+            merged["K_raw_ns"] = np.where(valid, merged["CH_ns_num"] / merged["CH_ns_den"], np.nan)
+            # Normalize at anchor index
+            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+            k0 = merged["K_raw_ns"].iloc[t0_idx]
+            if not (np.isfinite(k0) and k0 > EPS):
+                k0 = 1.0
+            merged["KCOR_ns"] = np.where(np.isfinite(merged["K_raw_ns"]), merged["K_raw_ns"] / k0, np.nan)
+
+            out = merged[["DateDied","ISOweekDied_num","KCOR_ns"]].copy()
+            out["EnrollmentDate"] = sheet_name
+            out["YearOfBirth"] = yob
+            out["Dose_num"] = num
+            out["Dose_den"] = den
+            out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
+            out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+            out_rows.append(out)
+
+    if out_rows:
+        return pd.concat(out_rows, ignore_index=True)
+    return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR_ns"])
+
 def build_kcor_o_deaths_details(df, sheet_name):
     """For each dose pair and age, output deaths/week, adjusted deaths/week, cumulative adjusted deaths,
     and normalized cumulative ratio (normalized to 1 at week KCOR_NORMALIZATION_WEEK).
@@ -1122,12 +1176,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     df2["cumD_adj"] = df2["CH"] * df2["cumPT"]
                     df2["cumD_unadj"] = df2.groupby(["YearOfBirth","Dose"]) ['Dead'].cumsum()
                     out_sh_sa = build_kcor_rows(df2, sh, dual_print)
-                    # Compute KCOR_o and merge into SA output
-                    kcor_o_sa = build_kcor_o_rows(df2, sh)
-                    if not kcor_o_sa.empty and not out_sh_sa.empty:
+                    # Compute KCOR_ns and merge into SA output
+                    kcor_ns_sa = build_kcor_ns_rows(df2, sh)
+                    if not kcor_ns_sa.empty and not out_sh_sa.empty:
                         out_sh_sa = pd.merge(
                             out_sh_sa,
-                            kcor_o_sa,
+                            kcor_ns_sa,
                             on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
                             how="left"
                         )
@@ -1587,12 +1641,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #     print()
 
         out_sh = build_kcor_rows(df, sh, dual_print)
-        # Compute KCOR_o on prepared df and merge into output
-        kcor_o = build_kcor_o_rows(df, sh)
-        if not kcor_o.empty and not out_sh.empty:
+        # Compute KCOR_ns and merge into output
+        kcor_ns = build_kcor_ns_rows(df, sh)
+        if not kcor_ns.empty and not out_sh.empty:
             out_sh = pd.merge(
                 out_sh,
-                kcor_o,
+                kcor_ns,
                 on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
                 how="left"
             )
@@ -1733,7 +1787,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_o")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date
@@ -1753,12 +1807,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     kcor_val = age_data["KCOR"].iloc[0]
                     ci_lower = age_data["CI_lower"].iloc[0]
                     ci_upper = age_data["CI_upper"].iloc[0]
-                    # KCOR_o may be missing for pooled rows; print '-' in that case
+                    # KCOR_ns may be missing for pooled rows; print '-' in that case
                     try:
-                        kcor_o_val = age_data.get("KCOR_o", pd.Series([np.nan])).iloc[0]
+                        kcor_ns_val = age_data.get("KCOR_ns", pd.Series([np.nan])).iloc[0]
                     except Exception:
-                        kcor_o_val = np.nan
-                    kcor_o_str = "-" if not (isinstance(kcor_o_val, (int, float)) and np.isfinite(kcor_o_val)) else f"{kcor_o_val:.4f}"
+                        kcor_ns_val = np.nan
+                    kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
                     
                     # Fetch betas used for numerator and denominator cohorts for this age from the stored map
                     key_age = int(age) if pd.notna(age) else age
@@ -1773,9 +1827,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         age_label = f"{age}"
                     
                     if age == 0:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_o_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_o_str}  (beta_num={beta_num:.6f}, beta_den={beta_den:.6f})")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  (beta_num={beta_num:.6f}, beta_den={beta_den:.6f})")
     
     dual_print("="*80)
 
