@@ -47,7 +47,7 @@ KCOR is simple enough to fully implement in an Excel spreadsheet, including slop
 
 In short, KCOR turns epidemiology upside down by precisely matching mortality curves of the two cohorts being compared rather than 1:1 demographic makeup of the cohorts. That's the key insight. And it works because human beings have extremely constant baseline mortality rates that increase at a known constant, predictable rate (around 8.5% per year).
 
-Most importantly, nobody has been able to attack the method. To attack the method, you have to actually identify which step is wrong and explain why it is wrong. Nobody can do that. Note that the slope normalization step can be ommitted with substantially similar results.
+Most importantly, nobody has been able to attack the method. To attack the method, you have to actually identify which step is wrong and explain why it is wrong. For example, there is no perfect slope normalization algorithm nor is the use of the first 4 weeks during non-COVID to set a baseline mortality rate. If there is a better way, what is it?
 
 KCOR results with the Czech data are devastating for the "safe and effective" narrative because they are so consistent across age groups and vaccine doses. The results show similar harms using data from Japan. KCOR showed a vaccine benefit (which may have exclusively been caused by non-proportional hazards), but the harms consistently outweighed the benefits. In short, KCOR shows 
 
@@ -225,7 +225,6 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 #### 1. Data Preprocessing
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
-- **Smoothing**: 8-week centered moving average applied to raw mortality rates to reduce noise
 
 #### 2. Slope normalization (slope2) — Primary Method (v4.6)
 - Fixed global windows in ISO year-week:
@@ -233,7 +232,8 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
   - W2 = [2023-24, 2023-36]
   - W3 = [2024-12, 2024-20]
 - Window selection rule per enrollment sheet: use W1/W2 unless the enrollment date is after start(W1); in that case use W2/W3.
-- Compute hazards h(t) = −ln(1 − MR(t)) with clipping.
+- Compute hazards using the improved discrete transform for start-of-week denominators:
+  - \( h(t) = -\ln\!\left(\dfrac{1 - 1.5\,MR(t)}{1 - 0.5\,MR(t)}\right) \) with clipping.
 - For each (YoB, Dose):
   - Let Wm1 = mean hazard over the first selected window; Wm2 = mean hazard over the second selected window (arithmetic means; missing weeks treated as 0). If either mean is ≤ 0 or the separation is invalid, set β = 0.
   - Define β = (ln Wm2 − ln Wm1) / Δweeks, where Δweeks is the center-to-center distance (in weeks) between the two windows.
@@ -243,19 +243,20 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - Raw MR is never modified; all slope normalization operates on hazards.
 
 #### 4. KCOR Computation 
-**Three-Step Process:**
+**Four-Step Process:**
 
-1. **Hazard Transform**: Convert adjusted mortality rates to discrete hazard functions for mathematical exactness  
-2. **Cumulative Hazard**: Compute $\text{H}(t)$ as cumulative sum of hazard functions
-3. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to baseline
+1. **Hazard Transform**: Convert mortality rates to discrete hazard functions for mathematical exactness. Note that KCOR_CMR.py produces alive values are alive at start of the week and dead is the number of people that died in that week. So our MR=dead/(alive at start of week) is not already a hazard rate — it’s the probability of dying during the week given survival to its start. This is precisely why we need the discrete-time log transform. Had we computed a continuous time alive people time as the denominator, we wouldn't need the transform. But we are using alive at the start of the week. It's a subtle but important distinction.
+2. **Slope normalization**: Use dual windows to normalize slopes as described above.
+3. **Cumulative Hazard**: Compute $\text{H}(t)$ as cumulative sum of hazard functions
+4. **Ratio Calculation**: Compute KCOR as ratio of cumulative hazards, normalized to the ratio at a baseline point
 
 **Step 1: Discrete Hazard Function Transform**
 
 $$
-\text{hazard}(t) = -\ln(1 - \text{MR}_{\text{adj}}(t))
+\text{hazard}(t) = -\ln\!\left(\frac{1 - 1.5\,\text{MR}_{\text{adj}}(t)}{1 - 0.5\,\text{MR}_{\text{adj}}(t)}\right)
 $$
 
-Where $\text{MR}_{adj}$ is clipped to $0.999$ to avoid $\ln(0)$.
+Where $\text{MR}_{\text{adj}}$ is clipped to $[0,\,0.999]$ and the numerator/denominator are clipped away from zero for numerical safety.
 
 > **📚 Mathematical Reasoning**: For a detailed explanation of why KCOR uses discrete hazard functions and the mathematical derivation behind this approach, see [Hazard Function Methodology](documentation/hazard_function.md).
 

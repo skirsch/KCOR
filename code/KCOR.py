@@ -277,6 +277,18 @@ def safe_exp(x, max_val=1e6):
     clipped_x = np.clip(x, -np.log(max_val), np.log(max_val))
     return np.exp(clipped_x)
 
+def hazard_from_mr_improved(mr: np.ndarray) -> np.ndarray:
+    """Improved discrete-time hazard transform for MR measured as D / N_start.
+
+    h = -ln((1 - 1.5 MR) / (1 - 0.5 MR))
+    """
+    mr_clipped = np.clip(mr, 0.0, 0.999)
+    num = 1.0 - 1.5 * mr_clipped
+    den = 1.0 - 0.5 * mr_clipped
+    num = np.clip(num, EPS, None)
+    den = np.clip(den, EPS, None)
+    return -np.log(num / den)
+
 
 def get_dose_pairs(sheet_name):
     """
@@ -1166,7 +1178,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     df2["slope"] = df2.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
                     df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
                     df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK))), axis=1)
-                    df2["hazard"] = -np.log(1 - df2["MR_adj"].clip(upper=0.999))
+                    df2["hazard"] = hazard_from_mr_improved(df2["MR_adj"]) 
                     # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
                     df2["hazard_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["hazard"], 0.0)
                     df2["MR_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["MR"], 0.0)
@@ -1337,7 +1349,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         W4_weeks = _iso_week_list(*BASE_W4)
         # Build weekly hazard by ISO week for each cohort
         df_tmp = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
-        df_tmp["h"] = -np.log(1 - df_tmp["MR"].clip(lower=0.0, upper=0.999))
+        df_tmp["h"] = hazard_from_mr_improved(df_tmp["MR"].clip(lower=0.0, upper=0.999))
         # annotate iso label per row (Monday of ISO week)
         iso_parts = df_tmp["DateDied"].dt.isocalendar()
         df_tmp["iso_label"] = iso_parts.year.astype(str) + "-" + iso_parts.week.astype(str).str.zfill(2)
@@ -1460,7 +1472,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                         mr_clipped = np.nan if np.isnan(mr_w) else np.clip(mr_w, 0.0, 0.999)
                                     else:
                                         mr_clipped = mr_w
-                                    hazard_w = (-np.log(1 - mr_clipped)) if (isinstance(mr_clipped, float) and mr_clipped >= 0.0 and mr_clipped < 1.0) else np.nan
+                                    hazard_w = hazard_from_mr_improved(np.array([mr_clipped]))[0] if (isinstance(mr_clipped, float) and mr_clipped >= 0.0 and mr_clipped < 1.0) else np.nan
                                     dual_print(
                                         f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT={pt_sum:.6f},Dead={dead_sum:.6f},MR={(mr_w if not np.isnan(mr_w) else float('nan')):.6e},hazard={(hazard_w if not np.isnan(hazard_w) else float('nan')):.6e}"
                                     )
@@ -1504,7 +1516,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         mr_used = df["MR"]
 
         # Clip to avoid log(0) and ensure numerical stability
-        df["hazard_raw"] = -np.log(1 - np.clip(mr_used, None, 0.999))
+        df["hazard_raw"] = hazard_from_mr_improved(np.clip(mr_used, 0.0, 0.999))
         # Initialize adjusted hazard equal to raw
         df["hazard_adj"] = df["hazard_raw"]
         # Apply slope2 de-trending at hazard level (single normalization only)
