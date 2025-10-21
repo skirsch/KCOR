@@ -39,7 +39,7 @@
 
 ## Overview
 
-KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality differences between two cohorts (e.g., vaccinated vs. unvaccinated) in retrospective observational data using a unique approach which does not require traditional 1:1 matching of the cohorts. All you need to know is just 3 types of date: birth, death, date(s) of intervention. This makes the method amenable to public record-level datasets such as from the Czech Republic. It can accurately determine the cumulative net benefit/harm of an intervention as of a specific point in time (e.g., end of 2022). Given a sufficient number of records (such as the 11M records in the Czech dataset) it can accurately answer key societal questions such as "Did the COVID vaccine save more lives on a net basis?" in an objective manner.
+KCOR (Kirsch Cumulative Outcomes Ratio) is a robust statistical methodology for analyzing relative mortality differences between two cohorts (e.g., vaccinated vs. unvaccinated) in retrospective observational data using a unique approach which does not require traditional 1:1 matching of the cohorts. All you need to know is 3 types of date: birth, death, date(s) of intervention. This makes the method amenable to public record-level datasets such as from the Czech Republic. It can accurately determine the cumulative net benefit/harm of an intervention as of a specific point in time (e.g., end of 2022). Given a sufficient number of records (such as the 11M records in the Czech dataset) it can accurately answer key societal questions such as "Did the COVID vaccine save more lives on a net basis?" in an objective manner.
 
 KCOR uses fixed cohorts defined at an enrollment date chosen post vaccination and during a low to no COVID period. KCOR tracks the mortality rates of the cohorts over time to assess cumulative mortality ratios between the cohorts. If the intervention is safe, the cumulative hazard ratios between the cohorts will be a flat line. KCOR normalizes BOTH the mortality rates AND the mortality slopes over time in order to create a fair comparison. 
 
@@ -1300,6 +1300,7 @@ McCullough Foundation
 - Epidemiologist with 12 years experience who wants to keep his job. [Full review here](/peer_review/KCOR%20review%20by%20epidemiologistv2.docx).
 
 ### ChatGPT review of KCOR vs. alternatives
+[ChatGPT Full review](https://chatgpt.com/share/68f6c32a-8e30-8009-a672-ee45d791f0c0).
 
 If you had more variables, yes—methods like **target trial emulation** or **g-computation** could be "superior." But with just DOB, death, and vaccination:
 
