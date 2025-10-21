@@ -1001,7 +1001,7 @@ for enroll_date_str in enrollment_dates:
             d_targets.append(4)
         for dnum in d_targets:
             frames = []
-            for lab in ['P','M']:
+            for lab in ['P','M','O']:
                 dfm = build_mfg_out_for_dose(dnum, lab)
                 if not dfm.empty:
                     frames.append(dfm)

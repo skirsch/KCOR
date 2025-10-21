@@ -1842,6 +1842,68 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  (beta_num={beta_num:.6f}, beta_den={beta_den:.6f})")
+
+        # --- Print M/P KCOR summaries by decades when available ---
+        try:
+            # Choose appropriate MFG sheet per cohort
+            mfg_sheet_map = {
+                "2021_24": (2, "MFG_MP_2021_24_D2_decades"),
+                "2022_06": (3, "MFG_MP_2022_06_D3_decades"),
+                "2022_47": (4, "MFG_MP_2022_47_D4_decades"),
+            }
+            if sheet_name in mfg_sheet_map:
+                dose_num, mfg_sheet_name = mfg_sheet_map[sheet_name]
+                # Read back the just-written sheet from tmp_path if possible; else from out_path after move
+                # Since we're in reporting before write, recompute quickly from combined data would be heavy.
+                # Instead, try to compute on the fly from CMR MFG sheet.
+                # We fallback to reading from input CMR workbook directly.
+                # Use the helper defined earlier to read raw CMR MFG sheet
+                def _read_cmr_mfg(base_sheet: str, dnum: int):
+                    try:
+                        src = pd.ExcelFile(src_path)
+                        return pd.read_excel(src, sheet_name=f"{base_sheet}_MFG_D{dnum}")
+                    except Exception:
+                        return pd.DataFrame()
+                dfm = _read_cmr_mfg(sheet_name, dose_num)
+                if not dfm.empty:
+                    # Bucket by decades and print last-available KCOR per decade
+                    dfm["DateDied"] = pd.to_datetime(dfm["DateDied"], errors='coerce')
+                    dfm = dfm[dfm["DateDied"].notna()]
+                    dfm["YearOfBirth"] = pd.to_numeric(dfm["YearOfBirth"], errors='coerce').fillna(-1).astype(int)
+                    dfm["Decade"] = (dfm["YearOfBirth"] // 10) * 10
+                    # Aggregate
+                    agg = dfm.groupby(["Decade","MFG","DateDied"]).agg({"Alive":"sum","Dead":"sum"}).reset_index()
+                    agg = agg.sort_values(["Decade","MFG","DateDied"])\
+                             .reset_index(drop=True)
+                    agg["PT"] = agg["Alive"].astype(float).clip(lower=0.0)
+                    agg["MR"] = np.where(agg["PT"] > 0, agg["Dead"]/(agg["PT"] + EPS), np.nan)
+                    agg["t"] = agg.groupby(["Decade","MFG"]).cumcount().astype(float)
+                    agg["hazard_raw"] = hazard_from_mr_improved(agg["MR"].to_numpy())
+                    agg["hazard_eff"] = np.where(agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), agg["hazard_raw"], 0.0)
+                    agg["CH"] = agg.groupby(["Decade","MFG"]) ['hazard_eff'].cumsum()
+                    dual_print(f"\nM/P by decades (Dose {dose_num})")
+                    dual_print("-" * 50)
+                    for dec, gdec in agg.groupby("Decade", sort=True):
+                        gm = gdec[gdec["MFG"]=='M'][["DateDied","CH"]]
+                        gp = gdec[gdec["MFG"]=='P'][["DateDied","CH"]]
+                        merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
+                        if merged.empty:
+                            continue
+                        t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+                        valid = merged["CH_P"] > EPS
+                        merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
+                        k0 = merged["K_raw_MP"].iloc[t0_idx]
+                        if not (np.isfinite(k0) and k0 > EPS):
+                            k0 = 1.0
+                        merged["KCOR_MP"] = np.where(np.isfinite(merged["K_raw_MP"]), merged["K_raw_MP"] / k0, np.nan)
+                        # pick closest to report_date
+                        td = (merged["DateDied"] - report_date)
+                        idx = int(np.nanargmin(np.abs(td.values.astype('timedelta64[D]').astype(float)))) if len(merged)>0 else -1
+                        if idx >= 0:
+                            val = float(merged["KCOR_MP"].iloc[idx])
+                            dual_print(f"  {int(dec)}: M/P KCOR = {val:.4f}")
+        except Exception as _e_print_mfg:
+            dual_print(f"[WARN] Failed to print M/P summaries: {_e_print_mfg}")
     
     dual_print("="*80)
 
@@ -2129,21 +2191,30 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 return pd.concat(out_rows, ignore_index=True)[cols]
                             return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","MFG_num","MFG_den","KCOR_MP"])
 
+                        wrote_any_mfg = False
                         # 2021_24: Dose 2, decades
                         df_mfg_2124 = _read_mfg_sheet("2021_24", 2)
                         mp_2124 = _compute_kcor_mp(df_mfg_2124, "2021_24", 2, by_decade=True)
                         if not mp_2124.empty:
                             mp_2124.to_excel(writer, index=False, sheet_name="MFG_MP_2021_24_D2_decades")
-                        # 2022_06: Dose 3, all ages
+                            dual_print("[MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades (", len(mp_2124), "rows)")
+                            wrote_any_mfg = True
+                        # 2022_06: Dose 3, decades
                         df_mfg_2206 = _read_mfg_sheet("2022_06", 3)
-                        mp_2206 = _compute_kcor_mp(df_mfg_2206, "2022_06", 3, by_decade=False)
+                        mp_2206 = _compute_kcor_mp(df_mfg_2206, "2022_06", 3, by_decade=True)
                         if not mp_2206.empty:
-                            mp_2206.to_excel(writer, index=False, sheet_name="MFG_MP_2022_06_D3_allages")
-                        # 2022_47: Dose 4, all ages
+                            mp_2206.to_excel(writer, index=False, sheet_name="MFG_MP_2022_06_D3_decades")
+                            dual_print("[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades (", len(mp_2206), "rows)")
+                            wrote_any_mfg = True
+                        # 2022_47: Dose 4, decades
                         df_mfg_2247 = _read_mfg_sheet("2022_47", 4)
-                        mp_2247 = _compute_kcor_mp(df_mfg_2247, "2022_47", 4, by_decade=False)
+                        mp_2247 = _compute_kcor_mp(df_mfg_2247, "2022_47", 4, by_decade=True)
                         if not mp_2247.empty:
-                            mp_2247.to_excel(writer, index=False, sheet_name="MFG_MP_2022_47_D4_allages")
+                            mp_2247.to_excel(writer, index=False, sheet_name="MFG_MP_2022_47_D4_decades")
+                            dual_print("[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades (", len(mp_2247), "rows)")
+                            wrote_any_mfg = True
+                        if not wrote_any_mfg:
+                            dual_print("[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)")
                     except Exception as _e_mfg:
                         dual_print(f"[WARN] Failed to add MFG M/P comparisons: {_e_mfg}")
                 
