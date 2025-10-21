@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-10-21 09:55:44
+Analysis Date: 2025-10-21 10:54:31
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -192,6 +192,18 @@ Dose combination: 2 vs 1 [2021_24]
   1990            |   0.3807 [0.281, 0.516] | 0.2675  (beta_num=0.000017, beta_den=0.008231)
   2000            |   0.4773 [0.260, 0.878] | 1.0810  (beta_num=0.021151, beta_den=-0.004282)
 
+M/P by decades (Dose 2)
+--------------------------------------------------
+  1920: M/P KCOR = 1.0802
+  1930: M/P KCOR = 1.3342
+  1940: M/P KCOR = 1.2231
+  1950: M/P KCOR = 1.8840
+  1960: M/P KCOR = 1.3196
+  1970: M/P KCOR = 1.3501
+  1980: M/P KCOR = 1.1850
+  1990: M/P KCOR = 1.7780
+  2000: M/P KCOR = 0.6701
+
 Sheet: 2022_06 — Reporting date: 2023-01-02
 ============================================================
 
@@ -284,6 +296,18 @@ Dose combination: 3 vs 0 [2022_06]
   1980            |   0.9958 [0.848, 1.169] | 1.1953  (beta_num=0.007925, beta_den=-0.000225)
   1990            |   1.2055 [0.929, 1.565] | 1.4701  (beta_num=0.008439, beta_den=-0.000598)
   2000            |   0.8977 [0.577, 1.397] | 1.0949  (beta_num=0.008698, beta_den=-0.000586)
+
+M/P by decades (Dose 3)
+--------------------------------------------------
+  1920: M/P KCOR = 1.0303
+  1930: M/P KCOR = 1.1277
+  1940: M/P KCOR = 1.2096
+  1950: M/P KCOR = 1.1477
+  1960: M/P KCOR = 1.1041
+  1970: M/P KCOR = 1.0034
+  1980: M/P KCOR = 0.9259
+  1990: M/P KCOR = 0.8294
+  2000: M/P KCOR = 1.0335
 
 Sheet: 2022_47 — Reporting date: 2024-01-01
 ============================================================
@@ -437,11 +461,23 @@ Dose combination: 4 vs 0 [2022_47]
   1980            |   1.0920 [0.812, 1.469] | 0.7346  (beta_num=-0.020896, beta_den=-0.006665)
   1990            |   0.7350 [0.454, 1.188] | 0.6613  (beta_num=-0.003741, beta_den=0.000059)
   2000            |   3.7419 [1.529, 9.159] | 4.2114  (beta_num=0.000000, beta_den=-0.004036)
+
+M/P by decades (Dose 4)
+--------------------------------------------------
+  1920: M/P KCOR = 0.2594
+  1930: M/P KCOR = 1.6342
+  1940: M/P KCOR = 0.3553
+  1950: M/P KCOR = 4.1847
+  1960: M/P KCOR = 1.5430
+  1970: M/P KCOR = 1.6349
+  1980: M/P KCOR = 1.9939
+  1990: M/P KCOR = 0.6872
+  2000: M/P KCOR = 0.0000
 ================================================================================
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
-[MFG] Wrote M/P KCOR: 2022_06 Dose 3 all ages ( 241 rows)
-[MFG] Wrote M/P KCOR: 2022_47 Dose 4 all ages ( 241 rows)
-[Done] Wrote 29070 rows to ../data/Czech/KCOR.xlsx at 2025-10-21 09:59:52
+[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
+[Done] Wrote 29070 rows to ../data/Czech/KCOR.xlsx at 2025-10-21 10:58:11
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 37 summary rows
   - 2021_24: 3 dose combinations, 37 summary rows
