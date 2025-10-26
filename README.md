@@ -160,10 +160,11 @@ I would be delighted to public debate any qualified scientist who believes KCOR 
 
 ### 🎯 Core Concept
 
-We observe that:
-1. Human beings die with a mortality rate (hazard function) that monontonically increases over time at a relatively constant rate. See [Fig 1 from data from the Human Mortality Database](https://pubmed.ncbi.nlm.nih.gov/24534516/).
-2. Any mixture of human beings (different ages, frailty mix) will have a characteristic mortality rate that monotonically increases over time at a relatively constant rate.
-3. Most all hazards are proportional to mortality enabling us to take the ratio of cum hazards and get a flat line. 
+KCOR was created after I realized 4 things were true:
+1. Human beings die with a fixed log-slope hazard of +8.5% per year.  See [Fig 1 from data from the Human Mortality Database](https://pubmed.ncbi.nlm.nih.gov/24534516/).
+2. Any sufficiently large mixture of human beings (different ages, frailty mix) can be characterized over a 2 year period using just two values: their baseline mortality rate and a constant log-slope value. For unvaccinated older cohorts, the log-slope value is always less than +8.5 and is usually negative.
+3. Most all hazards are proportional to mortality enabling us to take the ratio of cum hazards and get a flat line. COVID is one of the few exceptions (which means KCOR is a conservative estimator of vaccine harm)
+4. Comparing the ratio of cumulative hazards over the same calendar time between two cohorts is an effective way to gauge the cumulative net risk-benefit of an intervention over that time span.
 
 KCOR makes the hypothesis that we can compare cumulative mortality differences between two cohorts by computing the mortality rate each week, doing a discrete-time hazard transform of the mortality rate, and taking the ratio of the cumulative hazard functions as a function of t (CHvax/CHunvax).
 
