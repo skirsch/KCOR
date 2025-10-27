@@ -323,7 +323,7 @@ needed_cols = [
     'Infection', 'Sex', 'YearOfBirth',
     'Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose',
     'VaccineCode_SecondDose', 'VaccineCode_ThirdDose', 'VaccineCode_FourthDose',
-    'DateOfDeath', 'DCCI'
+    'Date_COVID_death', 'DateOfDeath', 'DCCI'
 ]
 # Take only needed columns as a fresh copy to avoid chained-assignment warnings
 a = a.loc[:, needed_cols].copy()
@@ -600,8 +600,19 @@ for enroll_date_str in enrollment_dates:
             .size()
             .reset_index(name='dead')
     )
+    # COVID-attributed deaths keyed to DateOfDeath's week (only those with non-empty Date_COVID_death)
+    covid_flag = a_copy['Date_COVID_death'].notna() & (a_copy['Date_COVID_death'].astype(str).str.strip() != '')
+    deaths_week_covid = (
+        a_copy[mask_deaths & covid_flag]
+            .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
+            .size()
+            .reset_index(name='dead_covid')
+    )
     observed_deaths = deaths_week.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
         ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead']
+    ]
+    observed_deaths_covid = deaths_week_covid.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
+        ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead_covid']
     ]
     print(f"    Total deaths across all dose groups: {int(observed_deaths['dead'].sum())}")
     print(f"    Unique weeks with deaths: {len(a_copy.loc[mask_deaths, 'WeekOfDeath'].dropna().unique())}")
@@ -624,6 +635,9 @@ for enroll_date_str in enrollment_dates:
     # Attach single aligned death series
     out = out.merge(observed_deaths, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
     out['dead'] = out['dead'].fillna(0).astype(int)
+    # Attach COVID-specific deaths aligned to the same keys
+    out = out.merge(observed_deaths_covid, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
+    out['dead_covid'] = out['dead_covid'].fillna(0).astype(int)
 
     out['ISOweekDied'] = out['ISOweekDied'].astype(str)
     out['WeekIdx'] = out['ISOweekDied'].map(week_index).astype(int)
@@ -691,6 +705,7 @@ for enroll_date_str in enrollment_dates:
 
     # Build Dead directly from aligned series
     out['Dead'] = out['dead'].astype(int)
+    out['Dead_COVID'] = out['dead_covid'].astype(int)
     # Cumulative prior-week deaths per combo+dose (single series)
     out['cumDead_prev'] = (
         out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
@@ -758,6 +773,7 @@ for enroll_date_str in enrollment_dates:
     # Drop helper columns
     out.drop(columns=[c for c in [
         'dead',
+        'dead_covid',
         'dead_pre','dead_post',
         'base_total',
         'trans_1','trans_2','trans_3','trans_4',
@@ -765,6 +781,14 @@ for enroll_date_str in enrollment_dates:
         'cumDead_prev',
         'WeekIdx'
     ] if c in out.columns], inplace=True)
+
+    # Ensure Dead_COVID column is placed right after Dead
+    if 'Dead_COVID' in out.columns and 'Dead' in out.columns:
+        cols = list(out.columns)
+        cols.remove('Dead_COVID')
+        insert_at = cols.index('Dead') + 1
+        cols.insert(insert_at, 'Dead_COVID')
+        out = out[cols]
 
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
@@ -877,7 +901,7 @@ for enroll_date_str in enrollment_dates:
     try:
         summary = (
             out[out['ISOweekDied'] == enroll_week_str]
-              .groupby('Dose', observed=True)[['Alive', 'Dead']]
+              .groupby('Dose', observed=True)[['Alive', 'Dead', 'Dead_COVID']]
               .sum()
               .reset_index()
               .sort_values('Dose')
