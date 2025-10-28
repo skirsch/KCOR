@@ -310,13 +310,15 @@ a.columns = [
     'min_MechanicalVentilation_ECMO', 'days_MechanicalVentilation_ECMO', 'max_MechanicalVentilation_ECMO',
     'Mutation', 'DateOfDeath', 'Long_COVID', 'DCCI']
 
-# Ensure DCCI buckets with explicit UNKNOWN = -1 (do NOT map blanks to 3)
-# Keep only the known buckets {0,1,5}; anything else (including blanks/NaN) becomes -1
+# Ensure DCCI buckets are {0,1,3,5}; collapse 2–4 -> 3; map NaN/-1 -> 0
 a['DCCI'] = pd.to_numeric(a['DCCI'], errors='coerce')
-# Map blanks/NaN to -1 first
-a['DCCI'] = a['DCCI'].where(a['DCCI'].notna(), -1)
-# Keep only known buckets {0,1,5}; anything else becomes -1
-a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([0, 1, 5, -1]), -1).astype('Int8')
+# NaN and negatives (e.g., -1) become 0
+a['DCCI'] = a['DCCI'].where(a['DCCI'].notna(), 0)
+a['DCCI'] = a['DCCI'].where(a['DCCI'] >= 0, 0)
+# Collapse 2–4 to 3
+a.loc[(a['DCCI'] >= 2) & (a['DCCI'] <= 4), 'DCCI'] = 3
+# Enforce allowed set; unexpected values fallback to 3
+a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([0, 1, 3, 5]), 3).astype('Int8')
 
 # Immediately drop columns we won't use to reduce memory
 needed_cols = [
