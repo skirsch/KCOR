@@ -248,7 +248,8 @@ try:
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEK via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEK}")
     # Effective normalization week accounting for skip weeks: normalization happens KCOR_NORMALIZATION_WEEK weeks after accumulation starts
-    KCOR_NORMALIZATION_WEEK_EFFECTIVE = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS
+    # Subtract 1 because accumulation starts at DYNAMIC_HVE_SKIP_WEEKS, so the Nth week of accumulation is at offset (DYNAMIC_HVE_SKIP_WEEKS + N - 1)
+    KCOR_NORMALIZATION_WEEK_EFFECTIVE = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS - 1
     # removed MA smoothing env overrides
     # removed SA_SLOPE_WINDOW_SIZE override
     # removed FINAL_KCOR env overrides
