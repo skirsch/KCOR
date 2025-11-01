@@ -83,7 +83,7 @@
 # it does not require the old KCOR.py script to run, but it uses the same data format.
 # It only looks at first dose vaccination data and ACM death dates.
 #
-
+# latest changee was adding the 2021-W20 enrollment date.
 
 import pandas as pd
 import numpy as np

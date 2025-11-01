@@ -44,7 +44,7 @@ METHODOLOGY OVERVIEW:
 
 KEY ASSUMPTIONS:
 - Mortality rates follow exponential trends during observation period
-- Baseline period (week 4) represents "normal" conditions
+- Baseline period (effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS) represents "normal" conditions
 - Person-time = Alive (survivor function approximation)
 
 INPUT WORKBOOK SCHEMA per sheet (e.g., '2021-13', '2021_24', '2022_06', ...):
@@ -130,14 +130,20 @@ VERSION = "v4.6"                # KCOR version number
 #        - Slope calculation simplified to single-window method (no dynamic anchors)
 # v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
 #        - slope2 hazard-level normalization and direct hazard computation from raw MR.
+# v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
+#        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
+#        - Slope calculation simplified to single-window method (no dynamic anchors)
+#        - Changed DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
+
+# latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
 # Core KCOR methodology parameters
-# KCOR baseline normalization week (KCOR == 1 at this week; weeks counted from enrollment t=0)
-KCOR_NORMALIZATION_WEEK = 4     # default week 4 which is the 5th week of cumulated data. See also DYNAMIC_HVE_SKIP_WEEKS.
+# KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS)
+KCOR_NORMALIZATION_WEEK = 4     # Weeks after accumulation starts to use for normalization baseline. Effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS. See also DYNAMIC_HVE_SKIP_WEEKS.
 AGE_RANGE = 10                  # Bucket size for YearOfBirth aggregation (e.g., 10 -> 1920, 1930, ..., 2000)
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
-DYNAMIC_HVE_SKIP_WEEKS = 0      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
+DYNAMIC_HVE_SKIP_WEEKS = 3      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
@@ -155,6 +161,8 @@ NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons an
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
     '2021_13': '2022-12-31',
+    '2021-20': '2022-12-31',
+    '2021_20': '2022-12-31',
     '2021_24': '2022-12-31',
     '2022_06': '2022-12-31',
     '2022_47': '2023-12-31',
@@ -167,7 +175,7 @@ KCOR_REPORTING_DATE = {
 # NOTE: the 2009 cutoff is because for 10 year processing of the 2000 age group, if we set it to 
 # 2000, the 2000 group would NOT include the 2005 cohort. This way, we get 10 year age groups for all the cohorts.
 YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inclusive)
-ENROLLMENT_DATES = ['2021_13', '2021_24', '2022_06', '2022_47']  # List of enrollment dates (sheet names) to process (set to None to process all)
+ENROLLMENT_DATES = None  # List of enrollment dates (sheet names) to process. If None, will be auto-derived from Excel file sheets (excluding _summary and _MFG_ sheets)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # Slope normalization uses slope2 fixed windows; SIN removed
@@ -239,6 +247,8 @@ try:
         KCOR_NORMALIZATION_WEEK = int(_env_anchor)
         if DEBUG_VERBOSE:
             print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEK via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEK}")
+    # Effective normalization week accounting for skip weeks: normalization happens KCOR_NORMALIZATION_WEEK weeks after accumulation starts
+    KCOR_NORMALIZATION_WEEK_EFFECTIVE = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS
     # removed MA smoothing env overrides
     # removed SA_SLOPE_WINDOW_SIZE override
     # removed FINAL_KCOR env overrides
@@ -306,6 +316,9 @@ def get_dose_pairs(sheet_name):
 
     if sheet_name in ("2021-13", "2021_13"):
         # Early 2021 sheet: max dose is 2, only doses 0, 1, 2
+        return [(1,0), (2,0), (2,1)]
+    elif sheet_name in ("2021-20", "2021_20"):
+        # Mid 2021 sheet: max dose is 2, only doses 0, 1, 2
         return [(1,0), (2,0), (2,1)]
     elif sheet_name == "2021_24":
         # Mid 2021 sheet: max dose is 2, only doses 0, 1, 2
@@ -454,8 +467,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                                       merged["CH_num"] / merged["CH_den"], 
                                       np.nan)
             
-            # Get baseline K_raw value at week 4 (usual baseline period)
-            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+            # Get baseline K_raw value at effective normalization week (KCOR_NORMALIZATION_WEEK weeks after accumulation starts)
+            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
             baseline_k_raw = merged["K_raw"].iloc[t0_idx]
             if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
                 baseline_k_raw = 1.0
@@ -480,7 +493,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
 
             # KCOR 95% CI using post-anchor increments (Nelson–Aalen), adjusted for slope-normalization
             # Anchor index
-            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
             # Post-anchor cumulative hazard increments
             dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
             dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
@@ -597,7 +610,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
             gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
             if gvn.empty or gdn.empty:
                 continue
-            t0_idx = KCOR_NORMALIZATION_WEEK if len(gvn) > KCOR_NORMALIZATION_WEEK and len(gdn) > KCOR_NORMALIZATION_WEEK else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEK_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
             c1 = gvn["CH"].iloc[t0_idx]
             c0 = gdn["CH"].iloc[t0_idx]
             if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
@@ -664,7 +677,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     gdn_upto = gdn[gdn["DateDied"] <= dt]
                     if len(gvn_upto) == 0 or len(gdn_upto) == 0:
                         continue
-                    t0_idx_age = KCOR_NORMALIZATION_WEEK if len(gvn_upto) > KCOR_NORMALIZATION_WEEK and len(gdn_upto) > KCOR_NORMALIZATION_WEEK else 0
+                    t0_idx_age = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(gvn_upto) > KCOR_NORMALIZATION_WEEK_EFFECTIVE and len(gdn_upto) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
                     # ΔCH at dt
                     dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
                     dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
@@ -701,7 +714,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                 CI_upper = max(Kpool * 0.1, min(CI_upper, Kpool * 10))
 
                 # After clipping: blank CI at baseline and earlier dates (t <= t0)
-                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEK, len(all_dates)-1)]:
+                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEK_EFFECTIVE, len(all_dates)-1)]:
                     CI_lower = np.nan
                     CI_upper = np.nan
                 
@@ -789,8 +802,8 @@ def build_kcor_o_rows(df, sheet_name):
             # Raw ratio of cumulative adjusted deaths
             valid = merged["cumD_o_den"] > EPS
             merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
-            # Normalize at anchor week index (week 4 or first)
-            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+            # Normalize at anchor week index (effective normalization week or first)
+            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
             k0 = merged["K_raw_o"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -842,7 +855,7 @@ def build_kcor_ns_rows(df, sheet_name):
             valid = merged["CH_ns_den"] > EPS
             merged["K_raw_ns"] = np.where(valid, merged["CH_ns_num"] / merged["CH_ns_den"], np.nan)
             # Normalize at anchor index
-            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
             k0 = merged["K_raw_ns"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -916,7 +929,7 @@ def build_kcor_o_deaths_details(df, sheet_name):
                 continue
             valid = merged["cumD_o_den"] > EPS
             merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
-            t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
             k0 = merged["K_raw_o"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -965,6 +978,7 @@ def build_kcor_o_deaths_details(df, sheet_name):
 def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log"):
     
     # Set up dual output (console + file)
+    global ENROLLMENT_DATES  # Declare global before any reference to ENROLLMENT_DATES
     output_dir = os.path.dirname(out_path)
     dual_print, log_file_handle = setup_dual_output(output_dir, log_filename)
     
@@ -1023,6 +1037,16 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     all_out = []
     pair_deaths_all = []
     by_dose_nc_all = []
+    
+    # Auto-derive enrollment dates from sheet names if not explicitly set
+    if ENROLLMENT_DATES is None:
+        # Filter out summary and MFG sheets (keep only main enrollment date sheets)
+        enrollment_sheets = [
+            name for name in xls.sheet_names 
+            if not name.endswith('_summary') and '_MFG_' not in name
+        ]
+        ENROLLMENT_DATES = sorted(enrollment_sheets)  # Sort for consistent ordering
+        dual_print(f"[INFO] Auto-derived enrollment dates from Excel file: {ENROLLMENT_DATES}")
     
     # Apply processing filters
     sheets_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else xls.sheet_names
@@ -1173,11 +1197,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         continue
                     # Build a copy pipeline to avoid cross-contamination
                     df2 = df.copy()
-                    df2 = adjust_mr(df2, slopes, t0=KCOR_NORMALIZATION_WEEK)
+                    df2 = adjust_mr(df2, slopes, t0=KCOR_NORMALIZATION_WEEK_EFFECTIVE)
                     # Add slope and scale_factor columns (required by downstream build_kcor_rows)
                     df2["slope"] = df2.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
                     df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
-                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK))), axis=1)
+                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK_EFFECTIVE))), axis=1)
                     df2["hazard"] = hazard_from_mr_improved(df2["MR_adj"]) 
                     # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
                     df2["hazard_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["hazard"], 0.0)
@@ -1702,7 +1726,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     if yob1 not in yob_all or yob2 not in yob_all:
                         continue
                     for dose in doses:
-                        # Direct KCOR: CH(dose,yob1)/CH(dose,yob2), baseline-normalized at week 4
+                        # Direct KCOR: CH(dose,yob1)/CH(dose,yob2), baseline-normalized at effective normalization week
                         ts = by_dose_nc[(by_dose_nc["EnrollmentDate"] == sheet_name) & (by_dose_nc["Dose"] == dose) & (by_dose_nc["YearOfBirth"].isin([yob1, yob2]))]
                         if ts["YearOfBirth"].nunique() != 2 or ts.empty:
                             continue
@@ -1712,8 +1736,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         if pivot.empty or yob1 not in pivot.columns or yob2 not in pivot.columns:
                             continue
                         pivot = pivot.sort_index()
-                        # Choose t0 index (KCOR_NORMALIZATION_WEEK from start)
-                        t0_idx = min(KCOR_NORMALIZATION_WEEK, len(pivot) - 1) if len(pivot) > 0 else 0
+                        # Choose t0 index (KCOR_NORMALIZATION_WEEK_EFFECTIVE from start)
+                        t0_idx = min(KCOR_NORMALIZATION_WEEK_EFFECTIVE, len(pivot) - 1) if len(pivot) > 0 else 0
                         k_raw = pivot[yob1] / pivot[yob2]
                         baseline = k_raw.iloc[t0_idx] if len(k_raw) > t0_idx and np.isfinite(k_raw.iloc[t0_idx]) and k_raw.iloc[t0_idx] > EPS else 1.0
                         k_series = k_raw / baseline
@@ -1889,7 +1913,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
                         if merged.empty:
                             continue
-                        t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+                        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
                         valid = merged["CH_P"] > EPS
                         merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
                         k0 = merged["K_raw_MP"].iloc[t0_idx]
@@ -1957,7 +1981,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "3. Mortality Rate Adjustment:",
                         "   - MR_adj = MR × exp(-slope × (t - t0))",
-                        "   - t0 = baseline week (typically week 4)",
+                        f"   - t0 = baseline week (effective normalization week = {KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS})",
                         "",
                         "4. KCOR Computation (v4.1):",
                         "   - Step 1: MR_adj = MR × exp(-slope × (t - t0))",
@@ -2171,7 +2195,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                     continue
                                 valid = merged["CH_P"] > EPS
                                 merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
-                                t0_idx = KCOR_NORMALIZATION_WEEK if len(merged) > KCOR_NORMALIZATION_WEEK else 0
+                                t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
                                 k0 = merged["K_raw_MP"].iloc[t0_idx]
                                 if not (np.isfinite(k0) and k0 > EPS):
                                     k0 = 1.0
