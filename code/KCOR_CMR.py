@@ -227,7 +227,7 @@ excel_writer = pd.ExcelWriter(excel_out_path, engine='xlsxwriter')
 # 2022-W47 is 11-21-2022, which is the best booster #2 enrollment since it is just after everyone got 2nd booster.
 # 2024-W01 is 12-30-2023, which is the best booster #3 enrollment since it is just after everyone got 3rd booster, but too late to be useful
 # because the deaths start declining in Q2 of 2024
-enrollment_dates = ['2021-13', '2021-20', '2021-24', '2022-06', '2022-47']  # Full set of enrollment dates
+enrollment_dates = ['2021-13', '2021-20', '2021-24', '2021-30', '2022-06', '2022-47']  # Full set of enrollment dates
 
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
 _env_dates = os.environ.get('ENROLLMENT_DATES')
