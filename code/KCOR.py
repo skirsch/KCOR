@@ -143,7 +143,9 @@ KCOR_NORMALIZATION_WEEK = 4     # Weeks after accumulation starts to use for nor
 AGE_RANGE = 10                  # Bucket size for YearOfBirth aggregation (e.g., 10 -> 1920, 1930, ..., 2000)
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
-DYNAMIC_HVE_SKIP_WEEKS = 3      # Start accumulating hazards/statistics from this week index (0 = from enrollment)
+# HVE is gone after 2 weeks, so to be safe, start accumulating 
+# hazards/statistics from the 3rd week of cumulated data.
+DYNAMIC_HVE_SKIP_WEEKS = 2      
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
