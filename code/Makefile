@@ -15,6 +15,7 @@ INPUT_DATA       = $(RECORDS_CSV)
 CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
 VARIABLE_OUTPUT  = ../data/$(DATASET)/KCOR_variable.xlsx
+TS_OUTPUT        = ../data/$(DATASET)/KCOR_ts.xlsx
 
 
 .PHONY: clean clean-all help sensitivity
@@ -86,6 +87,16 @@ $(VARIABLE_OUTPUT): $(INPUT_DATA) KCOR_variable.py | ../data/$(DATASET)
 	@echo "Running KCOR variable-cohort aggregation..."
 	python3 KCOR_variable.py $(INPUT_DATA) $(VARIABLE_OUTPUT)
 	@echo "KCOR_variable aggregation complete!"
+
+# Time series aggregation (single-sheet; weeks after each dose independently)
+ts: $(TS_OUTPUT)
+
+KCOR_ts: $(TS_OUTPUT)
+
+$(TS_OUTPUT): $(INPUT_DATA) KCOR_ts.py | ../data/$(DATASET)
+	@echo "Running KCOR time series aggregation..."
+	python3 KCOR_ts.py $(INPUT_DATA) $(TS_OUTPUT)
+	@echo "KCOR time series aggregation complete!"
 
 # Ensure output directory exists (real directory target)
 ../data/$(DATASET):
