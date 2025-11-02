@@ -137,7 +137,7 @@ def main():
     a['birth_year'] = a['birth_year'].astype(str).str[:4]
     a['birth_year'] = pd.to_numeric(a['birth_year'], errors='coerce')
     
-    # Filter birth years 1910-2005 (to compute decades 1920-2000)
+    # Filter birth years 1910-2005 (to compute decades 1920-1970)
     before = len(a)
     a = a[((a['birth_year'] >= 1910) & (a['birth_year'] <= 2005)) | (a['birth_year'].isna())].copy()
     after = len(a)
@@ -160,11 +160,11 @@ def main():
     
     print(f"  Total records: {len(a)}")
     
-    # Process each dose independently
+    # Process each dose independently, then by vaccination month
     all_results = []
     
-    for dose_num in range(1, 6):  # Doses 1-5
-        dose_col = f'Date_{["First", "Second", "Third", "Fourth", "Fifth"][dose_num-1]}Dose'
+    for dose_num in range(1, 5):  # Doses 1-4
+        dose_col = f'Date_{["First", "Second", "Third", "Fourth"][dose_num-1]}Dose'
         dose_date_col = dose_col + '_date'
         
         print(f"\n  Processing dose {dose_num}...")
@@ -176,118 +176,119 @@ def main():
         if len(dose_df) == 0:
             continue
         
-        # Vectorized approach: calculate all decades and death weeks at once
-        print(f"      Calculating decades and death weeks (vectorized)...")
+        # Extract vaccination month (1-12) for all people at once
+        dose_df['vaccination_month'] = dose_df[dose_date_col].apply(lambda x: x.month if x is not None else None)
         
-        # Calculate decades for all people (vectorized)
-        dose_df['decade'] = dose_df['birth_year'].apply(decade_from_birth_year)
-        
-        # Filter to valid decades
-        dose_df = dose_df[(dose_df['decade'].notna()) & 
-                          (dose_df['decade'] >= 1920) & 
-                          (dose_df['decade'] <= 2000)].copy()
-        
-        if len(dose_df) == 0:
-            print(f"    No valid contributions for dose {dose_num}")
-            continue
-        
-        # Calculate death_week for all people (vectorized where possible)
-        # For people with death dates, calculate weeks after dose
-        has_death = dose_df['DateOfDeath_date'].notna()
-        death_weeks = pd.Series(None, index=dose_df.index, dtype='float64')
-        
-        if has_death.any():
-            # Vectorized calculation for people with deaths
-            dose_dates = dose_df.loc[has_death, dose_date_col]
-            death_dates = dose_df.loc[has_death, 'DateOfDeath_date']
+        # Process by vaccination month to avoid iterating over everyone multiple times
+        for month in range(1, 13):  # Months 1-12
+            month_df = dose_df[dose_df['vaccination_month'] == month].copy()
             
-            # Calculate weeks after dose (vectorized where possible)
-            # Note: weeks_after_dose needs to be called per row, but we can optimize the filtering
-            death_week_values = []
-            for idx in dose_df[has_death].index:
-                dose_date = dose_df.loc[idx, dose_date_col]
-                death_date = dose_df.loc[idx, 'DateOfDeath_date']
-                week = weeks_after_dose(dose_date, death_date)
-                if week < 0:
-                    week = -1  # Died before dose
-                elif week > 200:
-                    week = None  # Died after week 200
-                death_week_values.append(week)
+            if len(month_df) == 0:
+                continue
             
-            death_weeks[has_death] = death_week_values
-        
-        dose_df['death_week'] = death_weeks
-        
-        # Filter out people who died before dose
-        dose_df = dose_df[dose_df['death_week'] != -1].copy()
-        
-        if len(dose_df) == 0:
-            print(f"    No valid contributions for dose {dose_num}")
-            continue
-        
-        print(f"      Aggregating by week (vectorized)...")
-        
-        # Process each week 0-200 using vectorized operations
-        result_rows = []
-        for week in range(0, 201):
-            if week % 50 == 0:
-                print(f"        Processing week {week}/200...")
+            print(f"      Processing month {month}: {len(month_df):,} people")
             
-            # Vectorized masks: who is alive at start of this week?
-            # Alive if: death_week is None (survived) OR death_week >= week
-            alive_mask = (dose_df['death_week'].isna()) | (dose_df['death_week'] >= week)
+            # Calculate decades for all people in this month (vectorized)
+            month_df['decade'] = month_df['birth_year'].apply(decade_from_birth_year)
             
-            # Vectorized mask: who dies during this week?
-            dead_mask = (dose_df['death_week'] == week)
+            # Filter to valid decades (1920-1970)
+            month_df = month_df[(month_df['decade'].notna()) & 
+                                (month_df['decade'] >= 1920) & 
+                                (month_df['decade'] <= 1970)].copy()
             
-            # Group by decade and sum the masks
-            alive_by_decade = dose_df[alive_mask].groupby('decade').size()
-            dead_by_decade = dose_df[dead_mask].groupby('decade').size()
+            if len(month_df) == 0:
+                continue
             
-            # Combine results for this week
-            for decade in alive_by_decade.index:
-                result_rows.append({
-                    'dose': dose_num,
-                    'decade': int(decade),
-                    'week_after_dose': week,
-                    'alive': int(alive_by_decade[decade]),
-                    'dead': int(dead_by_decade.get(decade, 0))
-                })
+            # Calculate death_week for all people (vectorized where possible)
+            has_death = month_df['DateOfDeath_date'].notna()
+            death_weeks = pd.Series(None, index=month_df.index, dtype='float64')
+            
+            if has_death.any():
+                # Calculate weeks after dose for people with deaths
+                death_week_values = []
+                for idx in month_df[has_death].index:
+                    dose_date = month_df.loc[idx, dose_date_col]
+                    death_date = month_df.loc[idx, 'DateOfDeath_date']
+                    week = weeks_after_dose(dose_date, death_date)
+                    if week < 0:
+                        week = -1  # Died before dose
+                    elif week > 200:
+                        week = None  # Died after week 200
+                    death_week_values.append(week)
+                
+                death_weeks[has_death] = death_week_values
+            
+            month_df['death_week'] = death_weeks
+            
+            # Filter out people who died before dose
+            month_df = month_df[month_df['death_week'] != -1].copy()
+            
+            if len(month_df) == 0:
+                continue
+            
+            # Process each week 0-200 using vectorized operations
+            result_rows = []
+            for week in range(0, 201):
+                # Vectorized masks: who is alive at start of this week?
+                alive_mask = (month_df['death_week'].isna()) | (month_df['death_week'] >= week)
+                
+                # Vectorized mask: who dies during this week?
+                dead_mask = (month_df['death_week'] == week)
+                
+                # Group by decade and sum the masks
+                alive_by_decade = month_df[alive_mask].groupby('decade').size()
+                dead_by_decade = month_df[dead_mask].groupby('decade').size()
+                
+                # Combine results for this week
+                for decade in alive_by_decade.index:
+                    result_rows.append({
+                        'dose': dose_num,
+                        'vaccination_month': month,
+                        'decade': int(decade),
+                        'week_after_dose': week,
+                        'alive': int(alive_by_decade[decade]),
+                        'dead': int(dead_by_decade.get(decade, 0))
+                    })
+            
+            if result_rows:
+                month_result = pd.DataFrame(result_rows)
+                all_results.append(month_result)
         
-        if not result_rows:
-            print(f"    No valid contributions for dose {dose_num}")
-            continue
-        
-        result = pd.DataFrame(result_rows)
-        
-        # Ensure we have all weeks 0-200 for each (dose, decade) combination
-        # Create full grid for all output decades 1920-2000
-        decades = list(range(1920, 2010, 10))  # 1920, 1930, ..., 2000
-        weeks = list(range(0, 201))
-        
-        grid = []
-        for decade in decades:
-            for week in weeks:
-                grid.append({'dose': dose_num, 'decade': decade, 'week_after_dose': week})
-        
-        grid_df = pd.DataFrame(grid)
-        result = grid_df.merge(result, on=['dose', 'decade', 'week_after_dose'], how='left')
-        result = result.fillna(0)
-        
-        # Sort and ensure proper types
-        result = result.sort_values(['dose', 'decade', 'week_after_dose'])
-        result['alive'] = result['alive'].astype(int)
-        result['dead'] = result['dead'].astype(int)
-        
-        all_results.append(result)
-        print(f"    Added {len(result)} rows for dose {dose_num}")
+        print(f"    Completed dose {dose_num}")
     
-    # Combine all doses
+    # Combine all results
     if not all_results:
         print("ERROR: No results generated")
         sys.exit(1)
     
     final_df = pd.concat(all_results, ignore_index=True)
+    
+    # Ensure we have all weeks 0-200 for each (dose, vaccination_month, decade) combination
+    # Create full grid for all output decades 1920-1970
+    decades = list(range(1920, 1980, 10))  # 1920, 1930, ..., 1970
+    weeks = list(range(0, 201))
+    months = list(range(1, 13))
+    
+    grid = []
+    for dose_num in range(1, 5):
+        for month in months:
+            for decade in decades:
+                for week in weeks:
+                    grid.append({
+                        'dose': dose_num,
+                        'vaccination_month': month,
+                        'decade': decade,
+                        'week_after_dose': week
+                    })
+    
+    grid_df = pd.DataFrame(grid)
+    final_df = grid_df.merge(final_df, on=['dose', 'vaccination_month', 'decade', 'week_after_dose'], how='left')
+    final_df = final_df.fillna(0)
+    
+    # Sort and ensure proper types
+    final_df = final_df.sort_values(['dose', 'vaccination_month', 'decade', 'week_after_dose'])
+    final_df['alive'] = final_df['alive'].astype(int)
+    final_df['dead'] = final_df['dead'].astype(int)
     
     # Calculate h(t) = -(ln(1 - dead/alive))
     # Handle edge cases: alive=0 or dead=0
@@ -300,6 +301,7 @@ def main():
     # Rename columns to match spec
     final_df = final_df.rename(columns={
         'dose': 'dose',
+        'vaccination_month': 'vaccination_month',
         'decade': 'Decade_of_Birth',
         'week_after_dose': 'week_after_dose',
         'alive': 'alive',
@@ -307,23 +309,23 @@ def main():
         'hazard': 'h(t)'
     })
     
-    # Calculate cumulative hazard cum h(t) for each (dose, Decade_of_Birth) group
+    # Calculate cumulative hazard cum h(t) for each (dose, vaccination_month, Decade_of_Birth) group
     # Sort to ensure proper ordering before cumulative sum
-    final_df = final_df.sort_values(['dose', 'Decade_of_Birth', 'week_after_dose'])
+    final_df = final_df.sort_values(['dose', 'vaccination_month', 'Decade_of_Birth', 'week_after_dose'])
     
-    # Compute cumulative sum of h(t) within each (dose, Decade_of_Birth) group
+    # Compute cumulative sum of h(t) within each (dose, vaccination_month, Decade_of_Birth) group
     # Replace NaN with 0 for cumulative calculation (treat missing as 0 hazard)
     # Use transform to preserve index alignment
     final_df['cum h(t)'] = (
-        final_df.groupby(['dose', 'Decade_of_Birth'])['h(t)']
+        final_df.groupby(['dose', 'vaccination_month', 'Decade_of_Birth'])['h(t)']
         .transform(lambda x: x.fillna(0).cumsum())
     )
     
     # Reorder columns
-    final_df = final_df[['dose', 'Decade_of_Birth', 'week_after_dose', 'alive', 'dead', 'h(t)', 'cum h(t)']]
+    final_df = final_df[['dose', 'vaccination_month', 'Decade_of_Birth', 'week_after_dose', 'alive', 'dead', 'h(t)', 'cum h(t)']]
     
-    # Filter to output decades 1920-2000
-    final_df = final_df[(final_df['Decade_of_Birth'] >= 1920) & (final_df['Decade_of_Birth'] <= 2000)]
+    # Filter to output decades 1920-1970
+    final_df = final_df[(final_df['Decade_of_Birth'] >= 1920) & (final_df['Decade_of_Birth'] <= 1970)]
     
     # Write to Excel
     print(f"\n  Writing to Excel: {excel_out_path}")

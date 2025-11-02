@@ -20,11 +20,11 @@ Note that the first 3 columns are group-by index columns, the next two columns a
 
 For the index columns:
 - Dose should vary from 1 to 5 (each dose processed independently)
-- Decade of birth should vary from 1920 to 2000 (increment by 10)
+- Decade of birth should vary from 1910 to 2000 (increment by 10)
 - Week after dose should vary from 0 to 200
 
 Processing notes:
-- Process birth years from 1910 to 2005 inclusive (to properly compute decade groupings for output decades 1920-2000)
+- Process birth years from 1910 to 2005 inclusive (to properly compute decade groupings for output decades 1910-2000)
 - Output format: Single Excel sheet
 - No need for Sex or DCCI grouping dimensions at this time
 
