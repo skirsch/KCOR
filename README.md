@@ -682,6 +682,7 @@ KCOR/
 ├── code/
 │   ├── KCOR.py                      # Main analysis script (v4.6)
 │   ├── KCOR_CMR.py                    # Data aggregation script
+│   ├── KCOR_ts.py                      # Time series analysis script
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── debug/                          # Helper scripts for development/verification
 │   └── old/                            # Archived scripts
@@ -713,6 +714,7 @@ KCOR/
 - Root `Makefile` orchestrates common tasks:
   - `make` → runs variable-cohort aggregation, analysis, validation, and tests
   - `make run` → main KCOR pipeline (delegates to `code/Makefile KCOR`)
+  - `make ts` → time series analysis (delegates to `code/Makefile ts`)
   - `make validation` → DS-CMRR + KM + GLM validation (delegates to `validation/DS-CMRR/`, `validation/kaplan_meier/`, and `validation/GLM/`)
   - `make test` → runs both negative-control and sensitivity tests (delegates to `test/Makefile`)
 - Important: Always run these targets from the repository root so environment and output paths are consistent.
@@ -787,12 +789,14 @@ Root Makefile orchestrates both the KCOR pipeline and the validation suite.
 # From repo root
 make                    # runs analysis (run) + validation + tests
 make run                # main KCOR pipeline
+make ts                 # time series analysis (KCOR_ts)
 make validation         # DS-CMRR + KM validation
 make test               # negative-control and sensitivity tests (see test/)
 
 # Dataset targeting (default DATASET=Czech)
 make DATASET=Czech
 make run DATASET=USA
+make ts DATASET=Czech
 make sensitivity DATASET=Czech
 ```
 
@@ -1199,7 +1203,7 @@ The KCOR methodology has been independently validated using multiple approaches 
 
 ### Independent Validation Methods
 
-The [`validation/`](validation/) directory contains four independent validation approaches to analyzing the Czech data: GLM, DS-CMRR, Kaplan-Meier, looking at cumulative deaths of naturally matched cohorts.
+The [`validation/`](validation/) directory contains multiple independent validation approaches to analyzing the Czech data: GLM, DS-CMRR, Kaplan-Meier, naturally matched cohorts, Aarstad correlation analysis, and time series analysis (KCOR_ts).
 
 Here are the KCOR results for direct comparison with other methods (such as GLM and DS-CMRR) that produce similar style curves
 
@@ -1244,6 +1248,24 @@ This plot shows that with naturally matched cohorts, the curves remain aligned b
    ![Aarstad Correlation Analysis](validation/aarstad/aarstad.png)
 
    *Aarstad correlation analysis showing consistent patterns with KCOR methodology*
+
+6. **Time Series Analysis (KCOR_ts)**: A complementary analysis that computes mortality rates per week for cohorts defined relative to the time they received their vaccination dose, rather than fixed enrollment dates. Unlike KCOR_CMR which uses fixed enrollment dates, this groups cohorts by the calendar month they received their dose.
+
+   This analysis processes each dose (1-4) independently, as if that dose is the only dose received, and tracks mortality over 200 weeks after vaccination. Output includes:
+   - `dose`: Vaccination dose (1-4)
+   - `vaccination_month`: Calendar month of vaccination (1-12)
+   - `Decade_of_Birth`: Birth decade (1920-1970)
+   - `week_after_dose`: Weeks since vaccination (0-200)
+   - `alive`: Number of people alive at start of week
+   - `dead`: Number of deaths during week
+   - `h(t)`: Weekly hazard function
+   - `cum h(t)`: Cumulative hazard from week 0
+
+   Run: `make ts` or `make ts DATASET=Czech`
+   - Output: `data/Czech/KCOR_ts.xlsx`
+   - Documentation: [`documentation/specs/time_series.md`](documentation/specs/time_series.md)
+
+   This analysis provides an alternative perspective on mortality patterns by tracking cohorts from their vaccination date rather than a fixed enrollment date, complementing the fixed-cohort approach used in the main KCOR analysis.
 
 ### Negative-Control and Sensitivity Tests
 
