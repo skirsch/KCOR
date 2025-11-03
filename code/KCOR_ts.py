@@ -85,7 +85,7 @@ def weeks_after_dose(dose_date: date, target_date: date) -> int:
 
 def decade_from_birth_year(birth_year: int) -> Optional[int]:
     """Convert birth year to decade (1920-1929 -> 1920, etc.). Returns None for invalid years."""
-    if pd.isna(birth_year) or birth_year < 1910 or birth_year > 2005:
+    if pd.isna(birth_year) or birth_year < 1920 or birth_year > 1979:
         return None
     # Round down to nearest decade
     return (birth_year // 10) * 10
@@ -137,11 +137,11 @@ def main():
     a['birth_year'] = a['birth_year'].astype(str).str[:4]
     a['birth_year'] = pd.to_numeric(a['birth_year'], errors='coerce')
     
-    # Filter birth years 1910-2005 (to compute decades 1920-1970)
+    # Filter birth years 1920-1979 (to compute decades 1920-1970)
     before = len(a)
-    a = a[((a['birth_year'] >= 1910) & (a['birth_year'] <= 2005)) | (a['birth_year'].isna())].copy()
+    a = a[((a['birth_year'] >= 1920) & (a['birth_year'] <= 1979)) | (a['birth_year'].isna())].copy()
     after = len(a)
-    print(f"  Filtered YearOfBirth to 1910-2005: kept {after}/{before} records")
+    print(f"  Filtered YearOfBirth to 1920-1979: kept {after}/{before} records")
     
     # Parse dose dates (ISO week format: YYYY-WW)
     dose_date_columns = ['Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose', 'Date_FifthDose']
