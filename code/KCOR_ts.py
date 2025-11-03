@@ -226,28 +226,57 @@ def main():
             if len(month_df) == 0:
                 continue
             
-            # Process each week 0-200 using vectorized operations
+            # Use numpy arrays for faster processing: create byte arrays per person
+            # Each person gets an array of length 201 (weeks 0-200):
+            #   alive_array: 1 if alive at start of week, 0 if dead
+            # We can derive dead_array from alive_array (if alive at week N but not week N+1, died during week N)
+            num_people = len(month_df)
+            alive_arrays = np.zeros((num_people, 201), dtype=np.uint8)
+            
+            # Vectorized array filling: much faster than iterating
+            death_weeks = month_df['death_week'].values
+            
+            # For people who survived (death_week is NaN), set all weeks to 1
+            survived_mask = pd.isna(death_weeks)
+            alive_arrays[survived_mask, :] = 1
+            
+            # For people who died, set alive from week 0 to death_week (inclusive)
+            died_mask = ~survived_mask
+            if died_mask.any():
+                died_indices = np.where(died_mask)[0]
+                death_weeks_int = death_weeks[died_mask].astype(int)
+                
+                # Set alive arrays: for each person who died, weeks 0 to death_week are alive
+                for i, person_idx in enumerate(died_indices):
+                    dw_val = death_weeks_int[i]
+                    alive_arrays[person_idx, :dw_val + 1] = 1
+            
+            # Derive dead_arrays from alive_arrays: person died during week N if alive at start of week N but not week N+1
+            # dead_arrays[week] = alive_arrays[week] AND NOT alive_arrays[week+1]
+            dead_arrays = np.zeros((num_people, 201), dtype=np.uint8)
+            # For weeks 0-199: died if alive at start of week but not at start of next week
+            dead_arrays[:, 0:200] = alive_arrays[:, 0:200] * (1 - alive_arrays[:, 1:201])
+            # Week 200: no deaths tracked (we only track up to week 200)
+            
+            # Get decades as array for grouping
+            decades_array = month_df['decade'].values.astype(int)
+            
+            # Group by decade and sum arrays (much faster than iterating weeks)
             result_rows = []
-            for week in range(0, 201):
-                # Vectorized masks: who is alive at start of this week?
-                alive_mask = (month_df['death_week'].isna()) | (month_df['death_week'] >= week)
+            for decade in np.unique(decades_array):
+                decade_mask = (decades_array == decade)
+                decade_alive = alive_arrays[decade_mask, :].sum(axis=0)  # Sum across people for each week
+                decade_dead = dead_arrays[decade_mask, :].sum(axis=0)
                 
-                # Vectorized mask: who dies during this week?
-                dead_mask = (month_df['death_week'] == week)
-                
-                # Group by decade and sum the masks
-                alive_by_decade = month_df[alive_mask].groupby('decade').size()
-                dead_by_decade = month_df[dead_mask].groupby('decade').size()
-                
-                # Combine results for this week
-                for decade in alive_by_decade.index:
+                # Create rows for each week
+                for week in range(201):
                     result_rows.append({
                         'dose': dose_num,
                         'vaccination_month': month,
                         'decade': int(decade),
                         'week_after_dose': week,
-                        'alive': int(alive_by_decade[decade]),
-                        'dead': int(dead_by_decade.get(decade, 0))
+                        'alive': int(decade_alive[week]),
+                        'dead': int(decade_dead[week])
                     })
             
             if result_rows:
