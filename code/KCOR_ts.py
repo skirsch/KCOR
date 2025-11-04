@@ -92,6 +92,8 @@ def decade_from_birth_year(birth_year: int) -> Optional[int]:
 
 def main():
     import datetime as dt
+    import time
+    start_time = time.time()
     print(f"KCOR_ts start: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Parse command line arguments
@@ -227,67 +229,7 @@ def main():
             if len(month_df) == 0:
                 continue
             
-            # Use numpy arrays for faster processing: create byte arrays per person
-            # Each person gets an array of length 201 (weeks 0-200):
-            #   alive_array: 1 if alive at start of week, 0 if dead
-            # We can derive dead_array from alive_array (if alive at week N but not week N+1, died during week N)
-            num_people = len(month_df)
-            alive_arrays = np.zeros((num_people, 201), dtype=np.uint8)
-            
-            # Vectorized array filling: much faster than iterating
-            death_weeks = month_df['death_week'].values
-            
-            # For people who survived (death_week is NaN), set all weeks to 1
-            survived_mask = pd.isna(death_weeks)
-            alive_arrays[survived_mask, :] = 1
-            
-            # For people who died, set alive from week 0 to death_week (inclusive)
-            died_mask = ~survived_mask
-            if died_mask.any():
-                died_indices = np.where(died_mask)[0]
-                death_weeks_int = death_weeks[died_mask].astype(int)
-                
-                # Set alive arrays: for each person who died, weeks 0 to death_week are alive
-                for i, person_idx in enumerate(died_indices):
-                    dw_val = death_weeks_int[i]
-                    alive_arrays[person_idx, :dw_val + 1] = 1
-            
-            # Derive dead_arrays from alive_arrays: person died during week N if alive at start of week N but not week N+1
-            # dead_arrays[week] = alive_arrays[week] AND NOT alive_arrays[week+1]
-            dead_arrays = np.zeros((num_people, 201), dtype=np.uint8)
-            # For weeks 0-199: died if alive at start of week but not at start of next week
-            dead_arrays[:, 0:200] = alive_arrays[:, 0:200] * (1 - alive_arrays[:, 1:201])
-            # Week 200: no deaths tracked (we only track up to week 200)
-            
-            # Get decades as array for grouping
-            decades_array = month_df['decade'].values.astype(int)
-            
-            # Group by decade and sum arrays (much faster than iterating weeks)
-            result_rows = []
-            for decade in np.unique(decades_array):
-                decade_mask = (decades_array == decade)
-                decade_alive = alive_arrays[decade_mask, :].sum(axis=0)  # Sum across people for each week
-                decade_dead = dead_arrays[decade_mask, :].sum(axis=0)
-                
-                # Create rows for each week
-                for week in range(201):
-                    result_rows.append({
-                        'dose': dose_num,
-                        'vaccination_month': month,
-                        'decade': int(decade),
-                        'week_after_dose': week,
-                        'alive': int(decade_alive[week]),
-                        'dead': int(decade_dead[week])
-                    })
-            
-            if result_rows:
-                month_result = pd.DataFrame(result_rows)
-                all_results.append(month_result)
-            
-            # ===== CENSORED VERSION =====
-            # Process same month but with censoring when people get next dose
-            print(f"      Processing month {month} (censored): {len(month_df):,} people")
-            
+            # Calculate censoring weeks first (for censored tab)
             # Determine censoring week: when people got the next dose (dose_num + 1)
             if dose_num < 4:  # Only doses 1-3 can have next dose
                 next_dose_col = f'Date_{["Second", "Third", "Fourth"][dose_num - 1]}Dose_date'
@@ -315,19 +257,30 @@ def main():
                 # Dose 4: no next dose, so no censoring
                 month_df['censor_week'] = None
             
-            # Build arrays with censoring: people stop contributing after censor_week or death_week (whichever comes first)
-            num_people_c = len(month_df)
-            alive_arrays_c = np.zeros((num_people_c, 201), dtype=np.uint8)
-            dead_arrays_c = np.zeros((num_people_c, 201), dtype=np.uint8)
-            censored_arrays_c = np.zeros((num_people_c, 201), dtype=np.uint8)
+            # Build both uncensored and censored arrays in a single pass
+            num_people = len(month_df)
+            alive_arrays = np.zeros((num_people, 201), dtype=np.uint8)
+            alive_arrays_c = np.zeros((num_people, 201), dtype=np.uint8)
+            dead_arrays_c = np.zeros((num_people, 201), dtype=np.uint8)
+            censored_arrays_c = np.zeros((num_people, 201), dtype=np.uint8)
             
-            death_weeks_c = month_df['death_week'].values
-            censor_weeks_c = month_df['censor_week'].values
+            death_weeks = month_df['death_week'].values
+            censor_weeks = month_df['censor_week'].values
             
-            for idx in range(num_people_c):
-                death_w = death_weeks_c[idx] if not pd.isna(death_weeks_c[idx]) else None
-                censor_w = censor_weeks_c[idx] if not pd.isna(censor_weeks_c[idx]) else None
+            # Single pass: build both uncensored and censored arrays
+            for idx in range(num_people):
+                death_w = death_weeks[idx] if not pd.isna(death_weeks[idx]) else None
+                censor_w = censor_weeks[idx] if not pd.isna(censor_weeks[idx]) else None
                 
+                # ===== UNCENSORED VERSION =====
+                if death_w is None:
+                    # Survived: alive for all 201 weeks
+                    alive_arrays[idx, :] = 1
+                else:
+                    # Died: alive from week 0 to death_week (inclusive)
+                    alive_arrays[idx, :int(death_w) + 1] = 1
+                
+                # ===== CENSORED VERSION =====
                 # Determine last week person contributes (minimum of death_week and censor_week)
                 if death_w is not None and censor_w is not None:
                     last_week = min(int(death_w), int(censor_w))
@@ -353,16 +306,39 @@ def main():
                 if not is_death and censor_w is not None:
                     censored_arrays_c[idx, int(censor_w)] = 1
             
-            # Group by decade and sum arrays
+            # Derive dead_arrays from alive_arrays for uncensored version
+            dead_arrays = np.zeros((num_people, 201), dtype=np.uint8)
+            dead_arrays[:, 0:200] = alive_arrays[:, 0:200] * (1 - alive_arrays[:, 1:201])
+            
+            # Get decades as array for grouping
+            decades_array = month_df['decade'].values.astype(int)
+            
+            # Group by decade and sum arrays for both versions
+            result_rows = []
             result_rows_c = []
             for decade in np.unique(decades_array):
                 decade_mask = (decades_array == decade)
+                
+                # Uncensored aggregates
+                decade_alive = alive_arrays[decade_mask, :].sum(axis=0)
+                decade_dead = dead_arrays[decade_mask, :].sum(axis=0)
+                
+                # Censored aggregates
                 decade_alive_c = alive_arrays_c[decade_mask, :].sum(axis=0)
                 decade_dead_c = dead_arrays_c[decade_mask, :].sum(axis=0)
                 decade_censored_c = censored_arrays_c[decade_mask, :].sum(axis=0)
                 
                 # Create rows for each week
                 for week in range(201):
+                    result_rows.append({
+                        'dose': dose_num,
+                        'vaccination_month': month,
+                        'decade': int(decade),
+                        'week_after_dose': week,
+                        'alive': int(decade_alive[week]),
+                        'dead': int(decade_dead[week])
+                    })
+                    
                     result_rows_c.append({
                         'dose': dose_num,
                         'vaccination_month': month,
@@ -372,6 +348,10 @@ def main():
                         'dead': int(decade_dead_c[week]),
                         'censored': int(decade_censored_c[week])
                     })
+            
+            if result_rows:
+                month_result = pd.DataFrame(result_rows)
+                all_results.append(month_result)
             
             if result_rows_c:
                 month_result_c = pd.DataFrame(result_rows_c)
@@ -473,7 +453,21 @@ def main():
     print(f"  Total rows written (TimeSeries): {len(final_df)}")
     if not final_df_censored.empty:
         print(f"  Total rows written (Censored): {len(final_df_censored)}")
+    
+    # Calculate and print elapsed time
+    elapsed_time = time.time() - start_time
+    hours = int(elapsed_time // 3600)
+    minutes = int((elapsed_time % 3600) // 60)
+    seconds = int(elapsed_time % 60)
+    if hours > 0:
+        elapsed_str = f"{hours}h {minutes}m {seconds}s"
+    elif minutes > 0:
+        elapsed_str = f"{minutes}m {seconds}s"
+    else:
+        elapsed_str = f"{seconds}s"
+    
     print(f"KCOR_ts complete: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Total elapsed time: {elapsed_str}")
 
 if __name__ == '__main__':
     main()
