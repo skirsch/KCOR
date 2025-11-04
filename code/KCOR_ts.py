@@ -162,6 +162,7 @@ def main():
     
     # Process each dose independently, then by vaccination month
     all_results = []
+    all_results_censored = []  # For censored tab
     
     for dose_num in range(1, 5):  # Doses 1-4
         dose_col = f'Date_{["First", "Second", "Third", "Fourth"][dose_num-1]}Dose'
@@ -282,6 +283,99 @@ def main():
             if result_rows:
                 month_result = pd.DataFrame(result_rows)
                 all_results.append(month_result)
+            
+            # ===== CENSORED VERSION =====
+            # Process same month but with censoring when people get next dose
+            print(f"      Processing month {month} (censored): {len(month_df):,} people")
+            
+            # Determine censoring week: when people got the next dose (dose_num + 1)
+            if dose_num < 4:  # Only doses 1-3 can have next dose
+                next_dose_col = f'Date_{["Second", "Third", "Fourth"][dose_num]}Dose_date'
+                has_next_dose = month_df[next_dose_col].notna()
+                
+                # Calculate censoring week for people who got next dose
+                censor_weeks = pd.Series(None, index=month_df.index, dtype='float64')
+                
+                if has_next_dose.any():
+                    censor_week_values = []
+                    for idx in month_df[has_next_dose].index:
+                        dose_date = month_df.loc[idx, dose_date_col]
+                        next_dose_date = month_df.loc[idx, next_dose_col]
+                        week = weeks_after_dose(dose_date, next_dose_date)
+                        if week < 0:
+                            week = None  # Next dose before current dose (shouldn't happen)
+                        elif week > 200:
+                            week = None  # Next dose after week 200, treat as no censoring
+                        censor_week_values.append(week)
+                    
+                    censor_weeks[has_next_dose] = censor_week_values
+                
+                month_df['censor_week'] = censor_weeks
+            else:
+                # Dose 4: no next dose, so no censoring
+                month_df['censor_week'] = None
+            
+            # Build arrays with censoring: people stop contributing after censor_week or death_week (whichever comes first)
+            num_people_c = len(month_df)
+            alive_arrays_c = np.zeros((num_people_c, 201), dtype=np.uint8)
+            dead_arrays_c = np.zeros((num_people_c, 201), dtype=np.uint8)
+            censored_arrays_c = np.zeros((num_people_c, 201), dtype=np.uint8)
+            
+            death_weeks_c = month_df['death_week'].values
+            censor_weeks_c = month_df['censor_week'].values
+            
+            for idx in range(num_people_c):
+                death_w = death_weeks_c[idx] if not pd.isna(death_weeks_c[idx]) else None
+                censor_w = censor_weeks_c[idx] if not pd.isna(censor_weeks_c[idx]) else None
+                
+                # Determine last week person contributes (minimum of death_week and censor_week)
+                if death_w is not None and censor_w is not None:
+                    last_week = min(int(death_w), int(censor_w))
+                    is_death = (death_w <= censor_w)
+                elif death_w is not None:
+                    last_week = int(death_w)
+                    is_death = True
+                elif censor_w is not None:
+                    last_week = int(censor_w)
+                    is_death = False
+                else:
+                    last_week = 200  # Survived and not censored
+                    is_death = False
+                
+                # Person is alive from week 0 to last_week (inclusive)
+                alive_arrays_c[idx, :last_week + 1] = 1
+                
+                # If they died (before or at censoring), mark death
+                if is_death and death_w is not None:
+                    dead_arrays_c[idx, int(death_w)] = 1
+                
+                # If they were censored (before or at death), mark censoring
+                if not is_death and censor_w is not None:
+                    censored_arrays_c[idx, int(censor_w)] = 1
+            
+            # Group by decade and sum arrays
+            result_rows_c = []
+            for decade in np.unique(decades_array):
+                decade_mask = (decades_array == decade)
+                decade_alive_c = alive_arrays_c[decade_mask, :].sum(axis=0)
+                decade_dead_c = dead_arrays_c[decade_mask, :].sum(axis=0)
+                decade_censored_c = censored_arrays_c[decade_mask, :].sum(axis=0)
+                
+                # Create rows for each week
+                for week in range(201):
+                    result_rows_c.append({
+                        'dose': dose_num,
+                        'vaccination_month': month,
+                        'decade': int(decade),
+                        'week_after_dose': week,
+                        'alive': int(decade_alive_c[week]),
+                        'dead': int(decade_dead_c[week]),
+                        'censored': int(decade_censored_c[week])
+                    })
+            
+            if result_rows_c:
+                month_result_c = pd.DataFrame(result_rows_c)
+                all_results_censored.append(month_result_c)
         
         print(f"    Completed dose {dose_num}")
     
@@ -319,14 +413,6 @@ def main():
     final_df['alive'] = final_df['alive'].astype(int)
     final_df['dead'] = final_df['dead'].astype(int)
     
-    # Calculate h(t) = -(ln(1 - dead/alive))
-    # Handle edge cases: alive=0 or dead=0
-    final_df['hazard'] = np.where(
-        final_df['alive'] > 0,
-        -np.log(np.maximum(1e-10, 1 - (final_df['dead'] / final_df['alive']))),
-        np.nan
-    )
-    
     # Rename columns to match spec
     final_df = final_df.rename(columns={
         'dose': 'dose',
@@ -334,34 +420,59 @@ def main():
         'decade': 'Decade_of_Birth',
         'week_after_dose': 'week_after_dose',
         'alive': 'alive',
-        'dead': 'dead',
-        'hazard': 'h(t)'
+        'dead': 'dead'
     })
     
-    # Calculate cumulative hazard cum h(t) for each (dose, vaccination_month, Decade_of_Birth) group
-    # Sort to ensure proper ordering before cumulative sum
-    final_df = final_df.sort_values(['dose', 'vaccination_month', 'Decade_of_Birth', 'week_after_dose'])
-    
-    # Compute cumulative sum of h(t) within each (dose, vaccination_month, Decade_of_Birth) group
-    # Replace NaN with 0 for cumulative calculation (treat missing as 0 hazard)
-    # Use transform to preserve index alignment
-    final_df['cum h(t)'] = (
-        final_df.groupby(['dose', 'vaccination_month', 'Decade_of_Birth'])['h(t)']
-        .transform(lambda x: x.fillna(0).cumsum())
-    )
-    
     # Reorder columns
-    final_df = final_df[['dose', 'vaccination_month', 'Decade_of_Birth', 'week_after_dose', 'alive', 'dead', 'h(t)', 'cum h(t)']]
+    final_df = final_df[['dose', 'vaccination_month', 'Decade_of_Birth', 'week_after_dose', 'alive', 'dead']]
     
     # Filter to output decades 1920-1970
     final_df = final_df[(final_df['Decade_of_Birth'] >= 1920) & (final_df['Decade_of_Birth'] <= 1970)]
+    
+    # Process censored results
+    if all_results_censored:
+        final_df_censored = pd.concat(all_results_censored, ignore_index=True)
+        
+        # Create same grid for censored data
+        grid_df_censored = pd.DataFrame(grid)
+        final_df_censored = grid_df_censored.merge(final_df_censored, on=['dose', 'vaccination_month', 'decade', 'week_after_dose'], how='left')
+        final_df_censored = final_df_censored.fillna(0)
+        
+        # Sort and ensure proper types
+        final_df_censored = final_df_censored.sort_values(['dose', 'vaccination_month', 'decade', 'week_after_dose'])
+        final_df_censored['alive'] = final_df_censored['alive'].astype(int)
+        final_df_censored['dead'] = final_df_censored['dead'].astype(int)
+        final_df_censored['censored'] = final_df_censored['censored'].astype(int)
+        
+        # Rename columns
+        final_df_censored = final_df_censored.rename(columns={
+            'dose': 'dose',
+            'vaccination_month': 'vaccination_month',
+            'decade': 'Decade_of_Birth',
+            'week_after_dose': 'week_after_dose',
+            'alive': 'alive',
+            'dead': 'dead',
+            'censored': 'censored'
+        })
+        
+        # Reorder columns
+        final_df_censored = final_df_censored[['dose', 'vaccination_month', 'Decade_of_Birth', 'week_after_dose', 'alive', 'dead', 'censored']]
+        
+        # Filter to output decades 1920-1970
+        final_df_censored = final_df_censored[(final_df_censored['Decade_of_Birth'] >= 1920) & (final_df_censored['Decade_of_Birth'] <= 1970)]
+    else:
+        final_df_censored = pd.DataFrame()
     
     # Write to Excel
     print(f"\n  Writing to Excel: {excel_out_path}")
     with pd.ExcelWriter(excel_out_path, engine='xlsxwriter') as writer:
         final_df.to_excel(writer, sheet_name='TimeSeries', index=False)
+        if not final_df_censored.empty:
+            final_df_censored.to_excel(writer, sheet_name='Censored', index=False)
     
-    print(f"  Total rows written: {len(final_df)}")
+    print(f"  Total rows written (TimeSeries): {len(final_df)}")
+    if not final_df_censored.empty:
+        print(f"  Total rows written (Censored): {len(final_df_censored)}")
     print(f"KCOR_ts complete: {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == '__main__':
