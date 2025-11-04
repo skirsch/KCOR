@@ -290,7 +290,7 @@ def main():
             
             # Determine censoring week: when people got the next dose (dose_num + 1)
             if dose_num < 4:  # Only doses 1-3 can have next dose
-                next_dose_col = f'Date_{["Second", "Third", "Fourth"][dose_num]}Dose_date'
+                next_dose_col = f'Date_{["Second", "Third", "Fourth"][dose_num - 1]}Dose_date'
                 has_next_dose = month_df[next_dose_col].notna()
                 
                 # Calculate censoring week for people who got next dose
