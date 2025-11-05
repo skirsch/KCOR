@@ -1,0 +1,290 @@
+================================================================================
+KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2025-11-04 21:55:36
+Mode: Primary Analysis
+Input File: ../data/furst2/KCOR_CMR.xlsx
+Output File: ../data/furst2/KCOR.xlsx
+Log File: ../data/furst2/KCOR_summary.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEK = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = None
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
+  NEGATIVE_CONTROL_MODE = 0
+  SLOPE2_W1            = (2022-24, 2022-36)
+  SLOPE2_W2            = (2023-24, 2023-36)
+  SLOPE2_W3            = (2024-12, 2024-20)
+  SLOPE2_W4            = (2022-42, 2022-48)  [fallback second window if W2 has no data]
+  SLOPE2 selection     = W1/W2 unless enrollment_date > start(W1), then W2/W3
+================================================================================
+
+[INFO] Auto-derived enrollment dates from Excel file: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_47']
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_47']
+[Info] Processing sheet: 2021_13
+[DEBUG] Filtered to start from enrollment date 03/29/2021: 440 rows
+[DEBUG] Filtered to 440 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 264 rows
+[DEBUG] Aggregated across sexes: 264 rows
+  YoB 1950, % vaxxed=0  alive_by_dose= 100% 0% total=997513
+SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_13,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
+SLOPE2_FALLBACK,EnrollmentDate=2021_13,using=W4,2022-42..2022-48 (applies to all cohorts)
+SLOPE2_DIAG,EnrollmentDate=2021_13,YoB=1950,Dose=1,W1_present=13,W2_present=7,Wm1=2.686240e-04,Wm2=0.000000e+00,reason=zero_means
+[Info] Processing sheet: 2021_20
+[DEBUG] Filtered to start from enrollment date 05/17/2021: 405 rows
+[DEBUG] Filtered to 405 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 243 rows
+[DEBUG] Aggregated across sexes: 243 rows
+  YoB 1950, % vaxxed=10  alive_by_dose= 90% 10% total=996024
+SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_20,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
+SLOPE2_FALLBACK,EnrollmentDate=2021_20,using=W4,2022-42..2022-48 (applies to all cohorts)
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 385 rows
+[DEBUG] Filtered to 385 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 231 rows
+[DEBUG] Aggregated across sexes: 231 rows
+  YoB 1950, % vaxxed=35  alive_by_dose= 65% 35% total=995212
+SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_24,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
+SLOPE2_FALLBACK,EnrollmentDate=2021_24,using=W4,2022-42..2022-48 (applies to all cohorts)
+[Info] Processing sheet: 2021_30
+[DEBUG] Filtered to start from enrollment date 07/26/2021: 355 rows
+[DEBUG] Filtered to 355 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 213 rows
+[DEBUG] Aggregated across sexes: 213 rows
+  YoB 1950, % vaxxed=73  alive_by_dose= 27% 73% total=993964
+SLOPE2_WINDOW_PAIR,EnrollmentDate=2021_30,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
+SLOPE2_FALLBACK,EnrollmentDate=2021_30,using=W4,2022-42..2022-48 (applies to all cohorts)
+[Info] Processing sheet: 2022_06
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 215 rows
+[DEBUG] Filtered to 215 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 172 rows
+[DEBUG] Aggregated across sexes: 172 rows
+  YoB 1950, % vaxxed=80  alive_by_dose= 20% 80% total=988395
+SLOPE2_WINDOW_PAIR,EnrollmentDate=2022_06,pair=2022-24..2022-36 vs 2023-24..2023-36,fallback_W4=2022-42..2022-48
+SLOPE2_FALLBACK,EnrollmentDate=2022_06,using=W4,2022-42..2022-48 (applies to all cohorts)
+[Info] Processing sheet: 2022_47
+[DEBUG] Filtered to start from enrollment date 11/21/2022: 10 rows
+[DEBUG] Filtered to 10 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3, 4] (max dose 4): 10 rows
+[DEBUG] Aggregated across sexes: 10 rows
+  YoB 1950, % vaxxed=80  alive_by_dose= 20% 80% total=980022
+SLOPE2_WINDOW_PAIR,EnrollmentDate=2022_47,pair=2023-24..2023-36 vs 2024-12..2024-20
+SLOPE2_ABORT,EnrollmentDate=2022_47,reason=no_data_in_W1 — dataset lacks coverage in W1 2023-24..2023-36
+SLOPE2_DIAG,EnrollmentDate=2022_47,YoB=1950,Dose=0,W1_present=0,W2_present=0,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2022_47,YoB=1950,Dose=1,W1_present=0,W2_present=0,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2022_47,YoB=1950,Dose=2,W1_present=0,W2_present=0,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2022_47,YoB=1950,Dose=3,W1_present=0,W2_present=0,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_DIAG,EnrollmentDate=2022_47,YoB=1950,Dose=4,W1_present=0,W2_present=0,Wm1=0.000000e+00,Wm2=0.000000e+00,reason=zero_means
+SLOPE2_ALL_ZERO,EnrollmentDate=2022_47,W1=2023-24..2023-36,W2=2024-12..2024-20 — no valid slope2 signal (check data coverage in those windows)
+
+================================================================================
+KCOR VALUES AT REPORTING DATES - ALL SHEETS
+================================================================================
+
+Sheet: 2021_13 — Reporting date: 2022-11-28
+============================================================
+
+Dose combination: 1 vs 0 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |   0.5748 [0.348, 0.950] | 0.6713  (beta_num=0.000000, beta_den=-0.003402)
+
+Dose combination: 2 vs 0 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.003402)
+
+Dose combination: 2 vs 1 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=0.000000)
+
+Sheet: 2021_20 — Reporting date: 2022-11-28
+============================================================
+
+Dose combination: 1 vs 0 [2021_20]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  ASMR (direct)   |   1.9774 [1.871, 2.090] | -
+  1950            |   1.9774 [1.870, 2.091] | 1.5498  (beta_num=-0.008655, beta_den=-0.002991)
+
+Dose combination: 2 vs 0 [2021_20]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.002991)
+
+Dose combination: 2 vs 1 [2021_20]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.008655)
+
+Sheet: 2021_24 — Reporting date: 2022-11-28
+============================================================
+
+Dose combination: 1 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  ASMR (direct)   |   1.5181 [1.466, 1.572] | -
+  1950            |   1.5181 [1.465, 1.573] | 1.6135  (beta_num=-0.002321, beta_den=-0.004137)
+
+Dose combination: 2 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.004137)
+
+Dose combination: 2 vs 1 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.002321)
+
+Sheet: 2021_30 — Reporting date: 2022-11-28
+============================================================
+
+Dose combination: 1 vs 0 [2021_30]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  ASMR (direct)   |   3.4442 [3.317, 3.577] | -
+  1950            |   3.4442 [3.310, 3.584] | 2.5615  (beta_num=-0.005995, beta_den=0.002949)
+
+Dose combination: 2 vs 0 [2021_30]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=0.002949)
+
+Dose combination: 2 vs 1 [2021_30]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.005995)
+
+Sheet: 2022_06 — Reporting date: 2022-11-28
+============================================================
+
+Dose combination: 1 vs 0 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  ASMR (direct)   |   1.3314 [1.258, 1.410] | -
+  1950            |   1.3314 [1.252, 1.416] | 1.0765  (beta_num=-0.005843, beta_den=0.005787)
+
+Dose combination: 2 vs 0 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=0.005787)
+
+Dose combination: 2 vs 1 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.005843)
+
+Dose combination: 3 vs 2 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=nan)
+
+Dose combination: 3 vs 1 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=-0.005843)
+
+Dose combination: 3 vs 0 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=nan, beta_den=0.005787)
+
+Sheet: 2022_47 — Reporting date: 2022-11-28
+============================================================
+
+Dose combination: 1 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 2 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 2 vs 1 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 3 vs 2 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 3 vs 1 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 3 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 4 vs 3 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 4 vs 2 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 4 vs 1 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+
+Dose combination: 4 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns
+--------------------------------------------------
+  1950            |      nan [nan, nan] | -  (beta_num=0.000000, beta_den=0.000000)
+================================================================================
+[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)
+[Done] Wrote 1493 rows to ../data/furst2/KCOR.xlsx at 2025-11-04 21:55:40
+[Summary] Creating summary file: ../data/furst2/KCOR_summary.xlsx
+  - 2021_13: 3 dose combinations, 10 summary rows
+  - 2021_20: 3 dose combinations, 11 summary rows
+  - 2021_24: 3 dose combinations, 11 summary rows
+  - 2021_30: 3 dose combinations, 11 summary rows
+  - 2022_06: 6 dose combinations, 20 summary rows
+  - 2022_47: 10 dose combinations, 31 summary rows
+[Summary] Created summary with 6 enrollment periods
