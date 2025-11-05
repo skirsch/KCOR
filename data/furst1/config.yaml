@@ -1,0 +1,9 @@
+schema: KRF-1.0
+timezone: local
+firstDate: 
+YearOfBirth: 1950    # treat everyone as if they were born in 1950
+input: data.csv
+output: krf.csv
+referenceDate: '2021-01-01' # treat this as the first day of the experiement
+
+
