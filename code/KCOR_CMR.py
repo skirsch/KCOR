@@ -678,32 +678,46 @@ for enroll_date_str in enrollment_dates:
         t[label] = 1
         t = t.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[label].sum().reset_index()
         trans_frames.append(t)
+    
+    # Add transition INTO dose 0 on enrollment date for all unvaccinated people
+    # This ensures everyone gets assigned to dose 0 on the same date (enrollment date)
+    # Check original dates (before freezing) to determine if unvaccinated as of enrollment date
+    unvaccinated_mask = (
+        a_copy['Date_FirstDose'].isna() | 
+        (a_copy['Date_FirstDose'] > enrollment_date)
+    )
+    trans_0 = a_copy.loc[unvaccinated_mask, ['YearOfBirth', 'Sex', 'DCCI']].copy()
+    trans_0['ISOweekDied'] = enroll_week_str
+    trans_0['trans_0'] = 1
+    trans_0 = trans_0.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])['trans_0'].sum().reset_index()
+    trans_frames.insert(0, trans_0)
+    
     if len(trans_frames) > 0:
         transitions = trans_frames[0]
         for tf in trans_frames[1:]:
             transitions = transitions.merge(tf, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='outer')
     else:
         transitions = pd.DataFrame(columns=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])
-    for col_ in ['trans_1', 'trans_2', 'trans_3', 'trans_4']:
+    for col_ in ['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']:
         if col_ not in transitions.columns:
             transitions[col_] = 0
     transitions = transitions.fillna(0)
 
     # Compute cumulative transitions on nodose grid
     trans_grid = grid_nodose.merge(transitions, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
-    trans_grid[['trans_1', 'trans_2', 'trans_3', 'trans_4']] = trans_grid[['trans_1', 'trans_2', 'trans_3', 'trans_4']].fillna(0).astype(int)
+    trans_grid[['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']] = trans_grid[['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']].fillna(0).astype(int)
     cumT = (
         trans_grid.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'WeekIdx'])
-                 .groupby(['YearOfBirth', 'Sex', 'DCCI'])[['trans_1', 'trans_2', 'trans_3', 'trans_4']] 
+                 .groupby(['YearOfBirth', 'Sex', 'DCCI'])[['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']] 
                  .cumsum()
                  .shift(fill_value=0)
     )
-    cumT.columns = ['cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']
+    cumT.columns = ['cumT0_prev', 'cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']
     trans_grid = pd.concat([trans_grid, cumT], axis=1)
     # Merge cumulative transitions into output grid
-    out = out.merge(trans_grid[['ISOweekDied','YearOfBirth','Sex','DCCI','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']],
+    out = out.merge(trans_grid[['ISOweekDied','YearOfBirth','Sex','DCCI','cumT0_prev','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']],
                     on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
-    out[['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']] = out[['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']].fillna(0).astype(int)
+    out[['cumT0_prev','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']] = out[['cumT0_prev','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']].fillna(0).astype(int)
 
     # Build Dead directly from aligned series
     out['Dead'] = out['dead'].astype(int)
@@ -718,21 +732,22 @@ for enroll_date_str in enrollment_dates:
     # Ensure boundary conditions at the very first week (no prior transitions/deaths)
     first_week_str = all_weeks[0]
     first_mask = out['ISOweekDied'] == first_week_str
-    out.loc[first_mask, ['cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']] = 0
+    out.loc[first_mask, ['cumT0_prev','cumT1_prev','cumT2_prev','cumT3_prev','cumT4_prev']] = 0
 
     # Compute Alive for all weeks using variable-cohort formula (no enrollment freezing)
+    # Dose 0: transitions INTO dose 0 minus transitions OUT to dose 1 minus deaths
+    # Doses 1-4: transitions IN from previous dose minus transitions OUT to next dose minus deaths
     dose_vals = out['Dose'].values
-    alive_all = np.where(dose_vals == 0, out['base_total'] - out['cumT1_prev'] - out['cumDead_prev'],
+    alive_all = np.where(dose_vals == 0, out['cumT0_prev'] - out['cumT1_prev'] - out['cumDead_prev'],
                  np.where(dose_vals == 1, out['cumT1_prev'] - out['cumT2_prev'] - out['cumDead_prev'],
                  np.where(dose_vals == 2, out['cumT2_prev'] - out['cumT3_prev'] - out['cumDead_prev'],
                  np.where(dose_vals == 3, out['cumT3_prev'] - out['cumT4_prev'] - out['cumDead_prev'],
                                       out['cumT4_prev'] - out['cumDead_prev']))))
     out['Alive'] = np.maximum(alive_all, 0).astype(int)
-    # Ensure explicit first-week boundary: start-of-series counts live at first week
+    # Ensure explicit first-week boundary: all doses start at 0 before enrollment
     first_week_str = all_weeks[0]
     first_mask = out['ISOweekDied'] == first_week_str
-    out.loc[first_mask & (out['Dose'] == 0), 'Alive'] = out.loc[first_mask & (out['Dose'] == 0), 'base_total']
-    out.loc[first_mask & (out['Dose'] > 0), 'Alive'] = 0
+    out.loc[first_mask, 'Alive'] = 0
 
     # (trace instrumentation removed)
 

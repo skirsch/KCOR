@@ -166,6 +166,162 @@ def main():
     all_results = []
     all_results_censored = []  # For censored tab
     
+    # ===== DOSE 0 PROCESSING =====
+    # Dose 0: People unvaccinated as of week 20 of 2021 (2021-W20)
+    print(f"\n  Processing dose 0...")
+    week_20_2021 = pd.to_datetime('2021-20-1', format='%G-%V-%u').date()  # Monday of week 20, 2021
+    
+    # Filter to people who were unvaccinated on or before week 20 of 2021
+    # (either no first dose, or first dose after week 20)
+    dose0_df = a[((a['Date_FirstDose_date'].isna()) | (a['Date_FirstDose_date'] > week_20_2021))].copy()
+    print(f"    People with dose 0 (unvaccinated as of week 20, 2021): {len(dose0_df)}")
+    
+    if len(dose0_df) > 0:
+        # For dose 0, use month 5 (May 2021, when week 20 occurs) as vaccination_month
+        dose0_df['vaccination_month'] = 5
+        dose0_df['dose0_reference_date'] = week_20_2021
+        
+        # Calculate decades
+        dose0_df['decade'] = dose0_df['birth_year'].apply(decade_from_birth_year)
+        dose0_df = dose0_df[(dose0_df['decade'].notna()) & 
+                            (dose0_df['decade'] >= 1920) & 
+                            (dose0_df['decade'] <= 1970)].copy()
+        
+        if len(dose0_df) > 0:
+            # Calculate death_week relative to week 20 of 2021
+            has_death = dose0_df['DateOfDeath_date'].notna()
+            death_weeks = pd.Series(None, index=dose0_df.index, dtype='float64')
+            
+            if has_death.any():
+                death_week_values = []
+                for idx in dose0_df[has_death].index:
+                    death_date = dose0_df.loc[idx, 'DateOfDeath_date']
+                    week = weeks_after_dose(week_20_2021, death_date)
+                    if week < 0:
+                        week = -1  # Died before week 20
+                    elif week > 200:
+                        week = None  # Died after week 200
+                    death_week_values.append(week)
+                
+                death_weeks[has_death] = death_week_values
+            
+            dose0_df['death_week'] = death_weeks
+            dose0_df = dose0_df[dose0_df['death_week'] != -1].copy()
+            
+            if len(dose0_df) > 0:
+                # Calculate censoring week: when they got dose 1 (for censored analysis)
+                has_dose1 = dose0_df['Date_FirstDose_date'].notna()
+                censor_weeks = pd.Series(None, index=dose0_df.index, dtype='float64')
+                
+                if has_dose1.any():
+                    censor_week_values = []
+                    for idx in dose0_df[has_dose1].index:
+                        dose1_date = dose0_df.loc[idx, 'Date_FirstDose_date']
+                        week = weeks_after_dose(week_20_2021, dose1_date)
+                        if week < 0:
+                            week = None  # Dose 1 before week 20 (shouldn't happen)
+                        elif week > 200:
+                            week = None  # Dose 1 after week 200, treat as no censoring
+                        censor_week_values.append(week)
+                    
+                    censor_weeks[has_dose1] = censor_week_values
+                
+                dose0_df['censor_week'] = censor_weeks
+                
+                # Build both uncensored and censored arrays in a single pass
+                num_people = len(dose0_df)
+                alive_arrays = np.zeros((num_people, 201), dtype=np.uint8)
+                alive_arrays_c = np.zeros((num_people, 201), dtype=np.uint8)
+                dead_arrays_c = np.zeros((num_people, 201), dtype=np.uint8)
+                censored_arrays_c = np.zeros((num_people, 201), dtype=np.uint8)
+                
+                death_weeks = dose0_df['death_week'].values
+                censor_weeks = dose0_df['censor_week'].values
+                
+                # Single pass: build both uncensored and censored arrays
+                for idx in range(num_people):
+                    death_w = death_weeks[idx] if not pd.isna(death_weeks[idx]) else None
+                    censor_w = censor_weeks[idx] if not pd.isna(censor_weeks[idx]) else None
+                    
+                    # ===== UNCENSORED VERSION =====
+                    if death_w is None:
+                        alive_arrays[idx, :] = 1
+                    else:
+                        alive_arrays[idx, :int(death_w) + 1] = 1
+                    
+                    # ===== CENSORED VERSION =====
+                    if death_w is not None and censor_w is not None:
+                        last_week = min(int(death_w), int(censor_w))
+                        is_death = (death_w <= censor_w)
+                    elif death_w is not None:
+                        last_week = int(death_w)
+                        is_death = True
+                    elif censor_w is not None:
+                        last_week = int(censor_w)
+                        is_death = False
+                    else:
+                        last_week = 200
+                        is_death = False
+                    
+                    alive_arrays_c[idx, :last_week + 1] = 1
+                    
+                    if is_death and death_w is not None:
+                        dead_arrays_c[idx, int(death_w)] = 1
+                    
+                    if not is_death and censor_w is not None:
+                        censored_arrays_c[idx, int(censor_w)] = 1
+                
+                # Derive dead_arrays from alive_arrays for uncensored version
+                dead_arrays = np.zeros((num_people, 201), dtype=np.uint8)
+                dead_arrays[:, 0:200] = alive_arrays[:, 0:200] * (1 - alive_arrays[:, 1:201])
+                
+                # Get decades as array for grouping
+                decades_array = dose0_df['decade'].values.astype(int)
+                
+                # Group by decade and sum arrays for both versions
+                result_rows = []
+                result_rows_c = []
+                for decade in np.unique(decades_array):
+                    decade_mask = (decades_array == decade)
+                    
+                    decade_alive = alive_arrays[decade_mask, :].sum(axis=0)
+                    decade_dead = dead_arrays[decade_mask, :].sum(axis=0)
+                    
+                    decade_alive_c = alive_arrays_c[decade_mask, :].sum(axis=0)
+                    decade_dead_c = dead_arrays_c[decade_mask, :].sum(axis=0)
+                    decade_censored_c = censored_arrays_c[decade_mask, :].sum(axis=0)
+                    
+                    for week in range(201):
+                        result_rows.append({
+                            'dose': 0,
+                            'vaccination_month': 5,
+                            'decade': int(decade),
+                            'week_after_dose': week,
+                            'alive': int(decade_alive[week]),
+                            'dead': int(decade_dead[week])
+                        })
+                        
+                        result_rows_c.append({
+                            'dose': 0,
+                            'vaccination_month': 5,
+                            'decade': int(decade),
+                            'week_after_dose': week,
+                            'alive': int(decade_alive_c[week]),
+                            'dead': int(decade_dead_c[week]),
+                            'censored': int(decade_censored_c[week])
+                        })
+                
+                if result_rows:
+                    dose0_result = pd.DataFrame(result_rows)
+                    all_results.append(dose0_result)
+                
+                if result_rows_c:
+                    dose0_result_c = pd.DataFrame(result_rows_c)
+                    all_results_censored.append(dose0_result_c)
+        
+        print(f"    Completed dose 0")
+    
+    # ===== DOSE 1-4 PROCESSING =====
     for dose_num in range(1, 5):  # Doses 1-4
         dose_col = f'Date_{["First", "Second", "Third", "Fourth"][dose_num-1]}Dose'
         dose_date_col = dose_col + '_date'
@@ -373,6 +529,16 @@ def main():
     months = list(range(1, 13))
     
     grid = []
+    # Dose 0: only month 5 (May 2021)
+    for decade in decades:
+        for week in weeks:
+            grid.append({
+                'dose': 0,
+                'vaccination_month': 5,
+                'decade': decade,
+                'week_after_dose': week
+            })
+    # Doses 1-4: all months
     for dose_num in range(1, 5):
         for month in months:
             for decade in decades:
