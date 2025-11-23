@@ -324,7 +324,7 @@ a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([-1, 0, 1, 3, 5]), -1).astype('Int8')
 needed_cols = [
     'Infection', 'Sex', 'YearOfBirth',
     'Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose',
-    'VaccineCode_SecondDose', 'VaccineCode_ThirdDose', 'VaccineCode_FourthDose',
+    'VaccineCode_FirstDose', 'VaccineCode_SecondDose', 'VaccineCode_ThirdDose', 'VaccineCode_FourthDose',
     'Date_COVID_death', 'DateOfDeath', 'DCCI'
 ]
 # Take only needed columns as a fresh copy to avoid chained-assignment warnings
@@ -336,6 +336,33 @@ a = a.loc[:, needed_cols].copy()
 # Remove records where Infection > 1
 # Filter to single-infection rows as a fresh copy
 a = a[(a['Infection'].fillna(0).astype(int) <= 1)].copy()
+
+# Filter out records where person got a non-mRNA vaccine for any dose
+try:
+    from mfg_codes import parse_mfg, PFIZER, MODERNA
+except ImportError as e:
+    print(f"ERROR: Could not import mfg_codes: {e}")
+    raise
+
+# Check all vaccine codes (FirstDose through FourthDose) for non-mRNA vaccines
+vaccine_code_cols = ['VaccineCode_FirstDose', 'VaccineCode_SecondDose', 'VaccineCode_ThirdDose', 'VaccineCode_FourthDose']
+records_before_filter = len(a)
+
+# Create a mask: True if record has any non-mRNA vaccine dose
+has_non_mrna = pd.Series([False] * len(a), index=a.index)
+for col in vaccine_code_cols:
+    if col in a.columns:
+        # Parse each vaccine code and check if it's non-mRNA
+        mfg_values = a[col].apply(lambda x: parse_mfg(x) if pd.notna(x) and x != '' else None)
+        # Mark records where this dose is non-mRNA (not PFIZER or MODERNA, and not None/empty)
+        non_mrna_mask = (mfg_values.notna()) & (mfg_values != PFIZER) & (mfg_values != MODERNA)
+        has_non_mrna = has_non_mrna | non_mrna_mask
+
+# Filter out records with any non-mRNA vaccine dose
+a = a[~has_non_mrna].copy()
+records_after_filter = len(a)
+records_removed = records_before_filter - records_after_filter
+print(f"Filtered out {records_removed} records with non-mRNA vaccines (kept {records_after_filter} out of {records_before_filter} records)")
 
 # Convert Sex to alphabetic codes: M, F, O
 def sex_to_alpha(sex_val):

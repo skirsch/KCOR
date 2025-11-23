@@ -134,6 +134,33 @@ def main():
     # Filter to single-infection rows (remove duplicates)
     a = a[(a['Infection'].fillna(0).astype(int) <= 1)].copy()
     
+    # Filter out records where person got a non-mRNA vaccine for any dose
+    try:
+        from mfg_codes import parse_mfg, PFIZER, MODERNA
+    except ImportError as e:
+        print(f"ERROR: Could not import mfg_codes: {e}")
+        raise
+
+    # Check all vaccine codes (FirstDose through FourthDose) for non-mRNA vaccines
+    vaccine_code_cols = ['VaccineCode_FirstDose', 'VaccineCode_SecondDose', 'VaccineCode_ThirdDose', 'VaccineCode_FourthDose']
+    records_before_filter = len(a)
+
+    # Create a mask: True if record has any non-mRNA vaccine dose
+    has_non_mrna = pd.Series([False] * len(a), index=a.index)
+    for col in vaccine_code_cols:
+        if col in a.columns:
+            # Parse each vaccine code and check if it's non-mRNA
+            mfg_values = a[col].apply(lambda x: parse_mfg(x) if pd.notna(x) and x != '' else None)
+            # Mark records where this dose is non-mRNA (not PFIZER or MODERNA, and not None/empty)
+            non_mrna_mask = (mfg_values.notna()) & (mfg_values != PFIZER) & (mfg_values != MODERNA)
+            has_non_mrna = has_non_mrna | non_mrna_mask
+
+    # Filter out records with any non-mRNA vaccine dose
+    a = a[~has_non_mrna].copy()
+    records_after_filter = len(a)
+    records_removed = records_before_filter - records_after_filter
+    print(f"Filtered out {records_removed} records with non-mRNA vaccines (kept {records_after_filter} out of {records_before_filter} records)")
+    
     # Extract birth year
     a['birth_year'] = a['YearOfBirth'].str.extract(r'(\d{4})').astype(float)
     a['birth_year'] = a['birth_year'].astype(str).str[:4]
