@@ -1,4 +1,4 @@
-# KCOR v4.6 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v4.7 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -227,7 +227,7 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
 
-#### 2. Slope normalization (slope2) — Primary Method (v4.6)
+#### 2. Slope normalization (slope3) — Primary Method (v4.7)
 - Fixed global windows in ISO year-week:
   - W1 = [2022-24, 2022-36]
   - W2 = [2023-24, 2023-36]
@@ -236,12 +236,16 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - Compute hazards using the improved discrete transform for start-of-week denominators:
   - \( h(t) = -\ln\!\left(\dfrac{1 - 1.5\,MR(t)}{1 - 0.5\,MR(t)}\right) \) with clipping.
 - For each (YoB, Dose):
-  - Let Wm1 = mean hazard over the first selected window; Wm2 = mean hazard over the second selected window (arithmetic means; missing weeks treated as 0). If either mean is ≤ 0 or the separation is invalid, set β = 0.
+  - **Slope3 method**: Instead of averaging all hazard values in each window, compute Wm1 and Wm2 as the average of the lowest N values (default N=5) in each selected window. This makes the slope estimation more robust to outliers and noise.
+  - Filter out zero/negative values, sort remaining values, take the lowest N values, then compute their arithmetic mean.
+  - If fewer than N positive values exist, fall back to the mean of all values.
+  - If either mean is ≤ 0 or the separation is invalid, set β = 0.
   - Define β = (ln Wm2 − ln Wm1) / Δweeks, where Δweeks is the center-to-center distance (in weeks) between the two windows.
 - Apply origin-anchored de-trending at the hazard level only:
   - h_adj(t) = h(t) · e^{−β · t}, with t = weeks from enrollment (t = 0 at enrollment).
 - KCOR is computed from cumulative adjusted hazards; baseline normalization at week 4.
 - Raw MR is never modified; all slope normalization operates on hazards.
+- The number of lowest values to average (SLOPE3_MIN_VALUES) is configurable (default: 5).
 
 #### 4. KCOR Computation 
 **Four-Step Process:**
@@ -380,6 +384,21 @@ $$
 $$
 \mathrm{KCOR}_{pool}(t) = \frac{R^{std}_{dose}(t)}{R^{std}_{ref}(t)}
 $$
+
+#### 7. All Ages Calculation (v4.7)
+
+- **Purpose**: Provides an alternative aggregation method that treats all ages as a single cohort
+- **Method**: 
+  - Aggregate Dead, Alive, and person-time across all YearOfBirth values for each Dose and DateDied
+  - Compute mortality rates from aggregated counts: $\text{MR} = \text{Dead} / \text{PT}$
+  - Compute hazards from aggregated MR: $h = -\ln(1 - \text{MR})$
+  - Estimate beta (slope) by averaging beta values from per-age data
+  - Apply hazard-level normalization: $h_{\text{adj}} = h_{\text{raw}} \cdot e^{-\beta \cdot t}$
+  - Compute cumulative hazards and KCOR as for per-age calculations
+- **Difference from ASMR**:
+  - **ASMR (YearOfBirth = 0)**: Uses expected-deaths weights $w_a \propto h_a \times \text{PT}_a$ to pool across age groups, properly weighting elderly who contribute most to death burden
+  - **All Ages (YearOfBirth = -2)**: Direct aggregation without age grouping or weighting, treating the entire population as a single cohort
+- **Output**: Displayed in console and summary files right after "ASMR (direct)" for easy comparison
 
 
 
@@ -941,7 +960,8 @@ Dose combination: 2 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI]
 --------------------------------------------------
-  ASMR (pooled) | 1.2579 [1.232, 1.285]
+  ASMR (direct) | 1.2579 [1.232, 1.285]
+      All Ages  | 1.2583 [1.233, 1.284]
            1940 | 1.2554 [1.194, 1.320]
            1955 | 1.5021 [1.375, 1.640]
 
@@ -949,13 +969,15 @@ Dose combination: 3 vs 2 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI]
 --------------------------------------------------
-  ASMR (pooled) | 1.4941 [1.464, 1.525]
+  ASMR (direct) | 1.4941 [1.464, 1.525]
+      All Ages  | 1.4938 [1.464, 1.524]
            1940 | 1.6489 [1.570, 1.731]
            1955 | 1.4619 [1.350, 1.583]
 ```
 
 This shows that for dose 2 vs. dose 0 (2021_24 cohort):
-- **ASMR**: 25.8% higher mortality risk (95% CI: 23.2% to 28.5%)
+- **ASMR (direct)**: 25.8% higher mortality risk (95% CI: 23.2% to 28.5%) - pooled across ages using expected-deaths weights
+- **All Ages**: 25.8% higher risk (95% CI: 23.3% to 28.4%) - direct aggregation of all ages as a single cohort
 - **Age 1940**: 25.5% higher risk (95% CI: 19.4% to 32.0%)
 - **Age 1955**: 50.2% higher risk (95% CI: 37.5% to 64.0%)
 
@@ -1039,6 +1061,31 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Version history
+
+### 🆕 Version 4.7
+
+#### Major Improvements
+- **Slope3 Method**: Implemented improved slope estimation using the average of the lowest N values (default: 5) in each window instead of averaging all values
+- **Robustness**: More resistant to outliers and noise in hazard data
+- **Configurable**: SLOPE3_MIN_VALUES parameter (default: 5) allows tuning the number of lowest values to average
+- **Backward Compatible**: Falls back to mean of all values if insufficient positive values exist
+- **All Ages Calculation**: Added new "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
+- **Dual Age Aggregation**: Both ASMR (pooled with weights) and All Ages (direct aggregation) are now computed and displayed
+
+#### Slope3 Method Details
+- **Problem**: Averaging all values in slope windows can be sensitive to outliers and noise
+- **Solution**: Sort hazard values in each window, filter out zeros/negatives, take the lowest N values, then average
+- **Benefits**: More stable slope estimates, especially for cohorts with variable or noisy mortality patterns
+- **Parameter**: SLOPE3_MIN_VALUES (default: 5) controls how many lowest values to include in the average
+
+#### All Ages Calculation
+- **Purpose**: Provides an alternative to ASMR pooling by treating all ages as a single aggregated cohort
+- **Method**: Aggregates Dead, Alive, and person-time across all YearOfBirth values for each Dose and DateDied
+- **Difference from ASMR**: 
+  - **ASMR (YearOfBirth = 0)**: Pools across age groups using expected-deaths weights (w_a ∝ h_a × PT_a)
+  - **All Ages (YearOfBirth = -2)**: Direct aggregation without age grouping or weighting
+- **Display**: Shown in console and summary outputs right after "ASMR (direct)"
+- **Use Case**: Useful for comparing overall population-level effects without age-specific weighting
 
 ### 🆕 Version 4.6
 

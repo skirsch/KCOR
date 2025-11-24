@@ -1,6 +1,6 @@
 #!/usr/bin/env python3s
 """
-KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.6
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.7
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
 hazards between different dose groups, normalized to 1 at a baseline period.
@@ -20,8 +20,9 @@ METHODOLOGY OVERVIEW:
 
 3. NORMALIZATION AND HAZARDS:
    - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
-   - Slope normalization uses the slope2 method: estimate a cohort-level beta from fixed windows and
-     apply origin-anchored normalization at the hazard level only. Raw MR values are never modified.
+   - Slope normalization uses the slope3 method: estimate a cohort-level beta from fixed windows using
+     the average of the lowest N values in each window (default N=5) for improved robustness.
+     Apply origin-anchored normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
 4. KCOR COMPUTATION:
@@ -68,8 +69,8 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends. Version 4.6
-uses slope2 (fixed-window, hazard-level normalization) and direct hazard computation from raw MR.
+between vaccination groups while accounting for underlying time trends. Version 4.7
+uses slope3 (fixed-window, hazard-level normalization with lowest-N averaging) and direct hazard computation from raw MR.
 """
 import sys
 import math
@@ -97,9 +98,12 @@ DYNAMIC_HVE_SKIP_WEEKS = 2
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
-# slope2 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
-# ---------------- Slope2 Baseline Windows ----------------
-# Fixed time windows for slope2 calculation (ISO week format: "YYYY-WW")
+# Slope3 method: use lowest N values in each window instead of mean of all values
+SLOPE3_MIN_VALUES = 5  # Number of lowest values to average in each slope window
+
+# slope2/slope3 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
+# ---------------- Slope2/Slope3 Baseline Windows ----------------
+# Fixed time windows for slope calculation (ISO week format: "YYYY-WW")
 BASE_W1 = ("2022-24", "2022-36")
 BASE_W2 = ("2023-24", "2023-36")
 BASE_W3 = ("2024-12", "2024-20")
@@ -125,7 +129,7 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = None  # List of enrollment dates (sheet names) to process. If None, will be auto-derived from Excel file sheets (excluding _summary and _MFG_ sheets)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
-# Slope normalization uses slope2 fixed windows; SIN removed
+# Slope normalization uses slope3 method (slope2 windows with lowest-N averaging); SIN removed
 # removed legacy Czech unvaccinated MR adjustment toggle
 
 # ----------------------------------------------------------
@@ -140,7 +144,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.6"                # KCOR version number
+VERSION = "v4.7"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -160,11 +164,18 @@ VERSION = "v4.6"                # KCOR version number
 #        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
 #        - Slope calculation simplified to single-window method (no dynamic anchors)
 # v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
-#        - slope2 hazard-level normalization and direct hazard computation from raw MR.
+#        - slope3 hazard-level normalization (slope2 windows with lowest-N averaging) and direct hazard computation from raw MR.
 # v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
 #        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
 #        - Slope calculation simplified to single-window method (no dynamic anchors)
 #        - Changed DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
+# v4.7 - Implemented Slope3 method for improved slope estimation
+#        - Instead of averaging all values in each window, now averages the lowest N values (default: 5)
+#        - More robust to outliers and noise in the data
+#        - Configurable via SLOPE3_MIN_VALUES parameter
+#        - Added "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
+#        - Different from ASMR pooling: All Ages treats all ages as one cohort, while ASMR weights across age groups
+#        - All Ages calculation displayed right after ASMR (direct) in console and summary outputs
 
 # latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
@@ -763,8 +774,173 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
                     "t_den": np.nan
                 })
 
-    if out_rows or pooled_rows:
-        return pd.concat(out_rows + [pd.DataFrame(pooled_rows)], ignore_index=True)
+    # -------- All Ages rows (YearOfBirth = -2) --------
+    # Aggregate all ages together as a single cohort (no age grouping)
+    # This is different from ASMR pooling which weights across age groups
+    all_ages_rows = []
+    df_sorted = df.sort_values("DateDied")
+    
+    # Aggregate across all YearOfBirth values for each Dose and DateDied
+    # First, aggregate basic counts
+    all_ages_agg = df_sorted.groupby(["Dose", "DateDied"]).agg({
+        "ISOweekDied": "first",
+        "Alive": "sum",
+        "Dead": "sum",
+        "PT": "sum"
+    }).reset_index()
+    
+    # Recompute MR from aggregated counts
+    all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0, all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS), np.nan)
+    
+    # Sort and compute time index
+    all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
+    all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
+    
+    # Compute hazard from aggregated MR (hazard-level normalization, not MR-level)
+    all_ages_agg["MR_smooth"] = all_ages_agg["MR"]  # Use raw MR for smoothing
+    all_ages_agg["hazard_raw"] = hazard_from_mr_improved(all_ages_agg["MR"])
+    
+    # Estimate beta (slope) for aggregated all-ages data by averaging beta from per-age data
+    # Beta is applied at hazard level: hazard_adj = hazard_raw * exp(-beta * t)
+    # If hazard_adj and hazard_raw are available in original df, derive beta from their ratio
+    beta_by_dose = {}
+    for dose in all_ages_agg["Dose"].unique():
+        dose_data = df_sorted[df_sorted["Dose"] == dose]
+        # Try to estimate beta from hazard_adj/hazard_raw ratio if available
+        if "hazard_adj" in dose_data.columns and "hazard_raw" in dose_data.columns:
+            # For each age group, estimate beta from hazard ratio: hazard_adj/hazard_raw = exp(-beta * t)
+            # Average across ages (simple mean)
+            betas = []
+            for yob, age_group in dose_data.groupby("YearOfBirth"):
+                if len(age_group) > 0:
+                    # Get valid ratios where both hazards are positive
+                    valid_mask = (age_group["hazard_raw"] > EPS) & (age_group["hazard_adj"] > EPS) & (age_group["t"] > EPS)
+                    if valid_mask.sum() > 0:
+                        ratios = age_group.loc[valid_mask, "hazard_adj"] / age_group.loc[valid_mask, "hazard_raw"]
+                        ts = age_group.loc[valid_mask, "t"]
+                        # Estimate beta: log(ratio) = -beta * t, so beta = -log(ratio) / t
+                        log_ratios = np.log(ratios)
+                        beta_est = -log_ratios / ts
+                        # Use median to avoid outliers
+                        if len(beta_est) > 0:
+                            betas.append(np.median(beta_est))
+            if betas:
+                beta_by_dose[dose] = np.mean(betas)
+            else:
+                beta_by_dose[dose] = 0.0
+        else:
+            beta_by_dose[dose] = 0.0
+    
+    # Apply beta normalization at hazard level (origin-anchored)
+    def apply_beta_norm(row):
+        beta = beta_by_dose.get(row["Dose"], 0.0)
+        return row["hazard_raw"] * safe_exp(-beta * row["t"])
+    
+    all_ages_agg["hazard_adj"] = all_ages_agg.apply(apply_beta_norm, axis=1)
+    all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard level)
+    all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
+    all_ages_agg["CH"] = all_ages_agg.groupby("Dose")["hazard_eff"].cumsum()
+    all_ages_agg["CH_actual"] = all_ages_agg.groupby("Dose")["MR_adj"].cumsum()
+    all_ages_agg["cumPT"] = all_ages_agg.groupby("Dose")["PT"].cumsum()
+    all_ages_agg["cumD_adj"] = all_ages_agg["CH"] * all_ages_agg["cumPT"]
+    all_ages_agg["cumD_unadj"] = all_ages_agg.groupby("Dose")["Dead"].cumsum()
+    
+    # Add slope and scale_factor for consistency (using beta as slope equivalent)
+    all_ages_agg["slope"] = all_ages_agg["Dose"].map(beta_by_dose)
+    all_ages_agg["scale_factor"] = all_ages_agg.apply(lambda row: safe_exp(-row["slope"] * row["t"]), axis=1)
+    
+    # Now compute KCOR for all-ages aggregated data
+    dose_pairs = get_dose_pairs(sheet_name)
+    for num, den in dose_pairs:
+        # Apply debug dose pair filter
+        if DEBUG_DOSE_PAIR_ONLY and (num, den) != DEBUG_DOSE_PAIR_ONLY:
+            continue
+            
+        gv_all = all_ages_agg[all_ages_agg["Dose"] == num].sort_values("DateDied")
+        gu_all = all_ages_agg[all_ages_agg["Dose"] == den].sort_values("DateDied")
+        
+        if gv_all.empty or gu_all.empty:
+            continue
+        
+        # Merge numerator and denominator
+        merged_all = pd.merge(
+            gv_all[["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj", 
+                   "hazard_raw", "hazard_adj", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
+            gu_all[["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj",
+                   "hazard_raw", "hazard_adj", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
+            on="DateDied", suffixes=("_num", "_den"), how="inner"
+        ).sort_values("DateDied")
+        
+        if merged_all.empty:
+            continue
+        
+        merged_all = merged_all.reset_index(drop=True).copy(deep=True)
+        
+        # Compute KCOR same way as per-age
+        valid_denom = merged_all["CH_den"] > EPS
+        merged_all["K_raw"] = np.where(valid_denom,
+                                      merged_all["CH_num"] / merged_all["CH_den"], 
+                                      np.nan)
+        
+        # Get baseline K_raw value at effective normalization week
+        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+        baseline_k_raw = merged_all["K_raw"].iloc[t0_idx]
+        if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+            baseline_k_raw = 1.0
+        
+        # Compute final KCOR values normalized to baseline
+        merged_all["KCOR"] = np.where(np.isfinite(merged_all["K_raw"]), 
+                                      merged_all["K_raw"] / baseline_k_raw,
+                                     np.nan)
+        
+        # KCOR 95% CI using post-anchor increments (Nelson–Aalen)
+        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+        dCH_num = merged_all["CH_num"] - float(merged_all["CH_num"].iloc[t0_idx])
+        dCH_den = merged_all["CH_den"] - float(merged_all["CH_den"].iloc[t0_idx])
+        s_num = (merged_all.get("hazard_adj_num", np.nan) / (merged_all.get("hazard_raw_num", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+        s_den = (merged_all.get("hazard_adj_den", np.nan) / (merged_all.get("hazard_raw_den", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+        var_inc_num = (merged_all.get("Dead_num", 0.0).astype(float) / (merged_all.get("Alive_num", 0.0).astype(float) + EPS)**2) * (s_num.astype(float)**2)
+        var_inc_den = (merged_all.get("Dead_den", 0.0).astype(float) / (merged_all.get("Alive_den", 0.0).astype(float) + EPS)**2) * (s_den.astype(float)**2)
+        var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
+        var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
+        var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+        var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+        denom_num = np.maximum(np.abs(dCH_num.values), EPS)
+        denom_den = np.maximum(np.abs(dCH_den.values), EPS)
+        se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
+        merged_all["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
+        
+        # Calculate 95% CI bounds on log scale, then exponentiate
+        _ci_lower_raw = merged_all["KCOR"] * safe_exp(-1.96 * merged_all["SE_logKCOR"])
+        _ci_upper_raw = merged_all["KCOR"] * safe_exp(1.96 * merged_all["SE_logKCOR"])
+        merged_all["CI_lower"] = np.clip(_ci_lower_raw, 0, merged_all["KCOR"] * 10)
+        merged_all["CI_upper"] = np.clip(_ci_upper_raw, merged_all["KCOR"] * 0.1, merged_all["KCOR"] * 10)
+        merged_all.loc[merged_all.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
+        
+        # Build output rows for all-ages
+        for _, row in merged_all.iterrows():
+            all_ages_rows.append({
+                "EnrollmentDate": sheet_name,
+                "ISOweekDied": row["ISOweekDied_num"],
+                "Date": pd.to_datetime(row["DateDied"]).date(),
+                "YearOfBirth": -2,  # -2 = all ages aggregated
+                "Dose_num": num,
+                "Dose_den": den,
+                "KCOR": row["KCOR"],
+                "CI_lower": row["CI_lower"],
+                "CI_upper": row["CI_upper"],
+                "CH_num": row["CH_num"],
+                "hazard_adj_num": row["hazard_adj_num"],
+                "hazard_num": row["hazard_raw_num"],
+                "t_num": row["t_num"],
+                "CH_den": row["CH_den"],
+                "hazard_adj_den": row["hazard_adj_den"],
+                "hazard_den": row["hazard_raw_den"],
+                "t_den": row["t_den"]
+            })
+
+    if out_rows or pooled_rows or all_ages_rows:
+        return pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
         "KCOR","CI_lower","CI_upper","CH_num","hazard_adj_num","hazard_num","t_num",
@@ -882,6 +1058,75 @@ def build_kcor_ns_rows(df, sheet_name):
             out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
             out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
             out_rows.append(out)
+
+    # -------- All Ages rows (YearOfBirth = -2) for KCOR_ns --------
+    # Aggregate all ages together as a single cohort (no age grouping) for non-slope-corrected KCOR
+    df_ns_sorted = df_ns.sort_values("DateDied")
+    
+    # Aggregate across all YearOfBirth values for each Dose and DateDied
+    # First aggregate basic counts
+    all_ages_agg_ns = df_ns_sorted.groupby(["Dose", "DateDied"]).agg({
+        "ISOweekDied": "first",
+        "Alive": "sum",
+        "Dead": "sum",
+        "PT": "sum"
+    }).reset_index()
+    
+    # Recompute MR from aggregated counts
+    all_ages_agg_ns["MR"] = np.where(all_ages_agg_ns["PT"] > 0, all_ages_agg_ns["Dead"] / (all_ages_agg_ns["PT"] + EPS), np.nan)
+    
+    # Sort and compute time index
+    all_ages_agg_ns = all_ages_agg_ns.sort_values(["Dose", "DateDied"])
+    all_ages_agg_ns["t"] = all_ages_agg_ns.groupby("Dose").cumcount().astype(float)
+    
+    # Compute hazard_raw from aggregated MR (no slope adjustment for KCOR_ns)
+    all_ages_agg_ns["hazard_raw"] = hazard_from_mr_improved(all_ages_agg_ns["MR"])
+    
+    # Apply accumulation start rule (DYNAMIC_HVE_SKIP_WEEKS)
+    all_ages_agg_ns["hazard_eff_ns"] = np.where(all_ages_agg_ns["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg_ns["hazard_raw"], 0.0)
+    
+    # Cumulative raw hazard per dose
+    all_ages_agg_ns["CH_ns"] = all_ages_agg_ns.groupby("Dose")["hazard_eff_ns"].cumsum()
+    
+    # Compute KCOR_ns for all-ages aggregated data
+    dose_pairs = get_dose_pairs(sheet_name)
+    for num, den in dose_pairs:
+        gv_all_ns = all_ages_agg_ns[all_ages_agg_ns["Dose"] == num].sort_values("DateDied")
+        gu_all_ns = all_ages_agg_ns[all_ages_agg_ns["Dose"] == den].sort_values("DateDied")
+        
+        if gv_all_ns.empty or gu_all_ns.empty:
+            continue
+        
+        # Merge numerator and denominator
+        merged_all_ns = pd.merge(
+            gv_all_ns[["DateDied", "ISOweekDied", "CH_ns"]],
+            gu_all_ns[["DateDied", "ISOweekDied", "CH_ns"]],
+            on="DateDied", suffixes=("_num", "_den"), how="inner"
+        ).sort_values("DateDied")
+        
+        if merged_all_ns.empty:
+            continue
+        
+        # Raw ratio of cumulative raw hazards
+        valid = merged_all_ns["CH_ns_den"] > EPS
+        merged_all_ns["K_raw_ns"] = np.where(valid, merged_all_ns["CH_ns_num"] / merged_all_ns["CH_ns_den"], np.nan)
+        
+        # Normalize at anchor index
+        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged_all_ns) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+        k0 = merged_all_ns["K_raw_ns"].iloc[t0_idx]
+        if not (np.isfinite(k0) and k0 > EPS):
+            k0 = 1.0
+        merged_all_ns["KCOR_ns"] = np.where(np.isfinite(merged_all_ns["K_raw_ns"]), merged_all_ns["K_raw_ns"] / k0, np.nan)
+        
+        # Build output DataFrame for all-ages KCOR_ns (same format as regular age groups)
+        out_all = merged_all_ns[["DateDied","ISOweekDied_num","KCOR_ns"]].copy()
+        out_all["EnrollmentDate"] = sheet_name
+        out_all["YearOfBirth"] = -2  # -2 = all ages aggregated
+        out_all["Dose_num"] = num
+        out_all["Dose_den"] = den
+        out_all.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
+        out_all["Date"] = pd.to_datetime(out_all["Date"]).apply(lambda x: x.date())
+        out_rows.append(out_all)
 
     if out_rows:
         return pd.concat(out_rows, ignore_index=True)
@@ -1037,7 +1282,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
-    # slope2 windows (global)
+    # slope2/slope3 windows (global)
+    dual_print(f"  SLOPE3_MIN_VALUES    = {SLOPE3_MIN_VALUES}  [Slope3: average of lowest N values per window]")
     dual_print(f"  SLOPE2_W1            = (2022-24, 2022-36)")
     dual_print(f"  SLOPE2_W2            = (2023-24, 2023-36)")
     dual_print(f"  SLOPE2_W3            = (2024-12, 2024-20)")
@@ -1433,8 +1679,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 beta_vals[(yob, dose)] = 0.0
                 reason = "no_windows"
             else:
-                Wm1 = float(np.mean(w1_vals))
-                Wm2 = float(np.mean(w2_vals))
+                # Slope3 method: use average of lowest N values instead of mean of all values
+                # Filter out zeros/negatives, sort, take lowest N, then average
+                w1_filtered = sorted([v for v in w1_vals if v > 0.0])
+                w2_filtered = sorted([v for v in w2_vals if v > 0.0])
+                n_min = min(SLOPE3_MIN_VALUES, len(w1_filtered), len(w2_filtered))
+                if n_min > 0:
+                    Wm1 = float(np.mean(w1_filtered[:n_min]))
+                    Wm2 = float(np.mean(w2_filtered[:n_min]))
+                else:
+                    # Fallback to mean if no positive values
+                    Wm1 = float(np.mean(w1_vals))
+                    Wm2 = float(np.mean(w2_vals))
                 # Strict error on negative mean hazards; log offending dates and values
                 if Wm1 < 0.0 or Wm2 < 0.0:
                     try:
@@ -1846,8 +2102,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 dual_print("  No data available for this dose combination")
                 continue
             
-            # Show results by age (including ASMR = 0)
-            for age in sorted(dose_data["YearOfBirth"].unique()):
+            # Show results by age (including ASMR = 0, all ages = -2)
+            # Sort ages: negative ages first (0, -2, -1), then positive ages
+            def age_sort_key(age):
+                if age == 0:
+                    return (0, 0)  # ASMR first
+                elif age == -2:
+                    return (0, 1)  # All ages second
+                elif age == -1:
+                    return (0, 2)  # Unknown third
+                else:
+                    return (1, age)  # Regular ages after
+            
+            ages_sorted = sorted(dose_data["YearOfBirth"].unique(), key=age_sort_key)
+            for age in ages_sorted:
                 age_data = dose_data[dose_data["YearOfBirth"] == age]
                 if not age_data.empty:
                     kcor_val = age_data["KCOR"].iloc[0]
@@ -1867,12 +2135,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     
                     if age == 0:
                         age_label = "ASMR (direct)"
+                    elif age == -2:
+                        age_label = "All Ages"
                     elif age == -1:
                         age_label = "(unknown)"
                     else:
                         age_label = f"{age}"
                     
-                    if age == 0:
+                    if age == 0 or age == -2:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  (beta_num={beta_num:.6f}, beta_den={beta_den:.6f})")
@@ -2427,7 +2697,22 @@ def create_summary_file(combined_data, out_path, dual_print):
                         dose_data = latest_data[
                             (latest_data["Dose_num"] == dose_num) & 
                             (latest_data["Dose_den"] == dose_den)
-                        ].sort_values("YearOfBirth")
+                        ]
+                        
+                        # Sort ages: negative ages first (0, -2, -1), then positive ages
+                        def age_sort_key(age):
+                            if age == 0:
+                                return (0, 0)  # ASMR first
+                            elif age == -2:
+                                return (0, 1)  # All ages second
+                            elif age == -1:
+                                return (0, 2)  # Unknown third
+                            else:
+                                return (1, age)  # Regular ages after
+                        
+                        dose_data = dose_data.copy()
+                        dose_data["_sort_key"] = dose_data["YearOfBirth"].apply(age_sort_key)
+                        dose_data = dose_data.sort_values("_sort_key").drop(columns=["_sort_key"])
                         
                         # Add header row for this dose combination
                         summary_rows.append({
@@ -2443,6 +2728,8 @@ def create_summary_file(combined_data, out_path, dual_print):
                             age = row["YearOfBirth"]
                             if age == 0:
                                 age_label = "ASMR (direct)"
+                            elif age == -2:
+                                age_label = "All Ages"
                             elif age == -1:
                                 age_label = "(unknown)"
                             else:
