@@ -85,58 +85,6 @@ import shutil
 
 # Dependencies: pandas, numpy, openpyxl
 
-# Sensitivity analysis flag (environment-driven)
-def _is_sa_mode() -> bool:
-    v = os.environ.get("SENSITIVITY_ANALYSIS", "")
-    return str(v).strip().lower() in ("1", "true", "yes")
-
-def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
-    """Set up dual output to both console and file."""
-    # Create log file path
-    log_file = os.path.join(output_dir, log_filename)
-    
-    # Open file for writing
-    log_file_handle = open(log_file, 'w', encoding='utf-8')
-    
-    def dual_print(*args, **kwargs):
-        """Print to both console and file."""
-        message = ' '.join(str(arg) for arg in args)
-        print(message, **kwargs)  # Console output
-        print(message, file=log_file_handle, **kwargs)  # File output
-        log_file_handle.flush()  # Ensure immediate write
-    
-    return dual_print, log_file_handle
-
-# ---------------- Configuration Parameters ----------------
-# Version information
-VERSION = "v4.6"                # KCOR version number
-
-# Version History:
-# v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
-# v4.1 - Enhanced with discrete cumulative-hazard transform for mathematical exactness
-#        - Changed from simple cumsum(MR_adj) to cumsum(-ln(1 - MR_adj))
-#        - Removes small-rate approximation limitation
-#        - More robust for any mortality rate magnitude
-# v4.2 - Fixed ASMR pooling with Option 2+ expected-deaths weights
-#        - Changed from person-time weights to expected-deaths weights: w_a ∝ h_a × PT_a(W)
-#        - Properly weights elderly age groups who contribute most to death burden
-#        - Uses pooled quiet baseline window with smoothed mortality rates
-#        - ASMR now reflects actual mortality impact rather than population size
-# v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
-#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KOR_MIN parameters
-#        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
-# v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
-#        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
-#        - Slope calculation simplified to single-window method (no dynamic anchors)
-# v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
-#        - slope2 hazard-level normalization and direct hazard computation from raw MR.
-# v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
-#        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
-#        - Slope calculation simplified to single-window method (no dynamic anchors)
-#        - Changed DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
-
-# latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
-
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS)
 KCOR_NORMALIZATION_WEEK = 4     # Weeks after accumulation starts to use for normalization baseline. Effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS. See also DYNAMIC_HVE_SKIP_WEEKS.
@@ -150,16 +98,13 @@ MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
 # slope2 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
+# ---------------- Slope2 Baseline Windows ----------------
+# Fixed time windows for slope2 calculation (ISO week format: "YYYY-WW")
+BASE_W1 = ("2022-24", "2022-36")
+BASE_W2 = ("2023-24", "2023-36")
+BASE_W3 = ("2024-12", "2024-20")
+BASE_W4 = ("2022-42", "2022-48")  # fallback second window when selected W2 has zero hazards
 
-# KCOR normalization fine-tuning parameters
-# Removed FINAL_KCOR_MIN/FINAL_KOR_DATE scaling
-
-# Dynamic anchors removed
-
-# Legacy simple window-based slope calculation removed (SLOPE_WINDOW_SIZE obsolete)
-
-# Reporting date lookup for KCOR summary/console per cohort (sheet name)
-# For the first three cohorts, use end of 2022; for 2022_47, use one year later (end of 2023)
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
     '2021_13': '2022-12-31',
@@ -191,6 +136,71 @@ DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # SA_YOB: "0" for ASMR only, or range "start,end,step", or list "y1,y2,y3"
 OVERRIDE_DOSE_PAIRS = None
 OVERRIDE_YOBS = None
+
+
+# ---------------- Configuration Parameters ----------------
+# Version information
+VERSION = "v4.6"                # KCOR version number
+
+# Version History:
+# v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
+# v4.1 - Enhanced with discrete cumulative-hazard transform for mathematical exactness
+#        - Changed from simple cumsum(MR_adj) to cumsum(-ln(1 - MR_adj))
+#        - Removes small-rate approximation limitation
+#        - More robust for any mortality rate magnitude
+# v4.2 - Fixed ASMR pooling with Option 2+ expected-deaths weights
+#        - Changed from person-time weights to expected-deaths weights: w_a ∝ h_a × PT_a(W)
+#        - Properly weights elderly age groups who contribute most to death burden
+#        - Uses pooled quiet baseline window with smoothed mortality rates
+#        - ASMR now reflects actual mortality impact rather than population size
+# v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
+#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KOR_MIN parameters
+#        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
+# v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
+#        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
+#        - Slope calculation simplified to single-window method (no dynamic anchors)
+# v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
+#        - slope2 hazard-level normalization and direct hazard computation from raw MR.
+# v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
+#        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
+#        - Slope calculation simplified to single-window method (no dynamic anchors)
+#        - Changed DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
+
+# latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
+
+
+
+# KCOR normalization fine-tuning parameters
+# Removed FINAL_KCOR_MIN/FINAL_KOR_DATE scaling
+
+# Dynamic anchors removed
+
+# Legacy simple window-based slope calculation removed (SLOPE_WINDOW_SIZE obsolete)
+
+# Reporting date lookup for KCOR summary/console per cohort (sheet name)
+# For the first three cohorts, use end of 2022; for 2022_47, use one year later (end of 2023)
+
+# Sensitivity analysis flag (environment-driven)
+def _is_sa_mode() -> bool:
+    v = os.environ.get("SENSITIVITY_ANALYSIS", "")
+    return str(v).strip().lower() in ("1", "true", "yes")
+
+def setup_dual_output(output_dir, log_filename="KCOR_summary.log"):
+    """Set up dual output to both console and file."""
+    # Create log file path
+    log_file = os.path.join(output_dir, log_filename)
+    
+    # Open file for writing
+    log_file_handle = open(log_file, 'w', encoding='utf-8')
+    
+    def dual_print(*args, **kwargs):
+        """Print to both console and file."""
+        message = ' '.join(str(arg) for arg in args)
+        print(message, **kwargs)  # Console output
+        print(message, file=log_file_handle, **kwargs)  # File output
+        log_file_handle.flush()  # Ensure immediate write
+    
+    return dual_print, log_file_handle
 
 def _parse_env_dose_pairs(value: str):
     pairs = []
@@ -1346,10 +1356,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 cur = cur + timedelta(weeks=1)
             return weeks
         # Choose windows per enrollment date: default W1/W2; if enrollment after W1 start, use W2/W3
-        BASE_W1 = ("2022-24", "2022-36")
-        BASE_W2 = ("2023-24", "2023-36")
-        BASE_W3 = ("2024-12", "2024-20")
-        BASE_W4 = ("2022-42", "2022-48")  # fallback second window when selected W2 has zero hazards
+        # (BASE_W1, BASE_W2, BASE_W3, BASE_W4 are defined at top of file)
         # Determine enrollment date (Monday of sheet week)
         try:
             year_str, week_str = sh.split("_") if "_" in sh else sh.split("-")
