@@ -27,6 +27,7 @@
   - [🆕 Version 4.3](#-version-43)
   - [🆕 Version 4.2](#-version-42)
   - [🆕 Version 4.1](#-version-41)
+- [🗄️ About the Czech Republic record-level data](#about-the-czech-republic-record-level-data)
 - [📊 Results Using Czech Data](#-results-using-czech-data)
 - [🔬 Validation](#-validation)
   - [Independent Validation Methods](#independent-validation-methods)
@@ -128,9 +129,7 @@ Here is [the full discussion with Grok](https://grok.com/share/c2hhcmQtMg%3D%3D_
 >
 > "The KCOR methodology is mathematically coherent and innovative, particularly for datasets with limited covariates. The math contains no glaring errors, and the CI computation is correctly derived from survival analysis principles. Potential limitations (e.g., Gompertz assumption, proportional hazards, variance robustness) are acknowledged or testable via the provided validation suite (GLM, DS-CMRR, Kaplan-Meier). Empirically validating the slope normalization on specific cohorts (e.g., Czech 80-90) and checking for overdispersion would strengthen confidence. Overall, KCOR appears a legitimate and robust tool for its intended purpose, as supported by the document’s validation and peer reviews."
 
-### Results on the Czech record level data show extreme net harm
-
-The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. KCOR reveals why.
+### Czech results
 
 The [results section](#-results-using-czech-data) shows that the COVID vaccines caused significant net harm regardless of age. Boosters were even worse than primary vaccination. The summary here is for all ages, but the statistically significant harms were present for all age groups individually. 
 
@@ -155,6 +154,12 @@ The bottom line is that KCOR works extremely well with real world cohorts of suf
 [CDC ACIP Chair Martin Kulldorff said at the ACIP meeting](https://x.com/TheChiefNerd/status/1968692539344441575), "When there are different scientific views, only trust scientists who are willing to engage with and publicly debate the scientists with other views."
 
 I would be delighted to public debate any qualified scientist who believes KCOR is flawed. This would end the debate. No takers unfortunately. This has nothing to do with me or the KCOR method. Kulldorff made the same offer about vaccines and nobody would debate him.
+
+## About the Czech Republic record-level data 
+
+The [Czech Republic record level dataset](https://www.nzip.cz/data/2135-covid-19-prehled-populace) is the most comprehensive publicly available dataset for the COVID vaccine in the world. Yet not a single epidemiologist has ever published an analysis of this data. KCOR reveals why. It has records on 11M people: birth, death, and dates of vaccination (and type of vaccine). Exactly what is needed for mortality analysis. All other countries keep this information secret so you will never find out the truth. 
+
+No paper has ever shown that hiding public health data from the public results in better health outcomes. There is no need to do this research as everyone knows this to be true inherently. We are conditioned to trust the experts who themselves are flying blind, driven by faith.
 
 ## 🔬 Methodology
 
