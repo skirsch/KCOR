@@ -1,6 +1,6 @@
 #!/usr/bin/env python3s
 """
-KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.7
+KCOR (Kirsch Cumulative Outcomes Ratio) Analysis Script v4.8
 
 This script analyzes mortality data to compute KCOR values, which are ratios of cumulative
 hazards between different dose groups, normalized to 1 at a baseline period.
@@ -20,8 +20,8 @@ METHODOLOGY OVERVIEW:
 
 3. NORMALIZATION AND HAZARDS:
    - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
-   - Slope normalization uses the slope3 method: estimate a cohort-level beta from fixed windows using
-     the average of the lowest N values in each window (default N=5) for improved robustness.
+   - Slope normalization uses the slope4 method: estimate a cohort-level beta from fixed windows using
+     the geometric mean of all values in each window for improved robustness.
      Apply origin-anchored normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
@@ -69,8 +69,8 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends. Version 4.7
-uses slope3 (fixed-window, hazard-level normalization with lowest-N averaging) and direct hazard computation from raw MR.
+between vaccination groups while accounting for underlying time trends. Version 4.8
+uses slope4 (fixed-window, hazard-level normalization with geometric mean) and direct hazard computation from raw MR.
 """
 import sys
 import math
@@ -98,11 +98,11 @@ DYNAMIC_HVE_SKIP_WEEKS = 2
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
-# Slope3 method: use lowest N values in each window instead of mean of all values
-SLOPE3_MIN_VALUES = 5  # Number of lowest values to average in each slope window
+# Slope4 method: use geometric mean of all values in each window instead of arithmetic mean
+# Geometric mean is more robust to outliers and provides better representation of central tendency for hazard values
 
-# slope2/slope3 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
-# ---------------- Slope2/Slope3 Baseline Windows ----------------
+# slope2/slope3/slope4 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
+# ---------------- Slope2/Slope3/Slope4 Baseline Windows ----------------
 # Fixed time windows for slope calculation (ISO week format: "YYYY-WW")
 BASE_W1 = ("2022-24", "2022-36")
 BASE_W2 = ("2023-24", "2023-36")
@@ -129,7 +129,7 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = None  # List of enrollment dates (sheet names) to process. If None, will be auto-derived from Excel file sheets (excluding _summary and _MFG_ sheets)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
-# Slope normalization uses slope3 method (slope2 windows with lowest-N averaging); SIN removed
+# Slope normalization uses slope4 method (slope2 windows with geometric mean); SIN removed
 # removed legacy Czech unvaccinated MR adjustment toggle
 
 # ----------------------------------------------------------
@@ -144,7 +144,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.7"                # KCOR version number
+VERSION = "v4.8"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -165,6 +165,7 @@ VERSION = "v4.7"                # KCOR version number
 #        - Slope calculation simplified to single-window method (no dynamic anchors)
 # v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
 #        - slope3 hazard-level normalization (slope2 windows with lowest-N averaging) and direct hazard computation from raw MR.
+#        - (Note: slope3 was replaced by slope4 in v4.8)
 # v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
 #        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
 #        - Slope calculation simplified to single-window method (no dynamic anchors)
@@ -176,6 +177,11 @@ VERSION = "v4.7"                # KCOR version number
 #        - Added "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
 #        - Different from ASMR pooling: All Ages treats all ages as one cohort, while ASMR weights across age groups
 #        - All Ages calculation displayed right after ASMR (direct) in console and summary outputs
+# v4.8 - Replaced Slope3 with Slope4 method (2024-12-XX)
+#        - Changed from averaging lowest N values to using geometric mean of all values in each window
+#        - Geometric mean provides better representation of central tendency for hazard values
+#        - More mathematically sound approach that naturally handles the multiplicative nature of hazard rates
+#        - Removed SLOPE3_MIN_VALUES parameter (no longer needed)
 
 # latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
@@ -1282,8 +1288,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
-    # slope2/slope3 windows (global)
-    dual_print(f"  SLOPE3_MIN_VALUES    = {SLOPE3_MIN_VALUES}  [Slope3: average of lowest N values per window]")
+    # slope2/slope3/slope4 windows (global)
+    dual_print(f"  SLOPE4_METHOD        = geometric_mean  [Slope4: geometric mean of all values per window]")
     dual_print(f"  SLOPE2_W1            = (2022-24, 2022-36)")
     dual_print(f"  SLOPE2_W2            = (2023-24, 2023-36)")
     dual_print(f"  SLOPE2_W3            = (2024-12, 2024-20)")
@@ -1679,16 +1685,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 beta_vals[(yob, dose)] = 0.0
                 reason = "no_windows"
             else:
-                # Slope3 method: use average of lowest N values instead of mean of all values
-                # Filter out zeros/negatives, sort, take lowest N, then average
-                w1_filtered = sorted([v for v in w1_vals if v > 0.0])
-                w2_filtered = sorted([v for v in w2_vals if v > 0.0])
-                n_min = min(SLOPE3_MIN_VALUES, len(w1_filtered), len(w2_filtered))
-                if n_min > 0:
-                    Wm1 = float(np.mean(w1_filtered[:n_min]))
-                    Wm2 = float(np.mean(w2_filtered[:n_min]))
+                # Slope4 method: use geometric mean of all positive values in each window
+                # Geometric mean: exp(mean(ln(values))) for positive values
+                # Filter out zeros/negatives, then compute geometric mean
+                w1_filtered = [v for v in w1_vals if v > 0.0]
+                w2_filtered = [v for v in w2_vals if v > 0.0]
+                if len(w1_filtered) > 0 and len(w2_filtered) > 0:
+                    # Geometric mean: exp(mean(ln(values)))
+                    Wm1 = float(np.exp(np.mean(np.log(w1_filtered))))
+                    Wm2 = float(np.exp(np.mean(np.log(w2_filtered))))
                 else:
-                    # Fallback to mean if no positive values
+                    # Fallback to arithmetic mean if no positive values
                     Wm1 = float(np.mean(w1_vals))
                     Wm2 = float(np.mean(w2_vals))
                 # Strict error on negative mean hazards; log offending dates and values

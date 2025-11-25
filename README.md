@@ -1,4 +1,4 @@
-# KCOR v4.7 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v4.8 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -232,7 +232,7 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
 
-#### 2. Slope normalization (slope3) — Primary Method (v4.7)
+#### 2. Slope normalization (slope4) — Primary Method (v4.8)
 - Fixed global windows in ISO year-week:
   - W1 = [2022-24, 2022-36]
   - W2 = [2023-24, 2023-36]
@@ -241,16 +241,15 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - Compute hazards using the improved discrete transform for start-of-week denominators:
   - \( h(t) = -\ln\!\left(\dfrac{1 - 1.5\,MR(t)}{1 - 0.5\,MR(t)}\right) \) with clipping.
 - For each (YoB, Dose):
-  - **Slope3 method**: Instead of averaging all hazard values in each window, compute Wm1 and Wm2 as the average of the lowest N values (default N=5) in each selected window. This makes the slope estimation more robust to outliers and noise.
-  - Filter out zero/negative values, sort remaining values, take the lowest N values, then compute their arithmetic mean.
-  - If fewer than N positive values exist, fall back to the mean of all values.
+  - **Slope4 method**: Compute Wm1 and Wm2 as the geometric mean of all positive values in each selected window. The geometric mean provides better representation of central tendency for hazard values and naturally handles the multiplicative nature of hazard rates.
+  - Filter out zero/negative values, then compute geometric mean: \( \text{GM} = \exp(\text{mean}(\ln(\text{values}))) \).
+  - If no positive values exist, fall back to the arithmetic mean of all values.
   - If either mean is ≤ 0 or the separation is invalid, set β = 0.
   - Define β = (ln Wm2 − ln Wm1) / Δweeks, where Δweeks is the center-to-center distance (in weeks) between the two windows.
 - Apply origin-anchored de-trending at the hazard level only:
   - h_adj(t) = h(t) · e^{−β · t}, with t = weeks from enrollment (t = 0 at enrollment).
 - KCOR is computed from cumulative adjusted hazards; baseline normalization at week 4.
 - Raw MR is never modified; all slope normalization operates on hazards.
-- The number of lowest values to average (SLOPE3_MIN_VALUES) is configurable (default: 5).
 
 #### 4. KCOR Computation 
 **Four-Step Process:**
@@ -1067,6 +1066,24 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ## Version history
 
+### 🆕 Version 4.8 (2024-12-XX)
+
+#### Major Improvements
+- **Slope4 Method**: Replaced Slope3 with Slope4 normalization method
+- **Geometric Mean**: Changed from averaging lowest N values to using geometric mean of all values in each window
+- **Mathematical Soundness**: Geometric mean provides better representation of central tendency for hazard values
+- **Multiplicative Nature**: More appropriate for hazard rates which have multiplicative properties
+- **Simplified**: Removed SLOPE3_MIN_VALUES parameter (no longer needed)
+
+#### Slope4 Method Details
+- **Change from Slope3**: Instead of taking the lowest 5 values and averaging them, Slope4 uses the geometric mean of all positive values in the window
+- **Geometric Mean Formula**: \( \text{GM} = \exp(\text{mean}(\ln(\text{values}))) \) for positive values
+- **Benefits**: 
+  - More mathematically appropriate for hazard rates
+  - Naturally handles multiplicative relationships
+  - Provides better central tendency estimate for skewed distributions
+  - Simpler implementation without parameter tuning
+
 ### 🆕 Version 4.7
 
 #### Major Improvements
@@ -1077,7 +1094,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **All Ages Calculation**: Added new "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
 - **Dual Age Aggregation**: Both ASMR (pooled with weights) and All Ages (direct aggregation) are now computed and displayed
 
-#### Slope3 Method Details
+#### Slope3 Method Details (superseded by Slope4 in v4.8)
 - **Problem**: Averaging all values in slope windows can be sensitive to outliers and noise
 - **Solution**: Sort hazard values in each window, filter out zeros/negatives, take the lowest N values, then average
 - **Benefits**: More stable slope estimates, especially for cohorts with variable or noisy mortality patterns
