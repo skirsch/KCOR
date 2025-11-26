@@ -146,11 +146,11 @@ def main():
         output_dir = "../data/Czech2/"
     
     # Ensure output directory exists
-    output_path = Path(output_dir)
+    output_path = Path(output_dir) / "output"
     output_path.mkdir(parents=True, exist_ok=True)
     
     print(f"[Population Shift Analysis] Reading input file: {input_file}")
-    print(f"[Population Shift Analysis] Output directory: {output_dir}")
+    print(f"[Population Shift Analysis] Output directory: {output_path}")
     
     # Step 1: Load and prepare death dataset
     print("\n[Step 1] Loading and preparing death dataset...")
@@ -209,7 +209,8 @@ def main():
     
     # Step 5: Organ-system analysis (all ages)
     print("\n[Step 5] Adding organ-system analysis...")
-    lookup_file = output_path / "icd_system_lookup.csv"
+    # Lookup file is in parent directory, not output directory
+    lookup_file = Path(output_dir) / "icd_system_lookup.csv"
     if lookup_file.exists():
         lookup = pd.read_csv(lookup_file)
         death_df_system = death_df.copy()

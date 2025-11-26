@@ -16,13 +16,15 @@ OUTPUTS:
     - icd_comparison.csv: Main comparison table with ICD distributions
     - icd_difference_plot.png: Visualization of top differences
     - icd_by_system.csv: Aggregated comparison by organ system
-    - icd_agegroup_*.csv: Age-stratified comparisons (one file per age group)
-    - icd_postvax_bin_*.csv: Time-since-last-dose distributions (one file per time bin)
-    - icd_by_dose_*.csv: Dose-specific ICD distributions (one file per dose count)
+    - icd_agegroup.xlsx: Age-stratified comparisons (combined with age_group column)
+    - icd_postvax_bin.xlsx: Time-since-last-dose distributions (combined with post_vax_bin column)
+    - icd_by_dose.xlsx: Dose-specific ICD distributions (combined with dose column)
     - icd_summary.txt: Summary statistics
+    
+    All outputs are written to the output/ subdirectory.
 
 DEPENDENCIES:
-    pip install pandas matplotlib
+    pip install pandas matplotlib openpyxl
 """
 
 import sys
@@ -173,11 +175,11 @@ def main():
         output_dir = "../data/Czech2/"
     
     # Ensure output directory exists
-    output_path = Path(output_dir)
+    output_path = Path(output_dir) / "output"
     output_path.mkdir(parents=True, exist_ok=True)
     
     print(f"[ICD Analysis] Reading input file: {input_file}")
-    print(f"[ICD Analysis] Output directory: {output_dir}")
+    print(f"[ICD Analysis] Output directory: {output_path}")
     
     # Step 1: Load and clean data
     print("\n[Step 1] Loading and cleaning data...")
@@ -306,7 +308,8 @@ def main():
     
     # Extension 8: ICD grouping by organ system (using lookup file)
     print("\n[Extension 8] Grouping ICDs by organ system...")
-    lookup_file = output_path / "icd_system_lookup.csv"
+    # Lookup file is in parent directory, not output directory
+    lookup_file = Path(output_dir) / "icd_system_lookup.csv"
     if lookup_file.exists():
         lookup = pd.read_csv(lookup_file)
         death_df_system = death_df.copy()
@@ -395,6 +398,8 @@ def main():
         death_df["age_group"] = pd.cut(death_df["age"], bins=bins, labels=labels, right=False)
         
         age_results = []
+        age_dataframes = []
+        
         for age_group in labels:
             age_deaths = death_df[death_df["age_group"] == age_group]
             if len(age_deaths) == 0:
@@ -420,10 +425,23 @@ def main():
             combined["diff"] = combined["vacc_pct"] - combined["unvacc_pct"]
             combined.sort_values("diff", ascending=False, inplace=True)
             
-            age_file = output_path / f"icd_agegroup_{age_group}.csv"
-            combined.to_csv(age_file)
-            print(f"  Saved: {age_file}")
+            # Add age_group column and reset index to make ICD a column
+            combined = combined.reset_index()
+            combined["age_group"] = age_group
+            age_dataframes.append(combined)
             age_results.append(age_group)
+        
+        # Combine all age group dataframes into single Excel file
+        if age_dataframes:
+            age_combined = pd.concat(age_dataframes, ignore_index=True)
+            # Reorder columns: age_group first, then ICD, then the rest
+            cols = ["age_group", "icd"] + [c for c in age_combined.columns if c not in ["age_group", "icd"]]
+            age_combined = age_combined[cols]
+            
+            excel_file = output_path / "icd_agegroup.xlsx"
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                age_combined.to_excel(writer, index=False, sheet_name="icd_agegroup")
+            print(f"  Saved: {excel_file} (combined {len(age_results)} age groups)")
         
         if not age_results:
             print("  Warning: No age data available for stratification")
@@ -481,6 +499,7 @@ def main():
             )
             
             # Compute ICD distribution per bin (vaccinated deaths only)
+            bin_dataframes = []
             for b in labels:
                 sub = death_df_vax[
                     (death_df_vax["post_vax_bin"] == b) &
@@ -498,9 +517,22 @@ def main():
                     "pct": icd_pct
                 })
                 
-                bin_file = output_path / f"icd_postvax_bin_{b}.csv"
-                icd_pct_df.to_csv(bin_file)
-                print(f"  Saved: {bin_file}")
+                # Add post_vax_bin column and reset index to make ICD a column
+                icd_pct_df = icd_pct_df.reset_index()
+                icd_pct_df["post_vax_bin"] = b
+                bin_dataframes.append(icd_pct_df)
+            
+            # Combine all bin dataframes into single Excel file
+            if bin_dataframes:
+                bin_combined = pd.concat(bin_dataframes, ignore_index=True)
+                # Reorder columns: post_vax_bin first, then ICD, then the rest
+                cols = ["post_vax_bin", "icd"] + [c for c in bin_combined.columns if c not in ["post_vax_bin", "icd"]]
+                bin_combined = bin_combined[cols]
+                
+                excel_file = output_path / "icd_postvax_bin.xlsx"
+                with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                    bin_combined.to_excel(writer, index=False, sheet_name="icd_postvax_bin")
+                print(f"  Saved: {excel_file} (combined {len(bin_dataframes)} time bins)")
         else:
             print("  Warning: No vaccination events found")
     else:
@@ -523,6 +555,7 @@ def main():
         # For each dose count, compute ICD distribution
         unique_doses = sorted(death_df_dose["dose_count"].dropna().unique())
         
+        dose_dataframes = []
         for d in unique_doses:
             if pd.isna(d):
                 continue
@@ -540,9 +573,22 @@ def main():
                 "pct": icd_pct
             })
             
-            dose_file = output_path / f"icd_by_dose_{int(d)}.csv"
-            icd_pct_df.to_csv(dose_file)
-            print(f"  Saved: {dose_file}")
+            # Add dose column and reset index to make ICD a column
+            icd_pct_df = icd_pct_df.reset_index()
+            icd_pct_df["dose"] = int(d)
+            dose_dataframes.append(icd_pct_df)
+        
+        # Combine all dose dataframes into single Excel file
+        if dose_dataframes:
+            dose_combined = pd.concat(dose_dataframes, ignore_index=True)
+            # Reorder columns: dose first, then ICD, then the rest
+            cols = ["dose", "icd"] + [c for c in dose_combined.columns if c not in ["dose", "icd"]]
+            dose_combined = dose_combined[cols]
+            
+            excel_file = output_path / "icd_by_dose.xlsx"
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                dose_combined.to_excel(writer, index=False, sheet_name="icd_by_dose")
+            print(f"  Saved: {excel_file} (combined {len(dose_dataframes)} dose groups)")
     else:
         print("  Warning: Missing dose count column for dose-specific analysis")
     
@@ -602,9 +648,9 @@ def main():
     print(f"  - {output_path / 'icd_comparison.csv'}")
     print(f"  - {output_path / 'icd_difference_plot.png'}")
     print(f"  - {output_path / 'icd_by_system.csv'}")
-    print(f"  - {output_path / 'icd_agegroup_*.csv'}")
-    print(f"  - {output_path / 'icd_postvax_bin_*.csv'}")
-    print(f"  - {output_path / 'icd_by_dose_*.csv'}")
+    print(f"  - {output_path / 'icd_agegroup.xlsx'}")
+    print(f"  - {output_path / 'icd_postvax_bin.xlsx'}")
+    print(f"  - {output_path / 'icd_by_dose.xlsx'}")
     print(f"  - {output_path / 'icd_summary.txt'}")
 
 
