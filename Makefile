@@ -10,7 +10,7 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts help
+.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -83,6 +83,18 @@ HVE:
 ASMR:
 	$(MAKE) -C $(VALIDATION_ASMR_DIR) run DATASET=$(DATASET)
 
+# ICD-10 cause of death analysis (Czech2 dataset)
+icd10:
+	@echo "Running ICD-10 cause of death analysis..."
+	cd $(CODE_DIR) && python3 icd_analysis.py ../data/Czech2/data.csv ../data/Czech2/
+	@echo "ICD-10 analysis complete!"
+
+# ICD-10 population structural shift analysis (Czech2 dataset)
+icd_population_shift:
+	@echo "Running ICD-10 population structural shift analysis..."
+	cd $(CODE_DIR) && python3 icd_population_shift.py ../data/Czech2/data.csv ../data/Czech2/
+	@echo "ICD-10 population shift analysis complete!"
+
 # Help target
 help:
 	@echo "Available targets:"
@@ -100,6 +112,8 @@ help:
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
 	@echo "  HVE             - Run Healthy Vaccinee Effect simulation (validation/HVE)"
 	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
+	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
+	@echo "  icd_population_shift - Run ICD-10 population structural shift analysis (data/Czech2/)"
 	@echo "  clean           - Clean outputs"
 	@echo ""
 	@echo "Variables:"
