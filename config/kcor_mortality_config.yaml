@@ -1,0 +1,71 @@
+# KCOR Mortality Analysis Configuration File
+# This file centralizes parameters for the KCOR mortality analysis pipeline
+
+# Default enrollment dates for analysis
+enrollment_dates:
+  - year: 2021
+    month: 1
+  - year: 2021
+    month: 7
+  - year: 2022
+    month: 1
+
+# Default quiet periods for slope estimation (months after enrollment)
+quiet_periods:
+  - min: 3
+    max: 10
+  - min: 6
+    max: 15
+  - min: 9
+    max: 18
+
+# Follow-up horizons (months)
+follow_up_months:
+  - 12
+  - 18
+  - 24
+
+# Cohort definitions
+cohort_definitions:
+  - separate_doses: false  # Group doses 3+ together
+  - separate_doses: true    # Separate doses 3,4,5,6
+
+# Reference cohort (unvaccinated)
+reference_cohort: "dose0_unvaccinated"
+
+# Age bands for stratified analysis
+age_bands:
+  - label: "65-74"
+    min_age: 65
+    max_age: 74
+  - label: "75-84"
+    min_age: 75
+    max_age: 84
+  - label: "85+"
+    min_age: 85
+    max_age: 200
+
+# Minimum persons required per age band
+min_persons_per_age_band: 100
+
+# Statistical inference parameters
+statistical:
+  alpha: 0.05  # Significance level (for 95% CI)
+  normalization_t: null  # Normalization time point (null = auto)
+  bootstrap:
+    n_samples: 1000
+    random_seed: null
+
+# Output settings
+output:
+  base_dir: "data/Czech2/kcor_mortality_output"
+  create_subdirs: true
+  save_intermediate: true
+
+# Visualization settings
+visualization:
+  figure_dpi: 150
+  figure_size: [12, 6]
+  style: "whitegrid"
+  color_palette: "tab10"
+

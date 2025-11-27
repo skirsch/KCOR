@@ -10,7 +10,7 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift help
+.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -95,6 +95,26 @@ icd_population_shift:
 	cd $(CODE_DIR) && python3 icd_population_shift.py ../data/Czech2/data.csv ../data/Czech2/
 	@echo "ICD-10 population shift analysis complete!"
 
+# KCOR Mortality Analysis Pipeline (Czech2 dataset)
+mortality:
+	$(MAKE) -C $(CODE_DIR) mortality ENROLL_YEAR=$(ENROLL_YEAR) ENROLL_MONTH=$(ENROLL_MONTH) MAX_FU_MONTHS=$(MAX_FU_MONTHS) QUIET_MIN=$(QUIET_MIN) QUIET_MAX=$(QUIET_MAX)
+
+mortality_sensitivity:
+	$(MAKE) -C $(CODE_DIR) mortality_sensitivity
+
+mortality_age:
+	$(MAKE) -C $(CODE_DIR) mortality_age ENROLL_YEAR=$(ENROLL_YEAR) ENROLL_MONTH=$(ENROLL_MONTH) MAX_FU_MONTHS=$(MAX_FU_MONTHS) QUIET_MIN=$(QUIET_MIN) QUIET_MAX=$(QUIET_MAX)
+
+mortality_stats:
+	$(MAKE) -C $(CODE_DIR) mortality_stats
+
+mortality_plots:
+	$(MAKE) -C $(CODE_DIR) mortality_plots QUIET_MIN=$(QUIET_MIN) QUIET_MAX=$(QUIET_MAX)
+
+# Run all mortality analyses (Czech2 dataset)
+mortality_all:
+	$(MAKE) -C $(CODE_DIR) mortality_all ENROLL_YEAR=$(ENROLL_YEAR) ENROLL_MONTH=$(ENROLL_MONTH) MAX_FU_MONTHS=$(MAX_FU_MONTHS) QUIET_MIN=$(QUIET_MIN) QUIET_MAX=$(QUIET_MAX)
+
 # Help target
 help:
 	@echo "Available targets:"
@@ -114,8 +134,22 @@ help:
 	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
 	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
 	@echo "  icd_population_shift - Run ICD-10 population structural shift analysis (data/Czech2/)"
+	@echo ""
+	@echo "KCOR Mortality Analysis (Czech2 dataset):"
+	@echo "  mortality       - Run basic KCOR mortality analysis pipeline"
+	@echo "  mortality_sensitivity - Run sensitivity analysis (multiple configurations)"
+	@echo "  mortality_age   - Run age-stratified analysis"
+	@echo "  mortality_stats - Add statistical inference (CIs, p-values) to results"
+	@echo "  mortality_plots - Create enhanced visualizations"
+	@echo "  mortality_all   - Run ALL mortality analyses (recommended for complete analysis)"
+	@echo ""
 	@echo "  clean           - Clean outputs"
 	@echo ""
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
+	@echo "  ENROLL_YEAR=<year>    - Enrollment year for mortality analysis (default: 2021)"
+	@echo "  ENROLL_MONTH=<month>  - Enrollment month 1-12 for mortality analysis (default: 7)"
+	@echo "  MAX_FU_MONTHS=<n>     - Maximum follow-up months (default: 24)"
+	@echo "  QUIET_MIN=<month>    - Quiet period start month (default: 3)"
+	@echo "  QUIET_MAX=<month>     - Quiet period end month (default: 10)"
 
