@@ -20,9 +20,11 @@ METHODOLOGY OVERVIEW:
 
 3. NORMALIZATION AND HAZARDS:
    - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
-   - Slope normalization uses the slope4 method: estimate a cohort-level beta from fixed windows using
-     the geometric mean of all values in each window for improved robustness.
-     Apply origin-anchored normalization at the hazard level only. Raw MR values are never modified.
+   - Slope normalization uses the slope5 method: independent flat-slope normalization (zero-drift method).
+     A single global baseline window is automatically selected, then each cohort is normalized independently
+     to achieve zero log-hazard slope over the baseline window using OLS regression. Each cohort's own
+     drift slope β_c is estimated and removed, with normalization centered at pivot time t_0.
+     Apply normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
 4. KCOR COMPUTATION:
@@ -69,8 +71,8 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends. Version 4.8
-uses slope4 (fixed-window, hazard-level normalization with geometric mean) and direct hazard computation from raw MR.
+between vaccination groups while accounting for underlying time trends. Version 4.9
+uses slope5 (independent flat-slope normalization, zero-drift method) and direct hazard computation from raw MR.
 """
 import sys
 import math
@@ -98,16 +100,16 @@ DYNAMIC_HVE_SKIP_WEEKS = 2
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
-# Slope4 method: use geometric mean of all values in each window instead of arithmetic mean
-# Geometric mean is more robust to outliers and provides better representation of central tendency for hazard values
+# Slope5 method: Independent flat-slope normalization (zero-drift method)
+# Uses a single global baseline window selected automatically, then fits each cohort
+# independently to achieve zero log-hazard slope over the baseline window using OLS regression.
+# Each cohort's own drift slope β_c is estimated and removed, with normalization centered at pivot time t_0.
 
-# slope2/slope3/slope4 windows are defined inline near computation as BASE_W1/BASE_W2/BASE_W3
-# ---------------- Slope2/Slope3/Slope4 Baseline Windows ----------------
-# Fixed time windows for slope calculation (ISO week format: "YYYY-WW")
-BASE_W1 = ("2022-24", "2022-36")
-BASE_W2 = ("2023-24", "2023-36")
-BASE_W3 = ("2024-12", "2024-20")
-BASE_W4 = ("2022-42", "2022-48")  # fallback second window when selected W2 has zero hazards
+# ---------------- Slope5 Configuration Parameters ----------------
+SLOPE5_BASELINE_WINDOW_LENGTH_MIN = 30  # Minimum window length in weeks
+SLOPE5_BASELINE_WINDOW_LENGTH_MAX = 60  # Maximum window length in weeks
+SLOPE5_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
+SLOPE5_MIN_DATA_POINTS = 5              # Minimum data points required for OLS fit
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -129,7 +131,7 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = None  # List of enrollment dates (sheet names) to process. If None, will be auto-derived from Excel file sheets (excluding _summary and _MFG_ sheets)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
-# Slope normalization uses slope4 method (slope2 windows with geometric mean); SIN removed
+# Slope normalization uses slope5 method (independent flat-slope normalization, zero-drift method)
 # removed legacy Czech unvaccinated MR adjustment toggle
 
 # ----------------------------------------------------------
@@ -144,7 +146,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v4.8"                # KCOR version number
+VERSION = "v4.9"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -182,6 +184,13 @@ VERSION = "v4.8"                # KCOR version number
 #        - Geometric mean provides better representation of central tendency for hazard values
 #        - More mathematically sound approach that naturally handles the multiplicative nature of hazard rates
 #        - Removed SLOPE3_MIN_VALUES parameter (no longer needed)
+# v4.9 - Replaced Slope4 with Slope5 independent flat-slope normalization method
+#        - Single global baseline window automatically selected
+#        - Each cohort normalized independently to achieve zero log-hazard slope using OLS regression
+#        - Each cohort's own drift slope β_c is estimated and removed, centered at pivot time t_0
+#        - Normalization formula: h_c^norm(t) = e^{a_c} * e^{b_c*t} * h_c(t)
+#        - Provides mathematically precise, reproducible method per KCOR_slope5_RMS.md specification
+#        - Removed BASE_W1/BASE_W2/BASE_W3/BASE_W4 fixed windows (replaced with automatic selection)
 
 # latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
@@ -374,7 +383,7 @@ def compute_group_slopes_lookup(df, sheet_name, logger=None):
         return slopes
     
 def _parse_iso_year_week(s: str):
-    from datetime import datetime
+    # Note: datetime is already imported at module level
     y, w = s.split("-")
     # ISO week to date: Monday of that ISO week
     return datetime.fromisocalendar(int(y), int(w), 1)
@@ -422,6 +431,158 @@ def apply_moving_average(df, window=None, centered=None):
     df_smooth["MR_smooth"] = df_smooth.get("MR", np.nan)
     
     return df_smooth
+
+def _iso_to_date_slope5(isostr: str):
+    """Convert ISO week string (YYYY-WW) to datetime (Monday of that week)."""
+    y, w = isostr.split("-")
+    return datetime.fromisocalendar(int(y), int(w), 1)
+
+def _iso_week_list_slope5(start_iso: str, end_iso: str):
+    """Generate list of ISO week strings from start to end (inclusive)."""
+    start_dt = _iso_to_date_slope5(start_iso)
+    end_dt = _iso_to_date_slope5(end_iso)
+    if end_dt < start_dt:
+        raise RuntimeError("slope5 window end before start")
+    weeks = []
+    cur = start_dt
+    while cur <= end_dt:
+        iso = cur.isocalendar()
+        weeks.append(f"{iso.year}-{int(iso.week):02d}")
+        cur = cur + timedelta(weeks=1)
+    return weeks
+
+def select_slope5_baseline_window(df_all_sheets_list, dual_print_fn=None):
+    """
+    Select a single global baseline window for Slope5 normalization.
+    
+    Currently uses a fixed window: 2022-01 to 2024-12 (week 1 of 2022 through week 12 of 2024).
+    This covers approximately January 2022 through March 2024.
+    
+    Args:
+        df_all_sheets_list: List of (sheet_name, df) tuples containing all enrollment sheets' data
+        dual_print_fn: Optional logging function
+        
+    Returns:
+        Tuple (start_iso_week, end_iso_week) in format ("YYYY-WW", "YYYY-WW")
+    """
+    def _print(msg):
+        if dual_print_fn:
+            dual_print_fn(msg)
+        else:
+            print(msg)
+    
+    # Fixed window: 2022-01 to 2024-12 (week 1 of 2022 through week 12 of 2024)
+    baseline_window = ("2022-01", "2024-12")
+    
+    _print(f"SLOPE5_BASELINE_WINDOW,selected={baseline_window[0]}..{baseline_window[1]} (week 1 of 2022 through week 12 of 2024, fixed)")
+    return baseline_window
+
+def compute_slope5_normalization(df, baseline_window, dual_print_fn=None):
+    """
+    Compute Slope5 normalization parameters for each cohort independently.
+    
+    For each cohort c (including dose 0):
+    - Fit log h_c(t) ≈ α_c + β_c t on baseline window
+    - Extract β_c (cohort's own drift slope)
+    - Compute pivot time t_0 as mean of week indices in baseline window
+    - Return (β_c, t_0) tuple for normalization: h̃_c(t) = e^{-β_c (t - t_0)} * h_c(t)
+    
+    This normalizes each cohort independently to achieve zero log-hazard slope
+    over the baseline window (horizontal zero-drift method).
+    
+    Args:
+        df: DataFrame for one enrollment sheet with columns YearOfBirth, Dose, DateDied, MR, etc.
+        baseline_window: Tuple (start_iso_week, end_iso_week)
+        dual_print_fn: Optional logging function
+        
+    Returns:
+        Dict mapping (YearOfBirth, Dose) -> (β_c, t_0) tuple
+        For cohorts with insufficient data: (0.0, 0.0)
+    """
+    def _print(msg):
+        if dual_print_fn:
+            dual_print_fn(msg)
+    
+    normalization_params = {}
+    
+    # Compute hazards
+    df = df.copy()
+    df["hazard"] = hazard_from_mr_improved(df["MR"].clip(lower=0.0, upper=0.999))
+    
+    # Annotate ISO week labels
+    iso_parts = df["DateDied"].dt.isocalendar()
+    df["iso_label"] = iso_parts.year.astype(str) + "-" + iso_parts.week.astype(str).str.zfill(2)
+    
+    # Get baseline window weeks
+    baseline_weeks = _iso_week_list_slope5(*baseline_window)
+    
+    # Process each cohort independently
+    for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+        # Sort by DateDied to ensure t values are in order
+        g_sorted = g.sort_values("DateDied").reset_index(drop=True)
+        
+        # Extract cohort hazards and time indices by ISO week
+        # Group by ISO week and get both hazard and t (time since enrollment)
+        cohort_data = g_sorted.groupby("iso_label").agg({
+            "hazard": "mean",
+            "t": "first"  # Use first t value for each ISO week (should be same for all rows in that week)
+        }).to_dict(orient="index")
+        
+        # Build log h_c(t) for t in baseline_window, using actual t values (time since enrollment)
+        log_h_values = []
+        t_values = []
+        
+        for week in baseline_weeks:
+            week_data = cohort_data.get(week)
+            
+            if week_data is not None:
+                hc = week_data.get("hazard")
+                t_actual = week_data.get("t")
+                
+                # Must be valid and positive
+                if hc is not None and t_actual is not None and hc > EPS and pd.notna(t_actual):
+                    try:
+                        log_h_val = np.log(hc)
+                        if np.isfinite(log_h_val) and np.isfinite(t_actual):
+                            log_h_values.append(log_h_val)
+                            t_values.append(float(t_actual))  # Actual time since enrollment
+                    except Exception:
+                        continue
+        
+        # Need at least SLOPE5_MIN_DATA_POINTS points for OLS fit
+        sheet_name = df['sheet_name'].iloc[0] if 'sheet_name' in df.columns and len(df) > 0 else 'unknown'
+        if len(log_h_values) < SLOPE5_MIN_DATA_POINTS:
+            _print(f"SLOPE5_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(log_h_values)}")
+            normalization_params[(yob, dose)] = (0.0, 0.0)
+            continue
+        
+        # Fit OLS: log h_c(t) ≈ α_c + β_c t
+        try:
+            # Use np.polyfit for linear regression: log_h = α + β*t
+            # Returns [β, α] (slope, intercept)
+            coeffs = np.polyfit(t_values, log_h_values, 1)
+            alpha_c = float(coeffs[1])  # intercept
+            beta_c = float(coeffs[0])   # slope (drift parameter)
+            
+            # Set pivot time t_0 = 0 (enrollment time) so adjustment starts at enrollment
+            # This ensures no adjustment at enrollment (t=0), where t is time since enrollment
+            # The slope β_c is fitted on baseline window data, but the adjustment is applied
+            # starting from enrollment time (t=0) forward
+            t_0 = 0.0
+            
+            # Compute RMS error for diagnostics
+            predicted = np.array(t_values) * beta_c + alpha_c
+            residuals = np.array(log_h_values) - predicted
+            rms_error = np.sqrt(np.mean(residuals**2))
+            
+            # Return (β_c, t_0) tuple
+            normalization_params[(yob, dose)] = (beta_c, t_0)
+            _print(f"SLOPE5_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},alpha_c={alpha_c:.6e},beta_c={beta_c:.6e},t_0={t_0:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+        except Exception as e:
+            _print(f"SLOPE5_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(e)}")
+            normalization_params[(yob, dose)] = (0.0, 0.0)
+    
+    return normalization_params
 
 def build_kcor_rows(df, sheet_name, dual_print=None):
     """
@@ -1247,7 +1408,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print, log_file_handle = setup_dual_output(output_dir, log_filename)
     
     # Print professional header
-    from datetime import datetime
+    # Note: datetime and timedelta are already imported at module level
     log_file_path = os.path.join(output_dir, log_filename)
     # Use forward slashes for display consistency
     log_file_display = log_file_path.replace('\\', '/')
@@ -1288,13 +1449,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
-    # slope2/slope3/slope4 windows (global)
-    dual_print(f"  SLOPE4_METHOD        = geometric_mean  [Slope4: geometric mean of all values per window]")
-    dual_print(f"  SLOPE2_W1            = (2022-24, 2022-36)")
-    dual_print(f"  SLOPE2_W2            = (2023-24, 2023-36)")
-    dual_print(f"  SLOPE2_W3            = (2024-12, 2024-20)")
-    dual_print(f"  SLOPE2_W4            = (2022-42, 2022-48)  [fallback second window if W2 has no data]")
-    dual_print(f"  SLOPE2 selection     = W1/W2 unless enrollment_date > start(W1), then W2/W3")
+    # Slope5 configuration
+    dual_print(f"  SLOPE5_METHOD        = RMS_OLS  [Slope5: Independent flat-slope normalization (zero-drift method)]")
+    dual_print(f"  SLOPE5_BASELINE_WINDOW_LENGTH_MIN = {SLOPE5_BASELINE_WINDOW_LENGTH_MIN} weeks")
+    dual_print(f"  SLOPE5_BASELINE_WINDOW_LENGTH_MAX = {SLOPE5_BASELINE_WINDOW_LENGTH_MAX} weeks")
+    dual_print(f"  SLOPE5_BASELINE_START_YEAR = {SLOPE5_BASELINE_START_YEAR}")
+    dual_print(f"  SLOPE5_MIN_DATA_POINTS = {SLOPE5_MIN_DATA_POINTS}")
     dual_print("="*80)
     dual_print("")
     
@@ -1323,8 +1483,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Initialize debug data collection (will be populated inside sheet loop)
     debug_data = []
-    # Store slope2 betas per (EnrollmentDate, YoB, Dose) for later summary printing
-    beta_map = {}
+    # Store slope5 normalization parameters per (EnrollmentDate, YoB, Dose) for later summary printing
+    slope5_params_map = {}
+    
+    # Slope5: Select fixed baseline window (no data collection needed since window is fixed)
+    baseline_window = select_slope5_baseline_window([], dual_print)  # Empty list since we don't need data
+    dual_print(f"[Slope5] Using baseline window: {baseline_window[0]} to {baseline_window[1]}")
     
     for sh in sheets_to_process:
         dual_print(f"[Info] Processing sheet: {sh}")
@@ -1342,7 +1506,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             enrollment_year = int(year_str)
             enrollment_week = int(week_str)
             # Convert ISO week to date more accurately
-            from datetime import datetime, timedelta
+            # Note: datetime and timedelta are already imported at module level
             # ISO week 24 of 2021 should be around June 14, 2021
             # Let's use a more precise calculation
             jan1 = datetime(enrollment_year, 1, 1)
@@ -1552,7 +1716,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
         
 
-        # Slope normalization (legacy) has been removed; slope2 applies only at hazard level.
+        # Slope normalization: Slope5 applies only at hazard level.
         
         # Debug: Show MR values week by week, especially weeks with no deaths
         # if DEBUG_VERBOSE:
@@ -1588,225 +1752,29 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # removed temporary diagnostics
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
-        # Apply slope2 normalization: origin-anchored hazard de-trending using fixed-window beta per cohort
-        beta_vals = {}
-        # slope2: two fixed ISO-week windows, compute mean hazards, derive beta, origin-anchored
-        # Define helper functions for ISO week ranges and centers
-        def _iso_to_date(isostr: str):
-            y, w = isostr.split("-")
-            return datetime.fromisocalendar(int(y), int(w), 1)
-        def _iso_week_list(start_iso: str, end_iso: str):
-            start_dt = _iso_to_date(start_iso)
-            end_dt = _iso_to_date(end_iso)
-            if end_dt < start_dt:
-                raise RuntimeError("slope2 window end before start")
-            weeks = []
-            cur = start_dt
-            while cur <= end_dt:
-                iso = cur.isocalendar()
-                weeks.append(f"{iso.year}-{int(iso.week):02d}")
-                cur = cur + timedelta(weeks=1)
-            return weeks
-        # Choose windows per enrollment date: default W1/W2; if enrollment after W1 start, use W2/W3
-        # (BASE_W1, BASE_W2, BASE_W3, BASE_W4 are defined at top of file)
-        # Determine enrollment date (Monday of sheet week)
-        try:
-            year_str, week_str = sh.split("_") if "_" in sh else sh.split("-")
-            enroll_dt = datetime.fromisocalendar(int(year_str), int(week_str), 1)
-        except Exception:
-            enroll_dt = None
-        w1_start_dt = datetime.fromisocalendar(int(BASE_W1[0].split("-")[0]), int(BASE_W1[0].split("-")[1]), 1)
-        if enroll_dt is not None and enroll_dt > w1_start_dt:
-            W1_ISO = BASE_W2
-            W2_ISO = BASE_W3
-        else:
-            W1_ISO = BASE_W1
-            W2_ISO = BASE_W2
-        # Announce selected window pair for this enrollment (sheet-level)
-        try:
-            fallback_info = f",fallback_W4={BASE_W4[0]}..{BASE_W4[1]}" if (W1_ISO == BASE_W1 and W2_ISO == BASE_W2) else ""
-            dual_print(
-                f"SLOPE2_WINDOW_PAIR,EnrollmentDate={sh},pair={W1_ISO[0]}..{W1_ISO[1]} vs {W2_ISO[0]}..{W2_ISO[1]}{fallback_info}"
-            )
-        except Exception:
-            pass
-        W1_weeks = _iso_week_list(*W1_ISO)
-        W2_weeks = _iso_week_list(*W2_ISO)
-        W4_weeks = _iso_week_list(*BASE_W4)
-        # Build weekly hazard by ISO week for each cohort
-        df_tmp = df.copy().sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
-        df_tmp["h"] = hazard_from_mr_improved(df_tmp["MR"].clip(lower=0.0, upper=0.999))
-        # annotate iso label per row (Monday of ISO week)
-        iso_parts = df_tmp["DateDied"].dt.isocalendar()
-        df_tmp["iso_label"] = iso_parts.year.astype(str) + "-" + iso_parts.week.astype(str).str.zfill(2)
-        # Sheet-level coverage diagnostics and early abort if a required window has no coverage
-        try:
-            data_first = pd.to_datetime(df_tmp["DateDied"]).min()
-            data_last = pd.to_datetime(df_tmp["DateDied"]).max()
-            present_labels = set(df_tmp["iso_label"].unique().tolist())
-            w1_present = sum(1 for lbl in W1_weeks if lbl in present_labels)
-            w2_present = sum(1 for lbl in W2_weeks if lbl in present_labels)
-            w4_present = sum(1 for lbl in W4_weeks if lbl in present_labels)
-            if str(os.environ.get("SLOPE2_LOG_COVERAGE", "")).strip().lower() in ("1","true","yes"): 
-                dual_print(
-                    f"SLOPE2_DATA_RANGE,EnrollmentDate={sh},first={data_first.date() if pd.notna(data_first) else 'NA'},last={data_last.date() if pd.notna(data_last) else 'NA'}"
-                )
-                dual_print(
-                    f"SLOPE2_WINDOW_COVERAGE,EnrollmentDate={sh},W1_present={w1_present}/{len(W1_weeks)},W2_present={w2_present}/{len(W2_weeks)},W4_present={w4_present}/{len(W4_weeks)},W1={W1_ISO[0]}..{W1_ISO[1]},W2={W2_ISO[0]}..{W2_ISO[1]},W4={BASE_W4[0]}..{BASE_W4[1]}"
-                )
-            # If we are using (W1,W2), allow W4 as fallback if W2 has zero coverage.
-            using_w1w2 = (W1_ISO == BASE_W1 and W2_ISO == BASE_W2)
-            if w1_present == 0:
-                dual_print(f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_W1 — dataset lacks coverage in W1 {W1_ISO[0]}..{W1_ISO[1]}")
-                raise RuntimeError(f"slope2: dataset for {sh} lacks coverage in W1 (present={w1_present})")
-            if using_w1w2:
-                if w2_present == 0 and w4_present == 0:
-                    dual_print(f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_W2_or_W4 — dataset lacks coverage in both W2 and W4")
-                    raise RuntimeError(f"slope2: dataset for {sh} lacks coverage in W2 and W4 (W2_present={w2_present}, W4_present={w4_present})")
-            else:
-                # Using (W2,W3) selection; keep the existing strict coverage rule for the chosen windows
-                if w2_present == 0:
-                    dual_print(f"SLOPE2_ABORT,EnrollmentDate={sh},reason=no_data_in_selected_W1 — dataset lacks coverage in selected first window {W1_ISO[0]}..{W1_ISO[1]}")
-                    raise RuntimeError(f"slope2: dataset for {sh} lacks coverage in selected first window (present={w2_present})")
-                w3_weeks = _iso_week_list(*W2_ISO)  # here W2_ISO acts as second window in (W2,W3)
-                # Note: w3_present reuses w2_present variable semantics here; keep strict check via earlier w2_present
-        except Exception:
-            pass
-        any_beta_nonzero = False
-        for (yob, dose), g in df_tmp.groupby(["YearOfBirth","Dose"], sort=False):
-            # mean hazard per iso week (if multiple days exist in same iso week)
-            weekly = g.groupby("iso_label")["h"].mean().to_dict()
-            w1_vals = [float(weekly.get(lbl, 0.0)) for lbl in W1_weeks]
-            w2_vals = [float(weekly.get(lbl, 0.0)) for lbl in W2_weeks]
-            present_w1 = sum(1 for lbl in W1_weeks if lbl in weekly)
-            present_w2 = sum(1 for lbl in W2_weeks if lbl in weekly)
-            reason = None
-            if len(w1_vals) == 0 or len(w2_vals) == 0:
-                beta_vals[(yob, dose)] = 0.0
-                reason = "no_windows"
-            else:
-                # Slope4 method: use geometric mean of all positive values in each window
-                # Geometric mean: exp(mean(ln(values))) for positive values
-                # Filter out zeros/negatives, then compute geometric mean
-                w1_filtered = [v for v in w1_vals if v > 0.0]
-                w2_filtered = [v for v in w2_vals if v > 0.0]
-                if len(w1_filtered) > 0 and len(w2_filtered) > 0:
-                    # Geometric mean: exp(mean(ln(values)))
-                    Wm1 = float(np.exp(np.mean(np.log(w1_filtered))))
-                    Wm2 = float(np.exp(np.mean(np.log(w2_filtered))))
-                else:
-                    # Fallback to arithmetic mean if no positive values
-                    Wm1 = float(np.mean(w1_vals))
-                    Wm2 = float(np.mean(w2_vals))
-                # Strict error on negative mean hazards; log offending dates and values
-                if Wm1 < 0.0 or Wm2 < 0.0:
-                    try:
-                        dual_print(
-                            f"SLOPE2_NEGATIVE_MEAN,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},Wm1={Wm1:.6e},Wm2={Wm2:.6e}"
-                        )
-                        def _log_negatives(window_name: str, labels: list):
-                            for lbl in labels:
-                                hv = float(weekly.get(lbl, 0.0))
-                                if hv < 0.0:
-                                    dual_print(
-                                        f"SLOPE2_NEG_HAZARD,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},hazard={hv:.6e}"
-                                    )
-                        _log_negatives("W1", W1_weeks)
-                        _log_negatives("W2", W2_weeks)
-                    except Exception:
-                        pass
-                    raise RuntimeError("slope2: negative mean hazard detected; see log for details")
-                # Fallback W4 (sheet-level, once): if any cohort needs fallback, switch the entire enrollment's second window to W4
-                used_w4 = False
-                if Wm2 <= 0.0 and (W1_ISO == BASE_W1 and W2_ISO == BASE_W2):
-                    # Switch second window for all cohorts in this sheet
-                    W2_ISO = BASE_W4
-                    W2_weeks = _iso_week_list(*W2_ISO)
-                    w4_vals = [float(weekly.get(lbl, 0.0)) for lbl in W2_weeks]
-                    Wm2 = float(np.mean(w4_vals)) if len(w4_vals) > 0 else 0.0
-                    used_w4 = True
-                    try:
-                        dual_print(f"SLOPE2_FALLBACK,EnrollmentDate={sh},using=W4,{BASE_W4[0]}..{BASE_W4[1]} (applies to all cohorts)")
-                    except Exception:
-                        pass
-                _w1_start_dt = _iso_to_date(W1_ISO[0])
-                _w1_end_dt = _iso_to_date(W1_ISO[1])
-                if used_w4:
-                    _w2_start_dt = _iso_to_date(BASE_W4[0])
-                    _w2_end_dt = _iso_to_date(BASE_W4[1])
-                else:
-                    _w2_start_dt = _iso_to_date(W2_ISO[0])
-                    _w2_end_dt = _iso_to_date(W2_ISO[1])
-                c1 = _w1_start_dt + (_w1_end_dt - _w1_start_dt) / 2
-                c2 = _w2_start_dt + (_w2_end_dt - _w2_start_dt) / 2
-                delta_weeks = (c2 - c1).days / 7.0
-                if Wm1 <= 0.0 or Wm2 <= 0.0:
-                    beta_vals[(yob, dose)] = 0.0
-                    reason = "negative_means" if (Wm1 < 0.0 or Wm2 < 0.0) else "zero_means"
-                    # Only log details for truly negative means (not zero)
-                    if Wm1 < 0.0 or Wm2 < 0.0:
-                        try:
-                            nonpos_flags = []
-                            if Wm1 < 0.0:
-                                nonpos_flags.append(f"W1_mean={Wm1:.6e}")
-                            if Wm2 < 0.0:
-                                nonpos_flags.append(f"W2_mean={Wm2:.6e}")
-                            dual_print(
-                                f"SLOPE2_NONPOSITIVE_MEANS,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},{' '.join(nonpos_flags)}"
-                            )
-                            def _print_window_details(window_name: str, labels: list):
-                                for lbl in labels:
-                                    sub = g[g["iso_label"] == lbl]
-                                    if sub.empty:
-                                        dual_print(
-                                            f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT=0,Dead=0,MR=nan,hazard=nan"
-                                        )
-                                        continue
-                                    pt_sum = float(sub["PT"].sum()) if "PT" in sub.columns else float(sub["Alive"].sum())
-                                    dead_sum = float(sub["Dead"].sum())
-                                    mr_w = (dead_sum / pt_sum) if pt_sum > 0.0 else np.nan
-                                    if np.isnan(mr_w) or mr_w >= 1.0 or mr_w < 0.0:
-                                        mr_clipped = np.nan if np.isnan(mr_w) else np.clip(mr_w, 0.0, 0.999)
-                                    else:
-                                        mr_clipped = mr_w
-                                    hazard_w = hazard_from_mr_improved(np.array([mr_clipped]))[0] if (isinstance(mr_clipped, float) and mr_clipped >= 0.0 and mr_clipped < 1.0) else np.nan
-                                    dual_print(
-                                        f"SLOPE2_WINDOW_DETAIL,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},win={window_name},iso={lbl},date={_iso_to_date(lbl).date()},PT={pt_sum:.6f},Dead={dead_sum:.6f},MR={(mr_w if not np.isnan(mr_w) else float('nan')):.6e},hazard={(hazard_w if not np.isnan(hazard_w) else float('nan')):.6e}"
-                                    )
-                            if Wm1 < 0.0:
-                                _print_window_details("W1", W1_weeks)
-                            if Wm2 < 0.0:
-                                _print_window_details("W2", W2_weeks)
-                        except Exception:
-                            pass
-                elif delta_weeks <= 0:
-                    beta_vals[(yob, dose)] = 0.0
-                    reason = "invalid_delta"
-                else:
-                    beta = (np.log(Wm2) - np.log(Wm1)) / float(delta_weeks)
-                    beta_vals[(yob, dose)] = float(beta)
-                    if abs(beta) > 0.0:
-                        any_beta_nonzero = True
-            # Diagnostic when beta is zero for this cohort
-            if float(beta_vals.get((yob, dose), 0.0)) == 0.0:
-                try:
-                    dual_print(
-                        f"SLOPE2_DIAG,EnrollmentDate={sh},YoB={int(yob)},Dose={int(dose)},W1_present={present_w1},W2_present={present_w2},Wm1={float(np.mean(w1_vals)) if w1_vals else float('nan'):.6e},Wm2={float(np.mean(w2_vals)) if w2_vals else float('nan'):.6e},reason={reason}"
-                    )
-                except Exception:
-                    pass
-        # If all betas are zero for this sheet, emit a one-line notice with chosen windows
-        if not any_beta_nonzero:
+        # Apply Slope5 normalization: Independent flat-slope normalization (zero-drift method)
+        # Note: baseline_window was selected globally before processing sheets
+        
+        # Add sheet_name to df for compute_slope5_normalization
+        df["sheet_name"] = sh
+        
+        # Compute Slope5 normalization parameters for this sheet
+        slope5_params = compute_slope5_normalization(df, baseline_window, dual_print)
+        
+        # Persist normalization parameters (β_c, t_0) for this sheet for later summary printing
+        for (yob_k, dose_k), params in slope5_params.items():
             try:
-                dual_print(f"SLOPE2_ALL_ZERO,EnrollmentDate={sh},W1={W1_ISO[0]}..{W1_ISO[1]},W2={W2_ISO[0]}..{W2_ISO[1]} — no valid slope2 signal (check data coverage in those windows)")
+                # Store tuple (β_c, t_0)
+                if isinstance(params, tuple):
+                    slope5_params_map[(sh, int(yob_k), int(dose_k))] = params
+                else:
+                    # Legacy format: single value (shouldn't happen, but be safe)
+                    slope5_params_map[(sh, int(yob_k), int(dose_k))] = (float(params), 0.0)
             except Exception:
-                pass
-        # Persist betas for this sheet for later summary printing
-        for (yob_k, dose_k), bval in beta_vals.items():
-            try:
-                beta_map[(sh, int(yob_k), int(dose_k))] = float(bval)
-            except Exception:
-                beta_map[(sh, yob_k, dose_k)] = float(bval)
+                if isinstance(params, tuple):
+                    slope5_params_map[(sh, yob_k, dose_k)] = params
+                else:
+                    slope5_params_map[(sh, yob_k, dose_k)] = (float(params), 0.0)
 
         # Note: Do NOT modify raw MR. Normalization is applied later at the hazard level.
         # Czech-specific MR correction removed; use raw MR moving forward
@@ -1816,18 +1784,58 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["hazard_raw"] = hazard_from_mr_improved(np.clip(mr_used, 0.0, 0.999))
         # Initialize adjusted hazard equal to raw
         df["hazard_adj"] = df["hazard_raw"]
-        # Apply slope2 de-trending at hazard level (single normalization only)
-        if isinstance(beta_vals, dict) and len(beta_vals) > 0:
+        
+        # Apply Slope5 normalization at hazard level: h̃_c(t) = e^{-β_c * t} * h_c(t)
+        # The slope β_c is fitted on baseline window data, then applied starting from enrollment (t=0)
+        # This removes the drift term, with no adjustment at enrollment time
+        if isinstance(slope5_params, dict) and len(slope5_params) > 0:
             try:
-                df["_beta_slope2"] = df.apply(lambda r: float(beta_vals.get((r["YearOfBirth"], r["Dose"]), 0.0)), axis=1)
-                # Origin-anchored (enrollment-based) adjustment: h_adj(t) = h(t) * exp(-beta * t)
-                scale = np.exp(-df["_beta_slope2"] * df["t"])
-                df["hazard_adj"] = df["hazard_adj"] * scale
+                def apply_slope5_norm(row):
+                    params = slope5_params.get((row["YearOfBirth"], row["Dose"]), (0.0, 0.0))
+                    # Handle both tuple and legacy single value formats
+                    if isinstance(params, tuple):
+                        beta_c, t_0 = params
+                    else:
+                        # Legacy format: single value (shouldn't happen with new code, but be safe)
+                        beta_c = float(params) if params != 0.0 else 0.0
+                        t_0 = 0.0
+                    # Slope5 formula: h̃_c(t) = e^{-β_c * t} * h_c(t) where t is time since enrollment
+                    # With t_0 = 0, this simplifies to e^{-β_c * t}
+                    return row["hazard_raw"] * np.exp(-beta_c * (row["t"] - t_0))
+                
+                df["hazard_adj"] = df.apply(apply_slope5_norm, axis=1)
                 # Numerical safety: floor at tiny epsilon
                 df["hazard_adj"] = np.clip(df["hazard_adj"], 0.0, None)
-                df.drop(columns=["_beta_slope2"], inplace=True)
-            except Exception:
-                pass
+                
+                # Store slope and scale_factor for backward compatibility with output schema
+                # slope represents β_c (the drift slope parameter, fitted on baseline window)
+                # scale_factor represents e^{-β_c * t} (the normalization factor, applied since enrollment)
+                def get_slope(r):
+                    params = slope5_params.get((r["YearOfBirth"], r["Dose"]), (0.0, 0.0))
+                    return float(params[0]) if isinstance(params, tuple) else float(params)
+                
+                def get_scale_factor(r):
+                    params = slope5_params.get((r["YearOfBirth"], r["Dose"]), (0.0, 0.0))
+                    if isinstance(params, tuple):
+                        beta_c, t_0 = params
+                        return np.exp(-beta_c * (r["t"] - t_0))
+                    else:
+                        # Legacy format
+                        beta_c = float(params) if params != 0.0 else 0.0
+                        return np.exp(beta_c * r["t"])
+                
+                df["slope"] = df.apply(get_slope, axis=1)
+                df["scale_factor"] = df.apply(get_scale_factor, axis=1)
+            except Exception as e:
+                dual_print(f"SLOPE5_ERROR,EnrollmentDate={sh},error={str(e)}")
+                # Fallback: no normalization
+                df["slope"] = 0.0
+                df["scale_factor"] = 1.0
+        else:
+            # No normalization parameters available
+            df["slope"] = 0.0
+            df["scale_factor"] = 1.0
+        
         # Backward compatibility: keep 'hazard' as the adjusted hazard used in KCOR
         df["hazard"] = df["hazard_adj"]
         # Extra bug diagnostics for the 1950/Dose2 cohort on two dates — include hazard and CH
@@ -1840,20 +1848,23 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Calculate cumulative hazard (mathematically exact, not approximation)
         df["CH"] = df.groupby(["YearOfBirth","Dose"]) ["hazard_eff"].cumsum()
 
-        # Debug: print CH_raw vs CH_adj for specific cohort on request (restricted to slope2 window)
+        # Debug: print CH_raw vs CH_adj for specific cohort on request
         try:
             if sh in ("2021_24", "2021-24"):
                 dbg_mask = (df["YearOfBirth"] == 1940) & (df["Dose"] == 1)
                 target = df[dbg_mask].sort_values("t")
                 if not target.empty:
-                    # Restrict to SIN window indices for this cohort when available
-                    ta_tb = None
                     target_win = target.copy()
                     hraw_eff = target_win["hazard_raw"].to_numpy()
                     hadj_eff = target_win["hazard_adj"].to_numpy()
                     ch_raw_dbg = np.cumsum(hraw_eff)
                     ch_adj_dbg = np.cumsum(hadj_eff)
-                    beta_dbg = beta_vals.get((1940, 1), np.nan) if isinstance(beta_vals, dict) else np.nan
+                    # Get Slope5 slope parameter for debugging
+                    if isinstance(slope5_params, dict):
+                        params_dbg = slope5_params.get((1940, 1), np.nan)
+                        b_c_dbg = params_dbg[0] if isinstance(params_dbg, tuple) else params_dbg
+                    else:
+                        b_c_dbg = np.nan
                     pass
                     # CSV header
                     # dual_print("SLOPE2_DEBUG,EnrollmentDate,YearOfBirth,Dose,Date,t,CH_raw,CH_adj,beta")
@@ -1903,7 +1914,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 by_dose_nc_all.append(tmp)
             # Populate debug_data (by_dose) for all doses
             for _, row in dose_data.iterrows():
-                slope_val = slopes.get((row["YearOfBirth"], dose), 0.0)
+                # Get slope from Slope5 parameters (stored in df["slope"] column)
+                slope_val = row.get("slope", 0.0) if "slope" in row else 0.0
                 debug_data.append({
                     "EnrollmentDate": sh,
                     "Date": row["DateDied"].date(),
@@ -2135,10 +2147,25 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         kcor_ns_val = np.nan
                     kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
                     
-                    # Fetch betas used for numerator and denominator cohorts for this age from the stored map
+                    # Fetch Slope5 normalization parameters (β_c, t_0) for numerator and denominator cohorts
                     key_age = int(age) if pd.notna(age) else age
-                    beta_num = beta_map.get((sheet_name, key_age, int(dose_num)), np.nan)
-                    beta_den = beta_map.get((sheet_name, key_age, int(dose_den)), np.nan)
+                    params_num = slope5_params_map.get((sheet_name, key_age, int(dose_num)), np.nan)
+                    params_den = slope5_params_map.get((sheet_name, key_age, int(dose_den)), np.nan)
+                    
+                    # Extract β_c values from tuples for logging
+                    if isinstance(params_num, tuple):
+                        beta_num = params_num[0]
+                    elif pd.notna(params_num):
+                        beta_num = float(params_num)
+                    else:
+                        beta_num = np.nan
+                    
+                    if isinstance(params_den, tuple):
+                        beta_den = params_den[0]
+                    elif pd.notna(params_den):
+                        beta_den = float(params_den)
+                    else:
+                        beta_den = np.nan
                     
                     if age == 0:
                         age_label = "ASMR (direct)"

@@ -232,24 +232,25 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
 
-#### 2. Slope normalization (slope4) — Primary Method (v4.8)
-- Fixed global windows in ISO year-week:
-  - W1 = [2022-24, 2022-36]
-  - W2 = [2023-24, 2023-36]
-  - W3 = [2024-12, 2024-20]
-- Window selection rule per enrollment sheet: use W1/W2 unless the enrollment date is after start(W1); in that case use W2/W3.
+#### 2. Slope normalization (slope5) — Primary Method (v4.9)
+- **Fixed baseline window**: A single global baseline window is fixed for all cohorts:
+  - Window: **2022-01 to 2024-12** (week 1 of 2022 through week 12 of 2024)
+  - Covers approximately January 2022 through March 2024
+  - Same window used for all cohorts, ages, and enrollment dates
 - Compute hazards using the improved discrete transform for start-of-week denominators:
   - \( h(t) = -\ln\!\left(\dfrac{1 - 1.5\,MR(t)}{1 - 0.5\,MR(t)}\right) \) with clipping.
-- For each (YoB, Dose):
-  - **Slope4 method**: Compute Wm1 and Wm2 as the geometric mean of all positive values in each selected window. The geometric mean provides better representation of central tendency for hazard values and naturally handles the multiplicative nature of hazard rates.
-  - Filter out zero/negative values, then compute geometric mean: \( \text{GM} = \exp(\text{mean}(\ln(\text{values}))) \).
-  - If no positive values exist, fall back to the arithmetic mean of all values.
-  - If either mean is ≤ 0 or the separation is invalid, set β = 0.
-  - Define β = (ln Wm2 − ln Wm1) / Δweeks, where Δweeks is the center-to-center distance (in weeks) between the two windows.
-- Apply origin-anchored de-trending at the hazard level only:
-  - h_adj(t) = h(t) · e^{−β · t}, with t = weeks from enrollment (t = 0 at enrollment).
-- KCOR is computed from cumulative adjusted hazards; baseline normalization at week 4.
+- **Slope5 independent flat-slope normalization**: For each cohort c (including dose 0):
+  - Fit OLS regression on baseline window: \( \log h_c(t) \approx \alpha_c + \beta_c t \)
+  - Extract drift slope \( \beta_c \) (cohort's own time-dependent drift)
+  - Normalization removes drift to achieve zero log-hazard slope over baseline window
+- Apply normalization at the hazard level:
+  - \( \tilde{h}_c(t) = e^{-\beta_c \cdot t} \cdot h_c(t) \) where \( t \) is time since enrollment
+  - Slope \( \beta_c \) is fitted on baseline window data, then applied starting from enrollment (t=0)
+  - No adjustment at enrollment: \( e^{-\beta_c \cdot 0} = 1 \)
+  - All cohorts (including dose 0) are normalized independently
+- KCOR is computed from cumulative normalized hazards; baseline normalization at week 4.
 - Raw MR is never modified; all slope normalization operates on hazards.
+- See `documentation/specs/KCOR_Slope_Normalization_ONLY.md` for complete mathematical specification.
 
 #### 4. KCOR Computation 
 **Four-Step Process:**
@@ -1066,7 +1067,30 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ## Version history
 
-### 🆕 Version 4.8 (2024-12-XX)
+### 🆕 Version 4.9 (2024-12-XX)
+
+#### Major Improvements
+- **Slope5 Method**: Replaced Slope4 with Slope5 independent flat-slope normalization (zero-drift method)
+- **Fixed Baseline Window**: Single global baseline window fixed at **2022-01 to 2024-12** (week 1 of 2022 through week 12 of 2024)
+- **Independent Normalization**: Each cohort normalized independently to achieve zero log-hazard slope over baseline window
+- **Mathematical Precision**: Fits \( \log h_c(t) \approx \alpha_c + \beta_c t \) on baseline window, removes drift slope \( \beta_c \)
+- **Reproducible**: Mathematically precise method per `KCOR_Slope_Normalization_ONLY.md` specification
+- **Simplified**: Fixed window ensures consistency and reproducibility across all analyses
+
+#### Slope5 Method Details
+- **Baseline Window**: Fixed at **2022-01 to 2024-12** (approximately January 2022 through March 2024)
+- **Normalization Formula**: \( \tilde{h}_c(t) = e^{-\beta_c \cdot t} \cdot h_c(t) \) where \( t \) is time since enrollment
+- **OLS Fit**: Fits \( \log h_c(t) \approx \alpha_c + \beta_c t \) on baseline window data for each cohort independently
+- **Slope Application**: Slope \( \beta_c \) is fitted on baseline window, then applied starting from enrollment (t=0)
+- **Benefits**: 
+  - Mathematically precise and reproducible
+  - Single global fixed window ensures comparability across all cohorts
+  - Independent normalization removes each cohort's own drift without forcing matching to other cohorts
+  - Zero adjustment at enrollment ensures natural starting point
+  - All cohorts (including dose 0) normalized independently to flat slope
+  - See `documentation/specs/KCOR_Slope_Normalization_ONLY.md` for complete specification
+
+### Version 4.8 (2024-12-XX)
 
 #### Major Improvements
 - **Slope4 Method**: Replaced Slope3 with Slope4 normalization method
@@ -1075,7 +1099,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Multiplicative Nature**: More appropriate for hazard rates which have multiplicative properties
 - **Simplified**: Removed SLOPE3_MIN_VALUES parameter (no longer needed)
 
-#### Slope4 Method Details
+#### Slope4 Method Details (superseded by Slope5 in v4.9)
 - **Change from Slope3**: Instead of taking the lowest 5 values and averaging them, Slope4 uses the geometric mean of all positive values in the window
 - **Geometric Mean Formula**: \( \text{GM} = \exp(\text{mean}(\ln(\text{values}))) \) for positive values
 - **Benefits**: 
@@ -1094,7 +1118,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **All Ages Calculation**: Added new "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
 - **Dual Age Aggregation**: Both ASMR (pooled with weights) and All Ages (direct aggregation) are now computed and displayed
 
-#### Slope3 Method Details (superseded by Slope4 in v4.8)
+#### Slope3 Method Details (superseded by Slope4 in v4.8, then by Slope5 in v4.9)
 - **Problem**: Averaging all values in slope windows can be sensitive to outliers and noise
 - **Solution**: Sort hazard values in each window, filter out zeros/negatives, take the lowest N values, then average
 - **Benefits**: More stable slope estimates, especially for cohorts with variable or noisy mortality patterns
