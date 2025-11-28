@@ -22,7 +22,7 @@ METHODOLOGY OVERVIEW:
    - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
    - Slope normalization uses the slope5 method: independent flat-slope normalization (zero-drift method).
      A single global baseline window is automatically selected, then each cohort is normalized independently
-     to achieve zero log-hazard slope over the baseline window using OLS regression. Each cohort's own
+     to achieve zero log-hazard slope over the baseline window using Quantile Regression (median). Each cohort's own
      drift slope β_c is estimated and removed, with normalization centered at pivot time t_0.
      Apply normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
@@ -105,15 +105,14 @@ NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons an
 # Uses a single global baseline window selected automatically, then fits each cohort
 # independently to achieve zero log-hazard slope over the baseline window using Quantile Regression.
 # Each cohort's own drift slope β_c is estimated and removed, with normalization centered at pivot time t_0.
-# Quantile regression estimates baseline slope (lower envelope) rather than mean, reducing sensitivity to peaks/waves.
+# Quantile regression estimates baseline slope (median) rather than mean, reducing sensitivity to outliers.
 
 # ---------------- Slope5 Configuration Parameters ----------------
 SLOPE5_BASELINE_WINDOW_LENGTH_MIN = 30  # Minimum window length in weeks
 SLOPE5_BASELINE_WINDOW_LENGTH_MAX = 60  # Maximum window length in weeks
 SLOPE5_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
 SLOPE5_MIN_DATA_POINTS = 5              # Minimum data points required for quantile regression fit
-SLOPE5_QUANTILE_TAU = 0.25              # Quantile level for quantile regression (0.25 = 25th percentile baseline)
-SLOPE5_QUANTILE_TAU = 0.25              # Quantile level for quantile regression (0.25 = 25th percentile baseline)
+SLOPE5_QUANTILE_TAU = 0.5               # Quantile level for quantile regression (0.5 = 50th percentile/median)
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -190,7 +189,7 @@ VERSION = "v4.9"                # KCOR version number
 #        - Removed SLOPE3_MIN_VALUES parameter (no longer needed)
 # v4.9 - Replaced Slope4 with Slope5 independent flat-slope normalization method
 #        - Single global baseline window automatically selected
-#        - Each cohort normalized independently to achieve zero log-hazard slope using OLS regression
+#        - Each cohort normalized independently to achieve zero log-hazard slope using Quantile Regression (median)
 #        - Each cohort's own drift slope β_c is estimated and removed, centered at pivot time t_0
 #        - Normalization formula: h_c^norm(t) = e^{a_c} * e^{b_c*t} * h_c(t)
 #        - Provides mathematically precise, reproducible method per KCOR_slope5_RMS.md specification
@@ -487,14 +486,14 @@ def compute_slope5_normalization(df, baseline_window, dual_print_fn=None):
     
     For each cohort c (including dose 0):
     - Fit log h_c(t) ≈ α_c + β_c t on baseline window using Quantile Regression
-    - Extract β_c (cohort's own drift slope, estimated as baseline/lower envelope)
+    - Extract β_c (cohort's own drift slope, estimated as median)
     - Set pivot time t_0 = 0 (enrollment time)
     - Return (β_c, t_0) tuple for normalization: h̃_c(t) = e^{-β_c * t} * h_c(t)
     
     This normalizes each cohort independently to achieve zero log-hazard slope
     over the baseline window (horizontal zero-drift method). Quantile regression
-    estimates the baseline slope (lower envelope) rather than mean, reducing
-    sensitivity to peaks/waves in the data.
+    estimates the baseline slope (median) rather than mean, reducing sensitivity
+    to outliers in the data.
     
     Args:
         df: DataFrame for one enrollment sheet with columns YearOfBirth, Dose, DateDied, MR, etc.
@@ -555,7 +554,7 @@ def compute_slope5_normalization(df, baseline_window, dual_print_fn=None):
                     except Exception:
                         continue
         
-        # Need at least SLOPE5_MIN_DATA_POINTS points for OLS fit
+        # Need at least SLOPE5_MIN_DATA_POINTS points for quantile regression fit
         sheet_name = df['sheet_name'].iloc[0] if 'sheet_name' in df.columns and len(df) > 0 else 'unknown'
         if len(log_h_values) < SLOPE5_MIN_DATA_POINTS:
             _print(f"SLOPE5_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(log_h_values)}")
@@ -565,8 +564,8 @@ def compute_slope5_normalization(df, baseline_window, dual_print_fn=None):
         # Fit Quantile Regression: log h_c(t) ≈ α_c + β_c t
         try:
             # Use statsmodels QuantReg for quantile regression: log_h = α + β*t
-            # Quantile regression estimates baseline slope (lower envelope) rather than mean
-            # This reduces sensitivity to peaks/waves in the data
+            # Quantile regression estimates baseline slope (median) rather than mean
+            # This reduces sensitivity to outliers in the data
             X = sm.add_constant(np.array(t_values))  # [1, t]
             y = np.array(log_h_values)
             
@@ -1462,7 +1461,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     # Slope5 configuration
-    dual_print(f"  SLOPE5_METHOD        = RMS_OLS  [Slope5: Independent flat-slope normalization (zero-drift method)]")
+    dual_print(f"  SLOPE5_METHOD        = QuantReg (tau={SLOPE5_QUANTILE_TAU})  [Slope5: Independent flat-slope normalization (zero-drift method)]")
+    dual_print(f"  SLOPE5_QUANTILE_TAU  = {SLOPE5_QUANTILE_TAU}  [Quantile level for quantile regression (0.5 = median)]")
     dual_print(f"  SLOPE5_BASELINE_WINDOW_LENGTH_MIN = {SLOPE5_BASELINE_WINDOW_LENGTH_MIN} weeks")
     dual_print(f"  SLOPE5_BASELINE_WINDOW_LENGTH_MAX = {SLOPE5_BASELINE_WINDOW_LENGTH_MAX} weeks")
     dual_print(f"  SLOPE5_BASELINE_START_YEAR = {SLOPE5_BASELINE_START_YEAR}")
