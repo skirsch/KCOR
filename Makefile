@@ -10,10 +10,34 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all help
+.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
+
+# Install dependencies using pip (works with or without virtual environment)
+install:
+	@echo "Installing dependencies from requirements.txt..."
+	@echo "Note: If using system Python, you may need sudo. For virtual environment, run: python3 -m venv venv && source venv/bin/activate first"
+	pip3 install --upgrade pip
+	pip3 install -r requirements.txt
+	@echo "Installation complete!"
+
+# Install dependencies using Debian packages (alternative to pip)
+install-debian:
+	@echo "Installing dependencies using Debian packages..."
+	@echo "This requires sudo privileges."
+	sudo apt-get update
+	sudo apt-get install -y \
+		python3-pandas \
+		python3-numpy \
+		python3-openpyxl \
+		python3-statsmodels \
+		python3-scipy \
+		python3-matplotlib \
+		python3-seaborn
+	@echo "Debian package installation complete!"
+	@echo "Note: Package versions may differ from requirements.txt. For exact versions, use 'make install' with pip."
 
 # Default: build everything (variable-cohort + analysis + validation + tests)
 all: KCOR_variable KCOR validation test
@@ -118,6 +142,7 @@ mortality_all:
 # Help target
 help:
 	@echo "Available targets:"
+	@echo "  install         - Create virtual environment and install dependencies from requirements.txt"
 	@echo "  KCOR_variable   - Build variable-cohort aggregation (code/)"
 	@echo "  ts              - Build time series aggregation (code/)"
 	@echo "  KCOR            - Run main KCOR pipeline (code/)"
@@ -152,4 +177,11 @@ help:
 	@echo "  MAX_FU_MONTHS=<n>     - Maximum follow-up months (default: 24)"
 	@echo "  QUIET_MIN=<month>    - Quiet period start month (default: 3)"
 	@echo "  QUIET_MAX=<month>     - Quiet period end month (default: 10)"
+	@echo ""
+	@echo "Setup:"
+	@echo "  make install        - Install dependencies using pip (works with or without venv)"
+	@echo "  make install-debian - Install dependencies using Debian packages (requires sudo)"
+	@echo ""
+	@echo "Note: All required packages are available in Debian repositories."
+	@echo "      For virtual environment: python3 -m venv venv && source venv/bin/activate"
 

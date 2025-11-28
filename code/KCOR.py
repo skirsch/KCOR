@@ -85,8 +85,9 @@ import logging
 from datetime import datetime, timedelta
 import tempfile
 import shutil
+import statsmodels.api as sm
 
-# Dependencies: pandas, numpy, openpyxl
+# Dependencies: pandas, numpy, openpyxl, statsmodels
 
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS)
@@ -102,14 +103,17 @@ NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons an
 
 # Slope5 method: Independent flat-slope normalization (zero-drift method)
 # Uses a single global baseline window selected automatically, then fits each cohort
-# independently to achieve zero log-hazard slope over the baseline window using OLS regression.
+# independently to achieve zero log-hazard slope over the baseline window using Quantile Regression.
 # Each cohort's own drift slope β_c is estimated and removed, with normalization centered at pivot time t_0.
+# Quantile regression estimates baseline slope (lower envelope) rather than mean, reducing sensitivity to peaks/waves.
 
 # ---------------- Slope5 Configuration Parameters ----------------
 SLOPE5_BASELINE_WINDOW_LENGTH_MIN = 30  # Minimum window length in weeks
 SLOPE5_BASELINE_WINDOW_LENGTH_MAX = 60  # Maximum window length in weeks
 SLOPE5_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
-SLOPE5_MIN_DATA_POINTS = 5              # Minimum data points required for OLS fit
+SLOPE5_MIN_DATA_POINTS = 5              # Minimum data points required for quantile regression fit
+SLOPE5_QUANTILE_TAU = 0.25              # Quantile level for quantile regression (0.25 = 25th percentile baseline)
+SLOPE5_QUANTILE_TAU = 0.25              # Quantile level for quantile regression (0.25 = 25th percentile baseline)
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -482,13 +486,15 @@ def compute_slope5_normalization(df, baseline_window, dual_print_fn=None):
     Compute Slope5 normalization parameters for each cohort independently.
     
     For each cohort c (including dose 0):
-    - Fit log h_c(t) ≈ α_c + β_c t on baseline window
-    - Extract β_c (cohort's own drift slope)
-    - Compute pivot time t_0 as mean of week indices in baseline window
-    - Return (β_c, t_0) tuple for normalization: h̃_c(t) = e^{-β_c (t - t_0)} * h_c(t)
+    - Fit log h_c(t) ≈ α_c + β_c t on baseline window using Quantile Regression
+    - Extract β_c (cohort's own drift slope, estimated as baseline/lower envelope)
+    - Set pivot time t_0 = 0 (enrollment time)
+    - Return (β_c, t_0) tuple for normalization: h̃_c(t) = e^{-β_c * t} * h_c(t)
     
     This normalizes each cohort independently to achieve zero log-hazard slope
-    over the baseline window (horizontal zero-drift method).
+    over the baseline window (horizontal zero-drift method). Quantile regression
+    estimates the baseline slope (lower envelope) rather than mean, reducing
+    sensitivity to peaks/waves in the data.
     
     Args:
         df: DataFrame for one enrollment sheet with columns YearOfBirth, Dose, DateDied, MR, etc.
@@ -556,13 +562,19 @@ def compute_slope5_normalization(df, baseline_window, dual_print_fn=None):
             normalization_params[(yob, dose)] = (0.0, 0.0)
             continue
         
-        # Fit OLS: log h_c(t) ≈ α_c + β_c t
+        # Fit Quantile Regression: log h_c(t) ≈ α_c + β_c t
         try:
-            # Use np.polyfit for linear regression: log_h = α + β*t
-            # Returns [β, α] (slope, intercept)
-            coeffs = np.polyfit(t_values, log_h_values, 1)
-            alpha_c = float(coeffs[1])  # intercept
-            beta_c = float(coeffs[0])   # slope (drift parameter)
+            # Use statsmodels QuantReg for quantile regression: log_h = α + β*t
+            # Quantile regression estimates baseline slope (lower envelope) rather than mean
+            # This reduces sensitivity to peaks/waves in the data
+            X = sm.add_constant(np.array(t_values))  # [1, t]
+            y = np.array(log_h_values)
+            
+            qr_model = sm.QuantReg(y, X)
+            qr_res = qr_model.fit(q=SLOPE5_QUANTILE_TAU)
+            
+            alpha_c = float(qr_res.params[0])  # intercept
+            beta_c = float(qr_res.params[1])   # slope (drift parameter)
             
             # Set pivot time t_0 = 0 (enrollment time) so adjustment starts at enrollment
             # This ensures no adjustment at enrollment (t=0), where t is time since enrollment

@@ -240,8 +240,9 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - Compute hazards using the improved discrete transform for start-of-week denominators:
   - \( h(t) = -\ln\!\left(\dfrac{1 - 1.5\,MR(t)}{1 - 0.5\,MR(t)}\right) \) with clipping.
 - **Slope5 independent flat-slope normalization**: For each cohort c (including dose 0):
-  - Fit OLS regression on baseline window: \( \log h_c(t) \approx \alpha_c + \beta_c t \)
-  - Extract drift slope \( \beta_c \) (cohort's own time-dependent drift)
+  - Fit Quantile Regression on baseline window: \( \log h_c(t) \approx \alpha_c + \beta_c t \)
+  - Extract drift slope \( \beta_c \) (cohort's own time-dependent drift, estimated as baseline/lower envelope)
+  - Quantile regression estimates baseline slope rather than mean, reducing sensitivity to peaks/waves
   - Normalization removes drift to achieve zero log-hazard slope over baseline window
 - Apply normalization at the hazard level:
   - \( \tilde{h}_c(t) = e^{-\beta_c \cdot t} \cdot h_c(t) \) where \( t \) is time since enrollment
@@ -1080,7 +1081,9 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 #### Slope5 Method Details
 - **Baseline Window**: Fixed at **2022-01 to 2024-12** (approximately January 2022 through March 2024)
 - **Normalization Formula**: \( \tilde{h}_c(t) = e^{-\beta_c \cdot t} \cdot h_c(t) \) where \( t \) is time since enrollment
-- **OLS Fit**: Fits \( \log h_c(t) \approx \alpha_c + \beta_c t \) on baseline window data for each cohort independently
+- **Quantile Regression Fit**: Fits \( \log h_c(t) \approx \alpha_c + \beta_c t \) on baseline window data for each cohort independently
+  - Uses quantile level τ = 0.25 (25th percentile) to estimate baseline slope (lower envelope)
+  - Reduces sensitivity to peaks/waves compared to OLS (mean-based) regression
 - **Slope Application**: Slope \( \beta_c \) is fitted on baseline window, then applied starting from enrollment (t=0)
 - **Benefits**: 
   - Mathematically precise and reproducible
