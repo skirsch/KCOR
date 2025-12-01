@@ -368,6 +368,9 @@ def get_dose_pairs(sheet_name):
     elif sheet_name == "2022_06":
         # 2022 sheet: includes dose 3 comparisons (add 3 vs 1)
         return [(1,0), (2,0), (2,1), (3,2), (3,1), (3,0)]
+    elif sheet_name in ("2022-26", "2022_26"):
+        # 2022 sheet: "5 months after booster" cohort - includes dose 3 comparisons like 2022_06
+        return [(1,0), (2,0), (2,1), (3,2), (3,1), (3,0)]
     elif sheet_name == "2022_47":
         # Late 2022 sheet: include all combinations from 2022_06 plus 4 vs lower doses
         return [
