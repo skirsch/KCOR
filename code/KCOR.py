@@ -587,7 +587,9 @@ def fit_quadratic_quantile(t, logh, tau=0.5):
         raise RuntimeError(f"Quadratic regression solver failed with status: {problem.status}")
     
     a, b, c = beta.value
-    return float(a), float(b), float(c), float(t_mean)
+    # Ensure c >= 0 (clamp to handle numerical precision issues)
+    c = max(0.0, float(c))
+    return float(a), float(b), c, float(t_mean)
 
 def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
     """

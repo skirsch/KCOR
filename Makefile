@@ -54,7 +54,10 @@ all: KCOR_variable KCOR validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
 KCOR: $(VENV_DIR)
-	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET) VENV_PYTHON=$(abspath $(VENV_PYTHON))
+	@echo "Checking for cvxpy in virtual environment..."
+	@$(VENV_PYTHON) -c "import cvxpy" 2>/dev/null || (echo "ERROR: cvxpy not found in virtual environment. Run 'make install' to install dependencies." && exit 1)
+	@echo "cvxpy is available."
+	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET) PYTHON=$(abspath $(VENV_PYTHON))
 
 # CMR aggregation only (delegates to code/Makefile target CMR)
 CMR:
