@@ -1,4 +1,4 @@
-# KCOR v4.8 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v5.0 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -234,26 +234,31 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - **Enrollment Date Filtering**: Data processing starts from the enrollment date derived from sheet names (e.g., "2021_24" = 2021, week 24, "2022_06" = 2022, week 6)
 - **Sex Aggregation**: Mortality data is aggregated across sexes for each (`YearOfBirth`, `Dose`, `DateDied`. `DCCI`) combination
 
-#### 2. Slope normalization (slope5) — Primary Method (v4.9)
-- **Fixed baseline window**: A single global baseline window is fixed for all cohorts:
+#### 2. Slope normalization (slope6) — Primary Method (v5.0)
+- **Fit window**: A single global baseline window is fixed for regression fitting:
   - Window: **2022-01 to 2024-12** (week 1 of 2022 through week 12 of 2024)
   - Covers approximately January 2022 through March 2024
   - Same window used for all cohorts, ages, and enrollment dates
+- **Application window**: Used to determine centerpoint for time centering:
+  - Start: enrollment_date (varies by cohort)
+  - End: **2024-16** (ISO week 16 of 2024, fixed rightmost endpoint)
+  - Centerpoint: \( t_{\text{mean}} = \text{mean}(t) \) over application window
+  - Time-centered: \( t_c = t - t_{\text{mean}} \) so \( t_c = 0 \) at centerpoint
 - Compute hazards using the improved discrete transform for start-of-week denominators:
   - \( h(t) = -\ln\!\left(\dfrac{1 - 1.5\,MR(t)}{1 - 0.5\,MR(t)}\right) \) with clipping.
-- **Slope5 independent flat-slope normalization**: For each cohort c (including dose 0):
-  - Fit Quantile Regression on baseline window: \( \log h_c(t) \approx \alpha_c + \beta_c t \)
-  - Extract drift slope \( \beta_c \) (cohort's own time-dependent drift, estimated as baseline/lower envelope)
-  - Quantile regression estimates baseline slope rather than mean, reducing sensitivity to peaks/waves
-  - Normalization removes drift to achieve zero log-hazard slope over baseline window
-- Apply normalization at the hazard level:
-  - \( \tilde{h}_c(t) = e^{-\beta_c \cdot t} \cdot h_c(t) \) where \( t \) is time since enrollment
-  - Slope \( \beta_c \) is fitted on baseline window data, then applied starting from enrollment (t=0)
-  - No adjustment at enrollment: \( e^{-\beta_c \cdot 0} = 1 \)
+- **Slope6 time-centered linear/quadratic normalization**: For each cohort c (including dose 0):
+  - Fit linear median quantile regression on fit window: \( \log h_c(t_c) \approx a_{\text{lin}} + b_{\text{lin}} \cdot t_c \)
+  - If \( b_{\text{lin}} \geq 0 \): Use linear mode
+    - Normalization: \( \tilde{h}_c(t) = h_c(t) \cdot e^{-b_{\text{lin}} \cdot t_c} \) where \( t_c = t - t_{\text{mean}} \)
+  - If \( b_{\text{lin}} < 0 \): Use quadratic mode with \( c \geq 0 \) constraint
+    - Fit quadratic median quantile regression: \( \log h_c(t_c) \approx a + b \cdot t_c + c \cdot t_c^2 \) with \( c \geq 0 \)
+    - Normalization: \( \tilde{h}_c(t) = h_c(t) \cdot e^{-(b \cdot t_c + c \cdot t_c^2)} \) where \( t_c = t - t_{\text{mean}} \)
+  - Quantile regression (median, \( \tau = 0.5 \)) estimates baseline slope rather than mean, reducing sensitivity to outliers
+  - Time centering ensures \( t_c = 0 \) at the centerpoint of the application window
   - All cohorts (including dose 0) are normalized independently
 - KCOR is computed from cumulative normalized hazards; baseline normalization at week 4.
 - Raw MR is never modified; all slope normalization operates on hazards.
-- See `documentation/specs/KCOR_Slope_Normalization_ONLY.md` for complete mathematical specification.
+- See `documentation/specs/kcor_slope6_spec.md` and `documentation/specs/kcor_slope6_helpers.md` for complete mathematical specification.
 
 #### 4. KCOR Computation 
 **Four-Step Process:**
@@ -1070,7 +1075,36 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ## Version history
 
-### 🆕 Version 4.9 (2024-12-XX)
+### 🆕 Version 5.0 (2025-12-02)
+
+#### Major Improvements
+- **Slope6 Method**: Replaced Slope5 with Slope6 time-centered linear/quadratic quantile regression normalization
+- **Time-Centered Approach**: Normalization uses time centering where \( t_c = t - t_{\text{mean}} \) and \( t_c = 0 \) at the centerpoint
+- **Dual Window System**: 
+  - **Fit window**: 2022-01 to 2024-12 (for regression fitting)
+  - **Application window**: enrollment_date to 2024-16 (for determining centerpoint)
+- **Linear/Quadratic Decision**: Automatically chooses linear mode if \( b_{\text{lin}} \geq 0 \), quadratic mode with \( c \geq 0 \) if \( b_{\text{lin}} < 0 \)
+- **Robust Handling**: Quadratic mode handles depletion-driven curvature while preserving frailty model constraints (\( c \geq 0 \))
+- **Mathematical Precision**: Per `kcor_slope6_spec.md` and `kcor_slope6_helpers.md` specification
+
+#### Slope6 Method Details
+- **Fit Window**: Fixed at **2022-01 to 2024-12** (approximately January 2022 through March 2024) for regression fitting
+- **Application Window**: enrollment_date to **2024-16** (ISO week 16 of 2024) for determining centerpoint
+- **Time Centering**: \( t_{\text{mean}} = \text{mean}(t) \) over application window, then \( t_c = t - t_{\text{mean}} \)
+- **Linear Mode** (when \( b_{\text{lin}} \geq 0 \)):
+  - Fit: \( \log h_c(t_c) \approx a_{\text{lin}} + b_{\text{lin}} \cdot t_c \) using median quantile regression
+  - Normalization: \( \tilde{h}_c(t) = h_c(t) \cdot e^{-b_{\text{lin}} \cdot t_c} \)
+- **Quadratic Mode** (when \( b_{\text{lin}} < 0 \)):
+  - Fit: \( \log h_c(t_c) \approx a + b \cdot t_c + c \cdot t_c^2 \) with constraint \( c \geq 0 \)
+  - Normalization: \( \tilde{h}_c(t) = h_c(t) \cdot e^{-(b \cdot t_c + c \cdot t_c^2)} \)
+- **Benefits**: 
+  - Time-centered approach ensures \( t_c = 0 \) at centerpoint of application window
+  - Handles negative-slope cohorts (depletion-driven curvature) with quadratic mode
+  - Preserves frailty model constraints (\( c \geq 0 \)) in quadratic mode
+  - All cohorts (including dose 0) normalized independently
+  - See `documentation/specs/kcor_slope6_spec.md` and `documentation/specs/kcor_slope6_helpers.md` for complete specification
+
+### Version 4.9 (2024-12-XX)
 
 #### Major Improvements
 - **Slope5 Method**: Replaced Slope4 with Slope5 independent flat-slope normalization (zero-drift method)
@@ -1104,7 +1138,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **Multiplicative Nature**: More appropriate for hazard rates which have multiplicative properties
 - **Simplified**: Removed SLOPE3_MIN_VALUES parameter (no longer needed)
 
-#### Slope4 Method Details (superseded by Slope5 in v4.9)
+#### Slope4 Method Details (superseded by Slope5 in v4.9, then by Slope6 in v5.0)
 - **Change from Slope3**: Instead of taking the lowest 5 values and averaging them, Slope4 uses the geometric mean of all positive values in the window
 - **Geometric Mean Formula**: \( \text{GM} = \exp(\text{mean}(\ln(\text{values}))) \) for positive values
 - **Benefits**: 
@@ -1123,7 +1157,7 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 - **All Ages Calculation**: Added new "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
 - **Dual Age Aggregation**: Both ASMR (pooled with weights) and All Ages (direct aggregation) are now computed and displayed
 
-#### Slope3 Method Details (superseded by Slope4 in v4.8, then by Slope5 in v4.9)
+#### Slope3 Method Details (superseded by Slope4 in v4.8, then by Slope5 in v4.9, then by Slope6 in v5.0)
 - **Problem**: Averaging all values in slope windows can be sensitive to outliers and noise
 - **Solution**: Sort hazard values in each window, filter out zeros/negatives, take the lowest N values, then average
 - **Benefits**: More stable slope estimates, especially for cohorts with variable or noisy mortality patterns
