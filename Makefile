@@ -15,13 +15,23 @@ VALIDATION_ASMR_DIR := validation/ASMR_analysis
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
 
-# Install dependencies using pip (works with or without virtual environment)
-install:
-	@echo "Installing dependencies from requirements.txt..."
-	@echo "Note: If using system Python, you may need sudo. For virtual environment, run: python3 -m venv venv && source venv/bin/activate first"
-	pip3 install --upgrade pip
-	pip3 install -r requirements.txt
+# Virtual environment path
+VENV_DIR := .venv
+VENV_PYTHON := $(VENV_DIR)/bin/python3
+VENV_PIP := $(VENV_DIR)/bin/pip3
+
+# Install dependencies using pip in virtual environment
+install: $(VENV_DIR)
+	@echo "Installing dependencies from requirements.txt in virtual environment..."
+	$(VENV_PIP) install --upgrade pip
+	$(VENV_PIP) install -r requirements.txt
 	@echo "Installation complete!"
+
+# Create virtual environment if it doesn't exist
+$(VENV_DIR):
+	@echo "Creating virtual environment in $(VENV_DIR)..."
+	python3 -m venv $(VENV_DIR)
+	@echo "Virtual environment created!"
 
 # Install dependencies using Debian packages (alternative to pip)
 install-debian:
@@ -43,8 +53,8 @@ install-debian:
 all: KCOR_variable KCOR validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
-KCOR:
-	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET)
+KCOR: $(VENV_DIR)
+	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET) VENV_PYTHON=$(abspath $(VENV_PYTHON))
 
 # CMR aggregation only (delegates to code/Makefile target CMR)
 CMR:
@@ -108,15 +118,15 @@ ASMR:
 	$(MAKE) -C $(VALIDATION_ASMR_DIR) run DATASET=$(DATASET)
 
 # ICD-10 cause of death analysis (Czech2 dataset)
-icd10:
+icd10: $(VENV_DIR)
 	@echo "Running ICD-10 cause of death analysis..."
-	cd $(CODE_DIR) && python3 icd_analysis.py ../data/Czech2/data.csv ../data/Czech2/
+	cd $(CODE_DIR) && $(abspath $(VENV_PYTHON)) icd_analysis.py ../data/Czech2/data.csv ../data/Czech2/
 	@echo "ICD-10 analysis complete!"
 
 # ICD-10 population structural shift analysis (Czech2 dataset)
-icd_population_shift:
+icd_population_shift: $(VENV_DIR)
 	@echo "Running ICD-10 population structural shift analysis..."
-	cd $(CODE_DIR) && python3 icd_population_shift.py ../data/Czech2/data.csv ../data/Czech2/
+	cd $(CODE_DIR) && $(abspath $(VENV_PYTHON)) icd_population_shift.py ../data/Czech2/data.csv ../data/Czech2/
 	@echo "ICD-10 population shift analysis complete!"
 
 # KCOR Mortality Analysis Pipeline (Czech2 dataset)
@@ -142,7 +152,7 @@ mortality_all:
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  install         - Create virtual environment and install dependencies from requirements.txt"
+	@echo "  install         - Create .venv virtual environment and install dependencies from requirements.txt"
 	@echo "  KCOR_variable   - Build variable-cohort aggregation (code/)"
 	@echo "  ts              - Build time series aggregation (code/)"
 	@echo "  KCOR            - Run main KCOR pipeline (code/)"
@@ -179,9 +189,10 @@ help:
 	@echo "  QUIET_MAX=<month>     - Quiet period end month (default: 10)"
 	@echo ""
 	@echo "Setup:"
-	@echo "  make install        - Install dependencies using pip (works with or without venv)"
+	@echo "  make install        - Create .venv virtual environment and install dependencies from requirements.txt"
 	@echo "  make install-debian - Install dependencies using Debian packages (requires sudo)"
 	@echo ""
-	@echo "Note: All required packages are available in Debian repositories."
-	@echo "      For virtual environment: python3 -m venv venv && source venv/bin/activate"
+	@echo "Note: KCOR v5.0+ requires cvxpy which is best installed in a virtual environment."
+	@echo "      The 'make install' target automatically creates and uses .venv."
+	@echo "      All Python commands run through the Makefile use the virtual environment automatically."
 

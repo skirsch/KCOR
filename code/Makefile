@@ -2,6 +2,8 @@
 
 # Configuration - Dataset namespace (inherited from root Makefile)
 DATASET ?= Czech
+# Python executable (defaults to system python3, but can be overridden with venv path)
+PYTHON ?= python3
 # Paths for inputs
 RECORDS_CSV      = ../data/$(DATASET)/records.csv
 # Optional KRF input produced by dataset converters
@@ -25,8 +27,8 @@ KCOR: $(KCOR_OUTPUT)
 
 # KCOR analysis depends on CMR output and KCOR.py script
 $(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py
-	@echo "Running KCORv4 analysis..."
-	python3 KCOR.py $(CMR_OUTPUT) $(KCOR_OUTPUT) "Primary Analysis" KCOR_summary.log
+	@echo "Running KCORv5 analysis..."
+	$(PYTHON) KCOR.py $(CMR_OUTPUT) $(KCOR_OUTPUT) "Primary Analysis" KCOR_summary.log
 	@echo "KCOR analysis complete!"
 
 # CMR aggregation depends on input data and KCOR_CMR.py script
@@ -35,7 +37,7 @@ TMP_CMR := /tmp/KCOR_CMR.$(DATASET).xlsx
 $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@echo "Running KCOR CMR aggregation... (writing to $(TMP_CMR) then moving)"
 	@rm -f $(TMP_CMR)
-	python3 KCOR_CMR.py $(INPUT_DATA) $(TMP_CMR)
+	$(PYTHON) KCOR_CMR.py $(INPUT_DATA) $(TMP_CMR)
 	@echo "Wrote temporary: $(TMP_CMR)"
 	@ls -lh $(TMP_CMR)
 	@# Guard: do not move a zero-byte temp file
@@ -50,7 +52,7 @@ $(RECORDS_CSV): | ../data/$(DATASET)
 	@set -e; \
 	if [ -f "$(RECORDS_KRF)" ]; then \
 	  echo "Adapting KRF CSV to Czech-like input..."; \
-	  python3 krf_adapter.py $(RECORDS_KRF) $(RECORDS_CSV); \
+	  $(PYTHON) krf_adapter.py $(RECORDS_KRF) $(RECORDS_CSV); \
 	  echo "Wrote: $(RECORDS_CSV) from $(RECORDS_KRF)"; \
 	elif [ -f "$(RAW_CSV)" ] || [ -f "$(RAW_CSV_GZ)" ]; then \
 	  if [ -f "$(RAW_CSV_GZ)" ]; then \
@@ -73,7 +75,7 @@ $(RECORDS_KRF):
 .PHONY: KCOR_from_krf
 CMR_from_krf: | ../data/$(DATASET)
 	@echo "Adapting KRF CSV to Czech-like input..."
-	@python3 krf_adapter.py ../data/$(DATASET)/krf.csv ../data/$(DATASET)/records.csv
+	@$(PYTHON) krf_adapter.py ../data/$(DATASET)/krf.csv ../data/$(DATASET)/records.csv
 	@echo "Running KCOR CMR aggregation on adapted input..."
 	$(MAKE) CMR DATASET=$(DATASET)
 
@@ -85,7 +87,7 @@ KCOR_variable: $(VARIABLE_OUTPUT)
 
 $(VARIABLE_OUTPUT): $(INPUT_DATA) KCOR_variable.py | ../data/$(DATASET)
 	@echo "Running KCOR variable-cohort aggregation..."
-	python3 KCOR_variable.py $(INPUT_DATA) $(VARIABLE_OUTPUT)
+	$(PYTHON) KCOR_variable.py $(INPUT_DATA) $(VARIABLE_OUTPUT)
 	@echo "KCOR_variable aggregation complete!"
 
 # Time series aggregation (single-sheet; weeks after each dose independently)
@@ -95,29 +97,29 @@ KCOR_ts: $(TS_OUTPUT)
 
 $(TS_OUTPUT): $(INPUT_DATA) KCOR_ts.py | ../data/$(DATASET)
 	@echo "Running KCOR time series aggregation..."
-	python3 KCOR_ts.py $(INPUT_DATA) $(TS_OUTPUT)
+	$(PYTHON) KCOR_ts.py $(INPUT_DATA) $(TS_OUTPUT)
 	@echo "KCOR time series aggregation complete!"
 
 # Ensure output directory exists (real directory target)
 ../data/$(DATASET):
-	@python3 -c "import os; os.makedirs('$@', exist_ok=True)"
+	@$(PYTHON) -c "import os; os.makedirs('$@', exist_ok=True)"
 
 # Raw CSV inflation handled inside the unified records.csv rule above
 
 # Clean up all output files for current country
 clean:
 	@echo "Cleaning up output files for $(DATASET)..."
-	@python3 -c "import os; [os.remove(f) for f in ['$(CMR_OUTPUT)', '$(KCOR_OUTPUT)'] if os.path.exists(f)]"
+	@$(PYTHON) -c "import os; [os.remove(f) for f in ['$(CMR_OUTPUT)', '$(KCOR_OUTPUT)'] if os.path.exists(f)]"
 	@if [ "$(DATASET)" = "Czech2" ]; then \
 		echo "Cleaning up mortality analysis outputs..."; \
-		python3 -c "import shutil, os; shutil.rmtree('$(MORTALITY_OUTPUT_DIR)') if os.path.exists('$(MORTALITY_OUTPUT_DIR)') else None"; \
+		$(PYTHON) -c "import shutil, os; shutil.rmtree('$(MORTALITY_OUTPUT_DIR)') if os.path.exists('$(MORTALITY_OUTPUT_DIR)') else None"; \
 	fi
 	@echo "Cleanup complete!"
 
 # Clean up all output files for all countries
 clean-all:
 	@echo "Cleaning up all output files..."
-	@python3 -c "import shutil, os; shutil.rmtree('../data') if os.path.exists('../data') else None"
+	@$(PYTHON) -c "import shutil, os; shutil.rmtree('../data') if os.path.exists('../data') else None"
 	@echo "Cleanup complete!"
 
 # Help target
@@ -164,9 +166,9 @@ sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "  SA_COHORTS           = $(SA_COHORTS)"
 	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
 	@echo "Running KCOR sensitivity analysis ..."
-	@python3 -c "import os; os.makedirs('../test/sensitivity/out', exist_ok=True)"
+	@$(PYTHON) -c "import os; os.makedirs('../test/sensitivity/out', exist_ok=True)"
 	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
-		python3 KCOR.py $(CMR_OUTPUT) ../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
+		$(PYTHON) KCOR.py $(CMR_OUTPUT) ../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
 	@echo "Sensitivity run complete! Output: test/sensitivity/out/KCOR_SA.xlsx"
 
 # KCOR Mortality Analysis Pipeline
@@ -193,7 +195,7 @@ mortality: kcor_mortality.py | ../data/Czech2
 	echo "  Enrollment: $$ENROLL_YEAR_VAL-$$ENROLL_MONTH_VAL"; \
 	echo "  Follow-up: $$MAX_FU_VAL months"; \
 	echo "  Quiet period: [$$QUIET_MIN_VAL, $$QUIET_MAX_VAL]"; \
-	python3 kcor_mortality.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR) \
+	$(PYTHON) kcor_mortality.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR) \
 		--enroll-year $$ENROLL_YEAR_VAL \
 		--enroll-month $$ENROLL_MONTH_VAL \
 		--max-fu-months $$MAX_FU_VAL \
@@ -206,11 +208,11 @@ mortality_sensitivity: kcor_mortality_sensitivity.py | ../data/Czech2
 	@echo "Running KCOR mortality sensitivity analysis..."
 	@if [ -f "$(MORTALITY_CONFIG)" ]; then \
 		echo "  Using config: $(MORTALITY_CONFIG)"; \
-		python3 kcor_mortality_sensitivity.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR) \
+		$(PYTHON) kcor_mortality_sensitivity.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR) \
 			--config-file $(MORTALITY_CONFIG); \
 	else \
 		echo "  Using default configuration"; \
-		python3 kcor_mortality_sensitivity.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR); \
+		$(PYTHON) kcor_mortality_sensitivity.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR); \
 	fi
 	@echo "KCOR mortality sensitivity analysis complete! Output: $(MORTALITY_OUTPUT_DIR)/sensitivity"
 
@@ -223,7 +225,7 @@ mortality_age: kcor_mortality_age_stratified.py | ../data/Czech2
 	QUIET_MIN_VAL=$${QUIET_MIN:-3}; \
 	QUIET_MAX_VAL=$${QUIET_MAX:-10}; \
 	echo "  Enrollment: $$ENROLL_YEAR_VAL-$$ENROLL_MONTH_VAL"; \
-	python3 kcor_mortality_age_stratified.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR) \
+	$(PYTHON) kcor_mortality_age_stratified.py $(MORTALITY_INPUT_CSV) $(MORTALITY_OUTPUT_DIR) \
 		--enroll-year $$ENROLL_YEAR_VAL \
 		--enroll-month $$ENROLL_MONTH_VAL \
 		--max-fu-months $$MAX_FU_VAL \
@@ -235,7 +237,7 @@ mortality_age: kcor_mortality_age_stratified.py | ../data/Czech2
 mortality_stats: kcor_mortality_stats.py | ../data/Czech2
 	@echo "Adding statistical inference to KCOR mortality results..."
 	@if [ -f "$(MORTALITY_OUTPUT_DIR)/raw/kcor_hazard_adjusted.csv" ]; then \
-		python3 kcor_mortality_stats.py \
+		$(PYTHON) kcor_mortality_stats.py \
 			$(MORTALITY_OUTPUT_DIR)/raw/kcor_hazard_adjusted.csv \
 			$(MORTALITY_OUTPUT_DIR)/results/kcor_ratios_with_ci.csv \
 			--alpha 0.05; \
@@ -251,7 +253,7 @@ mortality_plots: kcor_mortality_plots.py | ../data/Czech2
 	@QUIET_MIN_VAL=$${QUIET_MIN:-3}; \
 	QUIET_MAX_VAL=$${QUIET_MAX:-10}; \
 	if [ -f "$(MORTALITY_OUTPUT_DIR)/raw/kcor_hazard_adjusted.csv" ]; then \
-		python3 kcor_mortality_plots.py \
+		$(PYTHON) kcor_mortality_plots.py \
 			$(MORTALITY_OUTPUT_DIR)/raw/kcor_hazard_adjusted.csv \
 			$(MORTALITY_OUTPUT_DIR)/plots \
 			--slopes-csv $(MORTALITY_OUTPUT_DIR)/raw/kcor_slopes.csv \
@@ -306,4 +308,4 @@ mortality_all: kcor_mortality.py kcor_mortality_sensitivity.py kcor_mortality_ag
 
 # Ensure Czech2 data directory exists
 ../data/Czech2:
-	@python3 -c "import os; os.makedirs('$@', exist_ok=True)"
+	@$(PYTHON) -c "import os; os.makedirs('$@', exist_ok=True)"
