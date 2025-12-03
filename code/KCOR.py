@@ -121,7 +121,7 @@ SLOPE6_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
 SLOPE6_MIN_DATA_POINTS = 5              # Minimum data points required for quantile regression fit
 SLOPE6_QUANTILE_TAU = 0.5               # Quantile level for quantile regression (0.5 = 50th percentile/median)
 SLOPE6_APPLICATION_END_ISO = "2024-16"  # Rightmost endpoint for determining centerpoint (ISO week format)
-ENABLE_QUADRATIC_SLOPE_FIT = 0          # When 0, disable quadratic mode and force linear fit only (temporary flag)
+ENABLE_QUADRATIC_SLOPE_FIT = 1          # When 0, disable quadratic mode and force linear fit only (temporary flag)
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -536,9 +536,12 @@ def fit_linear_median(t, logh, tau=0.5):
     
     return a_lin, b_lin, float(t_mean)
 
-def fit_quadratic_quantile(t, logh, tau=0.5):
+def fit_quadratic_quantile(t, logh, tau=0.5, fixed_b=None):
     """
-    Fit logh ≈ a + b * t_c + c * t_c^2 with c >= 0 using quantile regression via cvxpy.
+    Fit logh ≈ a + b * t_c + c * t_c^2 using quantile regression via cvxpy.
+    
+    If fixed_b is provided, b is constrained to that value. Otherwise, b is free.
+    No constraint on c (can be positive or negative).
     
     Parameters
     ----------
@@ -548,6 +551,8 @@ def fit_quadratic_quantile(t, logh, tau=0.5):
         log(hazard) values aligned with t.
     tau : float
         Quantile level, default 0.5 (median).
+    fixed_b : float, optional
+        If provided, constrain b to this fixed value from linear fit.
     
     Returns
     -------
@@ -577,8 +582,11 @@ def fit_quadratic_quantile(t, logh, tau=0.5):
     # Quantile check loss
     loss = cp.sum(cp.maximum(tau * residuals, (tau - 1) * residuals))
     
-    # Constraint: c >= 0  (beta[2] is c)
-    constraints = [beta[2] >= 0]
+    # Constraints
+    constraints = []
+    if fixed_b is not None:
+        # Constrain b to the fixed value from linear fit (beta[1] is b)
+        constraints.append(beta[1] == float(fixed_b))
     
     # Solve
     problem = cp.Problem(cp.Minimize(loss), constraints)
@@ -588,9 +596,7 @@ def fit_quadratic_quantile(t, logh, tau=0.5):
         raise RuntimeError(f"Quadratic regression solver failed with status: {problem.status}")
     
     a, b, c = beta.value
-    # Ensure c >= 0 (clamp to handle numerical precision issues)
-    c = max(0.0, float(c))
-    return float(a), float(b), c, float(t_mean)
+    return float(a), float(b), float(c), float(t_mean)
 
 def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
     """
@@ -754,7 +760,8 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 else:
                     _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
             else:
-                # Quadratic mode: b_lin < 0 and ENABLE_QUADRATIC_SLOPE_FIT != 0
+                # Try quadratic mode: b_lin < 0 and ENABLE_QUADRATIC_SLOPE_FIT != 0
+                # Constrain b to b_lin from linear fit, then check if c > 0
                 if not HAS_CVXPY:
                     _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=quadratic_needed_but_cvxpy_unavailable,b_lin={b_lin:.6e}")
                     # Fallback to linear mode even though b_lin < 0
@@ -769,25 +776,64 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     normalization_params[(yob, dose)] = params
                     continue
                 
-                # Fit quadratic regression
-                a, b, c, t_mean_quad = fit_quadratic_quantile(np.array(t_values), np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU)
-                
-                # Use t_mean from application window
-                t_c_fit = np.array(t_values) - t_mean
-                predicted = a + b * t_c_fit + c * t_c_fit**2
-                residuals = np.array(log_h_values) - predicted
-                rms_error = np.sqrt(np.mean(residuals**2))
-                
-                params = {
-                    "mode": "quadratic",
-                    "a": a,
-                    "b": b,
-                    "c": c,
-                    "t_mean": t_mean,
-                    "tau": SLOPE6_QUANTILE_TAU
-                }
-                normalization_params[(yob, dose)] = params
-                _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=quadratic,a={a:.6e},b={b:.6e},c={c:.6e},t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                # Fit quadratic regression with b constrained to b_lin
+                try:
+                    a, b, c, t_mean_quad = fit_quadratic_quantile(np.array(t_values), np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU, fixed_b=b_lin)
+                    
+                    # Check if c > 0; if not, fall back to linear fit
+                    if c > 0:
+                        # Use quadratic mode with b=b_lin and c
+                        # Use t_mean from application window
+                        t_c_fit = np.array(t_values) - t_mean
+                        predicted = a + b * t_c_fit + c * t_c_fit**2
+                        residuals = np.array(log_h_values) - predicted
+                        rms_error = np.sqrt(np.mean(residuals**2))
+                        
+                        params = {
+                            "mode": "quadratic",
+                            "a": a,
+                            "b": b,  # Should equal b_lin due to constraint
+                            "c": c,
+                            "t_mean": t_mean,
+                            "tau": SLOPE6_QUANTILE_TAU
+                        }
+                        normalization_params[(yob, dose)] = params
+                        _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=quadratic,a={a:.6e},b={b:.6e},c={c:.6e},t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                    else:
+                        # c <= 0, fall back to linear mode
+                        t_c_fit = np.array(t_values) - t_mean
+                        predicted = a_lin + b_lin * t_c_fit
+                        residuals = np.array(log_h_values) - predicted
+                        rms_error = np.sqrt(np.mean(residuals**2))
+                        
+                        params = {
+                            "mode": "linear",
+                            "a": a_lin,
+                            "b": b_lin,
+                            "c": 0.0,
+                            "t_mean": t_mean,
+                            "tau": SLOPE6_QUANTILE_TAU
+                        }
+                        normalization_params[(yob, dose)] = params
+                        _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(c_quadratic={c:.6e}<=0),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                except Exception as quad_error:
+                    # If quadratic fit fails, fall back to linear
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=quadratic_fit_failed,error={str(quad_error)},falling_back_to_linear")
+                    t_c_fit = np.array(t_values) - t_mean
+                    predicted = a_lin + b_lin * t_c_fit
+                    residuals = np.array(log_h_values) - predicted
+                    rms_error = np.sqrt(np.mean(residuals**2))
+                    
+                    params = {
+                        "mode": "linear",
+                        "a": a_lin,
+                        "b": b_lin,
+                        "c": 0.0,
+                        "t_mean": t_mean,
+                        "tau": SLOPE6_QUANTILE_TAU
+                    }
+                    normalization_params[(yob, dose)] = params
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
         except Exception as e:
             _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(e)}")
             normalization_params[(yob, dose)] = {
@@ -2460,20 +2506,32 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     params_num = slope6_params_map.get((sheet_name, key_age, int(dose_num)), {"b": np.nan})
                     params_den = slope6_params_map.get((sheet_name, key_age, int(dose_den)), {"b": np.nan})
                     
-                    # Extract b values from dict for logging
+                    # Extract b and c values from dict for logging
                     if isinstance(params_num, dict):
                         beta_num = params_num.get("b", np.nan)
+                        c_num = params_num.get("c", 0.0)
+                        mode_num = params_num.get("mode", "none")
                     elif pd.notna(params_num):
                         beta_num = float(params_num)
+                        c_num = 0.0
+                        mode_num = "linear"
                     else:
                         beta_num = np.nan
+                        c_num = 0.0
+                        mode_num = "none"
                     
                     if isinstance(params_den, dict):
                         beta_den = params_den.get("b", np.nan)
+                        c_den = params_den.get("c", 0.0)
+                        mode_den = params_den.get("mode", "none")
                     elif pd.notna(params_den):
                         beta_den = float(params_den)
+                        c_den = 0.0
+                        mode_den = "linear"
                     else:
                         beta_den = np.nan
+                        c_den = 0.0
+                        mode_den = "none"
                     
                     if age == 0:
                         age_label = "ASMR (direct)"
@@ -2487,7 +2545,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     if age == 0 or age == -2:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  (beta_num={beta_num:.6f}, beta_den={beta_den:.6f})")
+                        # Build parameter string with c values if non-zero
+                        param_parts = [f"beta_num={beta_num:.6f}", f"beta_den={beta_den:.6f}"]
+                        if (isinstance(c_num, (int, float)) and np.isfinite(c_num) and abs(c_num) > EPS) or \
+                           (isinstance(c_den, (int, float)) and np.isfinite(c_den) and abs(c_den) > EPS):
+                            param_parts.append(f"c_num={c_num:.6f}")
+                            param_parts.append(f"c_den={c_den:.6f}")
+                        param_str = ", ".join(param_parts)
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  ({param_str})")
 
         # --- Print M/P KCOR summaries by decades when available ---
         try:
