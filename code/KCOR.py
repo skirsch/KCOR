@@ -20,10 +20,12 @@ METHODOLOGY OVERVIEW:
 
 3. NORMALIZATION AND HAZARDS:
    - Legacy anchor-based slope removal and Czech-specific adjustments have been removed.
-   - Slope normalization uses the slope6 method: time-centered linear/quadratic quantile regression normalization.
-     Fit window (2022-01 to 2024-12) is used for regression fitting. Application window (enrollment_date to 2024-16)
+   - Slope normalization uses the slope6/slope7 method: time-centered linear quantile regression normalization (slope6) 
+     for b_lin >= 0, or depletion-mode normalization (slope7) for b_lin < 0.
+     For slope6: Fit window (2022-01 to 2024-12) is used for regression fitting. Application window (enrollment_date to 2024-16)
      determines the centerpoint. Time is centered: t_mean = mean(t) over application window, t_c = t - t_mean.
-     Linear median regression is used if b_lin >= 0; quadratic regression with c >= 0 is used if b_lin < 0.
+     Linear median regression is used if b_lin >= 0.
+     For slope7: Fit window = deployment window (enrollment_date to slope7_end_ISO). Time axis s = t (weeks since enrollment, no centering).
      Apply normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
@@ -71,8 +73,9 @@ DEPENDENCIES:
     pip install pandas numpy openpyxl
 
 This approach provides robust, interpretable estimates of relative mortality risk
-between vaccination groups while accounting for underlying time trends. Version 5.0
-uses slope6 (time-centered linear/quadratic quantile regression normalization) and direct hazard computation from raw MR.
+between vaccination groups while accounting for underlying time trends. Version 5.1
+uses slope6/slope7 (time-centered linear quantile regression normalization for b >= 0, 
+depletion-mode normalization for b < 0) and direct hazard computation from raw MR.
 """
 import sys
 import math
@@ -86,6 +89,7 @@ from datetime import datetime, timedelta
 import tempfile
 import shutil
 import statsmodels.api as sm
+from scipy.optimize import least_squares
 
 try:
     import cvxpy as cp
@@ -107,11 +111,11 @@ DYNAMIC_HVE_SKIP_WEEKS = 2
 MR_DISPLAY_SCALE = 52 * 1e5     # Display-only scaling of MR columns (annualized per 100,000)
 NEGATIVE_CONTROL_MODE = 0      # When 1, run negative-control age comparisons and skip normal output
 
-# Slope6 method: Time-centered linear/quadratic quantile regression normalization
+# Slope6 method: Time-centered linear quantile regression normalization
 # Uses a single global baseline window for fitting (2022-01 to 2024-12), then applies normalization
 # using time-centered approach where t=0 is at the centerpoint of the application window
 # (enrollment_date to 2024-16). Fits linear median regression first; if slope is negative,
-# falls back to quadratic regression with c >= 0 constraint to handle depletion-driven curvature.
+# falls back to slope7 depletion-mode normalization to handle depletion-driven curvature.
 # Quantile regression estimates baseline slope (median) rather than mean, reducing sensitivity to outliers.
 
 # ---------------- Slope6 Configuration Parameters ----------------
@@ -121,7 +125,8 @@ SLOPE6_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
 SLOPE6_MIN_DATA_POINTS = 5              # Minimum data points required for quantile regression fit
 SLOPE6_QUANTILE_TAU = 0.5               # Quantile level for quantile regression (0.5 = 50th percentile/median)
 SLOPE6_APPLICATION_END_ISO = "2024-16"  # Rightmost endpoint for determining centerpoint (ISO week format)
-ENABLE_QUADRATIC_SLOPE_FIT = 1          # When 0, disable quadratic mode and force linear fit only (temporary flag)
+SLOPE7_END_ISO = "2024-16"              # Final week used for slope7 depletion-mode normalization (ISO week format)
+ENABLE_NEGATIVE_SLOPE_FIT = 1          # When 0, disable slope7 depletion mode and force linear fit only (temporary flag)
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -143,7 +148,7 @@ YEAR_RANGE = (1920, 2009)       # Process age groups from start to end year (inc
 ENROLLMENT_DATES = None  # List of enrollment dates (sheet names) to process. If None, will be auto-derived from Excel file sheets (excluding _summary and _MFG_ sheets)
 DEBUG_DOSE_PAIR_ONLY = None  # Only process this dose pair (set to None to process all)
 DEBUG_VERBOSE = True            # Print detailed debugging info for each date
-# Slope normalization uses slope6 method (time-centered linear/quadratic quantile regression normalization)
+# Slope normalization uses slope6/slope7 method (time-centered linear quantile regression for b >= 0, depletion-mode for b < 0)
 # removed legacy Czech unvaccinated MR adjustment toggle
 
 # ----------------------------------------------------------
@@ -158,7 +163,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v5.0"                # KCOR version number
+VERSION = "v5.1"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -212,6 +217,12 @@ VERSION = "v5.0"                # KCOR version number
 #        - Normalization: quadratic mode uses h_norm = h * exp(-(b * t_c + c * t_c^2))
 #        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
 #        - Per kcor_slope6_spec.md and kcor_slope6_helpers.md specification
+# v5.1 - Replaced quadratic mode with Slope7 depletion-mode normalization for b < 0 cohorts
+#        - Uses Levenberg-Marquardt nonlinear least squares to fit exponential relaxation depletion curve
+#        - Fit window = deployment window (enrollment to slope7_end_ISO)
+#        - Time axis s = weeks since enrollment (no centering)
+#        - Parameters: C, ka (k_0), kb (k_∞), tau (τ)
+#        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
 
 # latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
@@ -598,36 +609,136 @@ def fit_quadratic_quantile(t, logh, tau=0.5, fixed_b=None):
     a, b, c = beta.value
     return float(a), float(b), float(c), float(t_mean)
 
+def fit_slope7_depletion(s, logh):
+    """
+    Fit depletion-mode normalization using Levenberg-Marquardt nonlinear least squares.
+    
+    Models log-hazard as: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
+    
+    Parameters
+    ----------
+    s : array-like
+        Time values in weeks since enrollment (NOT centered, s=0 at enrollment).
+    logh : array-like
+        log(hazard) values aligned with s.
+    
+    Returns
+    -------
+    C, k_inf, k_0, tau : floats
+        Fitted parameters:
+        - C: intercept
+        - k_inf (kb): long-run background slope (must be > 0)
+        - k_0 (ka): slope at enrollment (may be negative)
+        - tau: depletion timescale in weeks (must be > 0)
+        Returns (np.nan, np.nan, np.nan, np.nan) on failure.
+    """
+    s = np.asarray(s, dtype=float)
+    logh = np.asarray(logh, dtype=float)
+    
+    # Remove invalid values
+    valid_mask = np.isfinite(s) & np.isfinite(logh)
+    if valid_mask.sum() < SLOPE6_MIN_DATA_POINTS:
+        return (np.nan, np.nan, np.nan, np.nan)
+    
+    s_valid = s[valid_mask]
+    logh_valid = logh[valid_mask]
+    
+    # Initial parameter estimates
+    # C: intercept from first few points
+    if len(logh_valid) >= 3:
+        C_init = np.mean(logh_valid[:3])
+    else:
+        C_init = logh_valid[0] if len(logh_valid) > 0 else 0.0
+    
+    # k_0: initial slope (can be negative)
+    if len(s_valid) >= 2:
+        k_0_init = (logh_valid[1] - logh_valid[0]) / (s_valid[1] - s_valid[0] + EPS)
+    else:
+        k_0_init = 0.0
+    
+    # k_∞: long-run slope (should be positive, estimate from later points)
+    if len(logh_valid) >= 5:
+        later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
+        k_inf_init = max(later_slope, EPS)  # Ensure positive
+    else:
+        k_inf_init = max(k_0_init, EPS) if k_0_init > 0 else EPS
+    
+    # tau: depletion timescale (weeks), initial guess based on data span
+    tau_init = max((s_valid.max() - s_valid.min()) / 3.0, 1.0)
+    
+    # Parameter vector: [C, k_inf, k_0, tau]
+    p0 = np.array([C_init, k_inf_init, k_0_init, tau_init])
+    
+    # Bounds: k_inf > 0, tau > 0, others unbounded
+    bounds = ([None, EPS, None, EPS], [None, None, None, None])
+    
+    def residual_func(p):
+        """Residual function for least squares."""
+        C, k_inf, k_0, tau = p
+        # Model: log h(s) = C + k_inf*s + (k_0 - k_inf)*tau*(1 - exp(-s/tau))
+        predicted = C + k_inf * s_valid + (k_0 - k_inf) * tau * (1.0 - np.exp(-s_valid / (tau + EPS)))
+        return logh_valid - predicted
+    
+    try:
+        result = least_squares(
+            residual_func,
+            p0,
+            method='lm',  # Levenberg-Marquardt
+            bounds=bounds,
+            max_nfev=1000,
+            ftol=1e-8,
+            xtol=1e-8
+        )
+        
+        if result.success:
+            C, k_inf, k_0, tau = result.x
+            # Ensure constraints are satisfied
+            k_inf = max(k_inf, EPS)
+            tau = max(tau, EPS)
+            return (float(C), float(k_inf), float(k_0), float(tau))
+        else:
+            return (np.nan, np.nan, np.nan, np.nan)
+    except Exception:
+        return (np.nan, np.nan, np.nan, np.nan)
+
 def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
     """
     Compute Slope6 normalization parameters for each cohort independently.
     
     For each cohort c (including dose 0):
-    - Fit window: Uses baseline_window (2022-01 to 2024-12) for regression fitting
+    - Fit window: Uses baseline_window (2022-01 to 2024-12) for regression fitting (linear mode)
     - Application window: enrollment_date to 2024-16 for determining centerpoint (t_mean)
     - Fit linear median regression on log h_c(t) vs centered time t_c = t - t_mean
     - If b_lin >= 0, use linear mode: h_norm = h * exp(-b_lin * t_c)
-    - If b_lin < 0, use quadratic mode with c >= 0: h_norm = h * exp(-(b * t_c + c * t_c^2))
-    - Return dict with mode, a, b, c, t_mean, tau
+    - If b_lin < 0, use slope7 depletion-mode normalization:
+      - Fit window = deployment window (enrollment_date to SLOPE7_END_ISO)
+      - Use s = t (time since enrollment, NOT centered)
+      - Fit depletion curve: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
+      - Normalization: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+    - Return dict with mode, parameters
     
-    This normalizes each cohort independently using time-centered quantile regression.
-    Time centering ensures t=0 is at the centerpoint of the application window.
+    This normalizes each cohort independently using time-centered quantile regression for linear mode,
+    or depletion-mode normalization for negative slopes.
     
     Args:
         df: DataFrame for one enrollment sheet with columns YearOfBirth, Dose, DateDied, MR, etc.
-        baseline_window: Tuple (start_iso_week, end_iso_week) for fit window
+        baseline_window: Tuple (start_iso_week, end_iso_week) for fit window (linear mode)
         enrollment_date_str: Enrollment date string (e.g., "2021_24") for application window start
         dual_print_fn: Optional logging function
         
     Returns:
         Dict mapping (YearOfBirth, Dose) -> params dict with keys:
         {
-            "mode": "linear" or "quadratic",
-            "a": intercept,
-            "b": linear slope,
-            "c": quadratic coefficient (0 in linear mode),
-            "t_mean": time centering constant,
-            "tau": quantile level
+            "mode": "linear", "slope7", or "none",
+            "a": intercept (linear mode),
+            "b": linear slope (linear mode) or b_original (slope7 mode),
+            "c": quadratic coefficient (0 in linear mode, not used in slope7),
+            "C": intercept (slope7 mode),
+            "ka": k_0 starting slope (slope7 mode),
+            "kb": k_∞ final slope (slope7 mode),
+            "tau": depletion timescale (slope7 mode) or quantile level (linear mode),
+            "t_mean": time centering constant (linear mode) or 0.0 (slope7 mode),
+            "b_original": original b_lin value (slope7 mode)
         }
         For cohorts with insufficient data: dict with mode="none", all params 0.0
     """
@@ -738,7 +849,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             # Use t_mean from application window, not from fit
             # (t_mean_fit is computed from fit window, but we want t_mean from application window)
             
-            if b_lin >= 0 or ENABLE_QUADRATIC_SLOPE_FIT == 0:
+            if b_lin >= 0 or ENABLE_NEGATIVE_SLOPE_FIT == 0:
                 # Linear mode (either b_lin >= 0, or quadratic disabled via flag)
                 # Compute RMS error for diagnostics
                 t_c_fit = np.array(t_values) - t_mean
@@ -755,70 +866,40 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "tau": SLOPE6_QUANTILE_TAU
                 }
                 normalization_params[(yob, dose)] = params
-                if ENABLE_QUADRATIC_SLOPE_FIT == 0 and b_lin < 0:
+                if ENABLE_NEGATIVE_SLOPE_FIT == 0 and b_lin < 0:
                     _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(forced),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
                 else:
                     _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
             else:
-                # Try quadratic mode: b_lin < 0 and ENABLE_QUADRATIC_SLOPE_FIT != 0
-                # Constrain b to b_lin from linear fit, then check if c > 0
-                if not HAS_CVXPY:
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=quadratic_needed_but_cvxpy_unavailable,b_lin={b_lin:.6e}")
-                    # Fallback to linear mode even though b_lin < 0
-                    params = {
-                        "mode": "linear",
-                        "a": a_lin,
-                        "b": b_lin,
-                        "c": 0.0,
-                        "t_mean": t_mean,
-                        "tau": SLOPE6_QUANTILE_TAU
-                    }
-                    normalization_params[(yob, dose)] = params
-                    continue
+                # Try slope7 depletion-mode: b_lin < 0 and ENABLE_NEGATIVE_SLOPE_FIT != 0
+                # Use deployment window (enrollment_date to SLOPE7_END_ISO) as fit window
+                # Use s = t (time since enrollment, NOT centered)
+                slope7_end_dt = _iso_to_date_slope6(SLOPE7_END_ISO)
                 
-                # Fit quadratic regression with b constrained to b_lin
-                try:
-                    a, b, c, t_mean_quad = fit_quadratic_quantile(np.array(t_values), np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU, fixed_b=b_lin)
-                    
-                    # Check if c > 0; if not, fall back to linear fit
-                    if c > 0:
-                        # Use quadratic mode with b=b_lin and c
-                        # Use t_mean from application window
-                        t_c_fit = np.array(t_values) - t_mean
-                        predicted = a + b * t_c_fit + c * t_c_fit**2
-                        residuals = np.array(log_h_values) - predicted
-                        rms_error = np.sqrt(np.mean(residuals**2))
+                # Build deployment window data: enrollment_date to SLOPE7_END_ISO
+                s_values = []
+                log_h_slope7_values = []
+                
+                for week, week_data in cohort_data.items():
+                    date_died = week_data.get("DateDied")
+                    if date_died is not None and enrollment_dt <= date_died <= slope7_end_dt:
+                        hc = week_data.get("hazard")
+                        t_actual = week_data.get("t")
                         
-                        params = {
-                            "mode": "quadratic",
-                            "a": a,
-                            "b": b,  # Should equal b_lin due to constraint
-                            "c": c,
-                            "t_mean": t_mean,
-                            "tau": SLOPE6_QUANTILE_TAU
-                        }
-                        normalization_params[(yob, dose)] = params
-                        _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=quadratic,a={a:.6e},b={b:.6e},c={c:.6e},t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
-                    else:
-                        # c <= 0, fall back to linear mode
-                        t_c_fit = np.array(t_values) - t_mean
-                        predicted = a_lin + b_lin * t_c_fit
-                        residuals = np.array(log_h_values) - predicted
-                        rms_error = np.sqrt(np.mean(residuals**2))
-                        
-                        params = {
-                            "mode": "linear",
-                            "a": a_lin,
-                            "b": b_lin,
-                            "c": 0.0,
-                            "t_mean": t_mean,
-                            "tau": SLOPE6_QUANTILE_TAU
-                        }
-                        normalization_params[(yob, dose)] = params
-                        _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(c_quadratic={c:.6e}<=0),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
-                except Exception as quad_error:
-                    # If quadratic fit fails, fall back to linear
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=quadratic_fit_failed,error={str(quad_error)},falling_back_to_linear")
+                        # Must be valid and positive
+                        if hc is not None and t_actual is not None and hc > EPS and pd.notna(t_actual):
+                            try:
+                                log_h_val = np.log(hc)
+                                if np.isfinite(log_h_val) and np.isfinite(t_actual):
+                                    log_h_slope7_values.append(log_h_val)
+                                    s_values.append(float(t_actual))  # s = t (time since enrollment, NOT centered)
+                            except Exception:
+                                continue
+                
+                # Need at least SLOPE6_MIN_DATA_POINTS points for slope7 fit
+                if len(s_values) < SLOPE6_MIN_DATA_POINTS:
+                    _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(s_values)}")
+                    # Fallback to linear mode
                     t_c_fit = np.array(t_values) - t_mean
                     predicted = a_lin + b_lin * t_c_fit
                     residuals = np.array(log_h_values) - predicted
@@ -833,7 +914,67 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "tau": SLOPE6_QUANTILE_TAU
                     }
                     normalization_params[(yob, dose)] = params
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(insufficient_slope7_data),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                else:
+                    # Fit slope7 depletion-mode normalization
+                    try:
+                        C, kb, ka, tau = fit_slope7_depletion(np.array(s_values), np.array(log_h_slope7_values))
+                        
+                        if np.isfinite(C) and np.isfinite(kb) and np.isfinite(ka) and np.isfinite(tau) and kb > EPS and tau > EPS:
+                            # Compute RMS error for diagnostics
+                            predicted = C + kb * np.array(s_values) + (ka - kb) * tau * (1.0 - np.exp(-np.array(s_values) / (tau + EPS)))
+                            residuals = np.array(log_h_slope7_values) - predicted
+                            rms_error = np.sqrt(np.mean(residuals**2))
+                            
+                            params = {
+                                "mode": "slope7",
+                                "C": C,
+                                "ka": ka,  # k_0 starting slope
+                                "kb": kb,  # k_∞ final slope
+                                "tau": tau,
+                                "b_original": b_lin,
+                                "t_mean": 0.0,  # No centering for slope7
+                                "a": 0.0,  # Not used in slope7
+                                "b": 0.0,  # Not used in slope7 (use b_original instead)
+                                "c": 0.0,  # Not used in slope7
+                            }
+                            normalization_params[(yob, dose)] = params
+                            _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope7,C={C:.6e},ka={ka:.6e},kb={kb:.6e},tau={tau:.6e},b_original={b_lin:.6e},rms_error={rms_error:.6e},points={len(s_values)}")
+                        else:
+                            # Slope7 fit failed, fall back to linear
+                            t_c_fit = np.array(t_values) - t_mean
+                            predicted = a_lin + b_lin * t_c_fit
+                            residuals = np.array(log_h_values) - predicted
+                            rms_error = np.sqrt(np.mean(residuals**2))
+                            
+                            params = {
+                                "mode": "linear",
+                                "a": a_lin,
+                                "b": b_lin,
+                                "c": 0.0,
+                                "t_mean": t_mean,
+                                "tau": SLOPE6_QUANTILE_TAU
+                            }
+                            normalization_params[(yob, dose)] = params
+                            _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_failed_invalid_params,falling_back_to_linear")
+                    except Exception as slope7_error:
+                        # If slope7 fit fails, fall back to linear
+                        _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(slope7_error)},falling_back_to_linear")
+                        t_c_fit = np.array(t_values) - t_mean
+                        predicted = a_lin + b_lin * t_c_fit
+                        residuals = np.array(log_h_values) - predicted
+                        rms_error = np.sqrt(np.mean(residuals**2))
+                        
+                        params = {
+                            "mode": "linear",
+                            "a": a_lin,
+                            "b": b_lin,
+                            "c": 0.0,
+                            "t_mean": t_mean,
+                            "tau": SLOPE6_QUANTILE_TAU
+                        }
+                        normalization_params[(yob, dose)] = params
+                        _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
         except Exception as e:
             _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(e)}")
             normalization_params[(yob, dose)] = {
@@ -1746,7 +1887,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     # Slope6 configuration
-    dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear/quadratic quantile regression normalization]")
+    dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear quantile regression normalization for b >= 0]")
+    dual_print(f"  SLOPE7_METHOD        = Levenberg-Marquardt  [Slope7: Depletion-mode normalization for b < 0]")
     dual_print(f"  SLOPE6_QUANTILE_TAU  = {SLOPE6_QUANTILE_TAU}  [Quantile level for quantile regression (0.5 = median)]")
     dual_print(f"  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]")
     dual_print(f"  SLOPE6_APPLICATION_ENDPOINT = {SLOPE6_APPLICATION_END_ISO}  [Rightmost endpoint for determining centerpoint]")
@@ -2052,7 +2194,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # removed temporary diagnostics
         
         # Apply discrete cumulative-hazard transform for mathematical exactness
-        # Apply Slope6 normalization: Time-centered linear/quadratic quantile regression normalization
+        # Apply Slope6/Slope7 normalization: Time-centered linear quantile regression (slope6) for b >= 0,
+        # or depletion-mode normalization (slope7) for b < 0
         # Note: baseline_window (fit window) was selected globally before processing sheets
         
         # Add sheet_name to df for compute_slope6_normalization
@@ -2101,8 +2244,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Apply Slope6 normalization at hazard level using time-centered approach
         # Linear mode: h_norm = h * exp(-b_lin * t_c) where t_c = t - t_mean
-        # Quadratic mode: h_norm = h * exp(-(b * t_c + c * t_c^2)) where t_c = t - t_mean
-        # t_mean is computed from application window (enrollment_date to 2024-16)
+        # Slope7 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau))) where s = t (no centering)
+        # t_mean is computed from application window (enrollment_date to 2024-16) for linear mode
         if isinstance(slope6_params, dict) and len(slope6_params) > 0:
             try:
                 def apply_slope6_norm(row):
@@ -2119,19 +2262,23 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         return row["hazard_raw"]
                     
                     mode = params.get("mode", "linear")
-                    b = params.get("b", 0.0)
-                    c = params.get("c", 0.0)
-                    t_mean = params.get("t_mean", 0.0)
-                    
-                    # Compute centered time
-                    t_c = row["t"] - t_mean
                     
                     if mode == "linear":
+                        b = params.get("b", 0.0)
+                        t_mean = params.get("t_mean", 0.0)
+                        # Compute centered time
+                        t_c = row["t"] - t_mean
                         # Linear mode: h_norm = h * exp(-b * t_c)
                         return row["hazard_raw"] * np.exp(-b * t_c)
-                    elif mode == "quadratic":
-                        # Quadratic mode: h_norm = h * exp(-(b * t_c + c * t_c^2))
-                        return row["hazard_raw"] * np.exp(-(b * t_c + c * t_c**2))
+                    elif mode == "slope7":
+                        C = params.get("C", 0.0)
+                        ka = params.get("ka", 0.0)
+                        kb = params.get("kb", 0.0)
+                        tau = params.get("tau", 1.0)
+                        # Use s = t (time since enrollment, NOT centered)
+                        s = row["t"]
+                        # Slope7 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+                        return row["hazard_raw"] * np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
                     else:
                         # Unknown mode, no normalization
                         return row["hazard_raw"]
@@ -2149,7 +2296,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "b": 0.0
                     })
                     if isinstance(params, dict):
-                        return float(params.get("b", 0.0))
+                        mode = params.get("mode", "none")
+                        if mode == "slope7":
+                            # For slope7, return b_original (the original b_lin from linear fit)
+                            return float(params.get("b_original", 0.0))
+                        else:
+                            # For linear mode, return b
+                            return float(params.get("b", 0.0))
                     return 0.0
                 
                 def get_scale_factor(r):
@@ -2166,15 +2319,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     if mode == "none":
                         return 1.0
                     
-                    b = params.get("b", 0.0)
-                    c = params.get("c", 0.0)
-                    t_mean = params.get("t_mean", 0.0)
-                    t_c = r["t"] - t_mean
-                    
                     if mode == "linear":
+                        b = params.get("b", 0.0)
+                        t_mean = params.get("t_mean", 0.0)
+                        t_c = r["t"] - t_mean
                         return np.exp(-b * t_c)
-                    elif mode == "quadratic":
-                        return np.exp(-(b * t_c + c * t_c**2))
+                    elif mode == "slope7":
+                        C = params.get("C", 0.0)
+                        ka = params.get("ka", 0.0)
+                        kb = params.get("kb", 0.0)
+                        tau = params.get("tau", 1.0)
+                        # Use s = t (time since enrollment, NOT centered)
+                        s = r["t"]
+                        # Slope7 scale factor: exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+                        return np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
                     else:
                         return 1.0
                 
@@ -2506,32 +2664,72 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     params_num = slope6_params_map.get((sheet_name, key_age, int(dose_num)), {"b": np.nan})
                     params_den = slope6_params_map.get((sheet_name, key_age, int(dose_den)), {"b": np.nan})
                     
-                    # Extract b and c values from dict for logging
+                    # Extract parameters from dict for logging
                     if isinstance(params_num, dict):
-                        beta_num = params_num.get("b", np.nan)
-                        c_num = params_num.get("c", 0.0)
                         mode_num = params_num.get("mode", "none")
+                        if mode_num == "slope7":
+                            beta_num = params_num.get("b_original", np.nan)
+                            C_num = params_num.get("C", np.nan)
+                            ka_num = params_num.get("ka", np.nan)
+                            kb_num = params_num.get("kb", np.nan)
+                            tau_num = params_num.get("tau", np.nan)
+                            c_num = 0.0  # Not used in slope7
+                        else:
+                            beta_num = params_num.get("b", np.nan)
+                            c_num = params_num.get("c", 0.0)
+                            C_num = np.nan
+                            ka_num = np.nan
+                            kb_num = np.nan
+                            tau_num = np.nan
                     elif pd.notna(params_num):
                         beta_num = float(params_num)
                         c_num = 0.0
                         mode_num = "linear"
+                        C_num = np.nan
+                        ka_num = np.nan
+                        kb_num = np.nan
+                        tau_num = np.nan
                     else:
                         beta_num = np.nan
                         c_num = 0.0
                         mode_num = "none"
+                        C_num = np.nan
+                        ka_num = np.nan
+                        kb_num = np.nan
+                        tau_num = np.nan
                     
                     if isinstance(params_den, dict):
-                        beta_den = params_den.get("b", np.nan)
-                        c_den = params_den.get("c", 0.0)
                         mode_den = params_den.get("mode", "none")
+                        if mode_den == "slope7":
+                            beta_den = params_den.get("b_original", np.nan)
+                            C_den = params_den.get("C", np.nan)
+                            ka_den = params_den.get("ka", np.nan)
+                            kb_den = params_den.get("kb", np.nan)
+                            tau_den = params_den.get("tau", np.nan)
+                            c_den = 0.0  # Not used in slope7
+                        else:
+                            beta_den = params_den.get("b", np.nan)
+                            c_den = params_den.get("c", 0.0)
+                            C_den = np.nan
+                            ka_den = np.nan
+                            kb_den = np.nan
+                            tau_den = np.nan
                     elif pd.notna(params_den):
                         beta_den = float(params_den)
                         c_den = 0.0
                         mode_den = "linear"
+                        C_den = np.nan
+                        ka_den = np.nan
+                        kb_den = np.nan
+                        tau_den = np.nan
                     else:
                         beta_den = np.nan
                         c_den = 0.0
                         mode_den = "none"
+                        C_den = np.nan
+                        ka_den = np.nan
+                        kb_den = np.nan
+                        tau_den = np.nan
                     
                     if age == 0:
                         age_label = "ASMR (direct)"
@@ -2545,12 +2743,45 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     if age == 0 or age == -2:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
-                        # Build parameter string with c values if non-zero
-                        param_parts = [f"beta_num={beta_num:.6f}", f"beta_den={beta_den:.6f}"]
-                        if (isinstance(c_num, (int, float)) and np.isfinite(c_num) and abs(c_num) > EPS) or \
-                           (isinstance(c_den, (int, float)) and np.isfinite(c_den) and abs(c_den) > EPS):
-                            param_parts.append(f"c_num={c_num:.6f}")
-                            param_parts.append(f"c_den={c_den:.6f}")
+                        # Build parameter string
+                        param_parts = []
+                        
+                        # Check if either cohort uses slope7 mode
+                        if mode_num == "slope7" or mode_den == "slope7":
+                            # Slope7 mode: show b_original, C, ka, kb, tau
+                            if mode_num == "slope7":
+                                param_parts.append(f"b_original_num={beta_num:.6f}")
+                                if np.isfinite(C_num):
+                                    param_parts.append(f"C_num={C_num:.6e}")
+                                if np.isfinite(ka_num):
+                                    param_parts.append(f"ka_num={ka_num:.6e}")
+                                if np.isfinite(kb_num):
+                                    param_parts.append(f"kb_num={kb_num:.6e}")
+                                if np.isfinite(tau_num):
+                                    param_parts.append(f"tau_num={tau_num:.6e}")
+                            else:
+                                param_parts.append(f"beta_num={beta_num:.6f}")
+                            
+                            if mode_den == "slope7":
+                                param_parts.append(f"b_original_den={beta_den:.6f}")
+                                if np.isfinite(C_den):
+                                    param_parts.append(f"C_den={C_den:.6e}")
+                                if np.isfinite(ka_den):
+                                    param_parts.append(f"ka_den={ka_den:.6e}")
+                                if np.isfinite(kb_den):
+                                    param_parts.append(f"kb_den={kb_den:.6e}")
+                                if np.isfinite(tau_den):
+                                    param_parts.append(f"tau_den={tau_den:.6e}")
+                            else:
+                                param_parts.append(f"beta_den={beta_den:.6f}")
+                        else:
+                            # Linear/quadratic mode: show beta and c if non-zero
+                            param_parts = [f"beta_num={beta_num:.6f}", f"beta_den={beta_den:.6f}"]
+                            if (isinstance(c_num, (int, float)) and np.isfinite(c_num) and abs(c_num) > EPS) or \
+                               (isinstance(c_den, (int, float)) and np.isfinite(c_den) and abs(c_den) > EPS):
+                                param_parts.append(f"c_num={c_num:.6f}")
+                                param_parts.append(f"c_den={c_den:.6f}")
+                        
                         param_str = ", ".join(param_parts)
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  ({param_str})")
 
