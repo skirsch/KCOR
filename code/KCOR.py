@@ -121,6 +121,7 @@ SLOPE6_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
 SLOPE6_MIN_DATA_POINTS = 5              # Minimum data points required for quantile regression fit
 SLOPE6_QUANTILE_TAU = 0.5               # Quantile level for quantile regression (0.5 = 50th percentile/median)
 SLOPE6_APPLICATION_END_ISO = "2024-16"  # Rightmost endpoint for determining centerpoint (ISO week format)
+ENABLE_QUADRATIC_SLOPE_FIT = 0          # When 0, disable quadratic mode and force linear fit only (temporary flag)
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -731,8 +732,8 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             # Use t_mean from application window, not from fit
             # (t_mean_fit is computed from fit window, but we want t_mean from application window)
             
-            if b_lin >= 0:
-                # Linear mode
+            if b_lin >= 0 or ENABLE_QUADRATIC_SLOPE_FIT == 0:
+                # Linear mode (either b_lin >= 0, or quadratic disabled via flag)
                 # Compute RMS error for diagnostics
                 t_c_fit = np.array(t_values) - t_mean
                 predicted = a_lin + b_lin * t_c_fit
@@ -748,9 +749,12 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "tau": SLOPE6_QUANTILE_TAU
                 }
                 normalization_params[(yob, dose)] = params
-                _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                if ENABLE_QUADRATIC_SLOPE_FIT == 0 and b_lin < 0:
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(forced),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                else:
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
             else:
-                # Quadratic mode: b_lin < 0
+                # Quadratic mode: b_lin < 0 and ENABLE_QUADRATIC_SLOPE_FIT != 0
                 if not HAS_CVXPY:
                     _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=quadratic_needed_but_cvxpy_unavailable,b_lin={b_lin:.6e}")
                     # Fallback to linear mode even though b_lin < 0
