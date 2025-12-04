@@ -10,7 +10,7 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian help
+.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -97,6 +97,12 @@ glm-compare:
 test:
 	$(MAKE) -C test all
 
+# Slope normalization test
+slope-test: $(VENV_DIR)
+	@echo "Running slope normalization test..."
+	cd test/slope_normalization && $(abspath $(VENV_PYTHON)) test.py
+	@echo "Slope normalization test complete!"
+
 clean:
 	-$(MAKE) -C $(CODE_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_DSCMRR_DIR) clean DATASET=$(DATASET)
@@ -165,6 +171,7 @@ help:
 	@echo "  glm-compare     - Compare GLM outputs"
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
+	@echo "  slope-test      - Run slope normalization test on booster_d0_slope.csv"
 	@echo "  HVE             - Run Healthy Vaccinee Effect simulation (validation/HVE)"
 	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
 	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
