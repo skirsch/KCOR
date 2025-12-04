@@ -1,0 +1,28 @@
+method,parameter,value,description
+Linear,a_lin,-8.900759612,Intercept from quantile regression
+Linear,b_lin,-0.002805,Slope from quantile regression
+Linear,t_mean,57,Time centering constant (mean of t)
+TRF,C,-8.350997688,Intercept (fitted)
+TRF,k_inf (kb),-0.001999759,Long-run background slope (fitted)
+TRF,k_0 (ka),-0.094861913,Slope at enrollment (fitted)
+TRF,tau,4.728453848,Depletion timescale in weeks (fitted)
+TRF,C_init,-8.455236159,Initial estimate: mean of first 3 log(hazard) values
+TRF,k_0_init,-0.033123109,Initial estimate: slope from first two points
+TRF,delta_k_init,0.078180951,"Initial estimate: max(later_slope - k_0_init, 0.001)"
+TRF,tau_init,38,Initial estimate: (max(t) - min(t)) / 3.0
+TRF,bounds,"?k ? 0, tau > 1e-3",Bounds enforced (C and k_0 unbounded)
+TRF,max_nfev,1000,Maximum function evaluations
+TRF,ftol,0.00000001,Function tolerance
+TRF,xtol,0.00000001,Parameter tolerance
+LM,C,-8.350977992,Intercept (fitted)
+LM,k_inf (kb),-0.001999831,Long-run background slope (fitted)
+LM,k_0 (ka),-0.094877118,Slope at enrollment (fitted)
+LM,tau,4.727832615,Depletion timescale in weeks (fitted)
+LM,C_init,-8.455236159,Initial estimate: mean of first 3 log(hazard) values
+LM,k_0_init,-0.033123109,Initial estimate: slope from first two points
+LM,delta_k_init,0.078180951,"Initial estimate: max(later_slope - k_0_init, 0.001)"
+LM,tau_init,38,Initial estimate: (max(t) - min(t)) / 3.0
+LM,bounds,None,No bounds (unbounded optimization)
+LM,max_nfev,1000,Maximum function evaluations
+LM,ftol,0.00000001,Function tolerance
+LM,xtol,0.00000001,Parameter tolerance
