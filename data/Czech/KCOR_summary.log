@@ -1,7 +1,7 @@
 ================================================================================
-KCOR v5.0 - Kirsch Cumulative Outcomes Ratio Analysis
+KCOR v5.1 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-02 22:42:12
+Analysis Date: 2025-12-03 20:54:26
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -18,7 +18,8 @@ Configuration Parameters (effective):
   OVERRIDE_YOBS         = None
   KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
   NEGATIVE_CONTROL_MODE = 0
-  SLOPE6_METHOD        = QuantReg (tau=0.5)  [Slope6: Time-centered linear/quadratic quantile regression normalization]
+  SLOPE6_METHOD        = QuantReg (tau=0.5)  [Slope6: Time-centered linear quantile regression normalization for b >= 0]
+  SLOPE7_METHOD        = Trust Region Reflective (TRF)  [Slope7: Depletion-mode normalization for b < 0]
   SLOPE6_QUANTILE_TAU  = 0.5  [Quantile level for quantile regression (0.5 = median)]
   SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]
   SLOPE6_APPLICATION_ENDPOINT = 2024-16  [Rightmost endpoint for determining centerpoint]
@@ -48,16 +49,16 @@ SLOPE6_FIT_WINDOW,selected=2022-01..2024-12 (week 1 of 2022 through week 12 of 2
   YoB 1980, % vaxxed=5  alive_by_dose= 95% 2% 3% total=1339097
   YoB 1990, % vaxxed=4  alive_by_dose= 96% 2% 2% total=1074412
   YoB 2000, % vaxxed=0  alive_by_dose= 100% 0% 0% total=1020930
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=0,mode=quadratic,a=-5.029542e+00,b=-3.376279e-03,c=1.579623e-05,t_mean=7.950000e+01,rms_error=1.999524e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=0,mode=slope7,C=-4.579596e+00,ka=-2.813585e-01,kb=-1.793535e-03,tau=1.052647e+00,b_original=-3.376279e-03,rms_error=2.201148e-01,points=160
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=1,mode=linear,a=-5.136945e+00,b=2.233158e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.866856e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=2,mode=linear,a=-5.164255e+00,b=1.224361e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.704951e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=0,mode=quadratic,a=-5.877294e+00,b=-1.387589e-03,c=6.516234e-05,t_mean=7.950000e+01,rms_error=1.769664e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=0,mode=slope7,C=-5.635907e+00,ka=-2.369812e-03,kb=4.080917e-01,tau=3.969712e+04,b_original=-1.387589e-03,rms_error=1.898032e-01,points=160
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=1,mode=linear,a=-6.153315e+00,b=1.258920e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.768473e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=2,mode=linear,a=-6.180880e+00,b=1.537375e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.183486e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=0,mode=quadratic,a=-7.124697e+00,b=-6.905870e-04,c=4.169794e-05,t_mean=7.950000e+01,rms_error=1.274145e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=0,mode=slope7,C=-6.163345e+00,ka=-2.812783e-01,kb=-6.235429e-04,tau=2.987491e+00,b_original=-6.905870e-04,rms_error=1.513797e-01,points=160
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=1,mode=linear,a=-7.442328e+00,b=1.794616e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.348892e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=2,mode=linear,a=-6.791749e+00,b=5.848801e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.666938e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=0,mode=quadratic,a=-8.106381e+00,b=-2.848223e-04,c=3.048980e-05,t_mean=7.950000e+01,rms_error=1.102493e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=0,mode=slope7,C=-7.381071e+00,ka=-2.476129e-01,kb=-1.908945e-04,tau=2.742116e+00,b_original=-2.848223e-04,rms_error=1.354203e-01,points=160
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=1,mode=linear,a=-8.167387e+00,b=2.952449e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=2.793684e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=2,mode=linear,a=-7.844447e+00,b=3.940154e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.099223e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=0,mode=linear,a=-9.021545e+00,b=5.561831e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.043783e-01,points=116
@@ -89,21 +90,21 @@ SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=2,mode=linear,a=-7.676754e+00,b=
   YoB 1980, % vaxxed=11  alive_by_dose= 89% 5% 5% total=1338933
   YoB 1990, % vaxxed=8  alive_by_dose= 92% 4% 4% total=1074344
   YoB 2000, % vaxxed=1  alive_by_dose= 99% 1% 1% total=1020916
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=0,mode=quadratic,a=-5.005089e+00,b=-3.921659e-03,c=1.890709e-05,t_mean=7.600000e+01,rms_error=2.109363e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=1,mode=quadratic,a=-5.081712e+00,b=-9.956114e-04,c=2.049187e-06,t_mean=7.600000e+01,rms_error=4.625927e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=0,mode=slope7,C=-4.812380e+00,ka=-2.446433e-03,kb=-2.446424e-03,tau=9.119209e-02,b_original=-3.921659e-03,rms_error=2.435503e-01,points=153
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=1,mode=slope7,C=-5.184393e+00,ka=-1.201746e-03,kb=1.164083e-03,tau=6.279570e+01,b_original=-9.956114e-04,rms_error=4.235647e-01,points=153
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=2,mode=linear,a=-5.159072e+00,b=1.460444e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.746748e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=0,mode=quadratic,a=-5.829285e+00,b=-2.818220e-03,c=8.076533e-05,t_mean=7.600000e+01,rms_error=1.836139e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=0,mode=slope7,C=-5.557673e+00,ka=-1.935105e-03,kb=-1.935105e-03,tau=9.082617e+02,b_original=-2.818220e-03,rms_error=2.035030e-01,points=153
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=1,mode=linear,a=-6.034508e+00,b=1.297674e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=2.139254e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=2,mode=linear,a=-6.178158e+00,b=1.778223e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.144133e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=0,mode=quadratic,a=-6.869966e+00,b=-2.255914e-03,c=7.171855e-05,t_mean=7.600000e+01,rms_error=1.609053e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=0,mode=slope7,C=-6.473136e+00,ka=-4.678088e-03,kb=7.952854e-01,tau=2.835996e+04,b_original=-2.255914e-03,rms_error=1.833600e-01,points=153
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=1,mode=linear,a=-7.366573e+00,b=1.425916e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.246244e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=2,mode=linear,a=-7.287467e+00,b=1.793601e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.211908e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=0,mode=quadratic,a=-7.802144e+00,b=-1.697352e-03,c=6.612442e-05,t_mean=7.600000e+01,rms_error=1.421494e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=0,mode=slope7,C=-7.454442e+00,ka=-4.242333e-03,kb=8.138104e-01,tau=3.176149e+04,b_original=-1.697352e-03,rms_error=1.630729e-01,points=153
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=1,mode=linear,a=-8.407266e+00,b=2.269967e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.355025e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=2,mode=linear,a=-8.014648e+00,b=3.431122e-04,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.768550e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=0,mode=quadratic,a=-8.860337e+00,b=-2.347538e-04,c=3.506619e-05,t_mean=7.600000e+01,rms_error=1.331246e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=0,mode=slope7,C=-8.705123e+00,ka=-1.725863e-03,kb=3.684783e-01,tau=4.087843e+04,b_original=-2.347538e-04,rms_error=1.533333e-01,points=153
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=1,mode=linear,a=-9.420945e+00,b=2.722592e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.767764e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=2,mode=linear(c_quadratic=-1.465218e-05<=0),a=-9.368450e+00,b=-9.368064e-04,c=0.000000e+00,t_mean=7.600000e+01,rms_error=3.201769e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=2,mode=slope7,C=-9.426840e+00,ka=3.249374e-04,kb=3.249374e-04,tau=5.056950e+03,b_original=-9.368064e-04,rms_error=3.226586e-01,points=153
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=0,mode=linear,a=-1.002985e+01,b=4.368375e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.324169e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=1,mode=linear,a=-1.017069e+01,b=4.110476e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=3.670887e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=2,mode=linear,a=-1.028762e+01,b=2.222222e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=5.356767e-01,points=115
@@ -113,7 +114,7 @@ SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=2,mode=linear,a=-1.050453e+01,b=
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=0,mode=linear,a=-1.160538e+01,b=1.016257e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=3.295585e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=1,mode=linear,a=-1.061502e+01,b=1.428229e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=4.334626e-01,points=46
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=2,mode=linear,a=-1.072622e+01,b=1.688405e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=4.743339e-01,points=62
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=0,mode=linear(c_quadratic=-1.351720e-05<=0),a=-1.228409e+01,b=-2.893178e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=5.047720e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=0,mode=slope7,C=-1.254005e+01,ka=1.479717e-03,kb=1.479717e-03,tau=1.279271e+00,b_original=-2.893178e-03,rms_error=5.411989e-01,points=152
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=1,mode=linear,a=-8.911685e+00,b=2.624460e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.386278e-01,points=25
 SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=2,mode=linear,a=-8.700854e+00,b=2.235277e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=2.651086e-04,points=13
 [Info] Processing sheet: 2021_24
@@ -130,22 +131,22 @@ SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=2,mode=linear,a=-8.700854e+00,b=
   YoB 1980, % vaxxed=38  alive_by_dose= 62% 30% 9% total=1338855
   YoB 1990, % vaxxed=19  alive_by_dose= 81% 13% 6% total=1074314
   YoB 2000, % vaxxed=5  alive_by_dose= 95% 4% 1% total=1020909
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=0,mode=quadratic,a=-4.997847e+00,b=-3.954843e-03,c=2.595035e-05,t_mean=7.400000e+01,rms_error=2.118758e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=0,mode=slope7,C=-4.773422e+00,ka=-2.892532e-03,kb=-2.892532e-03,tau=1.678845e+01,b_original=-3.954843e-03,rms_error=2.488714e-01,points=149
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=1,mode=linear,a=-5.079598e+00,b=2.454609e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=5.784158e-01,points=113
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=2,mode=linear,a=-5.143328e+00,b=1.393686e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.706900e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=0,mode=quadratic,a=-5.793209e+00,b=-2.638341e-03,c=8.287692e-05,t_mean=7.400000e+01,rms_error=1.886972e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=0,mode=slope7,C=-5.515743e+00,ka=-2.206415e-03,kb=-2.206415e-03,tau=1.172882e-01,b_original=-2.638341e-03,rms_error=2.138868e-01,points=149
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=1,mode=linear,a=-5.973653e+00,b=6.743995e-04,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.380289e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=2,mode=linear,a=-6.169288e+00,b=1.669655e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.141171e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,mode=quadratic,a=-6.819596e+00,b=-2.665843e-03,c=9.426460e-05,t_mean=7.400000e+01,rms_error=1.720177e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,mode=slope7,C=-6.357555e+00,ka=-5.863031e-03,kb=1.292192e+00,tau=3.615708e+04,b_original=-2.665843e-03,rms_error=1.970204e-01,points=149
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=1,mode=linear,a=-7.111869e+00,b=1.335454e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.817636e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=2,mode=linear,a=-7.318262e+00,b=1.844754e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.073127e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,mode=quadratic,a=-7.712263e+00,b=-2.222604e-03,c=7.869894e-05,t_mean=7.400000e+01,rms_error=1.559992e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,mode=slope7,C=-7.264129e+00,ka=-6.092774e-03,kb=4.908967e+00,tau=1.256288e+05,b_original=-2.222604e-03,rms_error=1.789972e-01,points=149
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=1,mode=linear,a=-8.287974e+00,b=1.746275e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.387487e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=2,mode=linear,a=-8.292416e+00,b=1.440326e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.221555e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,mode=quadratic,a=-8.713659e+00,b=-1.161590e-03,c=3.129653e-05,t_mean=7.400000e+01,rms_error=1.442910e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,mode=slope7,C=-8.447270e+00,ka=-4.180652e-03,kb=5.971535e-01,tau=2.246000e+04,b_original=-1.161590e-03,rms_error=1.708996e-01,points=149
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=1,mode=linear,a=-9.389125e+00,b=2.688595e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.897756e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=2,mode=linear,a=-9.194391e+00,b=1.018442e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.856099e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=0,mode=linear(c_quadratic=-5.285801e-09<=0),a=-9.771018e+00,b=-1.372258e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.642996e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=0,mode=slope7,C=-9.619750e+00,ka=-2.460682e-03,kb=2.782679e-01,tau=1.844017e+04,b_original=-1.372258e-03,rms_error=1.778205e-01,points=149
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=1,mode=linear,a=-1.051276e+01,b=2.744565e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.375933e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=2,mode=linear,a=-1.009056e+01,b=1.151970e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.881938e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=0,mode=linear,a=-1.079105e+01,b=2.160237e-05,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.365657e-01,points=116
@@ -171,31 +172,31 @@ SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=2,mode=linear,a=-9.227342e+00,b=
   YoB 1980, % vaxxed=52  alive_by_dose= 48% 13% 39% total=1338704
   YoB 1990, % vaxxed=44  alive_by_dose= 56% 22% 22% total=1074262
   YoB 2000, % vaxxed=27  alive_by_dose= 73% 21% 6% total=1020888
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=0,mode=quadratic,a=-5.033003e+00,b=-4.911901e-03,c=3.763708e-05,t_mean=7.100000e+01,rms_error=2.207695e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=0,mode=slope7,C=-4.729941e+00,ka=-3.553011e-03,kb=-3.553011e-03,tau=2.305459e+01,b_original=-4.911901e-03,rms_error=2.502139e-01,points=143
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=1,mode=linear,a=-4.941576e+00,b=5.893265e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.590840e-01,points=90
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=2,mode=linear,a=-5.138248e+00,b=1.537036e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.661861e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=0,mode=quadratic,a=-5.762625e+00,b=-2.806032e-03,c=7.614364e-05,t_mean=7.100000e+01,rms_error=1.833677e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=1,mode=quadratic,a=-6.139810e+00,b=-1.081479e-03,c=9.606451e-05,t_mean=7.100000e+01,rms_error=4.280803e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=0,mode=slope7,C=-5.473317e+00,ka=-2.584826e-03,kb=-2.584826e-03,tau=1.081334e-03,b_original=-2.806032e-03,rms_error=2.191462e-01,points=143
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=1,mode=slope7,C=-5.519384e+00,ka=-1.523439e-02,kb=3.108789e-02,tau=2.126311e+02,b_original=-1.081479e-03,rms_error=4.035373e-01,points=143
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=2,mode=linear,a=-6.162031e+00,b=1.925499e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.149307e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=0,mode=quadratic,a=-6.799598e+00,b=-2.627743e-03,c=1.044543e-04,t_mean=7.100000e+01,rms_error=1.762478e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=0,mode=slope7,C=-6.245750e+00,ka=-8.395361e-03,kb=2.127748e+00,tau=3.253520e+04,b_original=-2.627743e-03,rms_error=2.045879e-01,points=143
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=1,mode=linear,a=-7.012362e+00,b=8.944203e-04,c=0.000000e+00,t_mean=7.100000e+01,rms_error=2.792767e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=2,mode=linear,a=-7.290627e+00,b=1.783291e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.084083e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=0,mode=quadratic,a=-7.671859e+00,b=-2.694251e-03,c=9.307574e-05,t_mean=7.100000e+01,rms_error=1.590571e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=1,mode=linear(c_quadratic=-2.498667e-11<=0),a=-7.958245e+00,b=-6.028892e-04,c=0.000000e+00,t_mean=7.100000e+01,rms_error=2.805020e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=0,mode=slope7,C=-7.131111e+00,ka=-8.733090e-03,kb=9.895202e+00,tau=1.412346e+05,b_original=-2.694251e-03,rms_error=1.892603e-01,points=143
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=1,mode=slope7,C=-7.615763e+00,ka=-2.262099e-02,kb=-5.910175e-04,tau=1.476186e+01,b_original=-6.028892e-04,rms_error=2.680078e-01,points=143
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=2,mode=linear,a=-8.295598e+00,b=1.739570e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.061027e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=0,mode=quadratic,a=-8.698771e+00,b=-1.893605e-03,c=4.913497e-05,t_mean=7.100000e+01,rms_error=1.576833e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=0,mode=slope7,C=-8.333436e+00,ka=-6.162841e-03,kb=7.080979e-01,tau=1.534423e+04,b_original=-1.893605e-03,rms_error=1.840223e-01,points=143
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=1,mode=linear,a=-8.991388e+00,b=2.498953e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.185587e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=2,mode=linear,a=-9.336333e+00,b=1.965518e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.329646e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=0,mode=quadratic,a=-9.729097e+00,b=-1.601722e-03,c=5.765281e-06,t_mean=7.100000e+01,rms_error=1.721835e-01,points=116
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=0,mode=slope7,C=-9.494237e+00,ka=-4.158054e-03,kb=9.296699e-01,tau=3.065703e+04,b_original=-1.601722e-03,rms_error=1.882059e-01,points=143
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=1,mode=linear,a=-1.003934e+01,b=2.990199e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.660533e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=2,mode=linear,a=-1.043989e+01,b=3.459691e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.899427e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=0,mode=linear,a=-1.066356e+01,b=2.339180e-05,c=0.000000e+00,t_mean=7.100000e+01,rms_error=2.553867e-01,points=116
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=1,mode=linear(c_quadratic=-5.115764e-05<=0),a=-1.118092e+01,b=-4.592819e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.498672e-01,points=106
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=1,mode=slope7,C=-1.115753e+01,ka=-1.631982e-03,kb=-7.961297e-04,tau=1.000012e-03,b_original=-4.592819e-03,rms_error=5.524275e-01,points=131
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=2,mode=linear,a=-1.120911e+01,b=3.521873e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.441673e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=0,mode=linear,a=-1.144547e+01,b=1.600371e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.029241e-01,points=116
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=1,mode=linear,a=-1.199665e+01,b=6.869437e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.392820e-01,points=87
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=2,mode=linear,a=-1.145430e+01,b=3.765438e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.689567e-01,points=108
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=0,mode=linear(c_quadratic=-2.219760e-05<=0),a=-1.225250e+01,b=-3.023283e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.405476e-01,points=114
+SLOPE7_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=0,mode=slope7,C=-1.191769e+01,ka=-4.184848e+00,kb=3.897611e-05,tau=1.055554e-01,b_original=-3.023283e-03,rms_error=5.719610e-01,points=141
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=1,mode=linear,a=-1.225419e+01,b=4.284773e-06,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.624120e-01,points=72
 SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=2,mode=linear,a=-1.103031e+01,b=8.546469e-06,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.090819e-01,points=46
 [Info] Processing sheet: 2022_06
@@ -212,31 +213,31 @@ SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=2,mode=linear,a=-1.103031e+01,b=
   YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 37% 27% total=1337981
   YoB 1990, % vaxxed=62  alive_by_dose= 38% 2% 41% 19% total=1073974
   YoB 2000, % vaxxed=58  alive_by_dose= 42% 2% 47% 9% total=1020738
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=0,mode=quadratic,a=-5.041115e+00,b=-5.487795e-03,c=3.304380e-05,t_mean=5.700000e+01,rms_error=2.388171e-01,points=111
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=0,mode=slope7,C=-4.663040e+00,ka=-9.182801e-03,kb=1.315272e+00,tau=1.895556e+04,b_original=-5.487795e-03,rms_error=2.465435e-01,points=115
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=1,mode=linear,a=-5.246130e+00,b=5.192307e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.817797e-01,points=78
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=2,mode=quadratic,a=-4.975134e+00,b=-2.257173e-03,c=2.798500e-05,t_mean=5.700000e+01,rms_error=3.090508e-01,points=111
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=2,mode=slope7,C=-4.422232e+00,ka=-9.270060e-02,kb=-1.349507e-03,tau=5.501102e+00,b_original=-2.257173e-03,rms_error=3.007144e-01,points=115
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=3,mode=linear,a=-5.177065e+00,b=1.852008e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.687208e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=0,mode=quadratic,a=-5.747069e+00,b=-2.691833e-03,c=6.729983e-05,t_mean=5.700000e+01,rms_error=1.878955e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=1,mode=quadratic,a=-5.557435e+00,b=-5.799652e-03,c=3.234869e-05,t_mean=5.700000e+01,rms_error=5.603752e-01,points=109
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=2,mode=quadratic,a=-5.847935e+00,b=-2.094852e-03,c=8.684335e-05,t_mean=5.700000e+01,rms_error=1.658613e-01,points=111
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=0,mode=slope7,C=-5.018609e+00,ka=-1.199233e-01,kb=-1.287435e-03,tau=5.279664e+00,b_original=-2.691833e-03,rms_error=1.783895e-01,points=115
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=1,mode=slope7,C=-5.046098e+00,ka=-6.155976e-02,kb=-2.469270e-03,tau=7.461101e+00,b_original=-5.799652e-03,rms_error=5.433244e-01,points=113
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=2,mode=slope7,C=-5.258882e+00,ka=-7.417852e-02,kb=-1.363555e-03,tau=6.353978e+00,b_original=-2.094852e-03,rms_error=1.612709e-01,points=115
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=3,mode=linear,a=-6.206778e+00,b=2.639537e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.209575e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,mode=quadratic,a=-6.768270e+00,b=-3.095402e-03,c=9.871006e-05,t_mean=5.700000e+01,rms_error=1.656953e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,mode=quadratic,a=-6.508669e+00,b=-3.019044e-03,c=7.399491e-05,t_mean=5.700000e+01,rms_error=4.686479e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,mode=quadratic,a=-6.887720e+00,b=-2.602065e-03,c=6.927959e-05,t_mean=5.700000e+01,rms_error=1.566757e-01,points=111
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,mode=slope7,C=-5.950339e+00,ka=-1.173409e-01,kb=-1.457438e-03,tau=5.891602e+00,b_original=-3.095402e-03,rms_error=1.544457e-01,points=115
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,mode=slope7,C=-5.173977e+00,ka=-2.537558e-01,kb=-1.422785e-03,tau=4.937946e+00,b_original=-3.019044e-03,rms_error=4.535818e-01,points=115
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,mode=slope7,C=-6.195614e+00,ka=-1.130500e-01,kb=-1.054994e-03,tau=5.138914e+00,b_original=-2.602065e-03,rms_error=1.447250e-01,points=115
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=3,mode=linear,a=-7.350828e+00,b=2.863351e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.139867e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,mode=quadratic,a=-7.658318e+00,b=-2.478236e-03,c=7.986669e-05,t_mean=5.700000e+01,rms_error=1.472630e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,mode=quadratic,a=-7.235237e+00,b=-2.080439e-03,c=6.041178e-05,t_mean=5.700000e+01,rms_error=4.275915e-01,points=107
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,mode=quadratic,a=-7.881006e+00,b=-2.058745e-03,c=6.813208e-05,t_mean=5.700000e+01,rms_error=1.396327e-01,points=111
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,mode=slope7,C=-6.982843e+00,ka=-9.380432e-02,kb=-1.498940e-03,tau=6.108610e+00,b_original=-2.478236e-03,rms_error=1.379781e-01,points=115
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,mode=slope7,C=-6.384083e+00,ka=-2.304269e-01,kb=-1.699567e-03,tau=3.473224e+00,b_original=-2.080439e-03,rms_error=4.233316e-01,points=110
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,mode=slope7,C=-7.470361e+00,ka=-4.497389e-02,kb=-1.223960e-03,tau=7.109993e+00,b_original=-2.058745e-03,rms_error=1.372397e-01,points=115
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=3,mode=linear,a=-8.350051e+00,b=3.061771e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.207671e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,mode=quadratic,a=-8.688562e+00,b=-2.518418e-03,c=2.466402e-05,t_mean=5.700000e+01,rms_error=1.746734e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,mode=quadratic,a=-8.267146e+00,b=-4.227701e-03,c=9.212553e-05,t_mean=5.700000e+01,rms_error=5.234539e-01,points=98
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,mode=slope7,C=-8.355234e+00,ka=-6.063675e-02,kb=-1.847457e-03,tau=3.806108e+00,b_original=-2.518418e-03,rms_error=1.710300e-01,points=115
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,mode=slope7,C=-7.727523e+00,ka=-2.367940e-02,kb=1.917199e-03,tau=2.850332e+01,b_original=-4.227701e-03,rms_error=5.211655e-01,points=101
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=2,mode=linear,a=-9.049307e+00,b=1.156193e-04,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.804050e-01,points=111
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=3,mode=linear,a=-9.334785e+00,b=4.044930e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.451370e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=0,mode=quadratic,a=-9.740026e+00,b=-2.139704e-03,c=1.665680e-05,t_mean=5.700000e+01,rms_error=2.003783e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=1,mode=quadratic,a=-9.004520e+00,b=-1.025022e-02,c=1.278501e-05,t_mean=5.700000e+01,rms_error=5.122707e-01,points=83
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=0,mode=slope7,C=-9.504526e+00,ka=-2.586532e-02,kb=-1.110154e-03,tau=7.209712e+00,b_original=-2.139704e-03,rms_error=1.962015e-01,points=115
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=1,mode=slope7,C=-8.206878e+00,ka=-1.164396e-01,kb=-1.796900e-03,tau=6.277070e+00,b_original=-1.025022e-02,rms_error=4.631619e-01,points=87
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=2,mode=linear,a=-1.018468e+01,b=7.818028e-04,c=0.000000e+00,t_mean=5.700000e+01,rms_error=2.145748e-01,points=111
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=3,mode=linear,a=-1.040174e+01,b=4.756082e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=2.083175e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=0,mode=quadratic,a=-1.062229e+01,b=-1.104923e-03,c=6.243872e-06,t_mean=5.700000e+01,rms_error=3.152323e-01,points=111
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=0,mode=slope7,C=-1.057880e+01,ka=-1.146201e-03,kb=-1.146193e-03,tau=1.000000e-03,b_original=-1.104923e-03,rms_error=3.202820e-01,points=115
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=1,mode=linear,a=-9.850277e+00,b=3.936795e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=4.038381e-01,points=59
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=2,mode=linear,a=-1.116674e+01,b=1.648691e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=3.949326e-01,points=111
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=3,mode=linear,a=-1.118977e+01,b=1.564764e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=4.930223e-01,points=111
@@ -244,7 +245,7 @@ SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=0,mode=linear,a=-1.140214e+01,b=
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=1,mode=linear,a=-9.933536e+00,b=1.300291e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.760916e-01,points=31
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=2,mode=linear,a=-1.190648e+01,b=8.408708e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.836624e-01,points=107
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=3,mode=linear,a=-1.153556e+01,b=1.052089e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.437086e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=0,mode=linear(c_quadratic=-2.542446e-05<=0),a=-1.204321e+01,b=-4.307860e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.587602e-01,points=101
+SLOPE7_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=0,mode=slope7,C=-1.136495e+01,ka=-7.154843e-01,kb=-5.242156e-04,tau=9.923776e-01,b_original=-4.307860e-03,rms_error=5.388550e-01,points=104
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=1,mode=linear,a=-9.939814e+00,b=5.227187e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=2.089727e-01,points=11
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=2,mode=linear,a=-1.238620e+01,b=4.172206e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.490717e-01,points=96
 SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=3,mode=linear,a=-1.138305e+01,b=6.636338e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=3.570340e-01,points=49
@@ -262,28 +263,28 @@ SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=3,mode=linear,a=-1.138305e+01,b=
   YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 33% 32% total=1337504
   YoB 1990, % vaxxed=63  alive_by_dose= 37% 1% 37% 24% total=1073781
   YoB 2000, % vaxxed=58  alive_by_dose= 42% 1% 42% 15% total=1020621
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=0,mode=quadratic,a=-5.092469e+00,b=-5.650065e-03,c=3.901127e-05,t_mean=4.700000e+01,rms_error=2.488629e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=0,mode=slope7,C=-4.803421e+00,ka=-8.372136e-03,kb=1.644295e+00,tau=2.213612e+04,b_original=-5.650065e-03,rms_error=2.565831e-01,points=95
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=1,mode=linear,a=-4.930252e+00,b=5.181958e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.465107e-01,points=49
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=2,mode=linear(c_quadratic=-1.806102e-05<=0),a=-4.964394e+00,b=-1.791438e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.024947e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=2,mode=slope7,C=-4.919973e+00,ka=-1.396298e-03,kb=-1.396298e-03,tau=4.758179e+03,b_original=-1.791438e-03,rms_error=2.988602e-01,points=95
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=3,mode=linear,a=-5.136544e+00,b=9.670121e-04,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.726206e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=0,mode=quadratic,a=-5.736954e+00,b=-1.444376e-03,c=1.552300e-05,t_mean=4.700000e+01,rms_error=1.814637e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=1,mode=quadratic,a=-5.682695e+00,b=-3.410213e-03,c=1.230612e-04,t_mean=4.700000e+01,rms_error=5.502825e-01,points=87
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=2,mode=quadratic,a=-5.796217e+00,b=-1.957426e-03,c=2.124485e-05,t_mean=4.700000e+01,rms_error=1.890774e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=0,mode=slope7,C=-5.604505e+00,ka=-4.211458e-03,kb=9.397125e-01,tau=1.831126e+04,b_original=-1.444376e-03,rms_error=1.830711e-01,points=95
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=1,mode=slope7,C=-5.487199e+00,ka=-3.299546e-03,kb=-3.299546e-03,tau=7.845163e-03,b_original=-3.410213e-03,rms_error=5.449612e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=2,mode=slope7,C=-5.673074e+00,ka=-4.609494e-03,kb=1.373397e+00,tau=2.293140e+04,b_original=-1.957426e-03,rms_error=1.870153e-01,points=95
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=3,mode=linear,a=-6.154955e+00,b=2.076705e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.237659e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=0,mode=quadratic,a=-6.770988e+00,b=-1.982371e-03,c=6.776645e-05,t_mean=4.700000e+01,rms_error=1.632610e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=1,mode=linear(c_quadratic=-5.377495e-05<=0),a=-6.450250e+00,b=-4.115929e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.284853e-01,points=89
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=2,mode=quadratic,a=-6.864278e+00,b=-7.428073e-04,c=5.570572e-05,t_mean=4.700000e+01,rms_error=1.572128e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=0,mode=slope7,C=-6.571688e+00,ka=-6.403958e-03,kb=1.509707e+00,tau=1.546611e+04,b_original=-1.982371e-03,rms_error=1.626595e-01,points=95
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=1,mode=slope7,C=-6.250190e+00,ka=-1.207374e-01,kb=-3.654198e-03,tau=8.493340e-01,b_original=-4.115929e-03,rms_error=5.319513e-01,points=93
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=2,mode=slope7,C=-6.726592e+00,ka=-3.294990e-03,kb=3.731573e-01,tau=7.917374e+03,b_original=-7.428073e-04,rms_error=1.566500e-01,points=95
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=3,mode=linear,a=-7.312968e+00,b=1.899908e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.130889e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=0,mode=quadratic,a=-7.661374e+00,b=-1.765155e-03,c=4.912384e-05,t_mean=4.700000e+01,rms_error=1.388041e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=1,mode=quadratic,a=-7.518202e+00,b=-5.337411e-03,c=2.131426e-04,t_mean=4.700000e+01,rms_error=5.569837e-01,points=86
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=2,mode=quadratic,a=-7.826046e+00,b=-1.429919e-03,c=4.771581e-06,t_mean=4.700000e+01,rms_error=1.346906e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=0,mode=slope7,C=-7.492824e+00,ka=-6.116034e-03,kb=7.394099e+00,tau=8.055409e+04,b_original=-1.765155e-03,rms_error=1.378637e-01,points=95
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=1,mode=slope7,C=-6.935041e+00,ka=-1.389876e-02,kb=1.088931e+00,tau=6.591227e+03,b_original=-5.337411e-03,rms_error=5.572112e-01,points=89
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=2,mode=slope7,C=-7.728596e+00,ka=-1.772307e-03,kb=-1.772307e-03,tau=9.984981e+00,b_original=-1.429919e-03,rms_error=1.374991e-01,points=95
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=3,mode=linear,a=-8.285511e+00,b=2.145963e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.160363e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=0,mode=quadratic,a=-8.712040e+00,b=-1.288216e-03,c=4.466640e-05,t_mean=4.700000e+01,rms_error=1.826334e-01,points=91
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=0,mode=slope7,C=-8.586790e+00,ka=-3.155547e-03,kb=2.797332e-01,tau=1.259556e+04,b_original=-1.288216e-03,rms_error=1.780336e-01,points=95
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=1,mode=linear,a=-7.991895e+00,b=2.492079e-04,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.447384e-01,points=73
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=2,mode=linear,a=-9.003744e+00,b=1.586002e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.867503e-01,points=91
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=3,mode=linear,a=-9.288961e+00,b=3.441935e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.334591e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=0,mode=linear(c_quadratic=-9.530863e-06<=0),a=-9.743584e+00,b=-1.192814e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.901023e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=1,mode=linear(c_quadratic=-1.627249e-04<=0),a=-8.882959e+00,b=-8.144627e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.429686e-01,points=62
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=0,mode=slope7,C=-9.404580e+00,ka=-1.753742e-01,kb=-1.301215e-03,tau=1.672895e+00,b_original=-1.192814e-03,rms_error=1.843421e-01,points=95
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=1,mode=slope7,C=-8.824827e+00,ka=-1.946283e-04,kb=-1.946283e-04,tau=1.153895e+03,b_original=-8.144627e-03,rms_error=4.069865e-01,points=65
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=2,mode=linear,a=-1.014262e+01,b=1.008492e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=2.352825e-01,points=91
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=3,mode=linear,a=-1.031100e+01,b=2.291335e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.943460e-01,points=91
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=0,mode=linear,a=-1.063617e+01,b=2.310537e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.238804e-01,points=91
@@ -292,9 +293,9 @@ SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=2,mode=linear,a=-1.120598e+01,b=
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=3,mode=linear,a=-1.119038e+01,b=3.810740e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.877943e-01,points=91
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=0,mode=linear,a=-1.129026e+01,b=1.226168e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.551368e-01,points=89
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=1,mode=linear,a=-9.573509e+00,b=1.189696e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=2.248542e-01,points=19
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=2,mode=quadratic,a=-1.177654e+01,b=-4.350877e-03,c=9.737842e-05,t_mean=4.700000e+01,rms_error=5.415738e-01,points=87
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=2,mode=slope7,C=-1.157569e+01,ka=-6.103050e-03,kb=2.354982e-01,tau=1.004121e+04,b_original=-4.350877e-03,rms_error=5.304797e-01,points=91
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=3,mode=linear,a=-1.162086e+01,b=5.415893e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.787479e-01,points=84
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=0,mode=quadratic,a=-1.217338e+01,b=-4.879649e-03,c=5.999684e-05,t_mean=4.700000e+01,rms_error=5.330089e-01,points=82
+SLOPE7_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=0,mode=slope7,C=-1.148912e+01,ka=-2.692051e-01,kb=-9.208852e-04,tau=2.179788e+00,b_original=-4.879649e-03,rms_error=5.190359e-01,points=85
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=1,mode=linear,a=-9.463954e+00,b=6.590615e-06,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.099728e-01,points=5
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=2,mode=linear,a=-1.227198e+01,b=4.461002e-06,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.358532e-01,points=73
 SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=3,mode=linear,a=-1.193596e+01,b=5.148751e-06,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.377386e-01,points=54
@@ -312,39 +313,39 @@ SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=3,mode=linear,a=-1.193596e+01,b=
   YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 32% 31% 2% total=1337052
   YoB 1990, % vaxxed=63  alive_by_dose= 37% 1% 35% 25% 1% total=1073590
   YoB 2000, % vaxxed=58  alive_by_dose= 42% 1% 40% 16% 0% total=1020528
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=0,mode=quadratic,a=-5.260665e+00,b=-5.602987e-03,c=3.053843e-04,t_mean=3.650000e+01,rms_error=2.228121e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=0,mode=slope7,C=-4.615145e+00,ka=-4.663571e-02,kb=6.657320e-03,tau=1.997291e+01,b_original=-5.602987e-03,rms_error=2.420680e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=1,mode=linear,a=-4.900183e+00,b=6.235434e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=4.586248e-01,points=38
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=2,mode=linear(c_quadratic=-6.167615e-09<=0),a=-4.952893e+00,b=-2.533841e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=4.089784e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=3,mode=quadratic,a=-5.175444e+00,b=-1.085926e-03,c=2.195988e-04,t_mean=3.650000e+01,rms_error=2.047605e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=2,mode=slope7,C=-4.760638e+00,ka=-2.331199e-02,kb=8.188983e-03,tau=2.714718e+01,b_original=-2.533841e-03,rms_error=3.878675e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=3,mode=slope7,C=-4.659391e+00,ka=-5.460603e-02,kb=5.188493e-03,tau=1.312380e+01,b_original=-1.085926e-03,rms_error=1.916835e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=4,mode=linear,a=-5.148350e+00,b=2.970965e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=2.302700e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=0,mode=quadratic,a=-5.851686e+00,b=-2.816879e-03,c=2.818440e-04,t_mean=3.650000e+01,rms_error=1.714001e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=1,mode=quadratic,a=-5.687570e+00,b=-6.318367e-03,c=3.742707e-04,t_mean=3.650000e+01,rms_error=6.003037e-01,points=68
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=2,mode=quadratic,a=-5.881063e+00,b=-1.676997e-03,c=1.701952e-04,t_mean=3.650000e+01,rms_error=1.873298e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=3,mode=quadratic,a=-6.189458e+00,b=-6.854044e-04,c=2.728495e-04,t_mean=3.650000e+01,rms_error=1.166034e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=0,mode=slope7,C=-5.381979e+00,ka=-3.921252e-02,kb=5.204921e-03,tau=1.613157e+01,b_original=-2.816879e-03,rms_error=1.710886e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=1,mode=slope7,C=-5.002082e+00,ka=-6.569922e-02,kb=1.008808e-02,tau=1.682612e+01,b_original=-6.318367e-03,rms_error=5.764660e-01,points=71
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=2,mode=slope7,C=-5.445856e+00,ka=-4.920258e-02,kb=4.287819e-03,tau=1.227782e+01,b_original=-1.676997e-03,rms_error=1.801255e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=3,mode=slope7,C=-5.829356e+00,ka=-2.636573e-02,kb=8.058924e-03,tau=2.254264e+01,b_original=-6.854044e-04,rms_error=1.121411e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=4,mode=linear,a=-6.214634e+00,b=2.189285e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.399784e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=0,mode=quadratic,a=-6.846493e+00,b=-2.111100e-03,c=2.531511e-04,t_mean=3.650000e+01,rms_error=1.609069e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=1,mode=quadratic,a=-6.610913e+00,b=-9.229037e-03,c=2.872588e-04,t_mean=3.650000e+01,rms_error=5.229566e-01,points=69
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=2,mode=quadratic,a=-6.924378e+00,b=-7.518244e-04,c=1.958409e-04,t_mean=3.650000e+01,rms_error=1.513258e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=3,mode=quadratic,a=-7.296894e+00,b=-1.123552e-03,c=2.201025e-04,t_mean=3.650000e+01,rms_error=1.058514e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=0,mode=slope7,C=-6.454428e+00,ka=-3.424031e-02,kb=5.121854e-03,tau=1.586126e+01,b_original=-2.111100e-03,rms_error=1.547305e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=1,mode=slope7,C=-5.800542e+00,ka=-5.226963e-02,kb=5.214770e-02,tau=6.082722e+01,b_original=-9.229037e-03,rms_error=5.227224e-01,points=73
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=2,mode=slope7,C=-6.543082e+00,ka=-3.733574e-02,kb=3.303196e-03,tau=1.233835e+01,b_original=-7.518244e-04,rms_error=1.453160e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=3,mode=slope7,C=-7.008742e+00,ka=-2.081417e-02,kb=4.855343e-03,tau=2.093089e+01,b_original=-1.123552e-03,rms_error=1.063596e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=4,mode=linear,a=-7.380885e+00,b=4.449970e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.334886e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=0,mode=quadratic,a=-7.773034e+00,b=-1.104465e-03,c=2.724789e-04,t_mean=3.650000e+01,rms_error=1.159822e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=1,mode=quadratic,a=-7.495988e+00,b=-1.066426e-02,c=3.612853e-04,t_mean=3.650000e+01,rms_error=5.618172e-01,points=65
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=2,mode=quadratic,a=-7.860941e+00,b=-2.078031e-03,c=1.544813e-04,t_mean=3.650000e+01,rms_error=1.324303e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=3,mode=quadratic,a=-8.304408e+00,b=-4.771298e-04,c=1.844739e-04,t_mean=3.650000e+01,rms_error=1.160543e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=0,mode=slope7,C=-7.373412e+00,ka=-3.488490e-02,kb=4.839005e-03,tau=1.515223e+01,b_original=-1.104465e-03,rms_error=1.148306e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=1,mode=slope7,C=-7.020036e+00,ka=-1.759156e-02,kb=2.925474e-02,tau=1.394565e+02,b_original=-1.066426e-02,rms_error=5.578735e-01,points=69
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=2,mode=slope7,C=-7.531135e+00,ka=-3.001572e-02,kb=8.480342e-05,tau=1.178624e+01,b_original=-2.078031e-03,rms_error=1.381973e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=3,mode=slope7,C=-8.028311e+00,ka=-2.979722e-02,kb=3.462333e-03,tau=1.276605e+01,b_original=-4.771298e-04,rms_error=1.124448e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=4,mode=linear,a=-8.274029e+00,b=4.398307e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.632784e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=0,mode=quadratic,a=-8.756269e+00,b=-1.813072e-03,c=1.231845e-04,t_mean=3.650000e+01,rms_error=1.792740e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=0,mode=slope7,C=-8.491069e+00,ka=-1.911233e-02,kb=1.938219e-03,tau=1.961686e+01,b_original=-1.813072e-03,rms_error=1.752815e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=1,mode=linear,a=-7.995500e+00,b=2.517795e-04,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.133553e-01,points=59
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=2,mode=linear,a=-8.989191e+00,b=2.777130e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.968479e-01,points=70
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=3,mode=linear,a=-9.265160e+00,b=1.180271e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.301576e-01,points=70
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=4,mode=linear,a=-9.015843e+00,b=4.259883e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=3.917877e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=0,mode=quadratic,a=-9.793738e+00,b=-3.352278e-03,c=1.136547e-04,t_mean=3.650000e+01,rms_error=1.977666e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=1,mode=quadratic,a=-9.083342e+00,b=-1.206378e-02,c=2.535549e-04,t_mean=3.650000e+01,rms_error=4.767468e-01,points=44
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=0,mode=slope7,C=-9.591378e+00,ka=-1.234399e-02,kb=4.305644e-03,tau=3.335063e+01,b_original=-3.352278e-03,rms_error=1.910538e-01,points=74
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=1,mode=slope7,C=-8.635942e+00,ka=-1.464894e-02,kb=1.180958e+01,tau=3.211750e+04,b_original=-1.206378e-02,rms_error=4.225342e-01,points=47
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=2,mode=linear,a=-1.011542e+01,b=1.401066e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=2.384031e-01,points=70
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=3,mode=linear,a=-1.032489e+01,b=2.100034e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.923329e-01,points=70
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=4,mode=linear,a=-9.649868e+00,b=5.696373e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.421592e-01,points=62
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=0,mode=linear,a=-1.063291e+01,b=2.443868e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=3.142521e-01,points=70
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=1,mode=linear,a=-9.543508e+00,b=4.591219e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=3.280991e-01,points=38
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=2,mode=linear(c_quadratic=-1.407807e-04<=0),a=-1.110265e+01,b=-2.688773e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=4.558241e-01,points=70
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=2,mode=slope7,C=-1.109161e+01,ka=-6.680303e-02,kb=2.688750e-03,tau=2.552641e+00,b_original=-2.688773e-03,rms_error=4.362016e-01,points=74
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=3,mode=linear,a=-1.115200e+01,b=1.258704e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=4.871769e-01,points=69
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=4,mode=linear,a=-1.006661e+01,b=3.692390e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.945589e-01,points=38
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=0,mode=linear,a=-1.128668e+01,b=1.215746e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=4.822465e-01,points=69
@@ -352,7 +353,7 @@ SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=1,mode=linear,a=-9.569330e+00,b=
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=2,mode=linear,a=-1.174572e+01,b=7.282404e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.957365e-01,points=66
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=3,mode=linear,a=-1.141145e+01,b=8.692520e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=6.335106e-01,points=62
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=4,mode=linear,a=-9.254018e+00,b=2.087595e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.240360e-04,points=16
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=0,mode=quadratic,a=-1.217247e+01,b=-6.330248e-03,c=1.025435e-04,t_mean=3.650000e+01,rms_error=5.495429e-01,points=61
+SLOPE7_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=0,mode=slope7,C=-1.156456e+01,ka=-1.227211e+00,kb=-1.433497e-04,tau=4.619905e-01,b_original=-6.330248e-03,rms_error=5.241927e-01,points=64
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=1,status=insufficient_data,points=4
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=2,mode=linear,a=-1.223713e+01,b=4.231098e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.472850e-01,points=54
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=3,mode=linear,a=-1.201750e+01,b=4.939110e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.218139e-01,points=38
@@ -369,12 +370,12 @@ Dose combination: 1 vs 0 [2021_13]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1752 [1.154, 1.197] | -
-  All Ages        |   1.5842 [1.559, 1.609] | 1.5700
-  1920            |   0.8202 [0.769, 0.875] | 1.1350  (beta_num=0.002233, beta_den=-0.003376, c_num=0.000000, c_den=0.000016)
-  1930            |   0.8467 [0.821, 0.873] | 1.2529  (beta_num=0.001259, beta_den=-0.001388, c_num=0.000000, c_den=0.000065)
-  1940            |   1.4416 [1.410, 1.474] | 1.9151  (beta_num=0.001795, beta_den=-0.000691, c_num=0.000000, c_den=0.000042)
-  1950            |   1.4717 [1.390, 1.559] | 1.7106  (beta_num=0.000295, beta_den=-0.000285, c_num=0.000000, c_den=0.000030)
+  ASMR (direct)   |   1.2386 [1.216, 1.262] | -
+  All Ages        |   0.3020 [0.297, 0.307] | 1.5700  (beta_num=0.000083, beta_den=-0.031195)
+  1920            |   0.9289 [0.871, 0.991] | 1.1350  (beta_num=0.002233, b_original_den=-0.003376, C_den=-4.579596e+00, ka_den=-2.813585e-01, kb_den=-1.793535e-03, tau_den=1.052647e+00)
+  1930            |   1.0815 [1.049, 1.115] | 1.2529  (beta_num=0.001259, b_original_den=-0.001388, C_den=-5.635907e+00, ka_den=-2.369812e-03, kb_den=4.080917e-01, tau_den=3.969712e+04)
+  1940            |   1.3198 [1.291, 1.349] | 1.9151  (beta_num=0.001795, b_original_den=-0.000691, C_den=-6.163345e+00, ka_den=-2.812783e-01, kb_den=-6.235429e-04, tau_den=2.987491e+00)
+  1950            |   1.3789 [1.302, 1.460] | 1.7106  (beta_num=0.000295, b_original_den=-0.000285, C_den=-7.381071e+00, ka_den=-2.476129e-01, kb_den=-1.908945e-04, tau_den=2.742116e+00)
   1960            |   1.4010 [1.255, 1.564] | 1.3723  (beta_num=0.000073, beta_den=0.000556)
   1970            |   3.3948 [2.872, 4.013] | 3.3944  (beta_num=0.000037, beta_den=0.000043)
   1980            |   1.0820 [0.800, 1.464] | 1.0455  (beta_num=0.000020, beta_den=0.000798)
@@ -385,12 +386,12 @@ Dose combination: 2 vs 0 [2021_13]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.2721 [1.251, 1.294] | -
-  All Ages        |   1.8536 [1.831, 1.877] | 1.8353
-  1920            |   1.1686 [1.128, 1.210] | 1.5473  (beta_num=0.001224, beta_den=-0.003376, c_num=0.000000, c_den=0.000016)
-  1930            |   1.2667 [1.242, 1.292] | 1.9017  (beta_num=0.001537, beta_den=-0.001388, c_num=0.000000, c_den=0.000065)
-  1940            |   1.4547 [1.414, 1.497] | 1.8232  (beta_num=0.000585, beta_den=-0.000691, c_num=0.000000, c_den=0.000042)
-  1950            |   1.0628 [1.004, 1.125] | 1.2401  (beta_num=0.000394, beta_den=-0.000285, c_num=0.000000, c_den=0.000030)
+  ASMR (direct)   |   1.3402 [1.318, 1.363] | -
+  All Ages        |   0.3533 [0.349, 0.358] | 1.8353  (beta_num=0.000063, beta_den=-0.031195)
+  1920            |   1.3235 [1.278, 1.371] | 1.5473  (beta_num=0.001224, b_original_den=-0.003376, C_den=-4.579596e+00, ka_den=-2.813585e-01, kb_den=-1.793535e-03, tau_den=1.052647e+00)
+  1930            |   1.6181 [1.587, 1.650] | 1.9017  (beta_num=0.001537, b_original_den=-0.001388, C_den=-5.635907e+00, ka_den=-2.369812e-03, kb_den=4.080917e-01, tau_den=3.969712e+04)
+  1940            |   1.3318 [1.294, 1.370] | 1.8232  (beta_num=0.000585, b_original_den=-0.000691, C_den=-6.163345e+00, ka_den=-2.812783e-01, kb_den=-6.235429e-04, tau_den=2.987491e+00)
+  1950            |   0.9958 [0.941, 1.054] | 1.2401  (beta_num=0.000394, b_original_den=-0.000285, C_den=-7.381071e+00, ka_den=-2.476129e-01, kb_den=-1.908945e-04, tau_den=2.742116e+00)
   1960            |   1.4708 [1.330, 1.626] | 1.4419  (beta_num=0.000090, beta_den=0.000556)
   1970            |   1.1932 [1.010, 1.410] | 1.1927  (beta_num=0.000031, beta_den=0.000043)
   1980            |   0.7643 [0.586, 0.996] | 0.7387  (beta_num=0.000022, beta_den=0.000798)
@@ -402,7 +403,7 @@ Dose combination: 2 vs 1 [2021_13]
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
   ASMR (direct)   |   1.0825 [1.058, 1.108] | -
-  All Ages        |   1.1700 [1.149, 1.191] | 1.1689
+  All Ages        |   1.1700 [1.149, 1.191] | 1.1689  (beta_num=0.000063, beta_den=0.000083)
   1920            |   1.4248 [1.336, 1.520] | 1.3633  (beta_num=0.001224, beta_den=0.002233)
   1930            |   1.4961 [1.451, 1.543] | 1.5179  (beta_num=0.001537, beta_den=0.001259)
   1940            |   1.0091 [0.977, 1.042] | 0.9520  (beta_num=0.000585, beta_den=0.001795)
@@ -420,45 +421,45 @@ Dose combination: 1 vs 0 [2021_20]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9016 [0.886, 0.918] | -
-  All Ages        |   1.5311 [1.508, 1.554] | 1.5169
-  1920            |   0.6361 [0.586, 0.690] | 0.7695  (beta_num=-0.000996, beta_den=-0.003922, c_num=0.000002, c_den=0.000019)
-  1930            |   0.7374 [0.709, 0.767] | 1.1856  (beta_num=0.001298, beta_den=-0.002818, c_num=0.000000, c_den=0.000081)
-  1940            |   0.9156 [0.892, 0.940] | 1.3855  (beta_num=0.001426, beta_den=-0.002256, c_num=0.000000, c_den=0.000072)
-  1950            |   1.2711 [1.238, 1.305] | 1.9121  (beta_num=0.002270, beta_den=-0.001697, c_num=0.000000, c_den=0.000066)
-  1960            |   1.2784 [1.221, 1.339] | 1.6420  (beta_num=0.002723, beta_den=-0.000235, c_num=0.000000, c_den=0.000035)
+  ASMR (direct)   |   1.1216 [1.102, 1.142] | -
+  All Ages        |   0.0903 [0.089, 0.092] | 1.5169  (beta_num=-0.006410, beta_den=-0.058306)
+  1920            |   0.7046 [0.649, 0.764] | 0.7695  (b_original_num=-0.000996, C_num=-5.184393e+00, ka_num=-1.201746e-03, kb_num=1.164083e-03, tau_num=6.279570e+01, b_original_den=-0.003922, C_den=-4.812380e+00, ka_den=-2.446433e-03, kb_den=-2.446424e-03, tau_den=9.119209e-02)
+  1930            |   1.0397 [1.000, 1.082] | 1.1856  (beta_num=0.001298, b_original_den=-0.002818, C_den=-5.557673e+00, ka_den=-1.935105e-03, kb_den=-1.935105e-03, tau_den=9.082617e+02)
+  1940            |   1.1221 [1.093, 1.152] | 1.3855  (beta_num=0.001426, b_original_den=-0.002256, C_den=-6.473136e+00, ka_den=-4.678088e-03, kb_den=7.952854e-01, tau_den=2.835996e+04)
+  1950            |   1.5120 [1.473, 1.553] | 1.9121  (beta_num=0.002270, b_original_den=-0.001697, C_den=-7.454442e+00, ka_den=-4.242333e-03, kb_den=8.138104e-01, tau_den=3.176149e+04)
+  1960            |   1.3835 [1.321, 1.449] | 1.6420  (beta_num=0.002723, b_original_den=-0.000235, C_den=-8.705123e+00, ka_den=-1.725863e-03, kb_den=3.684783e-01, tau_den=4.087843e+04)
   1970            |   1.1430 [1.048, 1.247] | 1.3515  (beta_num=0.004110, beta_den=0.000044)
   1980            |   1.3297 [1.116, 1.585] | 1.2853  (beta_num=0.000022, beta_den=0.000866)
   1990            |   1.4191 [1.035, 1.945] | 1.4191  (beta_num=0.000014, beta_den=0.000010)
-  2000            |   7.8992 [5.040, 12.380] | 7.2674  (beta_num=0.000026, beta_den=-0.002893)
+  2000            |   0.0000 [0.000, 0.000] | 7.2674  (beta_num=0.000026, b_original_den=-0.002893, C_den=-1.254005e+01, ka_den=1.479717e-03, kb_den=1.479717e-03, tau_den=1.279271e+00)
 
 Dose combination: 2 vs 0 [2021_20]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9249 [0.913, 0.937] | -
-  All Ages        |   1.4402 [1.424, 1.457] | 1.4228
-  1920            |   0.8403 [0.810, 0.872] | 1.1345  (beta_num=0.001460, beta_den=-0.003922, c_num=0.000000, c_den=0.000019)
-  1930            |   0.7837 [0.768, 0.800] | 1.2884  (beta_num=0.001778, beta_den=-0.002818, c_num=0.000000, c_den=0.000081)
-  1940            |   1.0495 [1.028, 1.072] | 1.6131  (beta_num=0.001794, beta_den=-0.002256, c_num=0.000000, c_den=0.000072)
-  1950            |   0.8966 [0.862, 0.932] | 1.2397  (beta_num=0.000343, beta_den=-0.001697, c_num=0.000000, c_den=0.000066)
-  1960            |   1.2560 [1.170, 1.349] | 1.3847  (beta_num=-0.000937, beta_den=-0.000235, c_num=0.000000, c_den=0.000035)
+  ASMR (direct)   |   1.1495 [1.135, 1.165] | -
+  All Ages        |   0.1083 [0.107, 0.110] | 1.4228  (beta_num=-0.011677, beta_den=-0.058306)
+  1920            |   0.9627 [0.928, 0.999] | 1.1345  (beta_num=0.001460, b_original_den=-0.003922, C_den=-4.812380e+00, ka_den=-2.446433e-03, kb_den=-2.446424e-03, tau_den=9.119209e-02)
+  1930            |   1.1049 [1.083, 1.128] | 1.2884  (beta_num=0.001778, b_original_den=-0.002818, C_den=-5.557673e+00, ka_den=-1.935105e-03, kb_den=-1.935105e-03, tau_den=9.082617e+02)
+  1940            |   1.2862 [1.260, 1.313] | 1.6131  (beta_num=0.001794, b_original_den=-0.002256, C_den=-6.473136e+00, ka_den=-4.678088e-03, kb_den=7.952854e-01, tau_den=2.835996e+04)
+  1950            |   1.0665 [1.026, 1.109] | 1.2397  (beta_num=0.000343, b_original_den=-0.001697, C_den=-7.454442e+00, ka_den=-4.242333e-03, kb_den=8.138104e-01, tau_den=3.176149e+04)
+  1960            |   1.2904 [1.202, 1.386] | 1.3847  (b_original_num=-0.000937, C_num=-9.426840e+00, ka_num=3.249374e-04, kb_num=3.249374e-04, tau_num=5.056950e+03, b_original_den=-0.000235, C_den=-8.705123e+00, ka_den=-1.725863e-03, kb_den=3.684783e-01, tau_den=4.087843e+04)
   1970            |   0.9836 [0.879, 1.101] | 1.0773  (beta_num=0.002222, beta_den=0.000044)
   1980            |   2.7931 [2.312, 3.374] | 2.6997  (beta_num=0.000020, beta_den=0.000866)
   1990            |   0.7904 [0.610, 1.023] | 0.7906  (beta_num=0.000017, beta_den=0.000010)
-  2000            |   6.5021 [3.814, 11.085] | 5.9813  (beta_num=0.000022, beta_den=-0.002893)
+  2000            |   0.0000 [0.000, 0.000] | 5.9813  (beta_num=0.000022, b_original_den=-0.002893, C_den=-1.254005e+01, ka_den=1.479717e-03, kb_den=1.479717e-03, tau_den=1.279271e+00)
 
 Dose combination: 2 vs 1 [2021_20]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0269 [1.008, 1.047] | -
-  All Ages        |   0.9406 [0.926, 0.955] | 0.9380
-  1920            |   1.3210 [1.219, 1.431] | 1.4743  (beta_num=0.001460, beta_den=-0.000996, c_num=0.000000, c_den=0.000002)
+  ASMR (direct)   |   1.0276 [1.008, 1.047] | -
+  All Ages        |   1.2004 [1.182, 1.219] | 0.9380  (beta_num=-0.011677, beta_den=-0.006410)
+  1920            |   1.3664 [1.261, 1.480] | 1.4743  (beta_num=0.001460, b_original_den=-0.000996, C_den=-5.184393e+00, ka_den=-1.201746e-03, kb_den=1.164083e-03, tau_den=6.279570e+01)
   1930            |   1.0627 [1.023, 1.104] | 1.0867  (beta_num=0.001778, beta_den=0.001298)
   1940            |   1.1463 [1.116, 1.177] | 1.1642  (beta_num=0.001794, beta_den=0.001426)
   1950            |   0.7053 [0.677, 0.735] | 0.6484  (beta_num=0.000343, beta_den=0.002270)
-  1960            |   0.9825 [0.908, 1.063] | 0.8433  (beta_num=-0.000937, beta_den=0.002723)
+  1960            |   0.9327 [0.862, 1.009] | 0.8433  (b_original_num=-0.000937, C_num=-9.426840e+00, ka_num=3.249374e-04, kb_num=3.249374e-04, tau_num=5.056950e+03, beta_den=0.002723)
   1970            |   0.8606 [0.751, 0.986] | 0.7972  (beta_num=0.002222, beta_den=0.004110)
   1980            |   2.1006 [1.638, 2.693] | 2.1004  (beta_num=0.000020, beta_den=0.000022)
   1990            |   1.4486 [0.978, 2.146] | 1.4483  (beta_num=0.000017, beta_den=0.000014)
@@ -471,14 +472,14 @@ Dose combination: 1 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.7470 [0.731, 0.763] | -
-  All Ages        |   1.2617 [1.240, 1.284] | 1.2541
-  1920            |   0.5352 [0.486, 0.589] | 0.7532  (beta_num=0.002455, beta_den=-0.003955, c_num=0.000000, c_den=0.000026)
-  1930            |   0.6739 [0.644, 0.705] | 1.0250  (beta_num=0.000674, beta_den=-0.002638, c_num=0.000000, c_den=0.000083)
-  1940            |   0.6911 [0.668, 0.716] | 1.1117  (beta_num=0.001335, beta_den=-0.002666, c_num=0.000000, c_den=0.000094)
-  1950            |   0.9492 [0.919, 0.981] | 1.4435  (beta_num=0.001746, beta_den=-0.002223, c_num=0.000000, c_den=0.000079)
-  1960            |   1.0356 [0.989, 1.085] | 1.3376  (beta_num=0.002689, beta_den=-0.001162, c_num=0.000000, c_den=0.000031)
-  1970            |   1.2738 [1.190, 1.363] | 1.5006  (beta_num=0.002745, beta_den=-0.001372)
+  ASMR (direct)   |   0.9248 [0.905, 0.944] | -
+  All Ages        |   0.0807 [0.079, 0.082] | 1.2541  (beta_num=0.000273, beta_den=-0.055679)
+  1920            |   0.6135 [0.557, 0.675] | 0.7532  (beta_num=0.002455, b_original_den=-0.003955, C_den=-4.773422e+00, ka_den=-2.892532e-03, kb_den=-2.892532e-03, tau_den=1.678845e+01)
+  1930            |   0.9184 [0.878, 0.961] | 1.0250  (beta_num=0.000674, b_original_den=-0.002638, C_den=-5.515743e+00, ka_den=-2.206415e-03, kb_den=-2.206415e-03, tau_den=1.172882e-01)
+  1940            |   0.8826 [0.853, 0.914] | 1.1117  (beta_num=0.001335, b_original_den=-0.002666, C_den=-6.357555e+00, ka_den=-5.863031e-03, kb_den=1.292192e+00, tau_den=3.615708e+04)
+  1950            |   1.1207 [1.085, 1.158] | 1.4435  (beta_num=0.001746, b_original_den=-0.002223, C_den=-7.264129e+00, ka_den=-6.092774e-03, kb_den=4.908967e+00, tau_den=1.256288e+05)
+  1960            |   1.0581 [1.010, 1.108] | 1.3376  (beta_num=0.002689, b_original_den=-0.001162, C_den=-8.447270e+00, ka_den=-4.180652e-03, kb_den=5.971535e-01, tau_den=2.246000e+04)
+  1970            |   1.2433 [1.162, 1.330] | 1.5006  (beta_num=0.002745, b_original_den=-0.001372, C_den=-9.619750e+00, ka_den=-2.460682e-03, kb_den=2.782679e-01, tau_den=1.844017e+04)
   1980            |   0.8184 [0.715, 0.936] | 1.0077  (beta_num=0.005419, beta_den=0.000022)
   1990            |   3.8446 [3.039, 4.864] | 3.8447  (beta_num=0.000009, beta_den=0.000010)
   2000            |   0.7193 [0.458, 1.129] | 0.7194  (beta_num=0.000008, beta_den=0.000004)
@@ -487,14 +488,14 @@ Dose combination: 2 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.8718 [0.861, 0.883] | -
-  All Ages        |   1.3824 [1.367, 1.398] | 1.3668
-  1920            |   0.7645 [0.736, 0.794] | 1.0391  (beta_num=0.001394, beta_den=-0.003955, c_num=0.000000, c_den=0.000026)
-  1930            |   0.7520 [0.736, 0.768] | 1.1917  (beta_num=0.001670, beta_den=-0.002638, c_num=0.000000, c_den=0.000083)
-  1940            |   0.8445 [0.827, 0.862] | 1.3874  (beta_num=0.001845, beta_den=-0.002666, c_num=0.000000, c_den=0.000094)
-  1950            |   1.1167 [1.086, 1.148] | 1.6773  (beta_num=0.001440, beta_den=-0.002223, c_num=0.000000, c_den=0.000079)
-  1960            |   1.0100 [0.956, 1.067] | 1.2177  (beta_num=0.001018, beta_den=-0.001162, c_num=0.000000, c_den=0.000031)
-  1970            |   1.1520 [1.056, 1.257] | 1.2675  (beta_num=0.001152, beta_den=-0.001372)
+  ASMR (direct)   |   1.0791 [1.066, 1.093] | -
+  All Ages        |   0.0884 [0.087, 0.090] | 1.3668  (beta_num=0.000140, beta_den=-0.055679)
+  1920            |   0.8763 [0.844, 0.910] | 1.0391  (beta_num=0.001394, b_original_den=-0.003955, C_den=-4.773422e+00, ka_den=-2.892532e-03, kb_den=-2.892532e-03, tau_den=1.678845e+01)
+  1930            |   1.0249 [1.003, 1.047] | 1.1917  (beta_num=0.001670, b_original_den=-0.002638, C_den=-5.515743e+00, ka_den=-2.206415e-03, kb_den=-2.206415e-03, tau_den=1.172882e-01)
+  1940            |   1.0785 [1.057, 1.101] | 1.3874  (beta_num=0.001845, b_original_den=-0.002666, C_den=-6.357555e+00, ka_den=-5.863031e-03, kb_den=1.292192e+00, tau_den=3.615708e+04)
+  1950            |   1.3185 [1.282, 1.356] | 1.6773  (beta_num=0.001440, b_original_den=-0.002223, C_den=-7.264129e+00, ka_den=-6.092774e-03, kb_den=4.908967e+00, tau_den=1.256288e+05)
+  1960            |   1.0319 [0.977, 1.090] | 1.2177  (beta_num=0.001018, b_original_den=-0.001162, C_den=-8.447270e+00, ka_den=-4.180652e-03, kb_den=5.971535e-01, tau_den=2.246000e+04)
+  1970            |   1.1244 [1.031, 1.227] | 1.2675  (beta_num=0.001152, b_original_den=-0.001372, C_den=-9.619750e+00, ka_den=-2.460682e-03, kb_den=2.782679e-01, tau_den=1.844017e+04)
   1980            |   1.3645 [1.170, 1.592] | 1.3646  (beta_num=0.000021, beta_den=0.000022)
   1990            |   2.0410 [1.616, 2.578] | 2.0417  (beta_num=0.000017, beta_den=0.000010)
   2000            |   0.8833 [0.589, 1.325] | 0.8838  (beta_num=0.000022, beta_den=0.000004)
@@ -504,7 +505,7 @@ Dose combination: 2 vs 1 [2021_24]
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
   ASMR (direct)   |   1.1669 [1.142, 1.192] | -
-  All Ages        |   1.0956 [1.077, 1.115] | 1.0899
+  All Ages        |   1.0956 [1.077, 1.115] | 1.0899  (beta_num=0.000140, beta_den=0.000273)
   1920            |   1.4284 [1.300, 1.570] | 1.3795  (beta_num=0.001394, beta_den=0.002455)
   1930            |   1.1160 [1.068, 1.166] | 1.1626  (beta_num=0.001670, beta_den=0.000674)
   1940            |   1.2219 [1.182, 1.264] | 1.2480  (beta_num=0.001845, beta_den=0.001335)
@@ -534,47 +535,47 @@ Dose combination: 1 vs 0 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.5225 [0.510, 0.536] | -
-  All Ages        |   0.8814 [0.863, 0.901] | 0.8758
-  1920            |   0.2130 [0.188, 0.241] | 0.4938  (beta_num=0.005893, beta_den=-0.004912, c_num=0.000000, c_den=0.000038)
-  1930            |   0.5989 [0.567, 0.633] | 0.6480  (beta_num=-0.001081, beta_den=-0.002806, c_num=0.000096, c_den=0.000076)
-  1940            |   0.4665 [0.447, 0.486] | 0.7808  (beta_num=0.000894, beta_den=-0.002628, c_num=0.000000, c_den=0.000104)
-  1950            |   0.5552 [0.531, 0.580] | 0.8101  (beta_num=-0.000603, beta_den=-0.002694, c_num=0.000000, c_den=0.000093)
-  1960            |   0.8126 [0.765, 0.863] | 1.2733  (beta_num=0.002499, beta_den=-0.001894, c_num=0.000000, c_den=0.000049)
-  1970            |   1.0200 [0.945, 1.100] | 1.4754  (beta_num=0.002990, beta_den=-0.001602, c_num=0.000000, c_den=0.000006)
-  1980            |   1.9685 [1.766, 2.195] | 1.3379  (beta_num=-0.004593, beta_den=0.000023)
+  ASMR (direct)   |   0.6279 [0.612, 0.644] | -
+  All Ages        |   0.0037 [0.004, 0.004] | 0.8758  (beta_num=-0.033598, beta_den=-0.074331)
+  1920            |   0.2591 [0.229, 0.293] | 0.4938  (beta_num=0.005893, b_original_den=-0.004912, C_den=-4.729941e+00, ka_den=-3.553011e-03, kb_den=-3.553011e-03, tau_den=2.305459e+01)
+  1930            |   0.7908 [0.748, 0.835] | 0.6480  (b_original_num=-0.001081, C_num=-5.519384e+00, ka_num=-1.523439e-02, kb_num=3.108789e-02, tau_num=2.126311e+02, b_original_den=-0.002806, C_den=-5.473317e+00, ka_den=-2.584826e-03, kb_den=-2.584826e-03, tau_den=1.081334e-03)
+  1940            |   0.5153 [0.494, 0.537] | 0.7808  (beta_num=0.000894, b_original_den=-0.002628, C_den=-6.245750e+00, ka_den=-8.395361e-03, kb_den=2.127748e+00, tau_den=3.253520e+04)
+  1950            |   0.7452 [0.713, 0.778] | 0.8101  (b_original_num=-0.000603, C_num=-7.615763e+00, ka_num=-2.262099e-02, kb_num=-5.910175e-04, tau_num=1.476186e+01, b_original_den=-0.002694, C_den=-7.131111e+00, ka_den=-8.733090e-03, kb_den=9.895202e+00, tau_den=1.412346e+05)
+  1960            |   0.8037 [0.757, 0.853] | 1.2733  (beta_num=0.002499, b_original_den=-0.001894, C_den=-8.333436e+00, ka_den=-6.162841e-03, kb_den=7.080979e-01, tau_den=1.534423e+04)
+  1970            |   0.9680 [0.897, 1.044] | 1.4754  (beta_num=0.002990, b_original_den=-0.001602, C_den=-9.494237e+00, ka_den=-4.158054e-03, kb_den=9.296699e-01, tau_den=3.065703e+04)
+  1980            |   1.4279 [1.283, 1.590] | 1.3379  (b_original_num=-0.004593, C_num=-1.115753e+01, ka_num=-1.631982e-03, kb_num=-7.961297e-04, tau_num=1.000012e-03, beta_den=0.000023)
   1990            |   0.8513 [0.729, 0.994] | 1.2559  (beta_num=0.006869, beta_den=0.001600)
-  2000            |   1.1734 [0.972, 1.416] | 1.5040  (beta_num=0.000004, beta_den=-0.003023)
+  2000            |   1.5081 [1.250, 1.820] | 1.5040  (beta_num=0.000004, b_original_den=-0.003023, C_den=-1.191769e+01, ka_den=-4.184848e+00, kb_den=3.897611e-05, tau_den=1.055554e-01)
 
 Dose combination: 2 vs 0 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.7878 [0.781, 0.795] | -
-  All Ages        |   1.4691 [1.457, 1.481] | 1.4580
-  1920            |   0.6268 [0.607, 0.648] | 1.1186  (beta_num=0.001537, beta_den=-0.004912, c_num=0.000000, c_den=0.000038)
-  1930            |   0.6851 [0.674, 0.696] | 1.1836  (beta_num=0.001925, beta_den=-0.002806, c_num=0.000000, c_den=0.000076)
-  1940            |   0.8191 [0.807, 0.832] | 1.4781  (beta_num=0.001783, beta_den=-0.002628, c_num=0.000000, c_den=0.000104)
-  1950            |   0.8500 [0.835, 0.866] | 1.4894  (beta_num=0.001740, beta_den=-0.002694, c_num=0.000000, c_den=0.000093)
-  1960            |   1.2443 [1.210, 1.280] | 1.8820  (beta_num=0.001966, beta_den=-0.001894, c_num=0.000000, c_den=0.000049)
-  1970            |   1.0511 [1.008, 1.096] | 1.5747  (beta_num=0.003460, beta_den=-0.001602, c_num=0.000000, c_den=0.000006)
+  ASMR (direct)   |   0.8896 [0.882, 0.897] | -
+  All Ages        |   0.0002 [0.000, 0.000] | 1.4580  (beta_num=0.000308, beta_den=-0.074331)
+  1920            |   0.7623 [0.738, 0.787] | 1.1186  (beta_num=0.001537, b_original_den=-0.004912, C_den=-4.729941e+00, ka_den=-3.553011e-03, kb_den=-3.553011e-03, tau_den=2.305459e+01)
+  1930            |   0.8394 [0.826, 0.853] | 1.1836  (beta_num=0.001925, b_original_den=-0.002806, C_den=-5.473317e+00, ka_den=-2.584826e-03, kb_den=-2.584826e-03, tau_den=1.081334e-03)
+  1940            |   0.9049 [0.891, 0.919] | 1.4781  (beta_num=0.001783, b_original_den=-0.002628, C_den=-6.245750e+00, ka_den=-8.395361e-03, kb_den=2.127748e+00, tau_den=3.253520e+04)
+  1950            |   0.9086 [0.892, 0.925] | 1.4894  (beta_num=0.001740, b_original_den=-0.002694, C_den=-7.131111e+00, ka_den=-8.733090e-03, kb_den=9.895202e+00, tau_den=1.412346e+05)
+  1960            |   1.2307 [1.197, 1.266] | 1.8820  (beta_num=0.001966, b_original_den=-0.001894, C_den=-8.333436e+00, ka_den=-6.162841e-03, kb_den=7.080979e-01, tau_den=1.534423e+04)
+  1970            |   0.9975 [0.957, 1.040] | 1.5747  (beta_num=0.003460, b_original_den=-0.001602, C_den=-9.494237e+00, ka_den=-4.158054e-03, kb_den=9.296699e-01, tau_den=3.065703e+04)
   1980            |   1.5695 [1.458, 1.689] | 2.0773  (beta_num=0.003522, beta_den=0.000023)
   1990            |   1.0556 [0.933, 1.194] | 1.2449  (beta_num=0.003765, beta_den=0.001600)
-  2000            |   0.2012 [0.157, 0.258] | 0.2579  (beta_num=0.000009, beta_den=-0.003023)
+  2000            |   0.2585 [0.202, 0.331] | 0.2579  (beta_num=0.000009, b_original_den=-0.003023, C_den=-1.191769e+01, ka_den=-4.184848e+00, kb_den=3.897611e-05, tau_den=1.055554e-01)
 
 Dose combination: 2 vs 1 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.5076 [1.471, 1.545] | -
-  All Ages        |   1.6668 [1.632, 1.702] | 1.6647
+  ASMR (direct)   |   1.4169 [1.382, 1.452] | -
+  All Ages        |   0.0463 [0.045, 0.048] | 1.6647  (beta_num=0.000308, beta_den=-0.033598)
   1920            |   2.9422 [2.603, 3.325] | 2.2655  (beta_num=0.001537, beta_den=0.005893)
-  1930            |   1.1438 [1.084, 1.207] | 1.8265  (beta_num=0.001925, beta_den=-0.001081, c_num=0.000000, c_den=0.000096)
+  1930            |   1.0614 [1.006, 1.120] | 1.8265  (beta_num=0.001925, b_original_den=-0.001081, C_den=-5.519384e+00, ka_den=-1.523439e-02, kb_den=3.108789e-02, tau_den=2.126311e+02)
   1940            |   1.7560 [1.686, 1.829] | 1.8930  (beta_num=0.001783, beta_den=0.000894)
-  1950            |   1.5312 [1.467, 1.598] | 1.8385  (beta_num=0.001740, beta_den=-0.000603)
+  1950            |   1.2193 [1.169, 1.272] | 1.8385  (beta_num=0.001740, b_original_den=-0.000603, C_den=-7.615763e+00, ka_den=-2.262099e-02, kb_den=-5.910175e-04, tau_den=1.476186e+01)
   1960            |   1.5313 [1.442, 1.626] | 1.4781  (beta_num=0.001966, beta_den=0.002499)
   1970            |   1.0305 [0.954, 1.114] | 1.0673  (beta_num=0.003460, beta_den=0.002990)
-  1980            |   0.7973 [0.709, 0.897] | 1.5527  (beta_num=0.003522, beta_den=-0.004593)
+  1980            |   1.0992 [0.978, 1.235] | 1.5527  (beta_num=0.003522, b_original_den=-0.004593, C_den=-1.115753e+01, ka_den=-1.631982e-03, kb_den=-7.961297e-04, tau_den=1.000012e-03)
   1990            |   1.2400 [1.039, 1.480] | 0.9912  (beta_num=0.003765, beta_den=0.006869)
   2000            |   0.1714 [0.129, 0.229] | 0.1715  (beta_num=0.000009, beta_den=0.000004)
 
@@ -585,46 +586,46 @@ Dose combination: 1 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9108 [0.853, 0.973] | -
-  All Ages        |   0.9428 [0.880, 1.010] | 0.9407
-  1920            |   0.8563 [0.630, 1.163] | 1.1285  (beta_num=0.005192, beta_den=-0.005488, c_num=0.000000, c_den=0.000033)
-  1930            |   1.1129 [0.984, 1.259] | 1.1027  (beta_num=-0.005800, beta_den=-0.002692, c_num=0.000032, c_den=0.000067)
-  1940            |   0.8167 [0.717, 0.930] | 0.8543  (beta_num=-0.003019, beta_den=-0.003095, c_num=0.000074, c_den=0.000099)
-  1950            |   0.8806 [0.756, 1.027] | 0.9134  (beta_num=-0.002080, beta_den=-0.002478, c_num=0.000060, c_den=0.000080)
-  1960            |   0.9055 [0.733, 1.118] | 0.7918  (beta_num=-0.004228, beta_den=-0.002518, c_num=0.000092, c_den=0.000025)
-  1970            |   1.0357 [0.791, 1.356] | 0.8824  (beta_num=-0.010250, beta_den=-0.002140, c_num=0.000013, c_den=0.000017)
-  1980            |   0.9501 [0.637, 1.418] | 0.9843  (beta_num=0.000039, beta_den=-0.001105, c_num=0.000000, c_den=0.000006)
+  ASMR (direct)   |   1.0262 [0.961, 1.096] | -
+  All Ages        |   0.1982 [0.183, 0.214] | 0.9407  (beta_num=-0.060593, beta_den=-0.107076)
+  1920            |   0.8591 [0.632, 1.167] | 1.1285  (beta_num=0.005192, b_original_den=-0.005488, C_den=-4.663040e+00, ka_den=-9.182801e-03, kb_den=1.315272e+00, tau_den=1.895556e+04)
+  1930            |   1.0762 [0.953, 1.216] | 1.1027  (b_original_num=-0.005800, C_num=-5.046098e+00, ka_num=-6.155976e-02, kb_num=-2.469270e-03, tau_num=7.461101e+00, b_original_den=-0.002692, C_den=-5.018609e+00, ka_den=-1.199233e-01, kb_den=-1.287435e-03, tau_den=5.279664e+00)
+  1940            |   1.0905 [0.964, 1.233] | 0.8543  (b_original_num=-0.003019, C_num=-5.173977e+00, ka_num=-2.537558e-01, kb_num=-1.422785e-03, tau_num=4.937946e+00, b_original_den=-0.003095, C_den=-5.950339e+00, ka_den=-1.173409e-01, kb_den=-1.457438e-03, tau_den=5.891602e+00)
+  1950            |   0.9243 [0.796, 1.073] | 0.9134  (b_original_num=-0.002080, C_num=-6.384083e+00, ka_num=-2.304269e-01, kb_num=-1.699567e-03, tau_num=3.473224e+00, b_original_den=-0.002478, C_den=-6.982843e+00, ka_den=-9.380432e-02, kb_den=-1.498940e-03, tau_den=6.108610e+00)
+  1960            |   0.9071 [0.735, 1.119] | 0.7918  (b_original_num=-0.004228, C_num=-7.727523e+00, ka_num=-2.367940e-02, kb_num=1.917199e-03, tau_num=2.850332e+01, b_original_den=-0.002518, C_den=-8.355234e+00, ka_den=-6.063675e-02, kb_den=-1.847457e-03, tau_den=3.806108e+00)
+  1970            |   1.1910 [0.917, 1.547] | 0.8824  (b_original_num=-0.010250, C_num=-8.206878e+00, ka_num=-1.164396e-01, kb_num=-1.796900e-03, tau_num=6.277070e+00, b_original_den=-0.002140, C_den=-9.504526e+00, ka_den=-2.586532e-02, kb_den=-1.110154e-03, tau_den=7.209712e+00)
+  1980            |   0.9593 [0.643, 1.432] | 0.9843  (beta_num=0.000039, b_original_den=-0.001105, C_den=-1.057880e+01, ka_den=-1.146201e-03, kb_den=-1.146193e-03, tau_den=1.000000e-03)
   1990            |   1.1913 [0.682, 2.081] | 1.2769  (beta_num=0.000013, beta_den=0.002179)
-  2000            |   0.2335 [0.058, 0.946] | 0.2558  (beta_num=0.000005, beta_den=-0.004308)
+  2000            |   0.2433 [0.060, 0.985] | 0.2558  (beta_num=0.000005, b_original_den=-0.004308, C_den=-1.136495e+01, ka_den=-7.154843e-01, kb_den=-5.242156e-04, tau_den=9.923776e-01)
 
 Dose combination: 2 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0566 [1.033, 1.081] | -
-  All Ages        |   1.0946 [1.070, 1.120] | 1.0993
-  1920            |   0.8835 [0.811, 0.962] | 0.9594  (beta_num=-0.002257, beta_den=-0.005488, c_num=0.000028, c_den=0.000033)
-  1930            |   1.0811 [1.033, 1.132] | 1.0600  (beta_num=-0.002095, beta_den=-0.002692, c_num=0.000087, c_den=0.000067)
-  1940            |   1.0467 [1.003, 1.092] | 1.1077  (beta_num=-0.002602, beta_den=-0.003095, c_num=0.000069, c_den=0.000099)
-  1950            |   1.1374 [1.082, 1.195] | 1.1703  (beta_num=-0.002059, beta_den=-0.002478, c_num=0.000068, c_den=0.000080)
-  1960            |   0.8748 [0.815, 0.939] | 0.9634  (beta_num=0.000116, beta_den=-0.002518, c_num=0.000000, c_den=0.000025)
-  1970            |   1.1712 [1.065, 1.288] | 1.2788  (beta_num=0.000782, beta_den=-0.002140, c_num=0.000000, c_den=0.000017)
-  1980            |   1.1328 [0.972, 1.320] | 1.1730  (beta_num=0.000016, beta_den=-0.001105, c_num=0.000000, c_den=0.000006)
+  ASMR (direct)   |   1.0211 [0.999, 1.044] | -
+  All Ages        |   0.1317 [0.128, 0.135] | 1.0993  (beta_num=-0.040657, beta_den=-0.107076)
+  1920            |   1.0323 [0.949, 1.123] | 0.9594  (b_original_num=-0.002257, C_num=-4.422232e+00, ka_num=-9.270060e-02, kb_num=-1.349507e-03, tau_num=5.501102e+00, b_original_den=-0.005488, C_den=-4.663040e+00, ka_den=-9.182801e-03, kb_den=1.315272e+00, tau_den=1.895556e+04)
+  1930            |   1.0054 [0.961, 1.052] | 1.0600  (b_original_num=-0.002095, C_num=-5.258882e+00, ka_num=-7.417852e-02, kb_num=-1.363555e-03, tau_num=6.353978e+00, b_original_den=-0.002692, C_den=-5.018609e+00, ka_den=-1.199233e-01, kb_den=-1.287435e-03, tau_den=5.279664e+00)
+  1940            |   1.0316 [0.989, 1.076] | 1.1077  (b_original_num=-0.002602, C_num=-6.195614e+00, ka_num=-1.130500e-01, kb_num=-1.054994e-03, tau_num=5.138914e+00, b_original_den=-0.003095, C_den=-5.950339e+00, ka_den=-1.173409e-01, kb_den=-1.457438e-03, tau_den=5.891602e+00)
+  1950            |   1.0420 [0.992, 1.094] | 1.1703  (b_original_num=-0.002059, C_num=-7.470361e+00, ka_num=-4.497389e-02, kb_num=-1.223960e-03, tau_num=7.109993e+00, b_original_den=-0.002478, C_den=-6.982843e+00, ka_den=-9.380432e-02, kb_den=-1.498940e-03, tau_den=6.108610e+00)
+  1960            |   0.8518 [0.793, 0.915] | 0.9634  (beta_num=0.000116, b_original_den=-0.002518, C_den=-8.355234e+00, ka_den=-6.063675e-02, kb_den=-1.847457e-03, tau_den=3.806108e+00)
+  1970            |   1.1269 [1.025, 1.239] | 1.2788  (beta_num=0.000782, b_original_den=-0.002140, C_den=-9.504526e+00, ka_den=-2.586532e-02, kb_den=-1.110154e-03, tau_den=7.209712e+00)
+  1980            |   1.1438 [0.981, 1.333] | 1.1730  (beta_num=0.000016, b_original_den=-0.001105, C_den=-1.057880e+01, ka_den=-1.146201e-03, kb_den=-1.146193e-03, tau_den=1.000000e-03)
   1990            |   2.0419 [1.635, 2.550] | 1.9498  (beta_num=0.000008, beta_den=0.002179)
-  2000            |   1.2714 [0.956, 1.691] | 1.3927  (beta_num=0.000004, beta_den=-0.004308)
+  2000            |   1.3247 [0.998, 1.759] | 1.3927  (beta_num=0.000004, b_original_den=-0.004308, C_den=-1.136495e+01, ka_den=-7.154843e-01, kb_den=-5.242156e-04, tau_den=9.923776e-01)
 
 Dose combination: 2 vs 1 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1572 [1.083, 1.237] | -
-  All Ages        |   1.1610 [1.083, 1.244] | 1.1686
-  1920            |   1.0318 [0.756, 1.407] | 0.8501  (beta_num=-0.002257, beta_den=0.005192, c_num=0.000028, c_den=0.000000)
-  1930            |   0.9715 [0.857, 1.101] | 0.9613  (beta_num=-0.002095, beta_den=-0.005800, c_num=0.000087, c_den=0.000032)
-  1940            |   1.2816 [1.125, 1.460] | 1.2966  (beta_num=-0.002602, beta_den=-0.003019, c_num=0.000069, c_den=0.000074)
-  1950            |   1.2916 [1.107, 1.507] | 1.2812  (beta_num=-0.002059, beta_den=-0.002080, c_num=0.000068, c_den=0.000060)
-  1960            |   0.9661 [0.781, 1.195] | 1.2167  (beta_num=0.000116, beta_den=-0.004228, c_num=0.000000, c_den=0.000092)
-  1970            |   1.1308 [0.862, 1.484] | 1.4494  (beta_num=0.000782, beta_den=-0.010250, c_num=0.000000, c_den=0.000013)
+  ASMR (direct)   |   0.9924 [0.929, 1.061] | -
+  All Ages        |   0.6645 [0.615, 0.718] | 1.1686  (beta_num=-0.040657, beta_den=-0.060593)
+  1920            |   1.2017 [0.881, 1.639] | 0.8501  (b_original_num=-0.002257, C_num=-4.422232e+00, ka_num=-9.270060e-02, kb_num=-1.349507e-03, tau_num=5.501102e+00, beta_den=0.005192)
+  1930            |   0.9341 [0.826, 1.057] | 0.9613  (b_original_num=-0.002095, C_num=-5.258882e+00, ka_num=-7.417852e-02, kb_num=-1.363555e-03, tau_num=6.353978e+00, b_original_den=-0.005800, C_den=-5.046098e+00, ka_den=-6.155976e-02, kb_den=-2.469270e-03, tau_den=7.461101e+00)
+  1940            |   0.9460 [0.836, 1.071] | 1.2966  (b_original_num=-0.002602, C_num=-6.195614e+00, ka_num=-1.130500e-01, kb_num=-1.054994e-03, tau_num=5.138914e+00, b_original_den=-0.003019, C_den=-5.173977e+00, ka_den=-2.537558e-01, kb_den=-1.422785e-03, tau_den=4.937946e+00)
+  1950            |   1.1273 [0.971, 1.309] | 1.2812  (b_original_num=-0.002059, C_num=-7.470361e+00, ka_num=-4.497389e-02, kb_num=-1.223960e-03, tau_num=7.109993e+00, b_original_den=-0.002080, C_den=-6.384083e+00, ka_den=-2.304269e-01, kb_den=-1.699567e-03, tau_den=3.473224e+00)
+  1960            |   0.9391 [0.760, 1.161] | 1.2167  (beta_num=0.000116, b_original_den=-0.004228, C_den=-7.727523e+00, ka_den=-2.367940e-02, kb_den=1.917199e-03, tau_den=2.850332e+01)
+  1970            |   0.9462 [0.727, 1.232] | 1.4494  (beta_num=0.000782, b_original_den=-0.010250, C_den=-8.206878e+00, ka_den=-1.164396e-01, kb_den=-1.796900e-03, tau_den=6.277070e+00)
   1980            |   1.1923 [0.792, 1.794] | 1.1917  (beta_num=0.000016, beta_den=0.000039)
   1990            |   0.4820 [0.274, 0.847] | 0.4821  (beta_num=0.000008, beta_den=0.000013)
   2000            |   5.4445 [1.340, 22.126] | 5.4447  (beta_num=0.000004, beta_den=0.000005)
@@ -633,12 +634,12 @@ Dose combination: 3 vs 2 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1814 [1.158, 1.205] | -
-  All Ages        |   1.4353 [1.407, 1.465] | 1.4385
-  1920            |   1.2394 [1.146, 1.341] | 1.4182  (beta_num=0.001852, beta_den=-0.002257, c_num=0.000000, c_den=0.000028)
-  1930            |   1.1437 [1.100, 1.189] | 1.4639  (beta_num=0.002640, beta_den=-0.002095, c_num=0.000000, c_den=0.000087)
-  1940            |   1.2291 [1.185, 1.275] | 1.5523  (beta_num=0.002863, beta_den=-0.002602, c_num=0.000000, c_den=0.000069)
-  1950            |   1.1651 [1.115, 1.218] | 1.4561  (beta_num=0.003062, beta_den=-0.002059, c_num=0.000000, c_den=0.000068)
+  ASMR (direct)   |   1.1050 [1.084, 1.127] | -
+  All Ages        |   0.5316 [0.521, 0.543] | 1.4385  (beta_num=0.000394, beta_den=-0.040657)
+  1920            |   1.0643 [0.985, 1.150] | 1.4182  (beta_num=0.001852, b_original_den=-0.002257, C_den=-4.422232e+00, ka_den=-9.270060e-02, kb_den=-1.349507e-03, tau_den=5.501102e+00)
+  1930            |   1.0778 [1.037, 1.120] | 1.4639  (beta_num=0.002640, b_original_den=-0.002095, C_den=-5.258882e+00, ka_den=-7.417852e-02, kb_den=-1.363555e-03, tau_den=6.353978e+00)
+  1940            |   1.1114 [1.072, 1.152] | 1.5523  (beta_num=0.002863, b_original_den=-0.002602, C_den=-6.195614e+00, ka_den=-1.130500e-01, kb_den=-1.054994e-03, tau_den=5.138914e+00)
+  1950            |   1.1404 [1.091, 1.192] | 1.4561  (beta_num=0.003062, b_original_den=-0.002059, C_den=-7.470361e+00, ka_den=-4.497389e-02, kb_den=-1.223960e-03, tau_den=7.109993e+00)
   1960            |   1.1663 [1.086, 1.253] | 1.2703  (beta_num=0.004045, beta_den=0.000116)
   1970            |   1.0917 [0.985, 1.210] | 1.1926  (beta_num=0.004756, beta_den=0.000782)
   1980            |   1.0886 [0.902, 1.314] | 1.0886  (beta_num=0.000016, beta_den=0.000016)
@@ -649,14 +650,14 @@ Dose combination: 3 vs 1 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.3704 [1.284, 1.463] | -
-  All Ages        |   1.6664 [1.557, 1.783] | 1.6810
+  ASMR (direct)   |   1.0989 [1.030, 1.173] | -
+  All Ages        |   0.3532 [0.327, 0.381] | 1.6810  (beta_num=0.000394, beta_den=-0.060593)
   1920            |   1.2789 [0.943, 1.734] | 1.2057  (beta_num=0.001852, beta_den=0.005192)
-  1930            |   1.1111 [0.984, 1.254] | 1.4073  (beta_num=0.002640, beta_den=-0.005800, c_num=0.000000, c_den=0.000032)
-  1940            |   1.5752 [1.386, 1.790] | 2.0128  (beta_num=0.002863, beta_den=-0.003019, c_num=0.000000, c_den=0.000074)
-  1950            |   1.5048 [1.293, 1.751] | 1.8656  (beta_num=0.003062, beta_den=-0.002080, c_num=0.000000, c_den=0.000060)
-  1960            |   1.1267 [0.912, 1.391] | 1.5457  (beta_num=0.004045, beta_den=-0.004228, c_num=0.000000, c_den=0.000092)
-  1970            |   1.2346 [0.940, 1.621] | 1.7285  (beta_num=0.004756, beta_den=-0.010250, c_num=0.000000, c_den=0.000013)
+  1930            |   1.0068 [0.893, 1.135] | 1.4073  (beta_num=0.002640, b_original_den=-0.005800, C_den=-5.046098e+00, ka_den=-6.155976e-02, kb_den=-2.469270e-03, tau_den=7.461101e+00)
+  1940            |   1.0514 [0.931, 1.187] | 2.0128  (beta_num=0.002863, b_original_den=-0.003019, C_den=-5.173977e+00, ka_den=-2.537558e-01, kb_den=-1.422785e-03, tau_den=4.937946e+00)
+  1950            |   1.2856 [1.110, 1.490] | 1.8656  (beta_num=0.003062, b_original_den=-0.002080, C_den=-6.384083e+00, ka_den=-2.304269e-01, kb_den=-1.699567e-03, tau_den=3.473224e+00)
+  1960            |   1.0952 [0.888, 1.351] | 1.5457  (beta_num=0.004045, b_original_den=-0.004228, C_den=-7.727523e+00, ka_den=-2.367940e-02, kb_den=1.917199e-03, tau_den=2.850332e+01)
+  1970            |   1.0329 [0.793, 1.346] | 1.7285  (beta_num=0.004756, b_original_den=-0.010250, C_den=-8.206878e+00, ka_den=-1.164396e-01, kb_den=-1.796900e-03, tau_den=6.277070e+00)
   1980            |   1.2980 [0.857, 1.965] | 1.2973  (beta_num=0.000016, beta_den=0.000039)
   1990            |   0.5708 [0.318, 1.026] | 0.5709  (beta_num=0.000011, beta_den=0.000013)
   2000            |   4.5000 [1.061, 19.079] | 4.5004  (beta_num=0.000007, beta_den=0.000005)
@@ -665,17 +666,17 @@ Dose combination: 3 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.2482 [1.226, 1.271] | -
-  All Ages        |   1.5710 [1.543, 1.600] | 1.5813
-  1920            |   1.0951 [1.032, 1.162] | 1.3607  (beta_num=0.001852, beta_den=-0.005488, c_num=0.000000, c_den=0.000033)
-  1930            |   1.2365 [1.195, 1.280] | 1.5518  (beta_num=0.002640, beta_den=-0.002692, c_num=0.000000, c_den=0.000067)
-  1940            |   1.2864 [1.244, 1.331] | 1.7195  (beta_num=0.002863, beta_den=-0.003095, c_num=0.000000, c_den=0.000099)
-  1950            |   1.3252 [1.271, 1.382] | 1.7040  (beta_num=0.003062, beta_den=-0.002478, c_num=0.000000, c_den=0.000080)
-  1960            |   1.0202 [0.956, 1.089] | 1.2238  (beta_num=0.004045, beta_den=-0.002518, c_num=0.000000, c_den=0.000025)
-  1970            |   1.2786 [1.160, 1.409] | 1.5252  (beta_num=0.004756, beta_den=-0.002140, c_num=0.000000, c_den=0.000017)
-  1980            |   1.2332 [1.041, 1.460] | 1.2770  (beta_num=0.000016, beta_den=-0.001105, c_num=0.000000, c_den=0.000006)
+  ASMR (direct)   |   1.1283 [1.108, 1.149] | -
+  All Ages        |   0.0700 [0.068, 0.072] | 1.5813  (beta_num=0.000394, beta_den=-0.107076)
+  1920            |   1.0986 [1.035, 1.166] | 1.3607  (beta_num=0.001852, b_original_den=-0.005488, C_den=-4.663040e+00, ka_den=-9.182801e-03, kb_den=1.315272e+00, tau_den=1.895556e+04)
+  1930            |   1.0836 [1.047, 1.121] | 1.5518  (beta_num=0.002640, b_original_den=-0.002692, C_den=-5.018609e+00, ka_den=-1.199233e-01, kb_den=-1.287435e-03, tau_den=5.279664e+00)
+  1940            |   1.1466 [1.109, 1.186] | 1.7195  (beta_num=0.002863, b_original_den=-0.003095, C_den=-5.950339e+00, ka_den=-1.173409e-01, kb_den=-1.457438e-03, tau_den=5.891602e+00)
+  1950            |   1.1883 [1.140, 1.238] | 1.7040  (beta_num=0.003062, b_original_den=-0.002478, C_den=-6.982843e+00, ka_den=-9.380432e-02, kb_den=-1.498940e-03, tau_den=6.108610e+00)
+  1960            |   0.9934 [0.931, 1.060] | 1.2238  (beta_num=0.004045, b_original_den=-0.002518, C_den=-8.355234e+00, ka_den=-6.063675e-02, kb_den=-1.847457e-03, tau_den=3.806108e+00)
+  1970            |   1.2303 [1.117, 1.355] | 1.5252  (beta_num=0.004756, b_original_den=-0.002140, C_den=-9.504526e+00, ka_den=-2.586532e-02, kb_den=-1.110154e-03, tau_den=7.209712e+00)
+  1980            |   1.2451 [1.051, 1.474] | 1.2770  (beta_num=0.000016, b_original_den=-0.001105, C_den=-1.057880e+01, ka_den=-1.146201e-03, kb_den=-1.146193e-03, tau_den=1.000000e-03)
   1990            |   1.2715 [0.967, 1.672] | 1.2142  (beta_num=0.000011, beta_den=0.002179)
-  2000            |   1.0509 [0.670, 1.647] | 1.1512  (beta_num=0.000007, beta_den=-0.004308)
+  2000            |   1.0949 [0.699, 1.714] | 1.1512  (beta_num=0.000007, b_original_den=-0.004308, C_den=-1.136495e+01, ka_den=-7.154843e-01, kb_den=-5.242156e-04, tau_den=9.923776e-01)
 
 M/P by decades (Dose 3)
 --------------------------------------------------
@@ -696,78 +697,78 @@ Dose combination: 1 vs 0 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9929 [0.941, 1.048] | -
-  All Ages        |   0.8673 [0.823, 0.914] | 0.8867
-  1920            |   0.4401 [0.349, 0.555] | 0.8155  (beta_num=0.005182, beta_den=-0.005650, c_num=0.000000, c_den=0.000039)
-  1930            |   1.3744 [1.238, 1.525] | 1.1372  (beta_num=-0.003410, beta_den=-0.001444, c_num=0.000123, c_den=0.000016)
-  1940            |   1.1963 [1.079, 1.326] | 1.1307  (beta_num=-0.004116, beta_den=-0.001982, c_num=0.000000, c_den=0.000068)
-  1950            |   0.6228 [0.551, 0.704] | 0.4601  (beta_num=-0.005337, beta_den=-0.001765, c_num=0.000213, c_den=0.000049)
-  1960            |   1.0146 [0.870, 1.183] | 1.1372  (beta_num=0.000249, beta_den=-0.001288, c_num=0.000000, c_den=0.000045)
-  1970            |   1.4044 [1.154, 1.709] | 0.9642  (beta_num=-0.008145, beta_den=-0.001193)
+  ASMR (direct)   |   0.9305 [0.882, 0.982] | -
+  All Ages        |   0.0090 [0.008, 0.010] | 0.8867  (beta_num=-0.057400, beta_den=-0.104213)
+  1920            |   0.4597 [0.365, 0.579] | 0.8155  (beta_num=0.005182, b_original_den=-0.005650, C_den=-4.803421e+00, ka_den=-8.372136e-03, kb_den=1.644295e+00, tau_den=2.213612e+04)
+  1930            |   1.2105 [1.089, 1.345] | 1.1372  (b_original_num=-0.003410, C_num=-5.487199e+00, ka_num=-3.299546e-03, kb_num=-3.299546e-03, tau_num=7.845163e-03, b_original_den=-0.001444, C_den=-5.604505e+00, ka_den=-4.211458e-03, kb_den=9.397125e-01, tau_den=1.831126e+04)
+  1940            |   1.2004 [1.083, 1.330] | 1.1307  (b_original_num=-0.004116, C_num=-6.250190e+00, ka_num=-1.207374e-01, kb_num=-3.654198e-03, tau_num=8.493340e-01, b_original_den=-0.001982, C_den=-6.571688e+00, ka_den=-6.403958e-03, kb_den=1.509707e+00, tau_den=1.546611e+04)
+  1950            |   0.5848 [0.518, 0.661] | 0.4601  (b_original_num=-0.005337, C_num=-6.935041e+00, ka_num=-1.389876e-02, kb_num=1.088931e+00, tau_num=6.591227e+03, b_original_den=-0.001765, C_den=-7.492824e+00, ka_den=-6.116034e-03, kb_den=7.394099e+00, tau_den=8.055409e+04)
+  1960            |   0.9975 [0.855, 1.163] | 1.1372  (beta_num=0.000249, b_original_den=-0.001288, C_den=-8.586790e+00, ka_den=-3.155547e-03, kb_den=2.797332e-01, tau_den=1.259556e+04)
+  1970            |   0.8722 [0.719, 1.058] | 0.9642  (b_original_num=-0.008145, C_num=-8.824827e+00, ka_num=-1.946283e-04, kb_num=-1.946283e-04, tau_num=1.153895e+03, b_original_den=-0.001193, C_den=-9.404580e+00, ka_den=-1.753742e-01, kb_den=-1.301215e-03, tau_den=1.672895e+00)
   1980            |   2.9145 [2.274, 3.735] | 2.9175  (beta_num=0.000045, beta_den=0.000023)
   1990            |   0.3441 [0.219, 0.540] | 0.3441  (beta_num=0.000012, beta_den=0.000012)
-  2000            |   1.1312 [0.582, 2.200] | 1.1101  (beta_num=0.000007, beta_den=-0.004880, c_num=0.000000, c_den=0.000060)
+  2000            |   0.0000 [0.000, 0.000] | 1.1101  (beta_num=0.000007, b_original_den=-0.004880, C_den=-1.148912e+01, ka_den=-2.692051e-01, kb_den=-9.208852e-04, tau_den=2.179788e+00)
 
 Dose combination: 2 vs 0 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0048 [0.989, 1.021] | -
-  All Ages        |   1.0672 [1.051, 1.084] | 1.0756
-  1920            |   0.9182 [0.857, 0.984] | 1.1506  (beta_num=-0.001791, beta_den=-0.005650, c_num=0.000000, c_den=0.000039)
-  1930            |   1.0488 [1.015, 1.084] | 1.0157  (beta_num=-0.001957, beta_den=-0.001444, c_num=0.000021, c_den=0.000016)
-  1940            |   1.0438 [1.014, 1.075] | 1.1247  (beta_num=-0.000743, beta_den=-0.001982, c_num=0.000056, c_den=0.000068)
-  1950            |   0.9376 [0.907, 0.969] | 0.9866  (beta_num=-0.001430, beta_den=-0.001765, c_num=0.000005, c_den=0.000049)
-  1960            |   0.8667 [0.828, 0.907] | 1.0445  (beta_num=0.001586, beta_den=-0.001288, c_num=0.000000, c_den=0.000045)
-  1970            |   1.1893 [1.119, 1.264] | 1.3355  (beta_num=0.001008, beta_den=-0.001193)
+  ASMR (direct)   |   1.0046 [0.989, 1.020] | -
+  All Ages        |   0.0377 [0.036, 0.039] | 1.0756  (beta_num=-0.069952, beta_den=-0.104213)
+  1920            |   0.9387 [0.876, 1.005] | 1.1506  (b_original_num=-0.001791, C_num=-4.919973e+00, ka_num=-1.396298e-03, kb_num=-1.396298e-03, tau_num=4.758179e+03, b_original_den=-0.005650, C_den=-4.803421e+00, ka_den=-8.372136e-03, kb_den=1.644295e+00, tau_den=2.213612e+04)
+  1930            |   1.0191 [0.986, 1.053] | 1.0157  (b_original_num=-0.001957, C_num=-5.673074e+00, ka_num=-4.609494e-03, kb_num=1.373397e+00, tau_num=2.293140e+04, b_original_den=-0.001444, C_den=-5.604505e+00, ka_den=-4.211458e-03, kb_den=9.397125e-01, tau_den=1.831126e+04)
+  1940            |   1.0616 [1.031, 1.093] | 1.1247  (b_original_num=-0.000743, C_num=-6.726592e+00, ka_num=-3.294990e-03, kb_num=3.731573e-01, tau_num=7.917374e+03, b_original_den=-0.001982, C_den=-6.571688e+00, ka_den=-6.403958e-03, kb_den=1.509707e+00, tau_den=1.546611e+04)
+  1950            |   0.9521 [0.921, 0.984] | 0.9866  (b_original_num=-0.001430, C_num=-7.728596e+00, ka_num=-1.772307e-03, kb_num=-1.772307e-03, tau_num=9.984981e+00, b_original_den=-0.001765, C_den=-7.492824e+00, ka_den=-6.116034e-03, kb_den=7.394099e+00, tau_den=8.055409e+04)
+  1960            |   0.8520 [0.814, 0.892] | 1.0445  (beta_num=0.001586, b_original_den=-0.001288, C_den=-8.586790e+00, ka_den=-3.155547e-03, kb_den=2.797332e-01, tau_den=1.259556e+04)
+  1970            |   1.1345 [1.068, 1.205] | 1.3355  (beta_num=0.001008, b_original_den=-0.001193, C_den=-9.404580e+00, ka_den=-1.753742e-01, kb_den=-1.301215e-03, tau_den=1.672895e+00)
   1980            |   1.1340 [1.032, 1.247] | 1.1336  (beta_num=0.000015, beta_den=0.000023)
-  1990            |   0.9547 [0.832, 1.096] | 0.7056  (beta_num=-0.004351, beta_den=0.000012, c_num=0.000097, c_den=0.000000)
-  2000            |   1.0061 [0.835, 1.212] | 1.3701  (beta_num=0.000004, beta_den=-0.004880, c_num=0.000000, c_den=0.000060)
+  1990            |   0.9355 [0.814, 1.075] | 0.7056  (b_original_num=-0.004351, C_num=-1.157569e+01, ka_num=-6.103050e-03, kb_num=2.354982e-01, tau_num=1.004121e+04, beta_den=0.000012)
+  2000            |   1.1439 [0.950, 1.377] | 1.3701  (beta_num=0.000004, b_original_den=-0.004880, C_den=-1.148912e+01, ka_den=-2.692051e-01, kb_den=-9.208852e-04, tau_den=2.179788e+00)
 
 Dose combination: 2 vs 1 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0119 [0.958, 1.068] | -
-  All Ages        |   1.2306 [1.167, 1.298] | 1.2130
-  1920            |   2.0865 [1.651, 2.638] | 1.4108  (beta_num=-0.001791, beta_den=0.005182)
-  1930            |   0.7631 [0.687, 0.848] | 0.8932  (beta_num=-0.001957, beta_den=-0.003410, c_num=0.000021, c_den=0.000123)
-  1940            |   0.8725 [0.787, 0.967] | 0.9947  (beta_num=-0.000743, beta_den=-0.004116, c_num=0.000056, c_den=0.000000)
-  1950            |   1.5053 [1.332, 1.701] | 2.1441  (beta_num=-0.001430, beta_den=-0.005337, c_num=0.000005, c_den=0.000213)
+  ASMR (direct)   |   1.0792 [1.022, 1.139] | -
+  All Ages        |   4.2022 [3.796, 4.651] | 1.2130  (beta_num=-0.069952, beta_den=-0.057400)
+  1920            |   2.0421 [1.615, 2.581] | 1.4108  (b_original_num=-0.001791, C_num=-4.919973e+00, ka_num=-1.396298e-03, kb_num=-1.396298e-03, tau_num=4.758179e+03, beta_den=0.005182)
+  1930            |   0.8419 [0.757, 0.937] | 0.8932  (b_original_num=-0.001957, C_num=-5.673074e+00, ka_num=-4.609494e-03, kb_num=1.373397e+00, tau_num=2.293140e+04, b_original_den=-0.003410, C_den=-5.487199e+00, ka_den=-3.299546e-03, kb_den=-3.299546e-03, tau_den=7.845163e-03)
+  1940            |   0.8844 [0.798, 0.980] | 0.9947  (b_original_num=-0.000743, C_num=-6.726592e+00, ka_num=-3.294990e-03, kb_num=3.731573e-01, tau_num=7.917374e+03, b_original_den=-0.004116, C_den=-6.250190e+00, ka_den=-1.207374e-01, kb_den=-3.654198e-03, tau_den=8.493340e-01)
+  1950            |   1.6281 [1.441, 1.840] | 2.1441  (b_original_num=-0.001430, C_num=-7.728596e+00, ka_num=-1.772307e-03, kb_num=-1.772307e-03, tau_num=9.984981e+00, b_original_den=-0.005337, C_den=-6.935041e+00, ka_den=-1.389876e-02, kb_den=1.088931e+00, tau_den=6.591227e+03)
   1960            |   0.8542 [0.732, 0.997] | 0.9185  (beta_num=0.001586, beta_den=0.000249)
-  1970            |   0.8468 [0.695, 1.032] | 1.3851  (beta_num=0.001008, beta_den=-0.008145)
+  1970            |   1.3007 [1.071, 1.580] | 1.3851  (beta_num=0.001008, b_original_den=-0.008145, C_den=-8.824827e+00, ka_den=-1.946283e-04, kb_den=-1.946283e-04, tau_den=1.153895e+03)
   1980            |   0.3891 [0.302, 0.501] | 0.3886  (beta_num=0.000015, beta_den=0.000045)
-  1990            |   2.7745 [1.759, 4.376] | 2.0507  (beta_num=-0.004351, beta_den=0.000012, c_num=0.000097, c_den=0.000000)
+  1990            |   2.7188 [1.724, 4.289] | 2.0507  (b_original_num=-0.004351, C_num=-1.157569e+01, ka_num=-6.103050e-03, kb_num=2.354982e-01, tau_num=1.004121e+04, beta_den=0.000012)
   2000            |   0.7206 [0.370, 1.405] | 0.7205  (beta_num=0.000004, beta_den=0.000007)
 
 Dose combination: 3 vs 2 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9416 [0.929, 0.954] | -
-  All Ages        |   1.1221 [1.107, 1.137] | 1.1455
-  1920            |   0.7777 [0.732, 0.826] | 0.9013  (beta_num=0.000967, beta_den=-0.001791)
-  1930            |   0.9365 [0.911, 0.963] | 1.1792  (beta_num=0.002077, beta_den=-0.001957, c_num=0.000000, c_den=0.000021)
-  1940            |   0.9879 [0.964, 1.012] | 1.1877  (beta_num=0.001900, beta_den=-0.000743, c_num=0.000000, c_den=0.000056)
-  1950            |   0.9133 [0.887, 0.940] | 1.1091  (beta_num=0.002146, beta_den=-0.001430, c_num=0.000000, c_den=0.000005)
+  ASMR (direct)   |   0.9429 [0.930, 0.956] | -
+  All Ages        |   0.0043 [0.004, 0.004] | 1.1455  (beta_num=0.000480, beta_den=-0.069952)
+  1920            |   0.7946 [0.748, 0.844] | 0.9013  (beta_num=0.000967, b_original_den=-0.001791, C_den=-4.919973e+00, ka_den=-1.396298e-03, kb_den=-1.396298e-03, tau_den=4.758179e+03)
+  1930            |   0.9390 [0.914, 0.965] | 1.1792  (beta_num=0.002077, b_original_den=-0.001957, C_den=-5.673074e+00, ka_den=-4.609494e-03, kb_den=1.373397e+00, tau_den=2.293140e+04)
+  1940            |   0.9955 [0.972, 1.020] | 1.1877  (beta_num=0.001900, b_original_den=-0.000743, C_den=-6.726592e+00, ka_den=-3.294990e-03, kb_den=3.731573e-01, tau_den=7.917374e+03)
+  1950            |   0.9000 [0.874, 0.926] | 1.1091  (beta_num=0.002146, b_original_den=-0.001430, C_den=-7.728596e+00, ka_den=-1.772307e-03, kb_den=-1.772307e-03, tau_den=9.984981e+00)
   1960            |   1.0961 [1.050, 1.144] | 1.2118  (beta_num=0.003442, beta_den=0.001586)
   1970            |   0.8424 [0.793, 0.895] | 0.9030  (beta_num=0.002291, beta_den=0.001008)
   1980            |   0.9602 [0.863, 1.069] | 1.1780  (beta_num=0.003811, beta_den=0.000015)
-  1990            |   0.8416 [0.713, 0.994] | 1.4931  (beta_num=0.005416, beta_den=-0.004351, c_num=0.000000, c_den=0.000097)
+  1990            |   0.8588 [0.727, 1.015] | 1.4931  (beta_num=0.005416, b_original_den=-0.004351, C_den=-1.157569e+01, ka_den=-6.103050e-03, kb_den=2.354982e-01, tau_den=1.004121e+04)
   2000            |   1.4488 [1.121, 1.872] | 1.4489  (beta_num=0.000005, beta_den=0.000004)
 
 Dose combination: 3 vs 1 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9515 [0.902, 1.004] | -
-  All Ages        |   1.3808 [1.311, 1.455] | 1.3895
+  ASMR (direct)   |   1.0162 [0.963, 1.072] | -
+  All Ages        |   0.0180 [0.016, 0.020] | 1.3895  (beta_num=0.000480, beta_den=-0.057400)
   1920            |   1.6227 [1.291, 2.040] | 1.2716  (beta_num=0.000967, beta_den=0.005182)
-  1930            |   0.7147 [0.645, 0.792] | 1.0533  (beta_num=0.002077, beta_den=-0.003410, c_num=0.000000, c_den=0.000123)
-  1940            |   0.8619 [0.779, 0.954] | 1.1814  (beta_num=0.001900, beta_den=-0.004116)
-  1950            |   1.3747 [1.218, 1.551] | 2.3781  (beta_num=0.002146, beta_den=-0.005337, c_num=0.000000, c_den=0.000213)
+  1930            |   0.7905 [0.712, 0.877] | 1.0533  (beta_num=0.002077, b_original_den=-0.003410, C_den=-5.487199e+00, ka_den=-3.299546e-03, kb_den=-3.299546e-03, tau_den=7.845163e-03)
+  1940            |   0.8804 [0.796, 0.974] | 1.1814  (beta_num=0.001900, b_original_den=-0.004116, C_den=-6.250190e+00, ka_den=-1.207374e-01, kb_den=-3.654198e-03, tau_den=8.493340e-01)
+  1950            |   1.4652 [1.299, 1.653] | 2.3781  (beta_num=0.002146, b_original_den=-0.005337, C_den=-6.935041e+00, ka_den=-1.389876e-02, kb_den=1.088931e+00, tau_den=6.591227e+03)
   1960            |   0.9363 [0.803, 1.091] | 1.1130  (beta_num=0.003442, beta_den=0.000249)
-  1970            |   0.7134 [0.586, 0.868] | 1.2507  (beta_num=0.002291, beta_den=-0.008145)
+  1970            |   1.0958 [0.903, 1.329] | 1.2507  (beta_num=0.002291, b_original_den=-0.008145, C_den=-8.824827e+00, ka_den=-1.946283e-04, kb_den=-1.946283e-04, tau_den=1.153895e+03)
   1980            |   0.3736 [0.290, 0.481] | 0.4577  (beta_num=0.003811, beta_den=0.000045)
   1990            |   2.3350 [1.473, 3.701] | 3.0620  (beta_num=0.005416, beta_den=0.000012)
   2000            |   0.8348 [0.420, 1.661] | 0.8348  (beta_num=0.000005, beta_den=0.000007)
@@ -776,17 +777,17 @@ Dose combination: 3 vs 0 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9461 [0.935, 0.957] | -
-  All Ages        |   1.1975 [1.184, 1.212] | 1.2321
-  1920            |   0.7141 [0.681, 0.748] | 1.0371  (beta_num=0.000967, beta_den=-0.005650, c_num=0.000000, c_den=0.000039)
-  1930            |   0.9822 [0.960, 1.005] | 1.1977  (beta_num=0.002077, beta_den=-0.001444, c_num=0.000000, c_den=0.000016)
-  1940            |   1.0311 [1.009, 1.054] | 1.3358  (beta_num=0.001900, beta_den=-0.001982, c_num=0.000000, c_den=0.000068)
-  1950            |   0.8562 [0.834, 0.879] | 1.0942  (beta_num=0.002146, beta_den=-0.001765, c_num=0.000000, c_den=0.000049)
-  1960            |   0.9500 [0.914, 0.988] | 1.2657  (beta_num=0.003442, beta_den=-0.001288, c_num=0.000000, c_den=0.000045)
-  1970            |   1.0019 [0.947, 1.060] | 1.2060  (beta_num=0.002291, beta_den=-0.001193)
+  ASMR (direct)   |   0.9473 [0.936, 0.959] | -
+  All Ages        |   0.0002 [0.000, 0.000] | 1.2321  (beta_num=0.000480, beta_den=-0.104213)
+  1920            |   0.7459 [0.712, 0.782] | 1.0371  (beta_num=0.000967, b_original_den=-0.005650, C_den=-4.803421e+00, ka_den=-8.372136e-03, kb_den=1.644295e+00, tau_den=2.213612e+04)
+  1930            |   0.9569 [0.935, 0.979] | 1.1977  (beta_num=0.002077, b_original_den=-0.001444, C_den=-5.604505e+00, ka_den=-4.211458e-03, kb_den=9.397125e-01, tau_den=1.831126e+04)
+  1940            |   1.0568 [1.034, 1.080] | 1.3358  (beta_num=0.001900, b_original_den=-0.001982, C_den=-6.571688e+00, ka_den=-6.403958e-03, kb_den=1.509707e+00, tau_den=1.546611e+04)
+  1950            |   0.8568 [0.835, 0.880] | 1.0942  (beta_num=0.002146, b_original_den=-0.001765, C_den=-7.492824e+00, ka_den=-6.116034e-03, kb_den=7.394099e+00, tau_den=8.055409e+04)
+  1960            |   0.9340 [0.898, 0.971] | 1.2657  (beta_num=0.003442, b_original_den=-0.001288, C_den=-8.586790e+00, ka_den=-3.155547e-03, kb_den=2.797332e-01, tau_den=1.259556e+04)
+  1970            |   0.9557 [0.903, 1.011] | 1.2060  (beta_num=0.002291, b_original_den=-0.001193, C_den=-9.404580e+00, ka_den=-1.753742e-01, kb_den=-1.301215e-03, tau_den=1.672895e+00)
   1980            |   1.0889 [0.989, 1.199] | 1.3354  (beta_num=0.003811, beta_den=0.000023)
   1990            |   0.8035 [0.689, 0.937] | 1.0536  (beta_num=0.005416, beta_den=0.000012)
-  2000            |   1.4576 [1.135, 1.871] | 1.9851  (beta_num=0.000005, beta_den=-0.004880, c_num=0.000000, c_den=0.000060)
+  2000            |   1.6573 [1.291, 2.127] | 1.9851  (beta_num=0.000005, b_original_den=-0.004880, C_den=-1.148912e+01, ka_den=-2.692051e-01, kb_den=-9.208852e-04, tau_den=2.179788e+00)
 
 Sheet: 2022_47 — Reporting date: 2024-01-01
 ============================================================
@@ -795,47 +796,47 @@ Dose combination: 1 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0932 [1.014, 1.179] | -
-  All Ages        |   0.9643 [0.894, 1.040] | 0.9459
-  1920            |   1.8095 [1.339, 2.445] | 3.1333  (beta_num=0.006235, beta_den=-0.005603, c_num=0.000000, c_den=0.000305)
-  1930            |   1.0115 [0.875, 1.169] | 0.8729  (beta_num=-0.006318, beta_den=-0.002817, c_num=0.000374, c_den=0.000282)
-  1940            |   0.9044 [0.781, 1.047] | 0.7484  (beta_num=-0.009229, beta_den=-0.002111, c_num=0.000287, c_den=0.000253)
-  1950            |   1.2546 [1.054, 1.494] | 0.9517  (beta_num=-0.010664, beta_den=-0.001104, c_num=0.000361, c_den=0.000272)
-  1960            |   1.6407 [1.303, 2.065] | 1.8979  (beta_num=0.000252, beta_den=-0.001813, c_num=0.000000, c_den=0.000123)
-  1970            |   0.9337 [0.698, 1.249] | 0.6867  (beta_num=-0.012064, beta_den=-0.003352, c_num=0.000254, c_den=0.000114)
+  ASMR (direct)   |   1.0947 [1.016, 1.180] | -
+  All Ages        |   0.0649 [0.058, 0.072] | 0.9459  (beta_num=-0.069474, beta_den=-0.125928)
+  1920            |   1.8031 [1.334, 2.437] | 3.1333  (beta_num=0.006235, b_original_den=-0.005603, C_den=-4.615145e+00, ka_den=-4.663571e-02, kb_den=6.657320e-03, tau_den=1.997291e+01)
+  1930            |   1.0170 [0.881, 1.174] | 0.8729  (b_original_num=-0.006318, C_num=-5.002082e+00, ka_num=-6.569922e-02, kb_num=1.008808e-02, tau_num=1.682612e+01, b_original_den=-0.002817, C_den=-5.381979e+00, ka_den=-3.921252e-02, kb_den=5.204921e-03, tau_den=1.613157e+01)
+  1940            |   1.0626 [0.919, 1.229] | 0.7484  (b_original_num=-0.009229, C_num=-5.800542e+00, ka_num=-5.226963e-02, kb_num=5.214770e-02, tau_num=6.082722e+01, b_original_den=-0.002111, C_den=-6.454428e+00, ka_den=-3.424031e-02, kb_den=5.121854e-03, tau_den=1.586126e+01)
+  1950            |   1.0023 [0.843, 1.192] | 0.9517  (b_original_num=-0.010664, C_num=-7.020036e+00, ka_num=-1.759156e-02, kb_num=2.925474e-02, tau_num=1.394565e+02, b_original_den=-0.001104, C_den=-7.373412e+00, ka_den=-3.488490e-02, kb_den=4.839005e-03, tau_den=1.515223e+01)
+  1960            |   1.5996 [1.271, 2.014] | 1.8979  (beta_num=0.000252, b_original_den=-0.001813, C_den=-8.491069e+00, ka_den=-1.911233e-02, kb_den=1.938219e-03, tau_den=1.961686e+01)
+  1970            |   0.7089 [0.529, 0.949] | 0.6867  (b_original_num=-0.012064, C_num=-8.635942e+00, ka_num=-1.464894e-02, kb_num=1.180958e+01, tau_num=3.211750e+04, b_original_den=-0.003352, C_den=-9.591378e+00, ka_den=-1.234399e-02, kb_den=4.305644e-03, tau_den=3.335063e+01)
   1980            |   1.3671 [0.972, 1.922] | 1.3676  (beta_num=0.000046, beta_den=0.000024)
   1990            |   0.9874 [0.524, 1.860] | 0.9875  (beta_num=0.000014, beta_den=0.000012)
-  2000            |   1.4395 [0.588, 3.525] | 1.3511  (beta_num=0.000000, beta_den=-0.006330, c_num=0.000000, c_den=0.000103)
+  2000            |   0.0000 [0.000, 0.000] | 1.3511  (beta_num=0.000000, b_original_den=-0.006330, C_den=-1.156456e+01, ka_den=-1.227211e+00, kb_den=-1.433497e-04, tau_den=4.619905e-01)
 
 Dose combination: 2 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9298 [0.909, 0.951] | -
-  All Ages        |   1.0765 [1.051, 1.102] | 1.0501
-  1920            |   1.2781 [1.153, 1.416] | 1.7257  (beta_num=-0.002534, beta_den=-0.005603, c_num=0.000000, c_den=0.000305)
-  1930            |   0.8784 [0.836, 0.923] | 0.9853  (beta_num=-0.001677, beta_den=-0.002817, c_num=0.000170, c_den=0.000282)
-  1940            |   0.9162 [0.877, 0.957] | 0.9910  (beta_num=-0.000752, beta_den=-0.002111, c_num=0.000196, c_den=0.000253)
-  1950            |   0.9902 [0.942, 1.041] | 1.0592  (beta_num=-0.002078, beta_den=-0.001104, c_num=0.000154, c_den=0.000272)
-  1960            |   0.8209 [0.767, 0.878] | 1.0145  (beta_num=0.002777, beta_den=-0.001813, c_num=0.000000, c_den=0.000123)
-  1970            |   0.7811 [0.714, 0.855] | 0.9624  (beta_num=0.001401, beta_den=-0.003352, c_num=0.000000, c_den=0.000114)
-  1980            |   1.4102 [1.228, 1.619] | 1.3066  (beta_num=-0.002689, beta_den=0.000024)
+  ASMR (direct)   |   0.9944 [0.972, 1.018] | -
+  All Ages        |   0.1475 [0.142, 0.153] | 1.0501  (beta_num=-0.083350, beta_den=-0.125928)
+  1920            |   1.4465 [1.306, 1.602] | 1.7257  (b_original_num=-0.002534, C_num=-4.760638e+00, ka_num=-2.331199e-02, kb_num=8.188983e-03, tau_num=2.714718e+01, b_original_den=-0.005603, C_den=-4.615145e+00, ka_den=-4.663571e-02, kb_den=6.657320e-03, tau_den=1.997291e+01)
+  1930            |   0.9812 [0.934, 1.031] | 0.9853  (b_original_num=-0.001677, C_num=-5.445856e+00, ka_num=-4.920258e-02, kb_num=4.287819e-03, tau_num=1.227782e+01, b_original_den=-0.002817, C_den=-5.381979e+00, ka_den=-3.921252e-02, kb_den=5.204921e-03, tau_den=1.613157e+01)
+  1940            |   0.9765 [0.935, 1.020] | 0.9910  (b_original_num=-0.000752, C_num=-6.543082e+00, ka_num=-3.733574e-02, kb_num=3.303196e-03, tau_num=1.233835e+01, b_original_den=-0.002111, C_den=-6.454428e+00, ka_den=-3.424031e-02, kb_den=5.121854e-03, tau_den=1.586126e+01)
+  1950            |   1.0444 [0.994, 1.098] | 1.0592  (b_original_num=-0.002078, C_num=-7.531135e+00, ka_num=-3.001572e-02, kb_num=8.480342e-05, tau_num=1.178624e+01, b_original_den=-0.001104, C_den=-7.373412e+00, ka_den=-3.488490e-02, kb_den=4.839005e-03, tau_den=1.515223e+01)
+  1960            |   0.8004 [0.748, 0.856] | 1.0145  (beta_num=0.002777, b_original_den=-0.001813, C_den=-8.491069e+00, ka_den=-1.911233e-02, kb_den=1.938219e-03, tau_den=1.961686e+01)
+  1970            |   0.8176 [0.747, 0.895] | 0.9624  (beta_num=0.001401, b_original_den=-0.003352, C_den=-9.591378e+00, ka_den=-1.234399e-02, kb_den=4.305644e-03, tau_den=3.335063e+01)
+  1980            |   1.2725 [1.108, 1.462] | 1.3066  (b_original_num=-0.002689, C_num=-1.109161e+01, ka_num=-6.680303e-02, kb_num=2.688750e-03, tau_num=2.552641e+00, beta_den=0.000024)
   1990            |   1.1284 [0.912, 1.397] | 1.1283  (beta_num=0.000007, beta_den=0.000012)
-  2000            |   0.4281 [0.321, 0.570] | 0.5512  (beta_num=0.000004, beta_den=-0.006330, c_num=0.000000, c_den=0.000103)
+  2000            |   0.5483 [0.411, 0.731] | 0.5512  (beta_num=0.000004, b_original_den=-0.006330, C_den=-1.156456e+01, ka_den=-1.227211e+00, kb_den=-1.433497e-04, tau_den=4.619905e-01)
 
 Dose combination: 2 vs 1 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.8501 [0.788, 0.917] | -
-  All Ages        |   1.1163 [1.034, 1.205] | 1.1101
-  1920            |   0.7063 [0.520, 0.960] | 0.5508  (beta_num=-0.002534, beta_den=0.006235)
-  1930            |   0.8684 [0.750, 1.006] | 1.1287  (beta_num=-0.001677, beta_den=-0.006318, c_num=0.000170, c_den=0.000374)
-  1940            |   1.0131 [0.874, 1.174] | 1.3243  (beta_num=-0.000752, beta_den=-0.009229, c_num=0.000196, c_den=0.000287)
-  1950            |   0.7893 [0.662, 0.941] | 1.1130  (beta_num=-0.002078, beta_den=-0.010664, c_num=0.000154, c_den=0.000361)
+  ASMR (direct)   |   0.9083 [0.842, 0.980] | -
+  All Ages        |   2.2729 [2.048, 2.523] | 1.1101  (beta_num=-0.083350, beta_den=-0.069474)
+  1920            |   0.8023 [0.590, 1.090] | 0.5508  (b_original_num=-0.002534, C_num=-4.760638e+00, ka_num=-2.331199e-02, kb_num=8.188983e-03, tau_num=2.714718e+01, beta_den=0.006235)
+  1930            |   0.9648 [0.834, 1.116] | 1.1287  (b_original_num=-0.001677, C_num=-5.445856e+00, ka_num=-4.920258e-02, kb_num=4.287819e-03, tau_num=1.227782e+01, b_original_den=-0.006318, C_den=-5.002082e+00, ka_den=-6.569922e-02, kb_den=1.008808e-02, tau_den=1.682612e+01)
+  1940            |   0.9190 [0.794, 1.064] | 1.3243  (b_original_num=-0.000752, C_num=-6.543082e+00, ka_num=-3.733574e-02, kb_num=3.303196e-03, tau_num=1.233835e+01, b_original_den=-0.009229, C_den=-5.800542e+00, ka_den=-5.226963e-02, kb_den=5.214770e-02, tau_den=6.082722e+01)
+  1950            |   1.0421 [0.875, 1.241] | 1.1130  (b_original_num=-0.002078, C_num=-7.531135e+00, ka_num=-3.001572e-02, kb_num=8.480342e-05, tau_num=1.178624e+01, b_original_den=-0.010664, C_den=-7.020036e+00, ka_den=-1.759156e-02, kb_den=2.925474e-02, tau_den=1.394565e+02)
   1960            |   0.5003 [0.397, 0.631] | 0.5346  (beta_num=0.002777, beta_den=0.000252)
-  1970            |   0.8365 [0.623, 1.122] | 1.4014  (beta_num=0.001401, beta_den=-0.012064, c_num=0.000000, c_den=0.000254)
-  1980            |   1.0315 [0.728, 1.461] | 0.9554  (beta_num=-0.002689, beta_den=0.000046)
+  1970            |   1.1533 [0.859, 1.548] | 1.4014  (beta_num=0.001401, b_original_den=-0.012064, C_den=-8.635942e+00, ka_den=-1.464894e-02, kb_den=1.180958e+01, tau_den=3.211750e+04)
+  1980            |   0.9309 [0.657, 1.318] | 0.9554  (b_original_num=-0.002689, C_num=-1.109161e+01, ka_num=-6.680303e-02, kb_num=2.688750e-03, tau_num=2.552641e+00, beta_den=0.000046)
   1990            |   0.6240 [0.328, 1.187] | 0.6240  (beta_num=0.000007, beta_den=0.000014)
   2000            |   0.6019 [0.244, 1.486] | 0.6019  (beta_num=0.000004, beta_den=0.000000)
 
@@ -843,15 +844,15 @@ Dose combination: 3 vs 2 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0895 [1.067, 1.112] | -
-  All Ages        |   1.0211 [1.000, 1.043] | 1.0418
-  1920            |   0.7273 [0.662, 0.799] | 0.6432  (beta_num=-0.001086, beta_den=-0.002534, c_num=0.000220, c_den=0.000000)
-  1930            |   1.1311 [1.083, 1.181] | 1.0740  (beta_num=-0.000685, beta_den=-0.001677, c_num=0.000273, c_den=0.000170)
-  1940            |   1.1426 [1.100, 1.186] | 1.1091  (beta_num=-0.001124, beta_den=-0.000752, c_num=0.000220, c_den=0.000196)
-  1950            |   1.0341 [0.989, 1.081] | 1.0502  (beta_num=-0.000477, beta_den=-0.002078, c_num=0.000184, c_den=0.000154)
+  ASMR (direct)   |   1.0263 [1.005, 1.048] | -
+  All Ages        |   0.3943 [0.383, 0.406] | 1.0418  (beta_num=-0.060106, beta_den=-0.083350)
+  1920            |   0.7089 [0.646, 0.779] | 0.6432  (b_original_num=-0.001086, C_num=-4.659391e+00, ka_num=-5.460603e-02, kb_num=5.188493e-03, tau_num=1.312380e+01, b_original_den=-0.002534, C_den=-4.760638e+00, ka_den=-2.331199e-02, kb_den=8.188983e-03, tau_den=2.714718e+01)
+  1930            |   1.0045 [0.962, 1.049] | 1.0740  (b_original_num=-0.000685, C_num=-5.829356e+00, ka_num=-2.636573e-02, kb_num=8.058924e-03, tau_num=2.254264e+01, b_original_den=-0.001677, C_den=-5.445856e+00, ka_den=-4.920258e-02, kb_den=4.287819e-03, tau_den=1.227782e+01)
+  1940            |   1.0687 [1.029, 1.110] | 1.1091  (b_original_num=-0.001124, C_num=-7.008742e+00, ka_num=-2.081417e-02, kb_num=4.855343e-03, tau_num=2.093089e+01, b_original_den=-0.000752, C_den=-6.543082e+00, ka_den=-3.733574e-02, kb_den=3.303196e-03, tau_den=1.233835e+01)
+  1950            |   1.0045 [0.961, 1.050] | 1.0502  (b_original_num=-0.000477, C_num=-8.028311e+00, ka_num=-2.979722e-02, kb_num=3.462333e-03, tau_num=1.276605e+01, b_original_den=-0.002078, C_den=-7.531135e+00, ka_den=-3.001572e-02, kb_den=8.480342e-05, tau_den=1.178624e+01)
   1960            |   1.1395 [1.067, 1.216] | 1.0930  (beta_num=0.001180, beta_den=0.002777)
   1970            |   1.1362 [1.037, 1.245] | 1.1599  (beta_num=0.002100, beta_den=0.001401)
-  1980            |   0.9662 [0.822, 1.135] | 1.0425  (beta_num=0.000013, beta_den=-0.002689)
+  1980            |   1.0707 [0.911, 1.259] | 1.0425  (beta_num=0.000013, b_original_den=-0.002689, C_den=-1.109161e+01, ka_den=-6.680303e-02, kb_den=2.688750e-03, tau_den=2.552641e+00)
   1990            |   1.4000 [1.087, 1.803] | 1.4000  (beta_num=0.000009, beta_den=0.000007)
   2000            |   1.4667 [0.997, 2.157] | 1.4667  (beta_num=0.000005, beta_den=0.000004)
 
@@ -859,14 +860,14 @@ Dose combination: 3 vs 1 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9224 [0.856, 0.994] | -
-  All Ages        |   1.1399 [1.057, 1.229] | 1.1565
-  1920            |   0.5137 [0.381, 0.692] | 0.3542  (beta_num=-0.001086, beta_den=0.006235, c_num=0.000220, c_den=0.000000)
-  1930            |   0.9823 [0.851, 1.133] | 1.2123  (beta_num=-0.000685, beta_den=-0.006318, c_num=0.000273, c_den=0.000374)
-  1940            |   1.1576 [1.002, 1.338] | 1.4688  (beta_num=-0.001124, beta_den=-0.009229, c_num=0.000220, c_den=0.000287)
-  1950            |   0.8162 [0.687, 0.970] | 1.1688  (beta_num=-0.000477, beta_den=-0.010664, c_num=0.000184, c_den=0.000361)
+  ASMR (direct)   |   0.9276 [0.861, 0.999] | -
+  All Ages        |   0.8961 [0.809, 0.992] | 1.1565  (beta_num=-0.060106, beta_den=-0.069474)
+  1920            |   0.5687 [0.422, 0.767] | 0.3542  (b_original_num=-0.001086, C_num=-4.659391e+00, ka_num=-5.460603e-02, kb_num=5.188493e-03, tau_num=1.312380e+01, beta_den=0.006235)
+  1930            |   0.9692 [0.842, 1.116] | 1.2123  (b_original_num=-0.000685, C_num=-5.829356e+00, ka_num=-2.636573e-02, kb_num=8.058924e-03, tau_num=2.254264e+01, b_original_den=-0.006318, C_den=-5.002082e+00, ka_den=-6.569922e-02, kb_den=1.008808e-02, tau_den=1.682612e+01)
+  1940            |   0.9822 [0.851, 1.134] | 1.4688  (b_original_num=-0.001124, C_num=-7.008742e+00, ka_num=-2.081417e-02, kb_num=4.855343e-03, tau_num=2.093089e+01, b_original_den=-0.009229, C_den=-5.800542e+00, ka_den=-5.226963e-02, kb_den=5.214770e-02, tau_den=6.082722e+01)
+  1950            |   1.0468 [0.882, 1.243] | 1.1688  (b_original_num=-0.000477, C_num=-8.028311e+00, ka_num=-2.979722e-02, kb_num=3.462333e-03, tau_num=1.276605e+01, b_original_den=-0.010664, C_den=-7.020036e+00, ka_den=-1.759156e-02, kb_den=2.925474e-02, tau_den=1.394565e+02)
   1960            |   0.5701 [0.453, 0.717] | 0.5843  (beta_num=0.001180, beta_den=0.000252)
-  1970            |   0.9504 [0.710, 1.272] | 1.6255  (beta_num=0.002100, beta_den=-0.012064, c_num=0.000000, c_den=0.000254)
+  1970            |   1.3104 [0.978, 1.755] | 1.6255  (beta_num=0.002100, b_original_den=-0.012064, C_den=-8.635942e+00, ka_den=-1.464894e-02, kb_den=1.180958e+01, tau_den=3.211750e+04)
   1980            |   0.9967 [0.702, 1.415] | 0.9960  (beta_num=0.000013, beta_den=0.000046)
   1990            |   0.6974 [0.365, 1.332] | 0.6973  (beta_num=0.000009, beta_den=0.000014)
   2000            |   0.6598 [0.260, 1.676] | 0.6597  (beta_num=0.000005, beta_den=0.000000)
@@ -875,28 +876,28 @@ Dose combination: 3 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0130 [0.995, 1.031] | -
-  All Ages        |   1.0993 [1.079, 1.120] | 1.0940
-  1920            |   0.9296 [0.864, 1.000] | 1.1099  (beta_num=-0.001086, beta_den=-0.005603, c_num=0.000220, c_den=0.000305)
-  1930            |   0.9936 [0.959, 1.029] | 1.0583  (beta_num=-0.000685, beta_den=-0.002817, c_num=0.000273, c_den=0.000282)
-  1940            |   1.0469 [1.013, 1.082] | 1.0992  (beta_num=-0.001124, beta_den=-0.002111, c_num=0.000220, c_den=0.000253)
-  1950            |   1.0240 [0.984, 1.066] | 1.1123  (beta_num=-0.000477, beta_den=-0.001104, c_num=0.000184, c_den=0.000272)
-  1960            |   0.9354 [0.883, 0.991] | 1.1089  (beta_num=0.001180, beta_den=-0.001813, c_num=0.000000, c_den=0.000123)
-  1970            |   0.8874 [0.817, 0.964] | 1.1163  (beta_num=0.002100, beta_den=-0.003352, c_num=0.000000, c_den=0.000114)
+  ASMR (direct)   |   1.0205 [1.003, 1.039] | -
+  All Ages        |   0.0582 [0.057, 0.060] | 1.0940  (beta_num=-0.060106, beta_den=-0.125928)
+  1920            |   1.0255 [0.954, 1.103] | 1.1099  (b_original_num=-0.001086, C_num=-4.659391e+00, ka_num=-5.460603e-02, kb_num=5.188493e-03, tau_num=1.312380e+01, b_original_den=-0.005603, C_den=-4.615145e+00, ka_den=-4.663571e-02, kb_den=6.657320e-03, tau_den=1.997291e+01)
+  1930            |   0.9857 [0.951, 1.021] | 1.0583  (b_original_num=-0.000685, C_num=-5.829356e+00, ka_num=-2.636573e-02, kb_num=8.058924e-03, tau_num=2.254264e+01, b_original_den=-0.002817, C_den=-5.381979e+00, ka_den=-3.921252e-02, kb_den=5.204921e-03, tau_den=1.613157e+01)
+  1940            |   1.0436 [1.010, 1.079] | 1.0992  (b_original_num=-0.001124, C_num=-7.008742e+00, ka_num=-2.081417e-02, kb_num=4.855343e-03, tau_num=2.093089e+01, b_original_den=-0.002111, C_den=-6.454428e+00, ka_den=-3.424031e-02, kb_den=5.121854e-03, tau_den=1.586126e+01)
+  1950            |   1.0492 [1.008, 1.092] | 1.1123  (b_original_num=-0.000477, C_num=-8.028311e+00, ka_num=-2.979722e-02, kb_num=3.462333e-03, tau_num=1.276605e+01, b_original_den=-0.001104, C_den=-7.373412e+00, ka_den=-3.488490e-02, kb_den=4.839005e-03, tau_den=1.515223e+01)
+  1960            |   0.9120 [0.861, 0.966] | 1.1089  (beta_num=0.001180, b_original_den=-0.001813, C_den=-8.491069e+00, ka_den=-1.911233e-02, kb_den=1.938219e-03, tau_den=1.961686e+01)
+  1970            |   0.9289 [0.855, 1.009] | 1.1163  (beta_num=0.002100, b_original_den=-0.003352, C_den=-9.591378e+00, ka_den=-1.234399e-02, kb_den=4.305644e-03, tau_den=3.335063e+01)
   1980            |   1.3625 [1.178, 1.576] | 1.3621  (beta_num=0.000013, beta_den=0.000024)
   1990            |   1.5798 [1.259, 1.982] | 1.5796  (beta_num=0.000009, beta_den=0.000012)
-  2000            |   0.6279 [0.435, 0.906] | 0.8084  (beta_num=0.000005, beta_den=-0.006330, c_num=0.000000, c_den=0.000103)
+  2000            |   0.8042 [0.557, 1.161] | 0.8084  (beta_num=0.000005, b_original_den=-0.006330, C_den=-1.156456e+01, ka_den=-1.227211e+00, kb_den=-1.433497e-04, tau_den=4.619905e-01)
 
 Dose combination: 4 vs 3 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9314 [0.911, 0.952] | -
-  All Ages        |   1.1655 [1.143, 1.188] | 1.1375
-  1920            |   0.9545 [0.891, 1.023] | 1.2441  (beta_num=0.002971, beta_den=-0.001086, c_num=0.000000, c_den=0.000220)
-  1930            |   0.8444 [0.818, 0.872] | 1.1164  (beta_num=0.002189, beta_den=-0.000685, c_num=0.000000, c_den=0.000273)
-  1940            |   0.8243 [0.797, 0.852] | 1.1296  (beta_num=0.004450, beta_den=-0.001124, c_num=0.000000, c_den=0.000220)
-  1950            |   0.9582 [0.913, 1.005] | 1.2582  (beta_num=0.004398, beta_den=-0.000477, c_num=0.000000, c_den=0.000184)
+  ASMR (direct)   |   0.9525 [0.932, 0.973] | -
+  All Ages        |   0.1479 [0.145, 0.151] | 1.1375  (beta_num=0.000529, beta_den=-0.060106)
+  1920            |   0.8621 [0.805, 0.923] | 1.2441  (beta_num=0.002971, b_original_den=-0.001086, C_den=-4.659391e+00, ka_den=-5.460603e-02, kb_den=5.188493e-03, tau_den=1.312380e+01)
+  1930            |   0.8816 [0.853, 0.911] | 1.1164  (beta_num=0.002189, b_original_den=-0.000685, C_den=-5.829356e+00, ka_den=-2.636573e-02, kb_den=8.058924e-03, tau_den=2.254264e+01)
+  1940            |   0.8628 [0.835, 0.892] | 1.1296  (beta_num=0.004450, b_original_den=-0.001124, C_den=-7.008742e+00, ka_den=-2.081417e-02, kb_den=4.855343e-03, tau_den=2.093089e+01)
+  1950            |   0.9657 [0.921, 1.013] | 1.2582  (beta_num=0.004398, b_original_den=-0.000477, C_den=-8.028311e+00, ka_den=-2.979722e-02, kb_den=3.462333e-03, tau_den=1.276605e+01)
   1960            |   1.3200 [1.194, 1.459] | 1.4311  (beta_num=0.004260, beta_den=0.001180)
   1970            |   2.7348 [2.284, 3.274] | 2.5885  (beta_num=0.000057, beta_den=0.002100)
   1980            |   0.5033 [0.354, 0.715] | 0.5035  (beta_num=0.000037, beta_den=0.000013)
@@ -907,15 +908,15 @@ Dose combination: 4 vs 2 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0140 [0.988, 1.041] | -
-  All Ages        |   1.1901 [1.161, 1.220] | 1.1850
-  1920            |   0.6942 [0.628, 0.767] | 0.8001  (beta_num=0.002971, beta_den=-0.002534)
-  1930            |   0.9552 [0.911, 1.002] | 1.1990  (beta_num=0.002189, beta_den=-0.001677, c_num=0.000000, c_den=0.000170)
-  1940            |   0.9419 [0.901, 0.984] | 1.2528  (beta_num=0.004450, beta_den=-0.000752, c_num=0.000000, c_den=0.000196)
-  1950            |   0.9909 [0.937, 1.048] | 1.3213  (beta_num=0.004398, beta_den=-0.002078, c_num=0.000000, c_den=0.000154)
+  ASMR (direct)   |   0.9767 [0.951, 1.003] | -
+  All Ages        |   0.0583 [0.057, 0.060] | 1.1850  (beta_num=0.000529, beta_den=-0.083350)
+  1920            |   0.6112 [0.553, 0.675] | 0.8001  (beta_num=0.002971, b_original_den=-0.002534, C_den=-4.760638e+00, ka_den=-2.331199e-02, kb_den=8.188983e-03, tau_den=2.714718e+01)
+  1930            |   0.8856 [0.845, 0.928] | 1.1990  (beta_num=0.002189, b_original_den=-0.001677, C_den=-5.445856e+00, ka_den=-4.920258e-02, kb_den=4.287819e-03, tau_den=1.227782e+01)
+  1940            |   0.9222 [0.883, 0.963] | 1.2528  (beta_num=0.004450, b_original_den=-0.000752, C_den=-6.543082e+00, ka_den=-3.733574e-02, kb_den=3.303196e-03, tau_den=1.233835e+01)
+  1950            |   0.9701 [0.917, 1.026] | 1.3213  (beta_num=0.004398, b_original_den=-0.002078, C_den=-7.531135e+00, ka_den=-3.001572e-02, kb_den=8.480342e-05, tau_den=1.178624e+01)
   1960            |   1.5041 [1.353, 1.673] | 1.5642  (beta_num=0.004260, beta_den=0.002777)
   1970            |   3.1074 [2.586, 3.733] | 3.0024  (beta_num=0.000057, beta_den=0.001401)
-  1980            |   0.4863 [0.343, 0.689] | 0.5249  (beta_num=0.000037, beta_den=-0.002689)
+  1980            |   0.5389 [0.380, 0.764] | 0.5249  (beta_num=0.000037, b_original_den=-0.002689, C_den=-1.109161e+01, ka_den=-6.680303e-02, kb_den=2.688750e-03, tau_den=2.552641e+00)
   1990            |   1.1029 [0.573, 2.123] | 1.1034  (beta_num=0.000021, beta_den=0.000007)
   2000            |   4.6802 [1.715, 12.774] | 4.6803  (beta_num=0.000000, beta_den=0.000004)
 
@@ -923,14 +924,14 @@ Dose combination: 4 vs 1 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.8611 [0.798, 0.929] | -
-  All Ages        |   1.3286 [1.231, 1.434] | 1.3155
+  ASMR (direct)   |   0.8857 [0.821, 0.955] | -
+  All Ages        |   0.1326 [0.120, 0.147] | 1.3155  (beta_num=0.000529, beta_den=-0.069474)
   1920            |   0.4903 [0.363, 0.662] | 0.4407  (beta_num=0.002971, beta_den=0.006235)
-  1930            |   0.8295 [0.718, 0.958] | 1.3534  (beta_num=0.002189, beta_den=-0.006318, c_num=0.000000, c_den=0.000374)
-  1940            |   0.9542 [0.824, 1.105] | 1.6591  (beta_num=0.004450, beta_den=-0.009229, c_num=0.000000, c_den=0.000287)
-  1950            |   0.7821 [0.656, 0.933] | 1.4706  (beta_num=0.004398, beta_den=-0.010664, c_num=0.000000, c_den=0.000361)
+  1930            |   0.8544 [0.741, 0.985] | 1.3534  (beta_num=0.002189, b_original_den=-0.006318, C_den=-5.002082e+00, ka_den=-6.569922e-02, kb_den=1.008808e-02, tau_den=1.682612e+01)
+  1940            |   0.8475 [0.733, 0.980] | 1.6591  (beta_num=0.004450, b_original_den=-0.009229, C_den=-5.800542e+00, ka_den=-5.226963e-02, kb_den=5.214770e-02, tau_den=6.082722e+01)
+  1950            |   1.0109 [0.848, 1.205] | 1.4706  (beta_num=0.004398, b_original_den=-0.010664, C_den=-7.020036e+00, ka_den=-1.759156e-02, kb_den=2.925474e-02, tau_den=1.394565e+02)
   1960            |   0.7526 [0.589, 0.961] | 0.8361  (beta_num=0.004260, beta_den=0.000252)
-  1970            |   2.5993 [1.865, 3.624] | 4.2075  (beta_num=0.000057, beta_den=-0.012064, c_num=0.000000, c_den=0.000254)
+  1970            |   3.5838 [2.569, 4.999] | 4.2075  (beta_num=0.000057, b_original_den=-0.012064, C_den=-8.635942e+00, ka_den=-1.464894e-02, kb_den=1.180958e+01, tau_den=3.211750e+04)
   1980            |   0.5016 [0.314, 0.801] | 0.5015  (beta_num=0.000037, beta_den=0.000046)
   1990            |   1.7822 [0.735, 4.321] | 1.7821  (beta_num=0.000021, beta_den=0.000014)
   2000            |   2.8170 [0.757, 10.488] | 2.8170  (beta_num=0.000000, beta_den=0.000000)
@@ -939,17 +940,17 @@ Dose combination: 4 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9447 [0.922, 0.968] | -
-  All Ages        |   1.2812 [1.253, 1.310] | 1.2444
-  1920            |   0.8872 [0.819, 0.961] | 1.3808  (beta_num=0.002971, beta_den=-0.005603, c_num=0.000000, c_den=0.000305)
-  1930            |   0.8391 [0.806, 0.873] | 1.1814  (beta_num=0.002189, beta_den=-0.002817, c_num=0.000000, c_den=0.000282)
-  1940            |   0.8630 [0.829, 0.898] | 1.2416  (beta_num=0.004450, beta_den=-0.002111, c_num=0.000000, c_den=0.000253)
-  1950            |   0.9812 [0.931, 1.035] | 1.3995  (beta_num=0.004398, beta_den=-0.001104, c_num=0.000000, c_den=0.000272)
-  1960            |   1.2347 [1.115, 1.367] | 1.5869  (beta_num=0.004260, beta_den=-0.001813, c_num=0.000000, c_den=0.000123)
-  1970            |   2.4270 [2.029, 2.903] | 2.8895  (beta_num=0.000057, beta_den=-0.003352, c_num=0.000000, c_den=0.000114)
+  ASMR (direct)   |   0.9727 [0.949, 0.996] | -
+  All Ages        |   0.0086 [0.008, 0.009] | 1.2444  (beta_num=0.000529, beta_den=-0.125928)
+  1920            |   0.8841 [0.816, 0.957] | 1.3808  (beta_num=0.002971, b_original_den=-0.005603, C_den=-4.615145e+00, ka_den=-4.663571e-02, kb_den=6.657320e-03, tau_den=1.997291e+01)
+  1930            |   0.8689 [0.835, 0.904] | 1.1814  (beta_num=0.002189, b_original_den=-0.002817, C_den=-5.381979e+00, ka_den=-3.921252e-02, kb_den=5.204921e-03, tau_den=1.613157e+01)
+  1940            |   0.9005 [0.865, 0.937] | 1.2416  (beta_num=0.004450, b_original_den=-0.002111, C_den=-6.454428e+00, ka_den=-3.424031e-02, kb_den=5.121854e-03, tau_den=1.586126e+01)
+  1950            |   1.0132 [0.961, 1.068] | 1.3995  (beta_num=0.004398, b_original_den=-0.001104, C_den=-7.373412e+00, ka_den=-3.488490e-02, kb_den=4.839005e-03, tau_den=1.515223e+01)
+  1960            |   1.2038 [1.087, 1.333] | 1.5869  (beta_num=0.004260, b_original_den=-0.001813, C_den=-8.491069e+00, ka_den=-1.911233e-02, kb_den=1.938219e-03, tau_den=1.961686e+01)
+  1970            |   2.5404 [2.124, 3.039] | 2.8895  (beta_num=0.000057, b_original_den=-0.003352, C_den=-9.591378e+00, ka_den=-1.234399e-02, kb_den=4.305644e-03, tau_den=3.335063e+01)
   1980            |   0.6857 [0.487, 0.965] | 0.6859  (beta_num=0.000037, beta_den=0.000024)
   1990            |   1.2446 [0.653, 2.373] | 1.2450  (beta_num=0.000021, beta_den=0.000012)
-  2000            |   4.0551 [1.496, 10.989] | 3.8062  (beta_num=0.000000, beta_den=-0.006330, c_num=0.000000, c_den=0.000103)
+  2000            |   0.0000 [0.000, 0.000] | 3.8062  (beta_num=0.000000, b_original_den=-0.006330, C_den=-1.156456e+01, ka_den=-1.227211e+00, kb_den=-1.433497e-04, tau_den=4.619905e-01)
 
 M/P by decades (Dose 4)
 --------------------------------------------------
@@ -966,7 +967,7 @@ M/P by decades (Dose 4)
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
-[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-02 22:48:02
+[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-03 21:00:50
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 40 summary rows
   - 2021_20: 3 dose combinations, 40 summary rows

@@ -9,7 +9,7 @@ openpyxl>=3.0.0
 # Statistical analysis
 statsmodels>=0.13.0
 scipy>=1.7.0
-cvxpy>=1.2.0  # Required for Slope6 quadratic regression (v5.0+)
+cvxpy>=1.2.0  # Optional: Only needed for legacy fit_quadratic_quantile (not used in v5.1+ with slope7)
 
 # Plotting and visualization
 matplotlib>=3.5.0

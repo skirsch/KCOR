@@ -54,9 +54,6 @@ all: KCOR_variable KCOR validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
 KCOR: $(VENV_DIR)
-	@echo "Checking for cvxpy in virtual environment..."
-	@$(VENV_PYTHON) -c "import cvxpy" 2>/dev/null || (echo "ERROR: cvxpy not found in virtual environment. Run 'make install' to install dependencies." && exit 1)
-	@echo "cvxpy is available."
 	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET) PYTHON=$(abspath $(VENV_PYTHON))
 
 # CMR aggregation only (delegates to code/Makefile target CMR)
@@ -195,7 +192,7 @@ help:
 	@echo "  make install        - Create .venv virtual environment and install dependencies from requirements.txt"
 	@echo "  make install-debian - Install dependencies using Debian packages (requires sudo)"
 	@echo ""
-	@echo "Note: KCOR v5.0+ requires cvxpy which is best installed in a virtual environment."
+	@echo "Note: KCOR v5.1+ uses slope7 mode and no longer requires cvxpy (it was only needed for legacy quadratic mode)."
 	@echo "      The 'make install' target automatically creates and uses .venv."
 	@echo "      All Python commands run through the Makefile use the virtual environment automatically."
 

@@ -88,6 +88,7 @@ import logging
 from datetime import datetime, timedelta
 import tempfile
 import shutil
+import csv
 import statsmodels.api as sm
 from scipy.optimize import least_squares
 
@@ -96,8 +97,11 @@ try:
     HAS_CVXPY = True
 except ImportError:
     HAS_CVXPY = False
+    import warnings
+    warnings.warn("cvxpy not available. Quadratic regression (fit_quadratic_quantile) will not work, but this is not needed for v5.1+ (slope7 mode).", ImportWarning)
 
-# Dependencies: pandas, numpy, openpyxl, statsmodels, cvxpy (optional, falls back to linear-only if missing)
+# Dependencies: pandas, numpy, openpyxl, statsmodels, scipy
+# cvxpy is optional and only needed for legacy fit_quadratic_quantile function (not used in v5.1+)
 
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS)
@@ -126,7 +130,97 @@ SLOPE6_MIN_DATA_POINTS = 5              # Minimum data points required for quant
 SLOPE6_QUANTILE_TAU = 0.5               # Quantile level for quantile regression (0.5 = 50th percentile/median)
 SLOPE6_APPLICATION_END_ISO = "2024-16"  # Rightmost endpoint for determining centerpoint (ISO week format)
 SLOPE7_END_ISO = "2024-16"              # Final week used for slope7 depletion-mode normalization (ISO week format)
-ENABLE_NEGATIVE_SLOPE_FIT = 1          # When 0, disable slope7 depletion mode and force linear fit only (temporary flag)
+ENABLE_NEGATIVE_SLOPE_FIT = 1           # When 0, disable slope7 depletion mode and force linear fit only (temporary flag)
+
+# Optional detailed debug logging for slope7 depletion-mode fits.
+# When enabled, each attempted slope7 fit (per cohort) is logged as a CSV row to SLOPE7_DEBUG_FILE,
+# including summary statistics of the inputs and the fitted parameters.
+SLOPE7_DEBUG_ENABLED = True
+SLOPE7_DEBUG_FILE = "KCOR_slope7_debug.csv"
+
+
+def log_slope7_fit_debug(record: dict) -> None:
+    """
+    Append a CSV-formatted debug record for a slope7 (or related) fit to SLOPE7_DEBUG_FILE.
+    We log summary stats of s_values and logh_values (min/max/mean) plus key fit parameters.
+    Failures in logging are silently ignored so as not to affect the main pipeline.
+    """
+    if not SLOPE7_DEBUG_ENABLED:
+        return
+    try:
+        # Extract raw sequences if present and compute simple summaries
+        s_vals = record.pop("s_values", None)
+        logh_vals = record.pop("logh_values", None)
+
+        def _summaries(arr):
+            if arr is None:
+                return (None, None, None)
+            a = np.asarray(list(arr), dtype=float)
+            if a.size == 0 or not np.isfinite(a).any():
+                return (None, None, None)
+            a = a[np.isfinite(a)]
+            if a.size == 0:
+                return (None, None, None)
+            return (float(a.min()), float(a.max()), float(a.mean()))
+
+        s_min, s_max, s_mean = _summaries(s_vals)
+        lh_min, lh_max, lh_mean = _summaries(logh_vals)
+
+        # Standardized column order for easy comparison
+        columns = [
+            "enrollment_date",
+            "mode",
+            "YearOfBirth",
+            "Dose",
+            "n_points",
+            "b_original",
+            "C",
+            "ka",
+            "kb",
+            "tau",
+            "rms_error",
+            "note",
+            "error",
+            "s_min",
+            "s_max",
+            "s_mean",
+            "logh_min",
+            "logh_max",
+            "logh_mean",
+        ]
+
+        # Prepare row dict with defaults
+        row = {col: None for col in columns}
+        for k, v in record.items():
+            if k not in row:
+                continue
+            if isinstance(v, np.generic):
+                row[k] = v.item()
+            elif isinstance(v, datetime):
+                row[k] = v.isoformat()
+            else:
+                row[k] = v
+
+        # Inject summaries
+        row["s_min"] = s_min
+        row["s_max"] = s_max
+        row["s_mean"] = s_mean
+        row["logh_min"] = lh_min
+        row["logh_max"] = lh_max
+        row["logh_mean"] = lh_mean
+
+        # Append to CSV, writing header if file is new/empty
+        file_exists = Path(SLOPE7_DEBUG_FILE).is_file()
+        write_header = (not file_exists) or (Path(SLOPE7_DEBUG_FILE).stat().st_size == 0)
+
+        with open(SLOPE7_DEBUG_FILE, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=columns)
+            if write_header:
+                writer.writeheader()
+            writer.writerow(row)
+    except Exception:
+        # Debug logging must never break the main computation
+        return
 
 KCOR_REPORTING_DATE = {
     '2021-13': '2022-12-31',
@@ -611,9 +705,12 @@ def fit_quadratic_quantile(t, logh, tau=0.5, fixed_b=None):
 
 def fit_slope7_depletion(s, logh):
     """
-    Fit depletion-mode normalization using Levenberg-Marquardt nonlinear least squares.
+    Fit depletion-mode normalization using Trust Region Reflective nonlinear least squares.
     
-    Models log-hazard as: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
+    Models log-hazard as: log h(s) = C + (k_0 + Δk)*s - Δk*τ*(1 - e^(-s/τ))
+    where k_∞ = k_0 + Δk, ensuring k_∞ ≥ k_0 (monotonicity constraint).
+    
+    Reparameterized to enforce k_∞ ≥ k_0 via Δk ≥ 0 constraint.
     
     Parameters
     ----------
@@ -627,9 +724,10 @@ def fit_slope7_depletion(s, logh):
     C, k_inf, k_0, tau : floats
         Fitted parameters:
         - C: intercept
-        - k_inf (kb): long-run background slope (must be > 0)
+        - k_inf (kb): long-run background slope = k_0 + Δk (may be negative, but k_inf ≥ k_0)
         - k_0 (ka): slope at enrollment (may be negative)
         - tau: depletion timescale in weeks (must be > 0)
+        The constraint k_inf ≥ k_0 ensures the slope b(s) is monotonically increasing.
         Returns (np.nan, np.nan, np.nan, np.nan) on failure.
     """
     s = np.asarray(s, dtype=float)
@@ -656,34 +754,46 @@ def fit_slope7_depletion(s, logh):
     else:
         k_0_init = 0.0
     
-    # k_∞: long-run slope (should be positive, estimate from later points)
+    # Δk: difference between long-run and initial slope (must be ≥ 0)
+    # Estimate from later points vs initial slope
+    MIN_DELTA_K = 0.0  # Δk must be ≥ 0 (enforces k_∞ ≥ k_0)
+    MIN_TAU = 1e-3     # Minimum value for tau bound (weeks)
+    
     if len(logh_valid) >= 5:
         later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
-        k_inf_init = max(later_slope, EPS)  # Ensure positive
+        delta_k_init = max(later_slope - k_0_init, 0.001)  # Ensure Δk ≥ 0 and well above bound
     else:
-        k_inf_init = max(k_0_init, EPS) if k_0_init > 0 else EPS
+        # If we can't estimate later slope, assume small positive Δk
+        delta_k_init = 0.001
     
     # tau: depletion timescale (weeks), initial guess based on data span
-    tau_init = max((s_valid.max() - s_valid.min()) / 3.0, 1.0)
+    tau_init = max((s_valid.max() - s_valid.min()) / 3.0, max(MIN_TAU * 10, 1.0))  # Ensure well above bound
     
-    # Parameter vector: [C, k_inf, k_0, tau]
-    p0 = np.array([C_init, k_inf_init, k_0_init, tau_init])
+    # Parameter vector: [C, k_0, Δk, tau]
+    p0 = np.array([C_init, k_0_init, delta_k_init, tau_init], dtype=float)
     
-    # Bounds: k_inf > 0, tau > 0, others unbounded
-    bounds = ([None, EPS, None, EPS], [None, None, None, None])
+    # Bounds: Δk ≥ 0, tau > MIN_TAU, C and k_0 unbounded (use ±inf for "no bound")
+    lower_bounds = np.array([-np.inf, -np.inf, MIN_DELTA_K, MIN_TAU], dtype=float)
+    upper_bounds = np.array([ np.inf,  np.inf,        np.inf,    np.inf], dtype=float)
+    
+    # Ensure initial guess is within bounds before calling least_squares
+    p0 = np.clip(p0, lower_bounds, upper_bounds)
+    bounds = (lower_bounds, upper_bounds)
     
     def residual_func(p):
         """Residual function for least squares."""
-        C, k_inf, k_0, tau = p
-        # Model: log h(s) = C + k_inf*s + (k_0 - k_inf)*tau*(1 - exp(-s/tau))
-        predicted = C + k_inf * s_valid + (k_0 - k_inf) * tau * (1.0 - np.exp(-s_valid / (tau + EPS)))
+        C, k_0, delta_k, tau = p
+        # Model: log h(s) = C + (k_0 + Δk)*s - Δk*τ*(1 - exp(-s/τ))
+        # This is equivalent to: C + k_∞*s + (k_0 - k_∞)*τ*(1 - exp(-s/τ)) where k_∞ = k_0 + Δk
+        k_inf = k_0 + delta_k
+        predicted = C + k_inf * s_valid - delta_k * tau * (1.0 - np.exp(-s_valid / (tau + EPS)))
         return logh_valid - predicted
     
     try:
         result = least_squares(
             residual_func,
             p0,
-            method='lm',  # Levenberg-Marquardt
+            method='trf',  # Trust Region Reflective (supports bounds)
             bounds=bounds,
             max_nfev=1000,
             ftol=1e-8,
@@ -691,11 +801,90 @@ def fit_slope7_depletion(s, logh):
         )
         
         if result.success:
-            C, k_inf, k_0, tau = result.x
+            C, k_0, delta_k, tau = result.x
             # Ensure constraints are satisfied
-            k_inf = max(k_inf, EPS)
-            tau = max(tau, EPS)
-            return (float(C), float(k_inf), float(k_0), float(tau))
+            delta_k = max(delta_k, MIN_DELTA_K)  # Ensure Δk ≥ 0
+            tau = max(tau, MIN_TAU)
+            # Compute k_∞ = k_0 + Δk
+            k_inf = k_0 + delta_k
+            # Verify all parameters are finite
+            if np.isfinite(C) and np.isfinite(k_inf) and np.isfinite(k_0) and np.isfinite(tau):
+                return (float(C), float(k_inf), float(k_0), float(tau))
+            else:
+                # Parameters are not finite
+                return (np.nan, np.nan, np.nan, np.nan)
+        else:
+            # Fit did not converge
+            return (np.nan, np.nan, np.nan, np.nan)
+    except Exception as e:
+        # Log the exception for debugging
+        import warnings
+        warnings.warn(f"fit_slope7_depletion failed: {str(e)}", RuntimeWarning)
+        return (np.nan, np.nan, np.nan, np.nan)
+
+
+def fit_slope7_depletion_lm(s, logh):
+    """
+    Comparator fit: depletion-mode normalization using unbounded Levenberg–Marquardt (method='lm').
+    
+    Uses the same functional form as fit_slope7_depletion, but WITHOUT bounds and with method='lm'
+    for nonlinear least squares. Intended for diagnostics/comparison only; results are logged but
+    not currently used for normalization.
+    """
+    s = np.asarray(s, dtype=float)
+    logh = np.asarray(logh, dtype=float)
+    
+    # Remove invalid values
+    valid_mask = np.isfinite(s) & np.isfinite(logh)
+    if valid_mask.sum() < SLOPE6_MIN_DATA_POINTS:
+        return (np.nan, np.nan, np.nan, np.nan)
+    
+    s_valid = s[valid_mask]
+    logh_valid = logh[valid_mask]
+    
+    # Initial parameter estimates (same strategy as bounded fit, but no clipping)
+    if len(logh_valid) >= 3:
+        C_init = np.mean(logh_valid[:3])
+    else:
+        C_init = logh_valid[0] if len(logh_valid) > 0 else 0.0
+    
+    if len(s_valid) >= 2:
+        k_0_init = (logh_valid[1] - logh_valid[0]) / (s_valid[1] - s_valid[0] + EPS)
+    else:
+        k_0_init = 0.0
+    
+    if len(logh_valid) >= 5:
+        later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
+        delta_k_init = max(later_slope - k_0_init, 0.001)
+    else:
+        delta_k_init = 0.001
+    
+    tau_init = max((s_valid.max() - s_valid.min()) / 3.0, 1.0)
+    
+    p0 = np.array([C_init, k_0_init, delta_k_init, tau_init], dtype=float)
+    
+    def residual_func(p):
+        C, k_0, delta_k, tau = p
+        k_inf = k_0 + delta_k
+        predicted = C + k_inf * s_valid - delta_k * tau * (1.0 - np.exp(-s_valid / (tau + EPS)))
+        return logh_valid - predicted
+    
+    try:
+        result = least_squares(
+            residual_func,
+            p0,
+            method='lm',  # Unbounded Levenberg–Marquardt for comparison
+            max_nfev=1000,
+            ftol=1e-8,
+            xtol=1e-8
+        )
+        if result.success:
+            C, k_0, delta_k, tau = result.x
+            k_inf = k_0 + delta_k
+            if np.isfinite(C) and np.isfinite(k_inf) and np.isfinite(k_0) and np.isfinite(tau):
+                return (float(C), float(k_inf), float(k_0), float(tau))
+            else:
+                return (np.nan, np.nan, np.nan, np.nan)
         else:
             return (np.nan, np.nan, np.nan, np.nan)
     except Exception:
@@ -848,15 +1037,35 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             
             # Use t_mean from application window, not from fit
             # (t_mean_fit is computed from fit window, but we want t_mean from application window)
+            t_c_fit = np.array(t_values) - t_mean
+            predicted_lin = a_lin + b_lin * t_c_fit
+            residuals_lin = np.array(log_h_values) - predicted_lin
+            rms_error_lin = np.sqrt(np.mean(residuals_lin**2))
+
+            # Log linear fit details for comparison with slope7
+            try:
+                log_slope7_fit_debug({
+                    "enrollment_date": sheet_name,
+                    "mode": "linear",
+                    "YearOfBirth": int(yob),
+                    "Dose": int(dose),
+                    "n_points": len(log_h_values),
+                    "b_original": float(b_lin),
+                    "C": float(a_lin),
+                    "ka": None,
+                    "kb": None,
+                    "tau": None,
+                    "rms_error": float(rms_error_lin),
+                    "note": f"linear_fit_t_mean={t_mean:.6f}",
+                    "error": None,
+                    "s_values": t_values,
+                    "logh_values": log_h_values,
+                })
+            except Exception:
+                pass
             
             if b_lin >= 0 or ENABLE_NEGATIVE_SLOPE_FIT == 0:
                 # Linear mode (either b_lin >= 0, or quadratic disabled via flag)
-                # Compute RMS error for diagnostics
-                t_c_fit = np.array(t_values) - t_mean
-                predicted = a_lin + b_lin * t_c_fit
-                residuals = np.array(log_h_values) - predicted
-                rms_error = np.sqrt(np.mean(residuals**2))
-                
                 params = {
                     "mode": "linear",
                     "a": a_lin,
@@ -867,9 +1076,9 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 }
                 normalization_params[(yob, dose)] = params
                 if ENABLE_NEGATIVE_SLOPE_FIT == 0 and b_lin < 0:
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(forced),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(forced),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)}")
                 else:
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)}")
             else:
                 # Try slope7 depletion-mode: b_lin < 0 and ENABLE_NEGATIVE_SLOPE_FIT != 0
                 # Use deployment window (enrollment_date to SLOPE7_END_ISO) as fit window
@@ -899,6 +1108,20 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 # Need at least SLOPE6_MIN_DATA_POINTS points for slope7 fit
                 if len(s_values) < SLOPE6_MIN_DATA_POINTS:
                     _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(s_values)}")
+                    try:
+                        log_slope7_fit_debug({
+                            "enrollment_date": sheet_name,
+                            "mode": "slope7_insufficient_data",
+                            "YearOfBirth": int(yob),
+                            "Dose": int(dose),
+                            "n_points": len(s_values),
+                            "s_values": list(map(float, s_values)),
+                            "logh_values": list(map(float, log_h_slope7_values)),
+                            "b_original": float(b_lin),
+                            "note": "insufficient points for slope7 fit; falling back to linear",
+                        })
+                    except Exception:
+                        pass
                     # Fallback to linear mode
                     t_c_fit = np.array(t_values) - t_mean
                     predicted = a_lin + b_lin * t_c_fit
@@ -916,15 +1139,82 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     normalization_params[(yob, dose)] = params
                     _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(insufficient_slope7_data),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
                 else:
-                    # Fit slope7 depletion-mode normalization
+                    # Fit slope7 depletion-mode normalization (bounded TRF) and LM comparator
                     try:
+                        # --- Bounded TRF fit (primary slope7) ---
                         C, kb, ka, tau = fit_slope7_depletion(np.array(s_values), np.array(log_h_slope7_values))
                         
-                        if np.isfinite(C) and np.isfinite(kb) and np.isfinite(ka) and np.isfinite(tau) and kb > EPS and tau > EPS:
+                        # Note: kb (k_∞) can be negative (cohort still depleting), but k_∞ ≥ k_0 is guaranteed by reparameterization
+                        if np.isfinite(C) and np.isfinite(kb) and np.isfinite(ka) and np.isfinite(tau) and tau > EPS:
                             # Compute RMS error for diagnostics
                             predicted = C + kb * np.array(s_values) + (ka - kb) * tau * (1.0 - np.exp(-np.array(s_values) / (tau + EPS)))
                             residuals = np.array(log_h_slope7_values) - predicted
                             rms_error = np.sqrt(np.mean(residuals**2))
+                            
+                            # Log detailed debug info for this successful bounded slope7 fit
+                            try:
+                                log_slope7_fit_debug({
+                                    "enrollment_date": sheet_name,
+                                    "mode": "slope7_success",
+                                    "YearOfBirth": int(yob),
+                                    "Dose": int(dose),
+                                    "n_points": len(s_values),
+                                    "s_values": list(map(float, s_values)),
+                                    "logh_values": list(map(float, log_h_slope7_values)),
+                                    "C": float(C),
+                                    "ka": float(ka),
+                                    "kb": float(kb),
+                                    "tau": float(tau),
+                                    "b_original": float(b_lin),
+                                    "rms_error": float(rms_error),
+                                })
+                            except Exception:
+                                pass
+                            
+                            # --- Unbounded LM comparator fit ---
+                            try:
+                                C_lm, kb_lm, ka_lm, tau_lm = fit_slope7_depletion_lm(
+                                    np.array(s_values), np.array(log_h_slope7_values)
+                                )
+                                if np.isfinite(C_lm) and np.isfinite(kb_lm) and np.isfinite(ka_lm) and np.isfinite(tau_lm) and tau_lm > EPS:
+                                    predicted_lm = C_lm + kb_lm * np.array(s_values) + (ka_lm - kb_lm) * tau_lm * (1.0 - np.exp(-np.array(s_values) / (tau_lm + EPS)))
+                                    residuals_lm = np.array(log_h_slope7_values) - predicted_lm
+                                    rms_error_lm = np.sqrt(np.mean(residuals_lm**2))
+                                    
+                                    log_slope7_fit_debug({
+                                        "enrollment_date": sheet_name,
+                                        "mode": "slope7_lm",
+                                        "YearOfBirth": int(yob),
+                                        "Dose": int(dose),
+                                        "n_points": len(s_values),
+                                        "s_values": list(map(float, s_values)),
+                                        "logh_values": list(map(float, log_h_slope7_values)),
+                                        "C": float(C_lm),
+                                        "ka": float(ka_lm),
+                                        "kb": float(kb_lm),
+                                        "tau": float(tau_lm),
+                                        "b_original": float(b_lin),
+                                        "rms_error": float(rms_error_lm),
+                                    })
+                                else:
+                                    log_slope7_fit_debug({
+                                        "enrollment_date": sheet_name,
+                                        "mode": "slope7_lm_invalid_params",
+                                        "YearOfBirth": int(yob),
+                                        "Dose": int(dose),
+                                        "n_points": len(s_values),
+                                        "s_values": list(map(float, s_values)),
+                                        "logh_values": list(map(float, log_h_slope7_values)),
+                                        "C": float(C_lm) if np.isfinite(C_lm) else None,
+                                        "ka": float(ka_lm) if np.isfinite(ka_lm) else None,
+                                        "kb": float(kb_lm) if np.isfinite(kb_lm) else None,
+                                        "tau": float(tau_lm) if np.isfinite(tau_lm) else None,
+                                        "b_original": float(b_lin),
+                                        "note": "invalid parameters from LM slope7 fit",
+                                    })
+                            except Exception:
+                                # LM comparator failure is non-fatal
+                                pass
                             
                             params = {
                                 "mode": "slope7",
@@ -942,6 +1232,24 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope7,C={C:.6e},ka={ka:.6e},kb={kb:.6e},tau={tau:.6e},b_original={b_lin:.6e},rms_error={rms_error:.6e},points={len(s_values)}")
                         else:
                             # Slope7 fit failed, fall back to linear
+                            try:
+                                log_slope7_fit_debug({
+                                    "enrollment_date": sheet_name,
+                                    "mode": "slope7_invalid_params",
+                                    "YearOfBirth": int(yob),
+                                    "Dose": int(dose),
+                                    "n_points": len(s_values),
+                                    "s_values": list(map(float, s_values)),
+                                    "logh_values": list(map(float, log_h_slope7_values)),
+                                    "C": float(C) if np.isfinite(C) else None,
+                                    "ka": float(ka) if np.isfinite(ka) else None,
+                                    "kb": float(kb) if np.isfinite(kb) else None,
+                                    "tau": float(tau) if np.isfinite(tau) else None,
+                                    "b_original": float(b_lin),
+                                    "note": "invalid parameters from slope7 fit; falling back to linear",
+                                })
+                            except Exception:
+                                pass
                             t_c_fit = np.array(t_values) - t_mean
                             predicted = a_lin + b_lin * t_c_fit
                             residuals = np.array(log_h_values) - predicted
@@ -959,6 +1267,20 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_failed_invalid_params,falling_back_to_linear")
                     except Exception as slope7_error:
                         # If slope7 fit fails, fall back to linear
+                        try:
+                            log_slope7_fit_debug({
+                                "enrollment_date": sheet_name,
+                                "mode": "slope7_exception",
+                                "YearOfBirth": int(yob),
+                                "Dose": int(dose),
+                                "n_points": len(s_values),
+                                "s_values": list(map(float, s_values)),
+                                "logh_values": list(map(float, log_h_slope7_values)),
+                                "b_original": float(b_lin),
+                                "error": str(slope7_error),
+                            })
+                        except Exception:
+                            pass
                         _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(slope7_error)},falling_back_to_linear")
                         t_c_fit = np.array(t_values) - t_mean
                         predicted = a_lin + b_lin * t_c_fit
@@ -985,6 +1307,149 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 "t_mean": t_mean,
                 "tau": SLOPE6_QUANTILE_TAU
             }
+    
+    # ------------------------------------------------------------------
+    # All-ages (YoB = -2) diagnostic fits (linear + slope7 TRF + LM)
+    # ------------------------------------------------------------------
+    try:
+        df_sorted = df.sort_values("DateDied")
+        all_ages_agg = df_sorted.groupby(["Dose", "DateDied"]).agg({
+            "ISOweekDied": "first",
+            "Alive": "sum",
+            "Dead": "sum",
+            "PT": "sum"
+        }).reset_index()
+        all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
+                                      all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
+                                      np.nan)
+        all_ages_agg["hazard_raw"] = hazard_from_mr_improved(all_ages_agg["MR"])
+        all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
+        all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
+        slope7_end_dt = _iso_to_date_slope6(SLOPE7_END_ISO)
+        
+        for dose in sorted(all_ages_agg["Dose"].unique()):
+            g_all = all_ages_agg[(all_ages_agg["Dose"] == dose) &
+                                 (all_ages_agg["DateDied"] >= enrollment_dt) &
+                                 (all_ages_agg["DateDied"] <= slope7_end_dt)].copy()
+            g_all = g_all[np.isfinite(g_all["hazard_raw"]) & (g_all["hazard_raw"] > EPS)]
+            if len(g_all) < SLOPE6_MIN_DATA_POINTS:
+                continue
+            s_vals = g_all["t"].to_numpy(dtype=float)
+            logh_vals = np.log(g_all["hazard_raw"].to_numpy(dtype=float))
+            if (~np.isfinite(logh_vals)).all():
+                continue
+            
+            # Linear fit on all-ages series
+            try:
+                a_lin_all, b_lin_all, t_mean_all = fit_linear_median(s_vals, logh_vals, tau=SLOPE6_QUANTILE_TAU)
+                t_c_all = s_vals - t_mean_all
+                pred_lin_all = a_lin_all + b_lin_all * t_c_all
+                resid_lin_all = logh_vals - pred_lin_all
+                rms_lin_all = float(np.sqrt(np.mean(resid_lin_all**2)))
+                log_slope7_fit_debug({
+                    "enrollment_date": sheet_name,
+                    "mode": "linear",
+                    "YearOfBirth": -2,
+                    "Dose": int(dose),
+                    "n_points": len(s_vals),
+                    "b_original": float(b_lin_all),
+                    "C": float(a_lin_all),
+                    "ka": None,
+                    "kb": None,
+                    "tau": None,
+                    "rms_error": rms_lin_all,
+                    "note": f"linear_all_ages_t_mean={t_mean_all:.6f}",
+                    "error": None,
+                    "s_values": s_vals.tolist(),
+                    "logh_values": logh_vals.tolist(),
+                })
+            except Exception:
+                continue
+            
+            # Bounded slope7 TRF on all-ages
+            try:
+                C_trf, kb_trf, ka_trf, tau_trf = fit_slope7_depletion(s_vals, logh_vals)
+                if np.isfinite(C_trf) and np.isfinite(kb_trf) and np.isfinite(ka_trf) and np.isfinite(tau_trf) and tau_trf > EPS:
+                    pred_trf = C_trf + kb_trf * s_vals + (ka_trf - kb_trf) * tau_trf * (1.0 - np.exp(-s_vals / (tau_trf + EPS)))
+                    resid_trf = logh_vals - pred_trf
+                    rms_trf = float(np.sqrt(np.mean(resid_trf**2)))
+                    log_slope7_fit_debug({
+                        "enrollment_date": sheet_name,
+                        "mode": "slope7_success",
+                        "YearOfBirth": -2,
+                        "Dose": int(dose),
+                        "n_points": len(s_vals),
+                        "s_values": s_vals.tolist(),
+                        "logh_values": logh_vals.tolist(),
+                        "C": float(C_trf),
+                        "ka": float(ka_trf),
+                        "kb": float(kb_trf),
+                        "tau": float(tau_trf),
+                        "b_original": float(b_lin_all),
+                        "rms_error": rms_trf,
+                    })
+                else:
+                    log_slope7_fit_debug({
+                        "enrollment_date": sheet_name,
+                        "mode": "slope7_invalid_params",
+                        "YearOfBirth": -2,
+                        "Dose": int(dose),
+                        "n_points": len(s_vals),
+                        "s_values": s_vals.tolist(),
+                        "logh_values": logh_vals.tolist(),
+                        "C": float(C_trf) if np.isfinite(C_trf) else None,
+                        "ka": float(ka_trf) if np.isfinite(ka_trf) else None,
+                        "kb": float(kb_trf) if np.isfinite(kb_trf) else None,
+                        "tau": float(tau_trf) if np.isfinite(tau_trf) else None,
+                        "b_original": float(b_lin_all),
+                        "note": "invalid parameters from slope7 TRF fit on all-ages series",
+                    })
+            except Exception:
+                pass
+            
+            # Unbounded slope7 LM comparator on all-ages
+            try:
+                C_lm_all, kb_lm_all, ka_lm_all, tau_lm_all = fit_slope7_depletion_lm(s_vals, logh_vals)
+                if np.isfinite(C_lm_all) and np.isfinite(kb_lm_all) and np.isfinite(ka_lm_all) and np.isfinite(tau_lm_all) and tau_lm_all > EPS:
+                    pred_lm_all = C_lm_all + kb_lm_all * s_vals + (ka_lm_all - kb_lm_all) * tau_lm_all * (1.0 - np.exp(-s_vals / (tau_lm_all + EPS)))
+                    resid_lm_all = logh_vals - pred_lm_all
+                    rms_lm_all = float(np.sqrt(np.mean(resid_lm_all**2)))
+                    log_slope7_fit_debug({
+                        "enrollment_date": sheet_name,
+                        "mode": "slope7_lm",
+                        "YearOfBirth": -2,
+                        "Dose": int(dose),
+                        "n_points": len(s_vals),
+                        "s_values": s_vals.tolist(),
+                        "logh_values": logh_vals.tolist(),
+                        "C": float(C_lm_all),
+                        "ka": float(ka_lm_all),
+                        "kb": float(kb_lm_all),
+                        "tau": float(tau_lm_all),
+                        "b_original": float(b_lin_all),
+                        "rms_error": rms_lm_all,
+                    })
+                else:
+                    log_slope7_fit_debug({
+                        "enrollment_date": sheet_name,
+                        "mode": "slope7_lm_invalid_params",
+                        "YearOfBirth": -2,
+                        "Dose": int(dose),
+                        "n_points": len(s_vals),
+                        "s_values": s_vals.tolist(),
+                        "logh_values": logh_vals.tolist(),
+                        "C": float(C_lm_all) if np.isfinite(C_lm_all) else None,
+                        "ka": float(ka_lm_all) if np.isfinite(ka_lm_all) else None,
+                        "kb": float(kb_lm_all) if np.isfinite(kb_lm_all) else None,
+                        "tau": float(tau_lm_all) if np.isfinite(tau_lm_all) else None,
+                        "b_original": float(b_lin_all),
+                        "note": "invalid parameters from slope7 LM fit on all-ages series",
+                    })
+            except Exception:
+                pass
+    except Exception:
+        # All-ages diagnostics are best-effort only
+        pass
     
     return normalization_params
 
@@ -1021,7 +1486,7 @@ def _parse_enrollment_date(enrollment_date_str):
     enrollment_date = first_monday + timedelta(weeks=week-1)
     return enrollment_date
 
-def build_kcor_rows(df, sheet_name, dual_print=None):
+def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
     """
     Build per-age KCOR rows for all PAIRS and ASMR pooled rows (YearOfBirth=0).
     Assumptions:
@@ -1435,6 +1900,28 @@ def build_kcor_rows(df, sheet_name, dual_print=None):
         else:
             beta_by_dose[dose] = 0.0
     
+    # Persist effective all-ages slopes into slope6_params_map (for summary logging)
+    if slope6_params_map is not None:
+        for dose, beta in beta_by_dose.items():
+            try:
+                slope6_params_map[(sheet_name, -2, int(dose))] = {
+                    "mode": "linear",
+                    "a": 0.0,
+                    "b": float(beta),
+                    "c": 0.0,
+                    "t_mean": 0.0,
+                    "tau": SLOPE6_QUANTILE_TAU,
+                }
+            except Exception:
+                slope6_params_map[(sheet_name, -2, dose)] = {
+                    "mode": "linear",
+                    "a": 0.0,
+                    "b": float(beta),
+                    "c": 0.0,
+                    "t_mean": 0.0,
+                    "tau": SLOPE6_QUANTILE_TAU,
+                }
+    
     # Apply beta normalization at hazard level (origin-anchored)
     def apply_beta_norm(row):
         beta = beta_by_dose.get(row["Dose"], 0.0)
@@ -1841,7 +2328,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Set up dual output (console + file)
     global ENROLLMENT_DATES  # Declare global before any reference to ENROLLMENT_DATES
+    global SLOPE7_DEBUG_FILE
     output_dir = os.path.dirname(out_path)
+    if not output_dir:
+        output_dir = "."
+    
+    # Place slope7 debug CSV alongside the main KCOR output files
+    SLOPE7_DEBUG_FILE = os.path.join(output_dir, "KCOR_slope7_debug.csv")
     dual_print, log_file_handle = setup_dual_output(output_dir, log_filename)
     
     # Print professional header
@@ -1888,7 +2381,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     # Slope6 configuration
     dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear quantile regression normalization for b >= 0]")
-    dual_print(f"  SLOPE7_METHOD        = Levenberg-Marquardt  [Slope7: Depletion-mode normalization for b < 0]")
+    dual_print(f"  SLOPE7_METHOD        = Trust Region Reflective (TRF)  [Slope7: Depletion-mode normalization for b < 0]")
     dual_print(f"  SLOPE6_QUANTILE_TAU  = {SLOPE6_QUANTILE_TAU}  [Quantile level for quantile regression (0.5 = median)]")
     dual_print(f"  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]")
     dual_print(f"  SLOPE6_APPLICATION_ENDPOINT = {SLOPE6_APPLICATION_END_ISO}  [Rightmost endpoint for determining centerpoint]")
@@ -2473,7 +2966,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
 
-        out_sh = build_kcor_rows(df, sh, dual_print)
+        out_sh = build_kcor_rows(df, sh, dual_print, slope6_params_map)
         # Compute KCOR_ns and merge into output
         kcor_ns = build_kcor_ns_rows(df, sh)
         if not kcor_ns.empty and not out_sh.empty:
@@ -2740,7 +3233,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         age_label = f"{age}"
                     
-                    if age == 0 or age == -2:
+                    if age == 0:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
                         # Build parameter string
