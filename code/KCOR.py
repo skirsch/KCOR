@@ -200,6 +200,8 @@ def log_slope7_fit_debug(record: dict) -> None:
             "t_first2",
             "t_last2",
             "t_last1",
+            "iso_week_first",
+            "iso_week_last",
         ]
 
         # Prepare row dict with defaults
@@ -263,6 +265,15 @@ def log_slope7_fit_debug(record: dict) -> None:
             row["t_first2"] = None
             row["t_last2"] = None
             row["t_last1"] = None
+        
+        # Extract and log first/last ISO weeks used in fit
+        iso_weeks_used = record.pop("iso_weeks_used", None)
+        if iso_weeks_used is not None and len(iso_weeks_used) > 0:
+            row["iso_week_first"] = str(iso_weeks_used[0]) if len(iso_weeks_used) > 0 else None
+            row["iso_week_last"] = str(iso_weeks_used[-1]) if len(iso_weeks_used) > 0 else None
+        else:
+            row["iso_week_first"] = None
+            row["iso_week_last"] = None
 
         # Append to CSV, writing header if file is new/empty or if header needs updating
         file_exists = Path(SLOPE7_DEBUG_FILE).is_file()
@@ -1117,6 +1128,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         log_h_values = []
         h_values = []  # Store raw hazard values for debugging
         t_values = []
+        iso_weeks_used = []  # Track ISO weeks actually used in fit
         
         for week in fit_weeks:
             week_data = cohort_data.get(week)
@@ -1133,6 +1145,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             log_h_values.append(log_h_val)
                             h_values.append(float(hc))  # Store raw hazard for debugging
                             t_values.append(float(t_actual))  # Actual time since enrollment
+                            iso_weeks_used.append(week)  # Track which ISO week was used
                     except Exception:
                         continue
         
@@ -1180,6 +1193,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "s_values": t_values,
                     "logh_values": log_h_values,
                     "h_values": h_values,  # Include raw hazard values for debugging
+                    "iso_weeks_used": iso_weeks_used,  # Track ISO weeks actually used
                 })
             except Exception:
                 pass
@@ -1192,6 +1206,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             # Collect valid data points first, then create sequential s_values (0, 1, 2, ...)
             temp_data = []
             temp_h_values = []  # Store raw hazard values for debugging
+            iso_weeks_slope7 = []  # Track ISO weeks used in slope7 fit
             
             for week, week_data in cohort_data.items():
                 date_died = week_data.get("DateDied")
@@ -1205,6 +1220,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             if np.isfinite(log_h_val):
                                 temp_data.append(log_h_val)
                                 temp_h_values.append(float(hc))  # Store raw hazard for debugging
+                                iso_weeks_slope7.append(week)  # Track which ISO week was used
                         except Exception:
                             continue
             
@@ -1234,6 +1250,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
                             "h_values": h_slope7_values,  # Include raw hazard values for debugging
+                            "iso_weeks_used": iso_weeks_slope7,  # Track ISO weeks actually used
                             "C": float(C_trf),
                             "ka": float(ka_trf),
                             "kb": float(kb_trf),
@@ -1255,6 +1272,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
                             "h_values": h_slope7_values,  # Include raw hazard values for debugging
+                            "iso_weeks_used": iso_weeks_slope7,  # Track ISO weeks actually used
                             "C": float(C_trf) if np.isfinite(C_trf) else None,
                             "ka": float(ka_trf) if np.isfinite(ka_trf) else None,
                             "kb": float(kb_trf) if np.isfinite(kb_trf) else None,
@@ -1284,6 +1302,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
                             "h_values": h_slope7_values,  # Include raw hazard values for debugging
+                            "iso_weeks_used": iso_weeks_slope7,  # Track ISO weeks actually used
                             "C": float(C_lm),
                             "ka": float(ka_lm),
                             "kb": float(kb_lm),
@@ -1305,6 +1324,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
                             "h_values": h_slope7_values,  # Include raw hazard values for debugging
+                            "iso_weeks_used": iso_weeks_slope7,  # Track ISO weeks actually used
                             "C": float(C_lm) if np.isfinite(C_lm) else None,
                             "ka": float(ka_lm) if np.isfinite(ka_lm) else None,
                             "kb": float(kb_lm) if np.isfinite(kb_lm) else None,
