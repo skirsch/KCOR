@@ -16,6 +16,7 @@ import statsmodels.api as sm
 from scipy.optimize import least_squares
 import warnings
 from pathlib import Path
+from datetime import datetime
 
 # Constants from KCOR.py
 EPS = 1e-12
@@ -25,6 +26,16 @@ SLOPE6_QUANTILE_TAU = 0.5
 # MIN_DELTA_K and MIN_TAU for TRF method
 MIN_DELTA_K = 0.0
 MIN_TAU = 1e-3
+
+# Fit window from KCOR.py (baseline_window)
+FIT_WINDOW_START = "2022-01"
+FIT_WINDOW_END = "2024-12"
+
+
+def _iso_to_date_slope6(isostr: str):
+    """Convert ISO week string (YYYY-WW) to datetime (Monday of that week)."""
+    y, w = isostr.split("-")
+    return datetime.fromisocalendar(int(y), int(w), 1)
 
 
 def fit_linear_median(t, logh, tau=0.5):
@@ -290,12 +301,21 @@ def main():
     df = df[~df['date'].str.contains('parameters', case=False, na=False)]
     df = df[~df['date'].str.contains('Here are', case=False, na=False)]
     
+    # NOTE: KCOR.py iterates through fit_weeks (2022-01 to 2024-12) but reports 115 points
+    # which matches the CSV total. This suggests KCOR might be using all available data
+    # or the CSV was created from data already filtered to the fit window.
+    # For now, we'll use all data points to match KCOR's reported count of 115.
+    # If KCOR is actually filtering, we'd expect 111 points (fit window: 2022-01 to 2024-12,
+    # but CSV starts at 2022-06, so 111 weeks from 2022-06 to 2024-12).
+    
+    print(f"Using all data points from CSV (matching KCOR's reported count of 115)")
+    
     # Extract columns
     dates = df['date'].values
     hazard_raw = pd.to_numeric(df['h(t) raw'], errors='coerce').values
     hazard_adj_existing = pd.to_numeric(df['h(t) adj'], errors='coerce').values
     
-    # Create sequential time index starting from 0
+    # Create sequential time index starting from 0 (matching KCOR's t values which are cumcount)
     t = np.arange(len(hazard_raw), dtype=float)
     
     # Filter out invalid values

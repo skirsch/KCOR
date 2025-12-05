@@ -18,20 +18,31 @@ DATASET ?= Czech
 # Virtual environment path
 VENV_DIR := .venv
 VENV_PYTHON := $(VENV_DIR)/bin/python3
-VENV_PIP := $(VENV_DIR)/bin/pip3
+VENV_PIP := $(VENV_DIR)/bin/pip
 
 # Install dependencies using pip in virtual environment
-install: $(VENV_DIR)
+install: $(VENV_PIP)
 	@echo "Installing dependencies from requirements.txt in virtual environment..."
-	$(VENV_PIP) install --upgrade pip
-	$(VENV_PIP) install -r requirements.txt
+	@echo "Upgrading pip..."
+	@$(VENV_PIP) install --upgrade pip
+	@echo "Installing requirements..."
+	@$(VENV_PIP) install -r requirements.txt
 	@echo "Installation complete!"
 
-# Create virtual environment if it doesn't exist
-$(VENV_DIR):
-	@echo "Creating virtual environment in $(VENV_DIR)..."
-	python3 -m venv $(VENV_DIR)
-	@echo "Virtual environment created!"
+# Ensure pip exists in virtual environment
+$(VENV_PIP): $(VENV_PYTHON)
+	@if [ ! -f "$(VENV_PIP)" ]; then \
+		echo "Installing pip in virtual environment..."; \
+		$(VENV_PYTHON) -m ensurepip --upgrade; \
+	fi
+
+# Create virtual environment directory and Python executable
+$(VENV_PYTHON):
+	@if [ ! -d "$(VENV_DIR)" ] || [ ! -f "$(VENV_PYTHON)" ]; then \
+		echo "Creating virtual environment in $(VENV_DIR)..."; \
+		python3 -m venv $(VENV_DIR); \
+		echo "Virtual environment created!"; \
+	fi
 
 # Install dependencies using Debian packages (alternative to pip)
 install-debian:
@@ -53,7 +64,7 @@ install-debian:
 all: KCOR_variable KCOR validation test
 
 # KCOR analysis pipeline (delegates to code/Makefile target KCOR)
-KCOR: $(VENV_DIR)
+KCOR: $(VENV_PYTHON)
 	$(MAKE) -C $(CODE_DIR) KCOR DATASET=$(DATASET) PYTHON=$(abspath $(VENV_PYTHON))
 
 # CMR aggregation only (delegates to code/Makefile target CMR)
@@ -98,7 +109,7 @@ test:
 	$(MAKE) -C test all
 
 # Slope normalization test
-slope-test: $(VENV_DIR)
+slope-test: $(VENV_PYTHON)
 	@echo "Running slope normalization test..."
 	cd test/slope_normalization && $(abspath $(VENV_PYTHON)) test.py
 	@echo "Slope normalization test complete!"
@@ -124,13 +135,13 @@ ASMR:
 	$(MAKE) -C $(VALIDATION_ASMR_DIR) run DATASET=$(DATASET)
 
 # ICD-10 cause of death analysis (Czech2 dataset)
-icd10: $(VENV_DIR)
+icd10: $(VENV_PYTHON)
 	@echo "Running ICD-10 cause of death analysis..."
 	cd $(CODE_DIR) && $(abspath $(VENV_PYTHON)) icd_analysis.py ../data/Czech2/data.csv ../data/Czech2/
 	@echo "ICD-10 analysis complete!"
 
 # ICD-10 population structural shift analysis (Czech2 dataset)
-icd_population_shift: $(VENV_DIR)
+icd_population_shift: $(VENV_PYTHON)
 	@echo "Running ICD-10 population structural shift analysis..."
 	cd $(CODE_DIR) && $(abspath $(VENV_PYTHON)) icd_population_shift.py ../data/Czech2/data.csv ../data/Czech2/
 	@echo "ICD-10 population shift analysis complete!"

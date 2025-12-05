@@ -191,6 +191,14 @@ def log_slope7_fit_debug(record: dict) -> None:
             "logh_min",
             "logh_max",
             "logh_mean",
+            "h_first1",
+            "h_first2",
+            "h_last2",
+            "h_last1",
+            "t_first1",
+            "t_first2",
+            "t_last2",
+            "t_last1",
         ]
 
         # Prepare row dict with defaults
@@ -212,6 +220,48 @@ def log_slope7_fit_debug(record: dict) -> None:
         row["logh_min"] = lh_min
         row["logh_max"] = lh_max
         row["logh_mean"] = lh_mean
+        
+        # Extract and log first/last few h(t) values for debugging
+        h_vals = record.pop("h_values", None)
+        if h_vals is not None and len(h_vals) > 0:
+            h_arr = np.asarray(list(h_vals), dtype=float)
+            h_arr = h_arr[np.isfinite(h_arr)]
+            if len(h_arr) >= 2:
+                # First 2 and last 2 h(t) values
+                row["h_first1"] = float(h_arr[0]) if len(h_arr) > 0 else None
+                row["h_first2"] = float(h_arr[1]) if len(h_arr) > 1 else None
+                row["h_last2"] = float(h_arr[-2]) if len(h_arr) >= 2 else None
+                row["h_last1"] = float(h_arr[-1]) if len(h_arr) >= 1 else None
+            else:
+                row["h_first1"] = float(h_arr[0]) if len(h_arr) > 0 else None
+                row["h_first2"] = None
+                row["h_last2"] = None
+                row["h_last1"] = float(h_arr[-1]) if len(h_arr) > 0 else None
+        else:
+            row["h_first1"] = None
+            row["h_first2"] = None
+            row["h_last2"] = None
+            row["h_last1"] = None
+        
+        # Extract and log first/last few time values for debugging
+        if s_vals is not None and len(s_vals) > 0:
+            s_arr = np.asarray(list(s_vals), dtype=float)
+            s_arr = s_arr[np.isfinite(s_arr)]
+            if len(s_arr) >= 2:
+                row["t_first1"] = float(s_arr[0]) if len(s_arr) > 0 else None
+                row["t_first2"] = float(s_arr[1]) if len(s_arr) > 1 else None
+                row["t_last2"] = float(s_arr[-2]) if len(s_arr) >= 2 else None
+                row["t_last1"] = float(s_arr[-1]) if len(s_arr) >= 1 else None
+            else:
+                row["t_first1"] = float(s_arr[0]) if len(s_arr) > 0 else None
+                row["t_first2"] = None
+                row["t_last2"] = None
+                row["t_last1"] = float(s_arr[-1]) if len(s_arr) > 0 else None
+        else:
+            row["t_first1"] = None
+            row["t_first2"] = None
+            row["t_last2"] = None
+            row["t_last1"] = None
 
         # Append to CSV, writing header if file is new/empty or if header needs updating
         file_exists = Path(SLOPE7_DEBUG_FILE).is_file()
@@ -1045,6 +1095,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         
         # Build log h_c(t) for t in fit_window, using actual t values (time since enrollment)
         log_h_values = []
+        h_values = []  # Store raw hazard values for debugging
         t_values = []
         
         for week in fit_weeks:
@@ -1060,6 +1111,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         log_h_val = np.log(hc)
                         if np.isfinite(log_h_val) and np.isfinite(t_actual):
                             log_h_values.append(log_h_val)
+                            h_values.append(float(hc))  # Store raw hazard for debugging
                             t_values.append(float(t_actual))  # Actual time since enrollment
                     except Exception:
                         continue
@@ -1107,6 +1159,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "error": None,
                     "s_values": t_values,
                     "logh_values": log_h_values,
+                    "h_values": h_values,  # Include raw hazard values for debugging
                 })
             except Exception:
                 pass
@@ -1118,6 +1171,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             # Build deployment window data: enrollment_date to SLOPE7_END_ISO
             # Collect valid data points first, then create sequential s_values (0, 1, 2, ...)
             temp_data = []
+            temp_h_values = []  # Store raw hazard values for debugging
             
             for week, week_data in cohort_data.items():
                 date_died = week_data.get("DateDied")
@@ -1130,12 +1184,14 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             log_h_val = np.log(hc)
                             if np.isfinite(log_h_val):
                                 temp_data.append(log_h_val)
+                                temp_h_values.append(float(hc))  # Store raw hazard for debugging
                         except Exception:
                             continue
             
             # Create sequential s_values starting from 0 (matching test.py: t = np.arange(len(...)))
             s_values = np.arange(len(temp_data), dtype=float).tolist()
             log_h_slope7_values = temp_data
+            h_slope7_values = temp_h_values  # Raw hazard values for debugging
             
             # Always try to fit slope7 TRF and LM (even if b_lin >= 0)
             # This ensures we always log all three methods for comparison
@@ -1157,6 +1213,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "n_points": len(s_values),
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
+                            "h_values": h_slope7_values,  # Include raw hazard values for debugging
                             "C": float(C_trf),
                             "ka": float(ka_trf),
                             "kb": float(kb_trf),
@@ -1177,6 +1234,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "n_points": len(s_values),
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
+                            "h_values": h_slope7_values,  # Include raw hazard values for debugging
                             "C": float(C_trf) if np.isfinite(C_trf) else None,
                             "ka": float(ka_trf) if np.isfinite(ka_trf) else None,
                             "kb": float(kb_trf) if np.isfinite(kb_trf) else None,
@@ -1205,6 +1263,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "n_points": len(s_values),
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
+                            "h_values": h_slope7_values,  # Include raw hazard values for debugging
                             "C": float(C_lm),
                             "ka": float(ka_lm),
                             "kb": float(kb_lm),
@@ -1225,6 +1284,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "n_points": len(s_values),
                             "s_values": list(map(float, s_values)),
                             "logh_values": list(map(float, log_h_slope7_values)),
+                            "h_values": h_slope7_values,  # Include raw hazard values for debugging
                             "C": float(C_lm) if np.isfinite(C_lm) else None,
                             "ka": float(ka_lm) if np.isfinite(ka_lm) else None,
                             "kb": float(kb_lm) if np.isfinite(kb_lm) else None,
@@ -1428,6 +1488,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             # Filter to only valid logh values and create sequential s_values
             valid_mask = np.isfinite(logh_vals)
             logh_vals = logh_vals[valid_mask]
+            h_vals_all = g_all["hazard_raw"].to_numpy(dtype=float)[valid_mask]  # Store raw hazard values for debugging
             s_vals = np.arange(len(logh_vals), dtype=float)
             
             # Linear fit on all-ages series
@@ -1453,6 +1514,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "error": None,
                     "s_values": s_vals.tolist(),
                     "logh_values": logh_vals.tolist(),
+                    "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
                 })
             except Exception:
                 continue
@@ -1472,6 +1534,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "n_points": len(s_vals),
                         "s_values": s_vals.tolist(),
                         "logh_values": logh_vals.tolist(),
+                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
                         "C": float(C_trf),
                         "ka": float(ka_trf),
                         "kb": float(kb_trf),
@@ -1492,6 +1555,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "n_points": len(s_vals),
                         "s_values": s_vals.tolist(),
                         "logh_values": logh_vals.tolist(),
+                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
                         "C": float(C_trf) if np.isfinite(C_trf) else None,
                         "ka": float(ka_trf) if np.isfinite(ka_trf) else None,
                         "kb": float(kb_trf) if np.isfinite(kb_trf) else None,
@@ -1517,6 +1581,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "n_points": len(s_vals),
                         "s_values": s_vals.tolist(),
                         "logh_values": logh_vals.tolist(),
+                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
                         "C": float(C_lm_all),
                         "ka": float(ka_lm_all),
                         "kb": float(kb_lm_all),
@@ -1537,6 +1602,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "n_points": len(s_vals),
                         "s_values": s_vals.tolist(),
                         "logh_values": logh_vals.tolist(),
+                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
                         "C": float(C_lm_all) if np.isfinite(C_lm_all) else None,
                         "ka": float(ka_lm_all) if np.isfinite(ka_lm_all) else None,
                         "kb": float(kb_lm_all) if np.isfinite(kb_lm_all) else None,
@@ -2434,6 +2500,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Place slope7 debug CSV alongside the main KCOR output files
     SLOPE7_DEBUG_FILE = os.path.join(output_dir, "KCOR_slope7_debug.csv")
+    # Clear the debug file at the start of each run
+    if SLOPE7_DEBUG_ENABLED:
+        try:
+            with open(SLOPE7_DEBUG_FILE, "w", newline="", encoding="utf-8") as f:
+                pass  # Create empty file or truncate existing file
+        except Exception:
+            pass  # Silently ignore errors in debug file setup
     dual_print, log_file_handle = setup_dual_output(output_dir, log_filename)
     
     # Print professional header
