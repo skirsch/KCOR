@@ -128,8 +128,9 @@ SLOPE6_BASELINE_WINDOW_LENGTH_MAX = 60  # Maximum window length in weeks
 SLOPE6_BASELINE_START_YEAR = 2023       # Focus on late calendar time (2023+)
 SLOPE6_MIN_DATA_POINTS = 5              # Minimum data points required for quantile regression fit
 SLOPE6_QUANTILE_TAU = 0.5               # Quantile level for quantile regression (0.5 = 50th percentile/median)
-SLOPE6_APPLICATION_END_ISO = "2024-16"  # Rightmost endpoint for determining centerpoint (ISO week format)
-SLOPE7_END_ISO = "2024-16"              # Final week used for slope7 depletion-mode normalization (ISO week format)
+SLOPE_FIT_END_ISO = "2024-16"           # Single constant for fit window end (used for both fit and application windows)
+SLOPE6_APPLICATION_END_ISO = SLOPE_FIT_END_ISO  # Rightmost endpoint for determining centerpoint (ISO week format)
+SLOPE7_END_ISO = SLOPE_FIT_END_ISO      # Final week used for slope7 depletion-mode normalization (ISO week format)
 ENABLE_NEGATIVE_SLOPE_FIT = 1           # When 0, disable slope7 depletion mode and force linear fit only (temporary flag)
 
 # Optional detailed debug logging for slope7 depletion-mode fits.
@@ -666,8 +667,7 @@ def select_slope6_baseline_window(df_all_sheets_list, dual_print_fn=None):
     """
     Select a single global baseline window for Slope6 normalization (fit window).
     
-    Currently uses a fixed window: 2022-01 to 2024-12 (week 1 of 2022 through week 12 of 2024).
-    This covers approximately January 2022 through March 2024.
+    Uses a fixed window: 2022-01 to SLOPE_FIT_END_ISO (week 1 of 2022 through the configured end week).
     
     Args:
         df_all_sheets_list: List of (sheet_name, df) tuples containing all enrollment sheets' data
@@ -682,10 +682,10 @@ def select_slope6_baseline_window(df_all_sheets_list, dual_print_fn=None):
         else:
             print(msg)
     
-    # Fixed window: 2022-01 to 2024-12 (week 1 of 2022 through week 12 of 2024)
-    baseline_window = ("2022-01", "2024-12")
+    # Fixed window: 2022-01 to SLOPE_FIT_END_ISO
+    baseline_window = ("2022-01", SLOPE_FIT_END_ISO)
     
-    _print(f"SLOPE6_FIT_WINDOW,selected={baseline_window[0]}..{baseline_window[1]} (week 1 of 2022 through week 12 of 2024, fixed)")
+    _print(f"SLOPE6_FIT_WINDOW,selected={baseline_window[0]}..{baseline_window[1]} (week 1 of 2022 through {SLOPE_FIT_END_ISO}, fixed)")
     return baseline_window
 
 def fit_linear_median(t, logh, tau=0.5):
@@ -991,9 +991,9 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     """
     Compute Slope6 normalization parameters for each cohort independently.
     
-    For each cohort c (including dose 0):
-    - Fit window: Uses baseline_window (2022-01 to 2024-12) for regression fitting (linear mode)
-    - Application window: enrollment_date to 2024-16 for determining centerpoint (t_mean)
+    For each cohort c (including dose 0 and YearOfBirth=-2 for all-ages):
+    - Fit window: Uses baseline_window (2022-01 to SLOPE_FIT_END_ISO) for regression fitting (linear mode)
+    - Application window: enrollment_date to SLOPE_FIT_END_ISO for determining centerpoint (t_mean)
     - Fit linear median regression on log h_c(t) vs centered time t_c = t - t_mean
     - If b_lin >= 0, use linear mode: h_norm = h * exp(-b_lin * t_c)
     - If b_lin < 0, use slope7 depletion-mode normalization:
@@ -1037,6 +1037,26 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     # Compute hazards
     df = df.copy()
     df["hazard"] = hazard_from_mr_improved(df["MR"].clip(lower=0.0, upper=0.999))
+    
+    # Create all-ages cohort (YearOfBirth=-2) by aggregating across all YearOfBirth values
+    # This is done before processing so it's treated like any other cohort
+    df_sorted = df.sort_values("DateDied")
+    all_ages_agg = df_sorted.groupby(["Dose", "DateDied"]).agg({
+        "ISOweekDied": "first",
+        "Alive": "sum",
+        "Dead": "sum",
+        "PT": "sum"
+    }).reset_index()
+    all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
+                                  all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
+                                  np.nan)
+    all_ages_agg["hazard"] = hazard_from_mr_improved(all_ages_agg["MR"].clip(lower=0.0, upper=0.999))
+    all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
+    all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
+    all_ages_agg["YearOfBirth"] = -2  # Mark as all-ages cohort
+    
+    # Append all-ages cohort to main dataframe (iso_label will be added for all rows below)
+    df = pd.concat([df, all_ages_agg[["YearOfBirth", "Dose", "DateDied", "MR", "hazard", "t", "ISOweekDied", "Alive", "Dead", "PT"]]], ignore_index=True)
     
     # Annotate ISO week labels
     iso_parts = df["DateDied"].dt.isocalendar()
@@ -1455,166 +1475,8 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             }
     
     # ------------------------------------------------------------------
-    # All-ages (YoB = -2) diagnostic fits (linear + slope7 TRF + LM)
-    # ------------------------------------------------------------------
-    try:
-        df_sorted = df.sort_values("DateDied")
-        all_ages_agg = df_sorted.groupby(["Dose", "DateDied"]).agg({
-            "ISOweekDied": "first",
-            "Alive": "sum",
-            "Dead": "sum",
-            "PT": "sum"
-        }).reset_index()
-        all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
-                                      all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
-                                      np.nan)
-        all_ages_agg["hazard_raw"] = hazard_from_mr_improved(all_ages_agg["MR"])
-        all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
-        all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
-        slope7_end_dt = _iso_to_date_slope6(SLOPE7_END_ISO)
-        
-        for dose in sorted(all_ages_agg["Dose"].unique()):
-            g_all = all_ages_agg[(all_ages_agg["Dose"] == dose) &
-                                 (all_ages_agg["DateDied"] >= enrollment_dt) &
-                                 (all_ages_agg["DateDied"] <= slope7_end_dt)].copy()
-            g_all = g_all[np.isfinite(g_all["hazard_raw"]) & (g_all["hazard_raw"] > EPS)]
-            if len(g_all) < SLOPE6_MIN_DATA_POINTS:
-                continue
-            # Create sequential s_values starting from 0 (matching test.py behavior)
-            # This ensures s_values are always 0, 1, 2, 3, ... regardless of gaps
-            logh_vals = np.log(g_all["hazard_raw"].to_numpy(dtype=float))
-            if (~np.isfinite(logh_vals)).all():
-                continue
-            # Filter to only valid logh values and create sequential s_values
-            valid_mask = np.isfinite(logh_vals)
-            logh_vals = logh_vals[valid_mask]
-            h_vals_all = g_all["hazard_raw"].to_numpy(dtype=float)[valid_mask]  # Store raw hazard values for debugging
-            s_vals = np.arange(len(logh_vals), dtype=float)
-            
-            # Linear fit on all-ages series
-            try:
-                a_lin_all, b_lin_all, t_mean_all = fit_linear_median(s_vals, logh_vals, tau=SLOPE6_QUANTILE_TAU)
-                t_c_all = s_vals - t_mean_all
-                pred_lin_all = a_lin_all + b_lin_all * t_c_all
-                resid_lin_all = logh_vals - pred_lin_all
-                rms_lin_all = float(np.sqrt(np.mean(resid_lin_all**2)))
-                log_slope7_fit_debug({
-                    "enrollment_date": sheet_name,
-                    "mode": "linear",
-                    "YearOfBirth": -2,
-                    "Dose": int(dose),
-                    "n_points": len(s_vals),
-                    "b_original": float(b_lin_all),
-                    "C": float(a_lin_all),
-                    "ka": None,
-                    "kb": None,
-                    "tau": None,
-                    "rms_error": rms_lin_all,
-                    "note": f"linear_all_ages_t_mean={t_mean_all:.6f}",
-                    "error": None,
-                    "s_values": s_vals.tolist(),
-                    "logh_values": logh_vals.tolist(),
-                    "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
-                })
-            except Exception:
-                continue
-            
-            # Bounded slope7 TRF on all-ages
-            try:
-                (C_trf, kb_trf, ka_trf, tau_trf), (C_init_trf, ka_init_trf, delta_k_init_trf, tau_init_trf) = fit_slope7_depletion(s_vals, logh_vals)
-                if np.isfinite(C_trf) and np.isfinite(kb_trf) and np.isfinite(ka_trf) and np.isfinite(tau_trf) and tau_trf > EPS:
-                    pred_trf = C_trf + kb_trf * s_vals + (ka_trf - kb_trf) * tau_trf * (1.0 - np.exp(-s_vals / (tau_trf + EPS)))
-                    resid_trf = logh_vals - pred_trf
-                    rms_trf = float(np.sqrt(np.mean(resid_trf**2)))
-                    log_slope7_fit_debug({
-                        "enrollment_date": sheet_name,
-                        "mode": "slope7_success",
-                        "YearOfBirth": -2,
-                        "Dose": int(dose),
-                        "n_points": len(s_vals),
-                        "s_values": s_vals.tolist(),
-                        "logh_values": logh_vals.tolist(),
-                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
-                        "C": float(C_trf),
-                        "ka": float(ka_trf),
-                        "kb": float(kb_trf),
-                        "tau": float(tau_trf),
-                        "C_init": None if (C_init_trf is None or (isinstance(C_init_trf, (int, float, np.number)) and (np.isnan(C_init_trf) or not np.isfinite(C_init_trf)))) else float(C_init_trf),
-                        "ka_init": None if (ka_init_trf is None or (isinstance(ka_init_trf, (int, float, np.number)) and (np.isnan(ka_init_trf) or not np.isfinite(ka_init_trf)))) else float(ka_init_trf),
-                        "delta_k_init": None if (delta_k_init_trf is None or (isinstance(delta_k_init_trf, (int, float, np.number)) and (np.isnan(delta_k_init_trf) or not np.isfinite(delta_k_init_trf)))) else float(delta_k_init_trf),
-                        "tau_init": None if (tau_init_trf is None or (isinstance(tau_init_trf, (int, float, np.number)) and (np.isnan(tau_init_trf) or not np.isfinite(tau_init_trf)))) else float(tau_init_trf),
-                        "b_original": float(b_lin_all),
-                        "rms_error": rms_trf,
-                    })
-                else:
-                    log_slope7_fit_debug({
-                        "enrollment_date": sheet_name,
-                        "mode": "slope7_invalid_params",
-                        "YearOfBirth": -2,
-                        "Dose": int(dose),
-                        "n_points": len(s_vals),
-                        "s_values": s_vals.tolist(),
-                        "logh_values": logh_vals.tolist(),
-                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
-                        "C": float(C_trf) if np.isfinite(C_trf) else None,
-                        "ka": float(ka_trf) if np.isfinite(ka_trf) else None,
-                        "kb": float(kb_trf) if np.isfinite(kb_trf) else None,
-                        "tau": float(tau_trf) if np.isfinite(tau_trf) else None,
-                        "b_original": float(b_lin_all),
-                        "note": "invalid parameters from slope7 TRF fit on all-ages series",
-                    })
-            except Exception:
-                pass
-            
-            # Unbounded slope7 LM comparator on all-ages
-            try:
-                (C_lm_all, kb_lm_all, ka_lm_all, tau_lm_all), (C_init_lm_all, ka_init_lm_all, delta_k_init_lm_all, tau_init_lm_all) = fit_slope7_depletion_lm(s_vals, logh_vals)
-                if np.isfinite(C_lm_all) and np.isfinite(kb_lm_all) and np.isfinite(ka_lm_all) and np.isfinite(tau_lm_all) and tau_lm_all > EPS:
-                    pred_lm_all = C_lm_all + kb_lm_all * s_vals + (ka_lm_all - kb_lm_all) * tau_lm_all * (1.0 - np.exp(-s_vals / (tau_lm_all + EPS)))
-                    resid_lm_all = logh_vals - pred_lm_all
-                    rms_lm_all = float(np.sqrt(np.mean(resid_lm_all**2)))
-                    log_slope7_fit_debug({
-                        "enrollment_date": sheet_name,
-                        "mode": "slope7_lm",
-                        "YearOfBirth": -2,
-                        "Dose": int(dose),
-                        "n_points": len(s_vals),
-                        "s_values": s_vals.tolist(),
-                        "logh_values": logh_vals.tolist(),
-                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
-                        "C": float(C_lm_all),
-                        "ka": float(ka_lm_all),
-                        "kb": float(kb_lm_all),
-                        "tau": float(tau_lm_all),
-                        "C_init": None if (C_init_lm_all is None or (isinstance(C_init_lm_all, (int, float, np.number)) and (np.isnan(C_init_lm_all) or not np.isfinite(C_init_lm_all)))) else float(C_init_lm_all),
-                        "ka_init": None if (ka_init_lm_all is None or (isinstance(ka_init_lm_all, (int, float, np.number)) and (np.isnan(ka_init_lm_all) or not np.isfinite(ka_init_lm_all)))) else float(ka_init_lm_all),
-                        "delta_k_init": None if (delta_k_init_lm_all is None or (isinstance(delta_k_init_lm_all, (int, float, np.number)) and (np.isnan(delta_k_init_lm_all) or not np.isfinite(delta_k_init_lm_all)))) else float(delta_k_init_lm_all),
-                        "tau_init": None if (tau_init_lm_all is None or (isinstance(tau_init_lm_all, (int, float, np.number)) and (np.isnan(tau_init_lm_all) or not np.isfinite(tau_init_lm_all)))) else float(tau_init_lm_all),
-                        "b_original": float(b_lin_all),
-                        "rms_error": rms_lm_all,
-                    })
-                else:
-                    log_slope7_fit_debug({
-                        "enrollment_date": sheet_name,
-                        "mode": "slope7_lm_invalid_params",
-                        "YearOfBirth": -2,
-                        "Dose": int(dose),
-                        "n_points": len(s_vals),
-                        "s_values": s_vals.tolist(),
-                        "logh_values": logh_vals.tolist(),
-                        "h_values": h_vals_all.tolist(),  # Include raw hazard values for debugging
-                        "C": float(C_lm_all) if np.isfinite(C_lm_all) else None,
-                        "ka": float(ka_lm_all) if np.isfinite(ka_lm_all) else None,
-                        "kb": float(kb_lm_all) if np.isfinite(kb_lm_all) else None,
-                        "tau": float(tau_lm_all) if np.isfinite(tau_lm_all) else None,
-                        "b_original": float(b_lin_all),
-                        "note": "invalid parameters from slope7 LM fit on all-ages series",
-                    })
-            except Exception:
-                pass
-    except Exception:
-        # All-ages diagnostics are best-effort only
-        pass
+    # All-ages (YoB = -2) cohort is now processed as a regular cohort in compute_slope6_normalization
+    # No special handling needed here - it's included in the main processing loop
     
     return normalization_params
 
