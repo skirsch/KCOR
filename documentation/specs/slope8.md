@@ -1,3 +1,17 @@
+# slope8 method
+
+## Latest modification: fit!= deploy for the most recent dose
+
+Fit is SHORTER at the start for the latest dose to avoid fitting any vaccine mortality increase. But deployment is over the full region. Note: This may be problematic for vaccines that raise mortality then lower it. 
+
+Separated fit window from full deployment window:
+- s_values_slope8_fit and log_h_slope8_values_fit: data used for fitting (excludes s < SLOPE_FIT_DELAY_WEEKS for highest dose)
+- s_values_slope8_full, log_h_slope8_values_full, h_slope8_values_full: full deployment window from s=0 for logging
+
+Fitting behavior:
+- Highest dose: fit uses only data where s >= SLOPE_FIT_DELAY_WEEKS
+- Other doses: fit uses all data from s=0
+
 Right now your **slope7** fit is *not* doing quantile regression.
 `fit_slope7_depletion` is using `scipy.optimize.least_squares(..., method='trf')` with an L2 loss on the whole curve, so it’s a standard nonlinear least-squares fit to all points in the deployment window.
 

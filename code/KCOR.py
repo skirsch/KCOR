@@ -136,19 +136,19 @@ SLOPE8_QUANTILE_TAU = 0.5               # Quantile level for slope8 quantile reg
 SLOPE_FIT_DELAY_WEEKS = 15              # Delay in weeks for highest dose fit start (slope8 only)
 
 # Optional detailed debug logging for slope7 depletion-mode fits.
-# When enabled, each attempted slope7 fit (per cohort) is logged as a CSV row to SLOPE7_DEBUG_FILE,
+# When enabled, each attempted slope7 fit (per cohort) is logged as a CSV row to SLOPE_DEBUG_FILE,
 # including summary statistics of the inputs and the fitted parameters.
-SLOPE7_DEBUG_ENABLED = True
-SLOPE7_DEBUG_FILE = "KCOR_slope7_debug.csv"
+SLOPE_DEBUG_ENABLED = True
+# SLOPE_DEBUG_FILE is set in process_workbook() to the full path in the output directory
 
 
 def log_slope7_fit_debug(record: dict) -> None:
     """
-    Append a CSV-formatted debug record for a slope7 (or related) fit to SLOPE7_DEBUG_FILE.
+    Append a CSV-formatted debug record for a slope7 (or related) fit to SLOPE_DEBUG_FILE.
     We log summary stats of s_values and logh_values (min/max/mean) plus key fit parameters.
     Failures in logging are silently ignored so as not to affect the main pipeline.
     """
-    if not SLOPE7_DEBUG_ENABLED:
+    if not SLOPE_DEBUG_ENABLED:
         return
     try:
         # Extract raw sequences if present and compute simple summaries
@@ -278,13 +278,13 @@ def log_slope7_fit_debug(record: dict) -> None:
             row["iso_week_last"] = None
 
         # Append to CSV, writing header if file is new/empty or if header needs updating
-        file_exists = Path(SLOPE7_DEBUG_FILE).is_file()
-        write_header = (not file_exists) or (Path(SLOPE7_DEBUG_FILE).stat().st_size == 0)
+        file_exists = Path(SLOPE_DEBUG_FILE).is_file()
+        write_header = (not file_exists) or (Path(SLOPE_DEBUG_FILE).stat().st_size == 0)
         
         # Check if header needs updating (if file exists but header doesn't match)
         if file_exists and not write_header:
             try:
-                with open(SLOPE7_DEBUG_FILE, "r", newline="", encoding="utf-8") as f:
+                with open(SLOPE_DEBUG_FILE, "r", newline="", encoding="utf-8") as f:
                     reader = csv.reader(f)
                     first_line = next(reader, None)
                     if first_line is not None:
@@ -297,7 +297,7 @@ def log_slope7_fit_debug(record: dict) -> None:
                             f.seek(0)
                             existing_data = list(csv.DictReader(f))
                             # Rewrite file with new header
-                            with open(SLOPE7_DEBUG_FILE, "w", newline="", encoding="utf-8") as fw:
+                            with open(SLOPE_DEBUG_FILE, "w", newline="", encoding="utf-8") as fw:
                                 writer = csv.DictWriter(fw, fieldnames=columns)
                                 writer.writeheader()
                                 # Write existing data (only columns that exist in both)
@@ -309,7 +309,7 @@ def log_slope7_fit_debug(record: dict) -> None:
                 # If we can't read/update the header, just append (best effort)
                 pass
 
-        with open(SLOPE7_DEBUG_FILE, "a", newline="", encoding="utf-8") as f:
+        with open(SLOPE_DEBUG_FILE, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=columns)
             if write_header:
                 writer.writeheader()
@@ -2645,17 +2645,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Set up dual output (console + file)
     global ENROLLMENT_DATES  # Declare global before any reference to ENROLLMENT_DATES
-    global SLOPE7_DEBUG_FILE
+    global SLOPE_DEBUG_FILE
     output_dir = os.path.dirname(out_path)
     if not output_dir:
         output_dir = "."
     
-    # Place slope7 debug CSV alongside the main KCOR output files
-    SLOPE7_DEBUG_FILE = os.path.join(output_dir, "KCOR_slope7_debug.csv")
+    # Place slope debug CSV alongside the main KCOR output files
+    SLOPE_DEBUG_FILE = os.path.join(output_dir, "KCOR_slope_debug.csv")
     # Clear the debug file at the start of each run
-    if SLOPE7_DEBUG_ENABLED:
+    if SLOPE_DEBUG_ENABLED:
         try:
-            with open(SLOPE7_DEBUG_FILE, "w", newline="", encoding="utf-8") as f:
+            with open(SLOPE_DEBUG_FILE, "w", newline="", encoding="utf-8") as f:
                 pass  # Create empty file or truncate existing file
         except Exception:
             pass  # Silently ignore errors in debug file setup
