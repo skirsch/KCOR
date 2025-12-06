@@ -174,8 +174,11 @@ def make_slope8_initial_guess(s_valid, logh_valid):
     Compute robust initial parameter guesses for slope8 depletion-mode fit using windowed OLS.
     
     Uses small OLS fits over early and late windows instead of single finite differences,
-    dramatically reducing sensitivity to noise and outliers. Enforces depletion pattern
-    (k_∞ ≥ k_0) and gracefully falls back to global linear slope for non-depletion cases.
+    dramatically reducing sensitivity to noise and outliers. 
+    
+    Conditional constraint: When k_0 < 0 (depletion case), enforces k_∞ ≥ k_0 (delta_k ≥ 0).
+    When k_0 >= 0, allows k_inf < k_0 (delta_k can be negative).
+    Gracefully falls back to global linear slope for non-depletion cases.
     
     Parameters
     ----------
@@ -237,14 +240,19 @@ def make_slope8_initial_guess(s_valid, logh_valid):
     k_0_init = float(b0)
     k_inf_init = float(b_inf)
     
-    # Enforce depletion pattern: k_∞ ≥ k_0
-    # If pattern is violated (slope more negative late than early), collapse to global slope
-    if k_inf_init < k_0_init:
-        # Use global slope as both and tiny curvature
-        k_0_init = float(b_global)
-        k_inf_init = float(b_global)
-    
-    delta_k_init = max(k_inf_init - k_0_init, 1e-4)  # small but > 0
+    # Conditional constraint: only enforce k_∞ ≥ k_0 when k_0 < 0 (depletion case)
+    # When k_0 >= 0, allow k_inf < k_0 (delta_k can be negative)
+    if k_0_init < 0:
+        # Depletion case: enforce k_∞ ≥ k_0
+        # If pattern is violated (slope more negative late than early), collapse to global slope
+        if k_inf_init < k_0_init:
+            # Use global slope as both and tiny curvature
+            k_0_init = float(b_global)
+            k_inf_init = float(b_global)
+        delta_k_init = max(k_inf_init - k_0_init, 1e-4)  # small but >= 0 for depletion case
+    else:
+        # Non-depletion case (k_0 >= 0): allow delta_k to be negative
+        delta_k_init = k_inf_init - k_0_init  # Can be negative
     
     # Step 4: Tau based on data span, clamped to reasonable range
     span = max(s_valid) - min(s_valid)
@@ -326,6 +334,7 @@ def log_slope7_fit_debug(record: dict) -> None:
             "optimizer_nit",
             "optimizer_message",
             "optimizer_status",
+            "optimizer_status_meaning",
             "optimizer_warnflag",
             "optimizer_grad_norm",
             "failure_detail",
@@ -940,9 +949,10 @@ def fit_slope7_depletion(s, logh):
     Fit depletion-mode normalization using Trust Region Reflective nonlinear least squares.
     
     Models log-hazard as: log h(s) = C + (k_0 + Δk)*s - Δk*τ*(1 - e^(-s/τ))
-    where k_∞ = k_0 + Δk, ensuring k_∞ ≥ k_0 (monotonicity constraint).
+    where k_∞ = k_0 + Δk.
     
-    Reparameterized to enforce k_∞ ≥ k_0 via Δk ≥ 0 constraint.
+    Conditional constraint: When k_0 < 0 (depletion case), k_∞ ≥ k_0 (delta_k ≥ 0) is enforced.
+    When k_0 ≥ 0, delta_k can be negative (no depletion constraint).
     
     Parameters
     ----------
@@ -956,10 +966,11 @@ def fit_slope7_depletion(s, logh):
     (C, k_inf, k_0, tau) : tuple of floats
         Fitted parameters:
         - C: intercept
-        - k_inf (kb): long-run background slope = k_0 + Δk (may be negative, but k_inf ≥ k_0)
-        - k_0 (ka): slope at enrollment (may be negative)
+        - k_inf (kb): long-run background slope = k_0 + Δk
+        - k_0 (ka): slope at enrollment (may be negative or positive)
         - tau: depletion timescale in weeks (must be > 0)
-        The constraint k_inf ≥ k_0 ensures the slope b(s) is monotonically increasing.
+        When k_0 < 0, the constraint k_inf ≥ k_0 ensures the slope b(s) is monotonically increasing.
+        When k_0 ≥ 0, no such constraint is applied.
         Returns (np.nan, np.nan, np.nan, np.nan) on failure.
     initial_params : tuple
         (C_init, k_0_init, delta_k_init, tau_init) - initial parameter estimates
@@ -988,17 +999,22 @@ def fit_slope7_depletion(s, logh):
     else:
         k_0_init = 0.0
     
-    # Δk: difference between long-run and initial slope (must be ≥ 0)
-    # Estimate from later points vs initial slope
-    MIN_DELTA_K = 0.0  # Δk must be ≥ 0 (enforces k_∞ ≥ k_0)
-    MIN_TAU = 1e-3     # Minimum value for tau bound (weeks)
+    # Δk: difference between long-run and initial slope
+    # Conditional constraint: delta_k >= 0 only when k_0 < 0 (depletion case)
+    # When k_0 >= 0, delta_k can be negative (no depletion constraint)
+    MIN_DELTA_K = -0.1  # Allow negative delta_k when k_0 >= 0
+    MIN_TAU = 1e-3      # Minimum value for tau bound (weeks)
     
     if len(logh_valid) >= 5:
         later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
-        delta_k_init = max(later_slope - k_0_init, 0.001)  # Ensure Δk ≥ 0 and well above bound
+        # Initial guess: if k_0 < 0, ensure delta_k >= 0; otherwise allow negative
+        if k_0_init < 0:
+            delta_k_init = max(later_slope - k_0_init, 0.001)  # Ensure Δk ≥ 0 for depletion case
+        else:
+            delta_k_init = later_slope - k_0_init  # Can be negative when k_0 >= 0
     else:
-        # If we can't estimate later slope, assume small positive Δk
-        delta_k_init = 0.001
+        # If we can't estimate later slope, use small positive for depletion case, zero otherwise
+        delta_k_init = 0.001 if k_0_init < 0 else 0.0
     
     # tau: depletion timescale (weeks), initial guess based on data span
     tau_init = max((s_valid.max() - s_valid.min()) / 3.0, max(MIN_TAU * 10, 1.0))  # Ensure well above bound
@@ -1009,7 +1025,7 @@ def fit_slope7_depletion(s, logh):
     # Parameter vector: [C, k_0, Δk, tau]
     p0 = np.array([C_init, k_0_init, delta_k_init, tau_init], dtype=float)
     
-    # Bounds: Δk ≥ 0, tau > MIN_TAU, C and k_0 unbounded (use ±inf for "no bound")
+    # Bounds: delta_k can be negative when k_0 >= 0, tau > MIN_TAU, C and k_0 unbounded
     lower_bounds = np.array([-np.inf, -np.inf, MIN_DELTA_K, MIN_TAU], dtype=float)
     upper_bounds = np.array([ np.inf,  np.inf,        np.inf,    np.inf], dtype=float)
     
@@ -1018,13 +1034,28 @@ def fit_slope7_depletion(s, logh):
     bounds = (lower_bounds, upper_bounds)
     
     def residual_func(p):
-        """Residual function for least squares."""
+        """Residual function for least squares with conditional constraint."""
         C, k_0, delta_k, tau = p
+        
+        # Conditional constraint: if k_0 < 0, delta_k must be >= 0 (depletion constraint)
+        # If k_0 >= 0, delta_k can be negative (no constraint)
+        # Add penalty to residuals if constraint is violated
+        penalty = 0.0
+        if k_0 < 0 and delta_k < 0:
+            # Violation of depletion constraint: add large penalty
+            penalty = 1e6 * (abs(delta_k) + 1.0)
+        
         # Model: log h(s) = C + (k_0 + Δk)*s - Δk*τ*(1 - exp(-s/τ))
         # This is equivalent to: C + k_∞*s + (k_0 - k_∞)*τ*(1 - exp(-s/τ)) where k_∞ = k_0 + Δk
         k_inf = k_0 + delta_k
         predicted = C + k_inf * s_valid - delta_k * tau * (1.0 - np.exp(-s_valid / (tau + EPS)))
-        return logh_valid - predicted
+        residuals = logh_valid - predicted
+        
+        # Add penalty as additional residual component
+        if penalty > 0:
+            residuals = np.append(residuals, np.sqrt(penalty))
+        
+        return residuals
     
     try:
         result = least_squares(
@@ -1039,8 +1070,13 @@ def fit_slope7_depletion(s, logh):
         
         if result.success:
             C, k_0, delta_k, tau = result.x
-            # Ensure constraints are satisfied
-            delta_k = max(delta_k, MIN_DELTA_K)  # Ensure Δk ≥ 0
+            # Conditional constraint: only enforce delta_k >= 0 when k_0 < 0 (depletion case)
+            # When k_0 >= 0, allow delta_k to be negative
+            if k_0 < 0:
+                # Depletion case: enforce k_inf >= k_0 (delta_k >= 0)
+                delta_k = max(delta_k, 0.0)
+            # else: k_0 >= 0, delta_k can be negative (no constraint)
+            
             tau = max(tau, MIN_TAU)
             # Compute k_∞ = k_0 + Δk
             k_inf = k_0 + delta_k
@@ -1099,9 +1135,14 @@ def fit_slope7_depletion_lm(s, logh):
     
     if len(logh_valid) >= 5:
         later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
-        delta_k_init = max(later_slope - k_0_init, 0.001)
+        # Initial guess: if k_0 < 0, ensure delta_k >= 0; otherwise allow negative
+        if k_0_init < 0:
+            delta_k_init = max(later_slope - k_0_init, 0.001)  # Ensure Δk ≥ 0 for depletion case
+        else:
+            delta_k_init = later_slope - k_0_init  # Can be negative when k_0 >= 0
     else:
-        delta_k_init = 0.001
+        # If we can't estimate later slope, use small positive for depletion case, zero otherwise
+        delta_k_init = 0.001 if k_0_init < 0 else 0.0
     
     tau_init = max((s_valid.max() - s_valid.min()) / 3.0, 1.0)
     
@@ -1111,10 +1152,26 @@ def fit_slope7_depletion_lm(s, logh):
     p0 = np.array([C_init, k_0_init, delta_k_init, tau_init], dtype=float)
     
     def residual_func(p):
+        """Residual function with conditional constraint."""
         C, k_0, delta_k, tau = p
+        
+        # Conditional constraint: if k_0 < 0, delta_k must be >= 0 (depletion constraint)
+        # If k_0 >= 0, delta_k can be negative (no constraint)
+        # Add penalty to residuals if constraint is violated
+        penalty = 0.0
+        if k_0 < 0 and delta_k < 0:
+            # Violation of depletion constraint: add large penalty
+            penalty = 1e6 * (abs(delta_k) + 1.0)
+        
         k_inf = k_0 + delta_k
         predicted = C + k_inf * s_valid - delta_k * tau * (1.0 - np.exp(-s_valid / (tau + EPS)))
-        return logh_valid - predicted
+        residuals = logh_valid - predicted
+        
+        # Add penalty as additional residual component
+        if penalty > 0:
+            residuals = np.append(residuals, np.sqrt(penalty))
+        
+        return residuals
     
     try:
         result = least_squares(
@@ -1127,6 +1184,13 @@ def fit_slope7_depletion_lm(s, logh):
         )
         if result.success:
             C, k_0, delta_k, tau = result.x
+            # Conditional constraint: only enforce delta_k >= 0 when k_0 < 0 (depletion case)
+            # When k_0 >= 0, allow delta_k to be negative
+            if k_0 < 0:
+                # Depletion case: enforce k_inf >= k_0 (delta_k >= 0)
+                delta_k = max(delta_k, 0.0)
+            # else: k_0 >= 0, delta_k can be negative (no constraint)
+            
             k_inf = k_0 + delta_k
             if np.isfinite(C) and np.isfinite(k_inf) and np.isfinite(k_0) and np.isfinite(tau):
                 return (float(C), float(k_inf), float(k_0), float(tau)), initial_params
@@ -1142,7 +1206,10 @@ def fit_slope8_depletion(s, logh):
     Fit depletion-mode normalization using quantile regression with L-BFGS-B optimization.
     
     Models log-hazard as: log h(s) = C + (k_0 + Δk)*s - Δk*τ*(1 - e^(-s/τ))
-    where k_∞ = k_0 + Δk, ensuring k_∞ ≥ k_0 (monotonicity constraint).
+    where k_∞ = k_0 + Δk.
+    
+    Conditional constraint: When k_0 < 0 (depletion case), k_∞ ≥ k_0 (delta_k ≥ 0) is enforced.
+    When k_0 ≥ 0, delta_k can be negative (no depletion constraint).
     
     Uses quantile (check) loss instead of L2 loss for robustness to outliers.
     Uses improved windowed OLS initial guess algorithm for robust parameter initialization.
@@ -1159,10 +1226,11 @@ def fit_slope8_depletion(s, logh):
     (C, k_inf, k_0, tau) : tuple of floats
         Fitted parameters:
         - C: intercept
-        - k_inf (kb): long-run background slope = k_0 + Δk (may be negative, but k_inf ≥ k_0)
-        - k_0 (ka): slope at enrollment (may be negative)
+        - k_inf (kb): long-run background slope = k_0 + Δk
+        - k_0 (ka): slope at enrollment (may be negative or positive)
         - tau: depletion timescale in weeks (must be > 0)
-        The constraint k_inf ≥ k_0 ensures the slope b(s) is monotonically increasing.
+        When k_0 < 0, the constraint k_inf ≥ k_0 ensures the slope b(s) is monotonically increasing.
+        When k_0 ≥ 0, no such constraint is applied.
         Returns (np.nan, np.nan, np.nan, np.nan) on failure.
     initial_params : tuple
         (C_init, k_0_init, delta_k_init, tau_init) - initial parameter estimates
@@ -1208,10 +1276,12 @@ def fit_slope8_depletion(s, logh):
     C_init, k_0_init, delta_k_init, tau_init = make_slope8_initial_guess(s_valid, logh_valid)
     
     # Bounds for the quantile fit
-    MIN_DELTA_K = 0.0  # Δk must be ≥ 0 (enforces k_∞ ≥ k_0)
-    MAX_DELTA_K = 0.1  # long-run minus initial slope
-    MIN_TAU = 1e-3     # Minimum value for tau bound (weeks)
-    MAX_TAU = 260.0    # e.g., 5 years; avoids 600-year degeneracy
+    # Note: delta_k constraint is conditional: delta_k >= 0 only when k_0 < 0 (depletion case)
+    # When k_0 >= 0, delta_k can be negative (no depletion constraint)
+    MIN_DELTA_K = -0.1  # Allow negative delta_k when k_0 >= 0
+    MAX_DELTA_K = 0.1   # long-run minus initial slope
+    MIN_TAU = 1e-3      # Minimum value for tau bound (weeks)
+    MAX_TAU = 260.0     # e.g., 5 years; avoids 600-year degeneracy
     
     # Store initial estimates for return (before clipping)
     initial_params = (float(C_init), float(k_0_init), float(delta_k_init), float(tau_init))
@@ -1229,7 +1299,7 @@ def fit_slope8_depletion(s, logh):
     bounds = [
         (C_MIN, C_MAX),                 # C
         (K_MIN, K_MAX),                 # k_0
-        (MIN_DELTA_K, MAX_DELTA_K),     # Δk
+        (MIN_DELTA_K, MAX_DELTA_K),     # Δk (can be negative when k_0 >= 0)
         (MIN_TAU, MAX_TAU),             # tau
     ]
     
@@ -1246,12 +1316,22 @@ def fit_slope8_depletion(s, logh):
                = (τ-1)*u  if u < 0
         
         Here u = logh_valid - predicted.
+        
+        Conditional constraint: When k_0 < 0 (depletion case), enforce delta_k >= 0 (k_inf >= k_0).
+        When k_0 >= 0, delta_k can be negative (no depletion constraint).
         """
         C, k_0, delta_k, tau = p
         
         # Just in case the optimizer wanders slightly outside bounds numerically:
-        if not np.isfinite(tau) or tau <= MIN_TAU or delta_k < MIN_DELTA_K:
+        if not np.isfinite(tau) or tau <= MIN_TAU:
             return 1e9
+        
+        # Conditional constraint: if k_0 < 0, delta_k must be >= 0 (depletion constraint)
+        # If k_0 >= 0, delta_k can be negative (no constraint)
+        if k_0 < 0 and delta_k < 0:
+            # Violation of depletion constraint: add large penalty
+            penalty = 1e6 * (abs(delta_k) + 1.0)
+            return 1e9 + penalty
         
         k_inf = k_0 + delta_k
         
@@ -1279,7 +1359,14 @@ def fit_slope8_depletion(s, logh):
         
         # Extract fitted parameters (always extract, even if invalid)
         C, k_0, delta_k, tau = result.x
-        delta_k = max(delta_k, MIN_DELTA_K)
+        
+        # Conditional constraint: only enforce delta_k >= 0 when k_0 < 0 (depletion case)
+        # When k_0 >= 0, allow delta_k to be negative
+        if k_0 < 0:
+            # Depletion case: enforce k_inf >= k_0 (delta_k >= 0)
+            delta_k = max(delta_k, 0.0)
+        # else: k_0 >= 0, delta_k can be negative (no constraint)
+        
         tau = min(max(tau, MIN_TAU), MAX_TAU)
         k_inf = k_0 + delta_k
         
@@ -1289,13 +1376,84 @@ def fit_slope8_depletion(s, logh):
         kb_valid = np.isfinite(k_inf)
         tau_valid = np.isfinite(tau) and tau > EPS
         
+        # Extract message with proper handling of bytes/string and all possible message sources
+        def extract_message(msg):
+            """Extract full message string, handling bytes and ensuring full content."""
+            if msg is None:
+                return None
+            if isinstance(msg, bytes):
+                try:
+                    decoded = msg.decode('utf-8', errors='replace')
+                    # Check if decoded message is just "ABNORMAL: " - might be incomplete
+                    if decoded.strip() == "ABNORMAL:" or decoded.strip().startswith("ABNORMAL:"):
+                        # Try to get more info from the raw bytes
+                        try:
+                            # Sometimes the message might have null bytes or other encoding issues
+                            full_bytes = bytes(msg)
+                            # Look for printable characters after "ABNORMAL:"
+                            if b'ABNORMAL:' in full_bytes:
+                                idx = full_bytes.index(b'ABNORMAL:') + len(b'ABNORMAL:')
+                                remainder = full_bytes[idx:]
+                                if remainder:
+                                    remainder_str = remainder.decode('utf-8', errors='replace').strip()
+                                    if remainder_str:
+                                        decoded = decoded + " " + remainder_str
+                        except Exception:
+                            pass
+                    return decoded
+                except Exception:
+                    return str(msg)
+            msg_str = str(msg)
+            # Check if message appears truncated
+            if msg_str.strip() == "ABNORMAL:" or (msg_str.strip().startswith("ABNORMAL:") and len(msg_str.strip()) <= 10):
+                # Message might be incomplete - try to get more from result object
+                pass
+            return msg_str
+        
+        # Get full message string - check multiple possible sources
+        full_message = None
+        if hasattr(result, 'message'):
+            full_message = extract_message(result.message)
+        
+        # Also check for additional message information in other attributes
+        # L-BFGS-B sometimes stores additional info in different places
+        additional_info = []
+        if hasattr(result, 'task'):
+            task_msg = str(result.task) if result.task else None
+            if task_msg and task_msg != full_message:
+                additional_info.append(f"task={task_msg}")
+        
+        # Check if message is incomplete and try to reconstruct
+        if full_message and (full_message.strip() == "ABNORMAL:" or full_message.strip().startswith("ABNORMAL:")):
+            # Message appears incomplete - try to get more context
+            if additional_info:
+                full_message = full_message + " " + " ".join(additional_info)
+        
+        # Status code interpretation for L-BFGS-B
+        status_code = None
+        status_meaning = None
+        if hasattr(result, 'status'):
+            status_code = int(result.status)
+            # L-BFGS-B status codes:
+            status_meanings = {
+                0: "success",
+                1: "too_many_function_evaluations",
+                2: "too_many_iterations", 
+                3: "lower_bound_greater_than_upper_bound",
+                4: "line_search_failed",
+                5: "abnormal_termination",
+                6: "rounding_errors_prevent_progress",
+                7: "user_callback_requested_stop",
+            }
+            status_meaning = status_meanings.get(status_code, f"unknown_status_{status_code}")
+        
         # Build diagnostics dict with comprehensive optimizer information
         diagnostics = {
             "success": bool(result.success),
             "fun": float(result.fun) if np.isfinite(result.fun) else None,
             "nfev": int(result.nfev) if hasattr(result, 'nfev') else None,
             "nit": int(result.nit) if hasattr(result, 'nit') else None,
-            "message": str(result.message) if hasattr(result, 'message') else None,
+            "message": full_message,
             "C_valid": C_valid,
             "ka_valid": ka_valid,
             "kb_valid": kb_valid,
@@ -1303,8 +1461,10 @@ def fit_slope8_depletion(s, logh):
         }
         
         # Add additional optimizer details if available
-        if hasattr(result, 'status'):
-            diagnostics["optimizer_status"] = int(result.status)
+        if status_code is not None:
+            diagnostics["optimizer_status"] = status_code
+        if status_meaning is not None:
+            diagnostics["optimizer_status_meaning"] = status_meaning
         if hasattr(result, 'warnflag'):
             diagnostics["optimizer_warnflag"] = int(result.warnflag)
         if hasattr(result, 'allvecs'):
@@ -1317,18 +1477,64 @@ def fit_slope8_depletion(s, logh):
         if not result.success:
             detail_parts = []
             detail_parts.append(f"optimizer_success=False")
-            if hasattr(result, 'message') and result.message:
-                detail_parts.append(f"message='{result.message}'")
-            if hasattr(result, 'status'):
-                detail_parts.append(f"status={result.status}")
+            if status_code is not None:
+                detail_parts.append(f"status={status_code}({status_meaning})")
+            if full_message:
+                # Include full message, escaping quotes for CSV
+                msg_escaped = full_message.replace('"', '""').replace('\n', ' ').replace('\r', ' ')
+                detail_parts.append(f"message=\"{msg_escaped}\"")
             if not C_valid:
-                detail_parts.append(f"C={C:.6e} (invalid)")
+                detail_parts.append(f"C={C:.6e}(invalid)")
             if not ka_valid:
-                detail_parts.append(f"ka={k_0:.6e} (invalid)")
+                detail_parts.append(f"ka={k_0:.6e}(invalid)")
             if not kb_valid:
-                detail_parts.append(f"kb={k_inf:.6e} (invalid)")
+                detail_parts.append(f"kb={k_inf:.6e}(invalid)")
             if not tau_valid:
-                detail_parts.append(f"tau={tau:.6e} (invalid)")
+                detail_parts.append(f"tau={tau:.6e}(invalid)")
+            # Add parameter values for debugging abnormal terminations
+            if status_code == 5:  # abnormal termination
+                detail_parts.append(f"final_params:C={C:.6e},ka={k_0:.6e},kb={k_inf:.6e},tau={tau:.6e}")
+                detail_parts.append(f"final_loss={result.fun:.6e}" if np.isfinite(result.fun) else "final_loss=invalid")
+                if hasattr(result, 'nfev'):
+                    detail_parts.append(f"nfev={result.nfev}")
+                if hasattr(result, 'nit'):
+                    detail_parts.append(f"nit={result.nit}")
+                
+                # Check for common patterns that cause abnormal termination
+                pattern_parts = []
+                # Check if tau is at or near lower bound (MIN_TAU = 1e-3 weeks)
+                tau_at_lower_bound = abs(tau - MIN_TAU) < MIN_TAU * 10 or tau < MIN_TAU * 2
+                if tau_at_lower_bound:
+                    pattern_parts.append(f"tau_at_lower_bound(tau={tau:.6e},MIN_TAU={MIN_TAU})")
+                
+                # Check if tau is at or near upper bound (MAX_TAU = 260 weeks)
+                tau_at_upper_bound = abs(tau - MAX_TAU) < 1.0 or tau > MAX_TAU * 0.99
+                if tau_at_upper_bound:
+                    pattern_parts.append(f"tau_at_upper_bound(tau={tau:.6e},MAX_TAU={MAX_TAU})")
+                
+                # Check if delta_k is very small (model collapsing to linear)
+                delta_k_small = abs(delta_k) < 1e-5
+                if delta_k_small:
+                    pattern_parts.append(f"delta_k_very_small(delta_k={delta_k:.6e},ka≈kb)")
+                
+                # Check if delta_k is at upper bound
+                delta_k_at_upper = abs(delta_k - MAX_DELTA_K) < 1e-5
+                if delta_k_at_upper:
+                    pattern_parts.append(f"delta_k_at_upper_bound(delta_k={delta_k:.6e},MAX_DELTA_K={MAX_DELTA_K})")
+                
+                # Check if we have very few data points
+                if len(s_valid) < 10:
+                    pattern_parts.append(f"few_data_points(n={len(s_valid)})")
+                
+                # Check if gradient norm is very large (numerical issues)
+                if hasattr(result, 'grad') and result.grad is not None:
+                    grad_norm = np.linalg.norm(result.grad)
+                    if np.isfinite(grad_norm) and grad_norm > 1e6:
+                        pattern_parts.append(f"large_gradient_norm({grad_norm:.2e})")
+                
+                if pattern_parts:
+                    detail_parts.append("patterns:" + ",".join(pattern_parts))
+            
             diagnostics["failure_detail"] = "; ".join(detail_parts)
         else:
             diagnostics["failure_detail"] = None
@@ -1816,6 +2022,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "optimizer_nit": diagnostics_slope8["nit"],
                             "optimizer_message": diagnostics_slope8["message"],
                             "optimizer_status": diagnostics_slope8.get("optimizer_status"),
+                            "optimizer_status_meaning": diagnostics_slope8.get("optimizer_status_meaning"),
                             "optimizer_warnflag": diagnostics_slope8.get("optimizer_warnflag"),
                             "optimizer_grad_norm": diagnostics_slope8.get("optimizer_grad_norm"),
                             "failure_detail": diagnostics_slope8.get("failure_detail"),
