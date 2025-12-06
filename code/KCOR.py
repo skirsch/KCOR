@@ -90,7 +90,7 @@ import tempfile
 import shutil
 import csv
 import statsmodels.api as sm
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 
 try:
     import cvxpy as cp
@@ -132,6 +132,8 @@ SLOPE_FIT_END_ISO = "2024-16"           # Single constant for fit window end (us
 SLOPE6_APPLICATION_END_ISO = SLOPE_FIT_END_ISO  # Rightmost endpoint for determining centerpoint (ISO week format)
 SLOPE7_END_ISO = SLOPE_FIT_END_ISO      # Final week used for slope7 depletion-mode normalization (ISO week format)
 ENABLE_NEGATIVE_SLOPE_FIT = 1           # When 0, disable slope7 depletion mode and force linear fit only (temporary flag)
+SLOPE8_QUANTILE_TAU = 0.5               # Quantile level for slope8 quantile regression (0.5 = median)
+SLOPE_FIT_DELAY_WEEKS = 15              # Delay in weeks for highest dose fit start (slope8 only)
 
 # Optional detailed debug logging for slope7 depletion-mode fits.
 # When enabled, each attempted slope7 fit (per cohort) is logged as a CSV row to SLOPE7_DEBUG_FILE,
@@ -998,6 +1000,160 @@ def fit_slope7_depletion_lm(s, logh):
     except Exception:
         return (np.nan, np.nan, np.nan, np.nan), initial_params
 
+def fit_slope8_depletion(s, logh):
+    """
+    Fit depletion-mode normalization using quantile regression with L-BFGS-B optimization.
+    
+    Models log-hazard as: log h(s) = C + (k_0 + Δk)*s - Δk*τ*(1 - e^(-s/τ))
+    where k_∞ = k_0 + Δk, ensuring k_∞ ≥ k_0 (monotonicity constraint).
+    
+    Uses quantile (check) loss instead of L2 loss for robustness to outliers.
+    
+    Parameters
+    ----------
+    s : array-like
+        Time values in weeks since enrollment (NOT centered, s=0 at enrollment).
+    logh : array-like
+        log(hazard) values aligned with s.
+    
+    Returns
+    -------
+    (C, k_inf, k_0, tau) : tuple of floats
+        Fitted parameters:
+        - C: intercept
+        - k_inf (kb): long-run background slope = k_0 + Δk (may be negative, but k_inf ≥ k_0)
+        - k_0 (ka): slope at enrollment (may be negative)
+        - tau: depletion timescale in weeks (must be > 0)
+        The constraint k_inf ≥ k_0 ensures the slope b(s) is monotonically increasing.
+        Returns (np.nan, np.nan, np.nan, np.nan) on failure.
+    initial_params : tuple
+        (C_init, k_0_init, delta_k_init, tau_init) - initial parameter estimates
+    """
+    s = np.asarray(s, dtype=float)
+    logh = np.asarray(logh, dtype=float)
+    
+    # Remove invalid values
+    valid_mask = np.isfinite(s) & np.isfinite(logh)
+    if valid_mask.sum() < SLOPE6_MIN_DATA_POINTS:
+        return (np.nan, np.nan, np.nan, np.nan), (np.nan, np.nan, np.nan, np.nan)
+    
+    s_valid = s[valid_mask]
+    logh_valid = logh[valid_mask]
+    
+    # Initial parameter estimates (same as slope7)
+    # C: intercept from first few points
+    if len(logh_valid) >= 3:
+        C_init = np.mean(logh_valid[:3])
+    else:
+        C_init = logh_valid[0] if len(logh_valid) > 0 else 0.0
+    
+    # k_0: initial slope (can be negative)
+    if len(s_valid) >= 2:
+        k_0_init = (logh_valid[1] - logh_valid[0]) / (s_valid[1] - s_valid[0] + EPS)
+    else:
+        k_0_init = 0.0
+    
+    # Δk: difference between long-run and initial slope (must be ≥ 0)
+    MIN_DELTA_K = 0.0  # Δk must be ≥ 0 (enforces k_∞ ≥ k_0)
+    MAX_DELTA_K = 0.1  # long-run minus initial slope
+    MIN_TAU = 1e-3     # Minimum value for tau bound (weeks)
+    MAX_TAU = 260.0    # e.g., 5 years; avoids 600-year degeneracy
+    
+    if len(logh_valid) >= 5:
+        later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
+        delta_k_init = max(later_slope - k_0_init, 0.001)  # Ensure Δk ≥ 0 and well above bound
+    else:
+        # If we can't estimate later slope, assume small positive Δk
+        delta_k_init = 0.001
+    
+    # tau: depletion timescale (weeks), initial guess based on data span
+    tau_init = max((s_valid.max() - s_valid.min()) / 3.0, max(MIN_TAU * 10, 1.0))  # Ensure well above bound
+    
+    # Store initial estimates for return (before clipping)
+    initial_params = (float(C_init), float(k_0_init), float(delta_k_init), float(tau_init))
+    
+    # Parameter vector: [C, k_0, Δk, tau]
+    p0 = np.array([C_init, k_0_init, delta_k_init, tau_init], dtype=float)
+    
+    # Bounds for the quantile fit
+    # C ~ log(h). Hazards are ~1e-5–1e-3, so C is safely around [-20, -5].
+    C_MIN, C_MAX = -25.0, 0.0
+    
+    # Weekly log-slope is small (~±0.01). Keep a generous but finite box.
+    K_MIN, K_MAX = -0.1, 0.1
+    
+    bounds = [
+        (C_MIN, C_MAX),                 # C
+        (K_MIN, K_MAX),                 # k_0
+        (MIN_DELTA_K, MAX_DELTA_K),     # Δk
+        (MIN_TAU, MAX_TAU),             # tau
+    ]
+    
+    # Make sure starting point is inside the box
+    p0 = np.clip(p0, [b[0] for b in bounds], [b[1] for b in bounds])
+    
+    tau_q = SLOPE8_QUANTILE_TAU  # quantile for the check loss
+    
+    def quantile_loss(p):
+        """
+        Quantile (check) loss on log h(s):
+        
+        ρ_τ(u) = τ*u      if u >= 0
+               = (τ-1)*u  if u < 0
+        
+        Here u = logh_valid - predicted.
+        """
+        C, k_0, delta_k, tau = p
+        
+        # Just in case the optimizer wanders slightly outside bounds numerically:
+        if not np.isfinite(tau) or tau <= MIN_TAU or delta_k < MIN_DELTA_K:
+            return 1e9
+        
+        k_inf = k_0 + delta_k
+        
+        predicted = C + k_inf * s_valid - delta_k * tau * (
+            1.0 - np.exp(-s_valid / (tau + EPS))
+        )
+        
+        resid = logh_valid - predicted  # u in the formula above
+        pos = resid >= 0.0
+        loss = np.where(pos, tau_q * resid, (tau_q - 1.0) * resid)
+        
+        # Optional very small ridge to help numerics:
+        ridge = 1e-4 * np.sum(resid**2)
+        
+        return float(np.sum(loss) + ridge)
+    
+    try:
+        result = minimize(
+            quantile_loss,
+            p0,
+            method="L-BFGS-B",
+            bounds=bounds,
+            options={"maxiter": 2000}
+        )
+        
+        if result.success:
+            C, k_0, delta_k, tau = result.x
+            delta_k = max(delta_k, MIN_DELTA_K)
+            tau = min(max(tau, MIN_TAU), MAX_TAU)
+            k_inf = k_0 + delta_k
+            
+            if (
+                np.isfinite(C) and np.isfinite(k_inf)
+                and np.isfinite(k_0) and np.isfinite(tau)
+            ):
+                return (float(C), float(k_inf), float(k_0), float(tau)), initial_params
+            else:
+                return (np.nan, np.nan, np.nan, np.nan), initial_params
+        else:
+            return (np.nan, np.nan, np.nan, np.nan), initial_params
+    
+    except Exception as e:
+        import warnings
+        warnings.warn(f"fit_slope8_depletion (quantile) failed: {str(e)}", RuntimeWarning)
+        return (np.nan, np.nan, np.nan, np.nan), initial_params
+
 def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
     """
     Compute Slope6 normalization parameters for each cohort independently.
@@ -1080,6 +1236,11 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     # Parse enrollment date to get start of application window
     enrollment_dt = _parse_enrollment_date(enrollment_date_str)
     application_end_dt = _iso_to_date_slope6(SLOPE6_APPLICATION_END_ISO)
+    
+    # Determine highest dose for this enrollment date (for slope8 delayed fit)
+    sheet_name = df['sheet_name'].iloc[0] if 'sheet_name' in df.columns and len(df) > 0 else enrollment_date_str
+    dose_pairs = get_dose_pairs(sheet_name)
+    max_dose = max(max(pair) for pair in dose_pairs) if dose_pairs else 0
     
     # Process each cohort independently
     for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
@@ -1334,6 +1495,104 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         })
                 except Exception:
                     pass
+                
+                # --- Slope8 quantile regression fit (fourth method) ---
+                # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
+                # For highest dose, start fit at enrollment_date + SLOPE_FIT_DELAY_WEEKS
+                slope8_end_dt = _iso_to_date_slope6(SLOPE_FIT_END_ISO)
+                is_highest_dose = (dose == max_dose)
+                
+                # Determine fit start date for slope8
+                if is_highest_dose:
+                    slope8_start_dt = enrollment_dt + timedelta(weeks=SLOPE_FIT_DELAY_WEEKS)
+                else:
+                    slope8_start_dt = enrollment_dt
+                
+                # Build slope8 deployment window data
+                # s=0 corresponds to enrollment_date for all doses
+                # For highest dose, fit starts at enrollment_date + SLOPE_FIT_DELAY_WEEKS
+                s_values_slope8 = []
+                log_h_slope8_values = []
+                h_slope8_values = []
+                iso_weeks_slope8 = []
+                
+                # Build s_values: s=0 corresponds to enrollment_date
+                # For highest dose, we only include points where s >= SLOPE_FIT_DELAY_WEEKS
+                for week, week_data in cohort_data.items():
+                    date_died = week_data.get("DateDied")
+                    if date_died is not None and enrollment_dt <= date_died <= slope8_end_dt:
+                        hc = week_data.get("hazard")
+                        if hc is not None and hc > EPS:
+                            try:
+                                log_h_val = np.log(hc)
+                                if np.isfinite(log_h_val):
+                                    # Calculate s as weeks since enrollment_date
+                                    weeks_since_enrollment = (date_died - enrollment_dt).days / 7.0
+                                    
+                                    # For highest dose, only include points in fit window
+                                    if is_highest_dose and weeks_since_enrollment < SLOPE_FIT_DELAY_WEEKS:
+                                        continue
+                                    
+                                    s_values_slope8.append(weeks_since_enrollment)
+                                    log_h_slope8_values.append(log_h_val)
+                                    h_slope8_values.append(float(hc))
+                                    iso_weeks_slope8.append(week)
+                            except Exception:
+                                continue
+                
+                # Fit slope8 if we have enough data points
+                if len(s_values_slope8) >= SLOPE6_MIN_DATA_POINTS:
+                    try:
+                        (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8) = fit_slope8_depletion(
+                            np.array(s_values_slope8), np.array(log_h_slope8_values)
+                        )
+                        
+                        if np.isfinite(C_slope8) and np.isfinite(kb_slope8) and np.isfinite(ka_slope8) and np.isfinite(tau_slope8) and tau_slope8 > EPS:
+                            predicted_slope8 = C_slope8 + kb_slope8 * np.array(s_values_slope8) + (ka_slope8 - kb_slope8) * tau_slope8 * (1.0 - np.exp(-np.array(s_values_slope8) / (tau_slope8 + EPS)))
+                            residuals_slope8 = np.array(log_h_slope8_values) - predicted_slope8
+                            rms_error_slope8 = np.sqrt(np.mean(residuals_slope8**2))
+                            
+                            log_slope7_fit_debug({
+                                "enrollment_date": sheet_name,
+                                "mode": "slope8",
+                                "YearOfBirth": int(yob),
+                                "Dose": int(dose),
+                                "n_points": len(s_values_slope8),
+                                "s_values": list(map(float, s_values_slope8)),
+                                "logh_values": list(map(float, log_h_slope8_values)),
+                                "h_values": h_slope8_values,
+                                "iso_weeks_used": iso_weeks_slope8,
+                                "C": float(C_slope8),
+                                "ka": float(ka_slope8),
+                                "kb": float(kb_slope8),
+                                "tau": float(tau_slope8),
+                                "C_init": None if (C_init_slope8 is None or (isinstance(C_init_slope8, (int, float, np.number)) and (np.isnan(C_init_slope8) or not np.isfinite(C_init_slope8)))) else float(C_init_slope8),
+                                "ka_init": None if (ka_init_slope8 is None or (isinstance(ka_init_slope8, (int, float, np.number)) and (np.isnan(ka_init_slope8) or not np.isfinite(ka_init_slope8)))) else float(ka_init_slope8),
+                                "delta_k_init": None if (delta_k_init_slope8 is None or (isinstance(delta_k_init_slope8, (int, float, np.number)) and (np.isnan(delta_k_init_slope8) or not np.isfinite(delta_k_init_slope8)))) else float(delta_k_init_slope8),
+                                "tau_init": None if (tau_init_slope8 is None or (isinstance(tau_init_slope8, (int, float, np.number)) and (np.isnan(tau_init_slope8) or not np.isfinite(tau_init_slope8)))) else float(tau_init_slope8),
+                                "b_original": float(b_lin),
+                                "rms_error": float(rms_error_slope8),
+                            })
+                        else:
+                            log_slope7_fit_debug({
+                                "enrollment_date": sheet_name,
+                                "mode": "slope8_invalid_params",
+                                "YearOfBirth": int(yob),
+                                "Dose": int(dose),
+                                "n_points": len(s_values_slope8),
+                                "s_values": list(map(float, s_values_slope8)),
+                                "logh_values": list(map(float, log_h_slope8_values)),
+                                "h_values": h_slope8_values,
+                                "iso_weeks_used": iso_weeks_slope8,
+                                "C": float(C_slope8) if np.isfinite(C_slope8) else None,
+                                "ka": float(ka_slope8) if np.isfinite(ka_slope8) else None,
+                                "kb": float(kb_slope8) if np.isfinite(kb_slope8) else None,
+                                "tau": float(tau_slope8) if np.isfinite(tau_slope8) else None,
+                                "b_original": float(b_lin),
+                                "note": "invalid parameters from slope8 fit",
+                            })
+                    except Exception:
+                        pass
             
             # Now decide which normalization mode to use based on b_lin
             if b_lin >= 0 or ENABLE_NEGATIVE_SLOPE_FIT == 0:
