@@ -353,7 +353,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v5.1"                # KCOR version number
+VERSION = "v5.2"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -413,6 +413,14 @@ VERSION = "v5.1"                # KCOR version number
 #        - Time axis s = weeks since enrollment (no centering)
 #        - Parameters: C, ka (k_0), kb (k_∞), tau (τ)
 #        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
+# v5.2 - Added Slope8 quantile regression method as diagnostic tool
+#        - Uses quantile regression with check loss instead of L2 loss for robustness to outliers
+#        - Uses scipy.optimize.minimize with L-BFGS-B method and finite bounds
+#        - Fit window = deployment window (enrollment to SLOPE_FIT_END_ISO) for all doses
+#        - Special case: For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS (default 15 weeks)
+#        - Normalization applies from s=0 (enrollment) for all cohorts, including highest dose
+#        - Results logged to debug CSV but not yet applied for normalization
+#        - Provides alternative diagnostic method alongside linear, slope7 (TRF), and slope7 (LM)
 
 # latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
@@ -1498,26 +1506,23 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 
                 # --- Slope8 quantile regression fit (fourth method) ---
                 # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
-                # For highest dose, start fit at enrollment_date + SLOPE_FIT_DELAY_WEEKS
+                # For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS, but
+                # normalization is applied from s=0 (enrollment) onwards
                 slope8_end_dt = _iso_to_date_slope6(SLOPE_FIT_END_ISO)
                 is_highest_dose = (dose == max_dose)
                 
-                # Determine fit start date for slope8
-                if is_highest_dose:
-                    slope8_start_dt = enrollment_dt + timedelta(weeks=SLOPE_FIT_DELAY_WEEKS)
-                else:
-                    slope8_start_dt = enrollment_dt
+                # Build full deployment window data (s=0 at enrollment_date for all doses)
+                # This will be used for logging predictions
+                s_values_slope8_full = []
+                log_h_slope8_values_full = []
+                h_slope8_values_full = []
+                iso_weeks_slope8_full = []
                 
-                # Build slope8 deployment window data
-                # s=0 corresponds to enrollment_date for all doses
-                # For highest dose, fit starts at enrollment_date + SLOPE_FIT_DELAY_WEEKS
-                s_values_slope8 = []
-                log_h_slope8_values = []
-                h_slope8_values = []
-                iso_weeks_slope8 = []
+                # Build fit window data (subset for highest dose)
+                s_values_slope8_fit = []
+                log_h_slope8_values_fit = []
                 
                 # Build s_values: s=0 corresponds to enrollment_date
-                # For highest dose, we only include points where s >= SLOPE_FIT_DELAY_WEEKS
                 for week, week_data in cohort_data.items():
                     date_died = week_data.get("DateDied")
                     if date_died is not None and enrollment_dt <= date_died <= slope8_end_dt:
@@ -1529,39 +1534,45 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                                     # Calculate s as weeks since enrollment_date
                                     weeks_since_enrollment = (date_died - enrollment_dt).days / 7.0
                                     
-                                    # For highest dose, only include points in fit window
-                                    if is_highest_dose and weeks_since_enrollment < SLOPE_FIT_DELAY_WEEKS:
-                                        continue
+                                    # Always add to full dataset (for logging)
+                                    s_values_slope8_full.append(weeks_since_enrollment)
+                                    log_h_slope8_values_full.append(log_h_val)
+                                    h_slope8_values_full.append(float(hc))
+                                    iso_weeks_slope8_full.append(week)
                                     
-                                    s_values_slope8.append(weeks_since_enrollment)
-                                    log_h_slope8_values.append(log_h_val)
-                                    h_slope8_values.append(float(hc))
-                                    iso_weeks_slope8.append(week)
+                                    # For highest dose, only add to fit dataset if s >= SLOPE_FIT_DELAY_WEEKS
+                                    # For other doses, add all points to fit dataset
+                                    if not is_highest_dose or weeks_since_enrollment >= SLOPE_FIT_DELAY_WEEKS:
+                                        s_values_slope8_fit.append(weeks_since_enrollment)
+                                        log_h_slope8_values_fit.append(log_h_val)
                             except Exception:
                                 continue
                 
-                # Fit slope8 if we have enough data points
-                if len(s_values_slope8) >= SLOPE6_MIN_DATA_POINTS:
+                # Fit slope8 using only the fit window data
+                if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
                     try:
                         (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8) = fit_slope8_depletion(
-                            np.array(s_values_slope8), np.array(log_h_slope8_values)
+                            np.array(s_values_slope8_fit), np.array(log_h_slope8_values_fit)
                         )
                         
                         if np.isfinite(C_slope8) and np.isfinite(kb_slope8) and np.isfinite(ka_slope8) and np.isfinite(tau_slope8) and tau_slope8 > EPS:
-                            predicted_slope8 = C_slope8 + kb_slope8 * np.array(s_values_slope8) + (ka_slope8 - kb_slope8) * tau_slope8 * (1.0 - np.exp(-np.array(s_values_slope8) / (tau_slope8 + EPS)))
-                            residuals_slope8 = np.array(log_h_slope8_values) - predicted_slope8
-                            rms_error_slope8 = np.sqrt(np.mean(residuals_slope8**2))
+                            # Compute RMS error on fit window data
+                            predicted_slope8_fit = C_slope8 + kb_slope8 * np.array(s_values_slope8_fit) + (ka_slope8 - kb_slope8) * tau_slope8 * (1.0 - np.exp(-np.array(s_values_slope8_fit) / (tau_slope8 + EPS)))
+                            residuals_slope8_fit = np.array(log_h_slope8_values_fit) - predicted_slope8_fit
+                            rms_error_slope8 = np.sqrt(np.mean(residuals_slope8_fit**2))
                             
+                            # Log with full deployment window data (s=0 onwards for all doses)
+                            # The fit was done on subset, but normalization applies from s=0
                             log_slope7_fit_debug({
                                 "enrollment_date": sheet_name,
                                 "mode": "slope8",
                                 "YearOfBirth": int(yob),
                                 "Dose": int(dose),
-                                "n_points": len(s_values_slope8),
-                                "s_values": list(map(float, s_values_slope8)),
-                                "logh_values": list(map(float, log_h_slope8_values)),
-                                "h_values": h_slope8_values,
-                                "iso_weeks_used": iso_weeks_slope8,
+                                "n_points": len(s_values_slope8_fit),  # Number of points used in fit
+                                "s_values": list(map(float, s_values_slope8_full)),  # Full range for logging
+                                "logh_values": list(map(float, log_h_slope8_values_full)),  # Full range for logging
+                                "h_values": h_slope8_values_full,  # Full range for logging
+                                "iso_weeks_used": iso_weeks_slope8_full,  # Full range for logging
                                 "C": float(C_slope8),
                                 "ka": float(ka_slope8),
                                 "kb": float(kb_slope8),
@@ -1579,11 +1590,11 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                                 "mode": "slope8_invalid_params",
                                 "YearOfBirth": int(yob),
                                 "Dose": int(dose),
-                                "n_points": len(s_values_slope8),
-                                "s_values": list(map(float, s_values_slope8)),
-                                "logh_values": list(map(float, log_h_slope8_values)),
-                                "h_values": h_slope8_values,
-                                "iso_weeks_used": iso_weeks_slope8,
+                                "n_points": len(s_values_slope8_fit),
+                                "s_values": list(map(float, s_values_slope8_full)),
+                                "logh_values": list(map(float, log_h_slope8_values_full)),
+                                "h_values": h_slope8_values_full,
+                                "iso_weeks_used": iso_weeks_slope8_full,
                                 "C": float(C_slope8) if np.isfinite(C_slope8) else None,
                                 "ka": float(ka_slope8) if np.isfinite(ka_slope8) else None,
                                 "kb": float(kb_slope8) if np.isfinite(kb_slope8) else None,
