@@ -142,6 +142,122 @@ SLOPE_DEBUG_ENABLED = True
 # SLOPE_DEBUG_FILE is set in process_workbook() to the full path in the output directory
 
 
+def format_initial_params(C_init, ka_init, delta_k_init, tau_init):
+    """
+    Format initial parameter values for logging, converting to float or None.
+    Handles None, NaN, and non-finite values consistently.
+    
+    Parameters
+    ----------
+    C_init, ka_init, delta_k_init, tau_init : float or None
+        Initial parameter estimates
+    
+    Returns
+    -------
+    dict
+        Dictionary with keys: C_init, ka_init, delta_k_init, tau_init
+    """
+    def _format_param(val):
+        if val is None or (isinstance(val, (int, float, np.number)) and (np.isnan(val) or not np.isfinite(val))):
+            return None
+        return float(val)
+    
+    return {
+        "C_init": _format_param(C_init),
+        "ka_init": _format_param(ka_init),
+        "delta_k_init": _format_param(delta_k_init),
+        "tau_init": _format_param(tau_init),
+    }
+
+def make_slope8_initial_guess(s_valid, logh_valid):
+    """
+    Compute robust initial parameter guesses for slope8 depletion-mode fit using windowed OLS.
+    
+    Uses small OLS fits over early and late windows instead of single finite differences,
+    dramatically reducing sensitivity to noise and outliers. Enforces depletion pattern
+    (k_∞ ≥ k_0) and gracefully falls back to global linear slope for non-depletion cases.
+    
+    Parameters
+    ----------
+    s_valid : array-like
+        Time values (weeks since enrollment), already filtered for valid values
+    logh_valid : array-like
+        Log-hazard values aligned with s_valid, already filtered for valid values
+    
+    Returns
+    -------
+    tuple
+        (C_init, k_0_init, delta_k_init, tau_init) - initial parameter estimates
+    """
+    s_valid = np.asarray(s_valid, dtype=float)
+    logh_valid = np.asarray(logh_valid, dtype=float)
+    
+    # Step 0: Sort data to ensure proper ordering
+    order = np.argsort(s_valid)
+    s_valid = s_valid[order]
+    logh_valid = logh_valid[order]
+    
+    n = len(s_valid)
+    
+    # Step 1: Global linear fit as baseline/fallback
+    A = np.vstack([s_valid, np.ones_like(s_valid)]).T
+    b_global, a_global = np.linalg.lstsq(A, logh_valid, rcond=None)[0]
+    
+    if n < 5:
+        # Too few points: almost linear fallback
+        C_init = float(a_global)
+        k_0_init = float(b_global)
+        delta_k_init = 1e-4
+        tau_init = 10.0
+        return C_init, k_0_init, delta_k_init, tau_init
+    
+    # Step 2: Early and late window OLS fits
+    # Window size: ~1/3 of data but at least 3 points
+    w = max(n // 3, 3)
+    
+    # Early window: first w points
+    s_early = s_valid[:w]
+    h_early = logh_valid[:w]
+    b0, a0 = np.linalg.lstsq(
+        np.vstack([s_early, np.ones_like(s_early)]).T,
+        h_early,
+        rcond=None
+    )[0]
+    
+    # Late window: last w points
+    s_late = s_valid[-w:]
+    h_late = logh_valid[-w:]
+    b_inf, a_inf = np.linalg.lstsq(
+        np.vstack([s_late, np.ones_like(s_late)]).T,
+        h_late,
+        rcond=None
+    )[0]
+    
+    # Step 3: Derive k_0_init and delta_k_init
+    k_0_init = float(b0)
+    k_inf_init = float(b_inf)
+    
+    # Enforce depletion pattern: k_∞ ≥ k_0
+    # If pattern is violated (slope more negative late than early), collapse to global slope
+    if k_inf_init < k_0_init:
+        # Use global slope as both and tiny curvature
+        k_0_init = float(b_global)
+        k_inf_init = float(b_global)
+    
+    delta_k_init = max(k_inf_init - k_0_init, 1e-4)  # small but > 0
+    
+    # Step 4: Tau based on data span, clamped to reasonable range
+    span = max(s_valid) - min(s_valid)
+    if span <= 0:
+        span = 10.0  # arbitrary small default
+    tau_init = span / 3.0
+    tau_init = min(max(tau_init, 2.0), 52.0)  # between 2 weeks and 1 year
+    
+    # Step 5: C from early intercept (evaluated at s=0)
+    C_init = float(a0)
+    
+    return C_init, k_0_init, delta_k_init, tau_init
+
 def log_slope7_fit_debug(record: dict) -> None:
     """
     Append a CSV-formatted debug record for a slope7 (or related) fit to SLOPE_DEBUG_FILE.
@@ -204,6 +320,15 @@ def log_slope7_fit_debug(record: dict) -> None:
             "t_last1",
             "iso_week_first",
             "iso_week_last",
+            "optimizer_success",
+            "optimizer_fun",
+            "optimizer_nfev",
+            "optimizer_nit",
+            "optimizer_message",
+            "param_C_valid",
+            "param_ka_valid",
+            "param_kb_valid",
+            "param_tau_valid",
         ]
 
         # Prepare row dict with defaults
@@ -1016,6 +1141,7 @@ def fit_slope8_depletion(s, logh):
     where k_∞ = k_0 + Δk, ensuring k_∞ ≥ k_0 (monotonicity constraint).
     
     Uses quantile (check) loss instead of L2 loss for robustness to outliers.
+    Uses improved windowed OLS initial guess algorithm for robust parameter initialization.
     
     Parameters
     ----------
@@ -1036,6 +1162,17 @@ def fit_slope8_depletion(s, logh):
         Returns (np.nan, np.nan, np.nan, np.nan) on failure.
     initial_params : tuple
         (C_init, k_0_init, delta_k_init, tau_init) - initial parameter estimates
+    diagnostics : dict
+        Dictionary with optimizer diagnostics:
+        - success: bool - whether optimizer reported success
+        - fun: float - final loss value
+        - nfev: int - number of function evaluations
+        - nit: int - number of iterations
+        - message: str - optimizer message
+        - C_valid: bool - whether C parameter is valid (finite)
+        - ka_valid: bool - whether ka parameter is valid (finite)
+        - kb_valid: bool - whether kb parameter is valid (finite)
+        - tau_valid: bool - whether tau parameter is valid (finite and > EPS)
     """
     s = np.asarray(s, dtype=float)
     logh = np.asarray(logh, dtype=float)
@@ -1043,39 +1180,30 @@ def fit_slope8_depletion(s, logh):
     # Remove invalid values
     valid_mask = np.isfinite(s) & np.isfinite(logh)
     if valid_mask.sum() < SLOPE6_MIN_DATA_POINTS:
-        return (np.nan, np.nan, np.nan, np.nan), (np.nan, np.nan, np.nan, np.nan)
+        diagnostics = {
+            "success": False,
+            "fun": None,
+            "nfev": 0,
+            "nit": 0,
+            "message": "insufficient_data_points",
+            "C_valid": False,
+            "ka_valid": False,
+            "kb_valid": False,
+            "tau_valid": False,
+        }
+        return (np.nan, np.nan, np.nan, np.nan), (np.nan, np.nan, np.nan, np.nan), diagnostics
     
     s_valid = s[valid_mask]
     logh_valid = logh[valid_mask]
     
-    # Initial parameter estimates (same as slope7)
-    # C: intercept from first few points
-    if len(logh_valid) >= 3:
-        C_init = np.mean(logh_valid[:3])
-    else:
-        C_init = logh_valid[0] if len(logh_valid) > 0 else 0.0
+    # Use improved initial guess algorithm (windowed OLS approach)
+    C_init, k_0_init, delta_k_init, tau_init = make_slope8_initial_guess(s_valid, logh_valid)
     
-    # k_0: initial slope (can be negative)
-    if len(s_valid) >= 2:
-        k_0_init = (logh_valid[1] - logh_valid[0]) / (s_valid[1] - s_valid[0] + EPS)
-    else:
-        k_0_init = 0.0
-    
-    # Δk: difference between long-run and initial slope (must be ≥ 0)
+    # Bounds for the quantile fit
     MIN_DELTA_K = 0.0  # Δk must be ≥ 0 (enforces k_∞ ≥ k_0)
     MAX_DELTA_K = 0.1  # long-run minus initial slope
     MIN_TAU = 1e-3     # Minimum value for tau bound (weeks)
     MAX_TAU = 260.0    # e.g., 5 years; avoids 600-year degeneracy
-    
-    if len(logh_valid) >= 5:
-        later_slope = (logh_valid[-1] - logh_valid[-3]) / (s_valid[-1] - s_valid[-3] + EPS)
-        delta_k_init = max(later_slope - k_0_init, 0.001)  # Ensure Δk ≥ 0 and well above bound
-    else:
-        # If we can't estimate later slope, assume small positive Δk
-        delta_k_init = 0.001
-    
-    # tau: depletion timescale (weeks), initial guess based on data span
-    tau_init = max((s_valid.max() - s_valid.min()) / 3.0, max(MIN_TAU * 10, 1.0))  # Ensure well above bound
     
     # Store initial estimates for return (before clipping)
     initial_params = (float(C_init), float(k_0_init), float(delta_k_init), float(tau_init))
@@ -1141,26 +1269,53 @@ def fit_slope8_depletion(s, logh):
             options={"maxiter": 2000}
         )
         
-        if result.success:
-            C, k_0, delta_k, tau = result.x
-            delta_k = max(delta_k, MIN_DELTA_K)
-            tau = min(max(tau, MIN_TAU), MAX_TAU)
-            k_inf = k_0 + delta_k
-            
-            if (
-                np.isfinite(C) and np.isfinite(k_inf)
-                and np.isfinite(k_0) and np.isfinite(tau)
-            ):
-                return (float(C), float(k_inf), float(k_0), float(tau)), initial_params
-            else:
-                return (np.nan, np.nan, np.nan, np.nan), initial_params
+        # Extract fitted parameters (always extract, even if invalid)
+        C, k_0, delta_k, tau = result.x
+        delta_k = max(delta_k, MIN_DELTA_K)
+        tau = min(max(tau, MIN_TAU), MAX_TAU)
+        k_inf = k_0 + delta_k
+        
+        # Check validity of each parameter
+        C_valid = np.isfinite(C)
+        ka_valid = np.isfinite(k_0)
+        kb_valid = np.isfinite(k_inf)
+        tau_valid = np.isfinite(tau) and tau > EPS
+        
+        # Build diagnostics dict
+        diagnostics = {
+            "success": bool(result.success),
+            "fun": float(result.fun) if np.isfinite(result.fun) else None,
+            "nfev": int(result.nfev) if hasattr(result, 'nfev') else None,
+            "nit": int(result.nit) if hasattr(result, 'nit') else None,
+            "message": str(result.message) if hasattr(result, 'message') else None,
+            "C_valid": C_valid,
+            "ka_valid": ka_valid,
+            "kb_valid": kb_valid,
+            "tau_valid": tau_valid,
+        }
+        
+        # Return fitted parameters (even if invalid) along with diagnostics
+        if result.success and C_valid and ka_valid and kb_valid and tau_valid:
+            return (float(C), float(k_inf), float(k_0), float(tau)), initial_params, diagnostics
         else:
-            return (np.nan, np.nan, np.nan, np.nan), initial_params
+            # Return invalid parameters (as actual values, not NaN) so they can be logged
+            return (float(C), float(k_inf), float(k_0), float(tau)), initial_params, diagnostics
     
     except Exception as e:
         import warnings
         warnings.warn(f"fit_slope8_depletion (quantile) failed: {str(e)}", RuntimeWarning)
-        return (np.nan, np.nan, np.nan, np.nan), initial_params
+        diagnostics = {
+            "success": False,
+            "fun": None,
+            "nfev": None,
+            "nit": None,
+            "message": str(e),
+            "C_valid": False,
+            "ka_valid": False,
+            "kb_valid": False,
+            "tau_valid": False,
+        }
+        return (np.nan, np.nan, np.nan, np.nan), initial_params, diagnostics
 
 def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
     """
@@ -1424,10 +1579,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "ka": float(ka_trf),
                             "kb": float(kb_trf),
                             "tau": float(tau_trf),
-                            "C_init": None if (C_init_trf is None or (isinstance(C_init_trf, (int, float, np.number)) and (np.isnan(C_init_trf) or not np.isfinite(C_init_trf)))) else float(C_init_trf),
-                            "ka_init": None if (ka_init_trf is None or (isinstance(ka_init_trf, (int, float, np.number)) and (np.isnan(ka_init_trf) or not np.isfinite(ka_init_trf)))) else float(ka_init_trf),
-                            "delta_k_init": None if (delta_k_init_trf is None or (isinstance(delta_k_init_trf, (int, float, np.number)) and (np.isnan(delta_k_init_trf) or not np.isfinite(delta_k_init_trf)))) else float(delta_k_init_trf),
-                            "tau_init": None if (tau_init_trf is None or (isinstance(tau_init_trf, (int, float, np.number)) and (np.isnan(tau_init_trf) or not np.isfinite(tau_init_trf)))) else float(tau_init_trf),
+                            **format_initial_params(C_init_trf, ka_init_trf, delta_k_init_trf, tau_init_trf),
                             "b_original": float(b_lin),
                             "rms_error": float(rms_error_trf),
                         })
@@ -1446,6 +1598,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "ka": float(ka_trf) if np.isfinite(ka_trf) else None,
                             "kb": float(kb_trf) if np.isfinite(kb_trf) else None,
                             "tau": float(tau_trf) if np.isfinite(tau_trf) else None,
+                            **format_initial_params(C_init_trf, ka_init_trf, delta_k_init_trf, tau_init_trf),
                             "b_original": float(b_lin),
                             "note": "invalid parameters from slope7 TRF fit",
                         })
@@ -1476,10 +1629,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "ka": float(ka_lm),
                             "kb": float(kb_lm),
                             "tau": float(tau_lm),
-                            "C_init": None if (C_init_lm is None or (isinstance(C_init_lm, (int, float, np.number)) and (np.isnan(C_init_lm) or not np.isfinite(C_init_lm)))) else float(C_init_lm),
-                            "ka_init": None if (ka_init_lm is None or (isinstance(ka_init_lm, (int, float, np.number)) and (np.isnan(ka_init_lm) or not np.isfinite(ka_init_lm)))) else float(ka_init_lm),
-                            "delta_k_init": None if (delta_k_init_lm is None or (isinstance(delta_k_init_lm, (int, float, np.number)) and (np.isnan(delta_k_init_lm) or not np.isfinite(delta_k_init_lm)))) else float(delta_k_init_lm),
-                            "tau_init": None if (tau_init_lm is None or (isinstance(tau_init_lm, (int, float, np.number)) and (np.isnan(tau_init_lm) or not np.isfinite(tau_init_lm)))) else float(tau_init_lm),
+                            **format_initial_params(C_init_lm, ka_init_lm, delta_k_init_lm, tau_init_lm),
                             "b_original": float(b_lin),
                             "rms_error": float(rms_error_lm),
                         })
@@ -1498,6 +1648,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "ka": float(ka_lm) if np.isfinite(ka_lm) else None,
                             "kb": float(kb_lm) if np.isfinite(kb_lm) else None,
                             "tau": float(tau_lm) if np.isfinite(tau_lm) else None,
+                            **format_initial_params(C_init_lm, ka_init_lm, delta_k_init_lm, tau_init_lm),
                             "b_original": float(b_lin),
                             "note": "invalid parameters from LM slope7 fit",
                         })
@@ -1551,59 +1702,106 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 # Fit slope8 using only the fit window data
                 if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
                     try:
-                        (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8) = fit_slope8_depletion(
+                        (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8), diagnostics_slope8 = fit_slope8_depletion(
                             np.array(s_values_slope8_fit), np.array(log_h_slope8_values_fit)
                         )
                         
-                        if np.isfinite(C_slope8) and np.isfinite(kb_slope8) and np.isfinite(ka_slope8) and np.isfinite(tau_slope8) and tau_slope8 > EPS:
-                            # Compute RMS error on fit window data
-                            predicted_slope8_fit = C_slope8 + kb_slope8 * np.array(s_values_slope8_fit) + (ka_slope8 - kb_slope8) * tau_slope8 * (1.0 - np.exp(-np.array(s_values_slope8_fit) / (tau_slope8 + EPS)))
+                        # Always try to compute RMS error, even if parameters are invalid
+                        # This helps diagnose how bad the fit actually is
+                        rms_error_slope8 = None
+                        try:
+                            # Try to compute prediction even if some parameters are invalid
+                            # Use np.nan_to_num to handle invalid values gracefully
+                            C_safe = np.nan_to_num(C_slope8, nan=0.0, posinf=0.0, neginf=0.0)
+                            kb_safe = np.nan_to_num(kb_slope8, nan=0.0, posinf=0.0, neginf=0.0)
+                            ka_safe = np.nan_to_num(ka_slope8, nan=0.0, posinf=0.0, neginf=0.0)
+                            tau_safe = np.nan_to_num(tau_slope8, nan=1.0, posinf=1.0, neginf=1.0)
+                            tau_safe = max(tau_safe, EPS)  # Ensure tau > 0 for exp calculation
+                            
+                            predicted_slope8_fit = C_safe + kb_safe * np.array(s_values_slope8_fit) + (ka_safe - kb_safe) * tau_safe * (1.0 - np.exp(-np.array(s_values_slope8_fit) / (tau_safe + EPS)))
                             residuals_slope8_fit = np.array(log_h_slope8_values_fit) - predicted_slope8_fit
                             rms_error_slope8 = np.sqrt(np.mean(residuals_slope8_fit**2))
                             
-                            # Log with full deployment window data (s=0 onwards for all doses)
-                            # The fit was done on subset, but normalization applies from s=0
-                            log_slope7_fit_debug({
-                                "enrollment_date": sheet_name,
-                                "mode": "slope8",
-                                "YearOfBirth": int(yob),
-                                "Dose": int(dose),
-                                "n_points": len(s_values_slope8_fit),  # Number of points used in fit
-                                "s_values": list(map(float, s_values_slope8_full)),  # Full range for logging
-                                "logh_values": list(map(float, log_h_slope8_values_full)),  # Full range for logging
-                                "h_values": h_slope8_values_full,  # Full range for logging
-                                "iso_weeks_used": iso_weeks_slope8_full,  # Full range for logging
-                                "C": float(C_slope8),
-                                "ka": float(ka_slope8),
-                                "kb": float(kb_slope8),
-                                "tau": float(tau_slope8),
-                                "C_init": None if (C_init_slope8 is None or (isinstance(C_init_slope8, (int, float, np.number)) and (np.isnan(C_init_slope8) or not np.isfinite(C_init_slope8)))) else float(C_init_slope8),
-                                "ka_init": None if (ka_init_slope8 is None or (isinstance(ka_init_slope8, (int, float, np.number)) and (np.isnan(ka_init_slope8) or not np.isfinite(ka_init_slope8)))) else float(ka_init_slope8),
-                                "delta_k_init": None if (delta_k_init_slope8 is None or (isinstance(delta_k_init_slope8, (int, float, np.number)) and (np.isnan(delta_k_init_slope8) or not np.isfinite(delta_k_init_slope8)))) else float(delta_k_init_slope8),
-                                "tau_init": None if (tau_init_slope8 is None or (isinstance(tau_init_slope8, (int, float, np.number)) and (np.isnan(tau_init_slope8) or not np.isfinite(tau_init_slope8)))) else float(tau_init_slope8),
-                                "b_original": float(b_lin),
-                                "rms_error": float(rms_error_slope8),
-                            })
+                            # If RMS error is not finite, set to None
+                            if not np.isfinite(rms_error_slope8):
+                                rms_error_slope8 = None
+                        except Exception:
+                            # If prediction fails completely, leave RMS error as None
+                            pass
+                        
+                        # Determine mode based on parameter validity
+                        if diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"]:
+                            mode_str = "slope8"
+                            note_str = None
                         else:
-                            log_slope7_fit_debug({
-                                "enrollment_date": sheet_name,
-                                "mode": "slope8_invalid_params",
-                                "YearOfBirth": int(yob),
-                                "Dose": int(dose),
-                                "n_points": len(s_values_slope8_fit),
-                                "s_values": list(map(float, s_values_slope8_full)),
-                                "logh_values": list(map(float, log_h_slope8_values_full)),
-                                "h_values": h_slope8_values_full,
-                                "iso_weeks_used": iso_weeks_slope8_full,
-                                "C": float(C_slope8) if np.isfinite(C_slope8) else None,
-                                "ka": float(ka_slope8) if np.isfinite(ka_slope8) else None,
-                                "kb": float(kb_slope8) if np.isfinite(kb_slope8) else None,
-                                "tau": float(tau_slope8) if np.isfinite(tau_slope8) else None,
-                                "b_original": float(b_lin),
-                                "note": "invalid parameters from slope8 fit",
-                            })
-                    except Exception:
-                        pass
+                            mode_str = "slope8_invalid_params"
+                            # Build note describing which parameters failed
+                            failed_params = []
+                            if not diagnostics_slope8["C_valid"]:
+                                failed_params.append("C")
+                            if not diagnostics_slope8["ka_valid"]:
+                                failed_params.append("ka")
+                            if not diagnostics_slope8["kb_valid"]:
+                                failed_params.append("kb")
+                            if not diagnostics_slope8["tau_valid"]:
+                                failed_params.append("tau")
+                            note_str = f"invalid parameters from slope8 fit: {', '.join(failed_params)} failed validation"
+                        
+                        # Log with full deployment window data (s=0 onwards for all doses)
+                        # Always log fitted parameters (even if invalid) and diagnostics
+                        log_slope7_fit_debug({
+                            "enrollment_date": sheet_name,
+                            "mode": mode_str,
+                            "YearOfBirth": int(yob),
+                            "Dose": int(dose),
+                            "n_points": len(s_values_slope8_fit),  # Number of points used in fit
+                            "s_values": list(map(float, s_values_slope8_full)),  # Full range for logging
+                            "logh_values": list(map(float, log_h_slope8_values_full)),  # Full range for logging
+                            "h_values": h_slope8_values_full,  # Full range for logging
+                            "iso_weeks_used": iso_weeks_slope8_full,  # Full range for logging
+                            "C": float(C_slope8) if np.isfinite(C_slope8) else None,
+                            "ka": float(ka_slope8) if np.isfinite(ka_slope8) else None,
+                            "kb": float(kb_slope8) if np.isfinite(kb_slope8) else None,
+                            "tau": float(tau_slope8) if np.isfinite(tau_slope8) else None,
+                            **format_initial_params(C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8),
+                            "b_original": float(b_lin),
+                            "rms_error": float(rms_error_slope8) if rms_error_slope8 is not None else None,
+                            "note": note_str,
+                            "optimizer_success": diagnostics_slope8["success"],
+                            "optimizer_fun": diagnostics_slope8["fun"],
+                            "optimizer_nfev": diagnostics_slope8["nfev"],
+                            "optimizer_nit": diagnostics_slope8["nit"],
+                            "optimizer_message": diagnostics_slope8["message"],
+                            "param_C_valid": diagnostics_slope8["C_valid"],
+                            "param_ka_valid": diagnostics_slope8["ka_valid"],
+                            "param_kb_valid": diagnostics_slope8["kb_valid"],
+                            "param_tau_valid": diagnostics_slope8["tau_valid"],
+                        })
+                    except Exception as e:
+                        # Log exception case
+                        log_slope7_fit_debug({
+                            "enrollment_date": sheet_name,
+                            "mode": "slope8_exception",
+                            "YearOfBirth": int(yob),
+                            "Dose": int(dose),
+                            "n_points": len(s_values_slope8_fit),
+                            "s_values": list(map(float, s_values_slope8_full)),
+                            "logh_values": list(map(float, log_h_slope8_values_full)),
+                            "h_values": h_slope8_values_full,
+                            "iso_weeks_used": iso_weeks_slope8_full,
+                            "error": str(e),
+                            "b_original": float(b_lin),
+                            "note": f"exception during slope8 fit: {str(e)}",
+                            "optimizer_success": False,
+                            "optimizer_fun": None,
+                            "optimizer_nfev": None,
+                            "optimizer_nit": None,
+                            "optimizer_message": str(e),
+                            "param_C_valid": False,
+                            "param_ka_valid": False,
+                            "param_kb_valid": False,
+                            "param_tau_valid": False,
+                        })
             
             # Now decide which normalization mode to use based on b_lin
             if b_lin >= 0 or ENABLE_NEGATIVE_SLOPE_FIT == 0:

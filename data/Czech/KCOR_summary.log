@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v5.2 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-06 08:47:33
+Analysis Date: 2025-12-06 10:10:53
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -992,7 +992,7 @@ M/P by decades (Dose 4)
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
-[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-06 08:53:02
+[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-06 10:16:16
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 40 summary rows
   - 2021_20: 3 dose combinations, 40 summary rows
