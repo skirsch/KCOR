@@ -325,6 +325,10 @@ def log_slope7_fit_debug(record: dict) -> None:
             "optimizer_nfev",
             "optimizer_nit",
             "optimizer_message",
+            "optimizer_status",
+            "optimizer_warnflag",
+            "optimizer_grad_norm",
+            "failure_detail",
             "param_C_valid",
             "param_ka_valid",
             "param_kb_valid",
@@ -1186,6 +1190,10 @@ def fit_slope8_depletion(s, logh):
             "nfev": 0,
             "nit": 0,
             "message": "insufficient_data_points",
+            "optimizer_status": None,
+            "optimizer_warnflag": None,
+            "optimizer_grad_norm": None,
+            "failure_detail": "insufficient_data_points",
             "C_valid": False,
             "ka_valid": False,
             "kb_valid": False,
@@ -1281,7 +1289,7 @@ def fit_slope8_depletion(s, logh):
         kb_valid = np.isfinite(k_inf)
         tau_valid = np.isfinite(tau) and tau > EPS
         
-        # Build diagnostics dict
+        # Build diagnostics dict with comprehensive optimizer information
         diagnostics = {
             "success": bool(result.success),
             "fun": float(result.fun) if np.isfinite(result.fun) else None,
@@ -1293,6 +1301,37 @@ def fit_slope8_depletion(s, logh):
             "kb_valid": kb_valid,
             "tau_valid": tau_valid,
         }
+        
+        # Add additional optimizer details if available
+        if hasattr(result, 'status'):
+            diagnostics["optimizer_status"] = int(result.status)
+        if hasattr(result, 'warnflag'):
+            diagnostics["optimizer_warnflag"] = int(result.warnflag)
+        if hasattr(result, 'allvecs'):
+            diagnostics["optimizer_allvecs_count"] = len(result.allvecs) if result.allvecs else 0
+        if hasattr(result, 'grad'):
+            grad_norm = np.linalg.norm(result.grad) if result.grad is not None and np.isfinite(result.grad).any() else None
+            diagnostics["optimizer_grad_norm"] = float(grad_norm) if grad_norm is not None else None
+        
+        # Build detailed message explaining what went wrong if optimizer didn't succeed
+        if not result.success:
+            detail_parts = []
+            detail_parts.append(f"optimizer_success=False")
+            if hasattr(result, 'message') and result.message:
+                detail_parts.append(f"message='{result.message}'")
+            if hasattr(result, 'status'):
+                detail_parts.append(f"status={result.status}")
+            if not C_valid:
+                detail_parts.append(f"C={C:.6e} (invalid)")
+            if not ka_valid:
+                detail_parts.append(f"ka={k_0:.6e} (invalid)")
+            if not kb_valid:
+                detail_parts.append(f"kb={k_inf:.6e} (invalid)")
+            if not tau_valid:
+                detail_parts.append(f"tau={tau:.6e} (invalid)")
+            diagnostics["failure_detail"] = "; ".join(detail_parts)
+        else:
+            diagnostics["failure_detail"] = None
         
         # Return fitted parameters (even if invalid) along with diagnostics
         if result.success and C_valid and ka_valid and kb_valid and tau_valid:
@@ -1310,6 +1349,10 @@ def fit_slope8_depletion(s, logh):
             "nfev": None,
             "nit": None,
             "message": str(e),
+            "optimizer_status": None,
+            "optimizer_warnflag": None,
+            "optimizer_grad_norm": None,
+            "failure_detail": f"exception: {str(e)}",
             "C_valid": False,
             "ka_valid": False,
             "kb_valid": False,
@@ -1772,6 +1815,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "optimizer_nfev": diagnostics_slope8["nfev"],
                             "optimizer_nit": diagnostics_slope8["nit"],
                             "optimizer_message": diagnostics_slope8["message"],
+                            "optimizer_status": diagnostics_slope8.get("optimizer_status"),
+                            "optimizer_warnflag": diagnostics_slope8.get("optimizer_warnflag"),
+                            "optimizer_grad_norm": diagnostics_slope8.get("optimizer_grad_norm"),
+                            "failure_detail": diagnostics_slope8.get("failure_detail"),
                             "param_C_valid": diagnostics_slope8["C_valid"],
                             "param_ka_valid": diagnostics_slope8["ka_valid"],
                             "param_kb_valid": diagnostics_slope8["kb_valid"],
