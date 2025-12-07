@@ -1,7 +1,7 @@
 ================================================================================
-KCOR v5.2 - Kirsch Cumulative Outcomes Ratio Analysis
+KCOR v5.3 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-06 16:43:17
+Analysis Date: 2025-12-07 15:04:35
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -49,36 +49,56 @@ SLOPE6_FIT_WINDOW,selected=2022-01..2024-16 (week 1 of 2022 through 2024-16, fix
   YoB 1980, % vaxxed=5  alive_by_dose= 95% 2% 3% total=1339097
   YoB 1990, % vaxxed=4  alive_by_dose= 96% 2% 2% total=1074412
   YoB 2000, % vaxxed=0  alive_by_dose= 100% 0% 0% total=1020930
-SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=0,mode=slope7,C=-5.042186e+00,ka=7.871028e-03,kb=-4.836525e-03,tau=4.489529e+01,b_original=-3.376281e-03,rms_error=2.132590e-01,points=160
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=1,mode=linear,a=-5.146431e+00,b=1.740787e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.810616e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=2,mode=linear,a=-5.162403e+00,b=1.134222e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.703079e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=0,mode=slope7,C=-5.635913e+00,ka=-2.369862e-03,kb=2.151331e-01,tau=2.101167e+04,b_original=-1.427855e-03,rms_error=1.898035e-01,points=160
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=1,mode=linear,a=-6.153709e+00,b=1.205493e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.768262e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=2,mode=linear,a=-6.178731e+00,b=1.508026e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.169780e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=0,mode=slope7,C=-6.163407e+00,ka=-2.811989e-01,kb=-6.234685e-04,tau=2.988144e+00,b_original=-7.231161e-04,rms_error=1.513797e-01,points=160
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=1,mode=linear,a=-7.438769e+00,b=1.773045e-03,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.370041e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=2,mode=linear,a=-6.790581e+00,b=5.848466e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.655661e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=0,mode=slope7,C=-7.381064e+00,ka=-2.476221e-01,kb=-1.909006e-04,tau=2.742042e+00,b_original=-4.631761e-04,rms_error=1.354203e-01,points=160
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=1,mode=linear,a=-8.166796e+00,b=2.952479e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=2.784182e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=2,mode=linear,a=-7.843660e+00,b=3.939044e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.116371e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=0,mode=linear,a=-9.022549e+00,b=3.306137e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.050182e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=1,mode=linear,a=-9.442033e+00,b=6.607035e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=5.801635e-01,points=117
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=2,mode=linear,a=-9.338015e+00,b=9.053653e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=4.662773e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=0,mode=linear,a=-1.005796e+01,b=4.287564e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.248343e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=1,mode=linear,a=-1.011497e+01,b=3.572715e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=5.312598e-01,points=93
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=2,mode=linear,a=-1.037439e+01,b=3.088328e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=4.775119e-01,points=106
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=0,mode=linear,a=-1.093714e+01,b=7.979004e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=2.351469e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=1,mode=linear,a=-1.019164e+01,b=2.012813e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=4.337183e-01,points=46
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=2,mode=linear,a=-1.052711e+01,b=2.226457e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=4.930000e-01,points=68
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=0,mode=linear,a=-1.154560e+01,b=9.919332e-06,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.271685e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=1,mode=linear,a=-9.722611e+00,b=1.330553e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.224771e-01,points=32
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=2,mode=linear,a=-1.006606e+01,b=1.976697e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.097967e-01,points=45
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=0,mode=linear,a=-1.222153e+01,b=4.229258e-06,c=0.000000e+00,t_mean=7.950000e+01,rms_error=5.126871e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=1,mode=linear,a=-7.908360e+00,b=3.341672e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=3.740852e-04,points=5
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=2,mode=linear,a=-7.676514e+00,b=5.495995e-05,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.969330e-03,points=9
-SLOPE7_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=0,mode=slope7,C=-7.966570e+00,ka=-2.564576e-01,kb=-1.570473e-03,tau=2.622112e+00,b_original=-1.836623e-03,rms_error=1.316163e-01,points=160
-SLOPE6_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=1,mode=linear,a=-7.607216e+00,b=7.747917e-04,c=0.000000e+00,t_mean=7.950000e+01,rms_error=1.210794e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=2,mode=slope7,C=-7.420419e+00,ka=3.029940e-02,kb=-6.907267e-04,tau=1.823159e+01,b_original=-2.235496e-04,rms_error=1.121524e-01,points=160
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2021_13:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1930, Dose=0: mode=none
+  YoB=1930, Dose=1: mode=none
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_13:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2021_13: 0/4995 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2021_13: none: 30
 [Info] Processing sheet: 2021_20
 [DEBUG] Filtered to start from enrollment date 05/17/2021: 136170 rows
 [DEBUG] Filtered to 128160 rows for ages 1920-2009
@@ -93,36 +113,56 @@ SLOPE7_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=2,mode=slope7,C=-7.420419e+00,ka=3
   YoB 1980, % vaxxed=11  alive_by_dose= 89% 5% 5% total=1338933
   YoB 1990, % vaxxed=8  alive_by_dose= 92% 4% 4% total=1074344
   YoB 2000, % vaxxed=1  alive_by_dose= 99% 1% 1% total=1020916
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=0,mode=slope7,C=-5.226675e+00,ka=3.395608e-02,kb=-4.842935e-03,tau=1.741071e+01,b_original=-3.921660e-03,rms_error=2.220150e-01,points=153
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=1,mode=slope7,C=-5.184396e+00,ka=-1.201399e-03,kb=1.164497e-03,tau=6.282850e+01,b_original=-9.956058e-04,rms_error=4.235647e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=2,mode=linear,a=-5.159449e+00,b=1.247849e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.736900e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=0,mode=slope7,C=-5.744833e+00,ka=1.737578e-02,kb=-2.754824e-03,tau=1.365603e+01,b_original=-2.818213e-03,rms_error=1.993641e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=1,mode=linear,a=-6.034400e+00,b=1.246368e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=2.135620e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=2,mode=linear,a=-6.178629e+00,b=1.588380e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.127187e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=0,mode=slope7,C=-6.473119e+00,ka=-4.677868e-03,kb=3.208473e+00,tau=1.140609e+05,b_original=-1.958525e-03,rms_error=1.833578e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=1,mode=linear,a=-7.363722e+00,b=1.425909e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.289850e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=2,mode=linear,a=-7.284594e+00,b=1.618683e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.224185e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=0,mode=slope7,C=-7.454441e+00,ka=-4.242117e-03,kb=1.113559e+00,tau=4.342097e+04,b_original=-1.979328e-03,rms_error=1.630725e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=1,mode=linear,a=-8.412614e+00,b=1.697379e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.325957e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=2,mode=linear,a=-8.013974e+00,b=3.408581e-04,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.785577e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=0,mode=slope7,C=-8.741439e+00,ka=2.654688e-07,kb=-1.365777e-03,tau=4.505352e+01,b_original=-3.527938e-04,rms_error=1.535621e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=1,mode=linear,a=-9.407833e+00,b=2.896058e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.809044e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=2,mode=slope7,C=-9.941213e+00,ka=9.770904e-02,kb=-6.583402e-04,tau=6.266467e+00,b_original=-9.368058e-04,rms_error=3.124927e-01,points=153
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=0,mode=slope7,C=-1.015205e+01,ka=1.347205e-02,kb=-4.498914e-04,tau=1.143134e+01,b_original=-2.531721e-04,rms_error=1.483565e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=1,mode=linear,a=-1.018911e+01,b=3.457268e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=3.852875e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=2,mode=linear,a=-1.028818e+01,b=2.119818e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=5.343523e-01,points=119
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=0,mode=linear,a=-1.093610e+01,b=8.663562e-04,c=0.000000e+00,t_mean=7.600000e+01,rms_error=2.325779e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=1,mode=linear,a=-1.049949e+01,b=2.151601e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=5.463298e-01,points=89
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=2,mode=linear,a=-1.050449e+01,b=2.000706e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=4.847941e-01,points=94
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=0,mode=linear,a=-1.160536e+01,b=9.780698e-06,c=0.000000e+00,t_mean=7.600000e+01,rms_error=3.318193e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=1,mode=linear,a=-1.061498e+01,b=1.256494e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=4.288190e-01,points=47
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=2,mode=linear,a=-1.072618e+01,b=1.710077e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=4.942540e-01,points=64
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=0,mode=slope7,C=-1.315774e+01,ka=5.429643e-02,kb=-2.381817e-03,tau=1.834167e+01,b_original=-2.620543e-03,rms_error=5.190237e-01,points=152
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=1,mode=linear,a=-8.911588e+00,b=2.789578e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.358948e-01,points=26
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=2,mode=linear,a=-8.700801e+00,b=2.019442e-05,c=0.000000e+00,t_mean=7.600000e+01,rms_error=3.087984e-04,points=14
-SLOPE7_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=0,mode=slope7,C=-8.621074e+00,ka=-4.291151e-03,kb=9.644202e-01,tau=7.282101e+04,b_original=-2.978185e-03,rms_error=1.521436e-01,points=153
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=1,mode=linear,a=-8.455774e+00,b=1.182483e-03,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.060655e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=2,mode=linear,a=-7.298983e+00,b=1.769039e-04,c=0.000000e+00,t_mean=7.600000e+01,rms_error=1.055535e-01,points=120
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2021_20:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1930, Dose=0: mode=none
+  YoB=1930, Dose=1: mode=none
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_20:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2021_20: 0/4806 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2021_20: none: 30
 [Info] Processing sheet: 2021_24
 [DEBUG] Filtered to start from enrollment date 06/14/2021: 133110 rows
 [DEBUG] Filtered to 125280 rows for ages 1920-2009
@@ -137,36 +177,56 @@ SLOPE6_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=2,mode=linear,a=-7.298983e+00,b=1.
   YoB 1980, % vaxxed=38  alive_by_dose= 62% 30% 9% total=1338855
   YoB 1990, % vaxxed=19  alive_by_dose= 81% 13% 6% total=1074314
   YoB 2000, % vaxxed=5  alive_by_dose= 95% 4% 1% total=1020909
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=0,mode=slope7,C=-5.219904e+00,ka=4.294707e-02,kb=-5.010933e-03,tau=1.392776e+01,b_original=-3.954871e-03,rms_error=2.281239e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=1,mode=linear,a=-5.071311e+00,b=2.302387e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=5.802870e-01,points=117
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=2,mode=linear,a=-5.151966e+00,b=1.080083e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.685448e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=0,mode=slope7,C=-5.819832e+00,ka=3.780196e-02,kb=-3.194878e-03,tau=9.892043e+00,b_original=-2.676192e-03,rms_error=2.057343e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=1,mode=linear,a=-5.979216e+00,b=1.970768e-04,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.382304e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=2,mode=linear,a=-6.168080e+00,b=1.632454e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.130943e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,mode=slope7,C=-6.357556e+00,ka=-5.863028e-03,kb=1.229920e+00,tau=3.442041e+04,b_original=-2.600049e-03,rms_error=1.970206e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=1,mode=linear,a=-7.092563e+00,b=1.946734e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.849055e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=2,mode=linear,a=-7.315959e+00,b=1.645774e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.093128e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,mode=slope7,C=-7.264131e+00,ka=-6.093580e-03,kb=1.346966e+00,tau=3.454226e+04,b_original=-2.262152e-03,rms_error=1.789992e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=1,mode=linear,a=-8.286232e+00,b=1.238129e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.422881e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=2,mode=linear,a=-8.290423e+00,b=1.404078e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.232197e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,mode=slope7,C=-8.447270e+00,ka=-4.180886e-03,kb=5.073730e-01,tau=1.909777e+04,b_original=-1.408799e-03,rms_error=1.708999e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=1,mode=linear,a=-9.393538e+00,b=2.449976e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.928461e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=2,mode=linear,a=-9.193842e+00,b=1.203188e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.844755e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=0,mode=slope7,C=-9.619745e+00,ka=-2.460148e-03,kb=1.386634e+00,tau=9.146450e+04,b_original=-1.372256e-03,rms_error=1.778198e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=1,mode=linear,a=-1.050752e+01,b=2.602290e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.635373e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=2,mode=linear,a=-1.008946e+01,b=1.131395e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.948299e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=0,mode=linear,a=-1.079102e+01,b=2.138385e-05,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.352333e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=1,mode=linear,a=-1.138934e+01,b=5.324288e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=6.020763e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=2,mode=linear,a=-1.095510e+01,b=2.121653e-05,c=0.000000e+00,t_mean=7.400000e+01,rms_error=5.806560e-01,points=112
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=0,mode=linear,a=-1.159264e+01,b=9.736633e-06,c=0.000000e+00,t_mean=7.400000e+01,rms_error=3.625718e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=1,mode=linear,a=-1.183725e+01,b=9.321410e-06,c=0.000000e+00,t_mean=7.400000e+01,rms_error=5.934638e-01,points=90
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=2,mode=linear,a=-1.113806e+01,b=1.755496e-05,c=0.000000e+00,t_mean=7.400000e+01,rms_error=5.787853e-01,points=79
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=0,mode=linear,a=-1.240063e+01,b=4.476509e-06,c=0.000000e+00,t_mean=7.400000e+01,rms_error=5.005911e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=1,mode=linear,a=-1.055745e+01,b=8.162958e-06,c=0.000000e+00,t_mean=7.400000e+01,rms_error=2.229267e-01,points=29
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=2,mode=linear,a=-9.227231e+00,b=2.290600e-05,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.851861e-01,points=28
-SLOPE7_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=0,mode=slope7,C=-8.435707e+00,ka=-5.824001e-03,kb=1.754039e+00,tau=7.819203e+04,b_original=-3.630242e-03,rms_error=1.641671e-01,points=149
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=1,mode=linear,a=-9.143419e+00,b=1.441278e-03,c=0.000000e+00,t_mean=7.400000e+01,rms_error=1.131589e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=2,mode=linear,a=-7.598116e+00,b=2.669669e-04,c=0.000000e+00,t_mean=7.400000e+01,rms_error=9.809969e-02,points=120
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2021_24:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1930, Dose=0: mode=none
+  YoB=1930, Dose=1: mode=none
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_24:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2021_24: 0/4698 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2021_24: none: 30
 [Info] Processing sheet: 2021_30
 [DEBUG] Filtered to start from enrollment date 07/26/2021: 128520 rows
 [DEBUG] Filtered to 120960 rows for ages 1920-2009
@@ -181,36 +241,56 @@ SLOPE6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=2,mode=linear,a=-7.598116e+00,b=2.
   YoB 1980, % vaxxed=52  alive_by_dose= 48% 13% 39% total=1338704
   YoB 1990, % vaxxed=44  alive_by_dose= 56% 22% 22% total=1074262
   YoB 2000, % vaxxed=27  alive_by_dose= 73% 21% 6% total=1020888
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=0,mode=slope7,C=-5.245883e+00,ka=7.505567e-02,kb=-5.070615e-03,tau=8.294564e+00,b_original=-4.911903e-03,rms_error=2.319248e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=1,mode=linear,a=-4.933368e+00,b=5.893272e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.598002e-01,points=92
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=2,mode=linear,a=-5.152635e+00,b=9.403617e-04,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.639648e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=0,mode=slope7,C=-5.945844e+00,ka=8.800195e-02,kb=-3.624544e-03,tau=6.259208e+00,b_original=-2.806012e-03,rms_error=2.054150e-01,points=143
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=1,mode=slope7,C=-5.519378e+00,ka=-1.523487e-02,kb=3.107761e-02,tau=2.125659e+02,b_original=-1.080576e-03,rms_error=4.035373e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=2,mode=linear,a=-6.163958e+00,b=1.682749e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.131693e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=0,mode=slope7,C=-6.245751e+00,ka=-8.395421e-03,kb=2.041711e+00,tau=3.122266e+04,b_original=-2.627750e-03,rms_error=2.045881e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=1,mode=linear,a=-7.010573e+00,b=8.944204e-04,c=0.000000e+00,t_mean=7.100000e+01,rms_error=2.798565e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=2,mode=linear,a=-7.290292e+00,b=1.690225e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.094498e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=0,mode=slope7,C=-7.131072e+00,ka=-8.738292e-03,kb=1.232628e+00,tau=1.764657e+04,b_original=-2.694245e-03,rms_error=1.892664e-01,points=143
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=1,mode=slope7,C=-7.615754e+00,ka=-2.262328e-02,kb=-5.911026e-04,tau=1.476035e+01,b_original=-6.028900e-04,rms_error=2.680078e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=2,mode=linear,a=-8.293638e+00,b=1.672449e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.088775e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=0,mode=slope7,C=-8.606571e+00,ka=4.974517e-02,kb=-3.161089e-03,tau=4.235511e+00,b_original=-2.060985e-03,rms_error=1.854202e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=1,mode=linear,a=-8.986390e+00,b=2.498944e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.191958e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=2,mode=linear,a=-9.332402e+00,b=1.965520e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=1.353493e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=0,mode=slope7,C=-9.494238e+00,ka=-4.157853e-03,kb=1.097509e+00,tau=3.617813e+04,b_original=-1.601712e-03,rms_error=1.882058e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=1,mode=linear,a=-1.005247e+01,b=4.996591e-05,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.654448e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=2,mode=linear,a=-1.043405e+01,b=2.793949e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=2.113526e-01,points=120
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=0,mode=slope7,C=-1.059081e+01,ka=-1.886737e-03,kb=-7.922018e-04,tau=3.774251e+01,b_original=-7.430012e-04,rms_error=2.550535e-01,points=143
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=1,mode=slope7,C=-1.128490e+01,ka=7.645224e-03,kb=-3.304190e-03,tau=3.560599e+01,b_original=-4.000188e-03,rms_error=5.508367e-01,points=131
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=2,mode=linear,a=-1.120207e+01,b=3.521873e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.514814e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=0,mode=linear,a=-1.151615e+01,b=1.150586e-05,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.055480e-01,points=120
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=1,mode=linear,a=-1.200206e+01,b=6.545121e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.436236e-01,points=90
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=2,mode=linear,a=-1.144425e+01,b=3.797765e-03,c=0.000000e+00,t_mean=7.100000e+01,rms_error=5.728076e-01,points=112
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=0,mode=slope7,C=-1.265046e+01,ka=2.294381e-02,kb=-3.133627e-03,tau=2.393390e+01,b_original=-2.900951e-03,rms_error=5.667024e-01,points=141
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=1,mode=linear,a=-1.225418e+01,b=4.302751e-06,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.631775e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=2,mode=linear,a=-1.103028e+01,b=8.230986e-06,c=0.000000e+00,t_mean=7.100000e+01,rms_error=4.004559e-01,points=48
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=0,mode=slope7,C=-8.223383e+00,ka=-8.017763e-03,kb=2.194332e+00,tau=4.799728e+04,b_original=-3.991747e-03,rms_error=1.715263e-01,points=143
-SLOPE7_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=1,mode=slope7,C=-9.218362e+00,ka=-1.951091e-02,kb=-4.505205e-05,tau=2.007947e+01,b_original=-6.970772e-04,rms_error=1.392629e-01,points=143
-SLOPE6_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=2,mode=linear,a=-8.183074e+00,b=5.108354e-04,c=0.000000e+00,t_mean=7.100000e+01,rms_error=9.554571e-02,points=120
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2021_30:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1930, Dose=0: mode=none
+  YoB=1930, Dose=1: mode=none
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_30:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2021_30: 0/4536 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2021_30: none: 30
 [Info] Processing sheet: 2022_06
 [DEBUG] Filtered to start from enrollment date 02/07/2022: 107100 rows
 [DEBUG] Filtered to 100800 rows for ages 1920-2009
@@ -225,46 +305,66 @@ SLOPE6_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=2,mode=linear,a=-8.183074e+00,b=5.
   YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 37% 27% total=1337981
   YoB 1990, % vaxxed=62  alive_by_dose= 38% 2% 41% 19% total=1073974
   YoB 2000, % vaxxed=58  alive_by_dose= 42% 2% 47% 9% total=1020738
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=0,mode=slope7,C=-4.663023e+00,ka=-9.185582e-03,kb=7.373783e-01,tau=1.066234e+04,b_original=-5.487804e-03,rms_error=2.465447e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=1,mode=linear,a=-5.237132e+00,b=5.326368e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.842765e-01,points=80
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=2,mode=slope7,C=-4.422207e+00,ka=-9.271692e-02,kb=-1.349610e-03,tau=5.500311e+00,b_original=-2.257032e-03,rms_error=3.007144e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=3,mode=linear,a=-5.180364e+00,b=1.659390e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.690437e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=0,mode=slope7,C=-5.018589e+00,ka=-1.199373e-01,kb=-1.287520e-03,tau=5.279155e+00,b_original=-2.692329e-03,rms_error=1.783895e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=1,mode=slope7,C=-5.046638e+00,ka=-6.135620e-02,kb=-2.532572e-03,tau=7.456366e+00,b_original=-5.799699e-03,rms_error=5.433317e-01,points=113
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=2,mode=slope7,C=-5.258792e+00,ka=-7.423105e-02,kb=-1.364036e-03,tau=6.350131e+00,b_original=-2.200542e-03,rms_error=1.612709e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=3,mode=linear,a=-6.204555e+00,b=2.470407e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.189411e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,mode=slope7,C=-5.950341e+00,ka=-1.173397e-01,kb=-1.457429e-03,tau=5.891654e+00,b_original=-2.950437e-03,rms_error=1.544457e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,mode=slope7,C=-5.173981e+00,ka=-2.537524e-01,kb=-1.422767e-03,tau=4.937999e+00,b_original=-2.153514e-03,rms_error=4.535818e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,mode=slope7,C=-6.195610e+00,ka=-1.130529e-01,kb=-1.055011e-03,tau=5.138805e+00,b_original=-2.602070e-03,rms_error=1.447250e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=3,mode=linear,a=-7.356836e+00,b=2.533347e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.153824e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,mode=slope7,C=-6.982822e+00,ka=-9.381654e-02,kb=-1.499043e-03,tau=6.107934e+00,b_original=-2.478243e-03,rms_error=1.379781e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,mode=slope7,C=-6.384080e+00,ka=-2.304131e-01,kb=-1.731229e-03,tau=3.472597e+00,b_original=-2.431496e-03,rms_error=4.234323e-01,points=110
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,mode=slope7,C=-7.470395e+00,ka=-4.495624e-02,kb=-1.223755e-03,tau=7.112441e+00,b_original=-2.058744e-03,rms_error=1.372397e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=3,mode=linear,a=-8.345389e+00,b=3.007472e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.227751e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,mode=slope7,C=-8.355228e+00,ka=-6.064207e-02,kb=-1.847473e-03,tau=3.805836e+00,b_original=-2.675751e-03,rms_error=1.710300e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,mode=slope7,C=-7.723829e+00,ka=-2.667656e-02,kb=2.307776e-03,tau=2.583593e+01,b_original=-4.227419e-03,rms_error=5.212850e-01,points=101
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=2,mode=slope7,C=-8.861239e+00,ka=-1.971499e-02,kb=2.505318e-03,tau=1.786950e+01,b_original=-4.242850e-04,rms_error=1.713589e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=3,mode=linear,a=-9.342875e+00,b=3.567777e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.452605e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=0,mode=slope7,C=-9.504506e+00,ka=-2.587550e-02,kb=-1.110276e-03,tau=7.207179e+00,b_original=-2.139681e-03,rms_error=1.962015e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=1,mode=slope7,C=-8.173982e+00,ka=-1.479187e-01,kb=-2.260629e-03,tau=5.210738e+00,b_original=-9.271658e-03,rms_error=4.630422e-01,points=87
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=2,mode=linear,a=-1.019871e+01,b=3.915167e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=2.157792e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=3,mode=linear,a=-1.039621e+01,b=4.631507e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=2.319032e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=0,mode=slope7,C=-1.073994e+01,ka=9.867767e-02,kb=-1.322329e-03,tau=1.746671e+00,b_original=-1.356317e-03,rms_error=3.188636e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=1,mode=linear,a=-9.850166e+00,b=3.921961e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=4.036053e-01,points=62
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=2,mode=linear,a=-1.116671e+01,b=1.651554e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=3.913956e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=3,mode=linear,a=-1.118974e+01,b=1.585192e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=4.872425e-01,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=0,mode=linear,a=-1.140008e+01,b=2.137430e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=4.550821e-01,points=113
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=1,mode=linear,a=-9.933444e+00,b=1.084019e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.732763e-01,points=32
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=2,mode=linear,a=-1.190647e+01,b=7.974459e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.870032e-01,points=111
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=3,mode=linear,a=-1.153553e+01,b=1.119600e-05,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.431753e-01,points=99
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=0,mode=linear,a=-1.187973e+01,b=5.632072e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.849835e-01,points=104
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=1,mode=linear,a=-9.939814e+00,b=5.227187e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=2.089727e-01,points=11
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=2,mode=linear,a=-1.238619e+01,b=4.099531e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=5.483369e-01,points=100
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=3,mode=linear,a=-1.138305e+01,b=6.613444e-06,c=0.000000e+00,t_mean=5.700000e+01,rms_error=3.534419e-01,points=50
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=slope7,C=-7.930705e+00,ka=-9.832289e-02,kb=-3.127423e-03,tau=5.656188e+00,b_original=-3.872280e-03,rms_error=1.209296e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=slope7,C=-7.456098e+00,ka=-1.614991e-01,kb=-3.424586e-03,tau=4.905420e+00,b_original=-6.003897e-03,rms_error=2.547394e-01,points=115
-SLOPE7_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=2,mode=slope7,C=-8.461677e+00,ka=-6.909698e-02,kb=-1.993386e-03,tau=6.335741e+00,b_original=-2.746369e-03,rms_error=9.912542e-02,points=115
-SLOPE6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=3,mode=linear,a=-8.135407e+00,b=1.581555e-03,c=0.000000e+00,t_mean=5.700000e+01,rms_error=1.024209e-01,points=115
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2022_06:
+  Total cohorts in slope6_params: 40
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1920, Dose=3: mode=none
+  YoB=1930, Dose=0: mode=none
+  ... and 35 more cohorts
+[DEBUG] Normalization samples for 2022_06:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2022_06: 0/5040 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2022_06: none: 40
 [Info] Processing sheet: 2022_26
 [DEBUG] Filtered to start from enrollment date 06/27/2022: 91800 rows
 [DEBUG] Filtered to 86400 rows for ages 1920-2009
@@ -279,46 +379,66 @@ SLOPE6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=3,mode=linear,a=-8.135407e+00,b=1.
   YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 33% 32% total=1337504
   YoB 1990, % vaxxed=63  alive_by_dose= 37% 1% 37% 24% total=1073781
   YoB 2000, % vaxxed=58  alive_by_dose= 42% 1% 42% 15% total=1020621
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=0,mode=slope7,C=-4.803426e+00,ka=-8.371904e-03,kb=1.552039e+00,tau=2.090024e+04,b_original=-5.650136e-03,rms_error=2.565832e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=1,mode=linear,a=-4.911407e+00,b=5.466241e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.277886e-01,points=51
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=2,mode=slope7,C=-5.058950e+00,ka=2.335262e-02,kb=-2.315853e-03,tau=7.776431e+00,b_original=-1.791445e-03,rms_error=2.973332e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=3,mode=linear,a=-5.138777e+00,b=8.368977e-04,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.726965e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=0,mode=slope7,C=-5.777005e+00,ka=3.169159e-02,kb=-2.359636e-03,tau=5.043416e+00,b_original=-1.444351e-03,rms_error=1.822322e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=1,mode=slope7,C=-5.822157e+00,ka=6.167618e-02,kb=-5.679743e-03,tau=7.071081e+00,b_original=-3.410235e-03,rms_error=5.399440e-01,points=91
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=2,mode=slope7,C=-5.673077e+00,ka=-4.610501e-03,kb=6.709393e-01,tau=1.122337e+04,b_original=-2.179976e-03,rms_error=1.870164e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=3,mode=linear,a=-6.164333e+00,b=1.678523e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.211768e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=0,mode=slope7,C=-6.571681e+00,ka=-6.405185e-03,kb=1.182095e+00,tau=1.211474e+04,b_original=-1.982614e-03,rms_error=1.626599e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=1,mode=slope7,C=-6.250372e+00,ka=-1.201407e-01,kb=-3.740226e-03,tau=8.466329e-01,b_original=-4.055554e-03,rms_error=5.321053e-01,points=93
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=2,mode=slope7,C=-6.726602e+00,ka=-3.292948e-03,kb=8.016686e-01,tau=1.697743e+04,b_original=-7.428188e-04,rms_error=1.566494e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=3,mode=linear,a=-7.313030e+00,b=1.738731e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.134384e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=0,mode=slope7,C=-7.492826e+00,ka=-6.117242e-03,kb=2.081137e+00,tau=2.269386e+04,b_original=-1.765152e-03,rms_error=1.378657e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=1,mode=slope7,C=-6.949170e+00,ka=-1.377430e-02,kb=1.568852e+00,tau=9.437602e+03,b_original=-5.522902e-03,rms_error=5.575483e-01,points=89
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=2,mode=slope7,C=-7.808790e+00,ka=1.204409e-02,kb=-2.330610e-03,tau=8.146632e+00,b_original=-1.543729e-03,rms_error=1.363494e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=3,mode=linear,a=-8.289272e+00,b=1.962846e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.171063e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=0,mode=slope7,C=-8.675674e+00,ka=1.441640e-02,kb=-2.442416e-03,tau=5.615060e+00,b_original=-1.754293e-03,rms_error=1.776572e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=1,mode=linear,a=-7.991573e+00,b=2.494248e-04,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.395384e-01,points=75
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=2,mode=linear,a=-8.997050e+00,b=1.001895e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.878484e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=3,mode=linear,a=-9.286239e+00,b=3.353377e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.374739e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=0,mode=slope7,C=-9.404602e+00,ka=-1.753261e-01,kb=-1.301184e-03,tau=1.673243e+00,b_original=-1.052961e-03,rms_error=1.843421e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=1,mode=slope7,C=-8.946258e+00,ka=2.092944e-02,kb=-2.984975e-03,tau=1.047847e+01,b_original=-7.266412e-03,rms_error=4.053958e-01,points=65
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=2,mode=linear,a=-1.014546e+01,b=8.568643e-04,c=0.000000e+00,t_mean=4.700000e+01,rms_error=2.332758e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=3,mode=linear,a=-1.032039e+01,b=1.913556e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=2.276205e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=0,mode=linear,a=-1.063613e+01,b=1.957690e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.319284e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=1,mode=linear,a=-9.547730e+00,b=4.381399e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.505243e-01,points=47
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=2,mode=linear,a=-1.109621e+01,b=2.350051e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.954638e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=3,mode=linear,a=-1.116378e+01,b=1.553872e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.966582e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=0,mode=linear,a=-1.129026e+01,b=1.166305e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.771737e-01,points=93
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=1,mode=linear,a=-9.573466e+00,b=1.231396e-05,c=0.000000e+00,t_mean=4.700000e+01,rms_error=2.191533e-01,points=20
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=2,mode=slope7,C=-1.157692e+01,ka=-6.015661e-03,kb=1.706412e-01,tau=1.080519e+04,b_original=-7.561482e-03,rms_error=5.302270e-01,points=91
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=3,mode=linear,a=-1.161969e+01,b=5.077588e-03,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.786600e-01,points=88
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=0,mode=slope7,C=-1.148941e+01,ka=-2.686645e-01,kb=-1.023770e-03,tau=2.181523e+00,b_original=-4.655003e-03,rms_error=5.190865e-01,points=85
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=1,mode=linear,a=-9.463954e+00,b=6.590615e-06,c=0.000000e+00,t_mean=4.700000e+01,rms_error=3.099728e-01,points=5
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=2,mode=linear,a=-1.227197e+01,b=4.430041e-06,c=0.000000e+00,t_mean=4.700000e+01,rms_error=5.331880e-01,points=76
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=3,mode=linear,a=-1.193595e+01,b=5.168803e-06,c=0.000000e+00,t_mean=4.700000e+01,rms_error=4.436939e-01,points=55
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=0,mode=slope7,C=-8.453454e+00,ka=-7.130335e-03,kb=5.230595e+00,tau=6.746388e+04,b_original=-3.398728e-03,rms_error=1.227348e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=1,mode=slope7,C=-8.167127e+00,ka=-5.694170e-03,kb=-5.694169e-03,tau=2.334129e+01,b_original=-5.105052e-03,rms_error=3.120652e-01,points=95
-SLOPE7_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=2,mode=slope7,C=-8.859285e+00,ka=-4.006954e-03,kb=3.717427e-01,tau=1.038913e+04,b_original=-2.155976e-03,rms_error=1.069075e-01,points=95
-SLOPE6_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=3,mode=linear,a=-8.173986e+00,b=4.110832e-04,c=0.000000e+00,t_mean=4.700000e+01,rms_error=1.012480e-01,points=95
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2022_26:
+  Total cohorts in slope6_params: 40
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1920, Dose=3: mode=none
+  YoB=1930, Dose=0: mode=none
+  ... and 35 more cohorts
+[DEBUG] Normalization samples for 2022_26:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2022_26: 0/4320 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2022_26: none: 40
 [Info] Processing sheet: 2022_47
 [DEBUG] Filtered to start from enrollment date 11/21/2022: 75735 rows
 [DEBUG] Filtered to 71280 rows for ages 1920-2009
@@ -333,56 +453,76 @@ SLOPE6_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=3,mode=linear,a=-8.173986e+00,b=4.
   YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 32% 31% 2% total=1337052
   YoB 1990, % vaxxed=63  alive_by_dose= 37% 1% 35% 25% 1% total=1073590
   YoB 2000, % vaxxed=58  alive_by_dose= 42% 1% 40% 16% 0% total=1020528
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=0,mode=slope7,C=-4.615147e+00,ka=-4.663523e-02,kb=6.657522e-03,tau=1.997328e+01,b_original=-5.602991e-03,rms_error=2.420680e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=1,mode=linear,a=-4.890557e+00,b=6.183196e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=4.413264e-01,points=40
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=2,mode=slope7,C=-4.760626e+00,ka=-2.331495e-02,kb=8.186370e-03,tau=2.713960e+01,b_original=-2.537958e-03,rms_error=3.878675e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=3,mode=slope7,C=-4.659392e+00,ka=-5.460557e-02,kb=5.188562e-03,tau=1.312394e+01,b_original=-1.085942e-03,rms_error=1.916835e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=4,mode=linear,a=-5.148818e+00,b=2.537043e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=2.367800e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=0,mode=slope7,C=-5.381965e+00,ka=-3.921674e-02,kb=5.203869e-03,tau=1.612904e+01,b_original=-2.815431e-03,rms_error=1.710886e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=1,mode=slope7,C=-5.002298e+00,ka=-6.516671e-02,kb=1.104660e-02,tau=1.744871e+01,b_original=-6.318328e-03,rms_error=5.764183e-01,points=71
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=2,mode=slope7,C=-5.445859e+00,ka=-4.920172e-02,kb=4.287927e-03,tau=1.227808e+01,b_original=-1.760552e-03,rms_error=1.801255e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=3,mode=slope7,C=-5.829365e+00,ka=-2.636328e-02,kb=8.060314e-03,tau=2.254644e+01,b_original=-6.854434e-04,rms_error=1.121411e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=4,mode=linear,a=-6.210256e+00,b=2.189279e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.376802e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=0,mode=slope7,C=-6.454427e+00,ka=-3.424079e-02,kb=5.121738e-03,tau=1.586094e+01,b_original=-2.274939e-03,rms_error=1.547305e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=1,mode=slope7,C=-5.796255e+00,ka=-5.322855e-02,kb=5.321603e-02,tau=6.006620e+01,b_original=-9.228802e-03,rms_error=5.228861e-01,points=73
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=2,mode=slope7,C=-6.543078e+00,ka=-3.733697e-02,kb=3.303040e-03,tau=1.233786e+01,b_original=-7.521269e-04,rms_error=1.453160e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=3,mode=slope7,C=-7.008743e+00,ka=-2.081393e-02,kb=4.855456e-03,tau=2.093132e+01,b_original=-1.123567e-03,rms_error=1.063596e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=4,mode=linear,a=-7.375561e+00,b=4.126587e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.340710e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=0,mode=slope7,C=-7.373431e+00,ka=-3.487854e-02,kb=4.840364e-03,tau=1.515603e+01,b_original=-1.104465e-03,rms_error=1.148306e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=1,mode=slope7,C=-7.024488e+00,ka=-1.742127e-02,kb=7.170438e-02,tau=2.912739e+02,b_original=-1.166709e-02,rms_error=5.585038e-01,points=69
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=2,mode=slope7,C=-7.531133e+00,ka=-3.001638e-02,kb=8.472931e-05,tau=1.178591e+01,b_original=-2.637399e-03,rms_error=1.381973e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=3,mode=slope7,C=-8.028312e+00,ka=-2.979690e-02,kb=3.462377e-03,tau=1.276622e+01,b_original=-7.747084e-04,rms_error=1.124448e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=4,mode=linear,a=-8.280687e+00,b=3.032598e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.651205e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=0,mode=slope7,C=-8.491069e+00,ka=-1.911244e-02,kb=1.938176e-03,tau=1.961666e+01,b_original=-2.629204e-03,rms_error=1.752815e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=1,mode=linear,a=-7.995139e+00,b=2.575101e-04,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.076696e-01,points=61
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=2,mode=linear,a=-9.012249e+00,b=1.196870e-04,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.973735e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=3,mode=linear,a=-9.259056e+00,b=1.480238e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.381498e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=4,mode=linear,a=-9.021407e+00,b=3.726766e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=3.899051e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=0,mode=slope7,C=-9.591364e+00,ka=-1.234727e-02,kb=4.300948e-03,tau=3.332489e+01,b_original=-3.352287e-03,rms_error=1.910538e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=1,mode=slope7,C=-8.634599e+00,ka=-2.030594e-02,kb=3.954635e+00,tau=5.218976e+03,b_original=-1.107842e-02,rms_error=4.241342e-01,points=47
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=2,mode=linear,a=-1.013099e+01,b=4.010047e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=2.330491e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=3,mode=linear,a=-1.032518e+01,b=1.847348e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=2.289793e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=4,mode=linear,a=-9.649772e+00,b=5.661534e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.646422e-01,points=65
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=0,mode=slope7,C=-1.055719e+01,ka=-1.068438e-02,kb=-3.655371e-04,tau=1.129817e+01,b_original=-1.859501e-04,rms_error=3.215118e-01,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=1,mode=linear,a=-9.543383e+00,b=4.508491e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=3.158112e-01,points=41
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=2,mode=slope7,C=-1.134651e+01,ka=1.107433e-02,kb=-8.892567e-02,tau=3.858004e+02,b_original=-2.393072e-03,rms_error=4.341747e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=3,mode=slope7,C=-1.102240e+01,ka=-8.083678e-02,kb=3.052537e-03,tau=4.617031e+00,b_original=-2.846504e-03,rms_error=4.603909e-01,points=73
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=4,mode=linear,a=-1.006655e+01,b=3.546266e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.794642e-01,points=40
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=0,mode=slope7,C=-1.133220e+01,ka=1.881202e-03,kb=-9.811880e-02,tau=5.383082e+02,b_original=-3.368773e-03,rms_error=4.784404e-01,points=73
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=1,mode=linear,a=-9.569303e+00,b=1.311900e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.011598e-04,points=12
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=2,mode=linear,a=-1.174572e+01,b=6.493962e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=6.002357e-01,points=70
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=3,mode=linear,a=-1.141144e+01,b=8.451801e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=6.307123e-01,points=66
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=4,mode=linear,a=-9.253972e+00,b=2.058869e-05,c=0.000000e+00,t_mean=3.650000e+01,rms_error=8.065974e-05,points=17
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=0,mode=slope7,C=-1.225800e+01,ka=2.257949e-02,kb=-6.971972e-03,tau=1.585571e+01,b_original=-5.957491e-03,rms_error=5.258977e-01,points=64
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=1,status=insufficient_data,points=4
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=2,mode=linear,a=-1.223712e+01,b=4.246929e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.432036e-01,points=57
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=3,mode=linear,a=-1.201750e+01,b=4.985453e-06,c=0.000000e+00,t_mean=3.650000e+01,rms_error=5.268996e-01,points=39
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
 SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=4,status=insufficient_data,points=4
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=0,mode=slope7,C=-8.357150e+00,ka=-3.447282e-02,kb=3.054238e-03,tau=1.622388e+01,b_original=-3.461498e-03,rms_error=1.101592e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=1,mode=slope7,C=-7.872638e+00,ka=-3.733349e-02,kb=9.198887e-03,tau=3.163069e+01,b_original=-6.187850e-03,rms_error=2.786210e-01,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=2,mode=slope7,C=-8.740625e+00,ka=-3.535660e-02,kb=1.518859e-03,tau=1.215971e+01,b_original=-2.288896e-03,rms_error=9.440757e-02,points=74
-SLOPE7_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=3,mode=slope7,C=-8.067795e+00,ka=-2.604038e-02,kb=3.734989e-03,tau=1.738341e+01,b_original=-1.678592e-03,rms_error=8.903238e-02,points=74
-SLOPE6_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=4,mode=linear,a=-7.542589e+00,b=1.604936e-03,c=0.000000e+00,t_mean=3.650000e+01,rms_error=1.071616e-01,points=74
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=0,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=1,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=2,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=3,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=4,status=fit_error,error=Invalid format specifier '.6e if rms_error_slope8_norm is not None else np.nan:.6e' for object of type 'float'
+[DEBUG] Checking normalization parameters for 2022_47:
+  Total cohorts in slope6_params: 50
+  YoB=1920, Dose=0: mode=none
+  YoB=1920, Dose=1: mode=none
+  YoB=1920, Dose=2: mode=none
+  YoB=1920, Dose=3: mode=none
+  YoB=1920, Dose=4: mode=none
+  ... and 45 more cohorts
+[DEBUG] Normalization samples for 2022_47:
+  Sample 1: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 2: YoB=1920, Dose=0, reason=no_params, mode=none
+  Sample 3: YoB=1920, Dose=0, reason=no_params, mode=none
+[DEBUG] Normalization check for 2022_47: 0/4455 rows have different hazard_adj vs hazard_raw
+[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw
+  Row 0: YoB=1920, Dose=0 - mode=none
+  Row 1: YoB=1920, Dose=0 - mode=none
+  Row 2: YoB=1920, Dose=0 - mode=none
+  Row 3: YoB=1920, Dose=0 - mode=none
+  Row 4: YoB=1920, Dose=0 - mode=none
+[DEBUG] Normalization modes applied for 2022_47: none: 50
 
 ================================================================================
 KCOR VALUES AT REPORTING DATES - ALL SHEETS
@@ -395,49 +535,49 @@ Dose combination: 1 vs 0 [2021_13]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.2615 [1.238, 1.285] | -
-  All Ages        |   0.3031 [0.298, 0.308] | 1.5700  (beta_num=0.000074, beta_den=-0.031141)
-  1920            |   1.1377 [1.067, 1.213] | 1.1350  (beta_num=0.001741, b_original_den=-0.003376, C_den=-5.042186e+00, ka_den=7.871028e-03, kb_den=-4.836525e-03, tau_den=4.489529e+01)
-  1930            |   1.0842 [1.051, 1.118] | 1.2529  (beta_num=0.001205, b_original_den=-0.001428, C_den=-5.635913e+00, ka_den=-2.369862e-03, kb_den=2.151331e-01, tau_den=2.101167e+04)
-  1940            |   1.3211 [1.292, 1.351] | 1.9151  (beta_num=0.001773, b_original_den=-0.000723, C_den=-6.163407e+00, ka_den=-2.811989e-01, kb_den=-6.234685e-04, tau_den=2.988144e+00)
-  1950            |   1.3789 [1.302, 1.460] | 1.7106  (beta_num=0.000295, b_original_den=-0.000463, C_den=-7.381064e+00, ka_den=-2.476221e-01, kb_den=-1.909006e-04, tau_den=2.742042e+00)
-  1960            |   1.3880 [1.244, 1.549] | 1.3723  (beta_num=0.000066, beta_den=0.000331)
-  1970            |   3.3950 [2.872, 4.013] | 3.3944  (beta_num=0.000036, beta_den=0.000043)
-  1980            |   1.0820 [0.800, 1.464] | 1.0455  (beta_num=0.000020, beta_den=0.000798)
-  1990            |   1.8870 [1.267, 2.811] | 1.8868  (beta_num=0.000013, beta_den=0.000010)
-  2000            |   9.6221 [5.289, 17.506] | 9.6112  (beta_num=0.000033, beta_den=0.000004)
+  ASMR (direct)   |   1.5393 [1.511, 1.568] | -
+  All Ages        |   1.5700 [1.546, 1.595] | 1.5700  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.1350 [1.064, 1.211] | 1.1350  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.2529 [1.215, 1.292] | 1.2529  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.9151 [1.873, 1.958] | 1.9151  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.7106 [1.615, 1.812] | 1.7106  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.3723 [1.230, 1.532] | 1.3723  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   3.3944 [2.872, 4.012] | 3.3944  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.0455 [0.773, 1.414] | 1.0455  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.8868 [1.267, 2.811] | 1.8868  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   9.6112 [5.283, 17.486] | 9.6112  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2021_13]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.3617 [1.339, 1.385] | -
-  All Ages        |   0.3545 [0.350, 0.359] | 1.8353  (beta_num=0.000061, beta_den=-0.031141)
-  1920            |   1.5922 [1.537, 1.649] | 1.5473  (beta_num=0.001134, b_original_den=-0.003376, C_den=-5.042186e+00, ka_den=7.871028e-03, kb_den=-4.836525e-03, tau_den=4.489529e+01)
-  1930            |   1.6203 [1.589, 1.652] | 1.9017  (beta_num=0.001508, b_original_den=-0.001428, C_den=-5.635913e+00, ka_den=-2.369862e-03, kb_den=2.151331e-01, tau_den=2.101167e+04)
-  1940            |   1.3317 [1.294, 1.370] | 1.8232  (beta_num=0.000585, b_original_den=-0.000723, C_den=-6.163407e+00, ka_den=-2.811989e-01, kb_den=-6.234685e-04, tau_den=2.988144e+00)
-  1950            |   0.9958 [0.941, 1.054] | 1.2401  (beta_num=0.000394, b_original_den=-0.000463, C_den=-7.381064e+00, ka_den=-2.476221e-01, kb_den=-1.909006e-04, tau_den=2.742042e+00)
-  1960            |   1.4566 [1.318, 1.610] | 1.4419  (beta_num=0.000091, beta_den=0.000331)
-  1970            |   1.1932 [1.010, 1.409] | 1.1927  (beta_num=0.000031, beta_den=0.000043)
-  1980            |   0.7643 [0.586, 0.996] | 0.7387  (beta_num=0.000022, beta_den=0.000798)
-  1990            |   1.2729 [0.903, 1.795] | 1.2736  (beta_num=0.000020, beta_den=0.000010)
-  2000            |   3.3053 [1.062, 10.285] | 3.3026  (beta_num=0.000055, beta_den=0.000004)
+  ASMR (direct)   |   1.6358 [1.608, 1.664] | -
+  All Ages        |   1.8353 [1.813, 1.858] | 1.8353  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.5473 [1.494, 1.602] | 1.5473  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.9017 [1.865, 1.939] | 1.9017  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.8232 [1.772, 1.876] | 1.8232  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.2401 [1.172, 1.312] | 1.2401  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.4419 [1.304, 1.594] | 1.4419  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.1927 [1.010, 1.409] | 1.1927  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.7387 [0.567, 0.963] | 0.7387  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.2736 [0.903, 1.796] | 1.2736  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   3.3026 [1.061, 10.277] | 3.3026  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2021_13]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0800 [1.055, 1.105] | -
-  All Ages        |   1.1697 [1.149, 1.191] | 1.1689  (beta_num=0.000061, beta_den=0.000074)
-  1920            |   1.3995 [1.312, 1.493] | 1.3633  (beta_num=0.001134, beta_den=0.001741)
-  1930            |   1.4945 [1.450, 1.541] | 1.5179  (beta_num=0.001508, beta_den=0.001205)
-  1940            |   1.0081 [0.976, 1.041] | 0.9520  (beta_num=0.000585, beta_den=0.001773)
-  1950            |   0.7222 [0.668, 0.781] | 0.7250  (beta_num=0.000394, beta_den=0.000295)
-  1960            |   1.0494 [0.907, 1.215] | 1.0507  (beta_num=0.000091, beta_den=0.000066)
-  1970            |   0.3515 [0.278, 0.444] | 0.3514  (beta_num=0.000031, beta_den=0.000036)
-  1980            |   0.7064 [0.475, 1.050] | 0.7065  (beta_num=0.000022, beta_den=0.000020)
-  1990            |   1.0213 [0.609, 1.711] | 1.0212  (beta_num=0.000020, beta_den=0.000013)
-  2000            |   0.3435 [0.096, 1.231] | 0.3436  (beta_num=0.000055, beta_den=0.000033)
+  ASMR (direct)   |   1.0648 [1.040, 1.090] | -
+  All Ages        |   1.1689 [1.148, 1.190] | 1.1689  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.3633 [1.278, 1.454] | 1.3633  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.5179 [1.472, 1.565] | 1.5179  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   0.9520 [0.922, 0.983] | 0.9520  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.7250 [0.670, 0.784] | 0.7250  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.0507 [0.908, 1.216] | 1.0507  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.3514 [0.278, 0.443] | 0.3514  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.7065 [0.475, 1.051] | 0.7065  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.0212 [0.609, 1.711] | 1.0212  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.3436 [0.096, 1.231] | 0.3436  (beta_num=0.000000, beta_den=0.000000)
 
 Sheet: 2021_20 — Reporting date: 2023-01-02
 ============================================================
@@ -446,49 +586,49 @@ Dose combination: 1 vs 0 [2021_20]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.2250 [1.204, 1.247] | -
-  All Ages        |   0.0397 [0.039, 0.040] | 1.5169  (beta_num=-0.006427, beta_den=-0.070648)
-  1920            |   0.9869 [0.910, 1.071] | 0.7695  (b_original_num=-0.000996, C_num=-5.184396e+00, ka_num=-1.201399e-03, kb_num=1.164497e-03, tau_num=6.282850e+01, b_original_den=-0.003922, C_den=-5.226675e+00, ka_den=3.395608e-02, kb_den=-4.842935e-03, tau_den=1.741071e+01)
-  1930            |   1.2028 [1.156, 1.251] | 1.1856  (beta_num=0.001246, b_original_den=-0.002818, C_den=-5.744833e+00, ka_den=1.737578e-02, kb_den=-2.754824e-03, tau_den=1.365603e+01)
-  1940            |   1.1221 [1.093, 1.152] | 1.3855  (beta_num=0.001426, b_original_den=-0.001959, C_den=-6.473119e+00, ka_den=-4.677868e-03, kb_den=3.208473e+00, tau_den=1.140609e+05)
-  1950            |   1.5495 [1.509, 1.591] | 1.9121  (beta_num=0.001697, b_original_den=-0.001979, C_den=-7.454441e+00, ka_den=-4.242117e-03, kb_den=1.113559e+00, tau_den=4.342097e+04)
-  1960            |   1.4201 [1.356, 1.488] | 1.6420  (beta_num=0.002896, b_original_den=-0.000353, C_den=-8.741439e+00, ka_den=2.654688e-07, kb_den=-1.365777e-03, tau_den=4.505352e+01)
-  1970            |   1.2709 [1.165, 1.386] | 1.3515  (beta_num=0.003457, b_original_den=-0.000253, C_den=-1.015205e+01, ka_den=1.347205e-02, kb_den=-4.498914e-04, tau_den=1.143134e+01)
-  1980            |   1.3297 [1.116, 1.585] | 1.2853  (beta_num=0.000022, beta_den=0.000866)
-  1990            |   1.4191 [1.035, 1.945] | 1.4191  (beta_num=0.000013, beta_den=0.000010)
-  2000            |   0.0000 [0.000, 0.000] | 7.2674  (beta_num=0.000028, b_original_den=-0.002621, C_den=-1.315774e+01, ka_den=5.429643e-02, kb_den=-2.381817e-03, tau_den=1.834167e+01)
+  ASMR (direct)   |   1.3321 [1.309, 1.356] | -
+  All Ages        |   1.5169 [1.494, 1.540] | 1.5169  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.7695 [0.709, 0.835] | 0.7695  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1856 [1.140, 1.233] | 1.1856  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.3855 [1.349, 1.423] | 1.3855  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.9121 [1.862, 1.963] | 1.9121  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.6420 [1.568, 1.719] | 1.6420  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.3515 [1.240, 1.473] | 1.3515  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.2853 [1.078, 1.532] | 1.2853  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.4191 [1.035, 1.945] | 1.4191  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   7.2674 [4.637, 11.389] | 7.2674  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2021_20]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.2365 [1.220, 1.253] | -
-  All Ages        |   0.0476 [0.047, 0.048] | 1.4228  (beta_num=-0.011669, beta_den=-0.070648)
-  1920            |   1.3607 [1.312, 1.412] | 1.1345  (beta_num=0.001248, b_original_den=-0.003922, C_den=-5.226675e+00, ka_den=3.395608e-02, kb_den=-4.842935e-03, tau_den=1.741071e+01)
-  1930            |   1.2859 [1.260, 1.312] | 1.2884  (beta_num=0.001588, b_original_den=-0.002818, C_den=-5.744833e+00, ka_den=1.737578e-02, kb_den=-2.754824e-03, tau_den=1.365603e+01)
-  1940            |   1.2956 [1.269, 1.323] | 1.6131  (beta_num=0.001619, b_original_den=-0.001959, C_den=-6.473119e+00, ka_den=-4.677868e-03, kb_den=3.208473e+00, tau_den=1.140609e+05)
-  1950            |   1.0666 [1.026, 1.109] | 1.2397  (beta_num=0.000341, b_original_den=-0.001979, C_den=-7.454441e+00, ka_den=-4.242117e-03, kb_den=1.113559e+00, tau_den=4.342097e+04)
-  1960            |   1.0003 [0.930, 1.076] | 1.3847  (b_original_num=-0.000937, C_num=-9.941213e+00, ka_num=9.770904e-02, kb_num=-6.583402e-04, tau_num=6.266467e+00, b_original_den=-0.000353, C_den=-8.741439e+00, ka_den=2.654688e-07, kb_den=-1.365777e-03, tau_den=4.505352e+01)
-  1970            |   1.0699 [0.956, 1.198] | 1.0773  (beta_num=0.002120, b_original_den=-0.000253, C_den=-1.015205e+01, ka_den=1.347205e-02, kb_den=-4.498914e-04, tau_den=1.143134e+01)
-  1980            |   2.7932 [2.312, 3.374] | 2.6997  (beta_num=0.000020, beta_den=0.000866)
-  1990            |   0.7904 [0.610, 1.023] | 0.7906  (beta_num=0.000017, beta_den=0.000010)
-  2000            |   0.0000 [0.000, 0.000] | 5.9813  (beta_num=0.000020, b_original_den=-0.002621, C_den=-1.315774e+01, ka_den=5.429643e-02, kb_den=-2.381817e-03, tau_den=1.834167e+01)
+  ASMR (direct)   |   1.3585 [1.341, 1.376] | -
+  All Ages        |   1.4228 [1.407, 1.439] | 1.4228  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.1345 [1.094, 1.177] | 1.1345  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.2884 [1.262, 1.315] | 1.2884  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.6131 [1.580, 1.647] | 1.6131  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.2397 [1.192, 1.289] | 1.2397  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.3847 [1.289, 1.487] | 1.3847  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.0773 [0.963, 1.205] | 1.0773  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   2.6997 [2.235, 3.261] | 2.6997  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.7906 [0.611, 1.024] | 0.7906  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   5.9813 [3.509, 10.197] | 5.9813  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2021_20]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0126 [0.994, 1.032] | -
-  All Ages        |   1.1990 [1.181, 1.218] | 0.9380  (beta_num=-0.011669, beta_den=-0.006427)
-  1920            |   1.3787 [1.273, 1.494] | 1.4743  (beta_num=0.001248, b_original_den=-0.000996, C_den=-5.184396e+00, ka_den=-1.201399e-03, kb_den=1.164497e-03, tau_den=6.282850e+01)
-  1930            |   1.0691 [1.029, 1.111] | 1.0867  (beta_num=0.001588, beta_den=0.001246)
-  1940            |   1.1547 [1.124, 1.186] | 1.1642  (beta_num=0.001619, beta_den=0.001426)
-  1950            |   0.6883 [0.660, 0.717] | 0.6484  (beta_num=0.000341, beta_den=0.001697)
-  1960            |   0.7044 [0.650, 0.763] | 0.8433  (b_original_num=-0.000937, C_num=-9.941213e+00, ka_num=9.770904e-02, kb_num=-6.583402e-04, tau_num=6.266467e+00, beta_den=0.002896)
-  1970            |   0.8418 [0.735, 0.964] | 0.7972  (beta_num=0.002120, beta_den=0.003457)
-  1980            |   2.1006 [1.638, 2.693] | 2.1004  (beta_num=0.000020, beta_den=0.000022)
-  1990            |   1.4487 [0.978, 2.146] | 1.4483  (beta_num=0.000017, beta_den=0.000013)
-  2000            |   0.8230 [0.416, 1.629] | 0.8230  (beta_num=0.000020, beta_den=0.000028)
+  ASMR (direct)   |   1.0237 [1.005, 1.043] | -
+  All Ages        |   0.9380 [0.924, 0.953] | 0.9380  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.4743 [1.361, 1.597] | 1.4743  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0867 [1.046, 1.129] | 1.0867  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1642 [1.134, 1.196] | 1.1642  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.6484 [0.622, 0.676] | 0.6484  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.8433 [0.780, 0.912] | 0.8433  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.7972 [0.697, 0.912] | 0.7972  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   2.1004 [1.638, 2.693] | 2.1004  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.4483 [0.978, 2.146] | 1.4483  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.8230 [0.416, 1.629] | 0.8230  (beta_num=0.000000, beta_den=0.000000)
 
 Sheet: 2021_24 — Reporting date: 2023-01-02
 ============================================================
@@ -497,49 +637,49 @@ Dose combination: 1 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0244 [1.003, 1.046] | -
-  All Ages        |   0.0811 [0.079, 0.083] | 1.2541  (beta_num=0.000257, beta_den=-0.055613)
-  1920            |   0.8714 [0.792, 0.959] | 0.7532  (beta_num=0.002302, b_original_den=-0.003955, C_den=-5.219904e+00, ka_den=4.294707e-02, kb_den=-5.010933e-03, tau_den=1.392776e+01)
-  1930            |   1.1562 [1.105, 1.210] | 1.0250  (beta_num=0.000197, b_original_den=-0.002676, C_den=-5.819832e+00, ka_den=3.780196e-02, kb_den=-3.194878e-03, tau_den=9.892043e+00)
-  1940            |   0.8621 [0.833, 0.893] | 1.1117  (beta_num=0.001947, b_original_den=-0.002600, C_den=-6.357556e+00, ka_den=-5.863028e-03, kb_den=1.229920e+00, tau_den=3.442041e+04)
-  1950            |   1.1436 [1.107, 1.181] | 1.4435  (beta_num=0.001238, b_original_den=-0.002262, C_den=-7.264131e+00, ka_den=-6.093580e-03, kb_den=1.346966e+00, tau_den=3.454226e+04)
-  1960            |   1.0681 [1.020, 1.119] | 1.3376  (beta_num=0.002450, b_original_den=-0.001409, C_den=-8.447270e+00, ka_den=-4.180886e-03, kb_den=5.073730e-01, tau_den=1.909777e+04)
-  1970            |   1.2505 [1.169, 1.338] | 1.5006  (beta_num=0.002602, b_original_den=-0.001372, C_den=-9.619745e+00, ka_den=-2.460148e-03, kb_den=1.386634e+00, tau_den=9.146450e+04)
-  1980            |   0.8212 [0.718, 0.940] | 1.0077  (beta_num=0.005324, beta_den=0.000021)
-  1990            |   3.8446 [3.039, 4.864] | 3.8447  (beta_num=0.000009, beta_den=0.000010)
-  2000            |   0.7193 [0.458, 1.129] | 0.7194  (beta_num=0.000008, beta_den=0.000004)
+  ASMR (direct)   |   1.1165 [1.093, 1.140] | -
+  All Ages        |   1.2541 [1.232, 1.276] | 1.2541  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.7532 [0.684, 0.829] | 0.7532  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0250 [0.980, 1.072] | 1.0250  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1117 [1.074, 1.151] | 1.1117  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.4435 [1.397, 1.491] | 1.4435  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.3376 [1.277, 1.401] | 1.3376  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.5006 [1.403, 1.605] | 1.5006  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.0077 [0.883, 1.150] | 1.0077  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   3.8447 [3.039, 4.864] | 3.8447  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.7194 [0.458, 1.129] | 0.7194  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1959 [1.181, 1.211] | -
-  All Ages        |   0.0888 [0.087, 0.090] | 1.3668  (beta_num=0.000133, beta_den=-0.055613)
-  1920            |   1.2534 [1.207, 1.302] | 1.0391  (beta_num=0.001080, b_original_den=-0.003955, C_den=-5.219904e+00, ka_den=4.294707e-02, kb_den=-5.010933e-03, tau_den=1.392776e+01)
-  1930            |   1.2684 [1.242, 1.296] | 1.1917  (beta_num=0.001632, b_original_den=-0.002676, C_den=-5.819832e+00, ka_den=3.780196e-02, kb_den=-3.194878e-03, tau_den=9.892043e+00)
-  1940            |   1.0870 [1.065, 1.110] | 1.3874  (beta_num=0.001646, b_original_den=-0.002600, C_den=-6.357556e+00, ka_den=-5.863028e-03, kb_den=1.229920e+00, tau_den=3.442041e+04)
-  1950            |   1.3204 [1.284, 1.358] | 1.6773  (beta_num=0.001404, b_original_den=-0.002262, C_den=-7.264131e+00, ka_den=-6.093580e-03, kb_den=1.346966e+00, tau_den=3.454226e+04)
-  1960            |   1.0247 [0.970, 1.082] | 1.2177  (beta_num=0.001203, b_original_den=-0.001409, C_den=-8.447270e+00, ka_den=-4.180886e-03, kb_den=5.073730e-01, tau_den=1.909777e+04)
-  1970            |   1.1253 [1.031, 1.228] | 1.2675  (beta_num=0.001131, b_original_den=-0.001372, C_den=-9.619745e+00, ka_den=-2.460148e-03, kb_den=1.386634e+00, tau_den=9.146450e+04)
-  1980            |   1.3645 [1.170, 1.592] | 1.3646  (beta_num=0.000021, beta_den=0.000021)
-  1990            |   2.0410 [1.616, 2.578] | 2.0417  (beta_num=0.000018, beta_den=0.000010)
-  2000            |   0.8833 [0.589, 1.325] | 0.8838  (beta_num=0.000023, beta_den=0.000004)
+  ASMR (direct)   |   1.3105 [1.294, 1.327] | -
+  All Ages        |   1.3668 [1.351, 1.382] | 1.3668  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.0391 [1.001, 1.079] | 1.0391  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1917 [1.167, 1.217] | 1.1917  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.3874 [1.359, 1.416] | 1.3874  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.6773 [1.631, 1.725] | 1.6773  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2177 [1.153, 1.286] | 1.2177  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.2675 [1.162, 1.383] | 1.2675  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3646 [1.170, 1.592] | 1.3646  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   2.0417 [1.616, 2.579] | 2.0417  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.8838 [0.589, 1.326] | 0.8838  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2021_24]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1674 [1.143, 1.193] | -
-  All Ages        |   1.0952 [1.077, 1.114] | 1.0899  (beta_num=0.000133, beta_den=0.000257)
-  1920            |   1.4385 [1.309, 1.581] | 1.3795  (beta_num=0.001080, beta_den=0.002302)
-  1930            |   1.0970 [1.050, 1.146] | 1.1626  (beta_num=0.001632, beta_den=0.000197)
-  1940            |   1.2609 [1.219, 1.304] | 1.2480  (beta_num=0.001646, beta_den=0.001947)
-  1950            |   1.1546 [1.116, 1.195] | 1.1620  (beta_num=0.001404, beta_den=0.001238)
-  1960            |   0.9593 [0.902, 1.020] | 0.9104  (beta_num=0.001203, beta_den=0.002450)
-  1970            |   0.8999 [0.816, 0.993] | 0.8447  (beta_num=0.001131, beta_den=0.002602)
-  1980            |   1.6616 [1.374, 2.009] | 1.3542  (beta_num=0.000021, beta_den=0.005324)
-  1990            |   0.5309 [0.389, 0.724] | 0.5310  (beta_num=0.000018, beta_den=0.000009)
-  2000            |   1.2280 [0.682, 2.209] | 1.2285  (beta_num=0.000023, beta_den=0.000008)
+  ASMR (direct)   |   1.1737 [1.149, 1.199] | -
+  All Ages        |   1.0899 [1.071, 1.109] | 1.0899  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.3795 [1.255, 1.516] | 1.3795  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1626 [1.113, 1.214] | 1.1626  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.2480 [1.207, 1.290] | 1.2480  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.1620 [1.123, 1.202] | 1.1620  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.9104 [0.856, 0.968] | 0.9104  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.8447 [0.766, 0.931] | 0.8447  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3542 [1.122, 1.634] | 1.3542  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.5310 [0.389, 0.725] | 0.5310  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.2285 [0.683, 2.210] | 1.2285  (beta_num=0.000000, beta_den=0.000000)
 
 M/P by decades (Dose 2)
 --------------------------------------------------
@@ -560,49 +700,49 @@ Dose combination: 1 vs 0 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.7029 [0.685, 0.721] | -
-  All Ages        |   0.0006 [0.001, 0.001] | 0.8758  (beta_num=-0.033630, beta_den=-0.088417)
-  1920            |   0.3491 [0.308, 0.395] | 0.4938  (beta_num=0.005893, b_original_den=-0.004912, C_den=-5.245883e+00, ka_den=7.505567e-02, kb_den=-5.070615e-03, tau_den=8.294564e+00)
-  1930            |   1.0040 [0.950, 1.061] | 0.6480  (b_original_num=-0.001081, C_num=-5.519378e+00, ka_num=-1.523487e-02, kb_num=3.107761e-02, tau_num=2.125659e+02, b_original_den=-0.002806, C_den=-5.945844e+00, ka_den=8.800195e-02, kb_den=-3.624544e-03, tau_den=6.259208e+00)
-  1940            |   0.5153 [0.494, 0.537] | 0.7808  (beta_num=0.000894, b_original_den=-0.002628, C_den=-6.245751e+00, ka_den=-8.395421e-03, kb_den=2.041711e+00, tau_den=3.122266e+04)
-  1950            |   0.7452 [0.713, 0.778] | 0.8101  (b_original_num=-0.000603, C_num=-7.615754e+00, ka_num=-2.262328e-02, kb_num=-5.911026e-04, tau_num=1.476035e+01, b_original_den=-0.002694, C_den=-7.131072e+00, ka_den=-8.738292e-03, kb_den=1.232628e+00, tau_den=1.764657e+04)
-  1960            |   0.9148 [0.862, 0.971] | 1.2733  (beta_num=0.002499, b_original_den=-0.002061, C_den=-8.606571e+00, ka_den=4.974517e-02, kb_den=-3.161089e-03, tau_den=4.235511e+00)
-  1970            |   1.2211 [1.133, 1.316] | 1.4754  (beta_num=0.000050, b_original_den=-0.001602, C_den=-9.494238e+00, ka_den=-4.157853e-03, kb_den=1.097509e+00, tau_den=3.617813e+04)
-  1980            |   1.2151 [1.091, 1.353] | 1.3379  (b_original_num=-0.004000, C_num=-1.128490e+01, ka_num=7.645224e-03, kb_num=-3.304190e-03, tau_num=3.560599e+01, b_original_den=-0.000743, C_den=-1.059081e+01, ka_den=-1.886737e-03, kb_den=-7.922018e-04, tau_den=3.774251e+01)
-  1990            |   0.7704 [0.660, 0.899] | 1.2559  (beta_num=0.006545, beta_den=0.000012)
-  2000            |   1.8438 [1.527, 2.226] | 1.5040  (beta_num=0.000004, b_original_den=-0.002901, C_den=-1.265046e+01, ka_den=2.294381e-02, kb_den=-3.133627e-03, tau_den=2.393390e+01)
+  ASMR (direct)   |   0.7565 [0.738, 0.776] | -
+  All Ages        |   0.8758 [0.857, 0.895] | 0.8758  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.4938 [0.435, 0.560] | 0.4938  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   0.6480 [0.613, 0.685] | 0.6480  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   0.7808 [0.749, 0.814] | 0.7808  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.8101 [0.775, 0.846] | 0.8101  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2733 [1.200, 1.351] | 1.2733  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.4754 [1.369, 1.590] | 1.4754  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3379 [1.202, 1.490] | 1.3379  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.2559 [1.086, 1.453] | 1.2559  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.5040 [1.246, 1.815] | 1.5040  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0041 [0.996, 1.013] | -
-  All Ages        |   0.0000 [0.000, 0.000] | 1.4580  (beta_num=0.000280, beta_den=-0.088417)
-  1920            |   1.0752 [1.040, 1.111] | 1.1186  (beta_num=0.000940, b_original_den=-0.004912, C_den=-5.245883e+00, ka_den=7.505567e-02, kb_den=-5.070615e-03, tau_den=8.294564e+00)
-  1930            |   1.0858 [1.068, 1.104] | 1.1836  (beta_num=0.001683, b_original_den=-0.002806, C_den=-5.945844e+00, ka_den=8.800195e-02, kb_den=-3.624544e-03, tau_den=6.259208e+00)
-  1940            |   0.9115 [0.898, 0.925] | 1.4781  (beta_num=0.001690, b_original_den=-0.002628, C_den=-6.245751e+00, ka_den=-8.395421e-03, kb_den=2.041711e+00, tau_den=3.122266e+04)
-  1950            |   0.9133 [0.897, 0.930] | 1.4894  (beta_num=0.001672, b_original_den=-0.002694, C_den=-7.131072e+00, ka_den=-8.738292e-03, kb_den=1.232628e+00, tau_den=1.764657e+04)
-  1960            |   1.4008 [1.362, 1.441] | 1.8820  (beta_num=0.001966, b_original_den=-0.002061, C_den=-8.606571e+00, ka_den=4.974517e-02, kb_den=-3.161089e-03, tau_den=4.235511e+00)
-  1970            |   1.0490 [1.007, 1.093] | 1.5747  (beta_num=0.002794, b_original_den=-0.001602, C_den=-9.494238e+00, ka_den=-4.157853e-03, kb_den=1.097509e+00, tau_den=3.617813e+04)
-  1980            |   1.4325 [1.331, 1.542] | 2.0773  (beta_num=0.003522, b_original_den=-0.000743, C_den=-1.059081e+01, ka_den=-1.886737e-03, kb_den=-7.922018e-04, tau_den=3.774251e+01)
-  1990            |   0.9324 [0.824, 1.054] | 1.2449  (beta_num=0.003798, beta_den=0.000012)
-  2000            |   0.3161 [0.247, 0.405] | 0.2579  (beta_num=0.000008, b_original_den=-0.002901, C_den=-1.265046e+01, ka_den=2.294381e-02, kb_den=-3.133627e-03, tau_den=2.393390e+01)
+  ASMR (direct)   |   1.3632 [1.352, 1.375] | -
+  All Ages        |   1.4580 [1.446, 1.470] | 1.4580  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.1186 [1.084, 1.154] | 1.1186  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1836 [1.165, 1.203] | 1.1836  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.4781 [1.456, 1.501] | 1.4781  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.4894 [1.462, 1.517] | 1.4894  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.8820 [1.830, 1.935] | 1.8820  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.5747 [1.511, 1.641] | 1.5747  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   2.0773 [1.932, 2.233] | 2.0773  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.2449 [1.103, 1.405] | 1.2449  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.2579 [0.201, 0.330] | 0.2579  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.4285 [1.394, 1.464] | -
-  All Ages        |   0.0462 [0.045, 0.048] | 1.6647  (beta_num=0.000280, beta_den=-0.033630)
-  1920            |   3.0799 [2.725, 3.481] | 2.2655  (beta_num=0.000940, beta_den=0.005893)
-  1930            |   1.0814 [1.025, 1.141] | 1.8265  (beta_num=0.001683, b_original_den=-0.001081, C_den=-5.519378e+00, ka_den=-1.523487e-02, kb_den=3.107761e-02, tau_den=2.125659e+02)
-  1940            |   1.7687 [1.698, 1.842] | 1.8930  (beta_num=0.001690, beta_den=0.000894)
-  1950            |   1.2257 [1.175, 1.279] | 1.8385  (beta_num=0.001672, b_original_den=-0.000603, C_den=-7.615754e+00, ka_den=-2.262328e-02, kb_den=-5.911026e-04, tau_den=1.476035e+01)
-  1960            |   1.5313 [1.442, 1.626] | 1.4781  (beta_num=0.001966, beta_den=0.002499)
-  1970            |   0.8591 [0.796, 0.927] | 1.0673  (beta_num=0.002794, beta_den=0.000050)
-  1980            |   1.1789 [1.049, 1.325] | 1.5527  (beta_num=0.003522, b_original_den=-0.004000, C_den=-1.128490e+01, ka_den=7.645224e-03, kb_den=-3.304190e-03, tau_den=3.560599e+01)
-  1990            |   1.2102 [1.015, 1.444] | 0.9912  (beta_num=0.003798, beta_den=0.006545)
-  2000            |   0.1714 [0.129, 0.229] | 0.1715  (beta_num=0.000008, beta_den=0.000004)
+  ASMR (direct)   |   1.8019 [1.758, 1.847] | -
+  All Ages        |   1.6647 [1.630, 1.700] | 1.6647  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   2.2655 [2.001, 2.565] | 2.2655  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.8265 [1.731, 1.927] | 1.8265  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.8930 [1.818, 1.971] | 1.8930  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.8385 [1.762, 1.919] | 1.8385  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.4781 [1.393, 1.568] | 1.4781  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.0673 [0.989, 1.152] | 1.0673  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.5527 [1.383, 1.744] | 1.5527  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.9912 [0.838, 1.172] | 0.9912  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.1715 [0.129, 0.229] | 0.1715  (beta_num=0.000000, beta_den=0.000000)
 
 Sheet: 2022_06 — Reporting date: 2023-01-02
 ============================================================
@@ -611,97 +751,97 @@ Dose combination: 1 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0279 [0.962, 1.098] | -
-  All Ages        |   0.4015 [0.371, 0.434] | 0.9407  (beta_num=-0.060664, beta_den=-0.086689)
-  1920            |   0.8569 [0.631, 1.164] | 1.1285  (beta_num=0.005326, b_original_den=-0.005488, C_den=-4.663023e+00, ka_den=-9.185582e-03, kb_den=7.373783e-01, tau_den=1.066234e+04)
-  1930            |   1.0765 [0.953, 1.216] | 1.1027  (b_original_num=-0.005800, C_num=-5.046638e+00, ka_num=-6.135620e-02, kb_num=-2.532572e-03, tau_num=7.456366e+00, b_original_den=-0.002692, C_den=-5.018589e+00, ka_den=-1.199373e-01, kb_den=-1.287520e-03, tau_den=5.279155e+00)
-  1940            |   1.0905 [0.964, 1.233] | 0.8543  (b_original_num=-0.002154, C_num=-5.173981e+00, ka_num=-2.537524e-01, kb_num=-1.422767e-03, tau_num=4.937999e+00, b_original_den=-0.002950, C_den=-5.950341e+00, ka_den=-1.173397e-01, kb_den=-1.457429e-03, tau_den=5.891654e+00)
-  1950            |   0.9248 [0.797, 1.073] | 0.9134  (b_original_num=-0.002431, C_num=-6.384080e+00, ka_num=-2.304131e-01, kb_num=-1.731229e-03, tau_num=3.472597e+00, b_original_den=-0.002478, C_den=-6.982822e+00, ka_den=-9.381654e-02, kb_den=-1.499043e-03, tau_den=6.107934e+00)
-  1960            |   0.9213 [0.747, 1.136] | 0.7918  (b_original_num=-0.004227, C_num=-7.723829e+00, ka_num=-2.667656e-02, kb_num=2.307776e-03, tau_num=2.583593e+01, b_original_den=-0.002676, C_den=-8.355228e+00, ka_den=-6.064207e-02, kb_den=-1.847473e-03, tau_den=3.805836e+00)
-  1970            |   1.1992 [0.924, 1.557] | 0.8824  (b_original_num=-0.009272, C_num=-8.173982e+00, ka_num=-1.479187e-01, kb_num=-2.260629e-03, tau_num=5.210738e+00, b_original_den=-0.002140, C_den=-9.504506e+00, ka_den=-2.587550e-02, kb_den=-1.110276e-03, tau_den=7.207179e+00)
-  1980            |   0.9836 [0.659, 1.468] | 0.9843  (beta_num=0.000039, b_original_den=-0.001356, C_den=-1.073994e+01, ka_den=9.867767e-02, kb_den=-1.322329e-03, tau_den=1.746671e+00)
-  1990            |   1.1928 [0.683, 2.084] | 1.2769  (beta_num=0.000011, beta_den=0.002137)
-  2000            |   0.2558 [0.063, 1.036] | 0.2558  (beta_num=0.000005, beta_den=0.000006)
+  ASMR (direct)   |   0.9325 [0.873, 0.996] | -
+  All Ages        |   0.9407 [0.878, 1.008] | 0.9407  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.1285 [0.835, 1.525] | 1.1285  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1027 [0.973, 1.249] | 1.1027  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   0.8543 [0.747, 0.977] | 0.8543  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.9134 [0.781, 1.068] | 0.9134  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.7918 [0.637, 0.984] | 0.7918  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.8824 [0.668, 1.166] | 0.8824  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.9843 [0.660, 1.469] | 0.9843  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.2769 [0.731, 2.230] | 1.2769  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.2558 [0.063, 1.036] | 0.2558  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0317 [1.009, 1.055] | -
-  All Ages        |   0.4045 [0.393, 0.416] | 1.0993  (beta_num=-0.055079, beta_den=-0.086689)
-  1920            |   1.0323 [0.949, 1.123] | 0.9594  (b_original_num=-0.002257, C_num=-4.422207e+00, ka_num=-9.271692e-02, kb_num=-1.349610e-03, tau_num=5.500311e+00, b_original_den=-0.005488, C_den=-4.663023e+00, ka_den=-9.185582e-03, kb_den=7.373783e-01, tau_den=1.066234e+04)
-  1930            |   1.0054 [0.961, 1.051] | 1.0600  (b_original_num=-0.002201, C_num=-5.258792e+00, ka_num=-7.423105e-02, kb_num=-1.364036e-03, tau_num=6.350131e+00, b_original_den=-0.002692, C_den=-5.018589e+00, ka_den=-1.199373e-01, kb_den=-1.287520e-03, tau_den=5.279155e+00)
-  1940            |   1.0316 [0.989, 1.076] | 1.1077  (b_original_num=-0.002602, C_num=-6.195610e+00, ka_num=-1.130529e-01, kb_num=-1.055011e-03, tau_num=5.138805e+00, b_original_den=-0.002950, C_den=-5.950341e+00, ka_den=-1.173397e-01, kb_den=-1.457429e-03, tau_den=5.891654e+00)
-  1950            |   1.0420 [0.992, 1.094] | 1.1703  (b_original_num=-0.002059, C_num=-7.470395e+00, ka_num=-4.495624e-02, kb_num=-1.223755e-03, tau_num=7.112441e+00, b_original_den=-0.002478, C_den=-6.982822e+00, ka_den=-9.381654e-02, kb_den=-1.499043e-03, tau_den=6.107934e+00)
-  1960            |   0.9819 [0.915, 1.053] | 0.9634  (b_original_num=-0.000424, C_num=-8.861239e+00, ka_num=-1.971499e-02, kb_num=2.505318e-03, tau_num=1.786950e+01, b_original_den=-0.002676, C_den=-8.355228e+00, ka_den=-6.064207e-02, kb_den=-1.847473e-03, tau_den=3.805836e+00)
-  1970            |   1.1449 [1.041, 1.259] | 1.2788  (beta_num=0.000039, b_original_den=-0.002140, C_den=-9.504506e+00, ka_den=-2.587550e-02, kb_den=-1.110276e-03, tau_den=7.207179e+00)
-  1980            |   1.1727 [1.006, 1.368] | 1.1730  (beta_num=0.000017, b_original_den=-0.001356, C_den=-1.073994e+01, ka_den=9.867767e-02, kb_den=-1.322329e-03, tau_den=1.746671e+00)
-  1990            |   2.0402 [1.634, 2.548] | 1.9498  (beta_num=0.000008, beta_den=0.002137)
-  2000            |   1.3927 [1.046, 1.855] | 1.3927  (beta_num=0.000004, beta_den=0.000006)
+  ASMR (direct)   |   1.0965 [1.072, 1.121] | -
+  All Ages        |   1.0993 [1.074, 1.125] | 1.0993  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.9594 [0.880, 1.046] | 0.9594  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0600 [1.012, 1.110] | 1.0600  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1077 [1.060, 1.157] | 1.1077  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.1703 [1.113, 1.231] | 1.1703  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.9634 [0.897, 1.035] | 0.9634  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.2788 [1.162, 1.407] | 1.2788  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.1730 [1.006, 1.368] | 1.1730  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.9498 [1.562, 2.434] | 1.9498  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.3927 [1.046, 1.855] | 1.3927  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0011 [0.937, 1.070] | -
-  All Ages        |   1.0072 [0.931, 1.089] | 1.1686  (beta_num=-0.055079, beta_den=-0.060664)
-  1920            |   1.2047 [0.883, 1.643] | 0.8501  (b_original_num=-0.002257, C_num=-4.422207e+00, ka_num=-9.271692e-02, kb_num=-1.349610e-03, tau_num=5.500311e+00, beta_den=0.005326)
-  1930            |   0.9339 [0.826, 1.056] | 0.9613  (b_original_num=-0.002201, C_num=-5.258792e+00, ka_num=-7.423105e-02, kb_num=-1.364036e-03, tau_num=6.350131e+00, b_original_den=-0.005800, C_den=-5.046638e+00, ka_den=-6.135620e-02, kb_den=-2.532572e-03, tau_den=7.456366e+00)
-  1940            |   0.9460 [0.836, 1.071] | 1.2966  (b_original_num=-0.002602, C_num=-6.195610e+00, ka_num=-1.130529e-01, kb_num=-1.055011e-03, tau_num=5.138805e+00, b_original_den=-0.002154, C_den=-5.173981e+00, ka_den=-2.537524e-01, kb_den=-1.422767e-03, tau_den=4.937999e+00)
-  1950            |   1.1267 [0.970, 1.309] | 1.2812  (b_original_num=-0.002059, C_num=-7.470395e+00, ka_num=-4.495624e-02, kb_num=-1.223755e-03, tau_num=7.112441e+00, b_original_den=-0.002431, C_den=-6.384080e+00, ka_den=-2.304131e-01, kb_den=-1.731229e-03, tau_den=3.472597e+00)
-  1960            |   1.0658 [0.863, 1.317] | 1.2167  (b_original_num=-0.000424, C_num=-8.861239e+00, ka_num=-1.971499e-02, kb_num=2.505318e-03, tau_num=1.786950e+01, b_original_den=-0.004227, C_den=-7.723829e+00, ka_den=-2.667656e-02, kb_den=2.307776e-03, tau_den=2.583593e+01)
-  1970            |   0.9547 [0.734, 1.242] | 1.4494  (beta_num=0.000039, b_original_den=-0.009272, C_den=-8.173982e+00, ka_den=-1.479187e-01, kb_den=-2.260629e-03, tau_den=5.210738e+00)
-  1980            |   1.1923 [0.792, 1.794] | 1.1917  (beta_num=0.000017, beta_den=0.000039)
-  1990            |   0.4820 [0.274, 0.847] | 0.4821  (beta_num=0.000008, beta_den=0.000011)
-  2000            |   5.4445 [1.340, 22.126] | 5.4447  (beta_num=0.000004, beta_den=0.000005)
+  ASMR (direct)   |   1.1733 [1.098, 1.253] | -
+  All Ages        |   1.1686 [1.090, 1.252] | 1.1686  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.8501 [0.626, 1.154] | 0.8501  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   0.9613 [0.847, 1.091] | 0.9613  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.2966 [1.133, 1.483] | 1.2966  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.2812 [1.095, 1.500] | 1.2812  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2167 [0.978, 1.514] | 1.2167  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.4494 [1.095, 1.919] | 1.4494  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.1917 [0.792, 1.793] | 1.1917  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.4821 [0.274, 0.848] | 0.4821  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   5.4447 [1.340, 22.127] | 5.4447  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 2 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0994 [1.078, 1.121] | -
-  All Ages        |   0.3501 [0.342, 0.358] | 1.4385  (beta_num=0.000367, beta_den=-0.055079)
-  1920            |   1.0688 [0.989, 1.155] | 1.4182  (beta_num=0.001659, b_original_den=-0.002257, C_den=-4.422207e+00, ka_den=-9.271692e-02, kb_den=-1.349610e-03, tau_den=5.500311e+00)
-  1930            |   1.0818 [1.041, 1.124] | 1.4639  (beta_num=0.002470, b_original_den=-0.002201, C_den=-5.258792e+00, ka_den=-7.423105e-02, kb_den=-1.364036e-03, tau_den=6.350131e+00)
-  1940            |   1.1196 [1.080, 1.160] | 1.5523  (beta_num=0.002533, b_original_den=-0.002602, C_den=-6.195610e+00, ka_den=-1.130529e-01, kb_den=-1.055011e-03, tau_den=5.138805e+00)
-  1950            |   1.1418 [1.093, 1.193] | 1.4561  (beta_num=0.003007, b_original_den=-0.002059, C_den=-7.470395e+00, ka_den=-4.495624e-02, kb_den=-1.223755e-03, tau_den=7.112441e+00)
-  1960            |   1.0221 [0.952, 1.097] | 1.2703  (beta_num=0.003568, b_original_den=-0.000424, C_den=-8.861239e+00, ka_den=-1.971499e-02, kb_den=2.505318e-03, tau_den=1.786950e+01)
-  1970            |   1.0775 [0.972, 1.194] | 1.1926  (beta_num=0.004632, beta_den=0.000039)
-  1980            |   1.0886 [0.902, 1.314] | 1.0886  (beta_num=0.000016, beta_den=0.000017)
-  1990            |   0.6227 [0.468, 0.829] | 0.6227  (beta_num=0.000011, beta_den=0.000008)
-  2000            |   0.8265 [0.522, 1.309] | 0.8266  (beta_num=0.000007, beta_den=0.000004)
+  ASMR (direct)   |   1.4587 [1.430, 1.487] | -
+  All Ages        |   1.4385 [1.410, 1.468] | 1.4385  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.4182 [1.311, 1.535] | 1.4182  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.4639 [1.407, 1.523] | 1.4639  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.5523 [1.496, 1.611] | 1.5523  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.4561 [1.392, 1.523] | 1.4561  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2703 [1.183, 1.364] | 1.2703  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.1926 [1.077, 1.321] | 1.1926  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.0886 [0.902, 1.314] | 1.0886  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.6227 [0.468, 0.829] | 0.6227  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.8266 [0.522, 1.309] | 0.8266  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 1 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1031 [1.034, 1.177] | -
-  All Ages        |   0.3526 [0.327, 0.381] | 1.6810  (beta_num=0.000367, beta_den=-0.060664)
-  1920            |   1.2876 [0.950, 1.746] | 1.2057  (beta_num=0.001659, beta_den=0.005326)
-  1930            |   1.0104 [0.896, 1.139] | 1.4073  (beta_num=0.002470, b_original_den=-0.005800, C_den=-5.046638e+00, ka_den=-6.135620e-02, kb_den=-2.532572e-03, tau_den=7.456366e+00)
-  1940            |   1.0591 [0.938, 1.196] | 2.0128  (beta_num=0.002533, b_original_den=-0.002154, C_den=-5.173981e+00, ka_den=-2.537524e-01, kb_den=-1.422767e-03, tau_den=4.937999e+00)
-  1950            |   1.2865 [1.110, 1.491] | 1.8656  (beta_num=0.003007, b_original_den=-0.002431, C_den=-6.384080e+00, ka_den=-2.304131e-01, kb_den=-1.731229e-03, tau_den=3.472597e+00)
-  1960            |   1.0894 [0.883, 1.343] | 1.5457  (beta_num=0.003568, b_original_den=-0.004227, C_den=-7.723829e+00, ka_den=-2.667656e-02, kb_den=2.307776e-03, tau_den=2.583593e+01)
-  1970            |   1.0287 [0.790, 1.339] | 1.7285  (beta_num=0.004632, b_original_den=-0.009272, C_den=-8.173982e+00, ka_den=-1.479187e-01, kb_den=-2.260629e-03, tau_den=5.210738e+00)
-  1980            |   1.2980 [0.857, 1.965] | 1.2973  (beta_num=0.000016, beta_den=0.000039)
-  1990            |   0.5709 [0.318, 1.026] | 0.5709  (beta_num=0.000011, beta_den=0.000011)
-  2000            |   4.5000 [1.061, 19.079] | 4.5004  (beta_num=0.000007, beta_den=0.000005)
+  ASMR (direct)   |   1.7170 [1.609, 1.832] | -
+  All Ages        |   1.6810 [1.571, 1.799] | 1.6810  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.2057 [0.894, 1.626] | 1.2057  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.4073 [1.245, 1.591] | 1.4073  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   2.0128 [1.764, 2.296] | 2.0128  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.8656 [1.598, 2.178] | 1.8656  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.5457 [1.244, 1.920] | 1.5457  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.7285 [1.305, 2.289] | 1.7285  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.2973 [0.857, 1.964] | 1.2973  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.5709 [0.318, 1.026] | 0.5709  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   4.5004 [1.061, 19.081] | 4.5004  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 0 [2022_06]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1343 [1.114, 1.155] | -
-  All Ages        |   0.1416 [0.139, 0.145] | 1.5813  (beta_num=0.000367, beta_den=-0.086689)
-  1920            |   1.1033 [1.039, 1.171] | 1.3607  (beta_num=0.001659, b_original_den=-0.005488, C_den=-4.663023e+00, ka_den=-9.185582e-03, kb_den=7.373783e-01, tau_den=1.066234e+04)
-  1930            |   1.0876 [1.051, 1.125] | 1.5518  (beta_num=0.002470, b_original_den=-0.002692, C_den=-5.018589e+00, ka_den=-1.199373e-01, kb_den=-1.287520e-03, tau_den=5.279155e+00)
-  1940            |   1.1550 [1.117, 1.194] | 1.7195  (beta_num=0.002533, b_original_den=-0.002950, C_den=-5.950341e+00, ka_den=-1.173397e-01, kb_den=-1.457429e-03, tau_den=5.891654e+00)
-  1950            |   1.1897 [1.142, 1.240] | 1.7040  (beta_num=0.003007, b_original_den=-0.002478, C_den=-6.982822e+00, ka_den=-9.381654e-02, kb_den=-1.499043e-03, tau_den=6.107934e+00)
-  1960            |   1.0036 [0.941, 1.071] | 1.2238  (beta_num=0.003568, b_original_den=-0.002676, C_den=-8.355228e+00, ka_den=-6.064207e-02, kb_den=-1.847473e-03, tau_den=3.805836e+00)
-  1970            |   1.2336 [1.120, 1.359] | 1.5252  (beta_num=0.004632, b_original_den=-0.002140, C_den=-9.504506e+00, ka_den=-2.587550e-02, kb_den=-1.110276e-03, tau_den=7.207179e+00)
-  1980            |   1.2767 [1.078, 1.512] | 1.2770  (beta_num=0.000016, b_original_den=-0.001356, C_den=-1.073994e+01, ka_den=9.867767e-02, kb_den=-1.322329e-03, tau_den=1.746671e+00)
-  1990            |   1.2704 [0.966, 1.670] | 1.2142  (beta_num=0.000011, beta_den=0.002137)
-  2000            |   1.1511 [0.734, 1.806] | 1.1512  (beta_num=0.000007, beta_den=0.000006)
+  ASMR (direct)   |   1.5995 [1.571, 1.628] | -
+  All Ages        |   1.5813 [1.553, 1.610] | 1.5813  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.3607 [1.282, 1.445] | 1.3607  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.5518 [1.499, 1.607] | 1.5518  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.7195 [1.661, 1.780] | 1.7195  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.7040 [1.634, 1.777] | 1.7040  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2238 [1.147, 1.306] | 1.2238  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.5252 [1.385, 1.680] | 1.5252  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.2770 [1.078, 1.512] | 1.2770  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.2142 [0.924, 1.595] | 1.2142  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.1512 [0.734, 1.806] | 1.1512  (beta_num=0.000000, beta_den=0.000000)
 
 M/P by decades (Dose 3)
 --------------------------------------------------
@@ -722,97 +862,97 @@ Dose combination: 1 vs 0 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9126 [0.864, 0.963] | -
-  All Ages        |   0.0090 [0.008, 0.010] | 0.8867  (beta_num=-0.057435, beta_den=-0.104175)
-  1920            |   0.4527 [0.359, 0.571] | 0.8155  (beta_num=0.005466, b_original_den=-0.005650, C_den=-4.803426e+00, ka_den=-8.371904e-03, kb_den=1.552039e+00, tau_den=2.090024e+04)
-  1930            |   1.1229 [1.008, 1.251] | 1.1372  (b_original_num=-0.003410, C_num=-5.822157e+00, ka_num=6.167618e-02, kb_num=-5.679743e-03, tau_num=7.071081e+00, b_original_den=-0.001444, C_den=-5.777005e+00, ka_den=3.169159e-02, kb_den=-2.359636e-03, tau_den=5.043416e+00)
-  1940            |   1.2058 [1.088, 1.336] | 1.1307  (b_original_num=-0.004056, C_num=-6.250372e+00, ka_num=-1.201407e-01, kb_num=-3.740226e-03, tau_num=8.466329e-01, b_original_den=-0.001983, C_den=-6.571681e+00, ka_den=-6.405185e-03, kb_den=1.182095e+00, tau_den=1.211474e+04)
-  1950            |   0.5801 [0.514, 0.655] | 0.4601  (b_original_num=-0.005523, C_num=-6.949170e+00, ka_num=-1.377430e-02, kb_num=1.568852e+00, tau_num=9.437602e+03, b_original_den=-0.001765, C_den=-7.492826e+00, ka_den=-6.117242e-03, kb_den=2.081137e+00, tau_den=2.269386e+04)
-  1960            |   1.0361 [0.888, 1.208] | 1.1372  (beta_num=0.000249, b_original_den=-0.001754, C_den=-8.675674e+00, ka_den=1.441640e-02, kb_den=-2.442416e-03, tau_den=5.615060e+00)
-  1970            |   0.8538 [0.703, 1.037] | 0.9642  (b_original_num=-0.007266, C_num=-8.946258e+00, ka_num=2.092944e-02, kb_num=-2.984975e-03, tau_num=1.047847e+01, b_original_den=-0.001053, C_den=-9.404602e+00, ka_den=-1.753261e-01, kb_den=-1.301184e-03, tau_den=1.673243e+00)
-  1980            |   2.9141 [2.274, 3.734] | 2.9175  (beta_num=0.000044, beta_den=0.000020)
-  1990            |   0.3441 [0.219, 0.540] | 0.3441  (beta_num=0.000012, beta_den=0.000012)
-  2000            |   0.0000 [0.000, 0.000] | 1.1101  (beta_num=0.000007, b_original_den=-0.004655, C_den=-1.148941e+01, ka_den=-2.686645e-01, kb_den=-1.023770e-03, tau_den=2.181523e+00)
+  ASMR (direct)   |   0.8933 [0.847, 0.942] | -
+  All Ages        |   0.8867 [0.841, 0.935] | 0.8867  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.8155 [0.648, 1.027] | 0.8155  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1372 [1.024, 1.262] | 1.1372  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1307 [1.021, 1.253] | 1.1307  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.4601 [0.407, 0.520] | 0.4601  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.1372 [0.975, 1.326] | 1.1372  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.9642 [0.795, 1.170] | 0.9642  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   2.9175 [2.277, 3.739] | 2.9175  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.3441 [0.219, 0.540] | 0.3441  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.1101 [0.571, 2.160] | 1.1101  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0130 [0.997, 1.029] | -
-  All Ages        |   0.0377 [0.036, 0.039] | 1.0756  (beta_num=-0.069917, beta_den=-0.104175)
-  1920            |   0.8749 [0.817, 0.937] | 1.1506  (b_original_num=-0.001791, C_num=-5.058950e+00, ka_num=2.335262e-02, kb_num=-2.315853e-03, tau_num=7.776431e+00, b_original_den=-0.005650, C_den=-4.803426e+00, ka_den=-8.371904e-03, kb_den=1.552039e+00, tau_den=2.090024e+04)
-  1930            |   1.0936 [1.058, 1.130] | 1.0157  (b_original_num=-0.002180, C_num=-5.673077e+00, ka_num=-4.610501e-03, kb_num=6.709393e-01, tau_num=1.122337e+04, b_original_den=-0.001444, C_den=-5.777005e+00, ka_den=3.169159e-02, kb_den=-2.359636e-03, tau_den=5.043416e+00)
-  1940            |   1.0616 [1.031, 1.093] | 1.1247  (b_original_num=-0.000743, C_num=-6.726602e+00, ka_num=-3.292948e-03, kb_num=8.016686e-01, tau_num=1.697743e+04, b_original_den=-0.001983, C_den=-6.571681e+00, ka_den=-6.405185e-03, kb_den=1.182095e+00, tau_den=1.211474e+04)
-  1950            |   0.9143 [0.884, 0.945] | 0.9866  (b_original_num=-0.001544, C_num=-7.808790e+00, ka_num=1.204409e-02, kb_num=-2.330610e-03, tau_num=8.146632e+00, b_original_den=-0.001765, C_den=-7.492826e+00, ka_den=-6.117242e-03, kb_den=2.081137e+00, tau_den=2.269386e+04)
-  1960            |   0.9128 [0.872, 0.955] | 1.0445  (beta_num=0.001002, b_original_den=-0.001754, C_den=-8.675674e+00, ka_den=1.441640e-02, kb_den=-2.442416e-03, tau_den=5.615060e+00)
-  1970            |   1.1435 [1.076, 1.215] | 1.3355  (beta_num=0.000857, b_original_den=-0.001053, C_den=-9.404602e+00, ka_den=-1.753261e-01, kb_den=-1.301184e-03, tau_den=1.673243e+00)
-  1980            |   0.9999 [0.909, 1.100] | 1.1336  (beta_num=0.002350, beta_den=0.000020)
-  1990            |   0.9484 [0.826, 1.089] | 0.7056  (b_original_num=-0.007561, C_num=-1.157692e+01, ka_num=-6.015661e-03, kb_num=1.706412e-01, tau_num=1.080519e+04, beta_den=0.000012)
-  2000            |   1.1376 [0.945, 1.370] | 1.3701  (beta_num=0.000004, b_original_den=-0.004655, C_den=-1.148941e+01, ka_den=-2.686645e-01, kb_den=-1.023770e-03, tau_den=2.181523e+00)
+  ASMR (direct)   |   1.0620 [1.046, 1.079] | -
+  All Ages        |   1.0756 [1.059, 1.092] | 1.0756  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.1506 [1.075, 1.231] | 1.1506  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0157 [0.983, 1.050] | 1.0157  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1247 [1.092, 1.158] | 1.1247  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.9866 [0.954, 1.020] | 0.9866  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.0445 [0.998, 1.093] | 1.0445  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.3355 [1.257, 1.419] | 1.3355  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.1336 [1.031, 1.246] | 1.1336  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.7056 [0.614, 0.811] | 0.7056  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.3701 [1.136, 1.652] | 1.3701  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.1096 [1.051, 1.172] | -
-  All Ages        |   4.1745 [3.771, 4.621] | 1.2130  (beta_num=-0.069917, beta_den=-0.057435)
-  1920            |   1.9326 [1.528, 2.444] | 1.4108  (b_original_num=-0.001791, C_num=-5.058950e+00, ka_num=2.335262e-02, kb_num=-2.315853e-03, tau_num=7.776431e+00, beta_den=0.005466)
-  1930            |   0.9739 [0.873, 1.086] | 0.8932  (b_original_num=-0.002180, C_num=-5.673077e+00, ka_num=-4.610501e-03, kb_num=6.709393e-01, tau_num=1.122337e+04, b_original_den=-0.003410, C_den=-5.822157e+00, ka_den=6.167618e-02, kb_den=-5.679743e-03, tau_den=7.071081e+00)
-  1940            |   0.8804 [0.794, 0.976] | 0.9947  (b_original_num=-0.000743, C_num=-6.726602e+00, ka_num=-3.292948e-03, kb_num=8.016686e-01, tau_num=1.697743e+04, b_original_den=-0.004056, C_den=-6.250372e+00, ka_den=-1.201407e-01, kb_den=-3.740226e-03, tau_den=8.466329e-01)
-  1950            |   1.5759 [1.394, 1.781] | 2.1441  (b_original_num=-0.001544, C_num=-7.808790e+00, ka_num=1.204409e-02, kb_num=-2.330610e-03, tau_num=8.146632e+00, b_original_den=-0.005523, C_den=-6.949170e+00, ka_den=-1.377430e-02, kb_den=1.568852e+00, tau_den=9.437602e+03)
-  1960            |   0.8810 [0.755, 1.029] | 0.9185  (beta_num=0.001002, beta_den=0.000249)
-  1970            |   1.3393 [1.101, 1.628] | 1.3851  (beta_num=0.000857, b_original_den=-0.007266, C_den=-8.946258e+00, ka_den=2.092944e-02, kb_den=-2.984975e-03, tau_den=1.047847e+01)
-  1980            |   0.3431 [0.266, 0.442] | 0.3886  (beta_num=0.002350, beta_den=0.000044)
-  1990            |   2.7563 [1.747, 4.348] | 2.0507  (b_original_num=-0.007561, C_num=-1.157692e+01, ka_num=-6.015661e-03, kb_num=1.706412e-01, tau_num=1.080519e+04, beta_den=0.000012)
-  2000            |   0.7206 [0.370, 1.405] | 0.7205  (beta_num=0.000004, beta_den=0.000007)
+  ASMR (direct)   |   1.1879 [1.126, 1.253] | -
+  All Ages        |   1.2130 [1.150, 1.279] | 1.2130  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.4108 [1.117, 1.782] | 1.4108  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   0.8932 [0.804, 0.993] | 0.8932  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   0.9947 [0.898, 1.102] | 0.9947  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   2.1441 [1.895, 2.426] | 2.1441  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.9185 [0.787, 1.072] | 0.9185  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.3851 [1.140, 1.683] | 1.3851  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.3886 [0.302, 0.500] | 0.3886  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   2.0507 [1.300, 3.235] | 2.0507  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.7205 [0.370, 1.405] | 0.7205  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 2 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9684 [0.955, 0.982] | -
-  All Ages        |   0.0043 [0.004, 0.004] | 1.1455  (beta_num=0.000359, beta_den=-0.069917)
-  1920            |   0.8584 [0.808, 0.912] | 0.9013  (beta_num=0.000837, b_original_den=-0.001791, C_den=-5.058950e+00, ka_den=2.335262e-02, kb_den=-2.315853e-03, tau_den=7.776431e+00)
-  1930            |   0.9588 [0.933, 0.986] | 1.1792  (beta_num=0.001679, b_original_den=-0.002180, C_den=-5.673077e+00, ka_den=-4.610501e-03, kb_den=6.709393e-01, tau_den=1.122337e+04)
-  1940            |   1.0041 [0.980, 1.029] | 1.1877  (beta_num=0.001739, b_original_den=-0.000743, C_den=-6.726602e+00, ka_den=-3.292948e-03, kb_den=8.016686e-01, tau_den=1.697743e+04)
-  1950            |   0.9463 [0.919, 0.974] | 1.1091  (beta_num=0.001963, b_original_den=-0.001544, C_den=-7.808790e+00, ka_den=1.204409e-02, kb_den=-2.330610e-03, tau_den=8.146632e+00)
-  1960            |   1.0677 [1.023, 1.114] | 1.2118  (beta_num=0.003353, beta_den=0.001002)
-  1970            |   0.8525 [0.802, 0.906] | 0.9030  (beta_num=0.001914, beta_den=0.000857)
-  1980            |   1.3357 [1.200, 1.486] | 1.1780  (beta_num=0.000016, beta_den=0.002350)
-  1990            |   0.8609 [0.729, 1.017] | 1.4931  (beta_num=0.005078, b_original_den=-0.007561, C_den=-1.157692e+01, ka_den=-6.015661e-03, kb_den=1.706412e-01, tau_den=1.080519e+04)
-  2000            |   1.4488 [1.121, 1.872] | 1.4489  (beta_num=0.000005, beta_den=0.000004)
+  ASMR (direct)   |   1.1390 [1.124, 1.154] | -
+  All Ages        |   1.1455 [1.130, 1.161] | 1.1455  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.9013 [0.849, 0.957] | 0.9013  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1792 [1.147, 1.212] | 1.1792  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1877 [1.159, 1.217] | 1.1877  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.1091 [1.078, 1.142] | 1.1091  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2118 [1.161, 1.264] | 1.2118  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.9030 [0.850, 0.959] | 0.9030  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.1780 [1.059, 1.310] | 1.1780  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.4931 [1.267, 1.760] | 1.4931  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.4489 [1.122, 1.872] | 1.4489  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 1 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0732 [1.017, 1.132] | -
-  All Ages        |   0.0181 [0.016, 0.020] | 1.3895  (beta_num=0.000359, beta_den=-0.057435)
-  1920            |   1.6590 [1.319, 2.086] | 1.2716  (beta_num=0.000837, beta_den=0.005466)
-  1930            |   0.9338 [0.840, 1.039] | 1.0533  (beta_num=0.001679, b_original_den=-0.003410, C_den=-5.822157e+00, ka_den=6.167618e-02, kb_den=-5.679743e-03, tau_den=7.071081e+00)
-  1940            |   0.8839 [0.799, 0.978] | 1.1814  (beta_num=0.001739, b_original_den=-0.004056, C_den=-6.250372e+00, ka_den=-1.201407e-01, kb_den=-3.740226e-03, tau_den=8.466329e-01)
-  1950            |   1.4913 [1.322, 1.682] | 2.3781  (beta_num=0.001963, b_original_den=-0.005523, C_den=-6.949170e+00, ka_den=-1.377430e-02, kb_den=1.568852e+00, tau_den=9.437602e+03)
-  1960            |   0.9407 [0.807, 1.096] | 1.1130  (beta_num=0.003353, beta_den=0.000249)
-  1970            |   1.1418 [0.940, 1.386] | 1.2507  (beta_num=0.001914, b_original_den=-0.007266, C_den=-8.946258e+00, ka_den=2.092944e-02, kb_den=-2.984975e-03, tau_den=1.047847e+01)
-  1980            |   0.4583 [0.356, 0.590] | 0.4577  (beta_num=0.000016, beta_den=0.000044)
-  1990            |   2.3730 [1.497, 3.761] | 3.0620  (beta_num=0.005078, beta_den=0.000012)
-  2000            |   0.8348 [0.420, 1.661] | 0.8348  (beta_num=0.000005, beta_den=0.000007)
+  ASMR (direct)   |   1.3519 [1.282, 1.425] | -
+  All Ages        |   1.3895 [1.319, 1.464] | 1.3895  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.2716 [1.012, 1.598] | 1.2716  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0533 [0.950, 1.167] | 1.0533  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1814 [1.068, 1.307] | 1.1814  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   2.3781 [2.106, 2.685] | 2.3781  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.1130 [0.955, 1.297] | 1.1130  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.2507 [1.031, 1.517] | 1.2507  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.4577 [0.355, 0.589] | 0.4577  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   3.0620 [1.934, 4.849] | 3.0620  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.8348 [0.420, 1.661] | 0.8348  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 0 [2022_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9810 [0.969, 0.993] | -
-  All Ages        |   0.0002 [0.000, 0.000] | 1.2321  (beta_num=0.000359, beta_den=-0.104175)
-  1920            |   0.7510 [0.717, 0.787] | 1.0371  (beta_num=0.000837, b_original_den=-0.005650, C_den=-4.803426e+00, ka_den=-8.371904e-03, kb_den=1.552039e+00, tau_den=2.090024e+04)
-  1930            |   1.0486 [1.024, 1.074] | 1.1977  (beta_num=0.001679, b_original_den=-0.001444, C_den=-5.777005e+00, ka_den=3.169159e-02, kb_den=-2.359636e-03, tau_den=5.043416e+00)
-  1940            |   1.0659 [1.043, 1.090] | 1.3358  (beta_num=0.001739, b_original_den=-0.001983, C_den=-6.571681e+00, ka_den=-6.405185e-03, kb_den=1.182095e+00, tau_den=1.211474e+04)
-  1950            |   0.8651 [0.843, 0.888] | 1.0942  (beta_num=0.001963, b_original_den=-0.001765, C_den=-7.492826e+00, ka_den=-6.117242e-03, kb_den=2.081137e+00, tau_den=2.269386e+04)
-  1960            |   0.9746 [0.937, 1.013] | 1.2657  (beta_num=0.003353, b_original_den=-0.001754, C_den=-8.675674e+00, ka_den=1.441640e-02, kb_den=-2.442416e-03, tau_den=5.615060e+00)
-  1970            |   0.9749 [0.922, 1.031] | 1.2060  (beta_num=0.001914, b_original_den=-0.001053, C_den=-9.404602e+00, ka_den=-1.753261e-01, kb_den=-1.301184e-03, tau_den=1.673243e+00)
-  1980            |   1.3356 [1.214, 1.469] | 1.3354  (beta_num=0.000016, beta_den=0.000020)
-  1990            |   0.8165 [0.700, 0.952] | 1.0536  (beta_num=0.005078, beta_den=0.000012)
-  2000            |   1.6482 [1.284, 2.115] | 1.9851  (beta_num=0.000005, b_original_den=-0.004655, C_den=-1.148941e+01, ka_den=-2.686645e-01, kb_den=-1.023770e-03, tau_den=2.181523e+00)
+  ASMR (direct)   |   1.2097 [1.195, 1.224] | -
+  All Ages        |   1.2321 [1.218, 1.247] | 1.2321  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.0371 [0.991, 1.086] | 1.0371  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1977 [1.170, 1.226] | 1.1977  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.3358 [1.307, 1.366] | 1.3358  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.0942 [1.066, 1.123] | 1.0942  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.2657 [1.218, 1.316] | 1.2657  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.2060 [1.140, 1.276] | 1.2060  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3354 [1.214, 1.469] | 1.3354  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.0536 [0.906, 1.225] | 1.0536  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.9851 [1.545, 2.550] | 1.9851  (beta_num=0.000000, beta_den=0.000000)
 
 Sheet: 2022_47 — Reporting date: 2024-01-01
 ============================================================
@@ -821,161 +961,161 @@ Dose combination: 1 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0920 [1.013, 1.177] | -
-  All Ages        |   0.0056 [0.005, 0.006] | 0.9459  (beta_num=-0.069130, beta_den=-0.176202)
-  1920            |   1.8057 [1.336, 2.440] | 3.1333  (beta_num=0.006183, b_original_den=-0.005603, C_den=-4.615147e+00, ka_den=-4.663523e-02, kb_den=6.657522e-03, tau_den=1.997328e+01)
-  1930            |   1.0174 [0.882, 1.174] | 0.8729  (b_original_num=-0.006318, C_num=-5.002298e+00, ka_num=-6.516671e-02, kb_num=1.104660e-02, tau_num=1.744871e+01, b_original_den=-0.002815, C_den=-5.381965e+00, ka_den=-3.921674e-02, kb_den=5.203869e-03, tau_den=1.612904e+01)
-  1940            |   1.0643 [0.920, 1.231] | 0.7484  (b_original_num=-0.009229, C_num=-5.796255e+00, ka_num=-5.322855e-02, kb_num=5.321603e-02, tau_num=6.006620e+01, b_original_den=-0.002275, C_den=-6.454427e+00, ka_den=-3.424079e-02, kb_den=5.121738e-03, tau_den=1.586094e+01)
-  1950            |   1.0046 [0.845, 1.195] | 0.9517  (b_original_num=-0.011667, C_num=-7.024488e+00, ka_num=-1.742127e-02, kb_num=7.170438e-02, tau_num=2.912739e+02, b_original_den=-0.001104, C_den=-7.373431e+00, ka_den=-3.487854e-02, kb_den=4.840364e-03, tau_den=1.515603e+01)
-  1960            |   1.5994 [1.271, 2.013] | 1.8979  (beta_num=0.000258, b_original_den=-0.002629, C_den=-8.491069e+00, ka_den=-1.911244e-02, kb_den=1.938176e-03, tau_den=1.961666e+01)
-  1970            |   0.6724 [0.501, 0.902] | 0.6867  (b_original_num=-0.011078, C_num=-8.634599e+00, ka_num=-2.030594e-02, kb_num=3.954635e+00, tau_num=5.218976e+03, b_original_den=-0.003352, C_den=-9.591364e+00, ka_den=-1.234727e-02, kb_den=4.300948e-03, tau_den=3.332489e+01)
-  1980            |   1.2721 [0.905, 1.788] | 1.3676  (beta_num=0.000045, b_original_den=-0.000186, C_den=-1.055719e+01, ka_den=-1.068438e-02, kb_den=-3.655371e-04, tau_den=1.129817e+01)
-  1990            |   0.0000 [0.000, 0.000] | 0.9875  (beta_num=0.000013, b_original_den=-0.003369, C_den=-1.133220e+01, ka_den=1.881202e-03, kb_den=-9.811880e-02, tau_den=5.383082e+02)
-  2000            |   0.0000 [0.000, 0.000] | 1.3511  (beta_num=0.000000, b_original_den=-0.005957, C_den=-1.225800e+01, ka_den=2.257949e-02, kb_den=-6.971972e-03, tau_den=1.585571e+01)
+  ASMR (direct)   |   0.9669 [0.898, 1.041] | -
+  All Ages        |   0.9459 [0.877, 1.020] | 0.9459  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   3.1333 [2.320, 4.231] | 3.1333  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   0.8729 [0.754, 1.011] | 0.8729  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   0.7484 [0.645, 0.869] | 0.7484  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   0.9517 [0.799, 1.134] | 0.9517  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.8979 [1.508, 2.389] | 1.8979  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.6867 [0.510, 0.925] | 0.6867  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3676 [0.973, 1.923] | 1.3676  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.9875 [0.524, 1.860] | 0.9875  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.3511 [0.551, 3.310] | 1.3511  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9975 [0.975, 1.021] | -
-  All Ages        |   0.0129 [0.012, 0.013] | 1.0501  (beta_num=-0.083380, beta_den=-0.176202)
-  1920            |   1.4465 [1.306, 1.602] | 1.7257  (b_original_num=-0.002538, C_num=-4.760626e+00, ka_num=-2.331495e-02, kb_num=8.186370e-03, tau_num=2.713960e+01, b_original_den=-0.005603, C_den=-4.615147e+00, ka_den=-4.663523e-02, kb_den=6.657522e-03, tau_den=1.997328e+01)
-  1930            |   0.9812 [0.934, 1.031] | 0.9853  (b_original_num=-0.001761, C_num=-5.445859e+00, ka_num=-4.920172e-02, kb_num=4.287927e-03, tau_num=1.227808e+01, b_original_den=-0.002815, C_den=-5.381965e+00, ka_den=-3.921674e-02, kb_den=5.203869e-03, tau_den=1.612904e+01)
-  1940            |   0.9765 [0.935, 1.020] | 0.9910  (b_original_num=-0.000752, C_num=-6.543078e+00, ka_num=-3.733697e-02, kb_num=3.303040e-03, tau_num=1.233786e+01, b_original_den=-0.002275, C_den=-6.454427e+00, ka_den=-3.424079e-02, kb_den=5.121738e-03, tau_den=1.586094e+01)
-  1950            |   1.0444 [0.994, 1.098] | 1.0592  (b_original_num=-0.002637, C_num=-7.531133e+00, ka_num=-3.001638e-02, kb_num=8.472931e-05, tau_num=1.178591e+01, b_original_den=-0.001104, C_den=-7.373431e+00, ka_den=-3.487854e-02, kb_den=4.840364e-03, tau_den=1.515603e+01)
-  1960            |   0.8581 [0.802, 0.918] | 1.0145  (beta_num=0.000120, b_original_den=-0.002629, C_den=-8.491069e+00, ka_den=-1.911244e-02, kb_den=1.938176e-03, tau_den=1.961666e+01)
-  1970            |   0.8466 [0.774, 0.926] | 0.9624  (beta_num=0.000040, b_original_den=-0.003352, C_den=-9.591364e+00, ka_den=-1.234727e-02, kb_den=4.300948e-03, tau_den=3.332489e+01)
-  1980            |   1.0447 [0.908, 1.202] | 1.3066  (b_original_num=-0.002393, C_num=-1.134651e+01, ka_num=1.107433e-02, kb_num=-8.892567e-02, tau_num=3.858004e+02, b_original_den=-0.000186, C_den=-1.055719e+01, ka_den=-1.068438e-02, kb_den=-3.655371e-04, tau_den=1.129817e+01)
-  1990            |   1.0683 [0.863, 1.322] | 1.1283  (beta_num=0.000006, b_original_den=-0.003369, C_den=-1.133220e+01, ka_den=1.881202e-03, kb_den=-9.811880e-02, tau_den=5.383082e+02)
-  2000            |   0.5913 [0.442, 0.790] | 0.5512  (beta_num=0.000004, b_original_den=-0.005957, C_den=-1.225800e+01, ka_den=2.257949e-02, kb_den=-6.971972e-03, tau_den=1.585571e+01)
+  ASMR (direct)   |   1.0408 [1.017, 1.065] | -
+  All Ages        |   1.0501 [1.026, 1.075] | 1.0501  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.7257 [1.557, 1.913] | 1.7257  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   0.9853 [0.937, 1.036] | 0.9853  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   0.9910 [0.948, 1.036] | 0.9910  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.0592 [1.007, 1.114] | 1.0592  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.0145 [0.948, 1.086] | 1.0145  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   0.9624 [0.879, 1.053] | 0.9624  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3066 [1.138, 1.501] | 1.3066  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.1283 [0.912, 1.397] | 1.1283  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.5512 [0.413, 0.736] | 0.5512  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 2 vs 1 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9139 [0.847, 0.986] | -
-  All Ages        |   2.3079 [2.080, 2.561] | 1.1101  (beta_num=-0.083380, beta_den=-0.069130)
-  1920            |   0.8011 [0.589, 1.089] | 0.5508  (b_original_num=-0.002538, C_num=-4.760626e+00, ka_num=-2.331495e-02, kb_num=8.186370e-03, tau_num=2.713960e+01, beta_den=0.006183)
-  1930            |   0.9645 [0.834, 1.115] | 1.1287  (b_original_num=-0.001761, C_num=-5.445859e+00, ka_num=-4.920172e-02, kb_num=4.287927e-03, tau_num=1.227808e+01, b_original_den=-0.006318, C_den=-5.002298e+00, ka_den=-6.516671e-02, kb_den=1.104660e-02, tau_den=1.744871e+01)
-  1940            |   0.9175 [0.792, 1.062] | 1.3243  (b_original_num=-0.000752, C_num=-6.543078e+00, ka_num=-3.733697e-02, kb_num=3.303040e-03, tau_num=1.233786e+01, b_original_den=-0.009229, C_den=-5.796255e+00, ka_den=-5.322855e-02, kb_den=5.321603e-02, tau_den=6.006620e+01)
-  1950            |   1.0397 [0.873, 1.238] | 1.1130  (b_original_num=-0.002637, C_num=-7.531133e+00, ka_num=-3.001638e-02, kb_num=8.472931e-05, tau_num=1.178591e+01, b_original_den=-0.011667, C_den=-7.024488e+00, ka_den=-1.742127e-02, kb_den=7.170438e-02, tau_den=2.912739e+02)
-  1960            |   0.5365 [0.425, 0.677] | 0.5346  (beta_num=0.000120, beta_den=0.000258)
-  1970            |   1.2590 [0.936, 1.693] | 1.4014  (beta_num=0.000040, b_original_den=-0.011078, C_den=-8.634599e+00, ka_den=-2.030594e-02, kb_den=3.954635e+00, tau_den=5.218976e+03)
-  1980            |   0.8212 [0.579, 1.164] | 0.9554  (b_original_num=-0.002393, C_num=-1.134651e+01, ka_num=1.107433e-02, kb_num=-8.892567e-02, tau_num=3.858004e+02, beta_den=0.000045)
-  1990            |   0.6240 [0.328, 1.187] | 0.6240  (beta_num=0.000006, beta_den=0.000013)
-  2000            |   0.6019 [0.244, 1.486] | 0.6019  (beta_num=0.000004, beta_den=0.000000)
+  ASMR (direct)   |   1.0771 [1.000, 1.160] | -
+  All Ages        |   1.1101 [1.029, 1.198] | 1.1101  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.5508 [0.405, 0.748] | 0.5508  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1287 [0.973, 1.310] | 1.1287  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.3243 [1.139, 1.539] | 1.3243  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.1130 [0.933, 1.328] | 1.1130  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.5346 [0.424, 0.674] | 0.5346  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.4014 [1.038, 1.891] | 1.4014  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.9554 [0.675, 1.353] | 0.9554  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.6240 [0.328, 1.187] | 0.6240  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.6019 [0.244, 1.486] | 0.6019  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 2 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0226 [1.002, 1.044] | -
-  All Ages        |   1.1761 [1.141, 1.212] | 1.0418  (beta_num=-0.085907, beta_den=-0.083380)
-  1920            |   0.7089 [0.646, 0.779] | 0.6432  (b_original_num=-0.001086, C_num=-4.659392e+00, ka_num=-5.460557e-02, kb_num=5.188562e-03, tau_num=1.312394e+01, b_original_den=-0.002538, C_den=-4.760626e+00, ka_den=-2.331495e-02, kb_den=8.186370e-03, tau_den=2.713960e+01)
-  1930            |   1.0045 [0.962, 1.049] | 1.0740  (b_original_num=-0.000685, C_num=-5.829365e+00, ka_num=-2.636328e-02, kb_num=8.060314e-03, tau_num=2.254644e+01, b_original_den=-0.001761, C_den=-5.445859e+00, ka_den=-4.920172e-02, kb_den=4.287927e-03, tau_den=1.227808e+01)
-  1940            |   1.0687 [1.029, 1.110] | 1.1091  (b_original_num=-0.001124, C_num=-7.008743e+00, ka_num=-2.081393e-02, kb_num=4.855456e-03, tau_num=2.093132e+01, b_original_den=-0.000752, C_den=-6.543078e+00, ka_den=-3.733697e-02, kb_den=3.303040e-03, tau_den=1.233786e+01)
-  1950            |   1.0045 [0.961, 1.050] | 1.0502  (b_original_num=-0.000775, C_num=-8.028312e+00, ka_num=-2.979690e-02, kb_num=3.462377e-03, tau_num=1.276622e+01, b_original_den=-0.002637, C_den=-7.531133e+00, ka_den=-3.001638e-02, kb_den=8.472931e-05, tau_den=1.178591e+01)
-  1960            |   1.0544 [0.988, 1.125] | 1.0930  (beta_num=0.001480, beta_den=0.000120)
-  1970            |   1.1047 [1.008, 1.210] | 1.1599  (beta_num=0.001847, beta_den=0.000040)
-  1980            |   1.3324 [1.133, 1.567] | 1.0425  (b_original_num=-0.002847, C_num=-1.102240e+01, ka_num=-8.083678e-02, kb_num=3.052537e-03, tau_num=4.617031e+00, b_original_den=-0.002393, C_den=-1.134651e+01, ka_den=1.107433e-02, kb_den=-8.892567e-02, tau_den=3.858004e+02)
-  1990            |   1.4000 [1.087, 1.803] | 1.4000  (beta_num=0.000008, beta_den=0.000006)
-  2000            |   1.4667 [0.997, 2.157] | 1.4667  (beta_num=0.000005, beta_den=0.000004)
+  ASMR (direct)   |   1.0574 [1.036, 1.079] | -
+  All Ages        |   1.0418 [1.020, 1.064] | 1.0418  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.6432 [0.585, 0.707] | 0.6432  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0740 [1.028, 1.122] | 1.0740  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1091 [1.068, 1.152] | 1.1091  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.0502 [1.004, 1.098] | 1.0502  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.0930 [1.024, 1.166] | 1.0930  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.1599 [1.059, 1.271] | 1.1599  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.0425 [0.887, 1.225] | 1.0425  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.4000 [1.087, 1.803] | 1.4000  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   1.4667 [0.997, 2.157] | 1.4667  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 1 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9299 [0.864, 1.001] | -
-  All Ages        |   2.7143 [2.451, 3.006] | 1.1565  (beta_num=-0.085907, beta_den=-0.069130)
-  1920            |   0.5679 [0.421, 0.765] | 0.3542  (b_original_num=-0.001086, C_num=-4.659392e+00, ka_num=-5.460557e-02, kb_num=5.188562e-03, tau_num=1.312394e+01, beta_den=0.006183)
-  1930            |   0.9688 [0.841, 1.116] | 1.2123  (b_original_num=-0.000685, C_num=-5.829365e+00, ka_num=-2.636328e-02, kb_num=8.060314e-03, tau_num=2.254644e+01, b_original_den=-0.006318, C_den=-5.002298e+00, ka_den=-6.516671e-02, kb_den=1.104660e-02, tau_den=1.744871e+01)
-  1940            |   0.9805 [0.849, 1.132] | 1.4688  (b_original_num=-0.001124, C_num=-7.008743e+00, ka_num=-2.081393e-02, kb_num=4.855456e-03, tau_num=2.093132e+01, b_original_den=-0.009229, C_den=-5.796255e+00, ka_den=-5.322855e-02, kb_den=5.321603e-02, tau_den=6.006620e+01)
-  1950            |   1.0444 [0.879, 1.240] | 1.1688  (b_original_num=-0.000775, C_num=-8.028312e+00, ka_num=-2.979690e-02, kb_num=3.462377e-03, tau_num=1.276622e+01, b_original_den=-0.011667, C_den=-7.024488e+00, ka_den=-1.742127e-02, kb_den=7.170438e-02, tau_den=2.912739e+02)
-  1960            |   0.5657 [0.450, 0.712] | 0.5843  (beta_num=0.001480, beta_den=0.000258)
-  1970            |   1.3908 [1.036, 1.867] | 1.6255  (beta_num=0.001847, b_original_den=-0.011078, C_den=-8.634599e+00, ka_den=-2.030594e-02, kb_den=3.954635e+00, tau_den=5.218976e+03)
-  1980            |   1.0942 [0.771, 1.553] | 0.9960  (b_original_num=-0.002847, C_num=-1.102240e+01, ka_num=-8.083678e-02, kb_num=3.052537e-03, tau_num=4.617031e+00, beta_den=0.000045)
-  1990            |   0.6974 [0.365, 1.332] | 0.6973  (beta_num=0.000008, beta_den=0.000013)
-  2000            |   0.6598 [0.260, 1.676] | 0.6597  (beta_num=0.000005, beta_den=0.000000)
+  ASMR (direct)   |   1.1337 [1.054, 1.219] | -
+  All Ages        |   1.1565 [1.073, 1.246] | 1.1565  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.3542 [0.263, 0.477] | 0.3542  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.2123 [1.049, 1.401] | 1.2123  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.4688 [1.267, 1.702] | 1.4688  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.1688 [0.982, 1.391] | 1.1688  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.5843 [0.465, 0.735] | 0.5843  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.6255 [1.207, 2.189] | 1.6255  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.9960 [0.701, 1.414] | 0.9960  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.6973 [0.365, 1.332] | 0.6973  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.6597 [0.260, 1.676] | 0.6597  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 3 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   1.0201 [1.002, 1.038] | -
-  All Ages        |   0.0151 [0.015, 0.016] | 1.0940  (beta_num=-0.085907, beta_den=-0.176202)
-  1920            |   1.0255 [0.954, 1.103] | 1.1099  (b_original_num=-0.001086, C_num=-4.659392e+00, ka_num=-5.460557e-02, kb_num=5.188562e-03, tau_num=1.312394e+01, b_original_den=-0.005603, C_den=-4.615147e+00, ka_den=-4.663523e-02, kb_den=6.657522e-03, tau_den=1.997328e+01)
-  1930            |   0.9857 [0.951, 1.021] | 1.0583  (b_original_num=-0.000685, C_num=-5.829365e+00, ka_num=-2.636328e-02, kb_num=8.060314e-03, tau_num=2.254644e+01, b_original_den=-0.002815, C_den=-5.381965e+00, ka_den=-3.921674e-02, kb_den=5.203869e-03, tau_den=1.612904e+01)
-  1940            |   1.0436 [1.010, 1.079] | 1.0992  (b_original_num=-0.001124, C_num=-7.008743e+00, ka_num=-2.081393e-02, kb_num=4.855456e-03, tau_num=2.093132e+01, b_original_den=-0.002275, C_den=-6.454427e+00, ka_den=-3.424079e-02, kb_den=5.121738e-03, tau_den=1.586094e+01)
-  1950            |   1.0492 [1.008, 1.092] | 1.1123  (b_original_num=-0.000775, C_num=-8.028312e+00, ka_num=-2.979690e-02, kb_num=3.462377e-03, tau_num=1.276622e+01, b_original_den=-0.001104, C_den=-7.373431e+00, ka_den=-3.487854e-02, kb_den=4.840364e-03, tau_den=1.515603e+01)
-  1960            |   0.9048 [0.854, 0.959] | 1.1089  (beta_num=0.001480, b_original_den=-0.002629, C_den=-8.491069e+00, ka_den=-1.911244e-02, kb_den=1.938176e-03, tau_den=1.961666e+01)
-  1970            |   0.9352 [0.861, 1.016] | 1.1163  (beta_num=0.001847, b_original_den=-0.003352, C_den=-9.591364e+00, ka_den=-1.234727e-02, kb_den=4.300948e-03, tau_den=3.332489e+01)
-  1980            |   1.3919 [1.206, 1.607] | 1.3621  (b_original_num=-0.002847, C_num=-1.102240e+01, ka_num=-8.083678e-02, kb_num=3.052537e-03, tau_num=4.617031e+00, b_original_den=-0.000186, C_den=-1.055719e+01, ka_den=-1.068438e-02, kb_den=-3.655371e-04, tau_den=1.129817e+01)
-  1990            |   1.4956 [1.192, 1.876] | 1.5796  (beta_num=0.000008, b_original_den=-0.003369, C_den=-1.133220e+01, ka_den=1.881202e-03, kb_den=-9.811880e-02, tau_den=5.383082e+02)
-  2000            |   0.8672 [0.599, 1.255] | 0.8084  (beta_num=0.000005, b_original_den=-0.005957, C_den=-1.225800e+01, ka_den=2.257949e-02, kb_den=-6.971972e-03, tau_den=1.585571e+01)
+  ASMR (direct)   |   1.1005 [1.081, 1.120] | -
+  All Ages        |   1.0940 [1.074, 1.114] | 1.0940  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.1099 [1.031, 1.195] | 1.1099  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.0583 [1.021, 1.097] | 1.0583  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.0992 [1.063, 1.137] | 1.0992  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.1123 [1.068, 1.158] | 1.1123  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.1089 [1.046, 1.175] | 1.1089  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   1.1163 [1.027, 1.213] | 1.1163  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   1.3621 [1.178, 1.575] | 1.3621  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.5796 [1.259, 1.982] | 1.5796  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   0.8084 [0.559, 1.168] | 0.8084  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 4 vs 3 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9618 [0.941, 0.983] | -
-  All Ages        |   0.0496 [0.049, 0.051] | 1.1375  (beta_num=0.000453, beta_den=-0.085907)
-  1920            |   0.8715 [0.814, 0.933] | 1.2441  (beta_num=0.002537, b_original_den=-0.001086, C_den=-4.659392e+00, ka_den=-5.460557e-02, kb_den=5.188562e-03, tau_den=1.312394e+01)
-  1930            |   0.8816 [0.853, 0.911] | 1.1164  (beta_num=0.002189, b_original_den=-0.000685, C_den=-5.829365e+00, ka_den=-2.636328e-02, kb_den=8.060314e-03, tau_den=2.254644e+01)
-  1940            |   0.8702 [0.842, 0.900] | 1.1296  (beta_num=0.004127, b_original_den=-0.001124, C_den=-7.008743e+00, ka_den=-2.081393e-02, kb_den=4.855456e-03, tau_den=2.093132e+01)
-  1950            |   1.0015 [0.955, 1.050] | 1.2582  (beta_num=0.003033, b_original_den=-0.000775, C_den=-8.028312e+00, ka_den=-2.979690e-02, kb_den=3.462377e-03, tau_den=1.276622e+01)
-  1960            |   1.3489 [1.220, 1.491] | 1.4311  (beta_num=0.003727, beta_den=0.001480)
-  1970            |   2.7165 [2.269, 3.252] | 2.5885  (beta_num=0.000057, beta_den=0.001847)
-  1980            |   0.4584 [0.323, 0.651] | 0.5035  (beta_num=0.000035, b_original_den=-0.002847, C_den=-1.102240e+01, ka_den=-8.083678e-02, kb_den=3.052537e-03, tau_den=4.617031e+00)
-  1990            |   0.7878 [0.407, 1.524] | 0.7882  (beta_num=0.000021, beta_den=0.000008)
-  2000            |   4.2698 [1.525, 11.957] | 4.2699  (beta_num=0.000000, beta_den=0.000005)
+  ASMR (direct)   |   1.1964 [1.171, 1.223] | -
+  All Ages        |   1.1375 [1.116, 1.160] | 1.1375  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.2441 [1.161, 1.333] | 1.2441  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1164 [1.081, 1.153] | 1.1164  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.1296 [1.093, 1.167] | 1.1296  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.2582 [1.200, 1.319] | 1.2582  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.4311 [1.296, 1.580] | 1.4311  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   2.5885 [2.162, 3.099] | 2.5885  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.5035 [0.354, 0.716] | 0.5035  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   0.7882 [0.408, 1.524] | 0.7882  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   4.2699 [1.525, 11.957] | 4.2699  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 4 vs 2 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9827 [0.957, 1.009] | -
-  All Ages        |   0.0584 [0.057, 0.060] | 1.1850  (beta_num=0.000453, beta_den=-0.083380)
-  1920            |   0.6178 [0.560, 0.682] | 0.8001  (beta_num=0.002537, b_original_den=-0.002538, C_den=-4.760626e+00, ka_den=-2.331495e-02, kb_den=8.186370e-03, tau_den=2.713960e+01)
-  1930            |   0.8856 [0.845, 0.928] | 1.1990  (beta_num=0.002189, b_original_den=-0.001761, C_den=-5.445859e+00, ka_den=-4.920172e-02, kb_den=4.287927e-03, tau_den=1.227808e+01)
-  1940            |   0.9300 [0.890, 0.972] | 1.2528  (beta_num=0.004127, b_original_den=-0.000752, C_den=-6.543078e+00, ka_den=-3.733697e-02, kb_den=3.303040e-03, tau_den=1.233786e+01)
-  1950            |   1.0060 [0.951, 1.064] | 1.3213  (beta_num=0.003033, b_original_den=-0.002637, C_den=-7.531133e+00, ka_den=-3.001638e-02, kb_den=8.472931e-05, tau_den=1.178591e+01)
-  1960            |   1.4223 [1.279, 1.581] | 1.5642  (beta_num=0.003727, beta_den=0.000120)
-  1970            |   3.0008 [2.498, 3.605] | 3.0024  (beta_num=0.000057, beta_den=0.000040)
-  1980            |   0.6108 [0.431, 0.867] | 0.5249  (beta_num=0.000035, b_original_den=-0.002393, C_den=-1.134651e+01, ka_den=1.107433e-02, kb_den=-8.892567e-02, tau_den=3.858004e+02)
-  1990            |   1.1029 [0.573, 2.123] | 1.1034  (beta_num=0.000021, beta_den=0.000006)
-  2000            |   4.6802 [1.715, 12.774] | 4.6803  (beta_num=0.000000, beta_den=0.000004)
+  ASMR (direct)   |   1.2640 [1.231, 1.298] | -
+  All Ages        |   1.1850 [1.156, 1.214] | 1.1850  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.8001 [0.724, 0.884] | 0.8001  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1990 [1.143, 1.258] | 1.1990  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.2528 [1.199, 1.309] | 1.2528  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.3213 [1.249, 1.398] | 1.3213  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.5642 [1.408, 1.738] | 1.5642  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   3.0024 [2.499, 3.607] | 3.0024  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.5249 [0.370, 0.744] | 0.5249  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.1034 [0.573, 2.124] | 1.1034  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   4.6803 [1.715, 12.775] | 4.6803  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 4 vs 1 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.8967 [0.831, 0.967] | -
-  All Ages        |   0.1347 [0.122, 0.149] | 1.3155  (beta_num=0.000453, beta_den=-0.069130)
-  1920            |   0.4949 [0.367, 0.668] | 0.4407  (beta_num=0.002537, beta_den=0.006183)
-  1930            |   0.8541 [0.741, 0.985] | 1.3534  (beta_num=0.002189, b_original_den=-0.006318, C_den=-5.002298e+00, ka_den=-6.516671e-02, kb_den=1.104660e-02, tau_den=1.744871e+01)
-  1940            |   0.8533 [0.738, 0.987] | 1.6591  (beta_num=0.004127, b_original_den=-0.009229, C_den=-5.796255e+00, ka_den=-5.322855e-02, kb_den=5.321603e-02, tau_den=6.006620e+01)
-  1950            |   1.0459 [0.878, 1.246] | 1.4706  (beta_num=0.003033, b_original_den=-0.011667, C_den=-7.024488e+00, ka_den=-1.742127e-02, kb_den=7.170438e-02, tau_den=2.912739e+02)
-  1960            |   0.7631 [0.598, 0.974] | 0.8361  (beta_num=0.003727, beta_den=0.000258)
-  1970            |   3.7780 [2.704, 5.278] | 4.2075  (beta_num=0.000057, b_original_den=-0.011078, C_den=-8.634599e+00, ka_den=-2.030594e-02, kb_den=3.954635e+00, tau_den=5.218976e+03)
-  1980            |   0.5016 [0.314, 0.801] | 0.5015  (beta_num=0.000035, beta_den=0.000045)
-  1990            |   1.7822 [0.735, 4.321] | 1.7821  (beta_num=0.000021, beta_den=0.000013)
+  ASMR (direct)   |   1.3638 [1.266, 1.469] | -
+  All Ages        |   1.3155 [1.219, 1.419] | 1.3155  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   0.4407 [0.327, 0.594] | 0.4407  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.3534 [1.170, 1.565] | 1.3534  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.6591 [1.429, 1.926] | 1.6591  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.4706 [1.232, 1.756] | 1.4706  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   0.8361 [0.655, 1.067] | 0.8361  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   4.2075 [3.002, 5.897] | 4.2075  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.5015 [0.314, 0.800] | 0.5015  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.7821 [0.735, 4.320] | 1.7821  (beta_num=0.000000, beta_den=0.000000)
   2000            |   2.8170 [0.757, 10.488] | 2.8170  (beta_num=0.000000, beta_den=0.000000)
 
 Dose combination: 4 vs 0 [2022_47]
 --------------------------------------------------
             YoB | KCOR [95% CI] | KCOR_ns
 --------------------------------------------------
-  ASMR (direct)   |   0.9815 [0.958, 1.006] | -
-  All Ages        |   0.0008 [0.001, 0.001] | 1.2444  (beta_num=0.000453, beta_den=-0.176202)
-  1920            |   0.8937 [0.825, 0.968] | 1.3808  (beta_num=0.002537, b_original_den=-0.005603, C_den=-4.615147e+00, ka_den=-4.663523e-02, kb_den=6.657522e-03, tau_den=1.997328e+01)
-  1930            |   0.8689 [0.835, 0.904] | 1.1814  (beta_num=0.002189, b_original_den=-0.002815, C_den=-5.381965e+00, ka_den=-3.921674e-02, kb_den=5.203869e-03, tau_den=1.612904e+01)
-  1940            |   0.9082 [0.873, 0.945] | 1.2416  (beta_num=0.004127, b_original_den=-0.002275, C_den=-6.454427e+00, ka_den=-3.424079e-02, kb_den=5.121738e-03, tau_den=1.586094e+01)
-  1950            |   1.0507 [0.997, 1.108] | 1.3995  (beta_num=0.003033, b_original_den=-0.001104, C_den=-7.373431e+00, ka_den=-3.487854e-02, kb_den=4.840364e-03, tau_den=1.515603e+01)
-  1960            |   1.2205 [1.103, 1.351] | 1.5869  (beta_num=0.003727, b_original_den=-0.002629, C_den=-8.491069e+00, ka_den=-1.911244e-02, kb_den=1.938176e-03, tau_den=1.961666e+01)
-  1970            |   2.5404 [2.124, 3.039] | 2.8895  (beta_num=0.000057, b_original_den=-0.003352, C_den=-9.591364e+00, ka_den=-1.234727e-02, kb_den=4.300948e-03, tau_den=3.332489e+01)
-  1980            |   0.6381 [0.453, 0.898] | 0.6859  (beta_num=0.000035, b_original_den=-0.000186, C_den=-1.055719e+01, ka_den=-1.068438e-02, kb_den=-3.655371e-04, tau_den=1.129817e+01)
-  1990            |   1.1782 [0.618, 2.247] | 1.2450  (beta_num=0.000021, b_original_den=-0.003369, C_den=-1.133220e+01, ka_den=1.881202e-03, kb_den=-9.811880e-02, tau_den=5.383082e+02)
-  2000            |   0.0000 [0.000, 0.000] | 3.8062  (beta_num=0.000000, b_original_den=-0.005957, C_den=-1.225800e+01, ka_den=2.257949e-02, kb_den=-6.971972e-03, tau_den=1.585571e+01)
+  ASMR (direct)   |   1.3177 [1.286, 1.350] | -
+  All Ages        |   1.2444 [1.217, 1.272] | 1.2444  (beta_num=0.000000, beta_den=0.000000)
+  1920            |   1.3808 [1.274, 1.496] | 1.3808  (beta_num=0.000000, beta_den=0.000000)
+  1930            |   1.1814 [1.135, 1.230] | 1.1814  (beta_num=0.000000, beta_den=0.000000)
+  1940            |   1.2416 [1.193, 1.292] | 1.2416  (beta_num=0.000000, beta_den=0.000000)
+  1950            |   1.3995 [1.327, 1.476] | 1.3995  (beta_num=0.000000, beta_den=0.000000)
+  1960            |   1.5869 [1.434, 1.756] | 1.5869  (beta_num=0.000000, beta_den=0.000000)
+  1970            |   2.8895 [2.415, 3.457] | 2.8895  (beta_num=0.000000, beta_den=0.000000)
+  1980            |   0.6859 [0.487, 0.965] | 0.6859  (beta_num=0.000000, beta_den=0.000000)
+  1990            |   1.2450 [0.653, 2.374] | 1.2450  (beta_num=0.000000, beta_den=0.000000)
+  2000            |   3.8062 [1.404, 10.319] | 3.8062  (beta_num=0.000000, beta_den=0.000000)
 
 M/P by decades (Dose 4)
 --------------------------------------------------
@@ -992,7 +1132,10 @@ M/P by decades (Dose 4)
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
-[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-06 16:53:04
+[MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
+[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-07 15:16:02
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 40 summary rows
   - 2021_20: 3 dose combinations, 40 summary rows

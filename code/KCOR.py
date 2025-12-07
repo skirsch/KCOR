@@ -1998,19 +1998,23 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 
                 # Fit slope8 using only the fit window data
                 # Store results for later use in normalization
-                slope8_succeeded = False
+                # ALWAYS use slope8 parameters if fit was attempted, even if unreliable
+                slope8_attempted = False
                 abnormal_fit_flag = False
                 C_slope8_norm = None
                 kb_slope8_norm = None
                 ka_slope8_norm = None
                 tau_slope8_norm = None
                 rms_error_slope8_norm = None
+                mode_str = None
+                note_str = None
                 
                 if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
                     try:
                         (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8), diagnostics_slope8 = fit_slope8_depletion(
                             np.array(s_values_slope8_fit), np.array(log_h_slope8_values_fit)
                         )
+                        slope8_attempted = True
                         
                         # Always try to compute RMS error, even if parameters are invalid
                         # This helps diagnose how bad the fit actually is
@@ -2035,25 +2039,32 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             # If prediction fails completely, leave RMS error as None
                             pass
                         
-                        # Check if parameters are valid for normalization
-                        if (diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and 
-                            diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"]):
-                            slope8_succeeded = True
-                            C_slope8_norm = C_slope8
-                            kb_slope8_norm = kb_slope8
-                            ka_slope8_norm = ka_slope8
-                            tau_slope8_norm = tau_slope8
-                            rms_error_slope8_norm = rms_error_slope8
-                            # Determine if fit was abnormal: status=5 (abnormal termination) or not success
-                            abnormal_fit_flag = (
-                                diagnostics_slope8.get("optimizer_status") == 5 or 
-                                not diagnostics_slope8.get("success", False)
-                            )
-                            mode_str = "slope8"
-                            note_str = None
-                        else:
-                            mode_str = "slope8_invalid_params"
-                            # Build note describing which parameters failed
+                        # ALWAYS use slope8 parameters, even if invalid or abnormal
+                        # Replace NaN/inf values with safe defaults for normalization
+                        C_slope8_norm = C_slope8 if np.isfinite(C_slope8) else 0.0
+                        kb_slope8_norm = kb_slope8 if np.isfinite(kb_slope8) else 0.0
+                        ka_slope8_norm = ka_slope8 if np.isfinite(ka_slope8) else 0.0
+                        tau_slope8_norm = tau_slope8 if (np.isfinite(tau_slope8) and tau_slope8 > EPS) else 1.0
+                        rms_error_slope8_norm = rms_error_slope8
+                        
+                        # Determine if fit was abnormal/unreliable:
+                        # - Optimizer not successful
+                        # - Abnormal termination (status=5)
+                        # - Invalid parameters
+                        abnormal_fit_flag = (
+                            not diagnostics_slope8.get("success", False) or
+                            diagnostics_slope8.get("optimizer_status") == 5 or
+                            not (diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and 
+                                 diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"])
+                        )
+                        
+                        # Build note describing issues if any
+                        if abnormal_fit_flag:
+                            note_parts = []
+                            if not diagnostics_slope8.get("success", False):
+                                note_parts.append("optimizer_not_successful")
+                            if diagnostics_slope8.get("optimizer_status") == 5:
+                                note_parts.append("abnormal_termination")
                             failed_params = []
                             if not diagnostics_slope8["C_valid"]:
                                 failed_params.append("C")
@@ -2063,7 +2074,11 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                                 failed_params.append("kb")
                             if not diagnostics_slope8["tau_valid"]:
                                 failed_params.append("tau")
-                            note_str = f"invalid parameters from slope8 fit: {', '.join(failed_params)} failed validation"
+                            if failed_params:
+                                note_parts.append(f"invalid_params:{','.join(failed_params)}")
+                            note_str = "; ".join(note_parts) if note_parts else "unreliable_fit"
+                        
+                        mode_str = "slope8"
                         
                         # Log with full deployment window data (s=0 onwards for all doses)
                         # Always log fitted parameters (even if invalid) and diagnostics
@@ -2101,6 +2116,18 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "param_tau_valid": diagnostics_slope8["tau_valid"],
                         })
                     except Exception as e:
+                        # Even on exception, use slope8 with default parameters (mark as abnormal)
+                        slope8_attempted = True
+                        # Use safe default parameters (no normalization effect, but still slope8 mode)
+                        C_slope8_norm = 0.0
+                        kb_slope8_norm = 0.0
+                        ka_slope8_norm = 0.0
+                        tau_slope8_norm = 1.0
+                        rms_error_slope8_norm = None
+                        abnormal_fit_flag = True
+                        mode_str = "slope8_exception"
+                        note_str = f"exception during slope8 fit: {str(e)}"
+                        
                         # Log exception case
                         log_slope7_fit_debug({
                             "enrollment_date": sheet_name,
@@ -2114,7 +2141,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "iso_weeks_used": iso_weeks_slope8_full,
                             "error": str(e),
                             "b_original": float(b_lin),
-                            "note": f"exception during slope8 fit: {str(e)}",
+                            "note": note_str,
                             "optimizer_success": False,
                             "optimizer_fun": None,
                             "optimizer_nfev": None,
@@ -2126,9 +2153,9 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "param_tau_valid": False,
                         })
             
-            # Use Slope8 for normalization (primary method for all cohorts)
-            # Use the slope8 results that were computed above
-            if slope8_succeeded:
+            # ALWAYS use Slope8 for normalization if fit was attempted
+            # Never fall back to linear mode - use slope8 parameters even if unreliable
+            if slope8_attempted and C_slope8_norm is not None:
                 params = {
                     "mode": "slope8",
                     "C": C_slope8_norm,
@@ -2143,10 +2170,13 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "c": 0.0,  # Not used in slope8
                 }
                 normalization_params[(yob, dose)] = params
-                abnormal_str = " (abnormal)" if abnormal_fit_flag else ""
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope8,C={C_slope8_norm:.6e},ka={ka_slope8_norm:.6e},kb={kb_slope8_norm:.6e},tau={tau_slope8_norm:.6e},b_original={b_lin:.6e},rms_error={rms_error_slope8_norm:.6e if rms_error_slope8_norm is not None else np.nan:.6e},points={len(s_values_slope8_fit)}{abnormal_str}")
+                abnormal_str = " (abnormal/unreliable)" if abnormal_fit_flag else ""
+                note_str_display = f", note={note_str}" if note_str else ""
+                rms_error_str = f"{rms_error_slope8_norm:.6e}" if rms_error_slope8_norm is not None else "nan"
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope8,C={C_slope8_norm:.6e},ka={ka_slope8_norm:.6e},kb={kb_slope8_norm:.6e},tau={tau_slope8_norm:.6e},b_original={b_lin:.6e},rms_error={rms_error_str},points={len(s_values_slope8_fit)}{abnormal_str}{note_str_display}")
             else:
-                # Fall back to linear mode if slope8 failed or wasn't attempted
+                # Only fall back if slope8 wasn't attempted at all (insufficient data or exception)
+                # In this case, use linear mode but mark as abnormal since slope8 should have been used
                 params = {
                     "mode": "linear",
                     "a": a_lin,
@@ -2154,10 +2184,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "c": 0.0,
                     "t_mean": t_mean,
                     "tau": SLOPE6_QUANTILE_TAU,
-                    "abnormal_fit": False,  # Linear fallback is not considered abnormal
+                    "abnormal_fit": True,  # Mark as abnormal since slope8 wasn't attempted
                 }
                 normalization_params[(yob, dose)] = params
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)}")
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)} (abnormal - slope8 should have been used)")
         except Exception as e:
             _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(e)}")
             normalization_params[(yob, dose)] = {
@@ -3512,6 +3542,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # t_mean is computed from application window (enrollment_date to 2024-16) for linear mode
         if isinstance(slope6_params, dict) and len(slope6_params) > 0:
             try:
+                # Track normalization application for debugging
+                norm_debug_samples = []
+                
                 def apply_slope6_norm(row):
                     params = slope6_params.get((row["YearOfBirth"], row["Dose"]), {
                         "mode": "none",
@@ -3523,6 +3556,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     })
                     
                     if not isinstance(params, dict) or params.get("mode") == "none":
+                        if len(norm_debug_samples) < 3:
+                            norm_debug_samples.append({
+                                "yob": row["YearOfBirth"], "dose": row["Dose"],
+                                "reason": "no_params" if params.get("mode") == "none" else "not_dict",
+                                "mode": params.get("mode", "unknown") if isinstance(params, dict) else type(params).__name__
+                            })
                         return row["hazard_raw"]
                     
                     mode = params.get("mode", "linear")
@@ -3533,7 +3572,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         # Compute centered time
                         t_c = row["t"] - t_mean
                         # Linear mode: h_norm = h * exp(-b * t_c)
-                        return row["hazard_raw"] * np.exp(-b * t_c)
+                        result = row["hazard_raw"] * np.exp(-b * t_c)
+                        if len(norm_debug_samples) < 3 and abs(b) > 1e-10:
+                            norm_debug_samples.append({
+                                "yob": row["YearOfBirth"], "dose": row["Dose"], "mode": mode,
+                                "b": b, "t_c": t_c, "norm_factor": np.exp(-b * t_c),
+                                "hazard_raw": row["hazard_raw"], "result": result
+                            })
+                        return result
                     elif mode == "slope7" or mode == "slope8":
                         C = params.get("C", 0.0)
                         ka = params.get("ka", 0.0)
@@ -3541,15 +3587,114 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         tau = params.get("tau", 1.0)
                         # Use s = t (time since enrollment, NOT centered)
                         s = row["t"]
+                        # Ensure tau is positive and finite
+                        if not np.isfinite(tau) or tau <= EPS:
+                            tau = 1.0
                         # Slope7/Slope8 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
-                        return row["hazard_raw"] * np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+                        norm_factor = np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+                        # Ensure norm_factor is finite
+                        if not np.isfinite(norm_factor):
+                            norm_factor = 1.0
+                        result = row["hazard_raw"] * norm_factor
+                        # Collect debug samples for slope8
+                        if len(norm_debug_samples) < 3:
+                            norm_debug_samples.append({
+                                "yob": row["YearOfBirth"], "dose": row["Dose"], "mode": mode,
+                                "C": C, "ka": ka, "kb": kb, "tau": tau, "s": s,
+                                "norm_factor": norm_factor, "hazard_raw": row["hazard_raw"], "result": result
+                            })
+                        return result
                     else:
                         # Unknown mode, no normalization
+                        if len(norm_debug_samples) < 3:
+                            norm_debug_samples.append({
+                                "yob": row["YearOfBirth"], "dose": row["Dose"],
+                                "reason": "unknown_mode", "mode": mode
+                            })
                         return row["hazard_raw"]
+                
+                # Debug: Check parameters before applying normalization
+                if DEBUG_VERBOSE:
+                    dual_print(f"[DEBUG] Checking normalization parameters for {sh}:")
+                    dual_print(f"  Total cohorts in slope6_params: {len(slope6_params)}")
+                    sample_count = 0
+                    for (yob, dose), params in list(slope6_params.items())[:5]:  # Show first 5
+                        if isinstance(params, dict):
+                            mode = params.get("mode", "none")
+                            if mode == "slope8":
+                                C = params.get("C", 0.0)
+                                ka = params.get("ka", 0.0)
+                                kb = params.get("kb", 0.0)
+                                tau = params.get("tau", 1.0)
+                                dual_print(f"  YoB={yob}, Dose={dose}: mode={mode}, C={C:.6e}, ka={ka:.6e}, kb={kb:.6e}, tau={tau:.6e}")
+                            else:
+                                dual_print(f"  YoB={yob}, Dose={dose}: mode={mode}")
+                        sample_count += 1
+                    if len(slope6_params) > 5:
+                        dual_print(f"  ... and {len(slope6_params) - 5} more cohorts")
                 
                 df["hazard_adj"] = df.apply(apply_slope6_norm, axis=1)
                 # Numerical safety: floor at tiny epsilon
                 df["hazard_adj"] = np.clip(df["hazard_adj"], 0.0, None)
+                
+                # Debug: Report normalization samples
+                if DEBUG_VERBOSE and norm_debug_samples:
+                    dual_print(f"[DEBUG] Normalization samples for {sh}:")
+                    for i, sample in enumerate(norm_debug_samples):
+                        if "reason" in sample:
+                            dual_print(f"  Sample {i+1}: YoB={sample['yob']}, Dose={sample['dose']}, reason={sample['reason']}, mode={sample.get('mode', 'N/A')}")
+                        elif sample.get("mode") == "slope8" or sample.get("mode") == "slope7":
+                            dual_print(f"  Sample {i+1}: YoB={sample['yob']}, Dose={sample['dose']}, mode={sample['mode']}, "
+                                     f"C={sample['C']:.6e}, ka={sample['ka']:.6e}, kb={sample['kb']:.6e}, tau={sample['tau']:.6e}, "
+                                     f"norm_factor={sample['norm_factor']:.6e}, hazard_raw={sample['hazard_raw']:.6e}, result={sample['result']:.6e}")
+                        else:
+                            dual_print(f"  Sample {i+1}: YoB={sample['yob']}, Dose={sample['dose']}, mode={sample.get('mode', 'N/A')}, "
+                                     f"norm_factor={sample.get('norm_factor', 1.0):.6e}")
+                
+                # Debug: Verify normalization was applied
+                if DEBUG_VERBOSE:
+                    # Check if hazard_adj differs from hazard_raw
+                    diff_mask = np.abs(df["hazard_adj"] - df["hazard_raw"]) > 1e-10
+                    n_different = diff_mask.sum()
+                    n_total = len(df)
+                    dual_print(f"[DEBUG] Normalization check for {sh}: {n_different}/{n_total} rows have different hazard_adj vs hazard_raw")
+                    if n_different > 0:
+                        sample_diff = df[diff_mask].head(3)
+                        for idx, row in sample_diff.iterrows():
+                            dual_print(f"  Sample: YoB={row['YearOfBirth']}, Dose={row['Dose']}, t={row['t']:.1f}, "
+                                     f"hazard_raw={row['hazard_raw']:.6e}, hazard_adj={row['hazard_adj']:.6e}, "
+                                     f"ratio={row['hazard_adj']/row['hazard_raw']:.6f}")
+                    else:
+                        dual_print(f"[DEBUG] WARNING: No normalization applied! All hazard_adj == hazard_raw")
+                        # Check why - sample a few rows
+                        for idx, row in df.head(5).iterrows():
+                            params_check = slope6_params.get((row["YearOfBirth"], row["Dose"]), None)
+                            if params_check is None:
+                                dual_print(f"  Row {idx}: YoB={row['YearOfBirth']}, Dose={row['Dose']} - NO PARAMS FOUND")
+                            elif isinstance(params_check, dict):
+                                mode_check = params_check.get("mode", "none")
+                                dual_print(f"  Row {idx}: YoB={row['YearOfBirth']}, Dose={row['Dose']} - mode={mode_check}")
+                            else:
+                                dual_print(f"  Row {idx}: YoB={row['YearOfBirth']}, Dose={row['Dose']} - params type={type(params_check)}")
+                    
+                    modes_used = {}
+                    for (yob, dose), params in slope6_params.items():
+                        if isinstance(params, dict):
+                            mode = params.get("mode", "none")
+                            modes_used[mode] = modes_used.get(mode, 0) + 1
+                    if modes_used:
+                        mode_str = ", ".join([f"{mode}: {count}" for mode, count in modes_used.items()])
+                        dual_print(f"[DEBUG] Normalization modes applied for {sh}: {mode_str}")
+                        # Check if any slope8 normalizations were applied
+                        slope8_count = sum(1 for p in slope6_params.values() 
+                                          if isinstance(p, dict) and p.get("mode") == "slope8")
+                        if slope8_count > 0:
+                            dual_print(f"[DEBUG] Slope8 normalization applied to {slope8_count} cohort(s)")
+                        # Check for abnormal fits
+                        abnormal_count = sum(1 for p in slope6_params.values() 
+                                           if isinstance(p, dict) and p.get("abnormal_fit", False))
+                        if abnormal_count > 0:
+                            dual_print(f"[DEBUG] Found {abnormal_count} cohort(s) with abnormal fits")
                 
                 # Store slope and scale_factor for backward compatibility with output schema
                 # slope represents b (the linear slope parameter)
@@ -3604,7 +3749,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 df["scale_factor"] = df.apply(get_scale_factor, axis=1)
             except Exception as e:
                 dual_print(f"SLOPE6_ERROR,EnrollmentDate={sh},error={str(e)}")
+                import traceback
+                if DEBUG_VERBOSE:
+                    dual_print(f"[DEBUG] Full traceback for normalization error:")
+                    dual_print(traceback.format_exc())
                 # Fallback: no normalization
+                df["hazard_adj"] = df["hazard_raw"]  # Ensure hazard_adj is set even on error
                 df["slope"] = 0.0
                 df["scale_factor"] = 1.0
         else:
@@ -3917,7 +4067,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     ci_lower = age_data["CI_lower"].iloc[0]
                     ci_upper = age_data["CI_upper"].iloc[0]
                     # Check if abnormal fit flag is present
-                    abnormal_fit_flag = age_data.get("abnormal_fit", pd.Series([False])).iloc[0] if "abnormal_fit" in age_data.columns else False
+                    if "abnormal_fit" in age_data.columns:
+                        abnormal_fit_flag = bool(age_data["abnormal_fit"].iloc[0])
+                    else:
+                        abnormal_fit_flag = False
                     abnormal_marker = "*" if abnormal_fit_flag else ""
                     # KCOR_ns may be missing for pooled rows; print '-' in that case
                     try:
