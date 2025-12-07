@@ -2650,67 +2650,52 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
     all_ages_agg["MR_smooth"] = all_ages_agg["MR"]  # Use raw MR for smoothing
     all_ages_agg["hazard_raw"] = hazard_from_mr_improved(all_ages_agg["MR"])
     
-    # Estimate beta (slope) for aggregated all-ages data by averaging beta from per-age data
-    # Beta is applied at hazard level: hazard_adj = hazard_raw * exp(-beta * t)
-    # If hazard_adj and hazard_raw are available in original df, derive beta from their ratio
-    beta_by_dose = {}
-    for dose in all_ages_agg["Dose"].unique():
-        dose_data = df_sorted[df_sorted["Dose"] == dose]
-        # Try to estimate beta from hazard_adj/hazard_raw ratio if available
-        if "hazard_adj" in dose_data.columns and "hazard_raw" in dose_data.columns:
-            # For each age group, estimate beta from hazard ratio: hazard_adj/hazard_raw = exp(-beta * t)
-            # Average across ages (simple mean)
-            betas = []
-            for yob, age_group in dose_data.groupby("YearOfBirth"):
-                if len(age_group) > 0:
-                    # Get valid ratios where both hazards are positive
-                    valid_mask = (age_group["hazard_raw"] > EPS) & (age_group["hazard_adj"] > EPS) & (age_group["t"] > EPS)
-                    if valid_mask.sum() > 0:
-                        ratios = age_group.loc[valid_mask, "hazard_adj"] / age_group.loc[valid_mask, "hazard_raw"]
-                        ts = age_group.loc[valid_mask, "t"]
-                        # Estimate beta: log(ratio) = -beta * t, so beta = -log(ratio) / t
-                        log_ratios = np.log(ratios)
-                        beta_est = -log_ratios / ts
-                        # Use median to avoid outliers
-                        if len(beta_est) > 0:
-                            betas.append(np.median(beta_est))
-            if betas:
-                beta_by_dose[dose] = np.mean(betas)
-            else:
-                beta_by_dose[dose] = 0.0
+    # Use slope8 normalization parameters from slope6_params_map (already computed in compute_slope6_normalization)
+    # Do NOT overwrite the parameters - they were correctly computed with slope8 for cohort -2
+    # Apply normalization using the same logic as regular cohorts
+    
+    def apply_slope8_norm_all_ages(row):
+        """Apply slope8 normalization to all-ages cohort using parameters from slope6_params_map."""
+        if slope6_params_map is None:
+            return row["hazard_raw"]
+        
+        # Get normalization parameters for this dose (cohort -2 was already computed in compute_slope6_normalization)
+        params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
+        if params is None:
+            # Fallback: try without int conversion
+            params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
+        
+        if params is None or not isinstance(params, dict) or params.get("mode") == "none":
+            return row["hazard_raw"]
+        
+        mode = params.get("mode", "linear")
+        
+        if mode == "slope8":
+            # Slope8 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+            C = params.get("C", 0.0)
+            ka = params.get("ka", 0.0)
+            kb = params.get("kb", 0.0)
+            tau = params.get("tau", 1.0)
+            # Use s = t (time since enrollment, NOT centered)
+            s = row["t"]
+            # Ensure tau is positive and finite
+            if not np.isfinite(tau) or tau <= EPS:
+                tau = 1.0
+            norm_factor = np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+            if not np.isfinite(norm_factor):
+                norm_factor = 1.0
+            return row["hazard_raw"] * norm_factor
+        elif mode == "linear":
+            # Linear mode: h_norm = h * exp(-b * t_c) where t_c = t - t_mean
+            b = params.get("b", 0.0)
+            t_mean = params.get("t_mean", 0.0)
+            t_c = row["t"] - t_mean
+            return row["hazard_raw"] * np.exp(-b * t_c)
         else:
-            beta_by_dose[dose] = 0.0
+            # Unknown mode or slope7 (shouldn't happen with slope8, but be safe)
+            return row["hazard_raw"]
     
-    # Persist effective all-ages slopes into slope6_params_map (for summary logging)
-    if slope6_params_map is not None:
-        for dose, beta in beta_by_dose.items():
-            try:
-                slope6_params_map[(sheet_name, -2, int(dose))] = {
-                    "mode": "linear",
-                    "a": 0.0,
-                    "b": float(beta),
-                    "c": 0.0,
-                    "t_mean": 0.0,
-                    "tau": SLOPE6_QUANTILE_TAU,
-                    "abnormal_fit": False,  # All-ages uses simple linear fallback, not abnormal
-                }
-            except Exception:
-                slope6_params_map[(sheet_name, -2, dose)] = {
-                    "mode": "linear",
-                    "a": 0.0,
-                    "b": float(beta),
-                    "c": 0.0,
-                    "t_mean": 0.0,
-                    "tau": SLOPE6_QUANTILE_TAU,
-                    "abnormal_fit": False,  # All-ages uses simple linear fallback, not abnormal
-                }
-    
-    # Apply beta normalization at hazard level (origin-anchored)
-    def apply_beta_norm(row):
-        beta = beta_by_dose.get(row["Dose"], 0.0)
-        return row["hazard_raw"] * safe_exp(-beta * row["t"])
-    
-    all_ages_agg["hazard_adj"] = all_ages_agg.apply(apply_beta_norm, axis=1)
+    all_ages_agg["hazard_adj"] = all_ages_agg.apply(apply_slope8_norm_all_ages, axis=1)
     all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard level)
     all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
     all_ages_agg["CH"] = all_ages_agg.groupby("Dose")["hazard_eff"].cumsum()
@@ -2719,9 +2704,55 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
     all_ages_agg["cumD_adj"] = all_ages_agg["CH"] * all_ages_agg["cumPT"]
     all_ages_agg["cumD_unadj"] = all_ages_agg.groupby("Dose")["Dead"].cumsum()
     
-    # Add slope and scale_factor for consistency (using beta as slope equivalent)
-    all_ages_agg["slope"] = all_ages_agg["Dose"].map(beta_by_dose)
-    all_ages_agg["scale_factor"] = all_ages_agg.apply(lambda row: safe_exp(-row["slope"] * row["t"]), axis=1)
+    # Add slope and scale_factor for consistency (using parameters from slope6_params_map)
+    def get_slope_for_all_ages(row):
+        """Get slope value from slope6_params_map for display purposes."""
+        if slope6_params_map is None:
+            return 0.0
+        params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
+        if params is None:
+            params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
+        if params is None or not isinstance(params, dict):
+            return 0.0
+        mode = params.get("mode", "none")
+        if mode == "slope8":
+            # For slope8, use b_original (the original linear slope) for display
+            return params.get("b_original", 0.0)
+        elif mode == "linear":
+            return params.get("b", 0.0)
+        else:
+            return 0.0
+    
+    def get_scale_factor_for_all_ages(row):
+        """Compute scale_factor from slope8 parameters for display purposes."""
+        if slope6_params_map is None:
+            return 1.0
+        params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
+        if params is None:
+            params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
+        if params is None or not isinstance(params, dict):
+            return 1.0
+        mode = params.get("mode", "none")
+        s = row["t"]
+        if mode == "slope8":
+            C = params.get("C", 0.0)
+            ka = params.get("ka", 0.0)
+            kb = params.get("kb", 0.0)
+            tau = params.get("tau", 1.0)
+            if not np.isfinite(tau) or tau <= EPS:
+                tau = 1.0
+            norm_factor = np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+            return norm_factor if np.isfinite(norm_factor) else 1.0
+        elif mode == "linear":
+            b = params.get("b", 0.0)
+            t_mean = params.get("t_mean", 0.0)
+            t_c = s - t_mean
+            return np.exp(-b * t_c) if np.isfinite(b) else 1.0
+        else:
+            return 1.0
+    
+    all_ages_agg["slope"] = all_ages_agg.apply(get_slope_for_all_ages, axis=1)
+    all_ages_agg["scale_factor"] = all_ages_agg.apply(get_scale_factor_for_all_ages, axis=1)
     
     # Now compute KCOR for all-ages aggregated data
     dose_pairs = get_dose_pairs(sheet_name)
@@ -4034,7 +4065,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns | ka_num  kb_num  tau_num  ka_den  kb_den  tau_den")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date
@@ -4160,10 +4191,42 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         age_label = f"{age}"
                     
+                    # Format ka, kb, tau values for numerator and denominator (3 significant digits)
+                    def format_param(val):
+                        """Format parameter value with 3 significant digits, right-aligned in 6 characters."""
+                        if val is None or not np.isfinite(val):
+                            return "   ---"
+                        # Use 3 significant digits with appropriate format
+                        abs_val = abs(val)
+                        if abs_val == 0.0:
+                            return "   0.0"
+                        elif abs_val < 0.001:
+                            # Scientific notation for very small numbers
+                            return f"{val:.2e}".rjust(6)
+                        elif abs_val < 1.0:
+                            # 3 decimal places for numbers < 1
+                            return f"{val:.3f}".rjust(6)
+                        elif abs_val < 10.0:
+                            # 2 decimal places for numbers 1-10
+                            return f"{val:.2f}".rjust(6)
+                        elif abs_val < 100.0:
+                            # 1 decimal place for numbers 10-100
+                            return f"{val:.1f}".rjust(6)
+                        else:
+                            # Integer for numbers >= 100
+                            return f"{val:.0f}".rjust(6)
+                    
+                    ka_num_str = format_param(ka_num if (mode_num == "slope7" or mode_num == "slope8") else None)
+                    kb_num_str = format_param(kb_num if (mode_num == "slope7" or mode_num == "slope8") else None)
+                    tau_num_str = format_param(tau_num if (mode_num == "slope7" or mode_num == "slope8") else None)
+                    ka_den_str = format_param(ka_den if (mode_den == "slope7" or mode_den == "slope8") else None)
+                    kb_den_str = format_param(kb_den if (mode_den == "slope7" or mode_den == "slope8") else None)
+                    tau_den_str = format_param(tau_den if (mode_den == "slope7" or mode_den == "slope8") else None)
+                    
                     if age == 0:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
                     else:
-                        # Build parameter string
+                        # Build parameter string for detailed info (still shown in parentheses)
                         param_parts = []
                         
                         # Check if either cohort uses slope7/slope8 mode
@@ -4203,7 +4266,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 param_parts.append(f"c_den={c_den:.6f}")
                         
                         param_str = ", ".join(param_parts)
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  ({param_str})")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}  ({param_str})")
 
         # --- Print M/P KCOR summaries by decades when available ---
         try:
