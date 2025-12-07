@@ -1328,16 +1328,29 @@ def fit_slope8_depletion(s, logh):
         
         # Conditional constraint: if k_0 < 0, delta_k must be >= 0 (depletion constraint)
         # If k_0 >= 0, delta_k can be negative (no constraint)
-        if k_0 < 0 and delta_k < 0:
-            # Violation of depletion constraint: add large penalty
-            penalty = 1e6 * (abs(delta_k) + 1.0)
-            return 1e9 + penalty
+        # Use smooth penalty that increases gradually as constraint is violated
+        # Allow small tolerance around delta_k = 0 to handle numerical precision and k_0 = k_inf case
+        DELTA_K_TOLERANCE = 1e-6  # Small tolerance for numerical precision
+        penalty = 0.0
+        if k_0 < 0 and delta_k < -DELTA_K_TOLERANCE:
+            # Violation of depletion constraint: add smooth quadratic penalty
+            # Penalty increases quadratically with violation magnitude
+            # Only penalize if violation is significant (beyond tolerance)
+            violation = abs(delta_k + DELTA_K_TOLERANCE)  # Measure violation beyond tolerance
+            penalty = 1e4 * violation * violation  # Quadratic penalty, smoother than hard cutoff
         
         k_inf = k_0 + delta_k
         
-        predicted = C + k_inf * s_valid - delta_k * tau * (
-            1.0 - np.exp(-s_valid / (tau + EPS))
-        )
+        # When delta_k is very close to 0, the depletion term becomes negligible
+        # Handle this case to avoid numerical issues with tau when delta_k ≈ 0
+        if abs(delta_k) < DELTA_K_TOLERANCE:
+            # Linear model: log h(s) = C + k_inf * s (depletion term is negligible)
+            predicted = C + k_inf * s_valid
+        else:
+            # Full depletion model
+            predicted = C + k_inf * s_valid - delta_k * tau * (
+                1.0 - np.exp(-s_valid / (tau + EPS))
+            )
         
         resid = logh_valid - predicted  # u in the formula above
         pos = resid >= 0.0
@@ -1346,7 +1359,10 @@ def fit_slope8_depletion(s, logh):
         # Optional very small ridge to help numerics:
         ridge = 1e-4 * np.sum(resid**2)
         
-        return float(np.sum(loss) + ridge)
+        # Add penalty for constraint violation (if any)
+        total_loss = float(np.sum(loss) + ridge + penalty)
+        
+        return total_loss
     
     try:
         result = minimize(
@@ -1354,7 +1370,12 @@ def fit_slope8_depletion(s, logh):
             p0,
             method="L-BFGS-B",
             bounds=bounds,
-            options={"maxiter": 2000}
+            options={
+                "maxiter": 5000,  # Increased from 2000 to handle slow convergence cases
+                "ftol": 1e-6,     # Function tolerance for convergence
+                "gtol": 1e-5,     # Gradient tolerance for convergence
+                "maxfun": 15000,  # Maximum function evaluations
+            }
         )
         
         # Extract fitted parameters (always extract, even if invalid)
