@@ -1346,11 +1346,15 @@ def fit_slope8_depletion(s, logh):
         if abs(delta_k) < DELTA_K_TOLERANCE:
             # Linear model: log h(s) = C + k_inf * s (depletion term is negligible)
             predicted = C + k_inf * s_valid
+            # When delta_k ≈ 0, tau is unidentifiable, so add small regularization
+            # to prevent tau from wandering to extreme values
+            tau_regularization = 1e-6 * (tau - 52.0)**2  # Encourage tau near typical value
         else:
             # Full depletion model
             predicted = C + k_inf * s_valid - delta_k * tau * (
                 1.0 - np.exp(-s_valid / (tau + EPS))
             )
+            tau_regularization = 0.0  # No regularization needed when tau is identifiable
         
         resid = logh_valid - predicted  # u in the formula above
         pos = resid >= 0.0
@@ -1359,12 +1363,28 @@ def fit_slope8_depletion(s, logh):
         # Optional very small ridge to help numerics:
         ridge = 1e-4 * np.sum(resid**2)
         
-        # Add penalty for constraint violation (if any)
-        total_loss = float(np.sum(loss) + ridge + penalty)
+        # Add penalty for constraint violation (if any) and tau regularization
+        total_loss = float(np.sum(loss) + ridge + penalty + tau_regularization)
         
         return total_loss
     
     try:
+        # Adjust convergence tolerances based on number of data points
+        # With very few points, use looser tolerances to avoid excessive iterations
+        n_data = len(s_valid)
+        if n_data < 15:
+            # Very few data points: use looser tolerances
+            ftol = 1e-4
+            gtol = 1e-3
+        elif n_data < 30:
+            # Few data points: moderate tolerances
+            ftol = 1e-5
+            gtol = 1e-4
+        else:
+            # Normal case: standard tolerances
+            ftol = 1e-6
+            gtol = 1e-5
+        
         result = minimize(
             quantile_loss,
             p0,
@@ -1372,8 +1392,8 @@ def fit_slope8_depletion(s, logh):
             bounds=bounds,
             options={
                 "maxiter": 5000,  # Increased from 2000 to handle slow convergence cases
-                "ftol": 1e-6,     # Function tolerance for convergence
-                "gtol": 1e-5,     # Gradient tolerance for convergence
+                "ftol": ftol,     # Function tolerance (adjusted by data size)
+                "gtol": gtol,     # Gradient tolerance (adjusted by data size)
                 "maxfun": 15000,  # Maximum function evaluations
             }
         )
