@@ -491,7 +491,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v5.2"                # KCOR version number
+VERSION = "v5.3"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -559,6 +559,11 @@ VERSION = "v5.2"                # KCOR version number
 #        - Normalization applies from s=0 (enrollment) for all cohorts, including highest dose
 #        - Results logged to debug CSV but not yet applied for normalization
 #        - Provides alternative diagnostic method alongside linear, slope7 (TRF), and slope7 (LM)
+# v5.3 - Switched to Slope8 as primary normalization method for all cohorts
+#        - Replaces Slope6/Slope7 decision logic with Slope8 for all cohorts
+#        - Tracks abnormal fits via optimizer diagnostics (status=5 or not success)
+#        - Flags KCOR results affected by abnormal fits with asterisk (*) in console/log and summary spreadsheet
+#        - Slope8 fit window starts later for highest dose, but normalization applied from s=0 for all cohorts
 
 # latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
 
@@ -1609,44 +1614,46 @@ def fit_slope8_depletion(s, logh):
 
 def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
     """
-    Compute Slope6 normalization parameters for each cohort independently.
+    Compute Slope8 normalization parameters for each cohort independently.
     
     For each cohort c (including dose 0 and YearOfBirth=-2 for all-ages):
-    - Fit window: Uses baseline_window (2022-01 to SLOPE_FIT_END_ISO) for regression fitting (linear mode)
-    - Application window: enrollment_date to SLOPE_FIT_END_ISO for determining centerpoint (t_mean)
-    - Fit linear median regression on log h_c(t) vs centered time t_c = t - t_mean
-    - If b_lin >= 0, use linear mode: h_norm = h * exp(-b_lin * t_c)
-    - If b_lin < 0, use slope7 depletion-mode normalization:
-      - Fit window = deployment window (enrollment_date to SLOPE7_END_ISO)
-      - Use s = t (time since enrollment, NOT centered)
-      - Fit depletion curve: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
-      - Normalization: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
-    - Return dict with mode, parameters
+    - Uses Slope8 quantile regression depletion-mode normalization as primary method
+    - Fit window: enrollment_date to SLOPE_FIT_END_ISO
+      - For highest dose: fit uses data from s >= SLOPE_FIT_DELAY_WEEKS (default 15 weeks)
+      - For other doses: fit uses all data from enrollment
+    - Application: normalization applied from s=0 (enrollment) for all cohorts
+    - Fit depletion curve: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
+    - Normalization: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+    - Falls back to linear mode if Slope8 fit fails or insufficient data
+    - Tracks abnormal fits via optimizer diagnostics (status=5 or not success)
+    - Returns dict with mode, parameters, and abnormal_fit flag
     
-    This normalizes each cohort independently using time-centered quantile regression for linear mode,
-    or depletion-mode normalization for negative slopes.
+    This normalizes each cohort independently using Slope8 quantile regression,
+    which provides robust handling of depletion-driven curvature.
     
     Args:
         df: DataFrame for one enrollment sheet with columns YearOfBirth, Dose, DateDied, MR, etc.
-        baseline_window: Tuple (start_iso_week, end_iso_week) for fit window (linear mode)
-        enrollment_date_str: Enrollment date string (e.g., "2021_24") for application window start
+        baseline_window: Tuple (start_iso_week, end_iso_week) - kept for compatibility, not used for Slope8
+        enrollment_date_str: Enrollment date string (e.g., "2021_24") for fit window start
         dual_print_fn: Optional logging function
         
     Returns:
         Dict mapping (YearOfBirth, Dose) -> params dict with keys:
         {
-            "mode": "linear", "slope7", or "none",
-            "a": intercept (linear mode),
-            "b": linear slope (linear mode) or b_original (slope7 mode),
-            "c": quadratic coefficient (0 in linear mode, not used in slope7),
-            "C": intercept (slope7 mode),
-            "ka": k_0 starting slope (slope7 mode),
-            "kb": k_∞ final slope (slope7 mode),
-            "tau": depletion timescale (slope7 mode) or quantile level (linear mode),
-            "t_mean": time centering constant (linear mode) or 0.0 (slope7 mode),
-            "b_original": original b_lin value (slope7 mode)
+            "mode": "slope8", "linear", or "none",
+            "C": intercept (slope8 mode),
+            "ka": k_0 starting slope (slope8 mode),
+            "kb": k_∞ final slope (slope8 mode),
+            "tau": depletion timescale (slope8 mode),
+            "b_original": original b_lin value from linear fit (slope8 mode),
+            "abnormal_fit": bool - True if optimizer reported abnormal termination or failure,
+            "a": intercept (linear fallback mode),
+            "b": linear slope (linear fallback mode),
+            "t_mean": time centering constant (linear fallback mode) or 0.0 (slope8 mode),
+            "c": quadratic coefficient (always 0.0),
+            "tau": quantile level (linear fallback mode)
         }
-        For cohorts with insufficient data: dict with mode="none", all params 0.0
+        For cohorts with insufficient data: dict with mode="linear", abnormal_fit=False, all params 0.0
     """
     def _print(msg):
         if dual_print_fn:
@@ -1990,6 +1997,15 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                                 continue
                 
                 # Fit slope8 using only the fit window data
+                # Store results for later use in normalization
+                slope8_succeeded = False
+                abnormal_fit_flag = False
+                C_slope8_norm = None
+                kb_slope8_norm = None
+                ka_slope8_norm = None
+                tau_slope8_norm = None
+                rms_error_slope8_norm = None
+                
                 if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
                     try:
                         (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8), diagnostics_slope8 = fit_slope8_depletion(
@@ -2019,8 +2035,20 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             # If prediction fails completely, leave RMS error as None
                             pass
                         
-                        # Determine mode based on parameter validity
-                        if diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"]:
+                        # Check if parameters are valid for normalization
+                        if (diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and 
+                            diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"]):
+                            slope8_succeeded = True
+                            C_slope8_norm = C_slope8
+                            kb_slope8_norm = kb_slope8
+                            ka_slope8_norm = ka_slope8
+                            tau_slope8_norm = tau_slope8
+                            rms_error_slope8_norm = rms_error_slope8
+                            # Determine if fit was abnormal: status=5 (abnormal termination) or not success
+                            abnormal_fit_flag = (
+                                diagnostics_slope8.get("optimizer_status") == 5 or 
+                                not diagnostics_slope8.get("success", False)
+                            )
                             mode_str = "slope8"
                             note_str = None
                         else:
@@ -2098,154 +2126,38 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                             "param_tau_valid": False,
                         })
             
-            # Now decide which normalization mode to use based on b_lin
-            if b_lin >= 0 or ENABLE_NEGATIVE_SLOPE_FIT == 0:
-                # Linear mode (either b_lin >= 0, or quadratic disabled via flag)
+            # Use Slope8 for normalization (primary method for all cohorts)
+            # Use the slope8 results that were computed above
+            if slope8_succeeded:
+                params = {
+                    "mode": "slope8",
+                    "C": C_slope8_norm,
+                    "ka": ka_slope8_norm,  # k_0 starting slope
+                    "kb": kb_slope8_norm,  # k_∞ final slope
+                    "tau": tau_slope8_norm,
+                    "b_original": b_lin,
+                    "abnormal_fit": abnormal_fit_flag,
+                    "t_mean": 0.0,  # No centering for slope8
+                    "a": 0.0,  # Not used in slope8
+                    "b": 0.0,  # Not used in slope8 (use b_original instead)
+                    "c": 0.0,  # Not used in slope8
+                }
+                normalization_params[(yob, dose)] = params
+                abnormal_str = " (abnormal)" if abnormal_fit_flag else ""
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope8,C={C_slope8_norm:.6e},ka={ka_slope8_norm:.6e},kb={kb_slope8_norm:.6e},tau={tau_slope8_norm:.6e},b_original={b_lin:.6e},rms_error={rms_error_slope8_norm:.6e if rms_error_slope8_norm is not None else np.nan:.6e},points={len(s_values_slope8_fit)}{abnormal_str}")
+            else:
+                # Fall back to linear mode if slope8 failed or wasn't attempted
                 params = {
                     "mode": "linear",
                     "a": a_lin,
                     "b": b_lin,
                     "c": 0.0,
                     "t_mean": t_mean,
-                    "tau": SLOPE6_QUANTILE_TAU
+                    "tau": SLOPE6_QUANTILE_TAU,
+                    "abnormal_fit": False,  # Linear fallback is not considered abnormal
                 }
                 normalization_params[(yob, dose)] = params
-                if ENABLE_NEGATIVE_SLOPE_FIT == 0 and b_lin < 0:
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(forced),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)}")
-                else:
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)}")
-            else:
-                # Use slope7 depletion-mode normalization: b_lin < 0 and ENABLE_NEGATIVE_SLOPE_FIT != 0
-                # Note: s_values and log_h_slope7_values were already built above (for logging all three methods)
-                # We reuse them here for normalization
-                if len(s_values) < SLOPE6_MIN_DATA_POINTS:
-                    _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(s_values)}")
-                    try:
-                        log_slope7_fit_debug({
-                            "enrollment_date": sheet_name,
-                            "mode": "slope7_insufficient_data",
-                            "YearOfBirth": int(yob),
-                            "Dose": int(dose),
-                            "n_points": len(s_values),
-                            "s_values": list(map(float, s_values)),
-                            "logh_values": list(map(float, log_h_slope7_values)),
-                            "b_original": float(b_lin),
-                            "note": "insufficient points for slope7 fit; falling back to linear",
-                        })
-                    except Exception:
-                        pass
-                    # Fallback to linear mode
-                    t_c_fit = np.array(t_values) - t_mean
-                    predicted = a_lin + b_lin * t_c_fit
-                    residuals = np.array(log_h_values) - predicted
-                    rms_error = np.sqrt(np.mean(residuals**2))
-                    
-                    params = {
-                        "mode": "linear",
-                        "a": a_lin,
-                        "b": b_lin,
-                        "c": 0.0,
-                        "t_mean": t_mean,
-                        "tau": SLOPE6_QUANTILE_TAU
-                    }
-                    normalization_params[(yob, dose)] = params
-                    _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(insufficient_slope7_data),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
-                else:
-                    # Fit slope7 depletion-mode normalization (bounded TRF) and LM comparator
-                    try:
-                        # --- Bounded TRF fit (primary slope7) ---
-                        (C, kb, ka, tau), (C_init, ka_init, delta_k_init, tau_init) = fit_slope7_depletion(np.array(s_values), np.array(log_h_slope7_values))
-                        
-                        # Note: kb (k_∞) can be negative (cohort still depleting), but k_∞ ≥ k_0 is guaranteed by reparameterization
-                        # Note: slope7 fits were already logged above (for all cohorts regardless of b_lin)
-                        # Here we just use the fit results for normalization
-                        if np.isfinite(C) and np.isfinite(kb) and np.isfinite(ka) and np.isfinite(tau) and tau > EPS:
-                            # Compute RMS error for diagnostics
-                            predicted = C + kb * np.array(s_values) + (ka - kb) * tau * (1.0 - np.exp(-np.array(s_values) / (tau + EPS)))
-                            residuals = np.array(log_h_slope7_values) - predicted
-                            rms_error = np.sqrt(np.mean(residuals**2))
-                            
-                            params = {
-                                "mode": "slope7",
-                                "C": C,
-                                "ka": ka,  # k_0 starting slope
-                                "kb": kb,  # k_∞ final slope
-                                "tau": tau,
-                                "b_original": b_lin,
-                                "t_mean": 0.0,  # No centering for slope7
-                                "a": 0.0,  # Not used in slope7
-                                "b": 0.0,  # Not used in slope7 (use b_original instead)
-                                "c": 0.0,  # Not used in slope7
-                            }
-                            normalization_params[(yob, dose)] = params
-                            _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope7,C={C:.6e},ka={ka:.6e},kb={kb:.6e},tau={tau:.6e},b_original={b_lin:.6e},rms_error={rms_error:.6e},points={len(s_values)}")
-                        else:
-                            # Slope7 fit failed, fall back to linear
-                            try:
-                                log_slope7_fit_debug({
-                                    "enrollment_date": sheet_name,
-                                    "mode": "slope7_invalid_params",
-                                    "YearOfBirth": int(yob),
-                                    "Dose": int(dose),
-                                    "n_points": len(s_values),
-                                    "s_values": list(map(float, s_values)),
-                                    "logh_values": list(map(float, log_h_slope7_values)),
-                                    "C": float(C) if np.isfinite(C) else None,
-                                    "ka": float(ka) if np.isfinite(ka) else None,
-                                    "kb": float(kb) if np.isfinite(kb) else None,
-                                    "tau": float(tau) if np.isfinite(tau) else None,
-                                    "b_original": float(b_lin),
-                                    "note": "invalid parameters from slope7 fit; falling back to linear",
-                                })
-                            except Exception:
-                                pass
-                            t_c_fit = np.array(t_values) - t_mean
-                            predicted = a_lin + b_lin * t_c_fit
-                            residuals = np.array(log_h_values) - predicted
-                            rms_error = np.sqrt(np.mean(residuals**2))
-                            
-                            params = {
-                                "mode": "linear",
-                                "a": a_lin,
-                                "b": b_lin,
-                                "c": 0.0,
-                                "t_mean": t_mean,
-                                "tau": SLOPE6_QUANTILE_TAU
-                            }
-                            normalization_params[(yob, dose)] = params
-                            _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_failed_invalid_params,falling_back_to_linear")
-                    except Exception as slope7_error:
-                        # If slope7 fit fails, fall back to linear
-                        try:
-                            log_slope7_fit_debug({
-                                "enrollment_date": sheet_name,
-                                "mode": "slope7_exception",
-                                "YearOfBirth": int(yob),
-                                "Dose": int(dose),
-                                "n_points": len(s_values),
-                                "s_values": list(map(float, s_values)),
-                                "logh_values": list(map(float, log_h_slope7_values)),
-                                "b_original": float(b_lin),
-                                "error": str(slope7_error),
-                            })
-                        except Exception:
-                            pass
-                        _print(f"SLOPE7_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(slope7_error)},falling_back_to_linear")
-                        t_c_fit = np.array(t_values) - t_mean
-                        predicted = a_lin + b_lin * t_c_fit
-                        residuals = np.array(log_h_values) - predicted
-                        rms_error = np.sqrt(np.mean(residuals**2))
-                        
-                        params = {
-                            "mode": "linear",
-                            "a": a_lin,
-                            "b": b_lin,
-                            "c": 0.0,
-                            "t_mean": t_mean,
-                            "tau": SLOPE6_QUANTILE_TAU
-                        }
-                        normalization_params[(yob, dose)] = params
-                        _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear,a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error:.6e},points={len(log_h_values)}")
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)}")
         except Exception as e:
             _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(e)}")
             normalization_params[(yob, dose)] = {
@@ -2431,10 +2343,23 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
             merged["hazard_den"] = merged.get("hazard_raw_den", np.nan)
             merged["hazard_adj_num"] = merged.get("hazard_adj_num", np.nan)
             merged["hazard_adj_den"] = merged.get("hazard_adj_den", np.nan)
+            
+            # Check if either numerator or denominator cohort had abnormal fit
+            abnormal_fit_num = False
+            abnormal_fit_den = False
+            if slope6_params_map is not None:
+                params_num = slope6_params_map.get((sheet_name, int(yob), int(num)), {})
+                params_den = slope6_params_map.get((sheet_name, int(yob), int(den)), {})
+                if isinstance(params_num, dict):
+                    abnormal_fit_num = params_num.get("abnormal_fit", False)
+                if isinstance(params_den, dict):
+                    abnormal_fit_den = params_den.get("abnormal_fit", False)
+            merged["abnormal_fit"] = abnormal_fit_num or abnormal_fit_den
+            
             # Order: unadjusted first, then adjusted
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
                           "CH_num","hazard_num","hazard_adj_num","t_num",
-                          "CH_den","hazard_den","hazard_adj_den","t_den"]].copy()
+                          "CH_den","hazard_den","hazard_adj_den","t_den","abnormal_fit"]].copy()
 
             # MR fields are written raw; no display scaling
             # Remove redundant merged suffix columns like *_den copies of ISOweek
@@ -2623,6 +2548,21 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                 
 
                 
+                # Check if any contributing age group had abnormal fit
+                abnormal_fit_pooled = False
+                if slope6_params_map is not None:
+                    for yob_check in df_sorted["YearOfBirth"].unique():
+                        if yob_check not in anchors:
+                            continue
+                        params_num_check = slope6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                        params_den_check = slope6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                        if isinstance(params_num_check, dict) and params_num_check.get("abnormal_fit", False):
+                            abnormal_fit_pooled = True
+                            break
+                        if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
+                            abnormal_fit_pooled = True
+                            break
+                
                 # Debug: Check for suspiciously large pooled KCOR values
                 if Kpool > 10:
                     print(f"\n[DEBUG] Large pooled KCOR detected: {Kpool:.6f}")
@@ -2650,7 +2590,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                     "CH_den": np.nan,
                     "hazard_adj_den": np.nan,
                     "hazard_den": np.nan,
-                    "t_den": np.nan
+                    "t_den": np.nan,
+                    "abnormal_fit": abnormal_fit_pooled
                 })
 
     # -------- All Ages rows (YearOfBirth = -2) --------
@@ -2721,6 +2662,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                     "c": 0.0,
                     "t_mean": 0.0,
                     "tau": SLOPE6_QUANTILE_TAU,
+                    "abnormal_fit": False,  # All-ages uses simple linear fallback, not abnormal
                 }
             except Exception:
                 slope6_params_map[(sheet_name, -2, dose)] = {
@@ -2730,6 +2672,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                     "c": 0.0,
                     "t_mean": 0.0,
                     "tau": SLOPE6_QUANTILE_TAU,
+                    "abnormal_fit": False,  # All-ages uses simple linear fallback, not abnormal
                 }
     
     # Apply beta normalization at hazard level (origin-anchored)
@@ -2818,6 +2761,16 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
         merged_all["CI_upper"] = np.clip(_ci_upper_raw, merged_all["KCOR"] * 0.1, merged_all["KCOR"] * 10)
         merged_all.loc[merged_all.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
         
+        # Check if either numerator or denominator cohort had abnormal fit (for all-ages)
+        abnormal_fit_all_ages = False
+        if slope6_params_map is not None:
+            params_num_all = slope6_params_map.get((sheet_name, -2, int(num)), {})
+            params_den_all = slope6_params_map.get((sheet_name, -2, int(den)), {})
+            if isinstance(params_num_all, dict):
+                abnormal_fit_all_ages = abnormal_fit_all_ages or params_num_all.get("abnormal_fit", False)
+            if isinstance(params_den_all, dict):
+                abnormal_fit_all_ages = abnormal_fit_all_ages or params_den_all.get("abnormal_fit", False)
+        
         # Build output rows for all-ages
         for _, row in merged_all.iterrows():
             all_ages_rows.append({
@@ -2837,7 +2790,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                 "CH_den": row["CH_den"],
                 "hazard_adj_den": row["hazard_adj_den"],
                 "hazard_den": row["hazard_raw_den"],
-                "t_den": row["t_den"]
+                "t_den": row["t_den"],
+                "abnormal_fit": abnormal_fit_all_ages
             })
 
     if out_rows or pooled_rows or all_ages_rows:
@@ -2845,7 +2799,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
         "KCOR","CI_lower","CI_upper","CH_num","hazard_adj_num","hazard_num","t_num",
-        "CH_den","hazard_adj_den","hazard_den","t_den"
+        "CH_den","hazard_adj_den","hazard_den","t_den","abnormal_fit"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -3580,14 +3534,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         t_c = row["t"] - t_mean
                         # Linear mode: h_norm = h * exp(-b * t_c)
                         return row["hazard_raw"] * np.exp(-b * t_c)
-                    elif mode == "slope7":
+                    elif mode == "slope7" or mode == "slope8":
                         C = params.get("C", 0.0)
                         ka = params.get("ka", 0.0)
                         kb = params.get("kb", 0.0)
                         tau = params.get("tau", 1.0)
                         # Use s = t (time since enrollment, NOT centered)
                         s = row["t"]
-                        # Slope7 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+                        # Slope7/Slope8 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
                         return row["hazard_raw"] * np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
                     else:
                         # Unknown mode, no normalization
@@ -3607,8 +3561,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     })
                     if isinstance(params, dict):
                         mode = params.get("mode", "none")
-                        if mode == "slope7":
-                            # For slope7, return b_original (the original b_lin from linear fit)
+                        if mode == "slope7" or mode == "slope8":
+                            # For slope7/slope8, return b_original (the original b_lin from linear fit)
                             return float(params.get("b_original", 0.0))
                         else:
                             # For linear mode, return b
@@ -3634,14 +3588,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         t_mean = params.get("t_mean", 0.0)
                         t_c = r["t"] - t_mean
                         return np.exp(-b * t_c)
-                    elif mode == "slope7":
+                    elif mode == "slope7" or mode == "slope8":
                         C = params.get("C", 0.0)
                         ka = params.get("ka", 0.0)
                         kb = params.get("kb", 0.0)
                         tau = params.get("tau", 1.0)
                         # Use s = t (time since enrollment, NOT centered)
                         s = r["t"]
-                        # Slope7 scale factor: exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+                        # Slope7/Slope8 scale factor: exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
                         return np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
                     else:
                         return 1.0
@@ -3962,6 +3916,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     kcor_val = age_data["KCOR"].iloc[0]
                     ci_lower = age_data["CI_lower"].iloc[0]
                     ci_upper = age_data["CI_upper"].iloc[0]
+                    # Check if abnormal fit flag is present
+                    abnormal_fit_flag = age_data.get("abnormal_fit", pd.Series([False])).iloc[0] if "abnormal_fit" in age_data.columns else False
+                    abnormal_marker = "*" if abnormal_fit_flag else ""
                     # KCOR_ns may be missing for pooled rows; print '-' in that case
                     try:
                         kcor_ns_val = age_data.get("KCOR_ns", pd.Series([np.nan])).iloc[0]
@@ -3977,13 +3934,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     # Extract parameters from dict for logging
                     if isinstance(params_num, dict):
                         mode_num = params_num.get("mode", "none")
-                        if mode_num == "slope7":
+                        if mode_num == "slope7" or mode_num == "slope8":
                             beta_num = params_num.get("b_original", np.nan)
                             C_num = params_num.get("C", np.nan)
                             ka_num = params_num.get("ka", np.nan)
                             kb_num = params_num.get("kb", np.nan)
                             tau_num = params_num.get("tau", np.nan)
-                            c_num = 0.0  # Not used in slope7
+                            c_num = 0.0  # Not used in slope7/slope8
                         else:
                             beta_num = params_num.get("b", np.nan)
                             c_num = params_num.get("c", 0.0)
@@ -4010,13 +3967,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     
                     if isinstance(params_den, dict):
                         mode_den = params_den.get("mode", "none")
-                        if mode_den == "slope7":
+                        if mode_den == "slope7" or mode_den == "slope8":
                             beta_den = params_den.get("b_original", np.nan)
                             C_den = params_den.get("C", np.nan)
                             ka_den = params_den.get("ka", np.nan)
                             kb_den = params_den.get("kb", np.nan)
                             tau_den = params_den.get("tau", np.nan)
-                            c_den = 0.0  # Not used in slope7
+                            c_den = 0.0  # Not used in slope7/slope8
                         else:
                             beta_den = params_den.get("b", np.nan)
                             c_den = params_den.get("c", 0.0)
@@ -4051,15 +4008,15 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         age_label = f"{age}"
                     
                     if age == 0:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}")
                     else:
                         # Build parameter string
                         param_parts = []
                         
-                        # Check if either cohort uses slope7 mode
-                        if mode_num == "slope7" or mode_den == "slope7":
-                            # Slope7 mode: show b_original, C, ka, kb, tau
-                            if mode_num == "slope7":
+                        # Check if either cohort uses slope7/slope8 mode
+                        if mode_num == "slope7" or mode_num == "slope8" or mode_den == "slope7" or mode_den == "slope8":
+                            # Slope7/Slope8 mode: show b_original, C, ka, kb, tau
+                            if mode_num == "slope7" or mode_num == "slope8":
                                 param_parts.append(f"b_original_num={beta_num:.6f}")
                                 if np.isfinite(C_num):
                                     param_parts.append(f"C_num={C_num:.6e}")
@@ -4072,7 +4029,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             else:
                                 param_parts.append(f"beta_num={beta_num:.6f}")
                             
-                            if mode_den == "slope7":
+                            if mode_den == "slope7" or mode_den == "slope8":
                                 param_parts.append(f"b_original_den={beta_den:.6f}")
                                 if np.isfinite(C_den):
                                     param_parts.append(f"C_den={C_den:.6e}")
@@ -4093,7 +4050,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 param_parts.append(f"c_den={c_den:.6f}")
                         
                         param_str = ", ".join(param_parts)
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  ({param_str})")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str}  ({param_str})")
 
         # --- Print M/P KCOR summaries by decades when available ---
         try:
@@ -4683,10 +4640,14 @@ def create_summary_file(combined_data, out_path, dual_print):
                             else:
                                 age_label = f"{age}"
                             
+                            # Check if abnormal fit flag is present
+                            abnormal_fit_flag = row.get("abnormal_fit", False) if "abnormal_fit" in row.index else False
+                            abnormal_marker = "*" if abnormal_fit_flag else ""
+                            
                             summary_rows.append({
                                 "Dose_Combination": "",
                                 "YearOfBirth": age_label,
-                                "KCOR": f"{row['KCOR']:.4f}",
+                                "KCOR": f"{row['KCOR']:.4f}{abnormal_marker}",
                                 "CI_Lower": f"{row['CI_lower']:.3f}",
                                 "CI_Upper": f"{row['CI_upper']:.3f}"
                             })
