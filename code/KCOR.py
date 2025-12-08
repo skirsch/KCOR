@@ -24,7 +24,7 @@ METHODOLOGY OVERVIEW:
      Fit window: enrollment_date to SLOPE_FIT_END_ISO (for highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS).
      Application: normalization applied from s=0 (enrollment) for all cohorts.
      Fit depletion curve: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
-     Normalization: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+     Normalization: h_norm = h * exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))  [C term excluded so adjustment is 1 at s=0]
      Apply normalization at the hazard level only. Raw MR values are never modified.
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
@@ -1626,7 +1626,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
       - For other doses: fit uses all data from enrollment
     - Application: normalization applied from s=0 (enrollment) for all cohorts
     - Fit depletion curve: log h(s) = C + k_∞*s + (k_0 - k_∞)*τ*(1 - e^(-s/τ))
-    - Normalization: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+    - Normalization: h_norm = h * exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))  [C term excluded so adjustment is 1 at s=0]
     - Falls back to linear mode if Slope8 fit fails or insufficient data
     - Tracks abnormal fits via optimizer diagnostics (status=5 or not success)
     - Returns dict with mode, parameters, and abnormal_fit flag
@@ -2549,8 +2549,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
         mode = params.get("mode", "linear")
         
         if mode == "slope8":
-            # Slope8 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
-            C = params.get("C", 0.0)
+            # Slope8 mode: h_norm = h * exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+            # C term excluded so adjustment is 1 at s=0
             ka = params.get("ka", 0.0)
             kb = params.get("kb", 0.0)
             tau = params.get("tau", 1.0)
@@ -2559,7 +2559,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
             # Ensure tau is positive and finite
             if not np.isfinite(tau) or tau <= EPS:
                 tau = 1.0
-            norm_factor = np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+            norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
             if not np.isfinite(norm_factor):
                 norm_factor = 1.0
             return row["hazard_raw"] * norm_factor
@@ -2613,13 +2613,13 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
         mode = params.get("mode", "none")
         s = row["t"]
         if mode == "slope8":
-            C = params.get("C", 0.0)
+            # C term excluded so adjustment is 1 at s=0
             ka = params.get("ka", 0.0)
             kb = params.get("kb", 0.0)
             tau = params.get("tau", 1.0)
             if not np.isfinite(tau) or tau <= EPS:
                 tau = 1.0
-            norm_factor = np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+            norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
             return norm_factor if np.isfinite(norm_factor) else 1.0
         elif mode == "linear":
             b = params.get("b", 0.0)
@@ -3446,7 +3446,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Apply Slope6 normalization at hazard level using time-centered approach
         # Linear mode: h_norm = h * exp(-b_lin * t_c) where t_c = t - t_mean
-        # Slope8 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau))) where s = t (no centering)
+        # Slope8 mode: h_norm = h * exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau))) where s = t (no centering, C term excluded)
         # t_mean is computed from application window (enrollment_date to 2024-16) for linear mode
         if isinstance(slope6_params, dict) and len(slope6_params) > 0:
             try:
@@ -3489,7 +3489,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             })
                         return result
                     elif mode == "slope8":
-                        C = params.get("C", 0.0)
+                        # C term excluded so adjustment is 1 at s=0
                         ka = params.get("ka", 0.0)
                         kb = params.get("kb", 0.0)
                         tau = params.get("tau", 1.0)
@@ -3498,8 +3498,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         # Ensure tau is positive and finite
                         if not np.isfinite(tau) or tau <= EPS:
                             tau = 1.0
-                        # Slope8 mode: h_norm = h * exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
-                        norm_factor = np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+                        # Slope8 mode: h_norm = h * exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
+                        norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
                         # Ensure norm_factor is finite
                         if not np.isfinite(norm_factor):
                             norm_factor = 1.0
@@ -3642,14 +3642,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         t_c = r["t"] - t_mean
                         return np.exp(-b * t_c)
                     elif mode == "slope8":
-                        C = params.get("C", 0.0)
+                        # C term excluded so adjustment is 1 at s=0
                         ka = params.get("ka", 0.0)
                         kb = params.get("kb", 0.0)
                         tau = params.get("tau", 1.0)
                         # Use s = t (time since enrollment, NOT centered)
                         s = r["t"]
-                        # Slope8 scale factor: exp(-C - kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
-                        return np.exp(-C - kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+                        # Slope8 scale factor: exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau))) [C term excluded]
+                        return np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
                     else:
                         return 1.0
                 
@@ -3953,7 +3953,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns | ka_num  kb_num  tau_num  ka_den  kb_den  tau_den")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns | {'ka_num':>6} {'kb_num':>6} {'tau_num':>6} {'ka_den':>6} {'kb_den':>6} {'tau_den':>6}")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date
@@ -4197,7 +4197,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         age_label = f"{age}"
                     
-                    # Format ka, kb, tau values for numerator and denominator (3 significant digits)
+                    # Format ka, kb values for numerator and denominator (3 significant digits)
                     def format_param(val):
                         """Format parameter value with 3 significant digits, right-aligned in 6 characters."""
                         if val is None or not np.isfinite(val):
@@ -4222,14 +4222,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             # Integer for numbers >= 100
                             return f"{val:.0f}".rjust(6)
                     
+                    # Format tau values as integers (right-aligned in 6 characters)
+                    def format_tau(val):
+                        """Format tau value as integer, right-aligned in 6 characters."""
+                        if val is None or not np.isfinite(val):
+                            return "   ---"
+                        # Format as integer
+                        return f"{int(round(val)):>6}"
+                    
                     # Show ka/kb/tau if they exist and are finite, only for slope8 mode
                     # For non-slope8 modes, ka/kb/tau should be None
                     ka_num_str = format_param(ka_num if (ka_num is not None and np.isfinite(ka_num)) else None)
                     kb_num_str = format_param(kb_num if (kb_num is not None and np.isfinite(kb_num)) else None)
-                    tau_num_str = format_param(tau_num if (tau_num is not None and np.isfinite(tau_num)) else None)
+                    tau_num_str = format_tau(tau_num if (tau_num is not None and np.isfinite(tau_num)) else None)
                     ka_den_str = format_param(ka_den if (ka_den is not None and np.isfinite(ka_den)) else None)
                     kb_den_str = format_param(kb_den if (kb_den is not None and np.isfinite(kb_den)) else None)
-                    tau_den_str = format_param(tau_den if (tau_den is not None and np.isfinite(tau_den)) else None)
+                    tau_den_str = format_tau(tau_den if (tau_den is not None and np.isfinite(tau_den)) else None)
                     
                     if age == 0:
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
