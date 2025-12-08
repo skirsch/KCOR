@@ -90,16 +90,7 @@ import csv
 import statsmodels.api as sm
 from scipy.optimize import least_squares, minimize
 
-try:
-    import cvxpy as cp
-    HAS_CVXPY = True
-except ImportError:
-    HAS_CVXPY = False
-    import warnings
-    warnings.warn("cvxpy not available. Quadratic regression (fit_quadratic_quantile) will not work, but this is not needed for v5.3+ (slope8 mode).", ImportWarning)
-
 # Dependencies: pandas, numpy, openpyxl, statsmodels, scipy
-# cvxpy is optional and only needed for legacy fit_quadratic_quantile function (not used in v5.1+)
 
 # Core KCOR methodology parameters
 # KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS)
@@ -890,68 +881,6 @@ def fit_linear_median(t, logh, tau=0.5):
     
     return a_lin, b_lin, float(t_mean)
 
-def fit_quadratic_quantile(t, logh, tau=0.5, fixed_b=None):
-    """
-    Fit logh ≈ a + b * t_c + c * t_c^2 using quantile regression via cvxpy.
-    
-    If fixed_b is provided, b is constrained to that value. Otherwise, b is free.
-    No constraint on c (can be positive or negative).
-    
-    Parameters
-    ----------
-    t : array-like
-        Time values (1D array).
-    logh : array-like
-        log(hazard) values aligned with t.
-    tau : float
-        Quantile level, default 0.5 (median).
-    fixed_b : float, optional
-        If provided, constrain b to this fixed value from linear fit.
-    
-    Returns
-    -------
-    a, b, c, t_mean : floats
-        Fitted parameters and the time centering constant t_mean.
-    """
-    if not HAS_CVXPY:
-        raise RuntimeError("cvxpy is required for quadratic regression but is not available")
-    
-    t = np.asarray(t)
-    logh = np.asarray(logh)
-    # Center time for stability
-    t_mean = t.mean()
-    t_c = t - t_mean
-    
-    # Design matrix: [1, t_c, t_c^2]
-    X = np.column_stack([
-        np.ones_like(t_c),
-        t_c,
-        t_c**2,
-    ])
-    
-    # Variables: beta = [a, b, c]
-    beta = cp.Variable(3)
-    residuals = logh - X @ beta
-    
-    # Quantile check loss
-    loss = cp.sum(cp.maximum(tau * residuals, (tau - 1) * residuals))
-    
-    # Constraints
-    constraints = []
-    if fixed_b is not None:
-        # Constrain b to the fixed value from linear fit (beta[1] is b)
-        constraints.append(beta[1] == float(fixed_b))
-    
-    # Solve
-    problem = cp.Problem(cp.Minimize(loss), constraints)
-    problem.solve()
-    
-    if problem.status not in ["optimal", "optimal_inaccurate"]:
-        raise RuntimeError(f"Quadratic regression solver failed with status: {problem.status}")
-    
-    a, b, c = beta.value
-    return float(a), float(b), float(c), float(t_mean)
-
 def fit_slope7_depletion(s, logh):
     """
     Fit depletion-mode normalization using Trust Region Reflective nonlinear least squares.
@@ -1705,8 +1634,23 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     dose_pairs = get_dose_pairs(sheet_name)
     max_dose = max(max(pair) for pair in dose_pairs) if dose_pairs else 0
     
+    # Determine all expected cohorts: all YearOfBirth values × all doses that appear in dose_pairs
+    # This ensures we log all cohorts, even if they have no data
+    all_doses = set()
+    for pair in dose_pairs:
+        all_doses.add(pair[0])
+        all_doses.add(pair[1])
+    all_yobs = set(df["YearOfBirth"].unique()) if len(df) > 0 else set()
+    # Also include -2 (all-ages) if it's not already there
+    if len(df) > 0:
+        all_yobs.add(-2)
+    
+    # Track which cohorts we've processed
+    processed_cohorts = set()
+    
     # Process each cohort independently
     for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+        processed_cohorts.add((yob, dose))
         # Sort by DateDied to ensure t values are in order
         g_sorted = g.sort_values("DateDied").reset_index(drop=True)
         
@@ -1773,10 +1717,85 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     except Exception:
                         continue
         
-        # Need at least SLOPE6_MIN_DATA_POINTS points for quantile regression fit
+        # Initialize slope8_attempted before any try blocks that might fail
+        slope8_attempted = False
+        
+        # Fit linear median regression first
         sheet_name = df['sheet_name'].iloc[0] if 'sheet_name' in df.columns and len(df) > 0 else 'unknown'
-        if len(log_h_values) < SLOPE6_MIN_DATA_POINTS:
+        if len(log_h_values) >= SLOPE6_MIN_DATA_POINTS:
+            try:
+                a_lin, b_lin, t_mean_fit = fit_linear_median(np.array(t_values), np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU)
+                
+                # Use t_mean from application window, not from fit
+                # (t_mean_fit is computed from fit window, but we want t_mean from application window)
+                t_c_fit = np.array(t_values) - t_mean
+                predicted_lin = a_lin + b_lin * t_c_fit
+                residuals_lin = np.array(log_h_values) - predicted_lin
+                rms_error_lin = np.sqrt(np.mean(residuals_lin**2))
+
+                # Always log linear fit (first of three methods)
+                try:
+                    log_slope7_fit_debug({
+                        "enrollment_date": sheet_name,
+                        "mode": "linear",
+                        "YearOfBirth": int(yob),
+                        "Dose": int(dose),
+                        "n_points": len(log_h_values),
+                        "b_original": float(b_lin),
+                        "C": float(a_lin),
+                        "ka": None,
+                        "kb": None,
+                        "tau": None,
+                        "rms_error": float(rms_error_lin),
+                        "note": f"linear_fit_t_mean={t_mean:.6f}",
+                        "error": None,
+                        "s_values": t_values,
+                        "logh_values": log_h_values,
+                        "h_values": h_values,  # Include raw hazard values for debugging
+                        "iso_weeks_used": iso_weeks_used,  # Track ISO weeks actually used
+                    })
+                except Exception:
+                    pass
+            except Exception as e:
+                # Log linear fit failure
+                try:
+                    log_slope7_fit_debug({
+                        "enrollment_date": sheet_name,
+                        "mode": "linear",
+                        "YearOfBirth": int(yob),
+                        "Dose": int(dose),
+                        "n_points": len(log_h_values),
+                        "error": str(e),
+                        "note": "linear_fit_failed",
+                        "s_values": t_values,
+                        "logh_values": log_h_values,
+                        "h_values": h_values,
+                        "iso_weeks_used": iso_weeks_used,
+                    })
+                except Exception:
+                    pass
+                a_lin = None
+                b_lin = None
+                rms_error_lin = None
+        else:
+            # Insufficient data for linear fit - log this case
             _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(log_h_values)}")
+            try:
+                log_slope7_fit_debug({
+                    "enrollment_date": sheet_name,
+                    "mode": "linear",
+                    "YearOfBirth": int(yob),
+                    "Dose": int(dose),
+                    "n_points": len(log_h_values),
+                    "error": None,
+                    "note": f"insufficient_data_for_fit (need {SLOPE6_MIN_DATA_POINTS}, have {len(log_h_values)})",
+                    "s_values": t_values if len(t_values) > 0 else None,
+                    "logh_values": log_h_values if len(log_h_values) > 0 else None,
+                    "h_values": h_values if len(h_values) > 0 else None,
+                    "iso_weeks_used": iso_weeks_used if len(iso_weeks_used) > 0 else None,
+                })
+            except Exception:
+                pass
             normalization_params[(yob, dose)] = {
                 "mode": "none",
                 "a": 0.0,
@@ -1785,66 +1804,52 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 "t_mean": t_mean,
                 "tau": None  # tau only valid for slope8 mode
             }
-            continue
-        
-        # Initialize slope8_attempted before any try blocks that might fail
-        slope8_attempted = False
-        
-        # Fit linear median regression first
-        try:
-            a_lin, b_lin, t_mean_fit = fit_linear_median(np.array(t_values), np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU)
-            
-            # Use t_mean from application window, not from fit
-            # (t_mean_fit is computed from fit window, but we want t_mean from application window)
-            t_c_fit = np.array(t_values) - t_mean
-            predicted_lin = a_lin + b_lin * t_c_fit
-            residuals_lin = np.array(log_h_values) - predicted_lin
-            rms_error_lin = np.sqrt(np.mean(residuals_lin**2))
-
-            # Always log linear fit (first of three methods)
+            # Also log that slope8 wasn't attempted
             try:
                 log_slope7_fit_debug({
                     "enrollment_date": sheet_name,
-                    "mode": "linear",
+                    "mode": "slope8",
                     "YearOfBirth": int(yob),
                     "Dose": int(dose),
                     "n_points": len(log_h_values),
-                    "b_original": float(b_lin),
-                    "C": float(a_lin),
-                    "ka": None,
-                    "kb": None,
-                    "tau": None,
-                    "rms_error": float(rms_error_lin),
-                    "note": f"linear_fit_t_mean={t_mean:.6f}",
                     "error": None,
-                    "s_values": t_values,
-                    "logh_values": log_h_values,
-                    "h_values": h_values,  # Include raw hazard values for debugging
-                    "iso_weeks_used": iso_weeks_used,  # Track ISO weeks actually used
+                    "note": f"slope8_not_attempted_insufficient_data (need {SLOPE6_MIN_DATA_POINTS}, have {len(log_h_values)})",
+                    "optimizer_success": False,
+                    "param_C_valid": False,
+                    "param_ka_valid": False,
+                    "param_kb_valid": False,
+                    "param_tau_valid": False,
                 })
             except Exception:
                 pass
-            
-            # --- Slope8 quantile regression fit ---
-            # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
-            # For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS, but
-            # normalization is applied from s=0 (enrollment) onwards
-            slope8_end_dt = _iso_to_date_slope6(SLOPE_FIT_END_ISO)
-            is_highest_dose = (dose == max_dose)
-            
-            # Build full deployment window data (s=0 at enrollment_date for all doses)
-            # This will be used for logging predictions
-            s_values_slope8_full = []
-            log_h_slope8_values_full = []
-            h_slope8_values_full = []
-            iso_weeks_slope8_full = []
-            
-            # Build fit window data (subset for highest dose)
-            s_values_slope8_fit = []
-            log_h_slope8_values_fit = []
-            
-            # Build s_values: s=0 corresponds to enrollment_date
-            for week, week_data in cohort_data.items():
+            continue
+        
+        # Need at least SLOPE6_MIN_DATA_POINTS points for quantile regression fit
+        # (This check is now redundant since we already checked above, but keeping for clarity)
+        if len(log_h_values) < SLOPE6_MIN_DATA_POINTS:
+            # This should not happen since we already handled this case above, but just in case:
+            continue
+        
+        # --- Slope8 quantile regression fit ---
+        # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
+        # For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS, but
+        # normalization is applied from s=0 (enrollment) onwards
+        slope8_end_dt = _iso_to_date_slope6(SLOPE_FIT_END_ISO)
+        is_highest_dose = (dose == max_dose)
+        
+        # Build full deployment window data (s=0 at enrollment_date for all doses)
+        # This will be used for logging predictions
+        s_values_slope8_full = []
+        log_h_slope8_values_full = []
+        h_slope8_values_full = []
+        iso_weeks_slope8_full = []
+        
+        # Build fit window data (subset for highest dose)
+        s_values_slope8_fit = []
+        log_h_slope8_values_fit = []
+        
+        # Build s_values: s=0 corresponds to enrollment_date
+        for week, week_data in cohort_data.items():
                 date_died = week_data.get("DateDied")
                 if date_died is not None and enrollment_dt <= date_died <= slope8_end_dt:
                     hc = week_data.get("hazard")
@@ -1868,214 +1873,249 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                                     log_h_slope8_values_fit.append(log_h_val)
                         except Exception:
                             continue
-            
-            # Fit slope8 using only the fit window data
-            # Store results for later use in normalization
-            # ALWAYS use slope8 parameters if fit was attempted, even if unreliable
-            # Note: slope8_attempted was initialized earlier, but reset here for clarity
-            slope8_attempted = False
-            abnormal_fit_flag = False
-            C_slope8_norm = None
-            kb_slope8_norm = None
-            ka_slope8_norm = None
-            tau_slope8_norm = None
-            rms_error_slope8_norm = None
-            mode_str = None
-            note_str = None
-            
-            if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
+        
+        # Fit slope8 using only the fit window data
+        # Store results for later use in normalization
+        # ALWAYS use slope8 parameters if fit was attempted, even if unreliable
+        # Note: slope8_attempted was initialized earlier, but reset here for clarity
+        slope8_attempted = False
+        abnormal_fit_flag = False
+        C_slope8_norm = None
+        kb_slope8_norm = None
+        ka_slope8_norm = None
+        tau_slope8_norm = None
+        rms_error_slope8_norm = None
+        mode_str = None
+        note_str = None
+        
+        if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
+            try:
+                (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8), diagnostics_slope8 = fit_slope8_depletion(
+                    np.array(s_values_slope8_fit), np.array(log_h_slope8_values_fit)
+                )
+                slope8_attempted = True
+                
+                # Always try to compute RMS error, even if parameters are invalid
+                # This helps diagnose how bad the fit actually is
+                rms_error_slope8 = None
                 try:
-                    (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8), diagnostics_slope8 = fit_slope8_depletion(
-                        np.array(s_values_slope8_fit), np.array(log_h_slope8_values_fit)
-                    )
-                    slope8_attempted = True
+                    # Try to compute prediction even if some parameters are invalid
+                    # Use np.nan_to_num to handle invalid values gracefully
+                    C_safe = np.nan_to_num(C_slope8, nan=0.0, posinf=0.0, neginf=0.0)
+                    kb_safe = np.nan_to_num(kb_slope8, nan=0.0, posinf=0.0, neginf=0.0)
+                    ka_safe = np.nan_to_num(ka_slope8, nan=0.0, posinf=0.0, neginf=0.0)
+                    tau_safe = np.nan_to_num(tau_slope8, nan=1.0, posinf=1.0, neginf=1.0)
+                    tau_safe = max(tau_safe, EPS)  # Ensure tau > 0 for exp calculation
                     
-                    # Always try to compute RMS error, even if parameters are invalid
-                    # This helps diagnose how bad the fit actually is
-                    rms_error_slope8 = None
-                    try:
-                        # Try to compute prediction even if some parameters are invalid
-                        # Use np.nan_to_num to handle invalid values gracefully
-                        C_safe = np.nan_to_num(C_slope8, nan=0.0, posinf=0.0, neginf=0.0)
-                        kb_safe = np.nan_to_num(kb_slope8, nan=0.0, posinf=0.0, neginf=0.0)
-                        ka_safe = np.nan_to_num(ka_slope8, nan=0.0, posinf=0.0, neginf=0.0)
-                        tau_safe = np.nan_to_num(tau_slope8, nan=1.0, posinf=1.0, neginf=1.0)
-                        tau_safe = max(tau_safe, EPS)  # Ensure tau > 0 for exp calculation
-                        
-                        predicted_slope8_fit = C_safe + kb_safe * np.array(s_values_slope8_fit) + (ka_safe - kb_safe) * tau_safe * (1.0 - np.exp(-np.array(s_values_slope8_fit) / (tau_safe + EPS)))
-                        residuals_slope8_fit = np.array(log_h_slope8_values_fit) - predicted_slope8_fit
-                        rms_error_slope8 = np.sqrt(np.mean(residuals_slope8_fit**2))
-                        
-                        # If RMS error is not finite, set to None
-                        if not np.isfinite(rms_error_slope8):
-                            rms_error_slope8 = None
-                    except Exception:
-                        # If prediction fails completely, leave RMS error as None
-                        pass
+                    predicted_slope8_fit = C_safe + kb_safe * np.array(s_values_slope8_fit) + (ka_safe - kb_safe) * tau_safe * (1.0 - np.exp(-np.array(s_values_slope8_fit) / (tau_safe + EPS)))
+                    residuals_slope8_fit = np.array(log_h_slope8_values_fit) - predicted_slope8_fit
+                    rms_error_slope8 = np.sqrt(np.mean(residuals_slope8_fit**2))
                     
-                    # ALWAYS use slope8 parameters, even if invalid or abnormal
-                    # Replace NaN/inf values with safe defaults for normalization
-                    C_slope8_norm = C_slope8 if np.isfinite(C_slope8) else 0.0
-                    kb_slope8_norm = kb_slope8 if np.isfinite(kb_slope8) else 0.0
-                    ka_slope8_norm = ka_slope8 if np.isfinite(ka_slope8) else 0.0
-                    tau_slope8_norm = tau_slope8 if (np.isfinite(tau_slope8) and tau_slope8 > EPS) else 1.0
-                    rms_error_slope8_norm = rms_error_slope8
-                    
-                    # Determine if fit was abnormal/unreliable:
-                    # - Optimizer not successful
-                    # - Abnormal termination (status=5)
-                    # - Invalid parameters
-                    abnormal_fit_flag = (
-                        not diagnostics_slope8.get("success", False) or
-                        diagnostics_slope8.get("optimizer_status") == 5 or
-                        not (diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and 
-                             diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"])
-                    )
-                    
-                    # Build note describing issues if any
-                    if abnormal_fit_flag:
-                        note_parts = []
-                        if not diagnostics_slope8.get("success", False):
-                            note_parts.append("optimizer_not_successful")
-                        if diagnostics_slope8.get("optimizer_status") == 5:
-                            note_parts.append("abnormal_termination")
-                        failed_params = []
-                        if not diagnostics_slope8["C_valid"]:
-                            failed_params.append("C")
-                        if not diagnostics_slope8["ka_valid"]:
-                            failed_params.append("ka")
-                        if not diagnostics_slope8["kb_valid"]:
-                            failed_params.append("kb")
-                        if not diagnostics_slope8["tau_valid"]:
-                            failed_params.append("tau")
-                        if failed_params:
-                            note_parts.append(f"invalid_params:{','.join(failed_params)}")
-                        note_str = "; ".join(note_parts) if note_parts else "unreliable_fit"
-                    
-                    mode_str = "slope8"
-                    
-                    # Log with full deployment window data (s=0 onwards for all doses)
-                    # Always log fitted parameters (even if invalid) and diagnostics
+                    # If RMS error is not finite, set to None
+                    if not np.isfinite(rms_error_slope8):
+                        rms_error_slope8 = None
+                except Exception:
+                    # If prediction fails completely, leave RMS error as None
+                    pass
+                
+                # ALWAYS use slope8 parameters, even if invalid or abnormal
+                # Replace NaN/inf values with safe defaults for normalization
+                C_slope8_norm = C_slope8 if np.isfinite(C_slope8) else 0.0
+                kb_slope8_norm = kb_slope8 if np.isfinite(kb_slope8) else 0.0
+                ka_slope8_norm = ka_slope8 if np.isfinite(ka_slope8) else 0.0
+                tau_slope8_norm = tau_slope8 if (np.isfinite(tau_slope8) and tau_slope8 > EPS) else 1.0
+                rms_error_slope8_norm = rms_error_slope8
+                
+                # Determine if fit was abnormal/unreliable:
+                # - Optimizer not successful
+                # - Abnormal termination (status=5)
+                # - Invalid parameters
+                abnormal_fit_flag = (
+                    not diagnostics_slope8.get("success", False) or
+                    diagnostics_slope8.get("optimizer_status") == 5 or
+                    not (diagnostics_slope8["C_valid"] and diagnostics_slope8["ka_valid"] and 
+                         diagnostics_slope8["kb_valid"] and diagnostics_slope8["tau_valid"])
+                )
+                
+                # Build note describing issues if any
+                if abnormal_fit_flag:
+                    note_parts = []
+                    if not diagnostics_slope8.get("success", False):
+                        note_parts.append("optimizer_not_successful")
+                    if diagnostics_slope8.get("optimizer_status") == 5:
+                        note_parts.append("abnormal_termination")
+                    failed_params = []
+                    if not diagnostics_slope8["C_valid"]:
+                        failed_params.append("C")
+                    if not diagnostics_slope8["ka_valid"]:
+                        failed_params.append("ka")
+                    if not diagnostics_slope8["kb_valid"]:
+                        failed_params.append("kb")
+                    if not diagnostics_slope8["tau_valid"]:
+                        failed_params.append("tau")
+                    if failed_params:
+                        note_parts.append(f"invalid_params:{','.join(failed_params)}")
+                    note_str = "; ".join(note_parts) if note_parts else "unreliable_fit"
+                
+                mode_str = "slope8"
+                
+                # Log with full deployment window data (s=0 onwards for all doses)
+                # Always log fitted parameters (even if invalid) and diagnostics
+                log_slope7_fit_debug({
+                    "enrollment_date": sheet_name,
+                    "mode": mode_str,
+                    "YearOfBirth": int(yob),
+                    "Dose": int(dose),
+                    "n_points": len(s_values_slope8_fit),  # Number of points used in fit
+                    "s_values": list(map(float, s_values_slope8_full)),  # Full range for logging
+                    "logh_values": list(map(float, log_h_slope8_values_full)),  # Full range for logging
+                    "h_values": h_slope8_values_full,  # Full range for logging
+                    "iso_weeks_used": iso_weeks_slope8_full,  # Full range for logging
+                    "C": float(C_slope8) if np.isfinite(C_slope8) else None,
+                    "ka": float(ka_slope8) if np.isfinite(ka_slope8) else None,
+                    "kb": float(kb_slope8) if np.isfinite(kb_slope8) else None,
+                    "tau": float(tau_slope8) if np.isfinite(tau_slope8) else None,
+                    **format_initial_params(C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8),
+                    "b_original": float(b_lin),
+                    "rms_error": float(rms_error_slope8) if rms_error_slope8 is not None else None,
+                    "note": note_str,
+                    "optimizer_success": diagnostics_slope8["success"],
+                    "optimizer_fun": diagnostics_slope8["fun"],
+                    "optimizer_nfev": diagnostics_slope8["nfev"],
+                    "optimizer_nit": diagnostics_slope8["nit"],
+                    "optimizer_message": diagnostics_slope8["message"],
+                    "optimizer_status": diagnostics_slope8.get("optimizer_status"),
+                    "optimizer_status_meaning": diagnostics_slope8.get("optimizer_status_meaning"),
+                    "optimizer_warnflag": diagnostics_slope8.get("optimizer_warnflag"),
+                    "optimizer_grad_norm": diagnostics_slope8.get("optimizer_grad_norm"),
+                    "failure_detail": diagnostics_slope8.get("failure_detail"),
+                    "param_C_valid": diagnostics_slope8["C_valid"],
+                    "param_ka_valid": diagnostics_slope8["ka_valid"],
+                    "param_kb_valid": diagnostics_slope8["kb_valid"],
+                    "param_tau_valid": diagnostics_slope8["tau_valid"],
+                })
+            except Exception as e:
+                # Even on exception, use slope8 with default parameters (mark as abnormal)
+                slope8_attempted = True
+                # Use safe default parameters (no normalization effect, but still slope8 mode)
+                C_slope8_norm = 0.0
+                kb_slope8_norm = 0.0
+                ka_slope8_norm = 0.0
+                tau_slope8_norm = 1.0
+                rms_error_slope8_norm = None
+                abnormal_fit_flag = True
+                mode_str = "slope8_exception"
+                note_str = f"exception during slope8 fit: {str(e)}"
+                
+                # Log exception case
+                log_slope7_fit_debug({
+                    "enrollment_date": sheet_name,
+                    "mode": "slope8_exception",
+                    "YearOfBirth": int(yob),
+                    "Dose": int(dose),
+                    "n_points": len(s_values_slope8_fit),
+                    "s_values": list(map(float, s_values_slope8_full)),
+                    "logh_values": list(map(float, log_h_slope8_values_full)),
+                    "h_values": h_slope8_values_full,
+                    "iso_weeks_used": iso_weeks_slope8_full,
+                    "error": str(e),
+                    "b_original": float(b_lin),
+                    "note": note_str,
+                    "optimizer_success": False,
+                    "optimizer_fun": None,
+                    "optimizer_nfev": None,
+                    "optimizer_nit": None,
+                    "optimizer_message": str(e),
+                    "param_C_valid": False,
+                    "param_ka_valid": False,
+                    "param_kb_valid": False,
+                    "param_tau_valid": False,
+                })
+        
+        # ALWAYS use Slope8 for normalization if fit was attempted
+        # Never fall back to linear mode - use slope8 parameters even if unreliable
+        if slope8_attempted and C_slope8_norm is not None:
+            params = {
+                "mode": "slope8",
+                "C": C_slope8_norm,
+                "ka": ka_slope8_norm,  # k_0 starting slope
+                "kb": kb_slope8_norm,  # k_∞ final slope
+                "tau": tau_slope8_norm,
+                "b_original": b_lin,
+                "abnormal_fit": abnormal_fit_flag,
+                "t_mean": 0.0,  # No centering for slope8
+                "a": 0.0,  # Not used in slope8
+                "b": 0.0,  # Not used in slope8 (use b_original instead)
+                "c": 0.0,  # Not used in slope8
+            }
+            normalization_params[(yob, dose)] = params
+            abnormal_str = " (abnormal/unreliable)" if abnormal_fit_flag else ""
+            note_str_display = f", note={note_str}" if note_str else ""
+            rms_error_str = f"{rms_error_slope8_norm:.6e}" if rms_error_slope8_norm is not None else "nan"
+            _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope8,C={C_slope8_norm:.6e},ka={ka_slope8_norm:.6e},kb={kb_slope8_norm:.6e},tau={tau_slope8_norm:.6e},b_original={b_lin:.6e},rms_error={rms_error_str},points={len(s_values_slope8_fit)}{abnormal_str}{note_str_display}")
+        else:
+            # Only fall back if slope8 wasn't attempted at all (insufficient data or exception)
+            # In this case, use linear mode but mark as abnormal since slope8 should have been used
+            params = {
+                "mode": "linear",
+                "a": a_lin,
+                "b": b_lin,
+                "c": 0.0,
+                "t_mean": t_mean,
+                "tau": None,  # tau only valid for slope8 mode
+                "abnormal_fit": True,  # Mark as abnormal since slope8 wasn't attempted
+            }
+            normalization_params[(yob, dose)] = params
+            _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)} (abnormal - slope8 should have been used)")
+    
+    # ------------------------------------------------------------------
+    # All-ages (YoB = -2) cohort is now processed as a regular cohort in compute_slope6_normalization
+    # No special handling needed here - it's included in the main processing loop
+    
+    # After processing all cohorts that exist in dataframe, log missing cohorts
+    # This ensures all expected cohorts are logged, even if they have no data
+    for yob in all_yobs:
+        for dose in all_doses:
+            if (yob, dose) not in processed_cohorts:
+                # Log missing cohort
+                try:
                     log_slope7_fit_debug({
                         "enrollment_date": sheet_name,
-                        "mode": mode_str,
+                        "mode": "linear",
                         "YearOfBirth": int(yob),
                         "Dose": int(dose),
-                        "n_points": len(s_values_slope8_fit),  # Number of points used in fit
-                        "s_values": list(map(float, s_values_slope8_full)),  # Full range for logging
-                        "logh_values": list(map(float, log_h_slope8_values_full)),  # Full range for logging
-                        "h_values": h_slope8_values_full,  # Full range for logging
-                        "iso_weeks_used": iso_weeks_slope8_full,  # Full range for logging
-                        "C": float(C_slope8) if np.isfinite(C_slope8) else None,
-                        "ka": float(ka_slope8) if np.isfinite(ka_slope8) else None,
-                        "kb": float(kb_slope8) if np.isfinite(kb_slope8) else None,
-                        "tau": float(tau_slope8) if np.isfinite(tau_slope8) else None,
-                        **format_initial_params(C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8),
-                        "b_original": float(b_lin),
-                        "rms_error": float(rms_error_slope8) if rms_error_slope8 is not None else None,
-                        "note": note_str,
-                        "optimizer_success": diagnostics_slope8["success"],
-                        "optimizer_fun": diagnostics_slope8["fun"],
-                        "optimizer_nfev": diagnostics_slope8["nfev"],
-                        "optimizer_nit": diagnostics_slope8["nit"],
-                        "optimizer_message": diagnostics_slope8["message"],
-                        "optimizer_status": diagnostics_slope8.get("optimizer_status"),
-                        "optimizer_status_meaning": diagnostics_slope8.get("optimizer_status_meaning"),
-                        "optimizer_warnflag": diagnostics_slope8.get("optimizer_warnflag"),
-                        "optimizer_grad_norm": diagnostics_slope8.get("optimizer_grad_norm"),
-                        "failure_detail": diagnostics_slope8.get("failure_detail"),
-                        "param_C_valid": diagnostics_slope8["C_valid"],
-                        "param_ka_valid": diagnostics_slope8["ka_valid"],
-                        "param_kb_valid": diagnostics_slope8["kb_valid"],
-                        "param_tau_valid": diagnostics_slope8["tau_valid"],
+                        "n_points": 0,
+                        "error": None,
+                        "note": "cohort_not_present_in_data",
+                        "s_values": None,
+                        "logh_values": None,
+                        "h_values": None,
+                        "iso_weeks_used": None,
                     })
-                except Exception as e:
-                    # Even on exception, use slope8 with default parameters (mark as abnormal)
-                    slope8_attempted = True
-                    # Use safe default parameters (no normalization effect, but still slope8 mode)
-                    C_slope8_norm = 0.0
-                    kb_slope8_norm = 0.0
-                    ka_slope8_norm = 0.0
-                    tau_slope8_norm = 1.0
-                    rms_error_slope8_norm = None
-                    abnormal_fit_flag = True
-                    mode_str = "slope8_exception"
-                    note_str = f"exception during slope8 fit: {str(e)}"
-                    
-                    # Log exception case
                     log_slope7_fit_debug({
                         "enrollment_date": sheet_name,
-                        "mode": "slope8_exception",
+                        "mode": "slope8",
                         "YearOfBirth": int(yob),
                         "Dose": int(dose),
-                        "n_points": len(s_values_slope8_fit),
-                        "s_values": list(map(float, s_values_slope8_full)),
-                        "logh_values": list(map(float, log_h_slope8_values_full)),
-                        "h_values": h_slope8_values_full,
-                        "iso_weeks_used": iso_weeks_slope8_full,
-                        "error": str(e),
-                        "b_original": float(b_lin),
-                        "note": note_str,
+                        "n_points": 0,
+                        "error": None,
+                        "note": "cohort_not_present_in_data",
                         "optimizer_success": False,
-                        "optimizer_fun": None,
-                        "optimizer_nfev": None,
-                        "optimizer_nit": None,
-                        "optimizer_message": str(e),
                         "param_C_valid": False,
                         "param_ka_valid": False,
                         "param_kb_valid": False,
                         "param_tau_valid": False,
                     })
-            
-            # ALWAYS use Slope8 for normalization if fit was attempted
-            # Never fall back to linear mode - use slope8 parameters even if unreliable
-            if slope8_attempted and C_slope8_norm is not None:
-                params = {
-                    "mode": "slope8",
-                    "C": C_slope8_norm,
-                    "ka": ka_slope8_norm,  # k_0 starting slope
-                    "kb": kb_slope8_norm,  # k_∞ final slope
-                    "tau": tau_slope8_norm,
-                    "b_original": b_lin,
-                    "abnormal_fit": abnormal_fit_flag,
-                    "t_mean": 0.0,  # No centering for slope8
-                    "a": 0.0,  # Not used in slope8
-                    "b": 0.0,  # Not used in slope8 (use b_original instead)
-                    "c": 0.0,  # Not used in slope8
-                }
-                normalization_params[(yob, dose)] = params
-                abnormal_str = " (abnormal/unreliable)" if abnormal_fit_flag else ""
-                note_str_display = f", note={note_str}" if note_str else ""
-                rms_error_str = f"{rms_error_slope8_norm:.6e}" if rms_error_slope8_norm is not None else "nan"
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope8,C={C_slope8_norm:.6e},ka={ka_slope8_norm:.6e},kb={kb_slope8_norm:.6e},tau={tau_slope8_norm:.6e},b_original={b_lin:.6e},rms_error={rms_error_str},points={len(s_values_slope8_fit)}{abnormal_str}{note_str_display}")
-            else:
-                # Only fall back if slope8 wasn't attempted at all (insufficient data or exception)
-                # In this case, use linear mode but mark as abnormal since slope8 should have been used
-                params = {
-                    "mode": "linear",
-                    "a": a_lin,
-                    "b": b_lin,
+                except Exception:
+                    pass
+                normalization_params[(yob, dose)] = {
+                    "mode": "none",
+                    "a": 0.0,
+                    "b": 0.0,
                     "c": 0.0,
-                    "t_mean": t_mean,
-                    "tau": None,  # tau only valid for slope8 mode
-                    "abnormal_fit": True,  # Mark as abnormal since slope8 wasn't attempted
+                    "t_mean": 0.0,
+                    "tau": None
                 }
-                normalization_params[(yob, dose)] = params
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)} (abnormal - slope8 should have been used)")
-        except Exception as e:
-            _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=fit_error,error={str(e)}")
-            normalization_params[(yob, dose)] = {
-                "mode": "none",
-                "a": 0.0,
-                "b": 0.0,
-                "c": 0.0,
-                "t_mean": t_mean,
-                "tau": None  # tau only valid for slope8 mode
-            }
-    
-    # ------------------------------------------------------------------
-    # All-ages (YoB = -2) cohort is now processed as a regular cohort in compute_slope6_normalization
-    # No special handling needed here - it's included in the main processing loop
     
     return normalization_params
 
@@ -3953,7 +3993,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns | {'ka_num':>6} {'kb_num':>6} {'tau_num':>6} {'ka_den':>6} {'kb_den':>6} {'tau_den':>6}")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date
@@ -4199,36 +4239,36 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     
                     # Format ka, kb values for numerator and denominator (3 significant digits)
                     def format_param(val):
-                        """Format parameter value with 3 significant digits, right-aligned in 6 characters."""
+                        """Format parameter value with 3 significant digits, right-aligned in 9 characters."""
                         if val is None or not np.isfinite(val):
-                            return "   ---"
+                            return "      ---"
                         # Use 3 significant digits with appropriate format
                         abs_val = abs(val)
                         if abs_val == 0.0:
-                            return "   0.0"
+                            return "      0.0"
                         elif abs_val < 0.001:
                             # Scientific notation for very small numbers
-                            return f"{val:.2e}".rjust(6)
+                            return f"{val:.2e}".rjust(9)
                         elif abs_val < 1.0:
                             # 3 decimal places for numbers < 1
-                            return f"{val:.3f}".rjust(6)
+                            return f"{val:.3f}".rjust(9)
                         elif abs_val < 10.0:
                             # 2 decimal places for numbers 1-10
-                            return f"{val:.2f}".rjust(6)
+                            return f"{val:.2f}".rjust(9)
                         elif abs_val < 100.0:
                             # 1 decimal place for numbers 10-100
-                            return f"{val:.1f}".rjust(6)
+                            return f"{val:.1f}".rjust(9)
                         else:
                             # Integer for numbers >= 100
-                            return f"{val:.0f}".rjust(6)
+                            return f"{val:.0f}".rjust(9)
                     
-                    # Format tau values as integers (right-aligned in 6 characters)
+                    # Format tau values as integers (right-aligned in 3 characters)
                     def format_tau(val):
-                        """Format tau value as integer, right-aligned in 6 characters."""
+                        """Format tau value as integer, right-aligned in 3 characters."""
                         if val is None or not np.isfinite(val):
-                            return "   ---"
+                            return "---"
                         # Format as integer
-                        return f"{int(round(val)):>6}"
+                        return f"{int(round(val)):>3}"
                     
                     # Show ka/kb/tau if they exist and are finite, only for slope8 mode
                     # For non-slope8 modes, ka/kb/tau should be None
@@ -4240,10 +4280,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     tau_den_str = format_tau(tau_den if (tau_den is not None and np.isfinite(tau_den)) else None)
                     
                     if age == 0:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
                     else:
                         # Just show the ka/kb/tau values, no parameter details in parentheses
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f}{abnormal_marker} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
 
         # --- Print M/P KCOR summaries by decades when available ---
         try:
