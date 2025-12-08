@@ -29,3 +29,512 @@ Configuration Parameters (effective):
   SLOPE6_MIN_DATA_POINTS = 5
 ================================================================================
 
+[INFO] Auto-derived enrollment dates from Excel file: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
+SLOPE6_FIT_WINDOW,selected=2022-01..2024-16 (week 1 of 2022 through 2024-16, fixed)
+[Slope6] Using fit window: 2022-01 to 2024-16
+[Slope6] Application endpoint: 2024-16 (rightmost point for determining centerpoint)
+[Info] Processing sheet: 2021_13
+[DEBUG] Filtered to start from enrollment date 03/29/2021: 141525 rows
+[DEBUG] Filtered to 133200 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 79920 rows
+[DEBUG] Aggregated across sexes: 4995 rows
+  YoB 1920, % vaxxed=58  alive_by_dose= 42% 8% 50% total=35357
+  YoB 1930, % vaxxed=67  alive_by_dose= 33% 13% 53% total=264356
+  YoB 1940, % vaxxed=42  alive_by_dose= 58% 33% 9% total=740690
+  YoB 1950, % vaxxed=8  alive_by_dose= 92% 5% 4% total=1092692
+  YoB 1960, % vaxxed=9  alive_by_dose= 91% 4% 5% total=1182544
+  YoB 1970, % vaxxed=7  alive_by_dose= 93% 3% 4% total=1590700
+  YoB 1980, % vaxxed=5  alive_by_dose= 95% 2% 3% total=1339097
+  YoB 1990, % vaxxed=4  alive_by_dose= 96% 2% 2% total=1074412
+  YoB 2000, % vaxxed=0  alive_by_dose= 100% 0% 0% total=1020930
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=0,mode=slope8,C=-5.038178e+00,ka=7.140670e-03,kb=-5.023763e-03,tau=5.200039e+01,b_original=-3.376281e-03,rms_error=2.137401e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=1,mode=slope8,C=-5.258432e+00,ka=1.283278e-03,kb=1.001333e-03,tau=5.199994e+01,b_original=1.740787e-03,rms_error=3.506859e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1920,Dose=2,mode=slope8,C=-5.366188e+00,ka=3.644780e-03,kb=9.138944e-04,tau=4.800010e+01,b_original=1.134222e-03,rms_error=1.737153e-01,points=145
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=0,mode=slope8,C=-5.730844e+00,ka=3.517824e-09,kb=-1.627906e-03,tau=5.200000e+01,b_original=-1.427855e-03,rms_error=1.924135e-01,points=160 (abnormal/unreliable), note=optimizer_not_successful
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=1,mode=slope8,C=-6.425040e+00,ka=5.320646e-03,kb=7.029211e-04,tau=5.200028e+01,b_original=1.205493e-03,rms_error=1.913344e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1930,Dose=2,mode=slope8,C=-6.427274e+00,ka=3.987961e-03,kb=1.377575e-03,tau=4.800009e+01,b_original=1.508026e-03,rms_error=1.253457e-01,points=145
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=0,mode=slope8,C=-6.991288e+00,ka=-2.003417e-03,kb=-1.476526e-04,tau=5.200043e+01,b_original=-7.231161e-04,rms_error=1.795875e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=1,mode=slope8,C=-7.948222e+00,ka=1.334818e-02,kb=-7.472523e-04,tau=5.199998e+01,b_original=1.773045e-03,rms_error=1.462972e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1940,Dose=2,mode=slope8,C=-6.828528e+00,ka=-2.895077e-05,kb=6.592419e-04,tau=4.799975e+01,b_original=5.848466e-04,rms_error=1.691942e-01,points=145 (abnormal/unreliable), note=optimizer_not_successful
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=0,mode=slope8,C=-8.037257e+00,ka=-3.473843e-04,kb=-3.372844e-04,tau=5.200003e+01,b_original=-4.631761e-04,rms_error=1.531055e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=1,mode=slope8,C=-8.436453e+00,ka=1.031649e-02,kb=-2.273480e-03,tau=5.199986e+01,b_original=2.952479e-04,rms_error=2.861819e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1950,Dose=2,mode=slope8,C=-7.804066e+00,ka=-2.042914e-03,kb=7.363333e-04,tau=4.799994e+01,b_original=3.939044e-04,rms_error=3.099831e-01,points=145
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=0,mode=slope8,C=-9.027390e+00,ka=-9.509769e-04,kb=8.147022e-04,tau=5.200005e+01,b_original=3.306137e-04,rms_error=1.399835e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=1,mode=slope8,C=-9.727117e+00,ka=1.193843e-02,kb=-5.474012e-03,tau=5.200240e+01,b_original=6.607035e-05,rms_error=5.507387e-01,points=157
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1960,Dose=2,mode=slope8,C=-9.346790e+00,ka=8.816059e-05,kb=8.857208e-05,tau=4.799819e+01,b_original=9.053653e-05,rms_error=4.794239e-01,points=145
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=0,mode=slope8,C=-1.007655e+01,ka=1.205302e-03,kb=-3.875655e-04,tau=5.200002e+01,b_original=4.287564e-05,rms_error=1.441201e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=1,mode=slope8,C=-1.011832e+01,ka=2.554565e-05,kb=3.888592e-05,tau=5.200452e+01,b_original=3.572715e-05,rms_error=5.236718e-01,points=121
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1970,Dose=2,mode=slope8,C=-1.037687e+01,ka=1.093537e-05,kb=3.428842e-05,tau=4.799961e+01,b_original=3.088328e-05,rms_error=4.776721e-01,points=125
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=0,mode=slope8,C=-1.101842e+01,ka=2.374092e-03,kb=-1.856592e-04,tau=5.200001e+01,b_original=7.979004e-04,rms_error=2.387169e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=1,mode=slope8,C=-1.019361e+01,ka=2.122712e-05,kb=1.992883e-05,tau=5.199988e+01,b_original=2.012813e-05,rms_error=4.131179e-01,points=62
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1980,Dose=2,mode=slope8,C=-1.052886e+01,ka=3.449996e-06,kb=2.605020e-05,tau=4.766682e+01,b_original=2.226457e-05,rms_error=4.804314e-01,points=79
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=0,mode=slope8,C=-1.203339e+01,ka=1.460093e-02,kb=-2.796009e-03,tau=5.199718e+01,b_original=9.919332e-06,rms_error=3.267377e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=1,mode=slope8,C=-9.724235e+00,ka=2.468649e-05,kb=1.157094e-05,tau=5.066662e+01,b_original=1.330553e-05,rms_error=1.589930e-01,points=38
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=1990,Dose=2,mode=slope8,C=-1.006786e+01,ka=1.387330e-05,kb=2.046032e-05,tau=4.700030e+01,b_original=1.976697e-05,rms_error=2.982834e-01,points=54
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=0,mode=slope8,C=-1.321313e+01,ka=3.784920e-02,kb=-1.081542e-02,tau=5.199932e+01,b_original=4.229258e-06,rms_error=5.390973e-01,points=159
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=1,mode=slope8,C=-8.222995e+00,ka=2.552595e-02,kb=-5.356287e-03,tau=2.399816e+01,b_original=3.341672e-05,rms_error=3.688895e-01,points=9
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=2000,Dose=2,mode=slope8,C=-7.684119e+00,ka=9.597173e-05,kb=5.820680e-05,tau=2.500000e+01,b_original=5.495995e-05,rms_error=3.567290e-04,points=9
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=0,mode=slope8,C=-8.648924e+00,ka=-1.412042e-03,kb=-1.412042e-03,tau=5.200011e+01,b_original=-1.836623e-03,rms_error=1.515599e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=1,mode=slope8,C=-7.936530e+00,ka=8.967227e-03,kb=-9.094789e-04,tau=5.199983e+01,b_original=7.747917e-04,rms_error=1.318336e-01,points=160
+SLOPE8_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=2,mode=slope8,C=-7.222079e+00,ka=9.661449e-03,kb=-1.740183e-03,tau=4.800001e+01,b_original=-2.235496e-04,rms_error=1.189386e-01,points=145
+[DEBUG] Checking normalization parameters for 2021_13:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=slope8, C=-5.038178e+00, ka=7.140670e-03, kb=-5.023763e-03, tau=5.200039e+01
+  YoB=1920, Dose=1: mode=slope8, C=-5.258432e+00, ka=1.283278e-03, kb=1.001333e-03, tau=5.199994e+01
+  YoB=1920, Dose=2: mode=slope8, C=-5.366188e+00, ka=3.644780e-03, kb=9.138944e-04, tau=4.800010e+01
+  YoB=1930, Dose=0: mode=slope8, C=-5.730844e+00, ka=3.517824e-09, kb=-1.627906e-03, tau=5.200000e+01
+  YoB=1930, Dose=1: mode=slope8, C=-6.425040e+00, ka=5.320646e-03, kb=7.029211e-04, tau=5.200028e+01
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_13:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-5.038178e+00, ka=7.140670e-03, kb=-5.023763e-03, tau=5.200039e+01, norm_factor=1.541888e+02, hazard_raw=1.001030e-02, result=1.543476e+00
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-5.038178e+00, ka=7.140670e-03, kb=-5.023763e-03, tau=5.200039e+01, norm_factor=1.531095e+02, hazard_raw=9.417172e-03, result=1.441859e+00
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-5.038178e+00, ka=7.140670e-03, kb=-5.023763e-03, tau=5.200039e+01, norm_factor=1.520727e+02, hazard_raw=7.618821e-03, result=1.158614e+00
+[DEBUG] Normalization check for 2021_13: 4077/4995 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=1.001030e-02, hazard_adj=1.543476e+00, ratio=154.188816
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=9.417172e-03, hazard_adj=1.441859e+00, ratio=153.109519
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=7.618821e-03, hazard_adj=1.158614e+00, ratio=152.072671
+[DEBUG] Normalization modes applied for 2021_13: slope8: 30
+[DEBUG] Slope8 normalization applied to 30 cohort(s)
+[DEBUG] Found 2 cohort(s) with abnormal fits
+[Info] Processing sheet: 2021_20
+[DEBUG] Filtered to start from enrollment date 05/17/2021: 136170 rows
+[DEBUG] Filtered to 128160 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 76896 rows
+[DEBUG] Aggregated across sexes: 4806 rows
+  YoB 1920, % vaxxed=66  alive_by_dose= 34% 6% 60% total=34041
+  YoB 1930, % vaxxed=76  alive_by_dose= 24% 7% 69% total=260030
+  YoB 1940, % vaxxed=74  alive_by_dose= 26% 24% 50% total=735341
+  YoB 1950, % vaxxed=64  alive_by_dose= 36% 53% 11% total=1089395
+  YoB 1960, % vaxxed=48  alive_by_dose= 52% 38% 10% total=1181304
+  YoB 1970, % vaxxed=23  alive_by_dose= 77% 14% 8% total=1590183
+  YoB 1980, % vaxxed=11  alive_by_dose= 89% 5% 5% total=1338933
+  YoB 1990, % vaxxed=8  alive_by_dose= 92% 4% 4% total=1074344
+  YoB 2000, % vaxxed=1  alive_by_dose= 99% 1% 1% total=1020916
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=0,mode=slope8,C=-5.087389e+00,ka=1.047624e-02,kb=-6.615791e-03,tau=5.066703e+01,b_original=-3.921660e-03,rms_error=2.284326e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=1,mode=slope8,C=-5.137424e+00,ka=3.315983e-03,kb=-1.226587e-03,tau=5.066659e+01,b_original=-9.956058e-04,rms_error=4.402117e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1920,Dose=2,mode=slope8,C=-5.190787e+00,ka=-1.736501e-03,kb=1.849704e-03,tau=4.566671e+01,b_original=1.247849e-03,rms_error=1.721806e-01,points=138
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=0,mode=slope8,C=-5.685216e+00,ka=3.021541e-03,kb=-3.563910e-03,tau=5.066688e+01,b_original=-2.818213e-03,rms_error=2.040840e-01,points=153 (abnormal/unreliable), note=optimizer_not_successful
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=1,mode=slope8,C=-6.280350e+00,ka=6.579653e-03,kb=-1.339167e-04,tau=5.066665e+01,b_original=1.246368e-03,rms_error=2.063520e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1930,Dose=2,mode=slope8,C=-6.488366e+00,ka=8.132658e-03,kb=1.209971e-04,tau=4.566758e+01,b_original=1.588380e-03,rms_error=1.176400e-01,points=138
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=0,mode=slope8,C=-6.562590e+00,ka=-3.954834e-03,kb=-1.095090e-03,tau=5.066660e+01,b_original=-1.958525e-03,rms_error=1.885390e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=1,mode=slope8,C=-7.776660e+00,ka=1.186483e-02,kb=-1.333954e-03,tau=5.066665e+01,b_original=1.425909e-03,rms_error=1.409387e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1940,Dose=2,mode=slope8,C=-7.457975e+00,ka=2.477419e-03,kb=1.444733e-03,tau=4.566740e+01,b_original=1.618683e-03,rms_error=1.273047e-01,points=138
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=0,mode=slope8,C=-7.567521e+00,ka=-1.225779e-03,kb=-1.225779e-03,tau=5.066670e+01,b_original=-1.979328e-03,rms_error=1.719791e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=1,mode=slope8,C=-9.061007e+00,ka=2.078198e-02,kb=-3.549964e-03,tau=5.066669e+01,b_original=1.697379e-03,rms_error=1.418785e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1950,Dose=2,mode=slope8,C=-7.887294e+00,ka=-4.655189e-03,kb=9.903864e-04,tau=4.567380e+01,b_original=3.408581e-04,rms_error=1.900932e-01,points=138
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=0,mode=slope8,C=-8.772662e+00,ka=-1.141183e-03,kb=-1.054935e-04,tau=5.066668e+01,b_original=-3.527938e-04,rms_error=1.569968e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=1,mode=slope8,C=-1.002215e+01,ka=1.634666e-02,kb=-6.621937e-04,tau=5.066653e+01,b_original=2.896058e-03,rms_error=1.871543e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1960,Dose=2,mode=slope8,C=-9.223621e+00,ka=-3.568880e-03,kb=-3.477586e-04,tau=4.566617e+01,b_original=-9.368058e-04,rms_error=3.196614e-01,points=138
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=0,mode=slope8,C=-1.008898e+01,ka=2.552240e-03,kb=-9.511814e-04,tau=5.066671e+01,b_original=-2.531721e-04,rms_error=1.494706e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=1,mode=slope8,C=-1.054795e+01,ka=5.979278e-03,kb=2.402343e-03,tau=5.066664e+01,b_original=3.457268e-03,rms_error=3.733049e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1970,Dose=2,mode=slope8,C=-1.047473e+01,ka=3.244346e-03,kb=1.567649e-03,tau=4.566665e+01,b_original=2.119818e-03,rms_error=5.366886e-01,points=136
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=0,mode=slope8,C=-1.105150e+01,ka=2.611204e-03,kb=3.325316e-04,tau=5.066668e+01,b_original=8.663562e-04,rms_error=2.374555e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=1,mode=slope8,C=-1.119472e+01,ka=2.919369e-02,kb=-9.839792e-03,tau=5.066485e+01,b_original=2.151601e-05,rms_error=5.321067e-01,points=116
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1980,Dose=2,mode=slope8,C=-1.058734e+01,ka=3.535330e-03,kb=-1.058282e-03,tau=4.566709e+01,b_original=2.000706e-05,rms_error=4.806504e-01,points=107
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=0,mode=slope8,C=-1.201162e+01,ka=1.360990e-02,kb=-3.162807e-03,tau=5.066480e+01,b_original=9.780698e-06,rms_error=3.175707e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=1,mode=slope8,C=-1.061631e+01,ka=1.824120e-05,kb=1.141402e-05,tau=5.000001e+01,b_original=1.256494e-05,rms_error=4.142128e-01,points=56
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=1990,Dose=2,mode=slope8,C=-1.072782e+01,ka=2.131598e-05,kb=1.610147e-05,tau=4.566765e+01,b_original=1.710077e-05,rms_error=4.872729e-01,points=76
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=0,mode=slope8,C=-1.267197e+01,ka=1.657229e-02,kb=-5.354752e-03,tau=5.033604e+01,b_original=-2.620543e-03,rms_error=5.353283e-01,points=152
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=1,mode=slope8,C=-8.914208e+00,ka=3.736431e-05,kb=2.381882e-05,tau=5.033374e+01,b_original=2.789578e-05,rms_error=1.761084e-01,points=31
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=2000,Dose=2,mode=slope8,C=-8.702241e+00,ka=1.395627e-05,kb=1.813893e-05,tau=4.533333e+01,b_original=2.019442e-05,rms_error=1.770371e-04,points=16
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=0,mode=slope8,C=-8.687945e+00,ka=-3.647354e-03,kb=-2.613797e-03,tau=5.066671e+01,b_original=-2.978185e-03,rms_error=1.558569e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=1,mode=slope8,C=-8.902942e+00,ka=1.428743e-02,kb=-2.563825e-03,tau=5.066651e+01,b_original=1.182483e-03,rms_error=1.098809e-01,points=153
+SLOPE8_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=2,mode=slope8,C=-7.447019e+00,ka=5.282526e-03,kb=-8.581995e-04,tau=4.566783e+01,b_original=1.769039e-04,rms_error=1.120956e-01,points=138
+[DEBUG] Checking normalization parameters for 2021_20:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=slope8, C=-5.087389e+00, ka=1.047624e-02, kb=-6.615791e-03, tau=5.066703e+01
+  YoB=1920, Dose=1: mode=slope8, C=-5.137424e+00, ka=3.315983e-03, kb=-1.226587e-03, tau=5.066659e+01
+  YoB=1920, Dose=2: mode=slope8, C=-5.190787e+00, ka=-1.736501e-03, kb=1.849704e-03, tau=4.566671e+01
+  YoB=1930, Dose=0: mode=slope8, C=-5.685216e+00, ka=3.021541e-03, kb=-3.563910e-03, tau=5.066688e+01
+  YoB=1930, Dose=1: mode=slope8, C=-6.280350e+00, ka=6.579653e-03, kb=-1.339167e-04, tau=5.066665e+01
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_20:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-5.087389e+00, ka=1.047624e-02, kb=-6.615791e-03, tau=5.066703e+01, norm_factor=1.619664e+02, hazard_raw=6.518592e-03, result=1.055793e+00
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-5.087389e+00, ka=1.047624e-02, kb=-6.615791e-03, tau=5.066703e+01, norm_factor=1.603053e+02, hazard_raw=5.779864e-03, result=9.265431e-01
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-5.087389e+00, ka=1.047624e-02, kb=-6.615791e-03, tau=5.066703e+01, norm_factor=1.587138e+02, hazard_raw=6.250020e-03, result=9.919643e-01
+[DEBUG] Normalization check for 2021_20: 4193/4806 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=6.518592e-03, hazard_adj=1.055793e+00, ratio=161.966414
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=5.779864e-03, hazard_adj=9.265431e-01, ratio=160.305332
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=6.250020e-03, hazard_adj=9.919643e-01, ratio=158.713772
+[DEBUG] Normalization modes applied for 2021_20: slope8: 30
+[DEBUG] Slope8 normalization applied to 30 cohort(s)
+[DEBUG] Found 1 cohort(s) with abnormal fits
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 133110 rows
+[DEBUG] Filtered to 125280 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 75168 rows
+[DEBUG] Aggregated across sexes: 4698 rows
+  YoB 1920, % vaxxed=68  alive_by_dose= 32% 4% 64% total=33392
+  YoB 1930, % vaxxed=79  alive_by_dose= 21% 5% 73% total=258029
+  YoB 1940, % vaxxed=79  alive_by_dose= 21% 10% 69% total=733308
+  YoB 1950, % vaxxed=74  alive_by_dose= 26% 29% 45% total=1088084
+  YoB 1960, % vaxxed=64  alive_by_dose= 36% 45% 19% total=1180837
+  YoB 1970, % vaxxed=57  alive_by_dose= 43% 44% 13% total=1589939
+  YoB 1980, % vaxxed=38  alive_by_dose= 62% 30% 9% total=1338855
+  YoB 1990, % vaxxed=19  alive_by_dose= 81% 13% 6% total=1074314
+  YoB 2000, % vaxxed=5  alive_by_dose= 95% 4% 1% total=1020909
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=0,mode=slope8,C=-5.080997e+00,ka=1.277413e-02,kb=-8.491493e-03,tau=4.933303e+01,b_original=-3.954871e-03,rms_error=2.357918e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=1,mode=slope8,C=-4.864541e+00,ka=-1.293954e-02,kb=5.683082e-03,tau=4.933269e+01,b_original=2.302387e-03,rms_error=5.616860e-01,points=146
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1920,Dose=2,mode=slope8,C=-5.094951e+00,ka=-4.227943e-03,kb=1.912049e-03,tau=4.433325e+01,b_original=1.080083e-03,rms_error=1.677696e-01,points=134
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=0,mode=slope8,C=-5.702813e+00,ka=2.559408e-03,kb=-2.576565e-03,tau=4.933323e+01,b_original=-2.676192e-03,rms_error=2.213756e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=1,mode=slope8,C=-6.117770e+00,ka=3.440768e-03,kb=2.255795e-04,tau=4.933326e+01,b_original=1.970768e-04,rms_error=2.319320e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1930,Dose=2,mode=slope8,C=-6.335577e+00,ka=3.641344e-03,kb=8.100692e-04,tau=4.433482e+01,b_original=1.632454e-03,rms_error=1.137643e-01,points=134
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,mode=slope8,C=-6.524261e+00,ka=-3.228872e-03,kb=-1.978410e-03,tau=4.933330e+01,b_original=-2.600049e-03,rms_error=2.093360e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=1,mode=slope8,C=-7.354021e+00,ka=6.430523e-03,kb=1.311711e-05,tau=4.933346e+01,b_original=1.946734e-03,rms_error=1.747487e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=2,mode=slope8,C=-7.330513e+00,ka=-2.456525e-03,kb=2.086628e-03,tau=4.433330e+01,b_original=1.645774e-03,rms_error=1.157684e-01,points=134
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,mode=slope8,C=-7.364905e+00,ka=-4.810670e-03,kb=-1.640772e-03,tau=4.933336e+01,b_original=-2.262152e-03,rms_error=1.845366e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=1,mode=slope8,C=-8.660284e+00,ka=1.128026e-02,kb=-1.451207e-03,tau=4.933340e+01,b_original=1.238129e-03,rms_error=1.359257e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=2,mode=slope8,C=-8.434402e+00,ka=2.969391e-03,kb=7.409031e-04,tau=4.433463e+01,b_original=1.404078e-03,rms_error=1.258178e-01,points=134
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,mode=slope8,C=-8.553559e+00,ka=-1.903709e-03,kb=-1.338919e-03,tau=4.933360e+01,b_original=-1.408799e-03,rms_error=1.752777e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=1,mode=slope8,C=-9.957033e+00,ka=1.435240e-02,kb=2.255160e-04,tau=4.933339e+01,b_original=2.449976e-03,rms_error=1.843517e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=2,mode=slope8,C=-9.076803e+00,ka=-6.075834e-03,kb=2.153938e-03,tau=4.433377e+01,b_original=1.203188e-03,rms_error=1.821241e-01,points=134
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=0,mode=slope8,C=-9.652081e+00,ka=-1.199785e-03,kb=-1.199785e-03,tau=4.933333e+01,b_original=-1.372256e-03,rms_error=1.784393e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=1,mode=slope8,C=-1.101641e+01,ka=1.149356e-02,kb=9.509241e-04,tau=4.933344e+01,b_original=2.602290e-03,rms_error=2.583469e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1970,Dose=2,mode=slope8,C=-1.017838e+01,ka=1.013837e-03,kb=1.066330e-03,tau=4.433339e+01,b_original=1.131395e-03,rms_error=2.999757e-01,points=134
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=0,mode=slope8,C=-1.079586e+01,ka=2.148795e-04,kb=-7.145431e-05,tau=4.933333e+01,b_original=2.138385e-05,rms_error=2.363682e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=1,mode=slope8,C=-1.166200e+01,ka=3.458393e-03,kb=3.532843e-03,tau=4.933333e+01,b_original=5.324288e-03,rms_error=5.656890e-01,points=146
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1980,Dose=2,mode=slope8,C=-1.070135e+01,ka=-6.924310e-03,kb=6.018754e-04,tau=4.400046e+01,b_original=2.121653e-05,rms_error=5.649431e-01,points=125 (abnormal/unreliable), note=optimizer_not_successful
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=0,mode=slope8,C=-1.188109e+01,ka=9.585002e-03,kb=-2.101388e-03,tau=4.933277e+01,b_original=9.736633e-06,rms_error=3.548479e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=1,mode=slope8,C=-1.183790e+01,ka=-2.329815e-07,kb=1.313149e-05,tau=4.799647e+01,b_original=9.321410e-06,rms_error=5.754701e-01,points=103
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1990,Dose=2,mode=slope8,C=-1.103718e+01,ka=-7.738439e-03,kb=8.780006e-03,tau=4.433334e+01,b_original=1.755496e-05,rms_error=4.855661e-01,points=91
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=0,mode=slope8,C=-1.252392e+01,ka=1.039737e-02,kb=-3.974818e-03,tau=4.933495e+01,b_original=4.476509e-06,rms_error=5.311466e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=1,mode=slope8,C=-1.055801e+01,ka=2.689660e-06,kb=9.909386e-06,tau=4.566706e+01,b_original=8.162958e-06,rms_error=2.059046e-01,points=34
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=2000,Dose=2,mode=slope8,C=-9.229165e+00,ka=1.918509e-05,kb=2.325383e-05,tau=4.433333e+01,b_original=2.290600e-05,rms_error=1.789987e-01,points=30
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=0,mode=slope8,C=-8.580830e+00,ka=-3.440958e-03,kb=-3.307934e-03,tau=4.933337e+01,b_original=-3.630242e-03,rms_error=1.749840e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=1,mode=slope8,C=-9.415291e+00,ka=7.691140e-03,kb=-3.324304e-04,tau=4.933323e+01,b_original=1.441278e-03,rms_error=1.076666e-01,points=149
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=2,mode=slope8,C=-7.517210e+00,ka=-3.847932e-03,kb=1.125090e-03,tau=4.433351e+01,b_original=2.669669e-04,rms_error=1.033735e-01,points=134
+[DEBUG] Checking normalization parameters for 2021_24:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=slope8, C=-5.080997e+00, ka=1.277413e-02, kb=-8.491493e-03, tau=4.933303e+01
+  YoB=1920, Dose=1: mode=slope8, C=-4.864541e+00, ka=-1.293954e-02, kb=5.683082e-03, tau=4.933269e+01
+  YoB=1920, Dose=2: mode=slope8, C=-5.094951e+00, ka=-4.227943e-03, kb=1.912049e-03, tau=4.433325e+01
+  YoB=1930, Dose=0: mode=slope8, C=-5.702813e+00, ka=2.559408e-03, kb=-2.576565e-03, tau=4.933323e+01
+  YoB=1930, Dose=1: mode=slope8, C=-6.117770e+00, ka=3.440768e-03, kb=2.255795e-04, tau=4.933326e+01
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_24:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-5.080997e+00, ka=1.277413e-02, kb=-8.491493e-03, tau=4.933303e+01, norm_factor=1.609344e+02, hazard_raw=7.377006e-03, result=1.187214e+00
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-5.080997e+00, ka=1.277413e-02, kb=-8.491493e-03, tau=4.933303e+01, norm_factor=1.589257e+02, hazard_raw=6.958185e-03, result=1.105834e+00
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-5.080997e+00, ka=1.277413e-02, kb=-8.491493e-03, tau=4.933303e+01, norm_factor=1.570084e+02, hazard_raw=5.578683e-03, result=8.759000e-01
+[DEBUG] Normalization check for 2021_24: 4265/4698 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=7.377006e-03, hazard_adj=1.187214e+00, ratio=160.934405
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=6.958185e-03, hazard_adj=1.105834e+00, ratio=158.925702
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=5.578683e-03, hazard_adj=8.759000e-01, ratio=157.008380
+[DEBUG] Normalization modes applied for 2021_24: slope8: 30
+[DEBUG] Slope8 normalization applied to 30 cohort(s)
+[DEBUG] Found 1 cohort(s) with abnormal fits
+[Info] Processing sheet: 2021_30
+[DEBUG] Filtered to start from enrollment date 07/26/2021: 128520 rows
+[DEBUG] Filtered to 120960 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 72576 rows
+[DEBUG] Aggregated across sexes: 4536 rows
+  YoB 1920, % vaxxed=69  alive_by_dose= 31% 1% 67% total=32412
+  YoB 1930, % vaxxed=80  alive_by_dose= 20% 2% 79% total=255096
+  YoB 1940, % vaxxed=82  alive_by_dose= 18% 3% 79% total=730432
+  YoB 1950, % vaxxed=78  alive_by_dose= 22% 4% 74% total=1086337
+  YoB 1960, % vaxxed=70  alive_by_dose= 30% 5% 64% total=1180059
+  YoB 1970, % vaxxed=65  alive_by_dose= 35% 7% 57% total=1589549
+  YoB 1980, % vaxxed=52  alive_by_dose= 48% 13% 39% total=1338704
+  YoB 1990, % vaxxed=44  alive_by_dose= 56% 22% 22% total=1074262
+  YoB 2000, % vaxxed=27  alive_by_dose= 73% 21% 6% total=1020888
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=0,mode=slope8,C=-4.741311e+00,ka=-1.944129e-03,kb=-1.944129e-03,tau=4.733343e+01,b_original=-4.911903e-03,rms_error=2.785641e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=1,mode=slope8,C=-4.703564e+00,ka=-1.717206e-02,kb=9.923513e-03,tau=4.733738e+01,b_original=5.893272e-03,rms_error=5.410171e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1920,Dose=2,mode=slope8,C=-5.082937e+00,ka=-5.391124e-03,kb=2.299945e-03,tau=4.233380e+01,b_original=9.403617e-04,rms_error=1.635502e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=0,mode=slope8,C=-5.577624e+00,ka=-8.178531e-04,kb=-8.178531e-04,tau=4.733359e+01,b_original=-2.806012e-03,rms_error=2.319321e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=1,mode=slope8,C=-5.503072e+00,ka=-1.596608e-02,kb=1.854690e-03,tau=4.733268e+01,b_original=-1.080576e-03,rms_error=4.080062e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1930,Dose=2,mode=slope8,C=-6.144327e+00,ka=-3.501049e-03,kb=2.253014e-03,tau=4.233339e+01,b_original=1.682749e-03,rms_error=1.145938e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=0,mode=slope8,C=-6.407253e+00,ka=-6.105691e-03,kb=-1.704341e-03,tau=4.733439e+01,b_original=-2.627750e-03,rms_error=2.169573e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=1,mode=slope8,C=-6.644645e+00,ka=-1.582889e-02,kb=4.662088e-03,tau=4.726832e+01,b_original=8.944204e-04,rms_error=2.670126e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1940,Dose=2,mode=slope8,C=-7.261095e+00,ka=-4.260970e-03,kb=2.580193e-03,tau=4.233367e+01,b_original=1.690225e-03,rms_error=1.117288e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=0,mode=slope8,C=-7.235679e+00,ka=-7.628277e-03,kb=-1.314183e-03,tau=4.733441e+01,b_original=-2.694245e-03,rms_error=1.958371e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=1,mode=slope8,C=-7.741358e+00,ka=-5.826242e-03,kb=1.175028e-04,tau=4.733374e+01,b_original=-6.028900e-04,rms_error=2.707781e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1950,Dose=2,mode=slope8,C=-8.307716e+00,ka=-2.766797e-03,kb=2.335187e-03,tau=4.233343e+01,b_original=1.672449e-03,rms_error=1.109455e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=0,mode=slope8,C=-8.408332e+00,ka=-5.417373e-03,kb=-8.857093e-04,tau=4.733389e+01,b_original=-2.060985e-03,rms_error=1.878958e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=1,mode=slope8,C=-8.969389e+00,ka=-2.577663e-03,kb=2.525172e-03,tau=4.733328e+01,b_original=2.498944e-03,rms_error=4.040553e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1960,Dose=2,mode=slope8,C=-9.429611e+00,ka=-1.359555e-03,kb=2.922747e-03,tau=4.233337e+01,b_original=1.965520e-03,rms_error=1.298901e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=0,mode=slope8,C=-9.488997e+00,ka=-4.812541e-03,kb=-1.099448e-03,tau=4.733335e+01,b_original=-1.601712e-03,rms_error=1.889614e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=1,mode=slope8,C=-1.005584e+01,ka=2.659623e-05,kb=5.270044e-05,tau=4.733491e+01,b_original=4.996591e-05,rms_error=5.529174e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1970,Dose=2,mode=slope8,C=-1.076265e+01,ka=6.693758e-03,kb=2.027417e-03,tau=4.233321e+01,b_original=2.793949e-03,rms_error=2.067324e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=0,mode=slope8,C=-1.059664e+01,ka=-1.445649e-03,kb=-8.651625e-04,tau=4.733333e+01,b_original=-7.430012e-04,rms_error=2.550636e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=1,mode=slope8,C=-1.103115e+01,ka=4.774573e-03,kb=-6.422684e-03,tau=4.735278e+01,b_original=-4.000188e-03,rms_error=5.672511e-01,points=131
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1980,Dose=2,mode=slope8,C=-1.147036e+01,ka=2.536114e-03,kb=3.630234e-03,tau=4.233325e+01,b_original=3.521873e-03,rms_error=4.386816e-01,points=128
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=0,mode=slope8,C=-1.152630e+01,ka=5.994498e-04,kb=-1.763908e-04,tau=4.733589e+01,b_original=1.150586e-05,rms_error=4.238701e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=1,mode=slope8,C=-1.169638e+01,ka=3.440042e-06,kb=7.997139e-06,tau=4.733316e+01,b_original=6.545121e-03,rms_error=5.402101e-01,points=107
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=1990,Dose=2,mode=slope8,C=-1.207661e+01,ka=2.643047e-02,kb=-3.032259e-03,tau=4.233006e+01,b_original=3.797765e-03,rms_error=5.757200e-01,points=120
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=0,mode=slope8,C=-1.224471e+01,ka=6.718557e-03,kb=-5.010438e-03,tau=4.733362e+01,b_original=-2.900951e-03,rms_error=5.872294e-01,points=141
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=1,mode=slope8,C=-1.197797e+01,ka=-8.424683e-03,kb=1.242534e-03,tau=4.733465e+01,b_original=4.302751e-06,rms_error=4.490234e-01,points=84
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=2000,Dose=2,mode=slope8,C=-1.117787e+01,ka=7.508814e-03,kb=-1.808847e-03,tau=4.200018e+01,b_original=8.230986e-06,rms_error=3.754775e-01,points=51
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=0,mode=slope8,C=-8.352402e+00,ka=-6.534606e-03,kb=-2.831166e-03,tau=4.733417e+01,b_original=-3.991747e-03,rms_error=1.812879e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=1,mode=slope8,C=-9.226688e+00,ka=-1.223459e-02,kb=1.688643e-03,tau=4.733319e+01,b_original=-6.970772e-04,rms_error=1.417084e-01,points=143
+SLOPE8_FIT,EnrollmentDate=2021_30,YoB=-2,Dose=2,mode=slope8,C=-8.085230e+00,ka=-4.451307e-03,kb=1.339860e-03,tau=4.233357e+01,b_original=5.108354e-04,rms_error=9.788943e-02,points=128
+[DEBUG] Checking normalization parameters for 2021_30:
+  Total cohorts in slope6_params: 30
+  YoB=1920, Dose=0: mode=slope8, C=-4.741311e+00, ka=-1.944129e-03, kb=-1.944129e-03, tau=4.733343e+01
+  YoB=1920, Dose=1: mode=slope8, C=-4.703564e+00, ka=-1.717206e-02, kb=9.923513e-03, tau=4.733738e+01
+  YoB=1920, Dose=2: mode=slope8, C=-5.082937e+00, ka=-5.391124e-03, kb=2.299945e-03, tau=4.233380e+01
+  YoB=1930, Dose=0: mode=slope8, C=-5.577624e+00, ka=-8.178531e-04, kb=-8.178531e-04, tau=4.733359e+01
+  YoB=1930, Dose=1: mode=slope8, C=-5.503072e+00, ka=-1.596608e-02, kb=1.854690e-03, tau=4.733268e+01
+  ... and 25 more cohorts
+[DEBUG] Normalization samples for 2021_30:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-4.741311e+00, ka=-1.944129e-03, kb=-1.944129e-03, tau=4.733343e+01, norm_factor=1.145844e+02, hazard_raw=6.691326e-03, result=7.667213e-01
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-4.741311e+00, ka=-1.944129e-03, kb=-1.944129e-03, tau=4.733343e+01, norm_factor=1.148073e+02, hazard_raw=6.432830e-03, result=7.385361e-01
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-4.741311e+00, ka=-1.944129e-03, kb=-1.944129e-03, tau=4.733343e+01, norm_factor=1.150308e+02, hazard_raw=6.270881e-03, result=7.213443e-01
+[DEBUG] Normalization check for 2021_30: 4229/4536 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=6.691326e-03, hazard_adj=7.667213e-01, ratio=114.584361
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=6.432830e-03, hazard_adj=7.385361e-01, ratio=114.807345
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=6.270881e-03, hazard_adj=7.213443e-01, ratio=115.030762
+[DEBUG] Normalization modes applied for 2021_30: slope8: 30
+[DEBUG] Slope8 normalization applied to 30 cohort(s)
+[Info] Processing sheet: 2022_06
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 107100 rows
+[DEBUG] Filtered to 100800 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 80640 rows
+[DEBUG] Aggregated across sexes: 5040 rows
+  YoB 1920, % vaxxed=75  alive_by_dose= 25% 1% 12% 62% total=27232
+  YoB 1930, % vaxxed=85  alive_by_dose= 15% 1% 11% 73% total=238805
+  YoB 1940, % vaxxed=87  alive_by_dose= 13% 1% 12% 74% total=713459
+  YoB 1950, % vaxxed=84  alive_by_dose= 16% 1% 17% 67% total=1075737
+  YoB 1960, % vaxxed=77  alive_by_dose= 23% 1% 26% 51% total=1175879
+  YoB 1970, % vaxxed=74  alive_by_dose= 26% 1% 32% 41% total=1587588
+  YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 37% 27% total=1337981
+  YoB 1990, % vaxxed=62  alive_by_dose= 38% 2% 41% 19% total=1073974
+  YoB 2000, % vaxxed=58  alive_by_dose= 42% 2% 47% 9% total=1020738
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=0,mode=slope8,C=-4.599535e+00,ka=-1.228989e-02,kb=-3.040459e-03,tau=3.799952e+01,b_original=-5.487804e-03,rms_error=2.484244e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=1,mode=slope8,C=-5.159721e+00,ka=-1.007693e-02,kb=8.281860e-03,tau=3.733570e+01,b_original=5.326368e-03,rms_error=5.249203e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=2,mode=slope8,C=-4.744486e+00,ka=-7.900105e-03,kb=1.823966e-04,tau=3.800010e+01,b_original=-2.257032e-03,rms_error=3.089453e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1920,Dose=3,mode=slope8,C=-5.574341e+00,ka=1.755357e-02,kb=-1.544706e-03,tau=3.300530e+01,b_original=1.659390e-03,rms_error=1.712780e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=0,mode=slope8,C=-5.432967e+00,ka=-1.075881e-02,kb=7.594134e-04,tau=3.800027e+01,b_original=-2.692329e-03,rms_error=1.900754e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=1,mode=slope8,C=-5.143079e+00,ka=-1.362688e-02,kb=-1.094659e-03,tau=3.799867e+01,b_original=-5.799699e-03,rms_error=5.503402e-01,points=113
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=2,mode=slope8,C=-5.458487e+00,ka=-1.421098e-02,kb=1.584046e-03,tau=3.799984e+01,b_original=-2.200542e-03,rms_error=1.660655e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1930,Dose=3,mode=slope8,C=-6.664242e+00,ka=2.083190e-02,kb=-1.644333e-03,tau=3.299904e+01,b_original=2.470407e-03,rms_error=1.219281e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,mode=slope8,C=-6.259231e+00,ka=-2.023307e-02,kb=3.076115e-03,tau=3.799836e+01,b_original=-2.950437e-03,rms_error=1.634583e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,mode=slope8,C=-5.992217e+00,ka=-2.265859e-02,kb=4.833456e-03,tau=3.800268e+01,b_original=-2.153514e-03,rms_error=4.642356e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,mode=slope8,C=-6.510175e+00,ka=-1.600179e-02,kb=3.351707e-03,tau=3.800000e+01,b_original=-2.602070e-03,rms_error=1.555301e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=3,mode=slope8,C=-7.670048e+00,ka=1.247245e-02,kb=4.013880e-04,tau=3.300109e+01,b_original=2.533347e-03,rms_error=1.112639e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,mode=slope8,C=-7.175578e+00,ka=-1.893573e-02,kb=2.674369e-03,tau=3.799861e+01,b_original=-2.478243e-03,rms_error=1.458632e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,mode=slope8,C=-6.899648e+00,ka=-1.383583e-02,kb=2.471758e-03,tau=3.766631e+01,b_original=-2.431496e-03,rms_error=4.423283e-01,points=110
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,mode=slope8,C=-7.546563e+00,ka=-1.360031e-02,kb=2.302833e-03,tau=3.799956e+01,b_original=-2.058744e-03,rms_error=1.428255e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=3,mode=slope8,C=-8.843829e+00,ka=2.445505e-02,kb=-2.638446e-03,tau=3.299809e+01,b_original=3.007472e-03,rms_error=1.163269e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,mode=slope8,C=-8.478414e+00,ka=-6.892482e-03,kb=-3.185918e-04,tau=3.799952e+01,b_original=-2.675751e-03,rms_error=1.730994e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,mode=slope8,C=-7.563331e+00,ka=-2.786720e-02,kb=3.805798e-03,tau=3.799795e+01,b_original=-4.227419e-03,rms_error=5.256112e-01,points=101
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=2,mode=slope8,C=-8.923384e+00,ka=-1.136197e-02,kb=5.533280e-03,tau=3.800040e+01,b_original=-4.242850e-04,rms_error=1.731744e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=3,mode=slope8,C=-9.665152e+00,ka=1.082056e-02,kb=2.053913e-03,tau=3.300111e+01,b_original=3.567777e-03,rms_error=1.424861e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=0,mode=slope8,C=-9.566974e+00,ka=-4.931080e-03,kb=-7.735624e-04,tau=3.800000e+01,b_original=-2.139681e-03,rms_error=1.977880e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=1,mode=slope8,C=-8.408784e+00,ka=-2.137309e-02,kb=4.624548e-03,tau=3.799955e+01,b_original=-9.271658e-03,rms_error=4.995623e-01,points=87
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=2,mode=slope8,C=-1.019285e+01,ka=-3.457972e-04,kb=1.586574e-04,tau=3.799999e+01,b_original=3.915167e-05,rms_error=2.156170e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1970,Dose=3,mode=slope8,C=-1.118730e+01,ka=3.659083e-02,kb=-2.382215e-03,tau=3.298976e+01,b_original=4.631507e-03,rms_error=2.258737e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=0,mode=slope8,C=-1.056374e+01,ka=1.173059e-03,kb=-2.790783e-03,tau=3.800049e+01,b_original=-1.356317e-03,rms_error=3.213954e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=1,mode=slope8,C=-9.852485e+00,ka=4.951275e-05,kb=3.345878e-05,tau=3.800030e+01,b_original=3.921961e-05,rms_error=4.035892e-01,points=62
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=2,mode=slope8,C=-1.123623e+01,ka=2.329066e-03,kb=-1.788490e-04,tau=3.800000e+01,b_original=1.651554e-05,rms_error=3.864410e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1980,Dose=3,mode=slope8,C=-1.170967e+01,ka=2.432652e-02,kb=-3.694412e-03,tau=3.301773e+01,b_original=1.585192e-05,rms_error=4.793037e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=0,mode=slope8,C=-1.154541e+01,ka=1.415576e-02,kb=-6.528544e-03,tau=3.799937e+01,b_original=2.137430e-03,rms_error=4.329305e-01,points=113
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=1,mode=slope8,C=-9.934308e+00,ka=2.112960e-05,kb=9.315282e-06,tau=3.800058e+01,b_original=1.084019e-05,rms_error=1.732974e-01,points=32
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=2,mode=slope8,C=-1.222653e+01,ka=3.548518e-02,kb=-1.709142e-02,tau=3.800120e+01,b_original=7.974459e-06,rms_error=5.815574e-01,points=111
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1990,Dose=3,mode=slope8,C=-1.152222e+01,ka=-7.799914e-04,kb=2.087287e-04,tau=3.299827e+01,b_original=1.119600e-05,rms_error=5.516325e-01,points=87
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=0,mode=slope8,C=-1.188005e+01,ka=8.558942e-06,kb=3.308612e-06,tau=3.800002e+01,b_original=5.632072e-06,rms_error=5.849805e-01,points=104
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=1,mode=slope8,C=-9.940118e+00,ka=4.088063e-06,kb=5.390797e-06,tau=3.366667e+01,b_original=5.227187e-06,rms_error=2.089827e-01,points=11
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=2,mode=slope8,C=-1.234297e+01,ka=-1.885778e-03,kb=3.936821e-04,tau=3.800000e+01,b_original=4.099531e-06,rms_error=5.470439e-01,points=100
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=2000,Dose=3,mode=slope8,C=-1.126593e+01,ka=-5.833607e-03,kb=1.201692e-03,tau=3.266761e+01,b_original=6.613444e-06,rms_error=3.798576e-01,points=42
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=slope8,C=-8.261742e+00,ka=-1.182406e-02,kb=-1.751379e-03,tau=3.800024e+01,b_original=-3.872280e-03,rms_error=1.314333e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=slope8,C=-7.784155e+00,ka=-2.546038e-02,kb=1.847851e-03,tau=3.799887e+01,b_original=-6.003897e-03,rms_error=2.652662e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=2,mode=slope8,C=-8.652937e+00,ka=-1.457339e-02,kb=1.480436e-03,tau=3.799999e+01,b_original=-2.746369e-03,rms_error=1.067228e-01,points=115
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=3,mode=slope8,C=-8.451900e+00,ka=1.562289e-02,kb=-1.990694e-03,tau=3.300066e+01,b_original=1.581555e-03,rms_error=9.925916e-02,points=100
+[DEBUG] Checking normalization parameters for 2022_06:
+  Total cohorts in slope6_params: 40
+  YoB=1920, Dose=0: mode=slope8, C=-4.599535e+00, ka=-1.228989e-02, kb=-3.040459e-03, tau=3.799952e+01
+  YoB=1920, Dose=1: mode=slope8, C=-5.159721e+00, ka=-1.007693e-02, kb=8.281860e-03, tau=3.733570e+01
+  YoB=1920, Dose=2: mode=slope8, C=-4.744486e+00, ka=-7.900105e-03, kb=1.823966e-04, tau=3.800010e+01
+  YoB=1920, Dose=3: mode=slope8, C=-5.574341e+00, ka=1.755357e-02, kb=-1.544706e-03, tau=3.300530e+01
+  YoB=1930, Dose=0: mode=slope8, C=-5.432967e+00, ka=-1.075881e-02, kb=7.594134e-04, tau=3.800027e+01
+  ... and 35 more cohorts
+[DEBUG] Normalization samples for 2022_06:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-4.599535e+00, ka=-1.228989e-02, kb=-3.040459e-03, tau=3.799952e+01, norm_factor=9.943804e+01, hazard_raw=1.013724e-02, result=1.008027e+00
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-4.599535e+00, ka=-1.228989e-02, kb=-3.040459e-03, tau=3.799952e+01, norm_factor=1.006555e+02, hazard_raw=1.115477e-02, result=1.122790e+00
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-4.599535e+00, ka=-1.228989e-02, kb=-3.040459e-03, tau=3.799952e+01, norm_factor=1.018638e+02, hazard_raw=1.189764e-02, result=1.211938e+00
+[DEBUG] Normalization check for 2022_06: 4459/5040 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=1.013724e-02, hazard_adj=1.008027e+00, ratio=99.438043
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=1.115477e-02, hazard_adj=1.122790e+00, ratio=100.655522
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=1.189764e-02, hazard_adj=1.211938e+00, ratio=101.863752
+[DEBUG] Normalization modes applied for 2022_06: slope8: 40
+[DEBUG] Slope8 normalization applied to 40 cohort(s)
+[Info] Processing sheet: 2022_26
+[DEBUG] Filtered to start from enrollment date 06/27/2022: 91800 rows
+[DEBUG] Filtered to 86400 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 69120 rows
+[DEBUG] Aggregated across sexes: 4320 rows
+  YoB 1920, % vaxxed=76  alive_by_dose= 24% 1% 11% 65% total=23992
+  YoB 1930, % vaxxed=86  alive_by_dose= 14% 0% 10% 75% total=227891
+  YoB 1940, % vaxxed=87  alive_by_dose= 13% 0% 11% 76% total=702349
+  YoB 1950, % vaxxed=84  alive_by_dose= 16% 0% 14% 70% total=1069081
+  YoB 1960, % vaxxed=78  alive_by_dose= 22% 1% 22% 55% total=1173172
+  YoB 1970, % vaxxed=74  alive_by_dose= 26% 1% 28% 45% total=1586280
+  YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 33% 32% total=1337504
+  YoB 1990, % vaxxed=63  alive_by_dose= 37% 1% 37% 24% total=1073781
+  YoB 2000, % vaxxed=58  alive_by_dose= 42% 1% 42% 15% total=1020621
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=0,mode=slope8,C=-4.947637e+00,ka=4.434477e-03,kb=-8.579376e-03,tau=3.133368e+01,b_original=-5.650136e-03,rms_error=2.612461e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=1,mode=slope8,C=-5.054535e+00,ka=-2.693168e-03,kb=7.444587e-03,tau=3.034148e+01,b_original=5.466241e-03,rms_error=4.264563e-01,points=51
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=2,mode=slope8,C=-5.021368e+00,ka=8.040701e-03,kb=-4.810946e-03,tau=3.133357e+01,b_original=-1.791445e-03,rms_error=2.998811e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1920,Dose=3,mode=slope8,C=-5.115235e+00,ka=-8.590090e-04,kb=4.025691e-05,tau=2.633334e+01,b_original=8.368977e-04,rms_error=1.738741e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=0,mode=slope8,C=-5.679437e+00,ka=1.891454e-03,kb=-3.208846e-03,tau=3.132967e+01,b_original=-1.444351e-03,rms_error=1.850102e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=1,mode=slope8,C=-5.374658e+00,ka=-4.808278e-03,kb=-3.264551e-03,tau=3.135989e+01,b_original=-3.410235e-03,rms_error=5.514009e-01,points=91
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=2,mode=slope8,C=-5.672826e+00,ka=-3.157368e-03,kb=-1.966145e-03,tau=3.133448e+01,b_original=-2.179976e-03,rms_error=1.887504e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1930,Dose=3,mode=slope8,C=-6.209765e+00,ka=1.969186e-03,kb=7.979413e-04,tau=2.633257e+01,b_original=1.678523e-03,rms_error=1.224207e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=0,mode=slope8,C=-6.630636e+00,ka=-5.105010e-03,kb=-4.592547e-04,tau=3.133362e+01,b_original=-1.982614e-03,rms_error=1.662208e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=1,mode=slope8,C=-6.552669e+00,ka=1.689317e-02,kb=-9.556337e-03,tau=3.133434e+01,b_original=-4.055554e-03,rms_error=5.449427e-01,points=93
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=2,mode=slope8,C=-6.722608e+00,ka=-6.233070e-03,kb=1.201750e-03,tau=3.133352e+01,b_original=-7.428188e-04,rms_error=1.582285e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1940,Dose=3,mode=slope8,C=-7.392972e+00,ka=5.190280e-03,kb=1.226850e-04,tau=2.633229e+01,b_original=1.738731e-03,rms_error=1.122565e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=0,mode=slope8,C=-7.490588e+00,ka=-7.029153e-03,kb=1.026742e-04,tau=3.133412e+01,b_original=-1.765152e-03,rms_error=1.402819e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=1,mode=slope8,C=-6.677417e+00,ka=-3.772962e-02,kb=4.287253e-03,tau=3.100005e+01,b_original=-5.522902e-03,rms_error=5.635824e-01,points=89
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=2,mode=slope8,C=-7.754297e+00,ka=-1.495907e-03,kb=-1.495907e-03,tau=3.133167e+01,b_original=-1.543729e-03,rms_error=1.382932e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1950,Dose=3,mode=slope8,C=-8.140792e+00,ka=-1.196981e-02,kb=4.056201e-03,tau=2.633333e+01,b_original=1.962846e-03,rms_error=1.129859e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=0,mode=slope8,C=-8.629353e+00,ka=9.516620e-06,kb=-2.748840e-03,tau=3.133346e+01,b_original=-1.754293e-03,rms_error=1.784466e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=1,mode=slope8,C=-8.004181e+00,ka=3.160948e-04,kb=2.352633e-04,tau=3.100028e+01,b_original=2.494248e-04,rms_error=5.396307e-01,points=75
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=2,mode=slope8,C=-9.031563e+00,ka=-1.962243e-03,kb=2.868027e-03,tau=3.133334e+01,b_original=1.001895e-03,rms_error=1.868284e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1960,Dose=3,mode=slope8,C=-9.423059e+00,ka=5.644134e-03,kb=1.561712e-03,tau=2.633398e+01,b_original=3.353377e-03,rms_error=1.307394e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=0,mode=slope8,C=-9.665297e+00,ka=-1.656018e-03,kb=-1.497103e-03,tau=3.133333e+01,b_original=-1.052961e-03,rms_error=1.876519e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=1,mode=slope8,C=-9.036317e+00,ka=3.723381e-02,kb=-2.018219e-02,tau=3.133312e+01,b_original=-7.266412e-03,rms_error=4.500398e-01,points=65
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=2,mode=slope8,C=-1.014355e+01,ka=-2.582125e-03,kb=1.914632e-03,tau=3.133359e+01,b_original=8.568643e-04,rms_error=2.336148e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1970,Dose=3,mode=slope8,C=-1.032988e+01,ka=1.221221e-03,kb=7.293947e-04,tau=2.633333e+01,b_original=1.913556e-03,rms_error=2.336951e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=0,mode=slope8,C=-1.073097e+01,ka=8.134960e-03,kb=-3.929761e-03,tau=3.133119e+01,b_original=1.957690e-05,rms_error=3.315194e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=1,mode=slope8,C=-9.550335e+00,ka=7.489385e-05,kb=3.494052e-05,tau=3.133277e+01,b_original=4.381399e-05,rms_error=3.505638e-01,points=47
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=2,mode=slope8,C=-1.113928e+01,ka=-6.959137e-03,kb=6.858075e-03,tau=3.133338e+01,b_original=2.350051e-03,rms_error=3.939388e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1980,Dose=3,mode=slope8,C=-1.124007e+01,ka=5.237980e-03,kb=-1.232254e-03,tau=2.633347e+01,b_original=1.553872e-05,rms_error=4.126135e-01,points=80
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=0,mode=slope8,C=-1.135832e+01,ka=6.612495e-03,kb=-5.737739e-03,tau=3.100028e+01,b_original=1.166305e-05,rms_error=4.550954e-01,points=93
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=1,mode=slope8,C=-9.568275e+00,ka=-3.674250e-04,kb=1.279585e-04,tau=3.135079e+01,b_original=1.231396e-05,rms_error=2.175028e-01,points=20
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=2,mode=slope8,C=-1.136725e+01,ka=-1.960479e-02,kb=2.597100e-03,tau=3.133389e+01,b_original=-7.561482e-03,rms_error=5.463159e-01,points=91
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=1990,Dose=3,mode=slope8,C=-1.200770e+01,ka=1.140807e-02,kb=5.056079e-03,tau=2.633336e+01,b_original=5.077588e-03,rms_error=5.932835e-01,points=73
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=0,mode=slope8,C=-1.183643e+01,ka=-1.077980e-02,kb=-1.892221e-03,tau=3.133337e+01,b_original=-4.655003e-03,rms_error=5.287238e-01,points=85
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=1,mode=slope8,C=-9.609357e+00,ka=2.152639e-02,kb=-5.401005e-03,tau=1.933276e+01,b_original=6.590615e-06,rms_error=2.796344e-01,points=5
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=2,mode=slope8,C=-1.227216e+01,ka=4.951188e-06,kb=3.643642e-06,tau=3.066747e+01,b_original=4.430041e-06,rms_error=5.331889e-01,points=76
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=2000,Dose=3,mode=slope8,C=-1.193601e+01,ka=-8.790650e-06,kb=9.017261e-06,tau=2.633255e+01,b_original=5.168803e-06,rms_error=4.352926e-01,points=47
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=0,mode=slope8,C=-8.512383e+00,ka=-3.479354e-03,kb=-3.384255e-03,tau=3.133377e+01,b_original=-3.398728e-03,rms_error=1.254573e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=1,mode=slope8,C=-8.336751e+00,ka=9.333097e-03,kb=-9.893215e-03,tau=3.133495e+01,b_original=-5.105052e-03,rms_error=3.204217e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=2,mode=slope8,C=-8.857511e+00,ka=-5.789599e-03,kb=-1.137494e-03,tau=3.133389e+01,b_original=-2.155976e-03,rms_error=1.088609e-01,points=95
+SLOPE8_FIT,EnrollmentDate=2022_26,YoB=-2,Dose=3,mode=slope8,C=-7.940124e+00,ka=-1.261189e-02,kb=1.549828e-03,tau=2.633547e+01,b_original=4.110832e-04,rms_error=9.606457e-02,points=80
+[DEBUG] Checking normalization parameters for 2022_26:
+  Total cohorts in slope6_params: 40
+  YoB=1920, Dose=0: mode=slope8, C=-4.947637e+00, ka=4.434477e-03, kb=-8.579376e-03, tau=3.133368e+01
+  YoB=1920, Dose=1: mode=slope8, C=-5.054535e+00, ka=-2.693168e-03, kb=7.444587e-03, tau=3.034148e+01
+  YoB=1920, Dose=2: mode=slope8, C=-5.021368e+00, ka=8.040701e-03, kb=-4.810946e-03, tau=3.133357e+01
+  YoB=1920, Dose=3: mode=slope8, C=-5.115235e+00, ka=-8.590090e-04, kb=4.025691e-05, tau=2.633334e+01
+  YoB=1930, Dose=0: mode=slope8, C=-5.679437e+00, ka=1.891454e-03, kb=-3.208846e-03, tau=3.132967e+01
+  ... and 35 more cohorts
+[DEBUG] Normalization samples for 2022_26:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-4.947637e+00, ka=4.434477e-03, kb=-8.579376e-03, tau=3.133368e+01, norm_factor=1.408417e+02, hazard_raw=8.553153e-03, result=1.204641e+00
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-4.947637e+00, ka=4.434477e-03, kb=-8.579376e-03, tau=3.133368e+01, norm_factor=1.402474e+02, hazard_raw=5.734783e-03, result=8.042882e-01
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-4.947637e+00, ka=4.434477e-03, kb=-8.579376e-03, tau=3.133368e+01, norm_factor=1.397117e+02, hazard_raw=4.681319e-03, result=6.540351e-01
+[DEBUG] Normalization check for 2022_26: 3766/4320 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=8.553153e-03, hazard_adj=1.204641e+00, ratio=140.841733
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=5.734783e-03, hazard_adj=8.042882e-01, ratio=140.247371
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=4.681319e-03, hazard_adj=6.540351e-01, ratio=139.711714
+[DEBUG] Normalization modes applied for 2022_26: slope8: 40
+[DEBUG] Slope8 normalization applied to 40 cohort(s)
+[Info] Processing sheet: 2022_47
+[DEBUG] Filtered to start from enrollment date 11/21/2022: 75735 rows
+[DEBUG] Filtered to 71280 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3, 4] (max dose 4): 71280 rows
+[DEBUG] Aggregated across sexes: 4455 rows
+  YoB 1920, % vaxxed=77  alive_by_dose= 23% 1% 9% 41% 26% total=21094
+  YoB 1930, % vaxxed=86  alive_by_dose= 14% 1% 9% 49% 28% total=217189
+  YoB 1940, % vaxxed=87  alive_by_dose= 13% 0% 10% 53% 24% total=691317
+  YoB 1950, % vaxxed=85  alive_by_dose= 15% 0% 13% 54% 17% total=1062360
+  YoB 1960, % vaxxed=78  alive_by_dose= 22% 1% 21% 50% 6% total=1170515
+  YoB 1970, % vaxxed=74  alive_by_dose= 26% 1% 27% 43% 3% total=1584986
+  YoB 1980, % vaxxed=66  alive_by_dose= 34% 1% 32% 31% 2% total=1337052
+  YoB 1990, % vaxxed=63  alive_by_dose= 37% 1% 35% 25% 1% total=1073590
+  YoB 2000, % vaxxed=58  alive_by_dose= 42% 1% 40% 16% 0% total=1020528
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=0,mode=slope8,C=-4.751025e+00,ka=-3.311072e-02,kb=7.235728e-03,tau=2.433236e+01,b_original=-5.602991e-03,rms_error=2.448719e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=1,mode=slope8,C=-5.083821e+00,ka=1.774317e-03,kb=7.419980e-03,tau=2.300002e+01,b_original=6.183196e-03,rms_error=4.501811e-01,points=40
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=2,mode=slope8,C=-4.809448e+00,ka=-8.965440e-03,kb=1.630156e-04,tau=2.433365e+01,b_original=-2.537958e-03,rms_error=3.967145e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=3,mode=slope8,C=-4.821172e+00,ka=-2.616472e-02,kb=8.034628e-03,tau=2.433592e+01,b_original=-1.085942e-03,rms_error=1.973165e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1920,Dose=4,mode=slope8,C=-5.300599e+00,ka=2.932388e-03,kb=3.879712e-03,tau=1.933335e+01,b_original=2.537043e-03,rms_error=2.217371e-01,points=59
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=0,mode=slope8,C=-5.362595e+00,ka=-3.424407e-02,kb=9.329688e-03,tau=2.433336e+01,b_original=-2.815431e-03,rms_error=1.726765e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=1,mode=slope8,C=-5.048935e+00,ka=-3.937160e-02,kb=7.121751e-03,tau=2.400364e+01,b_original=-6.318328e-03,rms_error=5.841671e-01,points=71
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=2,mode=slope8,C=-5.616965e+00,ka=-1.802052e-02,kb=3.834571e-03,tau=2.433772e+01,b_original=-1.760552e-03,rms_error=1.867405e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=3,mode=slope8,C=-5.757637e+00,ka=-3.276294e-02,kb=1.127180e-02,tau=2.433241e+01,b_original=-6.854434e-04,rms_error=1.146089e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1930,Dose=4,mode=slope8,C=-6.028113e+00,ka=-2.557929e-02,kb=8.111116e-03,tau=1.933333e+01,b_original=2.189279e-03,rms_error=1.258336e-01,points=59
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=0,mode=slope8,C=-6.452820e+00,ka=-2.739545e-02,kb=7.596056e-03,tau=2.433338e+01,b_original=-2.274939e-03,rms_error=1.564090e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=1,mode=slope8,C=-5.812844e+00,ka=-5.131694e-02,kb=7.574867e-03,tau=2.433279e+01,b_original=-9.228802e-03,rms_error=5.295192e-01,points=73
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=2,mode=slope8,C=-6.634695e+00,ka=-2.200687e-02,kb=8.037936e-03,tau=2.433383e+01,b_original=-7.521269e-04,rms_error=1.489402e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=3,mode=slope8,C=-6.981058e+00,ka=-2.243363e-02,kb=7.152795e-03,tau=2.433322e+01,b_original=-1.123567e-03,rms_error=1.072588e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1940,Dose=4,mode=slope8,C=-7.529780e+00,ka=4.482625e-03,kb=4.018066e-03,tau=1.933334e+01,b_original=4.126587e-03,rms_error=1.245131e-01,points=59
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=0,mode=slope8,C=-7.343246e+00,ka=-3.133895e-02,kb=9.840794e-03,tau=2.429868e+01,b_original=-1.104465e-03,rms_error=1.173801e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=1,mode=slope8,C=-6.527363e+00,ka=-5.657383e-02,kb=5.773927e-03,tau=2.433313e+01,b_original=-1.166709e-02,rms_error=5.784025e-01,points=69
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=2,mode=slope8,C=-7.636888e+00,ka=-1.252460e-02,kb=1.265125e-03,tau=2.433370e+01,b_original=-2.637399e-03,rms_error=1.410309e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=3,mode=slope8,C=-8.067573e+00,ka=-1.653257e-02,kb=5.518500e-03,tau=2.433334e+01,b_original=-7.747084e-04,rms_error=1.157296e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1950,Dose=4,mode=slope8,C=-8.473263e+00,ka=1.087828e-02,kb=1.440761e-03,tau=1.933438e+01,b_original=3.032598e-03,rms_error=1.669046e-01,points=59
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=0,mode=slope8,C=-8.562313e+00,ka=-1.429885e-02,kb=4.655437e-03,tau=2.433337e+01,b_original=-2.629204e-03,rms_error=1.814291e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=1,mode=slope8,C=-8.003877e+00,ka=2.350540e-04,kb=2.619129e-04,tau=2.433308e+01,b_original=2.575101e-04,rms_error=5.077850e-01,points=61
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=2,mode=slope8,C=-9.055791e+00,ka=1.007489e-03,kb=1.850688e-03,tau=2.433320e+01,b_original=1.196870e-04,rms_error=1.966253e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=3,mode=slope8,C=-9.270999e+00,ka=-4.367700e-03,kb=4.461032e-03,tau=2.434727e+01,b_original=1.480238e-03,rms_error=1.367920e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1960,Dose=4,mode=slope8,C=-9.115362e+00,ka=-3.676799e-03,kb=6.032764e-03,tau=1.933389e+01,b_original=3.726766e-03,rms_error=3.831933e-01,points=59
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=0,mode=slope8,C=-9.622592e+00,ka=-5.099319e-03,kb=-2.222908e-03,tau=2.433334e+01,b_original=-3.352287e-03,rms_error=1.952359e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=1,mode=slope8,C=-8.518664e+00,ka=-1.996033e-02,kb=-7.618105e-03,tau=2.368312e+01,b_original=-1.107842e-02,rms_error=4.944758e-01,points=47
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=2,mode=slope8,C=-9.972118e+00,ka=-1.909088e-02,kb=8.221199e-03,tau=2.433392e+01,b_original=4.010047e-05,rms_error=2.273954e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=3,mode=slope8,C=-1.045453e+01,ka=8.593282e-03,kb=-1.066440e-03,tau=2.433334e+01,b_original=1.847348e-03,rms_error=2.259918e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1970,Dose=4,mode=slope8,C=-1.037661e+01,ka=4.630949e-02,kb=-3.103277e-03,tau=1.935973e+01,b_original=5.661534e-05,rms_error=5.596850e-01,points=53
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=0,mode=slope8,C=-1.062741e+01,ka=-8.760959e-04,kb=-8.760959e-04,tau=2.433334e+01,b_original=-1.859501e-04,rms_error=3.222893e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=1,mode=slope8,C=-9.486316e+00,ka=-4.159338e-03,kb=9.936944e-04,tau=2.400058e+01,b_original=4.508491e-05,rms_error=3.095091e-01,points=41
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=2,mode=slope8,C=-1.101250e+01,ka=1.118895e-04,kb=-3.688398e-03,tau=2.448486e+01,b_original=-2.393072e-03,rms_error=4.548248e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=3,mode=slope8,C=-1.108934e+01,ka=-5.516102e-03,kb=-2.504515e-03,tau=2.433322e+01,b_original=-2.846504e-03,rms_error=4.749289e-01,points=73
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1980,Dose=4,mode=slope8,C=-8.957086e+00,ka=-2.127159e-02,kb=-1.580459e-02,tau=1.833387e+01,b_original=3.546266e-05,rms_error=4.626062e-01,points=29
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=0,mode=slope8,C=-1.127707e+01,ka=-3.326781e-03,kb=-3.326781e-03,tau=2.433333e+01,b_original=-3.368773e-03,rms_error=4.808646e-01,points=73
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=1,mode=slope8,C=-9.569785e+00,ka=9.542644e-06,kb=1.236296e-05,tau=2.066667e+01,b_original=1.311900e-05,rms_error=4.685785e-05,points=12
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=2,mode=slope8,C=-1.177337e+01,ka=7.563644e-03,kb=-1.088869e-02,tau=2.433334e+01,b_original=6.493962e-06,rms_error=5.723921e-01,points=70
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=3,mode=slope8,C=-1.174504e+01,ka=1.886399e-02,kb=-2.317779e-03,tau=2.433283e+01,b_original=8.451801e-06,rms_error=6.208921e-01,points=66
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=1990,Dose=4,mode=slope8,C=-9.254706e+00,ka=2.765122e-05,kb=1.844860e-05,tau=1.866667e+01,b_original=2.058869e-05,rms_error=5.308966e-05,points=13
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=0,mode=slope8,C=-1.222352e+01,ka=1.214692e-02,kb=-7.028300e-03,tau=2.433486e+01,b_original=-5.957491e-03,rms_error=5.271918e-01,points=64
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=1,status=insufficient_data,points=4
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=2,mode=slope8,C=-1.223724e+01,ka=1.339380e-06,kb=4.985803e-06,tau=2.400794e+01,b_original=4.246929e-06,rms_error=5.432028e-01,points=57
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=3,mode=slope8,C=-1.201768e+01,ka=2.101762e-06,kb=6.572527e-06,tau=2.400466e+01,b_original=4.985453e-06,rms_error=5.269071e-01,points=39
+SLOPE6_FIT,EnrollmentDate=2022_47,YoB=2000,Dose=4,status=insufficient_data,points=4
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=0,mode=slope8,C=-8.371029e+00,ka=-2.755965e-02,kb=5.480114e-03,tau=2.433326e+01,b_original=-3.461498e-03,rms_error=1.112823e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=1,mode=slope8,C=-7.905894e+00,ka=-2.777872e-02,kb=-6.807978e-04,tau=2.433343e+01,b_original=-6.187850e-03,rms_error=2.873265e-01,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=2,mode=slope8,C=-8.837517e+00,ka=-1.867549e-02,kb=4.388258e-03,tau=2.433374e+01,b_original=-2.288896e-03,rms_error=9.789854e-02,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=3,mode=slope8,C=-8.021035e+00,ka=-2.854651e-02,kb=9.202418e-03,tau=2.433298e+01,b_original=-1.678592e-03,rms_error=9.471069e-02,points=74
+SLOPE8_FIT,EnrollmentDate=2022_47,YoB=-2,Dose=4,mode=slope8,C=-7.661110e+00,ka=2.786325e-03,kb=2.469180e-03,tau=1.933335e+01,b_original=1.604936e-03,rms_error=9.429780e-02,points=59 (abnormal/unreliable), note=optimizer_not_successful
+[DEBUG] Checking normalization parameters for 2022_47:
+  Total cohorts in slope6_params: 50
+  YoB=1920, Dose=0: mode=slope8, C=-4.751025e+00, ka=-3.311072e-02, kb=7.235728e-03, tau=2.433236e+01
+  YoB=1920, Dose=1: mode=slope8, C=-5.083821e+00, ka=1.774317e-03, kb=7.419980e-03, tau=2.300002e+01
+  YoB=1920, Dose=2: mode=slope8, C=-4.809448e+00, ka=-8.965440e-03, kb=1.630156e-04, tau=2.433365e+01
+  YoB=1920, Dose=3: mode=slope8, C=-4.821172e+00, ka=-2.616472e-02, kb=8.034628e-03, tau=2.433592e+01
+  YoB=1920, Dose=4: mode=slope8, C=-5.300599e+00, ka=2.932388e-03, kb=3.879712e-03, tau=1.933335e+01
+  ... and 45 more cohorts
+[DEBUG] Normalization samples for 2022_47:
+  Sample 1: YoB=1920, Dose=0, mode=slope8, C=-4.751025e+00, ka=-3.311072e-02, kb=7.235728e-03, tau=2.433236e+01, norm_factor=1.157028e+02, hazard_raw=8.003413e-03, result=9.260173e-01
+  Sample 2: YoB=1920, Dose=0, mode=slope8, C=-4.751025e+00, ka=-3.311072e-02, kb=7.235728e-03, tau=2.433236e+01, norm_factor=1.195002e+02, hazard_raw=8.282061e-03, result=9.897077e-01
+  Sample 3: YoB=1920, Dose=0, mode=slope8, C=-4.751025e+00, ka=-3.311072e-02, kb=7.235728e-03, tau=2.433236e+01, norm_factor=1.232259e+02, hazard_raw=8.351226e-03, result=1.029087e+00
+[DEBUG] Normalization check for 2022_47: 3735/4455 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1920, Dose=0, t=0.0, hazard_raw=8.003413e-03, hazard_adj=9.260173e-01, ratio=115.702812
+  Sample: YoB=1920, Dose=0, t=1.0, hazard_raw=8.282061e-03, hazard_adj=9.897077e-01, ratio=119.500175
+  Sample: YoB=1920, Dose=0, t=2.0, hazard_raw=8.351226e-03, hazard_adj=1.029087e+00, ratio=123.225884
+[DEBUG] Normalization modes applied for 2022_47: slope8: 48, none: 2
+[DEBUG] Slope8 normalization applied to 48 cohort(s)
+[DEBUG] Found 1 cohort(s) with abnormal fits
+
+================================================================================
+KCOR VALUES AT REPORTING DATES - ALL SHEETS
+================================================================================
+
+Sheet: 2021_13 — Reporting date: 2023-01-02
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age 1920: weight = 0.086762
+  Age 1930: weight = 0.325731
+  Age 1940: weight = 0.307788
+  Age 1950: weight = 0.173191
+  Age 1960: weight = 0.056425
+  Age 1970: weight = 0.025951
+  Age 1980: weight = 0.015555
+  Age 1990: weight = 0.007935
+  Age 2000: weight = 0.000663
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] | KCOR_ns | ka_num  kb_num  tau_num  ka_den  kb_den  tau_den
+--------------------------------------------------

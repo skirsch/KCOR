@@ -4105,15 +4105,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             ka_num = None  # Not valid for non-slope8
                             kb_num = None  # Not valid for non-slope8
                             tau_num = None  # Not valid for non-slope8 (don't use SLOPE6_QUANTILE_TAU)
-                    elif pd.notna(params_num):
-                        beta_num = float(params_num)
-                        c_num = 0.0
-                        mode_num = "linear"
-                        C_num = np.nan
-                        ka_num = np.nan
-                        kb_num = np.nan
-                        tau_num = np.nan
+                    elif params_num is not None and not isinstance(params_num, dict):
+                        # Legacy format: params_num is a scalar (shouldn't happen with slope8, but handle gracefully)
+                        try:
+                            beta_num = float(params_num)
+                            c_num = 0.0
+                            mode_num = "linear"
+                            C_num = np.nan
+                            ka_num = np.nan
+                            kb_num = np.nan
+                            tau_num = np.nan
+                        except (ValueError, TypeError):
+                            beta_num = np.nan
+                            c_num = 0.0
+                            mode_num = "none"
+                            C_num = np.nan
+                            ka_num = np.nan
+                            kb_num = np.nan
+                            tau_num = np.nan
                     else:
+                        # params_num is None or invalid
                         beta_num = np.nan
                         c_num = 0.0
                         mode_num = "none"
@@ -4149,15 +4160,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             ka_den = None  # Not valid for non-slope8
                             kb_den = None  # Not valid for non-slope8
                             tau_den = None  # Not valid for non-slope8 (don't use SLOPE6_QUANTILE_TAU)
-                    elif pd.notna(params_den):
-                        beta_den = float(params_den)
-                        c_den = 0.0
-                        mode_den = "linear"
-                        C_den = np.nan
-                        ka_den = np.nan
-                        kb_den = np.nan
-                        tau_den = np.nan
+                    elif params_den is not None and not isinstance(params_den, dict):
+                        # Legacy format: params_den is a scalar (shouldn't happen with slope8, but handle gracefully)
+                        try:
+                            beta_den = float(params_den)
+                            c_den = 0.0
+                            mode_den = "linear"
+                            C_den = np.nan
+                            ka_den = np.nan
+                            kb_den = np.nan
+                            tau_den = np.nan
+                        except (ValueError, TypeError):
+                            beta_den = np.nan
+                            c_den = 0.0
+                            mode_den = "none"
+                            C_den = np.nan
+                            ka_den = np.nan
+                            kb_den = np.nan
+                            tau_den = np.nan
                     else:
+                        # params_den is None or invalid
                         beta_den = np.nan
                         c_den = 0.0
                         mode_den = "none"
