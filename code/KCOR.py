@@ -128,6 +128,7 @@ SLOPE6_APPLICATION_END_ISO = SLOPE_FIT_END_ISO  # Rightmost endpoint for determi
 ENABLE_NEGATIVE_SLOPE_FIT = 1           # Legacy flag, not used (slope8 always used)
 SLOPE8_QUANTILE_TAU = 0.5               # Quantile level for slope8 quantile regression (0.5 = median)
 SLOPE_FIT_DELAY_WEEKS = 15              # Delay in weeks for highest dose fit start (slope8 only)
+SLOPE8_MAX_YOB = 1940                   # Maximum YearOfBirth for which slope8 is applied (cohorts >= 1940 use linear fit)
 
 # Optional detailed debug logging for slope8 depletion-mode fits.
 # When enabled, each attempted slope8 fit (per cohort) is logged as a CSV row to SLOPE_DEBUG_FILE,
@@ -1701,30 +1702,48 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         
         t_mean = np.mean(application_t_values)
         
+        # Determine fit window: enrollment_date + skip weeks to SLOPE_FIT_END_ISO
+        # Skip weeks: DYNAMIC_HVE_SKIP_WEEKS (2 weeks) for all doses, plus SLOPE_FIT_DELAY_WEEKS (15 weeks) for highest dose
+        slope8_end_dt = _iso_to_date_slope6(SLOPE_FIT_END_ISO)
+        is_highest_dose = (dose == max_dose)
+        fit_start_weeks = DYNAMIC_HVE_SKIP_WEEKS + (SLOPE_FIT_DELAY_WEEKS if is_highest_dose else 0)
+        
         # Build log h_c(t) for t in fit_window, using actual t values (time since enrollment)
+        # Fit window: enrollment_date + fit_start_weeks to SLOPE_FIT_END_ISO
         log_h_values = []
         h_values = []  # Store raw hazard values for debugging
         t_values = []
         iso_weeks_used = []  # Track ISO weeks actually used in fit
         
-        for week in fit_weeks:
-            week_data = cohort_data.get(week)
-            
-            if week_data is not None:
+        for week, week_data in cohort_data.items():
+            date_died = week_data.get("DateDied")
+            if date_died is not None and enrollment_dt <= date_died <= slope8_end_dt:
                 hc = week_data.get("hazard")
                 t_actual = week_data.get("t")
                 
-                # Must be valid and positive
-                if hc is not None and t_actual is not None and hc > EPS and pd.notna(t_actual):
-                    try:
-                        log_h_val = np.log(hc)
-                        if np.isfinite(log_h_val) and np.isfinite(t_actual):
-                            log_h_values.append(log_h_val)
-                            h_values.append(float(hc))  # Store raw hazard for debugging
-                            t_values.append(float(t_actual))  # Actual time since enrollment
-                            iso_weeks_used.append(week)  # Track which ISO week was used
-                    except Exception:
-                        continue
+                # Calculate weeks since enrollment
+                weeks_since_enrollment = (date_died - enrollment_dt).days / 7.0
+                
+                # Only include data from fit_start_weeks onwards
+                if weeks_since_enrollment >= fit_start_weeks:
+                    # Must be valid and positive
+                    if hc is not None and t_actual is not None and hc > EPS and pd.notna(t_actual):
+                        try:
+                            log_h_val = np.log(hc)
+                            if np.isfinite(log_h_val) and np.isfinite(t_actual):
+                                log_h_values.append(log_h_val)
+                                h_values.append(float(hc))  # Store raw hazard for debugging
+                                t_values.append(float(t_actual))  # Actual time since enrollment
+                                iso_weeks_used.append(week)  # Track which ISO week was used
+                        except Exception:
+                            continue
+        
+        # For linear fit, compute t_mean from fit window (not application window)
+        # This ensures time-centering is based on the actual fit window
+        if len(t_values) > 0:
+            t_mean_fit_window = np.mean(t_values)
+        else:
+            t_mean_fit_window = t_mean  # Fallback to application window mean
         
         # Initialize slope8_attempted before any try blocks that might fail
         slope8_attempted = False
@@ -1733,11 +1752,12 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         sheet_name = df['sheet_name'].iloc[0] if 'sheet_name' in df.columns and len(df) > 0 else 'unknown'
         if len(log_h_values) >= SLOPE6_MIN_DATA_POINTS:
             try:
-                a_lin, b_lin, t_mean_fit = fit_linear_median(np.array(t_values), np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU)
+                # Use time-centered approach: t_c = t - t_mean_fit_window
+                t_c_fit = np.array(t_values) - t_mean_fit_window
+                a_lin, b_lin, _ = fit_linear_median(t_c_fit, np.array(log_h_values), tau=SLOPE6_QUANTILE_TAU)
                 
-                # Use t_mean from application window, not from fit
-                # (t_mean_fit is computed from fit window, but we want t_mean from application window)
-                t_c_fit = np.array(t_values) - t_mean
+                # Use t_mean from fit window for normalization
+                t_mean = t_mean_fit_window
                 predicted_lin = a_lin + b_lin * t_c_fit
                 residuals_lin = np.array(log_h_values) - predicted_lin
                 rms_error_lin = np.sqrt(np.mean(residuals_lin**2))
@@ -1781,7 +1801,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "medae": float(medae_lin) if np.isfinite(medae_lin) else None,
                         "rmedae": float(rmedae_lin) if rmedae_lin is not None and np.isfinite(rmedae_lin) else None,
                         "fit_quality": fit_quality_lin,
-                        "note": f"linear_fit_t_mean={t_mean:.6f}",
+                        "note": f"linear_fit_t_mean={t_mean:.6f},skip_weeks={fit_start_weeks}",
                         "error": None,
                         "s_values": t_values,
                         "logh_values": log_h_values,
@@ -1869,50 +1889,62 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             continue
         
         # --- Slope8 quantile regression fit ---
-        # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
-        # For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS, but
-        # normalization is applied from s=0 (enrollment) onwards
-        slope8_end_dt = _iso_to_date_slope6(SLOPE_FIT_END_ISO)
-        is_highest_dose = (dose == max_dose)
+        # Only attempt slope8 for cohorts born before SLOPE8_MAX_YOB (1940)
+        # Cohorts >= 1940 and all-ages cohort (YOB=-2) will use linear fit (already computed above)
+        use_slope8 = (yob < SLOPE8_MAX_YOB and yob != -2)
         
-        # Build full deployment window data (s=0 at enrollment_date for all doses)
-        # This will be used for logging predictions
-        s_values_slope8_full = []
-        log_h_slope8_values_full = []
-        h_slope8_values_full = []
-        iso_weeks_slope8_full = []
+        if use_slope8:
+            # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
+            # Skip weeks: DYNAMIC_HVE_SKIP_WEEKS (2 weeks) for all doses, plus SLOPE_FIT_DELAY_WEEKS (15 weeks) for highest dose
+            # Fit region = adjustment region (same window for both fitting and applying normalization)
+            # Note: slope8_end_dt, is_highest_dose, and fit_start_weeks are already defined above
+            
+            # Build full deployment window data (s=0 at enrollment_date for all doses)
+            # This will be used for logging predictions
+            s_values_slope8_full = []
+            log_h_slope8_values_full = []
+            h_slope8_values_full = []
+            iso_weeks_slope8_full = []
+            
+            # Build fit window data (with skip weeks applied)
+            s_values_slope8_fit = []
+            log_h_slope8_values_fit = []
+            
+            # Build s_values: s=0 corresponds to enrollment_date
+            for week, week_data in cohort_data.items():
+                    date_died = week_data.get("DateDied")
+                    if date_died is not None and enrollment_dt <= date_died <= slope8_end_dt:
+                        hc = week_data.get("hazard")
+                        if hc is not None and hc > EPS:
+                            try:
+                                log_h_val = np.log(hc)
+                                if np.isfinite(log_h_val):
+                                    # Calculate s as weeks since enrollment_date
+                                    weeks_since_enrollment = (date_died - enrollment_dt).days / 7.0
+                                    
+                                    # Always add to full dataset (for logging)
+                                    s_values_slope8_full.append(weeks_since_enrollment)
+                                    log_h_slope8_values_full.append(log_h_val)
+                                    h_slope8_values_full.append(float(hc))
+                                    iso_weeks_slope8_full.append(week)
+                                    
+                                    # Only add to fit dataset if weeks_since_enrollment >= fit_start_weeks
+                                    # This skips DYNAMIC_HVE_SKIP_WEEKS for all doses, plus SLOPE_FIT_DELAY_WEEKS for highest dose
+                                    if weeks_since_enrollment >= fit_start_weeks:
+                                        s_values_slope8_fit.append(weeks_since_enrollment)
+                                        log_h_slope8_values_fit.append(log_h_val)
+                            except Exception:
+                                continue
+        else:
+            # For cohorts >= 1940, skip slope8 and use linear fit
+            s_values_slope8_fit = []
+            log_h_slope8_values_fit = []
+            s_values_slope8_full = []
+            log_h_slope8_values_full = []
+            h_slope8_values_full = []
+            iso_weeks_slope8_full = []
         
-        # Build fit window data (subset for highest dose)
-        s_values_slope8_fit = []
-        log_h_slope8_values_fit = []
-        
-        # Build s_values: s=0 corresponds to enrollment_date
-        for week, week_data in cohort_data.items():
-                date_died = week_data.get("DateDied")
-                if date_died is not None and enrollment_dt <= date_died <= slope8_end_dt:
-                    hc = week_data.get("hazard")
-                    if hc is not None and hc > EPS:
-                        try:
-                            log_h_val = np.log(hc)
-                            if np.isfinite(log_h_val):
-                                # Calculate s as weeks since enrollment_date
-                                weeks_since_enrollment = (date_died - enrollment_dt).days / 7.0
-                                
-                                # Always add to full dataset (for logging)
-                                s_values_slope8_full.append(weeks_since_enrollment)
-                                log_h_slope8_values_full.append(log_h_val)
-                                h_slope8_values_full.append(float(hc))
-                                iso_weeks_slope8_full.append(week)
-                                
-                                # For highest dose, only add to fit dataset if s >= SLOPE_FIT_DELAY_WEEKS
-                                # For other doses, add all points to fit dataset
-                                if not is_highest_dose or weeks_since_enrollment >= SLOPE_FIT_DELAY_WEEKS:
-                                    s_values_slope8_fit.append(weeks_since_enrollment)
-                                    log_h_slope8_values_fit.append(log_h_val)
-                        except Exception:
-                            continue
-        
-        # Fit slope8 using only the fit window data
+        # Fit slope8 using only the fit window data (only for cohorts < 1940)
         # Store results for later use in normalization
         # ALWAYS use slope8 parameters if fit was attempted, even if unreliable
         # Note: slope8_attempted was initialized earlier, but reset here for clarity
@@ -1930,7 +1962,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         mode_str = None
         note_str = None
         
-        if len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
+        if use_slope8 and len(s_values_slope8_fit) >= SLOPE6_MIN_DATA_POINTS:
             try:
                 (C_slope8, kb_slope8, ka_slope8, tau_slope8), (C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8), diagnostics_slope8 = fit_slope8_depletion(
                     np.array(s_values_slope8_fit), np.array(log_h_slope8_values_fit)
@@ -2117,9 +2149,9 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "param_tau_valid": False,
                 })
         
-        # ALWAYS use Slope8 for normalization if fit was attempted
-        # Never fall back to linear mode - use slope8 parameters even if unreliable
-        if slope8_attempted and C_slope8_norm is not None:
+        # Determine which mode to use based on YOB threshold
+        if use_slope8 and slope8_attempted and C_slope8_norm is not None:
+            # Use slope8 for cohorts < 1940
             params = {
                 "mode": "slope8",
                 "C": C_slope8_norm,
@@ -2138,20 +2170,63 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             note_str_display = f", note={note_str}" if note_str else ""
             rms_error_str = f"{rms_error_slope8_norm:.6e}" if rms_error_slope8_norm is not None else "nan"
             _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=slope8,C={C_slope8_norm:.6e},ka={ka_slope8_norm:.6e},kb={kb_slope8_norm:.6e},tau={tau_slope8_norm:.6e},b_original={b_lin:.6e},rms_error={rms_error_str},points={len(s_values_slope8_fit)}{abnormal_str}{note_str_display}")
+        elif not use_slope8:
+            # Use linear mode for cohorts >= 1940 (YOB threshold) or all-ages cohort (YOB=-2)
+            if a_lin is not None and b_lin is not None:
+                params = {
+                    "mode": "linear",
+                    "a": a_lin,
+                    "b": b_lin,
+                    "c": 0.0,
+                    "t_mean": t_mean,
+                    "tau": None,  # tau only valid for slope8 mode
+                    "abnormal_fit": False,  # Normal case for cohorts >= 1940
+                }
+                normalization_params[(yob, dose)] = params
+                rms_error_str = f"{rms_error_lin:.6e}" if rms_error_lin is not None else "nan"
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(yob_threshold),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_str},points={len(log_h_values)},skip_weeks={fit_start_weeks}")
+            else:
+                # Linear fit failed - mark as abnormal
+                params = {
+                    "mode": "linear",
+                    "a": 0.0,
+                    "b": 0.0,
+                    "c": 0.0,
+                    "t_mean": t_mean,
+                    "tau": None,
+                    "abnormal_fit": True,
+                }
+                normalization_params[(yob, dose)] = params
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(yob_threshold_failed),a=0.0,b=0.0,c=0.0,t_mean={t_mean:.6e},points={len(log_h_values)} (abnormal - linear fit failed)")
         else:
-            # Only fall back if slope8 wasn't attempted at all (insufficient data or exception)
+            # Fallback: slope8 was attempted but failed (insufficient data or exception)
             # In this case, use linear mode but mark as abnormal since slope8 should have been used
-            params = {
-                "mode": "linear",
-                "a": a_lin,
-                "b": b_lin,
-                "c": 0.0,
-                "t_mean": t_mean,
-                "tau": None,  # tau only valid for slope8 mode
-                "abnormal_fit": True,  # Mark as abnormal since slope8 wasn't attempted
-            }
-            normalization_params[(yob, dose)] = params
-            _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_lin:.6e},points={len(log_h_values)} (abnormal - slope8 should have been used)")
+            if a_lin is not None and b_lin is not None:
+                params = {
+                    "mode": "linear",
+                    "a": a_lin,
+                    "b": b_lin,
+                    "c": 0.0,
+                    "t_mean": t_mean,
+                    "tau": None,  # tau only valid for slope8 mode
+                    "abnormal_fit": True,  # Mark as abnormal since slope8 wasn't attempted
+                }
+                normalization_params[(yob, dose)] = params
+                rms_error_str = f"{rms_error_lin:.6e}" if rms_error_lin is not None else "nan"
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_str},points={len(log_h_values)} (abnormal - slope8 should have been used)")
+            else:
+                # Both failed - use defaults
+                params = {
+                    "mode": "none",
+                    "a": 0.0,
+                    "b": 0.0,
+                    "c": 0.0,
+                    "t_mean": t_mean,
+                    "tau": None,
+                    "abnormal_fit": True,
+                }
+                normalization_params[(yob, dose)] = params
+                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=none,points={len(log_h_values)} (abnormal - both slope8 and linear failed)")
     
     # ------------------------------------------------------------------
     # All-ages (YoB = -2) cohort is now processed as a regular cohort in compute_slope6_normalization

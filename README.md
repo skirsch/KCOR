@@ -260,25 +260,54 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - Raw MR is never modified; all slope normalization operates on hazards.
 - See `documentation/specs/kcor_slope6_spec.md` and `documentation/specs/kcor_slope6_helpers.md` for complete mathematical specification.
 
-#### 3. Slope8 quantile regression method — **Default Method** (v5.3)
-- **Non-linear quantile regression**: **Default normalization method** using quantile regression with check loss instead of L2 loss
+#### 3. Slope Normalization Methods
+
+KCOR uses two different slope normalization methods depending on the cohort's birth year:
+
+##### Slope8 Method (Four-Parameter Depletion Fit) — **For Cohorts Born Before 1940**
+
+- **Non-linear quantile regression**: Used for cohorts born **before 1940** (age 80+ at enrollment)
+- **Rationale**: Older cohorts exhibit depletion-driven curvature in mortality rates, requiring a four-parameter depletion model
 - **Robustness**: Quantile loss (check loss) provides robustness to outliers compared to least squares methods
 - **Optimization**: Uses `scipy.optimize.minimize` with L-BFGS-B method and finite parameter bounds:
   - C ∈ [-25, 0] (intercept, log-hazard scale)
   - k₀ ∈ [-0.1, 0.1] (initial slope)
   - Δk ∈ [0, 0.1] (slope change, ensures k_∞ ≥ k_0)
   - τ ∈ [1e-3, 260] (depletion timescale in weeks, prevents pathological long timescales)
-- **Deployment window**: Fits depletion curve over full deployment range from enrollment to end of data (SLOPE_FIT_END_ISO)
-- **Time axis**: s = 0 at enrollment_date (weeks since enrollment, no centering)
-- **Model**: Same depletion model as slope7: log h(s) = C + k_∞·s - Δk·τ·(1 - e^(-s/τ)) where k_∞ = k₀ + Δk
-- **Special case for highest dose**: 
-  - Fit window starts at s = SLOPE_FIT_DELAY_WEEKS (default 15 weeks) after enrollment to avoid fitting vaccine mortality increases
-  - Only data from s ≥ SLOPE_FIT_DELAY_WEEKS is used for parameter fitting
-  - Normalization formula applies from s = 0 (enrollment) onwards for all cohorts, including highest dose
-  - This ensures all cohorts are adjusted from enrollment, but highest dose uses a delayed fit window to exclude early vaccine-related mortality
-- **Status**: **Now the default normalization method** (as of v5.3); replaces slope7 as the primary method
-- **Fallback**: Falls back to linear mode if slope8 fit fails or insufficient data
-- See `documentation/specs/slope8.md` for complete mathematical specification.
+- **Time axis**: s = 0 at enrollment_date (weeks since enrollment, **not centered**)
+- **Model**: log h(s) = C + k_∞·s - Δk·τ·(1 - e^(-s/τ)) where k_∞ = k₀ + Δk
+- **Normalization**: h_norm(s) = h(s) · exp(-kb·s - (ka - kb)·τ·(1 - exp(-s/τ))) where s = t (weeks since enrollment)
+
+##### Linear Method (Simple Exponential Fit) — **For Cohorts Born 1940 or Later**
+
+- **Time-centered linear quantile regression**: Used for cohorts born **1940 or later** (age < 80 at enrollment) and **all-ages cohort** (YearOfBirth = -2)
+- **Rationale**: Younger cohorts have minimal depletion, so a simple exponential (linear in log-space) is sufficient
+- **Time centering**: t_c = t - t_mean where t_mean is the center of the fit window (t_c = 0 at center)
+- **Model**: log h(t_c) = a + b · t_c (linear in log-space, exponential in hazard-space)
+- **Normalization**: h_norm(t) = h(t) · exp(-b · t_c) where t_c = t - t_mean
+
+##### Unified Fit Window Rules (Both Methods)
+
+Both slope8 and linear methods use the **same fit window** (fit region = adjustment region):
+
+- **Fit window start**: enrollment_date + skip weeks
+  - **Highest dose**: Skip **17 weeks** total (DYNAMIC_HVE_SKIP_WEEKS=2 + SLOPE_FIT_DELAY_WEEKS=15)
+  - **Other doses**: Skip **2 weeks** (DYNAMIC_HVE_SKIP_WEEKS only)
+- **Fit window end**: SLOPE_FIT_END_ISO (default: "2024-16")
+- **Rationale**: 
+  - Skip first 2 weeks to avoid HVE (Healthy Vaccinee Effect) artifacts
+  - Skip additional 15 weeks for highest dose to avoid fitting early vaccine-related mortality increases
+  - Same window used for both fitting parameters and applying normalization
+
+##### Summary
+
+- **Cohorts born < 1940**: Use slope8 (four-parameter depletion fit, s=0 at enrollment)
+- **Cohorts born ≥ 1940**: Use linear fit (time-centered exponential)
+- **All-ages cohort (YOB=-2)**: Use linear fit (time-centered exponential)
+- **Fit region = adjustment region**: Same time window for both fitting and normalization
+- **Skip weeks**: 2 weeks for all doses (HVE), plus 15 weeks for highest dose (vaccine mortality)
+
+See `documentation/specs/slope8.md` for complete mathematical specification of slope8 method.
 
 #### 4. KCOR Computation 
 **Four-Step Process:**
