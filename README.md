@@ -1,4 +1,4 @@
-# KCOR v5.2 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v5.3 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -260,24 +260,24 @@ There is also the latest draft of the [KCOR paper](documentation/KCOR_Method_Pap
 - Raw MR is never modified; all slope normalization operates on hazards.
 - See `documentation/specs/kcor_slope6_spec.md` and `documentation/specs/kcor_slope6_helpers.md` for complete mathematical specification.
 
-#### 3. Slope8 quantile regression method — Diagnostic Tool (v5.2)
-- **Non-linear quantile regression**: An alternative diagnostic method using quantile regression with check loss instead of L2 loss
+#### 3. Slope8 quantile regression method — **Default Method** (v5.3)
+- **Non-linear quantile regression**: **Default normalization method** using quantile regression with check loss instead of L2 loss
 - **Robustness**: Quantile loss (check loss) provides robustness to outliers compared to least squares methods
 - **Optimization**: Uses `scipy.optimize.minimize` with L-BFGS-B method and finite parameter bounds:
   - C ∈ [-25, 0] (intercept, log-hazard scale)
   - k₀ ∈ [-0.1, 0.1] (initial slope)
   - Δk ∈ [0, 0.1] (slope change, ensures k_∞ ≥ k_0)
   - τ ∈ [1e-3, 260] (depletion timescale in weeks, prevents pathological long timescales)
-- **Deployment window**: Fits depletion curve over full deployment range from enrollment to SLOPE_FIT_END_ISO
+- **Deployment window**: Fits depletion curve over full deployment range from enrollment to end of data (SLOPE_FIT_END_ISO)
 - **Time axis**: s = 0 at enrollment_date (weeks since enrollment, no centering)
 - **Model**: Same depletion model as slope7: log h(s) = C + k_∞·s - Δk·τ·(1 - e^(-s/τ)) where k_∞ = k₀ + Δk
 - **Special case for highest dose**: 
-  - Fit window starts at s = SLOPE_FIT_DELAY_WEEKS (default 15 weeks) to account for delayed deployment
+  - Fit window starts at s = SLOPE_FIT_DELAY_WEEKS (default 15 weeks) after enrollment to avoid fitting vaccine mortality increases
   - Only data from s ≥ SLOPE_FIT_DELAY_WEEKS is used for parameter fitting
   - Normalization formula applies from s = 0 (enrollment) onwards for all cohorts, including highest dose
-  - This ensures all cohorts are adjusted from enrollment, but highest dose uses a shorter fit window
-- **Status**: Currently implemented as diagnostic tool; results logged to debug CSV but not yet applied for normalization
-- **Comparison**: Provides fourth diagnostic method alongside linear, slope7 (TRF), and slope7 (LM) for method comparison
+  - This ensures all cohorts are adjusted from enrollment, but highest dose uses a delayed fit window to exclude early vaccine-related mortality
+- **Status**: **Now the default normalization method** (as of v5.3); replaces slope7 as the primary method
+- **Fallback**: Falls back to linear mode if slope8 fit fails or insufficient data
 - See `documentation/specs/slope8.md` for complete mathematical specification.
 
 #### 4. KCOR Computation 
@@ -1095,6 +1095,23 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ## Version history
 
+### 🆕 Version 5.3 (2025-01-XX)
+
+#### Major Improvements
+- **Slope8 Now Default**: Slope8 quantile regression method is now the default normalization method (replaces slope7)
+- **Non-linear Fit**: Uses non-linear quantile regression to fit all points from enrollment until end of data
+- **Highest Dose Delay**: For the latest/highest dose, fitting starts after a specified delay (SLOPE_FIT_DELAY_WEEKS, default 15 weeks) to avoid fitting vaccine mortality increases
+- **Robust Normalization**: Provides robust handling of depletion-driven curvature with better outlier resistance than least squares methods
+- **Automatic Fallback**: Falls back to linear mode if slope8 fit fails or insufficient data points are available
+
+#### Slope8 Default Method Details
+- **Primary Method**: Slope8 is now the primary normalization method used for all cohorts
+- **Fit Window**: 
+  - Standard doses: Fits all data from enrollment to end of data
+  - Highest dose: Fits data starting from SLOPE_FIT_DELAY_WEEKS (default 15 weeks) after enrollment to avoid early vaccine mortality effects
+- **Normalization Application**: Normalization is applied from enrollment (s=0) onwards for all cohorts, regardless of fit window
+- **Fallback Behavior**: Automatically falls back to linear mode if slope8 cannot be fitted (insufficient data, fit failure, etc.)
+
 ### 🆕 Version 5.2 (2025-01-XX)
 
 #### Major Improvements
@@ -1119,8 +1136,9 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
   - Only data from s ≥ SLOPE_FIT_DELAY_WEEKS is used for parameter fitting
   - Normalization formula applies from s = 0 (enrollment) onwards for all cohorts, including highest dose
   - This ensures all cohorts are adjusted from enrollment, but highest dose uses a shorter fit window
-- **Status**: Currently implemented as diagnostic tool; results logged to debug CSV but not yet applied for normalization
-- **Comparison**: Provides fourth diagnostic method alongside linear, slope7 (TRF), and slope7 (LM) for method comparison
+- **Status (v5.2)**: Initially implemented as diagnostic tool; results logged to debug CSV but not yet applied for normalization
+- **Status (v5.3)**: Now the default normalization method (see Version 5.3 section below)
+- **Comparison (v5.2)**: Provided fourth diagnostic method alongside linear, slope7 (TRF), and slope7 (LM) for method comparison
 - See `documentation/specs/slope8.md` for complete mathematical specification
 
 ### 🆕 Version 5.1 (2025-01-XX)

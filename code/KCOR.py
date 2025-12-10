@@ -29,7 +29,7 @@ METHODOLOGY OVERVIEW:
    - Hazard is computed directly from raw MR: \( h = -\ln(1 - \text{MR}) \) with clipping for stability.
 
 4. KCOR COMPUTATION:
-   - KCOR = (CH_num / CH_den) normalized to 1 at week KCOR_NORMALIZATION_WEEK (or first available week).
+   - KCOR = (CH_num / CH_den) normalized to 1 at week KCOR_NORMALIZATION_WEEKS (or first available week).
    - CH is the cumulative sum of weekly hazards.
 
 5. UNCERTAINTY QUANTIFICATION:
@@ -48,7 +48,7 @@ METHODOLOGY OVERVIEW:
 
 KEY ASSUMPTIONS:
 - Mortality rates follow exponential trends during observation period
-- Baseline period (effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS) represents "normal" conditions
+- Baseline period (effective normalization week = KCOR_NORMALIZATION_WEEKS + DYNAMIC_HVE_SKIP_WEEKS) represents "normal" conditions
 - Person-time = Alive (survivor function approximation)
 
 INPUT WORKBOOK SCHEMA per sheet (e.g., '2021-13', '2021_24', '2022_06', ...):
@@ -93,8 +93,13 @@ from scipy.optimize import least_squares, minimize
 # Dependencies: pandas, numpy, openpyxl, statsmodels, scipy
 
 # Core KCOR methodology parameters
-# KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS)
-KCOR_NORMALIZATION_WEEK = 4     # Weeks after accumulation starts to use for normalization baseline. Effective normalization week = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS. See also DYNAMIC_HVE_SKIP_WEEKS.
+# KCOR baseline normalization week (KCOR == 1 at effective normalization week = KCOR_NORMALIZATION_WEEKS + DYNAMIC_HVE_SKIP_WEEKS)
+# Effective normalization week = KCOR_NORMALIZATION_WEEKS + DYNAMIC_HVE_SKIP_WEEKS. See also DYNAMIC_HVE_SKIP_WEEKS.
+
+# this is the number of weeks of data to use in the KCOR normalization baseline computation. 
+# the accumulation starts after DYNAMIC_HVE_SKIP_WEEKS. 
+KCOR_NORMALIZATION_WEEKS = 4     # Number of weeks of data to use to compute the KCOR normalization baseline. 
+
 AGE_RANGE = 10                  # Bucket size for YearOfBirth aggregation (e.g., 10 -> 1920, 1930, ..., 2000)
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
@@ -300,6 +305,10 @@ def log_slope7_fit_debug(record: dict) -> None:
             "kb",
             "tau",
             "rms_error",
+            "mad_error",
+            "medae",
+            "rmedae",
+            "fit_quality",
             "note",
             "error",
             "C_init",
@@ -649,12 +658,12 @@ try:
     # Core method knobs
     _env_anchor = os.environ.get('SA_ANCHOR_WEEKS')
     if _env_anchor:
-        KCOR_NORMALIZATION_WEEK = int(_env_anchor)
+        KCOR_NORMALIZATION_WEEKS = int(_env_anchor)
         if DEBUG_VERBOSE:
-            print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEK via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEK}")
-    # Effective normalization week accounting for skip weeks: normalization happens KCOR_NORMALIZATION_WEEK weeks after accumulation starts
+            print(f"[DEBUG] Overriding KCOR_NORMALIZATION_WEEKS via SA_ANCHOR_WEEKS: {KCOR_NORMALIZATION_WEEKS}")
+    # Effective normalization week accounting for skip weeks: normalization happens KCOR_NORMALIZATION_WEEKS weeks after accumulation starts
     # Subtract 1 because accumulation starts at DYNAMIC_HVE_SKIP_WEEKS, so the Nth week of accumulation is at offset (DYNAMIC_HVE_SKIP_WEEKS + N - 1)
-    KCOR_NORMALIZATION_WEEK_EFFECTIVE = KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS - 1
+    KCOR_NORMALIZATION_WEEKS_EFFECTIVE = KCOR_NORMALIZATION_WEEKS + DYNAMIC_HVE_SKIP_WEEKS - 1
     # removed MA smoothing env overrides
     # removed SA_SLOPE_WINDOW_SIZE override
     # removed FINAL_KCOR env overrides
@@ -1732,6 +1741,27 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 predicted_lin = a_lin + b_lin * t_c_fit
                 residuals_lin = np.array(log_h_values) - predicted_lin
                 rms_error_lin = np.sqrt(np.mean(residuals_lin**2))
+                # Mean Absolute Deviation (MAD) - independent of quantile tau
+                mad_error_lin = np.mean(np.abs(residuals_lin))
+                # Median Absolute Error (MedAE) - robust to outliers
+                medae_lin = np.median(np.abs(residuals_lin))
+                # Median Absolute Deviation of target variable (MAD(y))
+                logh_median_lin = np.median(log_h_values)
+                mad_y_lin = np.median(np.abs(log_h_values - logh_median_lin))
+                # Relative Median Absolute Error (rMedAE) = MedAE / MAD(y)
+                rmedae_lin = medae_lin / mad_y_lin if mad_y_lin > EPS else None
+                # Classify fit quality based on rMedAE
+                if rmedae_lin is not None and np.isfinite(rmedae_lin):
+                    if rmedae_lin <= 0.1:
+                        fit_quality_lin = "excellent"
+                    elif rmedae_lin <= 0.3:
+                        fit_quality_lin = "very_good"
+                    elif rmedae_lin <= 0.5:
+                        fit_quality_lin = "good"
+                    else:
+                        fit_quality_lin = "poor"
+                else:
+                    fit_quality_lin = None
 
                 # Always log linear fit (first of three methods)
                 try:
@@ -1747,6 +1777,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                         "kb": None,
                         "tau": None,
                         "rms_error": float(rms_error_lin),
+                        "mad_error": float(mad_error_lin) if np.isfinite(mad_error_lin) else None,
+                        "medae": float(medae_lin) if np.isfinite(medae_lin) else None,
+                        "rmedae": float(rmedae_lin) if rmedae_lin is not None and np.isfinite(rmedae_lin) else None,
+                        "fit_quality": fit_quality_lin,
                         "note": f"linear_fit_t_mean={t_mean:.6f}",
                         "error": None,
                         "s_values": t_values,
@@ -1777,6 +1811,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 a_lin = None
                 b_lin = None
                 rms_error_lin = None
+                mad_error_lin = None
+                medae_lin = None
+                rmedae_lin = None
+                fit_quality_lin = None
         else:
             # Insufficient data for linear fit - log this case
             _print(f"SLOPE6_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},status=insufficient_data,points={len(log_h_values)}")
@@ -1885,6 +1923,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         ka_slope8_norm = None
         tau_slope8_norm = None
         rms_error_slope8_norm = None
+        mad_error_slope8_norm = None
+        medae_slope8_norm = None
+        rmedae_slope8_norm = None
+        fit_quality_slope8_norm = None
         mode_str = None
         note_str = None
         
@@ -1895,9 +1937,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 )
                 slope8_attempted = True
                 
-                # Always try to compute RMS error, even if parameters are invalid
+                # Always try to compute RMS error and MAD, even if parameters are invalid
                 # This helps diagnose how bad the fit actually is
                 rms_error_slope8 = None
+                mad_error_slope8 = None
                 try:
                     # Try to compute prediction even if some parameters are invalid
                     # Use np.nan_to_num to handle invalid values gracefully
@@ -1910,10 +1953,40 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     predicted_slope8_fit = C_safe + kb_safe * np.array(s_values_slope8_fit) + (ka_safe - kb_safe) * tau_safe * (1.0 - np.exp(-np.array(s_values_slope8_fit) / (tau_safe + EPS)))
                     residuals_slope8_fit = np.array(log_h_slope8_values_fit) - predicted_slope8_fit
                     rms_error_slope8 = np.sqrt(np.mean(residuals_slope8_fit**2))
+                    # Mean Absolute Deviation (MAD) - independent of quantile tau
+                    mad_error_slope8 = np.mean(np.abs(residuals_slope8_fit))
+                    # Median Absolute Error (MedAE) - robust to outliers
+                    medae_slope8 = np.median(np.abs(residuals_slope8_fit))
+                    # Median Absolute Deviation of target variable (MAD(y))
+                    logh_median = np.median(log_h_slope8_values_fit)
+                    mad_y_slope8 = np.median(np.abs(log_h_slope8_values_fit - logh_median))
+                    # Relative Median Absolute Error (rMedAE) = MedAE / MAD(y)
+                    rmedae_slope8 = medae_slope8 / mad_y_slope8 if mad_y_slope8 > EPS else None
+                    # Classify fit quality based on rMedAE
+                    if rmedae_slope8 is not None and np.isfinite(rmedae_slope8):
+                        if rmedae_slope8 <= 0.1:
+                            fit_quality_slope8 = "excellent"
+                        elif rmedae_slope8 <= 0.3:
+                            fit_quality_slope8 = "very_good"
+                        elif rmedae_slope8 <= 0.5:
+                            fit_quality_slope8 = "good"
+                        else:
+                            fit_quality_slope8 = "poor"
+                    else:
+                        fit_quality_slope8 = None
                     
                     # If RMS error is not finite, set to None
                     if not np.isfinite(rms_error_slope8):
                         rms_error_slope8 = None
+                    # If MAD error is not finite, set to None
+                    if not np.isfinite(mad_error_slope8):
+                        mad_error_slope8 = None
+                    # If MedAE is not finite, set to None
+                    if not np.isfinite(medae_slope8):
+                        medae_slope8 = None
+                    # If rMedAE is not finite, set to None
+                    if rmedae_slope8 is not None and not np.isfinite(rmedae_slope8):
+                        rmedae_slope8 = None
                 except Exception:
                     # If prediction fails completely, leave RMS error as None
                     pass
@@ -1925,6 +1998,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 ka_slope8_norm = ka_slope8 if np.isfinite(ka_slope8) else 0.0
                 tau_slope8_norm = tau_slope8 if (np.isfinite(tau_slope8) and tau_slope8 > EPS) else 1.0
                 rms_error_slope8_norm = rms_error_slope8
+                mad_error_slope8_norm = mad_error_slope8
+                medae_slope8_norm = medae_slope8
+                rmedae_slope8_norm = rmedae_slope8
+                fit_quality_slope8_norm = fit_quality_slope8
                 
                 # Determine if fit was abnormal/unreliable:
                 # - Optimizer not successful
@@ -1978,6 +2055,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     **format_initial_params(C_init_slope8, ka_init_slope8, delta_k_init_slope8, tau_init_slope8),
                     "b_original": float(b_lin),
                     "rms_error": float(rms_error_slope8) if rms_error_slope8 is not None else None,
+                    "mad_error": float(mad_error_slope8) if mad_error_slope8 is not None else None,
+                    "medae": float(medae_slope8) if medae_slope8 is not None else None,
+                    "rmedae": float(rmedae_slope8) if rmedae_slope8 is not None else None,
+                    "fit_quality": fit_quality_slope8,
                     "note": note_str,
                     "optimizer_success": diagnostics_slope8["success"],
                     "optimizer_fun": diagnostics_slope8["fun"],
@@ -2003,6 +2084,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                 ka_slope8_norm = 0.0
                 tau_slope8_norm = 1.0
                 rms_error_slope8_norm = None
+                mad_error_slope8_norm = None
+                medae_slope8_norm = None
+                rmedae_slope8_norm = None
+                fit_quality_slope8_norm = None
                 abnormal_fit_flag = True
                 mode_str = "slope8_exception"
                 note_str = f"exception during slope8 fit: {str(e)}"
@@ -2160,7 +2245,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
       - MR = Dead / PT
       - MR_adj slope-removed via QR (for smoothing, not CH calculation)
       - CH = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
-      - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week KCOR_NORMALIZATION_WEEK if available
+      - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week KCOR_NORMALIZATION_WEEKS if available
               - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
     """
@@ -2226,8 +2311,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                                       merged["CH_num"] / merged["CH_den"], 
                                       np.nan)
             
-            # Get baseline K_raw value at effective normalization week (KCOR_NORMALIZATION_WEEK weeks after accumulation starts)
-            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+            # Get baseline K_raw value at effective normalization week (KCOR_NORMALIZATION_WEEKS weeks after accumulation starts)
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
             baseline_k_raw = merged["K_raw"].iloc[t0_idx]
             if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
                 baseline_k_raw = 1.0
@@ -2252,7 +2337,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
 
             # KCOR 95% CI using post-anchor increments (Nelson–Aalen), adjusted for slope-normalization
             # Anchor index
-            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
             # Post-anchor cumulative hazard increments
             dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
             dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
@@ -2386,7 +2471,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
             gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
             if gvn.empty or gdn.empty:
                 continue
-            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEK_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
             c1 = gvn["CH"].iloc[t0_idx]
             c0 = gdn["CH"].iloc[t0_idx]
             if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
@@ -2453,7 +2538,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                     gdn_upto = gdn[gdn["DateDied"] <= dt]
                     if len(gvn_upto) == 0 or len(gdn_upto) == 0:
                         continue
-                    t0_idx_age = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(gvn_upto) > KCOR_NORMALIZATION_WEEK_EFFECTIVE and len(gdn_upto) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+                    t0_idx_age = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
                     # ΔCH at dt
                     dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
                     dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
@@ -2490,7 +2575,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                 CI_upper = max(Kpool * 0.1, min(CI_upper, Kpool * 10))
 
                 # After clipping: blank CI at baseline and earlier dates (t <= t0)
-                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEK_EFFECTIVE, len(all_dates)-1)]:
+                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEKS_EFFECTIVE, len(all_dates)-1)]:
                     CI_lower = np.nan
                     CI_upper = np.nan
                 
@@ -2706,7 +2791,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                                       np.nan)
         
         # Get baseline K_raw value at effective normalization week
-        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
         baseline_k_raw = merged_all["K_raw"].iloc[t0_idx]
         if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
             baseline_k_raw = 1.0
@@ -2717,7 +2802,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
                                      np.nan)
         
         # KCOR 95% CI using post-anchor increments (Nelson–Aalen)
-        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
         dCH_num = merged_all["CH_num"] - float(merged_all["CH_num"].iloc[t0_idx])
         dCH_den = merged_all["CH_den"] - float(merged_all["CH_den"].iloc[t0_idx])
         s_num = (merged_all.get("hazard_adj_num", np.nan) / (merged_all.get("hazard_raw_num", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
@@ -2786,10 +2871,10 @@ def build_kcor_o_rows(df, sheet_name):
     
     Steps:
       1) Compute death-based slopes via lookup windows.
-      2) Adjust weekly deaths using multiplicative slope removal anchored at week KCOR_NORMALIZATION_WEEK.
+      2) Adjust weekly deaths using multiplicative slope removal anchored at week KCOR_NORMALIZATION_WEEKS.
       3) Compute cumulative adjusted deaths per (YearOfBirth, Dose).
       4) For each dose pair and age, compute the ratio of cumulative deaths, then normalize by its
-         value at week KCOR_NORMALIZATION_WEEK to make it 1 at that anchor week.
+         value at week KCOR_NORMALIZATION_WEEKS to make it 1 at that anchor week.
     """
     # Compute death-based slopes
     death_slopes = compute_death_slopes_lookup(df, sheet_name)
@@ -2826,7 +2911,7 @@ def build_kcor_o_rows(df, sheet_name):
             valid = merged["cumD_o_den"] > EPS
             merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
             # Normalize at anchor week index (effective normalization week or first)
-            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
             k0 = merged["K_raw_o"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -2851,7 +2936,7 @@ def build_kcor_ns_rows(df, sheet_name):
       - Apply the same accumulation start rule (DYNAMIC_HVE_SKIP_WEEKS) as standard KCOR.
       - Compute cumulative raw hazard CH_ns per (YearOfBirth, Dose).
       - For each age and dose pair, compute K_raw_ns = CH_ns_num / CH_ns_den and
-        normalize to 1 at week KCOR_NORMALIZATION_WEEK -> KCOR_ns.
+        normalize to 1 at week KCOR_NORMALIZATION_WEEKS -> KCOR_ns.
     """
     # Ensure needed columns and sorting; work on a copy to avoid side effects
     df_ns = df.sort_values(["YearOfBirth","Dose","DateDied"]).copy()
@@ -2878,7 +2963,7 @@ def build_kcor_ns_rows(df, sheet_name):
             valid = merged["CH_ns_den"] > EPS
             merged["K_raw_ns"] = np.where(valid, merged["CH_ns_num"] / merged["CH_ns_den"], np.nan)
             # Normalize at anchor index
-            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
             k0 = merged["K_raw_ns"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -2946,7 +3031,7 @@ def build_kcor_ns_rows(df, sheet_name):
         merged_all_ns["K_raw_ns"] = np.where(valid, merged_all_ns["CH_ns_num"] / merged_all_ns["CH_ns_den"], np.nan)
         
         # Normalize at anchor index
-        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged_all_ns) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all_ns) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
         k0 = merged_all_ns["K_raw_ns"].iloc[t0_idx]
         if not (np.isfinite(k0) and k0 > EPS):
             k0 = 1.0
@@ -2968,7 +3053,7 @@ def build_kcor_ns_rows(df, sheet_name):
 
 def build_kcor_o_deaths_details(df, sheet_name):
     """For each dose pair and age, output deaths/week, adjusted deaths/week, cumulative adjusted deaths,
-    and normalized cumulative ratio (normalized to 1 at week KCOR_NORMALIZATION_WEEK).
+    and normalized cumulative ratio (normalized to 1 at week KCOR_NORMALIZATION_WEEKS).
 
     Columns:
       EnrollmentDate, Date, ISOweekDied, YearOfBirth, Dose_num, Dose_den,
@@ -3021,7 +3106,7 @@ def build_kcor_o_deaths_details(df, sheet_name):
                 continue
             valid = merged["cumD_o_den"] > EPS
             merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
-            t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
             k0 = merged["K_raw_o"].iloc[t0_idx]
             if not (np.isfinite(k0) and k0 > EPS):
                 k0 = 1.0
@@ -3114,7 +3199,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print("-"*80)
     dual_print("Configuration Parameters (effective):")
     # Removed FINAL_KCOR parameters
-    dual_print(f"  KCOR_NORMALIZATION_WEEK = {KCOR_NORMALIZATION_WEEK}")
+    dual_print(f"  KCOR_NORMALIZATION_WEEKS = {KCOR_NORMALIZATION_WEEKS}")
     # Anchor-based slope parameters removed
     dual_print(f"  DYNAMIC_HVE_SKIP_WEEKS = {DYNAMIC_HVE_SKIP_WEEKS}")
     dual_print(f"  AGE_RANGE             = {AGE_RANGE}")
@@ -3311,11 +3396,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         continue
                     # Build a copy pipeline to avoid cross-contamination
                     df2 = df.copy()
-                    df2 = adjust_mr(df2, slopes, t0=KCOR_NORMALIZATION_WEEK_EFFECTIVE)
+                    df2 = adjust_mr(df2, slopes, t0=KCOR_NORMALIZATION_WEEKS_EFFECTIVE)
                     # Add slope and scale_factor columns (required by downstream build_kcor_rows)
                     df2["slope"] = df2.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
                     df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
-                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEK_EFFECTIVE))), axis=1)
+                    df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEKS_EFFECTIVE))), axis=1)
                     df2["hazard"] = hazard_from_mr_improved(df2["MR_adj"]) 
                     # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
                     df2["hazard_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["hazard"], 0.0)
@@ -3895,8 +3980,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         if pivot.empty or yob1 not in pivot.columns or yob2 not in pivot.columns:
                             continue
                         pivot = pivot.sort_index()
-                        # Choose t0 index (KCOR_NORMALIZATION_WEEK_EFFECTIVE from start)
-                        t0_idx = min(KCOR_NORMALIZATION_WEEK_EFFECTIVE, len(pivot) - 1) if len(pivot) > 0 else 0
+                        # Choose t0 index (KCOR_NORMALIZATION_WEEKS_EFFECTIVE from start)
+                        t0_idx = min(KCOR_NORMALIZATION_WEEKS_EFFECTIVE, len(pivot) - 1) if len(pivot) > 0 else 0
                         k_raw = pivot[yob1] / pivot[yob2]
                         baseline = k_raw.iloc[t0_idx] if len(k_raw) > t0_idx and np.isfinite(k_raw.iloc[t0_idx]) and k_raw.iloc[t0_idx] > EPS else 1.0
                         k_series = k_raw / baseline
@@ -3993,7 +4078,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | KCOR_ns | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>7} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date
@@ -4280,10 +4365,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     tau_den_str = format_tau(tau_den if (tau_den is not None and np.isfinite(tau_den)) else None)
                     
                     if age == 0:
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str:>7} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
                     else:
                         # Just show the ka/kb/tau values, no parameter details in parentheses
-                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
+                        dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str:>7} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
 
         # --- Print M/P KCOR summaries by decades when available ---
         try:
@@ -4331,7 +4416,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
                         if merged.empty:
                             continue
-                        t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+                        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
                         valid = merged["CH_P"] > EPS
                         merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
                         k0 = merged["K_raw_MP"].iloc[t0_idx]
@@ -4375,7 +4460,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "Configuration Parameters (effective):",
                         # FINAL_KCOR fields removed
-                        "  KCOR_NORMALIZATION_WEEK",
+                        "  KCOR_NORMALIZATION_WEEKS",
                         "  SLOPE_ANCHOR_T",
                         # "  SLOPE_WINDOW_SIZE",  # obsolete
                         # removed MA params
@@ -4399,7 +4484,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "3. Mortality Rate Adjustment:",
                         "   - MR_adj = MR × exp(-slope × (t - t0))",
-                        f"   - t0 = baseline week (effective normalization week = {KCOR_NORMALIZATION_WEEK + DYNAMIC_HVE_SKIP_WEEKS})",
+                        f"   - t0 = baseline week (effective normalization week = {KCOR_NORMALIZATION_WEEKS + DYNAMIC_HVE_SKIP_WEEKS})",
                         "",
                         "4. KCOR Computation (v4.1):",
                         "   - Step 1: MR_adj = MR × exp(-slope × (t - t0))",
@@ -4455,7 +4540,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"",
                         "",
                         "",
-                        f"{KCOR_NORMALIZATION_WEEK}",
+                        f"{KCOR_NORMALIZATION_WEEKS}",
                         f"{SLOPE_ANCHOR_T}",
                         f"",
                         # removed MA params
@@ -4525,7 +4610,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "",
                         "",
-                        f"{KCOR_NORMALIZATION_WEEK}",
+                        f"{KCOR_NORMALIZATION_WEEKS}",
                         f"{SLOPE_ANCHOR_T}",
                         f"",
                         # removed MA params
@@ -4613,7 +4698,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                     continue
                                 valid = merged["CH_P"] > EPS
                                 merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
-                                t0_idx = KCOR_NORMALIZATION_WEEK_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEK_EFFECTIVE else 0
+                                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
                                 k0 = merged["K_raw_MP"].iloc[t0_idx]
                                 if not (np.isfinite(k0) and k0 > EPS):
                                     k0 = 1.0
@@ -4743,7 +4828,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "CI_lower": target["CI_lower"],
                     "CI_upper": target["CI_upper"],
                     # Memorialize key parameters
-                    "param_normalization_week": KCOR_NORMALIZATION_WEEK,
+                    "param_normalization_week": KCOR_NORMALIZATION_WEEKS,
                     # removed MA params
                     # "param_slope_window_size" obsolete with slope2; keep empty for backward-compat headers
                     "param_slope_start": off1,
