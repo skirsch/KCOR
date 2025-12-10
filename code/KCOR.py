@@ -2321,7 +2321,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
       - MR_adj slope-removed via QR (for smoothing, not CH calculation)
       - CH = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
       - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week KCOR_NORMALIZATION_WEEKS if available
-              - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
+      - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
     """
     out_rows = []
@@ -4153,7 +4153,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         for (dose_num, dose_den) in dose_pairs:
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
             dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>7} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
+            dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>19} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
             dual_print("-" * 50)
             
             # Get data for this dose combination and sheet at reporting date

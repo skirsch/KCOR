@@ -266,22 +266,24 @@ KCOR uses two different slope normalization methods depending on the cohort's bi
 
 ##### Slope8 Method (Four-Parameter Depletion Fit) — **For Cohorts Born Before 1940**
 
-- **Non-linear quantile regression**: Used for cohorts born **before 1940** (age 80+ at enrollment)
+- **Non-linear quantile regression** (τ = 0.5, median): Used for cohorts born **before 1940** (age 80+ at enrollment)
 - **Rationale**: Older cohorts exhibit depletion-driven curvature in mortality rates, requiring a four-parameter depletion model
-- **Robustness**: Quantile loss (check loss) provides robustness to outliers compared to least squares methods
+- **Robustness**: Quantile loss (check loss) with τ = 0.5 provides robustness to outliers compared to least squares methods
 - **Optimization**: Uses `scipy.optimize.minimize` with L-BFGS-B method and finite parameter bounds:
   - C ∈ [-25, 0] (intercept, log-hazard scale)
-  - k₀ ∈ [-0.1, 0.1] (initial slope)
-  - Δk ∈ [0, 0.1] (slope change, ensures k_∞ ≥ k_0)
+  - k₀ ∈ [-0.1, 0.1] (initial slope at enrollment)
+  - Δk ∈ [-0.1, 0.1] (slope change, where k_∞ = k₀ + Δk)
   - τ ∈ [1e-3, 260] (depletion timescale in weeks, prevents pathological long timescales)
+- **Conditional constraint**: When k₀ < 0 (depletion case), Δk ≥ 0 is enforced via penalty (ensures k_∞ ≥ k₀, meaning slope increases over time). When k₀ ≥ 0, Δk can be negative (no depletion constraint)
 - **Time axis**: s = 0 at enrollment_date (weeks since enrollment, **not centered**)
 - **Model**: log h(s) = C + k_∞·s - Δk·τ·(1 - e^(-s/τ)) where k_∞ = k₀ + Δk
 - **Normalization**: h_norm(s) = h(s) · exp(-kb·s - (ka - kb)·τ·(1 - exp(-s/τ))) where s = t (weeks since enrollment)
 
 ##### Linear Method (Simple Exponential Fit) — **For Cohorts Born 1940 or Later**
 
-- **Time-centered linear quantile regression**: Used for cohorts born **1940 or later** (age < 80 at enrollment) and **all-ages cohort** (YearOfBirth = -2)
+- **Time-centered linear quantile regression** (τ = 0.5, median): Used for cohorts born **1940 or later** (age < 80 at enrollment) and **all-ages cohort** (YearOfBirth = -2)
 - **Rationale**: Younger cohorts have minimal depletion, so a simple exponential (linear in log-space) is sufficient
+- **Quantile regression**: Both methods use median quantile regression (τ = 0.5) rather than least squares, providing robustness to outliers
 - **Time centering**: t_c = t - t_mean where t_mean is the center of the fit window (t_c = 0 at center)
 - **Model**: log h(t_c) = a + b · t_c (linear in log-space, exponential in hazard-space)
 - **Normalization**: h_norm(t) = h(t) · exp(-b · t_c) where t_c = t - t_mean
