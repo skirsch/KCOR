@@ -18,9 +18,10 @@ CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
 VARIABLE_OUTPUT  = ../data/$(DATASET)/KCOR_variable.xlsx
 TS_OUTPUT        = ../data/$(DATASET)/KCOR_ts.xlsx
+MC_OUTPUT        = ../data/$(DATASET)/KCOR_CMR_MC.xlsx
 
 
-.PHONY: clean clean-all help sensitivity mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all
+.PHONY: clean clean-all help sensitivity monte_carlo mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all
 
 # Default target - run complete KCOR pipeline
 KCOR: $(KCOR_OUTPUT)
@@ -82,6 +83,26 @@ CMR_from_krf: | ../data/$(DATASET)
 # Convenience target for CMR only
 CMR: $(CMR_OUTPUT)
 
+# Monte Carlo mode - generates bootstrap samples
+MC_ITERATIONS ?= 100
+TMP_MC := /tmp/KCOR_CMR_MC.$(DATASET).xlsx
+
+monte_carlo: $(MC_OUTPUT)
+
+$(MC_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
+	@echo "Running KCOR CMR Monte Carlo aggregation... (writing to $(TMP_MC) then moving)"
+	@echo "  Monte Carlo iterations: $(MC_ITERATIONS)"
+	@rm -f $(TMP_MC)
+	MONTE_CARLO=1 MC_ITERATIONS=$(MC_ITERATIONS) $(PYTHON) KCOR_CMR.py $(INPUT_DATA) $(TMP_MC)
+	@echo "Wrote temporary: $(TMP_MC)"
+	@ls -lh $(TMP_MC)
+	@# Guard: do not move a zero-byte temp file
+	@test -s $(TMP_MC) || (echo "ERROR: Temp MC file is zero bytes. Skipping move and failing target." && exit 1)
+	@echo "Moving $(TMP_MC) -> $(MC_OUTPUT)"
+	@mv -f $(TMP_MC) $(MC_OUTPUT)
+	@ls -lh $(MC_OUTPUT)
+	@echo "Monte Carlo CMR aggregation complete!"
+
 # Variable cohort aggregation (single-sheet; current dose per week)
 KCOR_variable: $(VARIABLE_OUTPUT)
 
@@ -128,6 +149,7 @@ help:
 	@echo "  KCOR      - Run complete KCOR pipeline (CMR + analysis)"
 	@echo "  CMR       - Run only CMR aggregation step"
 	@echo "  CMR_from_krf - Run CMR aggregation step on KRF data; specify DATASET=japan to use Japan KRF data"
+	@echo "  monte_carlo - Run Monte Carlo bootstrap sampling (100 iterations by default, override with MC_ITERATIONS=N)"
 	@echo "  sensitivity - Smoke test sensitivity plumbing (echo SA_* and run analysis)"
 	@echo ""
 	@echo "KCOR Mortality Analysis (Czech2 dataset):"
@@ -150,10 +172,12 @@ help:
 	@echo "  help      - Show this help message"
 	@echo ""
 	@echo "Current configuration:"
+	@echo "Current configuration:"
 	@echo "  Dataset: $(DATASET)"
 	@echo "  Input:   $(INPUT_DATA)"
 	@echo "  CMR:     $(CMR_OUTPUT)"
 	@echo "  KCOR:    $(KCOR_OUTPUT)"
+	@echo "  MC:      $(MC_OUTPUT)"
 
 ## Minimal sensitivity plumbing target (kept for convenience)
 # Echos SA_* variables and runs analysis to the unified SA artifact under test/sensitivity/out

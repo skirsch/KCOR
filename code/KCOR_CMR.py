@@ -92,6 +92,8 @@ import seaborn as sns
 import os
 import sys
 from typing import Optional
+from multiprocessing import Pool, cpu_count
+from functools import partial
 
 # Czech Reference Population for ASMR calculation (by 5-year birth cohorts)
 # Source: Czech demographic data
@@ -200,6 +202,11 @@ def get_czech_reference_pop_for_birth_year(birth_year: int) -> int:
     cohort_year = ((birth_year - 1900) // 5) * 5 + 1900
     return CZECH_REFERENCE_POP.get(cohort_year, 0)
 
+# Check for Monte Carlo mode
+MONTE_CARLO_MODE = str(os.environ.get('MONTE_CARLO', '')).strip().lower() in ('1', 'true', 'yes')
+MC_ITERATIONS = int(os.environ.get('MC_ITERATIONS', '100'))
+MC_THREADS = int(os.environ.get('MC_THREADS', '20'))  # Number of parallel threads for Monte Carlo iterations
+
 # define the output Excel file path
 # This will contain the CMR for each dose group by week, birth cohort, and vaccination status.
 # This is used to compute the HR (Hazard Ratio) for each dose group by week, birth cohort, and vaccination status
@@ -213,6 +220,11 @@ elif len(sys.argv) >= 2:
 else:
     excel_out_path = "../data/KCOR_output.xlsx"  # default fallback
     input_file = "../../Czech/data/vax_24.csv"  # default fallback
+
+# In Monte Carlo mode, override output path if not explicitly provided
+if MONTE_CARLO_MODE and len(sys.argv) < 3:
+    excel_out_path = "../data/KCOR_CMR_MC.xlsx"
+
 excel_writer = pd.ExcelWriter(excel_out_path, engine='xlsxwriter')
 
 
@@ -230,12 +242,19 @@ excel_writer = pd.ExcelWriter(excel_out_path, engine='xlsxwriter')
 # because the deaths start declining in Q2 of 2024
 enrollment_dates = ['2021-13', '2021-20', '2021-24', '2021-30', '2022-06', '2022-26', '2022-47']  # Full set of enrollment dates
 
+# In Monte Carlo mode, only process 2022-06 enrollment
+if MONTE_CARLO_MODE:
+    enrollment_dates = ['2022-06']
+    print(f"Monte Carlo mode: Processing only 2022-06 enrollment with {MC_ITERATIONS} iterations")
+
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
-_env_dates = os.environ.get('ENROLLMENT_DATES')
-if _env_dates:
-    _parsed = [d.strip().replace('_', '-') for d in _env_dates.split(',') if d.strip()]
-    if _parsed:
-        enrollment_dates = _parsed
+# (Only applies if not in Monte Carlo mode)
+if not MONTE_CARLO_MODE:
+    _env_dates = os.environ.get('ENROLLMENT_DATES')
+    if _env_dates:
+        _parsed = [d.strip().replace('_', '-') for d in _env_dates.split(',') if d.strip()]
+        if _parsed:
+            enrollment_dates = _parsed
 
 # Process latest enrollment first to avoid any chance of state leakage across runs
 try:
@@ -489,30 +508,56 @@ dose_date_cols = [
     (4, 'Date_FourthDose'),  # 4 means 4+
 ]
 
-for enroll_date_str in enrollment_dates:
-    # Parse ISO week string as Monday of that week
+# Monte Carlo mode: Extract master population for 2022-06 enrollment
+master_monte_carlo = None
+if MONTE_CARLO_MODE:
+    # For MC mode, we need to extract master population before the loop
+    # Process 2022-06 enrollment to get the master population
+    enroll_date_str_mc = '2022-06'
+    enrollment_date_mc = pd.to_datetime(enroll_date_str_mc + '-1', format='%G-%V-%u', errors='coerce')
+    print(f"Monte Carlo mode: Extracting master population for {enroll_date_str_mc} enrollment...")
+    a_copy_mc = a.copy()
+    # Apply same filters as normal processing
+    before_mc = len(a_copy_mc)
+    a_copy_mc = a_copy_mc[((a_copy_mc['YearOfBirth'] >= 1920) & (a_copy_mc['YearOfBirth'] <= 2005)) | (a_copy_mc['YearOfBirth'] == -1)].copy()
+    after_mc = len(a_copy_mc)
+    print(f"  Filtered YearOfBirth to 1920-2005: kept {after_mc}/{before_mc} records")
+    # Extract master_monte_carlo: people alive at start of enrollment week
+    # Alive means: DateOfDeath is null OR DateOfDeath >= enrollment_date
+    master_monte_carlo = a_copy_mc[
+        (a_copy_mc['DateOfDeath'].isna()) | (a_copy_mc['DateOfDeath'] >= enrollment_date_mc)
+    ].copy()
+    master_count = len(master_monte_carlo)
+    print(f"  Master Monte Carlo population: {master_count:,} records (alive at start of enrollment week)")
+    print(f"  Will perform {MC_ITERATIONS} bootstrap iterations using {MC_THREADS} parallel threads")
+
+def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4):
+    """
+    Core processing function for a given dataset and enrollment date.
+    This function is shared between Monte Carlo and normal modes.
+    
+    Args:
+        a_copy: DataFrame with the dataset to process
+        enrollment_date: pandas Timestamp for enrollment date
+        enroll_week_str: ISO week string (e.g., '2022-06')
+        max_dose: Maximum dose to process (default 4). Doses above this are collapsed into max_dose.
+                  For Monte Carlo mode, use max_dose=3 to treat dose 3 as "3 or more doses".
+    
+    Returns:
+        tuple: (out, alive_at_enroll, all_weeks, week_index, pop_base)
+            - out: DataFrame with processed results
+            - alive_at_enroll: DataFrame of people alive at enrollment
+            - all_weeks: List of all week strings
+            - week_index: Dict mapping week strings to indices
+            - pop_base: DataFrame with population base counts
+    """
     import datetime
-    print(f"Processing enrollment date {enroll_date_str} at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    enrollment_date = pd.to_datetime(enroll_date_str + '-1', format='%G-%V-%u', errors='coerce')
-    enroll_week_str = enrollment_date.strftime('%G-%V')
-    print(f"  Creating copy of dataset ({len(a)} records)...")
-    a_copy = a.copy()
-    # Restrict processing to birth years within [1920, 2000] inclusive, but keep -1 (unknown)
-    before = len(a_copy)
-    a_copy = a_copy[((a_copy['YearOfBirth'] >= 1920) & (a_copy['YearOfBirth'] <= 2005)) | (a_copy['YearOfBirth'] == -1)].copy()
-    after = len(a_copy)
-    print(f"  Filtered YearOfBirth to 1920-2000: kept {after}/{before} records")
-    print(f"  Keeping all records including deaths before enrollment date...")
-    # Keep all individuals, including those who died before the enrollment date
-    # This allows us to see pre-enrollment deaths in their correct dose groups
-    print(f"  Records in analysis: {len(a_copy)}")
+    import pandas as pd
+    import numpy as np
+    from datetime import date, timedelta
     
     # Assign dose group as of enrollment date (highest dose <= enrollment date) - VECTORIZED VERSION
     # For people who died before enrollment, use their death date instead of enrollment date
-    print(f"  Assigning dose groups...")
-    
-    # For each person, determine the reference date for dose group assignment
-    # If they died before enrollment, use death date; otherwise use enrollment date
     reference_dates = a_copy['DateOfDeath'].where(
         a_copy['DateOfDeath'].notna() & (a_copy['DateOfDeath'] < enrollment_date),
         enrollment_date
@@ -540,25 +585,23 @@ for enroll_date_str in enrollment_dates:
     a_copy.loc[dose1_valid, 'dose_group'] = 1
     a_copy.loc[dose2_valid, 'dose_group'] = 2  
     a_copy.loc[dose3_valid, 'dose_group'] = 3
-    a_copy.loc[dose4_valid, 'dose_group'] = 4
-    # 4+ doses collapse to 4
-    print(f"  Dose group assignment complete.")
+    if max_dose >= 4:
+        a_copy.loc[dose4_valid, 'dose_group'] = 4
+    else:
+        # For max_dose=3, collapse dose 4+ into dose 3
+        a_copy.loc[dose4_valid, 'dose_group'] = 3
+    # Collapse any doses above max_dose into max_dose
+    if max_dose < 4:
+        a_copy.loc[a_copy['dose_group'] > max_dose, 'dose_group'] = max_dose
     
-    dose_groups = [0, 1, 2, 3, 4]
     # Compute population base: count of people in each (born, sex, dose_group)
-    print(f"  Computing population base (alive at enrollment)...")
     # Freeze dose at enrollment for population base and exclude those who died before enrollment
     alive_at_enroll = a_copy[(a_copy['DateOfDeath'].isna()) | (a_copy['DateOfDeath'] >= enrollment_date)].copy()
     pop_base = alive_at_enroll.groupby(['YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='pop')
-    print(f"    Total population across all dose groups: {pop_base['pop'].sum()}")
-    # Debug: print dose distribution at enrollment (collapsed to 0..4)
-    dose_dist = pop_base.groupby('dose_group')['pop'].sum().sort_index()
-    print(f"    Dose distribution at enrollment: " + ", ".join([f"{int(k)}={int(v)}" for k, v in dose_dist.items()]))
-    
+
     # Compute deaths per week using two classifications:
     #  - Pre-enrollment weeks: deaths grouped by dose at time of death (variable cohorts)
     #  - Post-enrollment weeks: deaths grouped by frozen enrollment dose (fixed cohorts)
-    print(f"  Computing deaths per week (variable pre-enrollment, fixed post-enrollment)...")
     # Dose at death (highest dose date <= DateOfDeath)
     # IMPORTANT: classify dose-at-death using strictly earlier dose dates
     # to maintain start-of-week semantics (no same-week promotion).
@@ -571,11 +614,16 @@ for enroll_date_str in enrollment_dates:
     a_copy.loc[d1_at, 'dose_at_death'] = 1
     a_copy.loc[d2_at, 'dose_at_death'] = 2
     a_copy.loc[d3_at, 'dose_at_death'] = 3
-    a_copy.loc[d4_at, 'dose_at_death'] = 4  # 4 = 4+
-    # Pre-enrollment deaths will be recomputed after building week index to enforce start-of-week semantics
+    if max_dose >= 4:
+        a_copy.loc[d4_at, 'dose_at_death'] = 4  # 4 = 4+
+    else:
+        a_copy.loc[d4_at, 'dose_at_death'] = max_dose  # Collapse 4+ into max_dose
+    # Collapse any doses above max_dose into max_dose
+    if max_dose < 4:
+        a_copy.loc[a_copy['dose_at_death'] > max_dose, 'dose_at_death'] = max_dose
+    
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
     # Use all vaccination and death dates to get the full week range
-    print(f"  Computing week range for entire study period (including pre-enrollment)...")
     all_dates = pd.concat([
         a_copy['Date_FirstDose'],
         a_copy['Date_SecondDose'],
@@ -587,9 +635,8 @@ for enroll_date_str in enrollment_dates:
     min_year = all_dates.min().isocalendar().year
     max_week = all_dates.max().isocalendar().week
     max_year = all_dates.max().isocalendar().year
-    print(f"    Full week range: {min_year}-{min_week:02d} to {max_year}-{max_week:02d} (includes pre-enrollment period)")
+    
     # Build all weeks between min and max
-    from datetime import date, timedelta
     def week_year_iter(y1, w1, y2, w2):
         d = date.fromisocalendar(y1, w1, 1)
         dend = date.fromisocalendar(y2, w2, 1)
@@ -600,7 +647,7 @@ for enroll_date_str in enrollment_dates:
     all_weeks = [f"{y}-{w:02d}" for y, w in week_year_iter(min_year, min_week, max_year, max_week)]
     # Stable numeric order for ISO weeks to avoid lexicographic mis-order (e.g., 2021-10 < 2021-2)
     week_index = {wk: idx for idx, wk in enumerate(all_weeks)}
-    print(f"  Preparing output structure (vectorized)...")
+    
     # Single death table aligned to start-of-week conventions
     mask_deaths = a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()
     # For fixed cohorts: attribute post-enrollment deaths to enrollment dose group
@@ -620,9 +667,15 @@ for enroll_date_str in enrollment_dates:
     a_copy.loc[d1_pre, 'dose_at_week'] = 1
     a_copy.loc[d2_pre, 'dose_at_week'] = 2
     a_copy.loc[d3_pre, 'dose_at_week'] = 3
-    a_copy.loc[d4_pre, 'dose_at_week'] = 4
+    if max_dose >= 4:
+        a_copy.loc[d4_pre, 'dose_at_week'] = 4
+    else:
+        a_copy.loc[d4_pre, 'dose_at_week'] = max_dose  # Collapse 4+ into max_dose
     # For post-enrollment deaths, use enrollment dose_group
     a_copy.loc[is_post_enroll_death, 'dose_at_week'] = a_copy.loc[is_post_enroll_death, 'dose_group']
+    # Collapse any doses above max_dose into max_dose
+    if max_dose < 4:
+        a_copy.loc[a_copy['dose_at_week'] > max_dose, 'dose_at_week'] = max_dose
     
     # Attribute all deaths by dose (enrollment dose for post-enrollment, dose at death for pre-enrollment)
     deaths_week = (
@@ -645,18 +698,7 @@ for enroll_date_str in enrollment_dates:
     observed_deaths_covid = deaths_week_covid.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
         ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead_covid']
     ]
-    total_all_deaths = int(observed_deaths['dead'].sum())
-    # Count post-enrollment deaths only (for fixed cohorts)
-    enroll_week_dt = pd.to_datetime(enroll_week_str + '-1', format='%G-%V-%u')
-    post_enroll_deaths = observed_deaths[
-        pd.to_datetime(observed_deaths['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce') >= enroll_week_dt
-    ]
-    total_post_enroll_deaths = int(post_enroll_deaths['dead'].sum()) if not post_enroll_deaths.empty else 0
-    print(f"    Total deaths (all time): {total_all_deaths}")
-    print(f"    Post-enrollment deaths (from {enroll_week_str} onwards): {total_post_enroll_deaths}")
-    print(f"    Unique weeks with deaths: {len(a_copy.loc[mask_deaths, 'WeekOfDeath'].dropna().unique())}")
-    # Single aligned death series covers both pre- and post-enrollment periods
-
+    
     # Build dose-agnostic grid to avoid duplicating transition counts
     weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
     nodose_combos = a_copy[['YearOfBirth', 'Sex', 'DCCI']].drop_duplicates().copy()
@@ -665,8 +707,8 @@ for enroll_date_str in enrollment_dates:
     grid_nodose = weeks_df.merge(nodose_combos, on='__k', how='left').drop(columns='__k')
     grid_nodose['WeekIdx'] = grid_nodose['ISOweekDied'].map(week_index).astype(int)
 
-    # Cross join with Dose 0..4 to build full output grid
-    dose_df = pd.DataFrame({'Dose': [0,1,2,3,4]})
+    # Cross join with Dose 0..max_dose to build full output grid
+    dose_df = pd.DataFrame({'Dose': list(range(max_dose + 1))})
     dose_df['__k'] = 1
     grid_nodose['__k'] = 1
     out = grid_nodose.merge(dose_df, on='__k', how='left').drop(columns='__k')
@@ -689,13 +731,10 @@ for enroll_date_str in enrollment_dates:
     out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u'))
 
     # Overwrite population columns to reflect attrition from deaths (vectorized)
-    print(f"  Computing population attrition from deaths (vectorized)...")
     out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-    # DateDied already computed above as Timestamp
 
     # -------- Fixed-cohort Alive calculation --------
     # For fixed cohorts: initialize each dose group at enrollment, then subtract only deaths
-    print(f"  Computing Alive counts using fixed-cohort approach...")
     
     # Merge enrollment population counts (pop_base) into output grid
     # pop_base has: YearOfBirth, Sex, DCCI, dose_group, pop
@@ -707,12 +746,12 @@ for enroll_date_str in enrollment_dates:
         fill_value=0
     ).reset_index()
     # Rename columns to pop_dose0, pop_dose1, etc.
-    pop_base_pivot.columns = ['YearOfBirth', 'Sex', 'DCCI'] + [f'pop_dose{d}' for d in range(5)]
+    pop_base_pivot.columns = ['YearOfBirth', 'Sex', 'DCCI'] + [f'pop_dose{d}' for d in range(max_dose + 1)]
     
     # Merge enrollment counts into output grid
     out = out.merge(pop_base_pivot, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
     # Fill missing values (shouldn't happen, but be safe)
-    for d in range(5):
+    for d in range(max_dose + 1):
         out[f'pop_dose{d}'] = out[f'pop_dose{d}'].fillna(0).astype(int)
     
     # Build Dead directly from aligned series
@@ -764,7 +803,6 @@ for enroll_date_str in enrollment_dates:
     # Everyone starts in dose 0, then transitions to higher doses as they get vaccinated
     pre_enroll_mask = out['WeekIdx'] < enroll_week_idx
     if pre_enroll_mask.any():
-        print(f"  Computing pre-enrollment Alive counts using variable-cohort approach...")
         # Get base total population (everyone starts in dose 0)
         base_total = a_copy.groupby(['YearOfBirth', 'Sex', 'DCCI']).size().rename('base_total').reset_index()
         
@@ -775,23 +813,35 @@ for enroll_date_str in enrollment_dates:
         trans_0_pre['ISOweekDied'] = first_week_str
         trans_0_pre['trans_0'] = trans_0_pre['base_total']
         
-        # Track transitions into doses 1-4 (pre-enrollment only, since a_var has post-enrollment frozen)
+        # Track transitions into doses 1-max_dose (pre-enrollment only, since a_var has post-enrollment frozen)
         trans_frames_pre = [trans_0_pre[['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'trans_0']]]
-        for dose_num, col in [(1, 'Date_FirstDose'), (2, 'Date_SecondDose'), (3, 'Date_ThirdDose'), (4, 'Date_FourthDose')]:
+        dose_cols = [(1, 'Date_FirstDose'), (2, 'Date_SecondDose'), (3, 'Date_ThirdDose'), (4, 'Date_FourthDose')]
+        for dose_num, col in dose_cols:
             wk = a_var[col].dt.strftime('%G-%V')
             trans_mask = (wk.notna()) & (pd.to_datetime(wk + '-1', format='%G-%V-%u', errors='coerce') < enrollment_date)
             if trans_mask.any():
                 trans_df = a_var.loc[trans_mask, ['YearOfBirth', 'Sex', 'DCCI']].copy()
                 trans_df['ISOweekDied'] = wk[trans_mask].values
-                trans_df[f'trans_{dose_num}'] = 1
-                trans_counts = trans_df.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[f'trans_{dose_num}'].sum().reset_index()
+                # Collapse doses above max_dose into max_dose
+                target_dose = min(dose_num, max_dose)
+                trans_df[f'trans_{target_dose}'] = 1
+                trans_counts = trans_df.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[f'trans_{target_dose}'].sum().reset_index()
                 trans_frames_pre.append(trans_counts)
         
-        # Merge all transitions
+        # Merge all transitions, summing when multiple transitions map to the same dose
         transitions_pre = trans_frames_pre[0]
         for tf in trans_frames_pre[1:]:
-            transitions_pre = transitions_pre.merge(tf, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='outer')
-        for col_ in ['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']:
+            transitions_pre = transitions_pre.merge(tf, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='outer', suffixes=('', '_new'))
+            # Sum columns that have _new suffix with original columns
+            for d in range(max_dose + 1):
+                col_ = f'trans_{d}'
+                col_new = f'{col_}_new'
+                if col_new in transitions_pre.columns:
+                    transitions_pre[col_] = transitions_pre[col_].fillna(0) + transitions_pre[col_new].fillna(0)
+                    transitions_pre.drop(columns=[col_new], inplace=True)
+        # Ensure all transition columns exist
+        for d in range(max_dose + 1):
+            col_ = f'trans_{d}'
             if col_ not in transitions_pre.columns:
                 transitions_pre[col_] = 0
         transitions_pre = transitions_pre.fillna(0)
@@ -799,16 +849,17 @@ for enroll_date_str in enrollment_dates:
         # Merge transitions into pre-enrollment grid (nodose level)
         out_pre_nodose = out[pre_enroll_mask][['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'WeekIdx']].drop_duplicates().copy()
         trans_grid_pre = out_pre_nodose.merge(transitions_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
-        trans_grid_pre[['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']] = trans_grid_pre[['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']].fillna(0).astype(int)
+        trans_cols = [f'trans_{d}' for d in range(max_dose + 1)]
+        trans_grid_pre[trans_cols] = trans_grid_pre[trans_cols].fillna(0).astype(int)
         
         # Compute cumulative transitions (nodose level)
         trans_grid_pre = trans_grid_pre.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'WeekIdx'])
         cumT_pre = (
-            trans_grid_pre.groupby(['YearOfBirth', 'Sex', 'DCCI'])[['trans_0', 'trans_1', 'trans_2', 'trans_3', 'trans_4']]
+            trans_grid_pre.groupby(['YearOfBirth', 'Sex', 'DCCI'])[trans_cols]
               .cumsum()
               .shift(fill_value=0)
         )
-        cumT_pre.columns = ['cumT0_prev', 'cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']
+        cumT_pre.columns = [f'cumT{d}_prev' for d in range(max_dose + 1)]
         trans_grid_pre = pd.concat([trans_grid_pre, cumT_pre], axis=1)
         
         # Merge cumulative transitions into full pre-enrollment grid (with doses)
@@ -816,9 +867,11 @@ for enroll_date_str in enrollment_dates:
         # Also merge base_total for first week initialization
         out_pre = out_pre.merge(base_total, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
         out_pre['base_total'] = out_pre['base_total'].fillna(0).astype(int)
-        out_pre = out_pre.merge(trans_grid_pre[['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'cumT0_prev', 'cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']],
+        merge_cols = ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'] + [f'cumT{d}_prev' for d in range(max_dose + 1)]
+        out_pre = out_pre.merge(trans_grid_pre[merge_cols],
                                 on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
-        out_pre[['cumT0_prev', 'cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']] = out_pre[['cumT0_prev', 'cumT1_prev', 'cumT2_prev', 'cumT3_prev', 'cumT4_prev']].fillna(0).astype(int)
+        cumT_cols = [f'cumT{d}_prev' for d in range(max_dose + 1)]
+        out_pre[cumT_cols] = out_pre[cumT_cols].fillna(0).astype(int)
         
         # Compute cumulative deaths (pre-enrollment, variable cohorts)
         out_pre = out_pre.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
@@ -832,20 +885,21 @@ for enroll_date_str in enrollment_dates:
         # Dose 0: started in dose 0 - transitions to dose 1 - deaths
         # Dose 1: transitions to dose 1 - transitions to dose 2 - deaths
         # etc.
+        # For max_dose: transitions to max_dose - deaths (no transitions out)
         dose_vals_pre = out_pre['Dose'].values
-        alive_pre = np.where(
-            dose_vals_pre == 0, out_pre['cumT0_prev'] - out_pre['cumT1_prev'] - out_pre['cumDead_var_prev'],
-            np.where(
-                dose_vals_pre == 1, out_pre['cumT1_prev'] - out_pre['cumT2_prev'] - out_pre['cumDead_var_prev'],
-                np.where(
-                    dose_vals_pre == 2, out_pre['cumT2_prev'] - out_pre['cumT3_prev'] - out_pre['cumDead_var_prev'],
-                    np.where(
-                        dose_vals_pre == 3, out_pre['cumT3_prev'] - out_pre['cumT4_prev'] - out_pre['cumDead_var_prev'],
-                        out_pre['cumT4_prev'] - out_pre['cumDead_var_prev']
-                    )
-                )
-            )
-        )
+        alive_pre = np.zeros(len(out_pre))
+        for d in range(max_dose + 1):
+            mask = dose_vals_pre == d
+            if mask.any():
+                if d < max_dose:
+                    # Transition in - transition out - deaths
+                    alive_pre[mask] = (out_pre.loc[mask, f'cumT{d}_prev'] - 
+                                      out_pre.loc[mask, f'cumT{d+1}_prev'] - 
+                                      out_pre.loc[mask, 'cumDead_var_prev']).values
+                else:
+                    # Max dose: transition in - deaths (no transitions out)
+                    alive_pre[mask] = (out_pre.loc[mask, f'cumT{d}_prev'] - 
+                                      out_pre.loc[mask, 'cumDead_var_prev']).values
         out_pre['Alive'] = np.maximum(alive_pre, 0).astype(int)
         
         # Ensure first week starts correctly (everyone in dose 0)
@@ -862,11 +916,8 @@ for enroll_date_str in enrollment_dates:
     
     # For enrollment week: Alive = enrollment population count (no deaths yet)
     enroll_mask = out['ISOweekDied'] == enroll_week_str
-    out.loc[enroll_mask & (out['Dose'] == 0), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == 0), 'pop_dose0'].values
-    out.loc[enroll_mask & (out['Dose'] == 1), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == 1), 'pop_dose1'].values
-    out.loc[enroll_mask & (out['Dose'] == 2), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == 2), 'pop_dose2'].values
-    out.loc[enroll_mask & (out['Dose'] == 3), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == 3), 'pop_dose3'].values
-    out.loc[enroll_mask & (out['Dose'] == 4), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == 4), 'pop_dose4'].values
+    for d in range(max_dose + 1):
+        out.loc[enroll_mask & (out['Dose'] == d), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == d), f'pop_dose{d}'].values
     
     # For post-enrollment weeks: Alive = enrollment_count - cumulative_deaths from previous weeks
     # Use cumDead_prev (deaths up to but not including this week) since Alive represents start-of-week population
@@ -875,85 +926,27 @@ for enroll_date_str in enrollment_dates:
     
     # Get enrollment counts for each row
     enroll_counts = np.zeros(len(out.loc[post_enroll_mask]))
-    enroll_counts[dose_vals == 0] = out.loc[post_enroll_mask & (out['Dose'] == 0), 'pop_dose0'].values
-    enroll_counts[dose_vals == 1] = out.loc[post_enroll_mask & (out['Dose'] == 1), 'pop_dose1'].values
-    enroll_counts[dose_vals == 2] = out.loc[post_enroll_mask & (out['Dose'] == 2), 'pop_dose2'].values
-    enroll_counts[dose_vals == 3] = out.loc[post_enroll_mask & (out['Dose'] == 3), 'pop_dose3'].values
-    enroll_counts[dose_vals == 4] = out.loc[post_enroll_mask & (out['Dose'] == 4), 'pop_dose4'].values
+    for d in range(max_dose + 1):
+        dose_mask = dose_vals == d
+        if dose_mask.any():
+            enroll_counts[dose_mask] = out.loc[post_enroll_mask & (out['Dose'] == d), f'pop_dose{d}'].values
     
     # Compute Alive: enrollment_count - cumulative_deaths from previous weeks (not including this week)
     # This represents people alive at the START of the week
     cum_deaths_prev = out.loc[post_enroll_mask, 'cumDead_prev'].values
     out.loc[post_enroll_mask, 'Alive'] = np.maximum(enroll_counts - cum_deaths_prev, 0).astype(int)
     
-    # Note: Pre-enrollment weeks are already filled in above with variable-cohort data
-    # (no need to set to 0 - they're computed using transition-based approach)
-    
-    # Sanity check: Alive should never be negative
-    if (out['Alive'] < 0).any():
-        print(f"ERROR: Found negative Alive values!")
-        negative_rows = out[out['Alive'] < 0][['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'Dose', 'Alive', 'pop_dose0', 'pop_dose1', 'pop_dose2', 'pop_dose3', 'pop_dose4', 'cumDead_total']].head(10)
-        print(negative_rows)
-    
-    # Verify enrollment week counts match pop_base
-    enroll_alive = out[enroll_mask].groupby('Dose')['Alive'].sum().sort_index()
-    enroll_pop = pop_base.groupby('dose_group')['pop'].sum().sort_index()
-    if not enroll_alive.equals(enroll_pop):
-        print(f"WARNING: Enrollment week Alive counts don't match pop_base:")
-        print(f"  Alive: {enroll_alive.to_dict()}")
-        print(f"  pop_base: {enroll_pop.to_dict()}")
-
-    # (trace instrumentation removed)
-
-    # Sanity checks with detailed prints for first few offenders
-    try:
-        # Only check post-enrollment weeks (pre-enrollment weeks have Alive=0 by design)
-        post_enroll_check = out[out['WeekIdx'] >= enroll_week_idx]
-        bad = post_enroll_check[post_enroll_check['Dead'] > post_enroll_check['Alive']]
-        if not bad.empty:
-            sample = bad[['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','Alive','Dead']].head(10)
-            print(f"ERROR: Dead > Alive in {len(bad)} post-enrollment rows. First 10:")
-            for _, r in sample.iterrows():
-                print(f"  {r['ISOweekDied']} YoB={r['YearOfBirth']} Sex={r['Sex']} DCCI={r['DCCI']} Dose={r['Dose']}: Alive={r['Alive']} Dead={r['Dead']}")
-            # Extra detail for first offender to see components
-            r0 = sample.iloc[0]
-            m0 = (
-                (out['ISOweekDied'] == r0['ISOweekDied']) &
-                (out['YearOfBirth'] == r0['YearOfBirth']) &
-                (out['Sex'] == r0['Sex']) &
-                (out['DCCI'] == r0['DCCI']) &
-                (out['Dose'] == r0['Dose'])
-            )
-            row = out.loc[m0].iloc[0]
-            # Get enrollment population for this dose group
-            dose_col = f"pop_dose{int(r0['Dose'])}"
-            enroll_pop = int(row.get(dose_col, 0)) if dose_col in row.index else 0
-            print(f"DETAIL: enrollment_pop={enroll_pop} Alive={int(row.get('Alive',-1))} cumDead_total={int(row.get('cumDead_total',-1))}")
-            print(f"        dead={int(row.get('dead',-1))}")
-        # Dose 0 monotonic check - only for post-enrollment weeks (enrollment week initialization is expected)
-        out = out.sort_values(['YearOfBirth','Sex','DCCI','Dose','DateDied'])
-        # Dose 0 alive must be monotonically non-increasing AFTER enrollment
-        d0_post = out[(out['Dose'] == 0) & (out['WeekIdx'] > enroll_week_idx)].copy()
-        d0_post = d0_post.sort_values(['YearOfBirth','Sex','DCCI','DateDied'])
-        d0_prev = d0_post.groupby(['YearOfBirth','Sex','DCCI'])['Alive'].shift(1)
-        violations = d0_post[d0_post['Alive'] > d0_prev]
-        if not violations.empty:
-            print(f"ERROR: Dose 0 Alive increased in {len(violations)} post-enrollment rows. First 10:")
-            for _, r in violations[['ISOweekDied','YearOfBirth','Sex','DCCI','Alive']].head(10).iterrows():
-                print(f"  {r['ISOweekDied']} YoB={r['YearOfBirth']} Sex={r['Sex']} DCCI={r['DCCI']}: Alive increased to {int(r['Alive'])}")
-    except Exception as e:
-        print(f"CAUTION: Sanity check (Dead<=Alive) failed: {e}")
-
     # Drop helper columns
-    out.drop(columns=[c for c in [
+    cols_to_drop = [
         'dead',
         'dead_covid',
         'dead_pre','dead_post',
         'cumDead_total',  # Keep cumDead_prev for compatibility, drop cumDead_total
-        'pop_dose0','pop_dose1','pop_dose2','pop_dose3','pop_dose4',  # Enrollment counts, no longer needed
+    ] + [f'pop_dose{d}' for d in range(max_dose + 1)] + [  # Enrollment counts, no longer needed
         'WeekIdx',
         'is_post_enroll'  # Helper column, no longer needed
-    ] if c in out.columns], inplace=True)
+    ]
+    out.drop(columns=[c for c in cols_to_drop if c in out.columns], inplace=True)
 
     # Ensure Dead_COVID column is placed right after Dead
     if 'Dead_COVID' in out.columns and 'Dead' in out.columns:
@@ -965,261 +958,281 @@ for enroll_date_str in enrollment_dates:
 
     # Convert DateDied back to string for Excel after computations
     out['DateDied'] = out['DateDied'].dt.strftime('%Y-%m-%d')
+    
+    return out, alive_at_enroll, all_weeks, week_index, pop_base
 
-    # Note: Enrollment-week Alive may differ from pop_base due to boundary semantics
-    # (pop_base is inclusive of same-week dose dates; Alive here is start-of-week prior to same-week transitions).
-    # We intentionally skip a strict equality check to avoid false alarms.
+def process_monte_carlo_iteration(args):
+    """
+    Process a single Monte Carlo iteration.
+    Returns (iteration_number, result_dataframe) tuple.
+    """
+    iteration, master_monte_carlo, master_count, enrollment_date, enroll_week_str, enroll_date_str = args
     
-    # ASMR calculation - BYPASSED for now (should be in analysis code, not summary code)
-    # This computation is bypassed to keep the output file simple and avoid mixed data types
-    print(f"  ASMR computation bypassed - keeping output file simple...")
+    import datetime
     
+    print(f"[Iteration {iteration}] Starting at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Sample WITH REPLACEMENT from master_monte_carlo
+    sampled_records = master_monte_carlo.sample(n=master_count, replace=True, random_state=iteration)
+    
+    # Use sampled records as a_copy for this iteration
+    a_copy = sampled_records.copy()
+    
+    # Process using shared helper function
+    # For Monte Carlo mode, limit to dose 3 (treat dose 3 as "3 or more doses")
+    out, alive_at_enroll, all_weeks, week_index, pop_base = process_enrollment_data(
+        a_copy, enrollment_date, enroll_week_str, max_dose=3
+    )
+    
+    # Monte Carlo mode: Filter to YearOfBirth=-2 (all ages) and simplify columns
+    # Filter to all-ages cohort only (YearOfBirth == -2)
+    # Aggregate across all YearOfBirth, Sex, DCCI to create all-ages cohort
+    out_mc_agg = out.groupby(['ISOweekDied', 'Dose', 'DateDied']).agg({
+        'Alive': 'sum',
+        'Dead': 'sum'
+    }).reset_index()
+    out_mc_agg['YearOfBirth'] = -2  # Mark as all-ages
+    
+    # Select only required columns
+    out_mc_final = out_mc_agg[['ISOweekDied', 'Dose', 'DateDied', 'Dead', 'Alive']].copy()
+    
+    print(f"[Iteration {iteration}] Completed at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    return (iteration, out_mc_final)
 
-    # (ASMR code remains here but is not executed)
-    # ASMR calculation - scale death counts DOWN based on standard population
-    # print(f"  Computing ASMR (Age-Standardized Mortality Rates)...")
-    # asmr_rows = []
-    # 
-    # for week in all_weeks:
-    #     week_data = out[out['ISOweekDied'] == week].copy()
-    #     # Filter to reasonable birth years only (1900-2020, those in Czech reference population)
-    #     current_year = int(week[:4])
-    #     week_data = week_data[week_data['YearOfBirth'].apply(lambda x: str(x).isdigit() and 1900 <= int(x) <= 2020)]
-    #     if len(week_data) == 0:
-    #         continue
-    #     # Calculate age for each birth cohort in this week
-    #     week_date = pd.to_datetime(week + '-1', format='%G-%V-%u')  # Convert ISO week back to Monday date
-    #     week_data['age'] = week_data['YearOfBirth'].apply(lambda YearOfBirth: approx_age_from_born(week_date, int(YearOfBirth)) if str(YearOfBirth).isdigit() else None)
-    #     week_data['age_group'] = week_data['age'].apply(age_to_group)
-    #     # Remove rows with invalid age groups
-    #     week_data = week_data[week_data['age_group'].notna()]
-    #     if len(week_data) == 0:
-    #         continue
-    #     
-    #     # Calculate the full Czech reference population total
-    #     full_standard_pop = sum(CZECH_REFERENCE_POP.values())  # Czech reference population total
-    #     
-    #     for d in dose_groups:
-    #         dose_data = week_data[week_data['Dose'] == d]
-    #         if len(dose_data) == 0:
-    #             continue
-    #         
-    #         # Group by sex and sum across age groups for this dose
-    #         sex_summary = dose_data.groupby('Sex').agg({
-    #             'Alive': 'sum',
-    #             'Dead': 'sum'
-    #         }).reset_index()
-    #         
-    #         for _, sex_row in sex_summary.iterrows():
-    #             sex_val = sex_row['Sex']
-    #             total_alive = sex_row['Alive']
-    #             total_dead = sex_row['Dead']
-    #             
-    #             total_scaled_deaths = 0
-    #             
-    #             # Now calculate birth-year-standardized deaths for this sex/dose combination
-    #             dose_sex_data = dose_data[dose_data['Sex'] == sex_val]
-    #             birth_year_summary = dose_sex_data.groupby('YearOfBirth').agg({
-    #                 'Alive': 'sum',
-    #                 'Dead': 'sum'
-    #             }).reset_index()
-    #             
-    #             for _, row in birth_year_summary.iterrows():
-    #                 birth_year_str = row['YearOfBirth']
-    #                 actual_pop = row['Alive']
-    #                 actual_deaths = row['Dead']
-    #                 
-    #                 # Convert birth year string to int and map to 5-year cohort
-    #                 if str(birth_year_str).isdigit():
-    #                     birth_year = int(birth_year_str)
-    #                     # Map to 5-year cohort (1900-1904 -> 1900, 1905-1909 -> 1905, etc.)
-    #                     cohort_year = ((birth_year - 1900) // 5) * 5 + 1900
-    #                     
-    #                     if cohort_year in CZECH_REFERENCE_POP and actual_pop > 0:
-    #                         reference_pop = CZECH_REFERENCE_POP[cohort_year]
-    #                         
-    #                         # Scale to match reference population (up or down as needed)
-    #                         scale_factor = reference_pop / actual_pop
-    #                         scaled_deaths = actual_deaths * scale_factor
-    #                         
-    #                         total_scaled_deaths += scaled_deaths
-    #             
-    #             # Create ASMR row for this sex/dose combination
-    #             asmr_row = {
-    #                 'ISOweekDied': week, 
-    #                 'YearOfBirth': 'ASMR',  # Use 'ASMR' string instead of 0
-    #                 'Sex': sex_val,         # Preserve original sex
-    #                 'Dose': d,              # Preserve original dose number
-    #                 'Alive': full_standard_pop,
-    #                 'Dead': int(round(total_scaled_deaths))
-    #             }
-    #             asmr_rows.append(asmr_row)
-    # 
-    # # Convert ASMR rows to DataFrame and append
-    # if asmr_rows:
-    #     asmr_df = pd.DataFrame(asmr_rows)
-    #     # Add DateDied column to ASMR rows
-    #     asmr_df['DateDied'] = asmr_df['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u').strftime('%Y-%m-%d'))
-    #     # Reorder columns to match main DataFrame
-    #     asmr_df = asmr_df[['ISOweekDied', 'DateDied', 'YearOfBirth', 'Sex', 'Dose', 'Alive', 'Dead']]
-    #     
-    #     out = pd.concat([out, asmr_df], ignore_index=True)
-    #     print(f"    Added {len(asmr_rows)} ASMR rows")
+# Main enrollment processing loop
+# In Monte Carlo mode, use parallel processing for iterations
+if MONTE_CARLO_MODE:
+    # MC mode: process iterations in parallel
+    import datetime
+    print(f"\n{'='*60}")
+    print(f"Starting Monte Carlo processing with {MC_ITERATIONS} iterations using {MC_THREADS} threads")
+    print(f"{'='*60}")
     
-    # Write to Excel sheets (main + enrollment-week summary)
-    print(f"  Writing to Excel sheet...")
-    sheet_name = enroll_date_str.replace('-', '_')
-    out.to_excel(excel_writer, sheet_name=sheet_name, index=False)
-    # Enrollment-week per-dose totals for quick cross-check
-    try:
-        summary = (
-            out[out['ISOweekDied'] == enroll_week_str]
-              .groupby('Dose', observed=True)[['Alive', 'Dead', 'Dead_COVID']]
-              .sum()
-              .reset_index()
-              .sort_values('Dose')
+    # Prepare arguments for parallel processing
+    # We only process one enrollment date in MC mode: 2022-06
+    enroll_date_str = enrollment_dates[0]  # Should be '2022-06'
+    enrollment_date = pd.to_datetime(enroll_date_str + '-1', format='%G-%V-%u', errors='coerce')
+    enroll_week_str = enrollment_date.strftime('%G-%V')
+    
+    # Prepare arguments for each iteration
+    iteration_args = [
+        (iteration, master_monte_carlo, master_count, enrollment_date, enroll_week_str, enroll_date_str)
+        for iteration in range(1, MC_ITERATIONS + 1)
+    ]
+    
+    # Process iterations in parallel
+    print(f"Processing {MC_ITERATIONS} iterations in parallel using {MC_THREADS} threads...")
+    start_time = datetime.datetime.now()
+    
+    # Use imap() instead of map() to process results as they complete
+    # This avoids collecting all 100 DataFrames in memory before returning
+    completed_count = 0
+    with Pool(processes=MC_THREADS) as pool:
+        # Use imap() to get results as they complete (not necessarily in order)
+        # chunksize=1 ensures we get results as soon as each iteration completes
+        for iteration, result_df in pool.imap(process_monte_carlo_iteration, iteration_args, chunksize=1):
+            # Write immediately to avoid memory buildup
+            sheet_name = str(iteration)
+            result_df.to_excel(excel_writer, sheet_name=sheet_name, index=False)
+            completed_count += 1
+            print(f"  [Iteration {iteration}] Wrote to sheet '{sheet_name}' ({len(result_df)} rows) - {completed_count}/{MC_ITERATIONS} complete")
+    
+    end_time = datetime.datetime.now()
+    elapsed = (end_time - start_time).total_seconds()
+    print(f"\nCompleted all {MC_ITERATIONS} iterations in {elapsed:.1f} seconds ({elapsed/MC_ITERATIONS:.2f} seconds per iteration)")
+    print(f"Wrote all {MC_ITERATIONS} sheets to Excel (sheets may not be in numerical order, but data is correct)")
+    
+    print(f"\n{'='*60}")
+    print(f"Monte Carlo processing complete!")
+    print(f"{'='*60}")
+    
+else:
+    # Normal mode processing (Monte Carlo mode is handled separately above)
+    for enroll_date_str in enrollment_dates:
+        # Parse ISO week string as Monday of that week
+        import datetime
+        print(f"Processing enrollment date {enroll_date_str} at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        enrollment_date = pd.to_datetime(enroll_date_str + '-1', format='%G-%V-%u', errors='coerce')
+        enroll_week_str = enrollment_date.strftime('%G-%V')
+        
+        print(f"  Creating copy of dataset ({len(a)} records)...")
+        a_copy = a.copy()
+        # Restrict processing to birth years within [1920, 2005] inclusive, but keep -1 (unknown)
+        before = len(a_copy)
+        a_copy = a_copy[((a_copy['YearOfBirth'] >= 1920) & (a_copy['YearOfBirth'] <= 2005)) | (a_copy['YearOfBirth'] == -1)].copy()
+        after = len(a_copy)
+        print(f"  Filtered YearOfBirth to 1920-2005: kept {after}/{before} records")
+        print(f"  Keeping all records including deaths before enrollment date...")
+        # Keep all individuals, including those who died before the enrollment date
+        # This allows us to see pre-enrollment deaths in their correct dose groups
+        print(f"  Records in analysis: {len(a_copy)}")
+        
+        # Process using shared helper function
+        print(f"  Processing enrollment date {enroll_date_str}...")
+        out, alive_at_enroll, all_weeks, week_index, pop_base = process_enrollment_data(
+            a_copy, enrollment_date, enroll_week_str
         )
-        # Add manufacturer composition at enrollment for doses 2-4
-        def _mfg_counts(dose_num: int, mfg_col: str):
-            dfc = alive_at_enroll[alive_at_enroll['dose_group'] == dose_num]
-            counts = dfc[mfg_col].value_counts()
-            p = int(counts.get('P', 0))
-            m = int(counts.get('M', 0))
-            o = int(counts.get('O', 0))
-            return p, m, o
-
-        for d in (2, 3, 4):
-            for k in ('P', 'M', 'O'):
-                col = f"Dose{d}_MFG_{k}"
-                if col not in summary.columns:
-                    summary[col] = 0
-        for d, mcol in ((2, 'Dose2_MFG'), (3, 'Dose3_MFG'), (4, 'Dose4_MFG')):
-            try:
-                p, m, o = _mfg_counts(d, mcol)
-                summary.loc[summary['Dose'] == d, [f'Dose{d}_MFG_P', f'Dose{d}_MFG_M', f'Dose{d}_MFG_O']] = [p, m, o]
-            except Exception as _e_sum_mfg:
-                print(f"CAUTION: Failed to compute summary MFG counts for dose {d}: {_e_sum_mfg}")
-        summary.to_excel(excel_writer, sheet_name=sheet_name + "_summary", index=False)
-    except Exception as e:
-        print(f"CAUTION: Failed to write summary sheet: {e}")
-    
-    # Write MFG-specific per-week series for doses 2,3,4 as auxiliary sheets
-    try:
-        def build_mfg_out_for_dose(dose_num: int, mfg_label: str) -> pd.DataFrame:
-            # Subset individuals whose dose{d} manufacturer matches label
-            mcol = {2: 'Dose2_MFG', 3: 'Dose3_MFG', 4: 'Dose4_MFG'}.get(dose_num)
-            if not mcol:
-                return pd.DataFrame()
-            sub = a_var[(a_var[mcol] == mfg_label)].copy()
-            if sub.empty:
-                return pd.DataFrame()
-            # Deaths per week for those at dose==dose_num at week start
-            wk_monday = pd.to_datetime(sub['WeekOfDeath'] + '-1', format='%G-%V-%u', errors='coerce')
-            d_w = (
-                (dose_num == 1) & (sub['Date_FirstDose'].notna() & (sub['Date_FirstDose'] < wk_monday))
-            ) | (
-                (dose_num == 2) & (sub['Date_SecondDose'].notna() & (sub['Date_SecondDose'] < wk_monday))
-            ) | (
-                (dose_num == 3) & (sub['Date_ThirdDose'].notna() & (sub['Date_ThirdDose'] < wk_monday))
-            ) | (
-                (dose_num == 4) & (sub['Date_FourthDose'].notna() & (sub['Date_FourthDose'] < wk_monday))
+        
+        # Write to Excel sheet
+        sheet_name = enroll_date_str.replace('-', '_')
+        print(f"  Writing to Excel sheet...")
+        out.to_excel(excel_writer, sheet_name=sheet_name, index=False)
+        print(f"  Wrote sheet '{sheet_name}' ({len(out)} rows)")
+        
+        # Enrollment-week per-dose totals for quick cross-check
+        try:
+            summary = (
+                out[out['ISOweekDied'] == enroll_week_str]
+                  .groupby('Dose', observed=True)[['Alive', 'Dead', 'Dead_COVID']]
+                  .sum()
+                  .reset_index()
+                  .sort_values('Dose')
             )
-            sub = sub.assign(_at_dose_week=np.where(d_w, dose_num, 0))
-            mask_deaths_sub = sub['DateOfDeath'].notnull() & sub['WeekOfDeath'].notna() & (sub['_at_dose_week'] == dose_num)
-            deaths_sub = (
-                sub[mask_deaths_sub]
-                  .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI'])
-                  .size()
-                  .reset_index(name='dead')
-            )
-            obs = deaths_sub.rename(columns={'WeekOfDeath':'ISOweekDied'})
-            obs['ISOweekDied'] = obs['ISOweekDied'].astype(str)
-            # Build nodose grid and attach WeekIdx
-            weeks_df2 = pd.DataFrame({'ISOweekDied': all_weeks})
-            nodose2 = sub[['YearOfBirth','Sex','DCCI']].drop_duplicates().copy()
-            weeks_df2['__k'] = 1
-            nodose2['__k'] = 1
-            grid2 = weeks_df2.merge(nodose2, on='__k', how='left').drop(columns='__k')
-            grid2['WeekIdx'] = grid2['ISOweekDied'].map(week_index).astype(int)
-            # Attach deaths
-            out2 = grid2.merge(obs, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
-            out2['dead'] = out2['dead'].fillna(0).astype(int)
-            # Transitions into dose d and out to d+1 for this subset
-            date_col_d = {1:'Date_FirstDose',2:'Date_SecondDose',3:'Date_ThirdDose',4:'Date_FourthDose'}[dose_num]
-            date_col_next = {1:'Date_SecondDose',2:'Date_ThirdDose',3:'Date_FourthDose',4:'Date_FifthDose'}.get(dose_num)
-            # Inflow to d
-            wk_in = sub[date_col_d].dt.strftime('%G-%V')
-            t_in = sub.loc[wk_in.notna(), ['YearOfBirth','Sex','DCCI']].copy()
-            t_in['ISOweekDied'] = wk_in[wk_in.notna()].values
-            t_in = t_in.groupby(['ISOweekDied','YearOfBirth','Sex','DCCI']).size().reset_index(name='trans_in')
-            # Outflow to d+1 (if next dose exists)
-            if date_col_next in sub.columns:
-                wk_out = sub[date_col_next].dt.strftime('%G-%V')
-                t_out = sub.loc[wk_out.notna(), ['YearOfBirth','Sex','DCCI']].copy()
-                t_out['ISOweekDied'] = wk_out[wk_out.notna()].values
-                t_out = t_out.groupby(['ISOweekDied','YearOfBirth','Sex','DCCI']).size().reset_index(name='trans_out')
-            else:
-                t_out = pd.DataFrame(columns=['ISOweekDied','YearOfBirth','Sex','DCCI','trans_out'])
-            # Merge transitions onto grid and compute cumulative prev (shifted)
-            trans2 = grid2.merge(t_in, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
-            trans2 = trans2.merge(t_out, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
-            trans2[['trans_in','trans_out']] = trans2[['trans_in','trans_out']].fillna(0).astype(int)
-            trans2 = trans2.sort_values(['YearOfBirth','Sex','DCCI','WeekIdx'])
-            cum_in_prev = trans2.groupby(['YearOfBirth','Sex','DCCI'])['trans_in'].cumsum().shift(fill_value=0)
-            cum_out_prev = trans2.groupby(['YearOfBirth','Sex','DCCI'])['trans_out'].cumsum().shift(fill_value=0)
-            out2 = out2.merge(trans2[['ISOweekDied','YearOfBirth','Sex','DCCI']].assign(cum_in_prev=cum_in_prev, cum_out_prev=cum_out_prev),
-                              on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
-            out2[['cum_in_prev','cum_out_prev']] = out2[['cum_in_prev','cum_out_prev']].fillna(0).astype(int)
-            # Cumulative prior-week deaths per combo
-            out2 = out2.sort_values(['YearOfBirth','Sex','DCCI','WeekIdx'])
-            out2['cumDead_prev'] = (
-                out2.groupby(['YearOfBirth','Sex','DCCI'])['dead']
-                    .cumsum()
-                    .shift(fill_value=0)
-            )
-            # Alive for dose d, mfg label
-            out2['Alive'] = np.maximum(out2['cum_in_prev'] - out2['cum_out_prev'] - out2['cumDead_prev'], 0).astype(int)
-            # First week boundary: 0 alive (since no prior inflow)
-            first_mask2 = out2['ISOweekDied'] == all_weeks[0]
-            out2.loc[first_mask2, 'Alive'] = 0
-            out2['Dead'] = out2['dead'].astype(int)
-            out2['Dose'] = dose_num
-            out2['MFG'] = mfg_label
-            out2['DateDied'] = pd.to_datetime(out2['ISOweekDied'] + '-1', format='%G-%V-%u').dt.strftime('%Y-%m-%d')
-            return out2[['ISOweekDied','DateDied','YearOfBirth','Sex','DCCI','Dose','MFG','Alive','Dead']]
+            # Add manufacturer composition at enrollment for doses 2-4
+            def _mfg_counts(dose_num: int, mfg_col: str):
+                dfc = alive_at_enroll[alive_at_enroll['dose_group'] == dose_num]
+                counts = dfc[mfg_col].value_counts()
+                p = int(counts.get('P', 0))
+                m = int(counts.get('M', 0))
+                o = int(counts.get('O', 0))
+                return p, m, o
 
-        # For specific doses per enrollment, create M/P sheets
-        d_targets = []
-        if enroll_date_str in ('2021-24','2021_24'):
-            d_targets.append(2)
-        if enroll_date_str in ('2022-06','2022_06'):
-            d_targets.append(3)
-        if enroll_date_str in ('2022-47','2022_47'):
-            d_targets.append(4)
-        for dnum in d_targets:
-            frames = []
-            for lab in ['P','M','O']:
-                dfm = build_mfg_out_for_dose(dnum, lab)
-                if not dfm.empty:
-                    frames.append(dfm)
-            if frames:
-                mfg_sheet = f"{sheet_name}_MFG_D{dnum}"
-                pd.concat(frames, ignore_index=True).to_excel(excel_writer, sheet_name=mfg_sheet, index=False)
-                print(f"  Wrote manufacturer-specific sheet: {mfg_sheet}")
-    except Exception as e:
-        print(f"CAUTION: Failed to write MFG-specific sheets: {e}")
+            for d in (2, 3, 4):
+                for k in ('P', 'M', 'O'):
+                    col = f"Dose{d}_MFG_{k}"
+                    if col not in summary.columns:
+                        summary[col] = 0
+            for d, mcol in ((2, 'Dose2_MFG'), (3, 'Dose3_MFG'), (4, 'Dose4_MFG')):
+                try:
+                    p, m, o = _mfg_counts(d, mcol)
+                    summary.loc[summary['Dose'] == d, [f'Dose{d}_MFG_P', f'Dose{d}_MFG_M', f'Dose{d}_MFG_O']] = [p, m, o]
+                except Exception as _e_sum_mfg:
+                    print(f"CAUTION: Failed to compute summary MFG counts for dose {d}: {_e_sum_mfg}")
+            summary.to_excel(excel_writer, sheet_name=sheet_name + "_summary", index=False)
+        except Exception as e:
+            print(f"CAUTION: Failed to write summary sheet: {e}")
+        
+        # Write MFG-specific per-week series for doses 2,3,4 as auxiliary sheets
+        try:
+            def build_mfg_out_for_dose(dose_num: int, mfg_label: str) -> pd.DataFrame:
+                # Subset individuals whose dose{d} manufacturer matches label
+                mcol = {2: 'Dose2_MFG', 3: 'Dose3_MFG', 4: 'Dose4_MFG'}.get(dose_num)
+                if not mcol:
+                    return pd.DataFrame()
+                # Get a_var from the helper function's scope - we need to reconstruct it
+                # For now, use a_copy and filter by manufacturer
+                a_var_local = a_copy.copy()
+                _bypass_freeze = str(os.environ.get('BYPASS_FREEZE','')).strip().lower() in ('1','true','yes')
+                if not _bypass_freeze:
+                    for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
+                        a_var_local.loc[a_var_local[_col] >= enrollment_date, _col] = pd.NaT
+                
+                sub = a_var_local[(a_var_local[mcol] == mfg_label)].copy()
+                if sub.empty:
+                    return pd.DataFrame()
+                # Deaths per week for those at dose==dose_num at week start
+                wk_monday = pd.to_datetime(sub['WeekOfDeath'] + '-1', format='%G-%V-%u', errors='coerce')
+                d_w = (
+                    (dose_num == 1) & (sub['Date_FirstDose'].notna() & (sub['Date_FirstDose'] < wk_monday))
+                ) | (
+                    (dose_num == 2) & (sub['Date_SecondDose'].notna() & (sub['Date_SecondDose'] < wk_monday))
+                ) | (
+                    (dose_num == 3) & (sub['Date_ThirdDose'].notna() & (sub['Date_ThirdDose'] < wk_monday))
+                ) | (
+                    (dose_num == 4) & (sub['Date_FourthDose'].notna() & (sub['Date_FourthDose'] < wk_monday))
+                )
+                sub = sub.assign(_at_dose_week=np.where(d_w, dose_num, 0))
+                mask_deaths_sub = sub['DateOfDeath'].notnull() & sub['WeekOfDeath'].notna() & (sub['_at_dose_week'] == dose_num)
+                deaths_sub = (
+                    sub[mask_deaths_sub]
+                      .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI'])
+                      .size()
+                      .reset_index(name='dead')
+                )
+                obs = deaths_sub.rename(columns={'WeekOfDeath':'ISOweekDied'})
+                obs['ISOweekDied'] = obs['ISOweekDied'].astype(str)
+                # Build nodose grid and attach WeekIdx
+                weeks_df2 = pd.DataFrame({'ISOweekDied': all_weeks})
+                nodose2 = sub[['YearOfBirth','Sex','DCCI']].drop_duplicates().copy()
+                weeks_df2['__k'] = 1
+                nodose2['__k'] = 1
+                grid2 = weeks_df2.merge(nodose2, on='__k', how='left').drop(columns='__k')
+                grid2['WeekIdx'] = grid2['ISOweekDied'].map(week_index).astype(int)
+                # Attach deaths
+                out2 = grid2.merge(obs, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+                out2['dead'] = out2['dead'].fillna(0).astype(int)
+                # Transitions into dose d and out to d+1 for this subset
+                date_col_d = {1:'Date_FirstDose',2:'Date_SecondDose',3:'Date_ThirdDose',4:'Date_FourthDose'}[dose_num]
+                date_col_next = {1:'Date_SecondDose',2:'Date_ThirdDose',3:'Date_FourthDose',4:'Date_FifthDose'}.get(dose_num)
+                # Inflow to d
+                wk_in = sub[date_col_d].dt.strftime('%G-%V')
+                t_in = sub.loc[wk_in.notna(), ['YearOfBirth','Sex','DCCI']].copy()
+                t_in['ISOweekDied'] = wk_in[wk_in.notna()].values
+                t_in = t_in.groupby(['ISOweekDied','YearOfBirth','Sex','DCCI']).size().reset_index(name='trans_in')
+                # Outflow to d+1 (if next dose exists)
+                if date_col_next in sub.columns:
+                    wk_out = sub[date_col_next].dt.strftime('%G-%V')
+                    t_out = sub.loc[wk_out.notna(), ['YearOfBirth','Sex','DCCI']].copy()
+                    t_out['ISOweekDied'] = wk_out[wk_out.notna()].values
+                    t_out = t_out.groupby(['ISOweekDied','YearOfBirth','Sex','DCCI']).size().reset_index(name='trans_out')
+                else:
+                    t_out = pd.DataFrame(columns=['ISOweekDied','YearOfBirth','Sex','DCCI','trans_out'])
+                # Merge transitions onto grid and compute cumulative prev (shifted)
+                trans2 = grid2.merge(t_in, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+                trans2 = trans2.merge(t_out, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+                trans2[['trans_in','trans_out']] = trans2[['trans_in','trans_out']].fillna(0).astype(int)
+                trans2 = trans2.sort_values(['YearOfBirth','Sex','DCCI','WeekIdx'])
+                cum_in_prev = trans2.groupby(['YearOfBirth','Sex','DCCI'])['trans_in'].cumsum().shift(fill_value=0)
+                cum_out_prev = trans2.groupby(['YearOfBirth','Sex','DCCI'])['trans_out'].cumsum().shift(fill_value=0)
+                out2 = out2.merge(trans2[['ISOweekDied','YearOfBirth','Sex','DCCI']].assign(cum_in_prev=cum_in_prev, cum_out_prev=cum_out_prev),
+                                  on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+                out2[['cum_in_prev','cum_out_prev']] = out2[['cum_in_prev','cum_out_prev']].fillna(0).astype(int)
+                # Cumulative prior-week deaths per combo
+                out2 = out2.sort_values(['YearOfBirth','Sex','DCCI','WeekIdx'])
+                out2['cumDead_prev'] = (
+                    out2.groupby(['YearOfBirth','Sex','DCCI'])['dead']
+                        .cumsum()
+                        .shift(fill_value=0)
+                )
+                # Alive for dose d, mfg label
+                out2['Alive'] = np.maximum(out2['cum_in_prev'] - out2['cum_out_prev'] - out2['cumDead_prev'], 0).astype(int)
+                # First week boundary: 0 alive (since no prior inflow)
+                first_mask2 = out2['ISOweekDied'] == all_weeks[0]
+                out2.loc[first_mask2, 'Alive'] = 0
+                out2['Dead'] = out2['dead'].astype(int)
+                out2['Dose'] = dose_num
+                out2['MFG'] = mfg_label
+                out2['DateDied'] = pd.to_datetime(out2['ISOweekDied'] + '-1', format='%G-%V-%u').dt.strftime('%Y-%m-%d')
+                return out2[['ISOweekDied','DateDied','YearOfBirth','Sex','DCCI','Dose','MFG','Alive','Dead']]
 
-    # Format YearOfBirth column as text to avoid Excel warnings
-    workbook = excel_writer.book
-    worksheet = excel_writer.sheets[sheet_name]
-    # the following line is commented out because it simply didn't work. Excel flags the YearOfBirth column as numbers anyway so you have to ignore the warning in Excel and save.
-    # text_format = workbook.add_format({'num_format': '@'})  # '@' = text format
-    # worksheet.set_column('C:C', None, text_format)  # Column C is YearOfBirth
-    
-    print(f"Added sheet {sheet_name} to {excel_out_path}")
-    print(f"Completed enrollment date {enroll_date_str} at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+            # For specific doses per enrollment, create M/P sheets
+            d_targets = []
+            if enroll_date_str in ('2021-24','2021_24'):
+                d_targets.append(2)
+            if enroll_date_str in ('2022-06','2022_06'):
+                d_targets.append(3)
+            if enroll_date_str in ('2022-47','2022_47'):
+                d_targets.append(4)
+            for dnum in d_targets:
+                frames = []
+                for lab in ['P','M','O']:
+                    dfm = build_mfg_out_for_dose(dnum, lab)
+                    if not dfm.empty:
+                        frames.append(dfm)
+                if frames:
+                    mfg_sheet = f"{sheet_name}_MFG_D{dnum}"
+                    pd.concat(frames, ignore_index=True).to_excel(excel_writer, sheet_name=mfg_sheet, index=False)
+                    print(f"  Wrote manufacturer-specific sheet: {mfg_sheet}")
+        except Exception as e:
+            print(f"CAUTION: Failed to write MFG-specific sheets: {e}")
+        
+        print(f"Added sheet {sheet_name} to {excel_out_path}")
+        print(f"Completed enrollment date {enroll_date_str} at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 60)
 
 # Save the Excel file after all sheets are added
 excel_writer.close()
-print(f"Wrote all dose group CMRs to {excel_out_path}")
+if MONTE_CARLO_MODE:
+    print(f"Wrote all {MC_ITERATIONS} Monte Carlo iterations to {excel_out_path}")
+else:
+    print(f"Wrote all dose group CMRs to {excel_out_path}")

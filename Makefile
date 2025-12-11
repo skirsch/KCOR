@@ -10,10 +10,13 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test help
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
+
+# Monte Carlo iterations (override on CLI: make monte_carlo MC_ITERATIONS=50)
+MC_ITERATIONS ?= 100
 
 # Virtual environment path
 VENV_DIR := .venv
@@ -70,6 +73,10 @@ KCOR: $(VENV_PYTHON)
 # CMR aggregation only (delegates to code/Makefile target CMR)
 CMR:
 	$(MAKE) -C $(CODE_DIR) CMR DATASET=$(DATASET)
+
+# Monte Carlo mode (delegates to code/Makefile target monte_carlo)
+monte_carlo:
+	$(MAKE) -C $(CODE_DIR) monte_carlo DATASET=$(DATASET) MC_ITERATIONS=$(MC_ITERATIONS)
 
 # Run CMR on KRF input by adapting to Czech-like format first
 CMR_from_krf:
@@ -175,6 +182,7 @@ help:
 	@echo "  KCOR            - Run main KCOR pipeline (code/)"
 	@echo "  CMR             - Run only CMR aggregation step (code/)"
 	@echo "  CMR_from_krf    - Adapt KRF CSV to Czech-like and run CMR (code/)"
+	@echo "  monte_carlo     - Run Monte Carlo bootstrap sampling (100 iterations by default, override with MC_ITERATIONS=N)"
 	@echo "  convert         - Run dataset converter (data/$(DATASET)/)"
 	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
 	@echo "  km              - Run only Kaplan–Meier validation"
@@ -200,6 +208,7 @@ help:
 	@echo ""
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
+	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 100)"
 	@echo "  ENROLL_YEAR=<year>    - Enrollment year for mortality analysis (default: 2021)"
 	@echo "  ENROLL_MONTH=<month>  - Enrollment month 1-12 for mortality analysis (default: 7)"
 	@echo "  MAX_FU_MONTHS=<n>     - Maximum follow-up months (default: 24)"
