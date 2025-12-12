@@ -16,7 +16,7 @@ VALIDATION_ASMR_DIR := validation/ASMR_analysis
 DATASET ?= Czech
 
 # Monte Carlo iterations (override on CLI: make monte_carlo MC_ITERATIONS=50)
-MC_ITERATIONS ?= 100
+MC_ITERATIONS ?= 25
 
 # Virtual environment path
 VENV_DIR := .venv
@@ -182,7 +182,7 @@ help:
 	@echo "  KCOR            - Run main KCOR pipeline (code/)"
 	@echo "  CMR             - Run only CMR aggregation step (code/)"
 	@echo "  CMR_from_krf    - Adapt KRF CSV to Czech-like and run CMR (code/)"
-	@echo "  monte_carlo     - Run Monte Carlo bootstrap sampling (100 iterations by default, override with MC_ITERATIONS=N)"
+	@echo "  monte_carlo     - Run Monte Carlo bootstrap sampling (25 iterations by default, override with MC_ITERATIONS=N)"
 	@echo "  convert         - Run dataset converter (data/$(DATASET)/)"
 	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
 	@echo "  km              - Run only Kaplan–Meier validation"
@@ -208,7 +208,7 @@ help:
 	@echo ""
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
-	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 100)"
+	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 25)"
 	@echo "  ENROLL_YEAR=<year>    - Enrollment year for mortality analysis (default: 2021)"
 	@echo "  ENROLL_MONTH=<month>  - Enrollment month 1-12 for mortality analysis (default: 7)"
 	@echo "  MAX_FU_MONTHS=<n>     - Maximum follow-up months (default: 24)"

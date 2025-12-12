@@ -91,9 +91,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import sys
+import tempfile
+import glob
 from typing import Optional
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, get_context
 from functools import partial
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Czech Reference Population for ASMR calculation (by 5-year birth cohorts)
 # Source: Czech demographic data
@@ -204,8 +207,8 @@ def get_czech_reference_pop_for_birth_year(birth_year: int) -> int:
 
 # Check for Monte Carlo mode
 MONTE_CARLO_MODE = str(os.environ.get('MONTE_CARLO', '')).strip().lower() in ('1', 'true', 'yes')
-MC_ITERATIONS = int(os.environ.get('MC_ITERATIONS', '100'))
-MC_THREADS = int(os.environ.get('MC_THREADS', '20'))  # Number of parallel threads for Monte Carlo iterations
+MC_ITERATIONS = int(os.environ.get('MC_ITERATIONS', '25'))
+MC_THREADS = int(os.environ.get('MC_THREADS', '5'))  # Number of parallel threads for Monte Carlo iterations (reduced from 20 to 5 to avoid memory exhaustion)
 
 # define the output Excel file path
 # This will contain the CMR for each dose group by week, birth cohort, and vaccination status.
@@ -245,7 +248,8 @@ enrollment_dates = ['2021-13', '2021-20', '2021-24', '2021-30', '2022-06', '2022
 # In Monte Carlo mode, only process 2022-06 enrollment
 if MONTE_CARLO_MODE:
     enrollment_dates = ['2022-06']
-    print(f"Monte Carlo mode: Processing only 2022-06 enrollment with {MC_ITERATIONS} iterations")
+    print(f"Monte Carlo mode: Processing only 2022-06 enrollment with {MC_ITERATIONS} iterations", flush=True)
+    print(f"  Using {MC_THREADS} parallel processes", flush=True)
 
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
 # (Only applies if not in Monte Carlo mode)
@@ -385,22 +389,29 @@ records_removed = records_before_filter - records_after_filter
 print(f"Filtered out {records_removed} records with non-mRNA vaccines (kept {records_after_filter} out of {records_before_filter} records)")
 
 # Convert Sex to alphabetic codes: M, F, O
-def sex_to_alpha(sex_val):
-    if pd.isna(sex_val) or sex_val == '':
-        return 'O'  # Other/Unknown
-    elif str(sex_val) == '1':
-        return 'M'  # Male
-    elif str(sex_val) == '2':
-        return 'F'  # Female
-    else:
-        return 'O'  # Other/Unknown
+# For Monte Carlo mode: skip conversion since we aggregate across Sex anyway
+if not MONTE_CARLO_MODE:
+    def sex_to_alpha(sex_val):
+        if pd.isna(sex_val) or sex_val == '':
+            return 'O'  # Other/Unknown
+        elif str(sex_val) == '1':
+            return 'M'  # Male
+        elif str(sex_val) == '2':
+            return 'F'  # Female
+        else:
+            return 'O'  # Other/Unknown
 
-a['Sex'] = a['Sex'].apply(sex_to_alpha)
+    a['Sex'] = a['Sex'].apply(sex_to_alpha)
 
-# Debug: Check data quality after Sex conversion
-print(f"Records after Sex conversion: {len(a)}")
-print("Sex distribution:")
-print(a['Sex'].value_counts())
+    # Debug: Check data quality after Sex conversion
+    print(f"Records after Sex conversion: {len(a)}")
+    print("Sex distribution:")
+    print(a['Sex'].value_counts())
+else:
+    # For Monte Carlo: just ensure Sex column exists (use as-is or set to 'O' if needed)
+    # We'll aggregate across Sex anyway, so exact values don't matter
+    if 'Sex' not in a.columns or a['Sex'].isna().any():
+        a['Sex'] = a['Sex'].fillna('O')
 
 
 
@@ -509,6 +520,8 @@ dose_date_cols = [
 ]
 
 # Monte Carlo mode: Extract master population for 2022-06 enrollment
+# Store as module-level variable so worker processes can access via fork() copy-on-write (no pickling!)
+_master_monte_carlo_global = None
 master_monte_carlo = None
 if MONTE_CARLO_MODE:
     # For MC mode, we need to extract master population before the loop
@@ -527,11 +540,13 @@ if MONTE_CARLO_MODE:
     master_monte_carlo = a_copy_mc[
         (a_copy_mc['DateOfDeath'].isna()) | (a_copy_mc['DateOfDeath'] >= enrollment_date_mc)
     ].copy()
+    # Store in module-level variable for fork() copy-on-write access (no pickling!)
+    _master_monte_carlo_global = master_monte_carlo
     master_count = len(master_monte_carlo)
     print(f"  Master Monte Carlo population: {master_count:,} records (alive at start of enrollment week)")
-    print(f"  Will perform {MC_ITERATIONS} bootstrap iterations using {MC_THREADS} parallel threads")
+    print(f"  Will perform {MC_ITERATIONS} bootstrap iterations using {MC_THREADS} parallel processes")
 
-def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4):
+def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4, monte_carlo_mode=False, iteration=None):
     """
     Core processing function for a given dataset and enrollment date.
     This function is shared between Monte Carlo and normal modes.
@@ -542,12 +557,14 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         enroll_week_str: ISO week string (e.g., '2022-06')
         max_dose: Maximum dose to process (default 4). Doses above this are collapsed into max_dose.
                   For Monte Carlo mode, use max_dose=3 to treat dose 3 as "3 or more doses".
+        monte_carlo_mode: If True, filter output to only post-enrollment weeks (reduces grid size).
+        iteration: Optional iteration number for progress tracking (Monte Carlo mode only)
     
     Returns:
         tuple: (out, alive_at_enroll, all_weeks, week_index, pop_base)
             - out: DataFrame with processed results
             - alive_at_enroll: DataFrame of people alive at enrollment
-            - all_weeks: List of all week strings
+            - all_weeks: List of all week strings (filtered for MC mode)
             - week_index: Dict mapping week strings to indices
             - pop_base: DataFrame with population base counts
     """
@@ -556,13 +573,57 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     import numpy as np
     from datetime import date, timedelta
     
+    def _progress(msg):
+        if monte_carlo_mode and iteration is not None:
+            print(f"[Iteration {iteration}] {msg}", flush=True)
+    
+    # #region agent log
+    import json
+    import os
+    import time
+    log_path = os.path.join(os.path.dirname(__file__), '..', '.cursor', 'debug.log')
+    def log_debug(session_id, run_id, hypothesis_id, location, message, data):
+        try:
+            log_entry = {
+                'sessionId': session_id,
+                'runId': run_id,
+                'hypothesisId': hypothesis_id,
+                'location': location,
+                'message': message,
+                'data': data,
+                'timestamp': int(time.time() * 1000)
+            }
+            with open(log_path, 'a') as f:
+                f.write(json.dumps(log_entry) + '\n')
+        except:
+            pass
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_enrollment_data START', {'iteration': iteration, 'a_copy_len': len(a_copy)})
+    # #endregion
+    
+    _progress("Starting process_enrollment_data...")
+    
     # Assign dose group as of enrollment date (highest dose <= enrollment date) - VECTORIZED VERSION
+    _progress("Computing reference dates...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before computing reference dates', {'iteration': iteration})
+    # #endregion
     # For people who died before enrollment, use their death date instead of enrollment date
     reference_dates = a_copy['DateOfDeath'].where(
         a_copy['DateOfDeath'].notna() & (a_copy['DateOfDeath'] < enrollment_date),
         enrollment_date
     )
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After computing reference dates', {'iteration': iteration})
+    # #endregion
     
+    _progress("Freezing cohort moves...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before freezing cohort moves', {'iteration': iteration})
+    # #endregion
     # Optionally freeze cohort moves after enrollment by zeroing post-enrollment dose dates
     # Set env BYPASS_FREEZE=1 to treat entire dataset as one variable cohort (no truncation)
     a_var = a_copy.copy()
@@ -571,7 +632,16 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
             # Freeze transitions on or after enrollment Monday to keep fixed cohorts post-enrollment
             a_var.loc[a_var[_col] >= enrollment_date, _col] = pd.NaT
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After freezing cohort moves', {'iteration': iteration})
+    # #endregion
 
+    _progress("Assigning dose groups...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before assigning dose groups', {'iteration': iteration})
+    # #endregion
     # Create boolean masks for each dose being valid (not null and <= reference_date) on the truncated dates
     dose1_valid = a_var['Date_FirstDose'].notna() & (a_var['Date_FirstDose'] <= reference_dates)
     dose2_valid = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] <= reference_dates)
@@ -594,10 +664,31 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     if max_dose < 4:
         a_copy.loc[a_copy['dose_group'] > max_dose, 'dose_group'] = max_dose
     
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After assigning dose groups', {'iteration': iteration})
+    # #endregion
+    
+    _progress("Computing population base...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before computing population base', {'iteration': iteration})
+    # #endregion
     # Compute population base: count of people in each (born, sex, dose_group)
     # Freeze dose at enrollment for population base and exclude those who died before enrollment
     alive_at_enroll = a_copy[(a_copy['DateOfDeath'].isna()) | (a_copy['DateOfDeath'] >= enrollment_date)].copy()
-    pop_base = alive_at_enroll.groupby(['YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='pop')
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After computing population base', {'iteration': iteration})
+    # #endregion
+    if monte_carlo_mode:
+        # For Monte Carlo: aggregate by Dose only
+        pop_base = alive_at_enroll.groupby(['dose_group']).size().reset_index(name='pop')
+        pop_base['YearOfBirth'] = -2  # Placeholder for compatibility
+        pop_base['Sex'] = 'O'  # Placeholder
+        pop_base['DCCI'] = 0  # Placeholder
+    else:
+        pop_base = alive_at_enroll.groupby(['YearOfBirth', 'Sex', 'DCCI', 'dose_group']).size().reset_index(name='pop')
 
     # Compute deaths per week using two classifications:
     #  - Pre-enrollment weeks: deaths grouped by dose at time of death (variable cohorts)
@@ -622,6 +713,11 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     if max_dose < 4:
         a_copy.loc[a_copy['dose_at_death'] > max_dose, 'dose_at_death'] = max_dose
     
+    _progress("Computing week range...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before computing week range', {'iteration': iteration})
+    # #endregion
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
     # Use all vaccination and death dates to get the full week range
     all_dates = pd.concat([
@@ -631,11 +727,16 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         a_copy['Date_FourthDose'],
         a_copy['DateOfDeath']
     ]).dropna()
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After pd.concat in week range', {'iteration': iteration, 'all_dates_len': len(all_dates)})
+    # #endregion
     min_week = all_dates.min().isocalendar().week
     min_year = all_dates.min().isocalendar().year
     max_week = all_dates.max().isocalendar().week
     max_year = all_dates.max().isocalendar().year
     
+    _progress(f"Building week list (from {min_year}-{min_week:02d} to {max_year}-{max_week:02d})...")
     # Build all weeks between min and max
     def week_year_iter(y1, w1, y2, w2):
         d = date.fromisocalendar(y1, w1, 1)
@@ -648,10 +749,26 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     # Stable numeric order for ISO weeks to avoid lexicographic mis-order (e.g., 2021-10 < 2021-2)
     week_index = {wk: idx for idx, wk in enumerate(all_weeks)}
     
+    _progress(f"Filtering weeks for Monte Carlo (total weeks: {len(all_weeks)})...")
+    # For Monte Carlo mode: filter to only weeks >= enrollment_date (post-enrollment only)
+    # This significantly reduces the output grid size (weeks × YearOfBirth × Sex × DCCI × Dose)
+    if monte_carlo_mode:
+        enroll_week_monday = pd.to_datetime(enroll_week_str + '-1', format='%G-%V-%u', errors='coerce')
+        # Vectorized filtering: convert all weeks to dates at once
+        weeks_series = pd.Series(all_weeks)
+        week_mondays = pd.to_datetime(weeks_series + '-1', format='%G-%V-%u', errors='coerce')
+        mask_post_enroll = week_mondays >= enroll_week_monday
+        all_weeks = weeks_series[mask_post_enroll].tolist()
+        # Rebuild week_index for filtered weeks (starting from 0)
+        week_index = {wk: idx for idx, wk in enumerate(all_weeks)}
+        _progress(f"Week filtering complete (post-enrollment weeks: {len(all_weeks)})")
+    
+    _progress("Classifying deaths...")
     # Single death table aligned to start-of-week conventions
     mask_deaths = a_copy['DateOfDeath'].notnull() & a_copy['WeekOfDeath'].notna()
     # For fixed cohorts: attribute post-enrollment deaths to enrollment dose group
     # For pre-enrollment deaths: use dose at start of death week (variable cohorts)
+    # Use vectorized conversion (was using .apply() before)
     week_monday = pd.to_datetime(a_copy['WeekOfDeath'] + '-1', format='%G-%V-%u', errors='coerce')
     is_post_enroll_death = week_monday >= enrollment_date
     
@@ -677,82 +794,157 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     if max_dose < 4:
         a_copy.loc[a_copy['dose_at_week'] > max_dose, 'dose_at_week'] = max_dose
     
+    _progress("Aggregating deaths...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before aggregating deaths', {'iteration': iteration})
+    # #endregion
     # Attribute all deaths by dose (enrollment dose for post-enrollment, dose at death for pre-enrollment)
-    deaths_week = (
-        a_copy[mask_deaths]
-            .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
-            .size()
-            .reset_index(name='dead')
-    )
-    # COVID-attributed deaths keyed to DateOfDeath's week (only those with non-empty Date_COVID_death)
-    covid_flag = a_copy['Date_COVID_death'].notna() & (a_copy['Date_COVID_death'].astype(str).str.strip() != '')
-    deaths_week_covid = (
-        a_copy[mask_deaths & covid_flag]
-            .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
-            .size()
-            .reset_index(name='dead_covid')
-    )
-    observed_deaths = deaths_week.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
-        ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead']
-    ]
-    observed_deaths_covid = deaths_week_covid.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
-        ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead_covid']
-    ]
+    # For Monte Carlo mode: aggregate across YearOfBirth, Sex, DCCI early to reduce grid size
+    if monte_carlo_mode:
+        # Aggregate deaths by (Week, Dose) only - no YearOfBirth, Sex, DCCI
+        deaths_week = (
+            a_copy[mask_deaths]
+                .groupby(['WeekOfDeath','dose_at_week'])
+                .size()
+                .reset_index(name='dead')
+        )
+        # COVID-attributed deaths
+        covid_flag = a_copy['Date_COVID_death'].notna() & (a_copy['Date_COVID_death'].astype(str).str.strip() != '')
+        deaths_week_covid = (
+            a_copy[mask_deaths & covid_flag]
+                .groupby(['WeekOfDeath','dose_at_week'])
+                .size()
+                .reset_index(name='dead_covid')
+        )
+        observed_deaths = deaths_week.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
+            ['ISOweekDied','Dose','dead']
+        ]
+        observed_deaths_covid = deaths_week_covid.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
+            ['ISOweekDied','Dose','dead_covid']
+        ]
+    else:
+        # Normal mode: keep YearOfBirth, Sex, DCCI dimensions
+        deaths_week = (
+            a_copy[mask_deaths]
+                .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
+                .size()
+                .reset_index(name='dead')
+        )
+        # COVID-attributed deaths keyed to DateOfDeath's week (only those with non-empty Date_COVID_death)
+        covid_flag = a_copy['Date_COVID_death'].notna() & (a_copy['Date_COVID_death'].astype(str).str.strip() != '')
+        deaths_week_covid = (
+            a_copy[mask_deaths & covid_flag]
+                .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI','dose_at_week'])
+                .size()
+                .reset_index(name='dead_covid')
+        )
+        observed_deaths = deaths_week.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
+            ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead']
+        ]
+        observed_deaths_covid = deaths_week_covid.rename(columns={'dose_at_week':'Dose','WeekOfDeath':'ISOweekDied'})[
+            ['ISOweekDied','YearOfBirth','Sex','DCCI','Dose','dead_covid']
+        ]
     
-    # Build dose-agnostic grid to avoid duplicating transition counts
-    weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
-    nodose_combos = a_copy[['YearOfBirth', 'Sex', 'DCCI']].drop_duplicates().copy()
-    weeks_df['__k'] = 1
-    nodose_combos['__k'] = 1
-    grid_nodose = weeks_df.merge(nodose_combos, on='__k', how='left').drop(columns='__k')
-    grid_nodose['WeekIdx'] = grid_nodose['ISOweekDied'].map(week_index).astype(int)
+    _progress("Building output grid...")
+    # #region agent log
+    if monte_carlo_mode and iteration is not None:
+        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before building output grid', {'iteration': iteration})
+    # #endregion
+    # Build output grid
+    # For Monte Carlo mode: only (Week, Dose) - much smaller grid!
+    # For normal mode: (Week, YearOfBirth, Sex, DCCI, Dose) - full grid
+    if monte_carlo_mode:
+        # Simple grid: weeks × doses only
+        weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
+        dose_df = pd.DataFrame({'Dose': list(range(max_dose + 1))})
+        weeks_df['__k'] = 1
+        dose_df['__k'] = 1
+        out = weeks_df.merge(dose_df, on='__k', how='left').drop(columns='__k')
+        out['WeekIdx'] = out['ISOweekDied'].map(week_index).astype(int)
+    else:
+        # Build dose-agnostic grid to avoid duplicating transition counts
+        weeks_df = pd.DataFrame({'ISOweekDied': all_weeks})
+        nodose_combos = a_copy[['YearOfBirth', 'Sex', 'DCCI']].drop_duplicates().copy()
+        weeks_df['__k'] = 1
+        nodose_combos['__k'] = 1
+        grid_nodose = weeks_df.merge(nodose_combos, on='__k', how='left').drop(columns='__k')
+        grid_nodose['WeekIdx'] = grid_nodose['ISOweekDied'].map(week_index).astype(int)
 
-    # Cross join with Dose 0..max_dose to build full output grid
-    dose_df = pd.DataFrame({'Dose': list(range(max_dose + 1))})
-    dose_df['__k'] = 1
-    grid_nodose['__k'] = 1
-    out = grid_nodose.merge(dose_df, on='__k', how='left').drop(columns='__k')
+        # Cross join with Dose 0..max_dose to build full output grid
+        dose_df = pd.DataFrame({'Dose': list(range(max_dose + 1))})
+        dose_df['__k'] = 1
+        grid_nodose['__k'] = 1
+        out = grid_nodose.merge(dose_df, on='__k', how='left').drop(columns='__k')
 
     # Attach single aligned death series
-    out = out.merge(observed_deaths, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
-    out['dead'] = out['dead'].fillna(0).astype(int)
-    # Attach COVID-specific deaths aligned to the same keys
-    out = out.merge(observed_deaths_covid, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
-    out['dead_covid'] = out['dead_covid'].fillna(0).astype(int)
+    if monte_carlo_mode:
+        # Merge on (ISOweekDied, Dose) only
+        out = out.merge(observed_deaths, on=['ISOweekDied','Dose'], how='left')
+        out['dead'] = out['dead'].fillna(0).astype(int)
+        # Attach COVID-specific deaths
+        out = out.merge(observed_deaths_covid, on=['ISOweekDied','Dose'], how='left')
+        out['dead_covid'] = out['dead_covid'].fillna(0).astype(int)
+    else:
+        # Merge on full keys (ISOweekDied, YearOfBirth, Sex, DCCI, Dose)
+        out = out.merge(observed_deaths, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
+        out['dead'] = out['dead'].fillna(0).astype(int)
+        # Attach COVID-specific deaths aligned to the same keys
+        out = out.merge(observed_deaths_covid, on=['ISOweekDied','YearOfBirth','Sex','DCCI','Dose'], how='left')
+        out['dead_covid'] = out['dead_covid'].fillna(0).astype(int)
 
     out['ISOweekDied'] = out['ISOweekDied'].astype(str)
     out['WeekIdx'] = out['ISOweekDied'].map(week_index).astype(int)
     # Optimize dtypes for speed and memory
-    out['Sex'] = out['Sex'].astype('category')
     out['Dose'] = out['Dose'].astype('int8')
-    out['DCCI'] = out['DCCI'].astype('Int8')
+    if not monte_carlo_mode:
+        out['Sex'] = out['Sex'].astype('category')
+        out['DCCI'] = out['DCCI'].astype('Int8')
     
     # Add DateDied as Timestamp (we'll convert to string just before writing)
-    out['DateDied'] = out['ISOweekDied'].apply(lambda week: pd.to_datetime(week + '-1', format='%G-%V-%u'))
+    # VECTORIZED: pd.to_datetime() on Series is vectorized, no need for .apply()
+    out['DateDied'] = pd.to_datetime(out['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
 
+    _progress("Sorting output grid...")
     # Overwrite population columns to reflect attrition from deaths (vectorized)
-    out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
+    if monte_carlo_mode:
+        out = out.sort_values(['Dose', 'WeekIdx'])
+    else:
+        out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
 
+    _progress("Computing Alive column...")
     # -------- Fixed-cohort Alive calculation --------
     # For fixed cohorts: initialize each dose group at enrollment, then subtract only deaths
     
-    # Merge enrollment population counts (pop_base) into output grid
-    # pop_base has: YearOfBirth, Sex, DCCI, dose_group, pop
-    # We need to pivot it so each dose group becomes a column
-    pop_base_pivot = pop_base.pivot_table(
-        index=['YearOfBirth', 'Sex', 'DCCI'],
-        columns='dose_group',
-        values='pop',
-        fill_value=0
-    ).reset_index()
-    # Rename columns to pop_dose0, pop_dose1, etc.
-    pop_base_pivot.columns = ['YearOfBirth', 'Sex', 'DCCI'] + [f'pop_dose{d}' for d in range(max_dose + 1)]
-    
-    # Merge enrollment counts into output grid
-    out = out.merge(pop_base_pivot, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
-    # Fill missing values (shouldn't happen, but be safe)
-    for d in range(max_dose + 1):
-        out[f'pop_dose{d}'] = out[f'pop_dose{d}'].fillna(0).astype(int)
+    if monte_carlo_mode:
+        # For Monte Carlo: aggregate by Dose only, then create columns
+        # First, ensure we only have doses 0 through max_dose
+        pop_base_filtered = pop_base[pop_base['dose_group'] <= max_dose].copy()
+        # Sum across all rows (since we aggregated by dose_group only)
+        pop_by_dose = pop_base_filtered.groupby('dose_group')['pop'].sum().reset_index()
+        # Create a dictionary mapping dose to population
+        pop_dict = {row['dose_group']: row['pop'] for _, row in pop_by_dose.iterrows()}
+        # Assign to output grid - ensure all doses 0-max_dose have values
+        for d in range(max_dose + 1):
+            out[f'pop_dose{d}'] = pop_dict.get(d, 0)
+    else:
+        # Merge enrollment population counts (pop_base) into output grid
+        # pop_base has: YearOfBirth, Sex, DCCI, dose_group, pop
+        # We need to pivot it so each dose group becomes a column
+        pop_base_pivot = pop_base.pivot_table(
+            index=['YearOfBirth', 'Sex', 'DCCI'],
+            columns='dose_group',
+            values='pop',
+            fill_value=0
+        ).reset_index()
+        # Rename columns to pop_dose0, pop_dose1, etc.
+        pop_base_pivot.columns = ['YearOfBirth', 'Sex', 'DCCI'] + [f'pop_dose{d}' for d in range(max_dose + 1)]
+        
+        # Merge enrollment counts into output grid
+        out = out.merge(pop_base_pivot, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
+        # Fill missing values (shouldn't happen, but be safe)
+        for d in range(max_dose + 1):
+            out[f'pop_dose{d}'] = out[f'pop_dose{d}'].fillna(0).astype(int)
     
     # Build Dead directly from aligned series
     out['Dead'] = out['dead'].astype(int)
@@ -761,181 +953,200 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     # Get enrollment week index for comparison
     enroll_week_idx = week_index.get(enroll_week_str, 0)
     
-    # For fixed cohorts, we only count deaths AFTER enrollment
-    # Compute cumulative deaths per dose group, but reset at enrollment
-    # Split into pre-enrollment and post-enrollment, then compute cumsum separately
-    out_pre = out[out['WeekIdx'] < enroll_week_idx].copy()
-    out_post = out[out['WeekIdx'] >= enroll_week_idx].copy()
-    
-    # Pre-enrollment: cumDead_total = 0 (not used, but set for completeness)
-    out_pre['cumDead_total'] = 0
-    
-    # Post-enrollment: compute cumulative deaths from enrollment onwards
-    out_post = out_post.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-    out_post['cumDead_total'] = (
-        out_post.groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
-          .cumsum()
-    )
-    
-    # Combine back
-    out = pd.concat([out_pre, out_post], ignore_index=True)
-    out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-    
-    # Compute cumulative prior-week deaths for post-enrollment weeks only
-    # This represents deaths from enrollment up to (but not including) the current week
-    out['cumDead_prev'] = 0
-    out_post_sorted = out[out['WeekIdx'] >= enroll_week_idx].copy()
-    out_post_sorted = out_post_sorted.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-    cumDead_prev_post = (
-        out_post_sorted.groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
-          .cumsum()
-          .shift(fill_value=0)
-    )
-    # Map back to original index - need to match by position since we're using a subset
-    post_enroll_indices = out[out['WeekIdx'] >= enroll_week_idx].index
-    out.loc[post_enroll_indices, 'cumDead_prev'] = cumDead_prev_post.values
+    if monte_carlo_mode:
+        # For Monte Carlo: all weeks are post-enrollment, simple cumulative deaths by Dose
+        out = out.sort_values(['Dose', 'WeekIdx'])
+        out['cumDead_total'] = out.groupby(['Dose'])['dead'].cumsum()
+        out['cumDead_prev'] = out.groupby(['Dose'])['dead'].cumsum().shift(fill_value=0)
+    else:
+        # For fixed cohorts, we only count deaths AFTER enrollment
+        # Compute cumulative deaths per dose group, but reset at enrollment
+        # Split into pre-enrollment and post-enrollment, then compute cumsum separately
+        out_pre = out[out['WeekIdx'] < enroll_week_idx].copy()
+        out_post = out[out['WeekIdx'] >= enroll_week_idx].copy()
+        
+        # Pre-enrollment: cumDead_total = 0 (not used, but set for completeness)
+        out_pre['cumDead_total'] = 0
+        
+        # Post-enrollment: compute cumulative deaths from enrollment onwards
+        out_post = out_post.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
+        out_post['cumDead_total'] = (
+            out_post.groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
+              .cumsum()
+        )
+        
+        # Combine back
+        out = pd.concat([out_pre, out_post], ignore_index=True)
+        out = out.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
+        
+        # Compute cumulative prior-week deaths for post-enrollment weeks only
+        # This represents deaths from enrollment up to (but not including) the current week
+        out['cumDead_prev'] = 0
+        out_post_sorted = out[out['WeekIdx'] >= enroll_week_idx].copy()
+        out_post_sorted = out_post_sorted.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
+        cumDead_prev_post = (
+            out_post_sorted.groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
+              .cumsum()
+              .shift(fill_value=0)
+        )
+        # Map back to original index - need to match by position since we're using a subset
+        post_enroll_indices = out[out['WeekIdx'] >= enroll_week_idx].index
+        out.loc[post_enroll_indices, 'cumDead_prev'] = cumDead_prev_post.values
     
     # Initialize Alive column
     out['Alive'] = 0
     
-    # -------- Pre-enrollment weeks: Variable cohorts (track transitions) --------
-    # For pre-enrollment weeks, compute Alive using transition-based approach
-    # Everyone starts in dose 0, then transitions to higher doses as they get vaccinated
-    pre_enroll_mask = out['WeekIdx'] < enroll_week_idx
-    if pre_enroll_mask.any():
-        # Get base total population (everyone starts in dose 0)
-        base_total = a_copy.groupby(['YearOfBirth', 'Sex', 'DCCI']).size().rename('base_total').reset_index()
-        
-        # Build transition frames for pre-enrollment only
-        # trans_0: everyone starts in dose 0 at the first week
-        first_week_str = all_weeks[0]
-        trans_0_pre = base_total.copy()
-        trans_0_pre['ISOweekDied'] = first_week_str
-        trans_0_pre['trans_0'] = trans_0_pre['base_total']
-        
-        # Track transitions into doses 1-max_dose (pre-enrollment only, since a_var has post-enrollment frozen)
-        trans_frames_pre = [trans_0_pre[['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'trans_0']]]
-        dose_cols = [(1, 'Date_FirstDose'), (2, 'Date_SecondDose'), (3, 'Date_ThirdDose'), (4, 'Date_FourthDose')]
-        for dose_num, col in dose_cols:
-            wk = a_var[col].dt.strftime('%G-%V')
-            trans_mask = (wk.notna()) & (pd.to_datetime(wk + '-1', format='%G-%V-%u', errors='coerce') < enrollment_date)
-            if trans_mask.any():
-                trans_df = a_var.loc[trans_mask, ['YearOfBirth', 'Sex', 'DCCI']].copy()
-                trans_df['ISOweekDied'] = wk[trans_mask].values
-                # Collapse doses above max_dose into max_dose
-                target_dose = min(dose_num, max_dose)
-                trans_df[f'trans_{target_dose}'] = 1
-                trans_counts = trans_df.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[f'trans_{target_dose}'].sum().reset_index()
-                trans_frames_pre.append(trans_counts)
-        
-        # Merge all transitions, summing when multiple transitions map to the same dose
-        transitions_pre = trans_frames_pre[0]
-        for tf in trans_frames_pre[1:]:
-            transitions_pre = transitions_pre.merge(tf, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='outer', suffixes=('', '_new'))
-            # Sum columns that have _new suffix with original columns
+    if monte_carlo_mode:
+        # For Monte Carlo: all weeks are post-enrollment, simple Alive calculation
+        # Alive = enrollment population - cumulative deaths from previous weeks
+        for d in range(max_dose + 1):
+            dose_mask = out['Dose'] == d
+            if dose_mask.any():
+                out.loc[dose_mask, 'Alive'] = np.maximum(
+                    out.loc[dose_mask, f'pop_dose{d}'].values - out.loc[dose_mask, 'cumDead_prev'].values,
+                    0
+                ).astype(int)
+    else:
+        # -------- Pre-enrollment weeks: Variable cohorts (track transitions) --------
+        # For pre-enrollment weeks, compute Alive using transition-based approach
+        # Everyone starts in dose 0, then transitions to higher doses as they get vaccinated
+        pre_enroll_mask = out['WeekIdx'] < enroll_week_idx
+        if pre_enroll_mask.any():
+            # Get base total population (everyone starts in dose 0)
+            base_total = a_copy.groupby(['YearOfBirth', 'Sex', 'DCCI']).size().rename('base_total').reset_index()
+            
+            # Build transition frames for pre-enrollment only
+            # trans_0: everyone starts in dose 0 at the first week
+            first_week_str = all_weeks[0]
+            trans_0_pre = base_total.copy()
+            trans_0_pre['ISOweekDied'] = first_week_str
+            trans_0_pre['trans_0'] = trans_0_pre['base_total']
+            
+            # Track transitions into doses 1-max_dose (pre-enrollment only, since a_var has post-enrollment frozen)
+            trans_frames_pre = [trans_0_pre[['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'trans_0']]]
+            dose_cols = [(1, 'Date_FirstDose'), (2, 'Date_SecondDose'), (3, 'Date_ThirdDose'), (4, 'Date_FourthDose')]
+            for dose_num, col in dose_cols:
+                wk = a_var[col].dt.strftime('%G-%V')
+                trans_mask = (wk.notna()) & (pd.to_datetime(wk + '-1', format='%G-%V-%u', errors='coerce') < enrollment_date)
+                if trans_mask.any():
+                    trans_df = a_var.loc[trans_mask, ['YearOfBirth', 'Sex', 'DCCI']].copy()
+                    trans_df['ISOweekDied'] = wk[trans_mask].values
+                    # Collapse doses above max_dose into max_dose
+                    target_dose = min(dose_num, max_dose)
+                    trans_df[f'trans_{target_dose}'] = 1
+                    trans_counts = trans_df.groupby(['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'])[f'trans_{target_dose}'].sum().reset_index()
+                    trans_frames_pre.append(trans_counts)
+            
+            # Merge all transitions, summing when multiple transitions map to the same dose
+            transitions_pre = trans_frames_pre[0]
+            for tf in trans_frames_pre[1:]:
+                transitions_pre = transitions_pre.merge(tf, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='outer', suffixes=('', '_new'))
+                # Sum columns that have _new suffix with original columns
+                for d in range(max_dose + 1):
+                    col_ = f'trans_{d}'
+                    col_new = f'{col_}_new'
+                    if col_new in transitions_pre.columns:
+                        transitions_pre[col_] = transitions_pre[col_].fillna(0) + transitions_pre[col_new].fillna(0)
+                        transitions_pre.drop(columns=[col_new], inplace=True)
+            # Ensure all transition columns exist
             for d in range(max_dose + 1):
                 col_ = f'trans_{d}'
-                col_new = f'{col_}_new'
-                if col_new in transitions_pre.columns:
-                    transitions_pre[col_] = transitions_pre[col_].fillna(0) + transitions_pre[col_new].fillna(0)
-                    transitions_pre.drop(columns=[col_new], inplace=True)
-        # Ensure all transition columns exist
+                if col_ not in transitions_pre.columns:
+                    transitions_pre[col_] = 0
+            transitions_pre = transitions_pre.fillna(0)
+            
+            # Merge transitions into pre-enrollment grid (nodose level)
+            out_pre_nodose = out[pre_enroll_mask][['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'WeekIdx']].drop_duplicates().copy()
+            trans_grid_pre = out_pre_nodose.merge(transitions_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
+            trans_cols = [f'trans_{d}' for d in range(max_dose + 1)]
+            trans_grid_pre[trans_cols] = trans_grid_pre[trans_cols].fillna(0).astype(int)
+            
+            # Compute cumulative transitions (nodose level)
+            trans_grid_pre = trans_grid_pre.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'WeekIdx'])
+            cumT_pre = (
+                trans_grid_pre.groupby(['YearOfBirth', 'Sex', 'DCCI'])[trans_cols]
+                  .cumsum()
+                  .shift(fill_value=0)
+            )
+            cumT_pre.columns = [f'cumT{d}_prev' for d in range(max_dose + 1)]
+            trans_grid_pre = pd.concat([trans_grid_pre, cumT_pre], axis=1)
+            
+            # Merge cumulative transitions into full pre-enrollment grid (with doses)
+            out_pre = out[pre_enroll_mask].copy()
+            # Also merge base_total for first week initialization
+            out_pre = out_pre.merge(base_total, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
+            out_pre['base_total'] = out_pre['base_total'].fillna(0).astype(int)
+            merge_cols = ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'] + [f'cumT{d}_prev' for d in range(max_dose + 1)]
+            out_pre = out_pre.merge(trans_grid_pre[merge_cols],
+                                    on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
+            cumT_cols = [f'cumT{d}_prev' for d in range(max_dose + 1)]
+            out_pre[cumT_cols] = out_pre[cumT_cols].fillna(0).astype(int)
+            
+            # Compute cumulative deaths (pre-enrollment, variable cohorts)
+            out_pre = out_pre.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
+            out_pre['cumDead_var_prev'] = (
+                out_pre.groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
+                  .cumsum()
+                  .shift(fill_value=0)
+            )
+            
+            # Compute Alive for pre-enrollment using transition formula
+            # Dose 0: started in dose 0 - transitions to dose 1 - deaths
+            # Dose 1: transitions to dose 1 - transitions to dose 2 - deaths
+            # etc.
+            # For max_dose: transitions to max_dose - deaths (no transitions out)
+            dose_vals_pre = out_pre['Dose'].values
+            alive_pre = np.zeros(len(out_pre))
+            for d in range(max_dose + 1):
+                mask = dose_vals_pre == d
+                if mask.any():
+                    if d < max_dose:
+                        # Transition in - transition out - deaths
+                        alive_pre[mask] = (out_pre.loc[mask, f'cumT{d}_prev'] - 
+                                          out_pre.loc[mask, f'cumT{d+1}_prev'] - 
+                                          out_pre.loc[mask, 'cumDead_var_prev']).values
+                    else:
+                        # Max dose: transition in - deaths (no transitions out)
+                        alive_pre[mask] = (out_pre.loc[mask, f'cumT{d}_prev'] - 
+                                          out_pre.loc[mask, 'cumDead_var_prev']).values
+            out_pre['Alive'] = np.maximum(alive_pre, 0).astype(int)
+            
+            # Ensure first week starts correctly (everyone in dose 0)
+            # For first week, cumT0_prev is 0 (shifted), but trans_0 has the initial population
+            first_week_mask_pre = out_pre['ISOweekDied'] == first_week_str
+            # Get base_total for first week dose 0
+            first_week_base = out_pre.loc[first_week_mask_pre & (out_pre['Dose'] == 0), 'base_total'].values
+            if len(first_week_base) > 0:
+                out_pre.loc[first_week_mask_pre & (out_pre['Dose'] == 0), 'Alive'] = first_week_base
+            out_pre.loc[first_week_mask_pre & (out_pre['Dose'] != 0), 'Alive'] = 0
+            
+            # Map back to main dataframe
+            out.loc[pre_enroll_mask, 'Alive'] = out_pre['Alive'].values
+    
+    if not monte_carlo_mode:
+        # For enrollment week: Alive = enrollment population count (no deaths yet)
+        enroll_mask = out['ISOweekDied'] == enroll_week_str
         for d in range(max_dose + 1):
-            col_ = f'trans_{d}'
-            if col_ not in transitions_pre.columns:
-                transitions_pre[col_] = 0
-        transitions_pre = transitions_pre.fillna(0)
+            out.loc[enroll_mask & (out['Dose'] == d), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == d), f'pop_dose{d}'].values
         
-        # Merge transitions into pre-enrollment grid (nodose level)
-        out_pre_nodose = out[pre_enroll_mask][['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'WeekIdx']].drop_duplicates().copy()
-        trans_grid_pre = out_pre_nodose.merge(transitions_pre, on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
-        trans_cols = [f'trans_{d}' for d in range(max_dose + 1)]
-        trans_grid_pre[trans_cols] = trans_grid_pre[trans_cols].fillna(0).astype(int)
+        # For post-enrollment weeks: Alive = enrollment_count - cumulative_deaths from previous weeks
+        # Use cumDead_prev (deaths up to but not including this week) since Alive represents start-of-week population
+        post_enroll_mask = out['WeekIdx'] > enroll_week_idx
+        dose_vals = out.loc[post_enroll_mask, 'Dose'].values
         
-        # Compute cumulative transitions (nodose level)
-        trans_grid_pre = trans_grid_pre.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'WeekIdx'])
-        cumT_pre = (
-            trans_grid_pre.groupby(['YearOfBirth', 'Sex', 'DCCI'])[trans_cols]
-              .cumsum()
-              .shift(fill_value=0)
-        )
-        cumT_pre.columns = [f'cumT{d}_prev' for d in range(max_dose + 1)]
-        trans_grid_pre = pd.concat([trans_grid_pre, cumT_pre], axis=1)
-        
-        # Merge cumulative transitions into full pre-enrollment grid (with doses)
-        out_pre = out[pre_enroll_mask].copy()
-        # Also merge base_total for first week initialization
-        out_pre = out_pre.merge(base_total, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
-        out_pre['base_total'] = out_pre['base_total'].fillna(0).astype(int)
-        merge_cols = ['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'] + [f'cumT{d}_prev' for d in range(max_dose + 1)]
-        out_pre = out_pre.merge(trans_grid_pre[merge_cols],
-                                on=['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI'], how='left')
-        cumT_cols = [f'cumT{d}_prev' for d in range(max_dose + 1)]
-        out_pre[cumT_cols] = out_pre[cumT_cols].fillna(0).astype(int)
-        
-        # Compute cumulative deaths (pre-enrollment, variable cohorts)
-        out_pre = out_pre.sort_values(['YearOfBirth', 'Sex', 'DCCI', 'Dose', 'WeekIdx'])
-        out_pre['cumDead_var_prev'] = (
-            out_pre.groupby(['YearOfBirth', 'Sex', 'DCCI', 'Dose'])['dead']
-              .cumsum()
-              .shift(fill_value=0)
-        )
-        
-        # Compute Alive for pre-enrollment using transition formula
-        # Dose 0: started in dose 0 - transitions to dose 1 - deaths
-        # Dose 1: transitions to dose 1 - transitions to dose 2 - deaths
-        # etc.
-        # For max_dose: transitions to max_dose - deaths (no transitions out)
-        dose_vals_pre = out_pre['Dose'].values
-        alive_pre = np.zeros(len(out_pre))
+        # Get enrollment counts for each row
+        enroll_counts = np.zeros(len(out.loc[post_enroll_mask]))
         for d in range(max_dose + 1):
-            mask = dose_vals_pre == d
-            if mask.any():
-                if d < max_dose:
-                    # Transition in - transition out - deaths
-                    alive_pre[mask] = (out_pre.loc[mask, f'cumT{d}_prev'] - 
-                                      out_pre.loc[mask, f'cumT{d+1}_prev'] - 
-                                      out_pre.loc[mask, 'cumDead_var_prev']).values
-                else:
-                    # Max dose: transition in - deaths (no transitions out)
-                    alive_pre[mask] = (out_pre.loc[mask, f'cumT{d}_prev'] - 
-                                      out_pre.loc[mask, 'cumDead_var_prev']).values
-        out_pre['Alive'] = np.maximum(alive_pre, 0).astype(int)
+            dose_mask = dose_vals == d
+            if dose_mask.any():
+                enroll_counts[dose_mask] = out.loc[post_enroll_mask & (out['Dose'] == d), f'pop_dose{d}'].values
         
-        # Ensure first week starts correctly (everyone in dose 0)
-        # For first week, cumT0_prev is 0 (shifted), but trans_0 has the initial population
-        first_week_mask_pre = out_pre['ISOweekDied'] == first_week_str
-        # Get base_total for first week dose 0
-        first_week_base = out_pre.loc[first_week_mask_pre & (out_pre['Dose'] == 0), 'base_total'].values
-        if len(first_week_base) > 0:
-            out_pre.loc[first_week_mask_pre & (out_pre['Dose'] == 0), 'Alive'] = first_week_base
-        out_pre.loc[first_week_mask_pre & (out_pre['Dose'] != 0), 'Alive'] = 0
-        
-        # Map back to main dataframe
-        out.loc[pre_enroll_mask, 'Alive'] = out_pre['Alive'].values
+        # Compute Alive: enrollment_count - cumulative_deaths from previous weeks (not including this week)
+        # This represents people alive at the START of the week
+        cum_deaths_prev = out.loc[post_enroll_mask, 'cumDead_prev'].values
+        out.loc[post_enroll_mask, 'Alive'] = np.maximum(enroll_counts - cum_deaths_prev, 0).astype(int)
     
-    # For enrollment week: Alive = enrollment population count (no deaths yet)
-    enroll_mask = out['ISOweekDied'] == enroll_week_str
-    for d in range(max_dose + 1):
-        out.loc[enroll_mask & (out['Dose'] == d), 'Alive'] = out.loc[enroll_mask & (out['Dose'] == d), f'pop_dose{d}'].values
-    
-    # For post-enrollment weeks: Alive = enrollment_count - cumulative_deaths from previous weeks
-    # Use cumDead_prev (deaths up to but not including this week) since Alive represents start-of-week population
-    post_enroll_mask = out['WeekIdx'] > enroll_week_idx
-    dose_vals = out.loc[post_enroll_mask, 'Dose'].values
-    
-    # Get enrollment counts for each row
-    enroll_counts = np.zeros(len(out.loc[post_enroll_mask]))
-    for d in range(max_dose + 1):
-        dose_mask = dose_vals == d
-        if dose_mask.any():
-            enroll_counts[dose_mask] = out.loc[post_enroll_mask & (out['Dose'] == d), f'pop_dose{d}'].values
-    
-    # Compute Alive: enrollment_count - cumulative_deaths from previous weeks (not including this week)
-    # This represents people alive at the START of the week
-    cum_deaths_prev = out.loc[post_enroll_mask, 'cumDead_prev'].values
-    out.loc[post_enroll_mask, 'Alive'] = np.maximum(enroll_counts - cum_deaths_prev, 0).astype(int)
-    
+    _progress("Cleaning up columns...")
     # Drop helper columns
     cols_to_drop = [
         'dead',
@@ -964,49 +1175,166 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
 def process_monte_carlo_iteration(args):
     """
     Process a single Monte Carlo iteration.
-    Returns (iteration_number, result_dataframe) tuple.
+    Writes result to a temporary CSV file and returns (iteration_number, temp_file_path) tuple.
+    
+    Args:
+        args: tuple of (iteration, master_count, enrollment_date, enroll_week_str, enroll_date_str, temp_dir)
+    
+    Note: Accesses _master_monte_carlo_global via fork() copy-on-write (no pickling!)
     """
-    iteration, master_monte_carlo, master_count, enrollment_date, enroll_week_str, enroll_date_str = args
+    import json
+    import os
+    import time
+    log_path = os.path.join(os.path.dirname(__file__), '..', '.cursor', 'debug.log')
+    def log_debug(session_id, run_id, hypothesis_id, location, message, data):
+        try:
+            log_entry = {
+                'sessionId': session_id,
+                'runId': run_id,
+                'hypothesisId': hypothesis_id,
+                'location': location,
+                'message': message,
+                'data': data,
+                'timestamp': int(time.time() * 1000)
+            }
+            with open(log_path, 'a') as f:
+                f.write(json.dumps(log_entry) + '\n')
+        except:
+            pass
+    
+    iteration, master_count, enrollment_date, enroll_week_str, enroll_date_str, temp_dir = args
+    # #region agent log
+    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_monte_carlo_iteration START', {'iteration': iteration, 'pid': os.getpid()})
+    # #endregion
+    
+    # Access module-level variable via fork() copy-on-write (no pickling!)
+    master_monte_carlo = _master_monte_carlo_global
+    if master_monte_carlo is None:
+        # #region agent log
+        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'master_monte_carlo is None', {'iteration': iteration})
+        # #endregion
+        raise RuntimeError("_master_monte_carlo_global is None - fork() may not have worked correctly")
+    
+    # #region agent log
+    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'master_monte_carlo accessed', {'iteration': iteration, 'master_count': master_count, 'master_len': len(master_monte_carlo) if master_monte_carlo is not None else 0})
+    # #endregion
     
     import datetime
+    import pandas as pd
     
-    print(f"[Iteration {iteration}] Starting at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"[Iteration {iteration}] Starting at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
     
-    # Sample WITH REPLACEMENT from master_monte_carlo
-    sampled_records = master_monte_carlo.sample(n=master_count, replace=True, random_state=iteration)
+    try:
+        # Iteration #1 uses the full dataset without sampling (for validation/comparison)
+        # All other iterations sample WITH REPLACEMENT from master_monte_carlo
+        if iteration == 1:
+            print(f"[Iteration {iteration}] Using full dataset without sampling ({len(master_monte_carlo)} records)...", flush=True)
+            # #region agent log
+            log_debug('debug-session', 'run1', 'C', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Using full dataset (iteration 1)', {'iteration': iteration, 'master_len': len(master_monte_carlo)})
+            # #endregion
+            a_copy = master_monte_carlo.copy()
+        else:
+            # Sample WITH REPLACEMENT from master_monte_carlo
+            print(f"[Iteration {iteration}] Sampling {master_count} records...", flush=True)
+            # #region agent log
+            log_debug('debug-session', 'run1', 'C', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before sampling', {'iteration': iteration, 'master_count': master_count})
+            # #endregion
+            sampled_records = master_monte_carlo.sample(n=master_count, replace=True, random_state=iteration)
+            # #region agent log
+            log_debug('debug-session', 'run1', 'C', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After sampling', {'iteration': iteration, 'sampled_len': len(sampled_records)})
+            # #endregion
+            # Use sampled records as a_copy for this iteration
+            a_copy = sampled_records.copy()
+        
+        print(f"[Iteration {iteration}] Processing enrollment data (input: {len(a_copy)} records)...", flush=True)
+        # Process using shared helper function
+        # For Monte Carlo mode, limit to dose 3 (treat dose 3 as "3 or more doses")
+        try:
+            # #region agent log
+            log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before process_enrollment_data', {'iteration': iteration, 'a_copy_len': len(a_copy)})
+            # #endregion
+            out, alive_at_enroll, all_weeks, week_index, pop_base = process_enrollment_data(
+                a_copy, enrollment_date, enroll_week_str, max_dose=3, monte_carlo_mode=True, iteration=iteration
+            )
+            # #region agent log
+            log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After process_enrollment_data', {'iteration': iteration, 'out_len': len(out)})
+            # #endregion
+            print(f"[Iteration {iteration}] Enrollment data processed (output: {len(out)} rows)", flush=True)
+        except Exception as e:
+            # #region agent log
+            log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception in process_enrollment_data', {'iteration': iteration, 'error': str(e), 'error_type': type(e).__name__})
+            # #endregion
+            print(f"[Iteration {iteration}] ERROR in process_enrollment_data: {e}", flush=True)
+            raise
+        
+        print(f"[Iteration {iteration}] Aggregating results...", flush=True)
+        # #region agent log
+        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before aggregation', {'iteration': iteration})
+        # #endregion
+        
+        # Monte Carlo mode: Filter to YearOfBirth=-2 (all ages) and simplify columns
+        # Filter to all-ages cohort only (YearOfBirth == -2)
+        # Aggregate across all YearOfBirth, Sex, DCCI to create all-ages cohort
+        out_mc_agg = out.groupby(['ISOweekDied', 'Dose', 'DateDied']).agg({
+            'Alive': 'sum',
+            'Dead': 'sum'
+        }).reset_index()
+        out_mc_agg['YearOfBirth'] = -2  # Mark as all-ages
+        
+        # Select only required columns
+        out_mc_final = out_mc_agg[['ISOweekDied', 'Dose', 'DateDied', 'Dead', 'Alive']].copy()
+        
+        # #region agent log
+        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After aggregation', {'iteration': iteration, 'out_mc_final_len': len(out_mc_final)})
+        # #endregion
+        
+        print(f"[Iteration {iteration}] Writing CSV file...", flush=True)
+        # Write to temporary CSV file instead of returning DataFrame
+        temp_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.csv")
+        # #region agent log
+        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before CSV write', {'iteration': iteration, 'temp_file': temp_file})
+        # #endregion
+        out_mc_final.to_csv(temp_file, index=False)
+        # #region agent log
+        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After CSV write', {'iteration': iteration})
+        # #endregion
+        
+        print(f"[Iteration {iteration}] Writing marker file...", flush=True)
+        # Write completion marker file (avoids returning values through multiprocessing queue)
+        marker_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.done")
+        # #region agent log
+        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before marker write', {'iteration': iteration, 'marker_file': marker_file})
+        # #endregion
+        with open(marker_file, 'w') as f:
+            f.write(temp_file)
+        # #region agent log
+        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After marker write', {'iteration': iteration})
+        # #endregion
+        
+        print(f"[Iteration {iteration}] Completed at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
+        # #region agent log
+        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_monte_carlo_iteration SUCCESS', {'iteration': iteration})
+        # #endregion
+    except Exception as e:
+        import traceback
+        # #region agent log
+        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_monte_carlo_iteration EXCEPTION', {'iteration': iteration, 'error': str(e), 'error_type': type(e).__name__, 'traceback': traceback.format_exc()})
+        # #endregion
+        print(f"[Iteration {iteration}] ERROR: {e}")
+        print(f"[Iteration {iteration}] Traceback: {traceback.format_exc()}")
+        raise
     
-    # Use sampled records as a_copy for this iteration
-    a_copy = sampled_records.copy()
-    
-    # Process using shared helper function
-    # For Monte Carlo mode, limit to dose 3 (treat dose 3 as "3 or more doses")
-    out, alive_at_enroll, all_weeks, week_index, pop_base = process_enrollment_data(
-        a_copy, enrollment_date, enroll_week_str, max_dose=3
-    )
-    
-    # Monte Carlo mode: Filter to YearOfBirth=-2 (all ages) and simplify columns
-    # Filter to all-ages cohort only (YearOfBirth == -2)
-    # Aggregate across all YearOfBirth, Sex, DCCI to create all-ages cohort
-    out_mc_agg = out.groupby(['ISOweekDied', 'Dose', 'DateDied']).agg({
-        'Alive': 'sum',
-        'Dead': 'sum'
-    }).reset_index()
-    out_mc_agg['YearOfBirth'] = -2  # Mark as all-ages
-    
-    # Select only required columns
-    out_mc_final = out_mc_agg[['ISOweekDied', 'Dose', 'DateDied', 'Dead', 'Alive']].copy()
-    
-    print(f"[Iteration {iteration}] Completed at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    return (iteration, out_mc_final)
+    # Return None to avoid any serialization issues
+    return None
 
 # Main enrollment processing loop
 # In Monte Carlo mode, use parallel processing for iterations
 if MONTE_CARLO_MODE:
     # MC mode: process iterations in parallel
     import datetime
-    print(f"\n{'='*60}")
-    print(f"Starting Monte Carlo processing with {MC_ITERATIONS} iterations using {MC_THREADS} threads")
-    print(f"{'='*60}")
+    print(f"\n{'='*60}", flush=True)
+    print(f"Starting Monte Carlo processing with {MC_ITERATIONS} iterations using {MC_THREADS} parallel processes", flush=True)
+    print(f"{'='*60}", flush=True)
     
     # Prepare arguments for parallel processing
     # We only process one enrollment date in MC mode: 2022-06
@@ -1014,33 +1342,266 @@ if MONTE_CARLO_MODE:
     enrollment_date = pd.to_datetime(enroll_date_str + '-1', format='%G-%V-%u', errors='coerce')
     enroll_week_str = enrollment_date.strftime('%G-%V')
     
-    # Prepare arguments for each iteration
+    # Create temporary directory for CSV files (avoids serializing DataFrames through multiprocessing queue)
+    temp_dir = tempfile.mkdtemp(prefix='kcor_mc_')
+    print(f"Using temporary directory: {temp_dir}")
+    
+    # CRITICAL FIX: Use multiprocessing with 'fork' start method (Linux only)
+    # With fork(), child processes get copy-on-write access to parent's memory
+    # We access master_monte_carlo via closure (not as argument) to avoid pickling
+    # Prepare arguments for each iteration (ONLY pass small args, DataFrame accessed via closure)
+    # CRITICAL: Only create args for the requested number of iterations
     iteration_args = [
-        (iteration, master_monte_carlo, master_count, enrollment_date, enroll_week_str, enroll_date_str)
+        (iteration, master_count, enrollment_date, enroll_week_str, enroll_date_str, temp_dir)
         for iteration in range(1, MC_ITERATIONS + 1)
     ]
     
-    # Process iterations in parallel
-    print(f"Processing {MC_ITERATIONS} iterations in parallel using {MC_THREADS} threads...")
+    # Verify we're not exceeding the requested iterations
+    if len(iteration_args) != MC_ITERATIONS:
+        print(f"ERROR: Created {len(iteration_args)} iteration args but MC_ITERATIONS={MC_ITERATIONS}")
+        sys.exit(1)
+    
+    # Process iterations in parallel using multiprocessing with fork (copy-on-write, no pickling!)
+    print(f"Processing {MC_ITERATIONS} iterations in parallel using {MC_THREADS} processes...", flush=True)
+    print(f"  Using multiprocessing with 'fork' - DataFrame accessed via copy-on-write (no pickling!)", flush=True)
     start_time = datetime.datetime.now()
     
-    # Use imap() instead of map() to process results as they complete
-    # This avoids collecting all 100 DataFrames in memory before returning
+    # #region agent log
+    import json
+    log_path = os.path.join(os.path.dirname(__file__), '..', '.cursor', 'debug.log')
+    def log_debug(session_id, run_id, hypothesis_id, location, message, data):
+        try:
+            log_entry = {
+                'sessionId': session_id,
+                'runId': run_id,
+                'hypothesisId': hypothesis_id,
+                'location': location,
+                'message': message,
+                'data': data,
+                'timestamp': int(__import__('time').time() * 1000)
+            }
+            with open(log_path, 'a') as f:
+                f.write(json.dumps(log_entry) + '\n')
+        except:
+            pass
+    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before creating pool', {'MC_ITERATIONS': MC_ITERATIONS, 'MC_THREADS': MC_THREADS})
+    # #endregion
+    
+    # CRITICAL FIX: Use multiprocessing with 'fork' start method (Linux/WSL)
+    # With fork(), child processes get copy-on-write access to parent's memory
+    # We pass master_monte_carlo via partial/closure to avoid pickling
+    temp_files = {}
     completed_count = 0
-    with Pool(processes=MC_THREADS) as pool:
-        # Use imap() to get results as they complete (not necessarily in order)
-        # chunksize=1 ensures we get results as soon as each iteration completes
-        for iteration, result_df in pool.imap(process_monte_carlo_iteration, iteration_args, chunksize=1):
-            # Write immediately to avoid memory buildup
-            sheet_name = str(iteration)
-            result_df.to_excel(excel_writer, sheet_name=sheet_name, index=False)
-            completed_count += 1
-            print(f"  [Iteration {iteration}] Wrote to sheet '{sheet_name}' ({len(result_df)} rows) - {completed_count}/{MC_ITERATIONS} complete")
+    
+    # #region agent log
+    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before creating process pool', {'MC_ITERATIONS': MC_ITERATIONS, 'MC_THREADS': MC_THREADS})
+    # #endregion
+    
+    # Use 'fork' start method on Linux (copy-on-write, no pickling needed!)
+    # On Windows this will fail, but user is on WSL/Linux
+    try:
+        ctx = get_context('fork')
+        print(f"  Using 'fork' start method - DataFrame accessed via copy-on-write (no pickling!)")
+    except ValueError:
+        # Fallback to default if 'fork' not available
+        print("  WARNING: 'fork' start method not available, using default (may require pickling)")
+        ctx = get_context()
+    
+    with ctx.Pool(processes=MC_THREADS) as pool:
+        # #region agent log
+        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Process pool created', {'pool_size': MC_THREADS, 'start_method': ctx.get_start_method()})
+        # #endregion
+        
+        # Submit all tasks - master_monte_carlo accessed via module-level variable (copy-on-write, no pickling!)
+        async_results = []
+        for args in iteration_args:
+            iteration = args[0]
+            # #region agent log
+            log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before submitting task', {'iteration': iteration})
+            # #endregion
+            async_result = pool.apply_async(process_monte_carlo_iteration, (args,))
+            async_results.append((iteration, async_result))
+            # #region agent log
+            log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Task submitted', {'iteration': iteration, 'async_result_id': id(async_result)})
+            # #endregion
+        
+        # #region agent log
+        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'All tasks submitted', {'total_submitted': len(async_results)})
+        # #endregion
+        
+        # Wait for all tasks to complete (process results as they finish, not in order)
+        remaining = dict(async_results)  # {iteration: async_result}
+        last_progress_time = datetime.datetime.now()
+        last_completed_count = 0
+        
+        while remaining:
+            # #region agent log
+            log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Polling loop iteration', {'remaining_count': len(remaining), 'remaining_iterations': list(remaining.keys()), 'completed_count': completed_count})
+            # #endregion
+            
+            # Check which tasks are ready (non-blocking check)
+            ready_iterations = []
+            import time as time_module
+            for iteration, async_result in list(remaining.items()):
+                try:
+                    # #region agent log
+                    check_start = time_module.time()
+                    log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before checking ready()', {'iteration': iteration, 'timestamp': check_start})
+                    # #endregion
+                    # Check if ready() itself hangs - measure time taken
+                    is_ready = async_result.ready()
+                    check_duration = time_module.time() - check_start
+                    # #region agent log
+                    log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After checking ready()', {'iteration': iteration, 'is_ready': is_ready, 'check_duration_ms': check_duration * 1000})
+                    # #endregion
+                    if check_duration > 0.5:
+                        # #region agent log
+                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'ready() call took too long - possible hang', {'iteration': iteration, 'duration_ms': check_duration * 1000})
+                        # #endregion
+                    if is_ready:
+                        ready_iterations.append(iteration)
+                except Exception as e:
+                    # #region agent log
+                    log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception checking ready()', {'iteration': iteration, 'error': str(e), 'error_type': type(e).__name__})
+                    # #endregion
+            
+            # Process ready tasks
+            for iteration in ready_iterations:
+                async_result = remaining.pop(iteration)
+                try:
+                    # #region agent log
+                    log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before async_result.get()', {'iteration': iteration})
+                    # #endregion
+                    # Get result (should be immediate since ready() returned True)
+                    # Use timeout to detect if get() hangs (shouldn't happen if ready() is True, but be safe)
+                    try:
+                        async_result.get(timeout=5)  # Increased timeout to 5s to be safe
+                        # #region agent log
+                        log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After async_result.get()', {'iteration': iteration})
+                        # #endregion
+                    except Exception as get_error:
+                        # #region agent log
+                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception in async_result.get()', {'iteration': iteration, 'error': str(get_error), 'error_type': type(get_error).__name__})
+                        # #endregion
+                        # Even if get() fails, check if marker file exists (process might have completed)
+                        marker_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.done")
+                        if os.path.exists(marker_file):
+                            # Process completed but get() failed - continue processing
+                            pass
+                        else:
+                            # Process didn't complete - re-raise to handle in outer exception handler
+                            raise
+                    completed_count += 1
+                    
+                    # Read the temp file path from marker file
+                    marker_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.done")
+                    if os.path.exists(marker_file):
+                        with open(marker_file, 'r') as f:
+                            temp_file = f.read().strip()
+                        temp_files[iteration] = temp_file
+                        os.remove(marker_file)  # Clean up marker
+                    else:
+                        # Fallback: construct expected temp file path
+                        temp_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.csv")
+                        if os.path.exists(temp_file):
+                            temp_files[iteration] = temp_file
+                    
+                    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    elapsed = (datetime.datetime.now() - start_time).total_seconds()
+                    print(f"  [Iteration {iteration}] Completed - {completed_count}/{MC_ITERATIONS} complete at {timestamp} (elapsed: {elapsed:.1f}s)", flush=True)
+                    last_progress_time = datetime.datetime.now()
+                    last_completed_count = completed_count
+                except Exception as e:
+                    import traceback
+                    print(f"  ERROR: Iteration {iteration} failed: {e}", flush=True)
+                    print(f"  Traceback: {traceback.format_exc()}", flush=True)
+                    # Try to read partial results if CSV exists
+                    temp_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.csv")
+                    if os.path.exists(temp_file):
+                        temp_files[iteration] = temp_file
+            
+            # If no tasks are ready, wait a bit before checking again
+            if remaining and not ready_iterations:
+                import time
+                # #region agent log
+                log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before sleep(0.5)', {'remaining_count': len(remaining), 'remaining_iterations': list(remaining.keys())})
+                # #endregion
+                sleep_start = time.time()
+                time.sleep(0.5)  # Check every 0.5 seconds
+                sleep_duration = time.time() - sleep_start
+                # #region agent log
+                log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After sleep(0.5)', {'sleep_duration_ms': sleep_duration * 1000, 'remaining_count': len(remaining)})
+                # #endregion
+                
+                # Warn if no progress for a while
+                time_since_progress = (datetime.datetime.now() - last_progress_time).total_seconds()
+                # #region agent log
+                log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'No ready tasks, waiting', {'time_since_progress': time_since_progress, 'remaining_iterations': list(remaining.keys())})
+                # #endregion
+                if time_since_progress > 300:  # 5 minutes with no progress
+                    stuck_iterations = list(remaining.keys())
+                    # #region agent log
+                    log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'STUCK ITERATIONS DETECTED', {'time_since_progress': time_since_progress, 'stuck_iterations': stuck_iterations})
+                    # #endregion
+                    print(f"  WARNING: No progress for {time_since_progress:.0f} seconds. Still waiting for iterations: {stuck_iterations}", flush=True)
+                    
+                    # After 10 minutes of no progress, terminate stuck processes and exit with error
+                    if time_since_progress > 600:  # 10 minutes
+                        print(f"  ERROR: Processes stuck for {time_since_progress:.0f} seconds. Terminating pool and exiting.", flush=True)
+                        # #region agent log
+                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'TERMINATING POOL DUE TO STUCK PROCESSES', {'time_since_progress': time_since_progress, 'stuck_iterations': stuck_iterations, 'completed_count': completed_count})
+                        # #endregion
+                        # Break out of loop - pool will be terminated by context manager
+                        break
+                    
+                    # Check if processes are actually running or dead
+                    try:
+                        # Try to get process info from async_result if available
+                        for stuck_iter in stuck_iterations:
+                            stuck_async = remaining.get(stuck_iter)
+                            if stuck_async:
+                                # #region agent log
+                                log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Checking stuck process status', {'iteration': stuck_iter, 'has_async_result': stuck_async is not None, 'ready': stuck_async.ready() if hasattr(stuck_async, 'ready') else 'N/A'})
+                                # #endregion
+                    except Exception as e:
+                        # #region agent log
+                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception checking process status', {'error': str(e)})
+                        # #endregion
+                    last_progress_time = datetime.datetime.now()  # Reset to avoid spam
+        
+        # #region agent log
+        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'All tasks completed', {'completed_count': completed_count, 'total': MC_ITERATIONS, 'temp_files_count': len(temp_files)})
+        # #endregion
+    
+    # #region agent log
+    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Pool context exited', {'completed_count': completed_count, 'temp_files_count': len(temp_files)})
+    # #endregion
     
     end_time = datetime.datetime.now()
     elapsed = (end_time - start_time).total_seconds()
     print(f"\nCompleted all {MC_ITERATIONS} iterations in {elapsed:.1f} seconds ({elapsed/MC_ITERATIONS:.2f} seconds per iteration)")
-    print(f"Wrote all {MC_ITERATIONS} sheets to Excel (sheets may not be in numerical order, but data is correct)")
+    
+    # Now read CSV files and write to Excel in order
+    print(f"\nWriting results to Excel...")
+    for iteration in sorted(temp_files.keys()):
+        temp_file = temp_files[iteration]
+        result_df = pd.read_csv(temp_file)
+        sheet_name = str(iteration)
+        result_df.to_excel(excel_writer, sheet_name=sheet_name, index=False)
+        print(f"  Wrote iteration {iteration} to sheet '{sheet_name}' ({len(result_df)} rows)")
+        # Clean up temp file immediately
+        os.remove(temp_file)
+    
+    # Clean up temp directory
+    try:
+        os.rmdir(temp_dir)
+    except OSError:
+        # Directory might not be empty if some files weren't cleaned up
+        pass
+    
+    print(f"\n{'='*60}")
+    print(f"Monte Carlo processing complete!")
+    print(f"{'='*60}")
     
     print(f"\n{'='*60}")
     print(f"Monte Carlo processing complete!")

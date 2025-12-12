@@ -84,7 +84,7 @@ CMR_from_krf: | ../data/$(DATASET)
 CMR: $(CMR_OUTPUT)
 
 # Monte Carlo mode - generates bootstrap samples
-MC_ITERATIONS ?= 100
+MC_ITERATIONS ?= 25
 TMP_MC := /tmp/KCOR_CMR_MC.$(DATASET).xlsx
 
 monte_carlo: $(MC_OUTPUT)
@@ -149,7 +149,7 @@ help:
 	@echo "  KCOR      - Run complete KCOR pipeline (CMR + analysis)"
 	@echo "  CMR       - Run only CMR aggregation step"
 	@echo "  CMR_from_krf - Run CMR aggregation step on KRF data; specify DATASET=japan to use Japan KRF data"
-	@echo "  monte_carlo - Run Monte Carlo bootstrap sampling (100 iterations by default, override with MC_ITERATIONS=N)"
+	@echo "  monte_carlo - Run Monte Carlo bootstrap sampling (25 iterations by default, override with MC_ITERATIONS=N)"
 	@echo "  sensitivity - Smoke test sensitivity plumbing (echo SA_* and run analysis)"
 	@echo ""
 	@echo "KCOR Mortality Analysis (Czech2 dataset):"

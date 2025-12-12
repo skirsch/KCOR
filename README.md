@@ -906,6 +906,37 @@ python KCOR.py [aggregated_file] [analysis_output] [mode] [log_filename]
 # Output appears both on console and in the specified log file
 ```
 
+#### Monte Carlo Mode (Bootstrap Sampling)
+
+KCOR_CMR.py supports Monte Carlo bootstrap sampling to generate confidence intervals and validate results. This mode performs multiple iterations with bootstrap resampling to assess statistical variability.
+
+**Usage:**
+```bash
+cd code
+# Using Make (recommended)
+make monte_carlo DATASET=Czech MC_ITERATIONS=25
+
+# Or directly with Python
+MONTE_CARLO=1 MC_ITERATIONS=25 MC_THREADS=5 python3 KCOR_CMR.py [input_file] [output_file]
+```
+
+**Configuration:**
+- `MONTE_CARLO=1` - Enables Monte Carlo mode
+- `MC_ITERATIONS` - Number of bootstrap iterations (default: 25)
+- `MC_THREADS` - Number of parallel processes (default: 5, reduced from 20 to avoid memory exhaustion)
+
+**Important Notes:**
+- **Iteration #1 uses the full dataset without sampling** - This serves as the reference/validation iteration representing the true population mean. All other iterations (2-N) use bootstrap sampling with replacement.
+- The output Excel file contains one sheet per iteration (sheet names: "1", "2", "3", ..., "N")
+- Iteration #1 can be compared with iterations 2-N to verify that bootstrap samples are centered around the mean
+- Memory usage scales with the number of parallel processes - if you encounter memory issues, reduce `MC_THREADS` (try 3 or even 2 for very large datasets)
+- Monte Carlo mode only processes the 2022-06 enrollment date (other enrollment dates are skipped)
+
+**Output:**
+The Monte Carlo output file (`KCOR_CMR_MC.xlsx`) contains multiple sheets:
+- Sheet "1": Full dataset (no sampling) - the reference iteration
+- Sheets "2" through "N": Bootstrap samples with replacement
+
 ### Data Requirements
 
 The Czech data files needed for running examples and validation are already included in this repository under `data/Czech/`. No additional downloads are required to run the default pipeline and validations.
