@@ -2188,8 +2188,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "abnormal_fit": False,  # Normal case for cohorts >= 1940
                 }
                 normalization_params[(yob, dose)] = params
-                rms_error_str = f"{rms_error_lin:.6e}" if rms_error_lin is not None else "nan"
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(yob_threshold),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_str},points={len(log_h_values)},skip_weeks={fit_start_weeks}")
+                # Suppress SLOPE8_FIT messages in MC mode (force_linear_mode=True)
+                if not force_linear_mode:
+                    rms_error_str = f"{rms_error_lin:.6e}" if rms_error_lin is not None else "nan"
+                    _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(yob_threshold),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_str},points={len(log_h_values)},skip_weeks={fit_start_weeks}")
             else:
                 # Linear fit failed - mark as abnormal
                 params = {
@@ -2202,7 +2204,9 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "abnormal_fit": True,
                 }
                 normalization_params[(yob, dose)] = params
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(yob_threshold_failed),a=0.0,b=0.0,c=0.0,t_mean={t_mean:.6e},points={len(log_h_values)} (abnormal - linear fit failed)")
+                # Suppress SLOPE8_FIT messages in MC mode (force_linear_mode=True)
+                if not force_linear_mode:
+                    _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(yob_threshold_failed),a=0.0,b=0.0,c=0.0,t_mean={t_mean:.6e},points={len(log_h_values)} (abnormal - linear fit failed)")
         else:
             # Fallback: slope8 was attempted but failed (insufficient data or exception)
             # In this case, use linear mode but mark as abnormal since slope8 should have been used
@@ -2217,8 +2221,10 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
                     "abnormal_fit": True,  # Mark as abnormal since slope8 wasn't attempted
                 }
                 normalization_params[(yob, dose)] = params
-                rms_error_str = f"{rms_error_lin:.6e}" if rms_error_lin is not None else "nan"
-                _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_str},points={len(log_h_values)} (abnormal - slope8 should have been used)")
+                # Suppress SLOPE8_FIT messages in MC mode (force_linear_mode=True)
+                if not force_linear_mode:
+                    rms_error_str = f"{rms_error_lin:.6e}" if rms_error_lin is not None else "nan"
+                    _print(f"SLOPE8_FIT,EnrollmentDate={sheet_name},YoB={int(yob)},Dose={int(dose)},mode=linear(fallback_slope8_not_attempted),a={a_lin:.6e},b={b_lin:.6e},c=0.000000e+00,t_mean={t_mean:.6e},rms_error={rms_error_str},points={len(log_h_values)} (abnormal - slope8 should have been used)")
             else:
                 # Both failed - use defaults
                 params = {
@@ -2531,8 +2537,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
     global ASMR_WEIGHTS_BY_SHEET
     ASMR_WEIGHTS_BY_SHEET[sheet_name] = weights.copy()
     
-    # Debug: Show expected-deaths weights
-    if DEBUG_VERBOSE:
+    # Debug: Show expected-deaths weights (suppress in MC mode)
+    if DEBUG_VERBOSE and not MONTE_CARLO_MODE:
         print(f"\n[DEBUG] Expected-deaths weights for ASMR pooling:")
         for yob in sorted(weights.keys()):
             print(f"  Age {yob}: weight = {weights[yob]:.6f}")
@@ -3455,7 +3461,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             "Alive": "sum",
             "Dead": "sum"
         }).reset_index()
-        dual_print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
+        # Suppress debug message in MC mode (always aggregated, not informative)
+        if not MONTE_CARLO_MODE:
+            dual_print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
         
         df = df.sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
         # person-time proxy and MR (internal probability per week)
@@ -4326,68 +4334,70 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
 
     # Report KCOR values at reporting dates for each dose combo and age for ALL sheets
-    dual_print("\n" + "="*80)
-    dual_print("KCOR VALUES AT REPORTING DATES - ALL SHEETS")
-    dual_print("="*80)
-    
-    # Ensure Date is datetime
-    combined["Date"] = pd.to_datetime(combined["Date"]) 
-    
-    # Iterate through each sheet and report at its configured reporting date
-    for sheet_name in sorted(combined["EnrollmentDate"].unique()):
-        target_str = KCOR_REPORTING_DATE.get(sheet_name)
-        if target_str:
-            try:
-                target_dt = pd.to_datetime(target_str)
-            except Exception:
+    # Skip console output in MC mode (MC summary handles that with per-iteration tables)
+    if not MONTE_CARLO_MODE:
+        dual_print("\n" + "="*80)
+        dual_print("KCOR VALUES AT REPORTING DATES - ALL SHEETS")
+        dual_print("="*80)
+        
+        # Ensure Date is datetime
+        combined["Date"] = pd.to_datetime(combined["Date"]) 
+        
+        # Iterate through each sheet and report at its configured reporting date
+        for sheet_name in sorted(combined["EnrollmentDate"].unique()):
+            target_str = KCOR_REPORTING_DATE.get(sheet_name)
+            if target_str:
+                try:
+                    target_dt = pd.to_datetime(target_str)
+                except Exception:
+                    target_dt = None
+            else:
                 target_dt = None
-        else:
-            target_dt = None
-        sheet_data_all = combined[combined["EnrollmentDate"] == sheet_name]
-        if sheet_data_all.empty:
-            continue
-        # Choose the closest available date to the configured reporting date; fallback to latest
-        if target_dt is not None and not sheet_data_all.empty:
-            diffs = (sheet_data_all["Date"] - target_dt).abs()
-            idxmin = diffs.idxmin()
-            report_date = sheet_data_all.loc[idxmin, "Date"]
-        else:
-            report_date = sheet_data_all["Date"].max()
-        dual_print(f"\nSheet: {sheet_name} — Reporting date: {report_date.strftime('%Y-%m-%d')}")
-        dual_print("=" * 60)
-        
-        # Display ASMR weights for this sheet if available
-        global ASMR_WEIGHTS_BY_SHEET
-        weights_display = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
-        if weights_display:
-            dual_print(f"\nASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):")
-            for yob in sorted(weights_display.keys()):
-                dual_print(f"  Age {yob}: weight = {weights_display[yob]:.6f}")
-            dual_print(f"  Total weight: {sum(weights_display.values()):.6f}")
-            dual_print("")
-        
-        end_data = sheet_data_all[sheet_data_all["Date"] == report_date]
-        
-        # Get dose pairs for this specific sheet
-        dose_pairs = get_dose_pairs(sheet_name)
-        
-        for (dose_num, dose_den) in dose_pairs:
-            dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
-            dual_print("-" * 50)
-            dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>19} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
-            dual_print("-" * 50)
-            
-            # Get data for this dose combination and sheet at reporting date
-            dose_data = end_data[
-                (end_data["Dose_num"] == dose_num) & 
-                (end_data["Dose_den"] == dose_den)
-            ]
-            
-            if dose_data.empty:
-                dual_print("  No data available for this dose combination")
+            sheet_data_all = combined[combined["EnrollmentDate"] == sheet_name]
+            if sheet_data_all.empty:
                 continue
+            # Choose the closest available date to the configured reporting date; fallback to latest
+            if target_dt is not None and not sheet_data_all.empty:
+                diffs = (sheet_data_all["Date"] - target_dt).abs()
+                idxmin = diffs.idxmin()
+                report_date = sheet_data_all.loc[idxmin, "Date"]
+            else:
+                report_date = sheet_data_all["Date"].max()
+            dual_print(f"\nSheet: {sheet_name} — Reporting date: {report_date.strftime('%Y-%m-%d')}")
+            dual_print("=" * 60)
             
-            # Show results by age (including ASMR = 0, all ages = -2)
+            # Display ASMR weights for this sheet if available
+            global ASMR_WEIGHTS_BY_SHEET
+            weights_display = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
+            if weights_display:
+                dual_print(f"\nASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):")
+                for yob in sorted(weights_display.keys()):
+                    dual_print(f"  Age {yob}: weight = {weights_display[yob]:.6f}")
+                dual_print(f"  Total weight: {sum(weights_display.values()):.6f}")
+                dual_print("")
+            
+            end_data = sheet_data_all[sheet_data_all["Date"] == report_date]
+            
+            # Get dose pairs for this specific sheet
+            dose_pairs = get_dose_pairs(sheet_name)
+            
+            for (dose_num, dose_den) in dose_pairs:
+                dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
+                dual_print("-" * 50)
+                dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>19} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
+                dual_print("-" * 50)
+                
+                # Get data for this dose combination and sheet at reporting date
+                dose_data = end_data[
+                    (end_data["Dose_num"] == dose_num) & 
+                    (end_data["Dose_den"] == dose_den)
+                ]
+                
+                if dose_data.empty:
+                    dual_print("  No data available for this dose combination")
+                    continue
+                
+                # Show results by age (including ASMR = 0, all ages = -2)
             # Sort ages: negative ages first (0, -2, -1), then positive ages
             def age_sort_key(age):
                 if age == 0:
@@ -4666,69 +4676,70 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         # Just show the ka/kb/tau values, no parameter details in parentheses
                         dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str:>7} | {abnormal_marker:>1} | {ka_num_str} {kb_num_str} {tau_num_str} {ka_den_str} {kb_den_str} {tau_den_str}")
 
-        # --- Print M/P KCOR summaries by decades when available ---
-        try:
-            # Choose appropriate MFG sheet per cohort
-            mfg_sheet_map = {
-                "2021_24": (2, "MFG_MP_2021_24_D2_decades"),
-                "2022_06": (3, "MFG_MP_2022_06_D3_decades"),
-                "2022_47": (4, "MFG_MP_2022_47_D4_decades"),
-            }
-            if sheet_name in mfg_sheet_map:
-                dose_num, mfg_sheet_name = mfg_sheet_map[sheet_name]
-                # Read back the just-written sheet from tmp_path if possible; else from out_path after move
-                # Since we're in reporting before write, recompute quickly from combined data would be heavy.
-                # Instead, try to compute on the fly from CMR MFG sheet.
-                # We fallback to reading from input CMR workbook directly.
-                # Use the helper defined earlier to read raw CMR MFG sheet
-                def _read_cmr_mfg(base_sheet: str, dnum: int):
-                    try:
-                        src = pd.ExcelFile(src_path)
-                        return pd.read_excel(src, sheet_name=f"{base_sheet}_MFG_D{dnum}")
-                    except Exception:
-                        return pd.DataFrame()
-                dfm = _read_cmr_mfg(sheet_name, dose_num)
-                if not dfm.empty:
-                    # Bucket by decades and print last-available KCOR per decade
-                    dfm["DateDied"] = pd.to_datetime(dfm["DateDied"], errors='coerce')
-                    dfm = dfm[dfm["DateDied"].notna()]
-                    dfm["YearOfBirth"] = pd.to_numeric(dfm["YearOfBirth"], errors='coerce').fillna(-1).astype(int)
-                    dfm["Decade"] = (dfm["YearOfBirth"] // 10) * 10
-                    # Aggregate
-                    agg = dfm.groupby(["Decade","MFG","DateDied"]).agg({"Alive":"sum","Dead":"sum"}).reset_index()
-                    agg = agg.sort_values(["Decade","MFG","DateDied"])\
-                             .reset_index(drop=True)
-                    agg["PT"] = agg["Alive"].astype(float).clip(lower=0.0)
-                    agg["MR"] = np.where(agg["PT"] > 0, agg["Dead"]/(agg["PT"] + EPS), np.nan)
-                    agg["t"] = agg.groupby(["Decade","MFG"]).cumcount().astype(float)
-                    agg["hazard_raw"] = hazard_from_mr_improved(agg["MR"].to_numpy())
-                    agg["hazard_eff"] = np.where(agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), agg["hazard_raw"], 0.0)
-                    agg["CH"] = agg.groupby(["Decade","MFG"]) ['hazard_eff'].cumsum()
-                    dual_print(f"\nM/P by decades (Dose {dose_num})")
-                    dual_print("-" * 50)
-                    for dec, gdec in agg.groupby("Decade", sort=True):
-                        gm = gdec[gdec["MFG"]=='M'][["DateDied","CH"]]
-                        gp = gdec[gdec["MFG"]=='P'][["DateDied","CH"]]
-                        merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
-                        if merged.empty:
-                            continue
-                        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-                        valid = merged["CH_P"] > EPS
-                        merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
-                        k0 = merged["K_raw_MP"].iloc[t0_idx]
-                        if not (np.isfinite(k0) and k0 > EPS):
-                            k0 = 1.0
-                        merged["KCOR_MP"] = np.where(np.isfinite(merged["K_raw_MP"]), merged["K_raw_MP"] / k0, np.nan)
-                        # pick closest to report_date
-                        td = (merged["DateDied"] - report_date)
-                        idx = int(np.nanargmin(np.abs(td.values.astype('timedelta64[D]').astype(float)))) if len(merged)>0 else -1
-                        if idx >= 0:
-                            val = float(merged["KCOR_MP"].iloc[idx])
-                            dual_print(f"  {int(dec)}: M/P KCOR = {val:.4f}")
-        except Exception as _e_print_mfg:
-            dual_print(f"[WARN] Failed to print M/P summaries: {_e_print_mfg}")
-    
-    dual_print("="*80)
+                # --- Print M/P KCOR summaries by decades when available ---
+                try:
+                    # Choose appropriate MFG sheet per cohort
+                    mfg_sheet_map = {
+                        "2021_24": (2, "MFG_MP_2021_24_D2_decades"),
+                        "2022_06": (3, "MFG_MP_2022_06_D3_decades"),
+                        "2022_47": (4, "MFG_MP_2022_47_D4_decades"),
+                    }
+                    if sheet_name in mfg_sheet_map:
+                        dose_num, mfg_sheet_name = mfg_sheet_map[sheet_name]
+                        # Read back the just-written sheet from tmp_path if possible; else from out_path after move
+                        # Since we're in reporting before write, recompute quickly from combined data would be heavy.
+                        # Instead, try to compute on the fly from CMR MFG sheet.
+                        # We fallback to reading from input CMR workbook directly.
+                        # Use the helper defined earlier to read raw CMR MFG sheet
+                        def _read_cmr_mfg(base_sheet: str, dnum: int):
+                            try:
+                                src = pd.ExcelFile(src_path)
+                                return pd.read_excel(src, sheet_name=f"{base_sheet}_MFG_D{dnum}")
+                            except Exception:
+                                return pd.DataFrame()
+                        dfm = _read_cmr_mfg(sheet_name, dose_num)
+                        if not dfm.empty:
+                            # Bucket by decades and print last-available KCOR per decade
+                            dfm["DateDied"] = pd.to_datetime(dfm["DateDied"], errors='coerce')
+                            dfm = dfm[dfm["DateDied"].notna()]
+                            dfm["YearOfBirth"] = pd.to_numeric(dfm["YearOfBirth"], errors='coerce').fillna(-1).astype(int)
+                            dfm["Decade"] = (dfm["YearOfBirth"] // 10) * 10
+                            # Aggregate
+                            agg = dfm.groupby(["Decade","MFG","DateDied"]).agg({"Alive":"sum","Dead":"sum"}).reset_index()
+                            agg = agg.sort_values(["Decade","MFG","DateDied"])\
+                                     .reset_index(drop=True)
+                            agg["PT"] = agg["Alive"].astype(float).clip(lower=0.0)
+                            agg["MR"] = np.where(agg["PT"] > 0, agg["Dead"]/(agg["PT"] + EPS), np.nan)
+                            agg["t"] = agg.groupby(["Decade","MFG"]).cumcount().astype(float)
+                            agg["hazard_raw"] = hazard_from_mr_improved(agg["MR"].to_numpy())
+                            agg["hazard_eff"] = np.where(agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), agg["hazard_raw"], 0.0)
+                            agg["CH"] = agg.groupby(["Decade","MFG"]) ['hazard_eff'].cumsum()
+                            dual_print(f"\nM/P by decades (Dose {dose_num})")
+                            dual_print("-" * 50)
+                            for dec, gdec in agg.groupby("Decade", sort=True):
+                                gm = gdec[gdec["MFG"]=='M'][["DateDied","CH"]]
+                                gp = gdec[gdec["MFG"]=='P'][["DateDied","CH"]]
+                                merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
+                                if merged.empty:
+                                    continue
+                                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                                valid = merged["CH_P"] > EPS
+                                merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
+                                k0 = merged["K_raw_MP"].iloc[t0_idx]
+                                if not (np.isfinite(k0) and k0 > EPS):
+                                    k0 = 1.0
+                                merged["KCOR_MP"] = np.where(np.isfinite(merged["K_raw_MP"]), merged["K_raw_MP"] / k0, np.nan)
+                                # pick closest to report_date
+                                td = (merged["DateDied"] - report_date)
+                                idx = int(np.nanargmin(np.abs(td.values.astype('timedelta64[D]').astype(float)))) if len(merged)>0 else -1
+                                if idx >= 0:
+                                    val = float(merged["KCOR_MP"].iloc[idx])
+                                    dual_print(f"  {int(dec)}: M/P KCOR = {val:.4f}")
+                except Exception as _e_print_mfg:
+                    dual_print(f"[WARN] Failed to print M/P summaries: {_e_print_mfg}")
+        
+        dual_print("="*80)
+    # End of console output section (suppressed in MC mode)
 
     # write (standard mode handled later with retry block)
 
@@ -5190,7 +5201,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         except Exception as e:
             print(f"\n❌ Error creating SA workbook: {e}")
     else:
-        # Standard summary
+        # Standard summary (skip console output in MC mode, MC summary handles that)
         create_summary_file(combined, out_path, dual_print)
     
     # Close log file
@@ -5378,7 +5389,10 @@ def create_mc_summary(mc_summary_data, dual_print):
     # Get dose pairs
     dose_pairs = get_dose_pairs("2022_06")
     
-    # For each dose pair, compute statistics across iterations
+    # Store processed data for each dose combination (for statistics stage)
+    dose_combo_stats = {}
+    
+    # STAGE 1: Print per-iteration tables for each dose combination
     for dose_num, dose_den in dose_pairs:
         dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
         dual_print("-" * 60)
@@ -5400,20 +5414,52 @@ def create_mc_summary(mc_summary_data, dual_print):
             all_ages_data = pair_data
         
         if all_ages_data.empty:
-            dual_print("  No data available for all-ages cohort")
+            dual_print("  No data available for this dose combination")
             continue
         
-        # Extract KCOR values (remove NaN)
-        kcor_values = all_ages_data["KCOR"].dropna()
+        # Extract KCOR values (remove NaN) and sort by iteration
+        all_ages_data_clean = all_ages_data[all_ages_data["KCOR"].notna()].copy()
         
-        if len(kcor_values) == 0:
+        if len(all_ages_data_clean) == 0:
             dual_print("  No valid KCOR values available")
             continue
         
-        # Count actual number of unique iterations (not just number of KCOR values)
-        # This handles cases where there might be multiple entries per iteration
-        unique_iterations = all_ages_data["Iteration"].nunique()
-        num_iterations = unique_iterations if unique_iterations > 0 else len(kcor_values)
+        # Group by iteration and take one KCOR value per iteration (deduplicate)
+        # Since all rows for the same iteration should have the same KCOR value,
+        # we can just take the first one per iteration
+        all_ages_data_unique = all_ages_data_clean.groupby("Iteration").first().reset_index()
+        all_ages_data_unique = all_ages_data_unique.sort_values("Iteration")
+        
+        # Store KCOR values for statistics stage
+        kcor_values = all_ages_data_unique["KCOR"]
+        dose_combo_stats[(dose_num, dose_den)] = {
+            "kcor_values": kcor_values,
+            "num_iterations": len(all_ages_data_unique)
+        }
+        
+        # Print per-iteration table (show KCOR values for each iteration)
+        dual_print(f"{'Iteration':>12} {'KCOR':>12}")
+        dual_print("-" * 25)
+        for _, row in all_ages_data_unique.iterrows():
+            iteration = row["Iteration"]
+            kcor_val = row["KCOR"]
+            dual_print(f"{iteration:>12} {kcor_val:>12.4f}")
+    
+    # STAGE 2: Print summary statistics for all dose combinations
+    dual_print("\n" + "="*80)
+    dual_print("SUMMARY STATISTICS")
+    dual_print("="*80)
+    
+    for dose_num, dose_den in dose_pairs:
+        if (dose_num, dose_den) not in dose_combo_stats:
+            continue
+        
+        stats = dose_combo_stats[(dose_num, dose_den)]
+        kcor_values = stats["kcor_values"]
+        num_iterations = stats["num_iterations"]
+        
+        dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
+        dual_print("-" * 60)
         
         # Compute statistics
         mean_kcor = kcor_values.mean()
