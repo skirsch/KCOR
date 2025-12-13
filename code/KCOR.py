@@ -470,6 +470,9 @@ KCOR_REPORTING_DATE = {
     '2022_47': '2023-12-31',
 }
 
+# Check for Monte Carlo mode
+MONTE_CARLO_MODE = str(os.environ.get('MONTE_CARLO', '')).strip().lower() in ('1', 'true', 'yes')
+
 # DATA SMOOTHING:
 # Moving-average smoothing parameters removed
 
@@ -495,7 +498,7 @@ OVERRIDE_YOBS = None
 
 # ---------------- Configuration Parameters ----------------
 # Version information
-VERSION = "v5.3"                # KCOR version number
+VERSION = "v5.4"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -1554,7 +1557,7 @@ def fit_slope8_depletion(s, logh):
         }
         return (np.nan, np.nan, np.nan, np.nan), initial_params, diagnostics
 
-def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None):
+def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_print_fn=None, force_linear_mode=False):
     """
     Compute Slope8 normalization parameters for each cohort independently.
     
@@ -1578,6 +1581,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         baseline_window: Tuple (start_iso_week, end_iso_week) - kept for compatibility, not used for Slope8
         enrollment_date_str: Enrollment date string (e.g., "2021_24") for fit window start
         dual_print_fn: Optional logging function
+        force_linear_mode: If True, skip slope8 attempts and use linear fits only (for MC mode)
         
     Returns:
         Dict mapping (YearOfBirth, Dose) -> params dict with keys:
@@ -1891,7 +1895,8 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         # --- Slope8 quantile regression fit ---
         # Only attempt slope8 for cohorts born before SLOPE8_MAX_YOB (1940)
         # Cohorts >= 1940 and all-ages cohort (YOB=-2) will use linear fit (already computed above)
-        use_slope8 = (yob < SLOPE8_MAX_YOB and yob != -2)
+        # In MC mode (force_linear_mode=True), always use linear fits
+        use_slope8 = (yob < SLOPE8_MAX_YOB and yob != -2) and not force_linear_mode
         
         if use_slope8:
             # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
@@ -3257,7 +3262,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print("="*80)
     dual_print(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     mode_str = os.environ.get('KCOR_MODE', 'Primary Analysis')
-    dual_print(f"Mode: {mode_str}")
+    if MONTE_CARLO_MODE:
+        dual_print(f"Mode: {mode_str} (Monte Carlo)")
+    else:
+        dual_print(f"Mode: {mode_str}")
     if _is_sa_mode():
         out_dir_hdr = os.path.dirname(out_path)
         sa_hdr_path = os.path.join(out_dir_hdr, "KCOR_SA.xlsx").replace('\\', '/')
@@ -3308,7 +3316,16 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     by_dose_nc_all = []
     
     # Auto-derive enrollment dates from sheet names if not explicitly set
-    if ENROLLMENT_DATES is None:
+    if MONTE_CARLO_MODE:
+        # In MC mode, all sheets are iterations (numbered "1", "2", "3", etc.)
+        # Filter out any non-numeric sheets
+        enrollment_sheets = [
+            name for name in xls.sheet_names 
+            if name.isdigit() or (name.replace('-', '').replace('_', '').isdigit())
+        ]
+        ENROLLMENT_DATES = sorted(enrollment_sheets, key=lambda x: int(x.replace('-', '').replace('_', '')))  # Sort numerically
+        dual_print(f"[INFO] Monte Carlo mode: Processing {len(ENROLLMENT_DATES)} iterations")
+    elif ENROLLMENT_DATES is None:
         # Filter out summary and MFG sheets (keep only main enrollment date sheets)
         enrollment_sheets = [
             name for name in xls.sheet_names 
@@ -3330,6 +3347,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Store slope6 normalization parameters per (EnrollmentDate, YoB, Dose) for later summary printing
     slope6_params_map = {}
     
+    # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
+    mc_summary_data = [] if MONTE_CARLO_MODE else None
+    
     # Slope6: Select fixed baseline window (fit window, no data collection needed since window is fixed)
     baseline_window = select_slope6_baseline_window([], dual_print)  # Empty list since we don't need data
     dual_print(f"[Slope6] Using fit window: {baseline_window[0]} to {baseline_window[1]}")
@@ -3342,11 +3362,30 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["DateDied"] = pd.to_datetime(df["DateDied"])
         # (Removed temporary diagnostics)
         
-        # Filter out unreasonably large birth years (keep -1 for "not available")
-        df = df[df["YearOfBirth"] <= 2020]
+        # In MC mode, add YearOfBirth column if missing (should be -2 for all-ages)
+        if MONTE_CARLO_MODE and "YearOfBirth" not in df.columns:
+            df["YearOfBirth"] = -2
         
-        # Filter to start from enrollment date (sheet name format: YYYY_WW)
-        if "_" in sh:
+        # Filter out unreasonably large birth years (keep -1 for "not available", -2 for all ages in MC mode)
+        if MONTE_CARLO_MODE:
+            # In MC mode, YearOfBirth=-2 is valid (all ages aggregated)
+            df = df[df["YearOfBirth"] <= 2020]
+            # Filter to only YOB=-2 in MC mode (all ages aggregated)
+            df = df[df["YearOfBirth"] == -2]
+            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to only YOB=-2 (all ages aggregated): {len(df)} rows")
+        else:
+            df = df[df["YearOfBirth"] <= 2020]
+        
+        # Filter to start from enrollment date
+        if MONTE_CARLO_MODE:
+            # In MC mode, all iterations use enrollment date 2022-06
+            enrollment_date_str = "2022-06"
+            enrollment_date = pd.to_datetime(enrollment_date_str + '-1', format='%G-%V-%u', errors='coerce')
+            df = df[df["DateDied"] >= enrollment_date]
+            dual_print(f"[DEBUG] Monte Carlo mode: Using enrollment date {enrollment_date.strftime('%m/%d/%Y')} (2022-06) for iteration {sh}")
+            dual_print(f"[DEBUG] Filtered to start from enrollment date: {len(df)} rows")
+        elif "_" in sh:
+            # Normal mode: parse enrollment date from sheet name (format: YYYY_WW)
             year_str, week_str = sh.split("_")
             enrollment_year = int(year_str)
             enrollment_week = int(week_str)
@@ -3381,26 +3420,36 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 except Exception:
                     pass
         
-        # Apply debug age filter
-        if YEAR_RANGE:
+        # Apply debug age filter (skip in MC mode since YearOfBirth=-2 is always used)
+        if YEAR_RANGE and not MONTE_CARLO_MODE:
             start_year, end_year = YEAR_RANGE
             df = df[(df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year)]
             dual_print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
         
         # Apply sheet-specific dose filtering
-        dose_pairs = get_dose_pairs(sh)
-        max_dose = max(max(pair) for pair in dose_pairs)
-        valid_doses = list(range(max_dose + 1))  # Include all doses from 0 to max_dose
-        df = df[df["Dose"].isin(valid_doses)]
-        dual_print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
+        if MONTE_CARLO_MODE:
+            # In MC mode, use 2022-06 dose pairs and limit to doses 0-3
+            dose_pairs = get_dose_pairs("2022_06")
+            max_dose = 3  # MC mode uses max_dose=3
+            valid_doses = [0, 1, 2, 3]
+            df = df[df["Dose"].isin(valid_doses)]
+            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
+        else:
+            dose_pairs = get_dose_pairs(sh)
+            max_dose = max(max(pair) for pair in dose_pairs)
+            valid_doses = list(range(max_dose + 1))  # Include all doses from 0 to max_dose
+            df = df[df["Dose"].isin(valid_doses)]
+            dual_print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
         
         # Aggregate across sexes for each dose/date/age combination
         # Optionally bucket YearOfBirth into AGE_RANGE-year bins (e.g., 10 -> 1920, 1930, ...)
-        try:
-            if int(AGE_RANGE) and int(AGE_RANGE) > 1:
-                df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
-        except Exception:
-            pass
+        # Skip AGE_RANGE bucketing in MC mode to preserve YOB=-2
+        if not MONTE_CARLO_MODE:
+            try:
+                if int(AGE_RANGE) and int(AGE_RANGE) > 1:
+                    df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
+            except Exception:
+                pass
         df = df.groupby(["YearOfBirth", "Dose", "DateDied"]).agg({
             "ISOweekDied": "first",
             "Alive": "sum",
@@ -3428,6 +3477,140 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #             print(f"  Age {yob}, Dose {dose}:")
         #             print(f"    Original MR range: {mr_orig.min():.6f} to {mr_orig.max():.6f}")
         #             print(f"    Smoothed MR range: {mr_smooth.min():.6f} to {mr_smooth.max():.6f}")
+        
+        # Monte Carlo mode: simplified processing path (skip SA mode and dynamic slopes)
+        if MONTE_CARLO_MODE:
+            # MC mode: skip SA mode and dynamic slope calculation, go directly to normalization
+            # Remove legacy slope-adjusted columns and scale factors; keep raw MR only
+            df["slope"] = 0.0
+            df["scale_factor"] = 1.0
+            df["MR_adj"] = df["MR"]
+            
+            # Apply discrete cumulative-hazard transform for mathematical exactness
+            # Apply Slope6 normalization: Force linear mode for MC (all YOB=-2)
+            effective_sheet_name_for_processing = "2022_06"
+            df["sheet_name"] = effective_sheet_name_for_processing
+            
+            # Compute Slope6 normalization parameters for this sheet (force linear mode)
+            slope6_params = compute_slope6_normalization(df, baseline_window, effective_sheet_name_for_processing, dual_print, force_linear_mode=True)
+            
+            # Persist normalization parameters
+            for (yob_k, dose_k), params in slope6_params.items():
+                try:
+                    if isinstance(params, dict):
+                        slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = params
+                    else:
+                        slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = {
+                            "mode": "none",
+                            "a": 0.0,
+                            "b": 0.0,
+                            "c": 0.0,
+                            "t_mean": 0.0,
+                            "tau": None
+                        }
+                except Exception:
+                    if isinstance(params, dict):
+                        slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = params
+                    else:
+                        slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = {
+                            "mode": "none",
+                            "a": 0.0,
+                            "b": 0.0,
+                            "c": 0.0,
+                            "t_mean": 0.0,
+                            "tau": None
+                        }
+            
+            # Note: Do NOT modify raw MR. Normalization is applied later at the hazard level.
+            mr_used = df["MR"]
+            
+            # Clip to avoid log(0) and ensure numerical stability
+            df["hazard_raw"] = hazard_from_mr_improved(np.clip(mr_used, 0.0, 0.999))
+            # Initialize adjusted hazard equal to raw
+            df["hazard_adj"] = df["hazard_raw"]
+            
+            # Apply Slope6 normalization at hazard level using stored parameters
+            for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+                params = slope6_params.get((yob, dose), {})
+                if not isinstance(params, dict):
+                    continue
+                mode = params.get("mode", "none")
+                if mode == "linear":
+                    # Linear normalization: h_adj = h_raw * exp(-b * (t - t_mean))
+                    a = params.get("a", 0.0)
+                    b = params.get("b", 0.0)
+                    t_mean = params.get("t_mean", 0.0)
+                    if np.isfinite(b) and np.abs(b) > EPS:
+                        g_sorted = g.sort_values("DateDied").copy()
+                        t_vals = g_sorted["t"].values
+                        # Apply linear normalization: exp(-b * (t - t_mean))
+                        norm_factor = safe_exp(-b * (t_vals - t_mean))
+                        df.loc[g_sorted.index, "hazard_adj"] = g_sorted["hazard_raw"].values * norm_factor
+                elif mode == "slope8":
+                    # Should not happen in MC mode, but handle gracefully
+                    C = params.get("C", 0.0)
+                    ka = params.get("ka", 0.0)
+                    kb = params.get("kb", 0.0)
+                    tau = params.get("tau", None)
+                    if tau is not None and np.isfinite(tau) and tau > EPS:
+                        g_sorted = g.sort_values("DateDied").copy()
+                        s_vals = g_sorted["t"].values
+                        # Apply slope8 normalization
+                        norm_factor = safe_exp(-kb * s_vals - (ka - kb) * tau * (1.0 - safe_exp(-s_vals / tau)))
+                        df.loc[g_sorted.index, "hazard_adj"] = g_sorted["hazard_raw"].values * norm_factor
+            
+            # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
+            df["hazard_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["hazard_adj"], 0.0)
+            df["CH"] = df.groupby(["YearOfBirth", "Dose"])["hazard_eff"].cumsum()
+            df["CH_actual"] = df.groupby(["YearOfBirth", "Dose"])["hazard_eff"].cumsum()
+            df["cumPT"] = df.groupby(["YearOfBirth", "Dose"])["PT"].cumsum()
+            df["cumD_adj"] = df["CH"] * df["cumPT"]
+            df["cumD_unadj"] = df.groupby(["YearOfBirth", "Dose"])["Dead"].cumsum()
+            
+            # Build KCOR rows using shared function
+            out_sh = build_kcor_rows(df, effective_sheet_name_for_processing, dual_print, slope6_params_map)
+            # Compute KCOR_ns and merge into output
+            kcor_ns = build_kcor_ns_rows(df, effective_sheet_name_for_processing)
+            if not kcor_ns.empty and not out_sh.empty:
+                out_sh = pd.merge(
+                    out_sh,
+                    kcor_ns,
+                    on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
+                    how="left"
+                )
+            all_out.append(out_sh)
+            
+            # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
+            if MONTE_CARLO_MODE:
+                out_sh_copy = out_sh.copy()
+                out_sh_copy["Date"] = pd.to_datetime(out_sh_copy["Date"])
+                target_date = pd.to_datetime("2022-12-31")
+                if not out_sh_copy.empty:
+                    out_sh_2022 = out_sh_copy[out_sh_copy["Date"].dt.year <= 2023]
+                    if not out_sh_2022.empty:
+                        diffs = (out_sh_2022["Date"] - target_date).abs()
+                        idx_closest = diffs.idxmin()
+                        closest_date = out_sh_2022.loc[idx_closest, "Date"]
+                        closest_data = out_sh_2022[out_sh_2022["Date"] == closest_date]
+                        for _, row in closest_data.iterrows():
+                            mc_summary_data.append({
+                                "Iteration": int(sh) if sh.isdigit() else sh,
+                                "Dose_num": row["Dose_num"],
+                                "Dose_den": row["Dose_den"],
+                                "YearOfBirth": row["YearOfBirth"],
+                                "Date": row["Date"],
+                                "KCOR": row["KCOR"],
+                                "CI_lower": row.get("CI_lower", np.nan),
+                                "CI_upper": row.get("CI_upper", np.nan)
+                            })
+            
+            # Collect per-pair deaths details for new output sheet
+            pair_details = build_kcor_o_deaths_details(df, effective_sheet_name_for_processing)
+            if not pair_details.empty:
+                pair_deaths_all.append(pair_details)
+            
+            # Continue to next sheet in MC mode
+            continue
         
         # SA: iterate slope ranges if provided; else compute once
         sa_mode = _is_sa_mode()
@@ -3601,20 +3784,24 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Note: baseline_window (fit window) was selected globally before processing sheets
         
         # Add sheet_name to df for compute_slope6_normalization
-        df["sheet_name"] = sh
+        # In MC mode, use "2022_06" as the enrollment date, not the iteration number
+        effective_sheet_name_for_processing = "2022_06" if MONTE_CARLO_MODE else sh
+        df["sheet_name"] = effective_sheet_name_for_processing
         
         # Compute Slope6 normalization parameters for this sheet
-        slope6_params = compute_slope6_normalization(df, baseline_window, sh, dual_print)
+        # In MC mode, force linear mode (skip slope8 attempts)
+        slope6_params = compute_slope6_normalization(df, baseline_window, effective_sheet_name_for_processing, dual_print, force_linear_mode=MONTE_CARLO_MODE)
         
         # Persist normalization parameters (dict with mode, a, b, c, t_mean, tau) for this sheet for later summary printing
+        # Use effective_sheet_name_for_processing (2022_06 in MC mode) for consistency
         for (yob_k, dose_k), params in slope6_params.items():
             try:
                 # Store params dict
                 if isinstance(params, dict):
-                    slope6_params_map[(sh, int(yob_k), int(dose_k))] = params
+                    slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = params
                 else:
                     # Legacy format: shouldn't happen with new code, but be safe
-                    slope6_params_map[(sh, int(yob_k), int(dose_k))] = {
+                    slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = {
                         "mode": "none",
                         "a": 0.0,
                         "b": 0.0,
@@ -3624,9 +3811,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     }
             except Exception:
                 if isinstance(params, dict):
-                    slope6_params_map[(sh, yob_k, dose_k)] = params
+                    slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = params
                 else:
-                    slope6_params_map[(sh, yob_k, dose_k)] = {
+                    slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = {
                         "mode": "none",
                         "a": 0.0,
                         "b": 0.0,
@@ -3995,9 +4182,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
 
-        out_sh = build_kcor_rows(df, sh, dual_print, slope6_params_map)
+        # In MC mode, use "2022_06" as sheet_name for enrollment date processing
+        # but keep iteration number for output sheet naming
+        effective_sheet_name = "2022_06" if MONTE_CARLO_MODE else sh
+        out_sh = build_kcor_rows(df, effective_sheet_name, dual_print, slope6_params_map)
         # Compute KCOR_ns and merge into output
-        kcor_ns = build_kcor_ns_rows(df, sh)
+        # In MC mode, use effective_sheet_name (2022_06) for consistency
+        kcor_ns = build_kcor_ns_rows(df, effective_sheet_name)
         if not kcor_ns.empty and not out_sh.empty:
             out_sh = pd.merge(
                 out_sh,
@@ -4006,8 +4197,38 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 how="left"
             )
         all_out.append(out_sh)
+        
+        # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
+        if MONTE_CARLO_MODE:
+            # Get KCOR values at end of 2022 (2022-12-31) for this iteration
+            out_sh_copy = out_sh.copy()
+            out_sh_copy["Date"] = pd.to_datetime(out_sh_copy["Date"])
+            target_date = pd.to_datetime("2022-12-31")
+            # Find closest date to target
+            if not out_sh_copy.empty:
+                # Filter to dates in 2022 or early 2023
+                out_sh_2022 = out_sh_copy[out_sh_copy["Date"].dt.year <= 2023]
+                if not out_sh_2022.empty:
+                    diffs = (out_sh_2022["Date"] - target_date).abs()
+                    idx_closest = diffs.idxmin()
+                    closest_date = out_sh_2022.loc[idx_closest, "Date"]
+                    # Collect data for all dose pairs at closest date
+                    closest_data = out_sh_2022[out_sh_2022["Date"] == closest_date]
+                    for _, row in closest_data.iterrows():
+                        mc_summary_data.append({
+                            "Iteration": int(sh) if sh.isdigit() else sh,
+                            "Dose_num": row["Dose_num"],
+                            "Dose_den": row["Dose_den"],
+                            "YearOfBirth": row["YearOfBirth"],
+                            "Date": row["Date"],
+                            "KCOR": row["KCOR"],
+                            "CI_lower": row.get("CI_lower", np.nan),
+                            "CI_upper": row.get("CI_upper", np.nan)
+                        })
+        
         # Collect per-pair deaths details for new output sheet
-        pair_details = build_kcor_o_deaths_details(df, sh)
+        # In MC mode, use effective_sheet_name (2022_06) for consistency
+        pair_details = build_kcor_o_deaths_details(df, effective_sheet_name)
         if not pair_details.empty:
             pair_deaths_all.append(pair_details)
 
@@ -4516,17 +4737,64 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     retry_count = 0
     
     if not _is_sa_mode():
-        while retry_count < max_retries:
-            try:
-                # Write to /tmp (when available) to avoid slow/locked Windows target paths, then move atomically
-                tmp_dir = "/tmp" if os.path.isdir("/tmp") else os.path.dirname(out_path) or "."
-                # Ensure suffix remains .xlsx so engine selection works
-                base_no_ext, _ = os.path.splitext(os.path.basename(out_path))
-                tmp_base = base_no_ext + ".tmp.xlsx"
-                tmp_path = os.path.join(tmp_dir, tmp_base)
-                with pd.ExcelWriter(tmp_path, engine="openpyxl") as writer:
-                    # Add About sheet first
-                    about_data = {
+        if MONTE_CARLO_MODE:
+            # MC mode: write one sheet per iteration
+            while retry_count < max_retries:
+                try:
+                    tmp_dir = "/tmp" if os.path.isdir("/tmp") else os.path.dirname(out_path) or "."
+                    base_no_ext, _ = os.path.splitext(os.path.basename(out_path))
+                    tmp_base = base_no_ext + ".tmp.xlsx"
+                    tmp_path = os.path.join(tmp_dir, tmp_base)
+                    with pd.ExcelWriter(tmp_path, engine="openpyxl") as writer:
+                        # Write each iteration as a separate sheet
+                        for i, iteration_sheet in enumerate(sheets_to_process):
+                            iteration_data = all_out[i] if i < len(all_out) else pd.DataFrame()
+                            if not iteration_data.empty:
+                                # Drop deprecated columns
+                                drop_cols = [
+                                    "MR_adj_num","MR_adj_den",
+                                    "CH_actual_num","CH_actual_den",
+                                    "slope_num","slope_den",
+                                    "scale_factor_num","scale_factor_den",
+                                    "MR_smooth_num","MR_smooth_den"
+                                ]
+                                iteration_data_clean = iteration_data.copy()
+                                for c in drop_cols:
+                                    if c in iteration_data_clean.columns:
+                                        iteration_data_clean.drop(columns=[c], inplace=True)
+                                iteration_data_clean["Date"] = iteration_data_clean["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                                # Use iteration number as sheet name
+                                sheet_name = str(iteration_sheet)
+                                iteration_data_clean.to_excel(writer, index=False, sheet_name=sheet_name)
+                                dual_print(f"[MC] Wrote iteration {sheet_name} to sheet '{sheet_name}' ({len(iteration_data_clean)} rows)")
+                    # Move temp file to final location
+                    shutil.move(tmp_path, out_path)
+                    dual_print(f"[MC] Wrote Monte Carlo output to {out_path}")
+                    break
+                except Exception as e:
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        dual_print(f"❌ Failed to write MC output after {max_retries} retries: {e}")
+                        raise
+                    import time
+                    time.sleep(0.5)
+            
+            # Create MC summary
+            if mc_summary_data:
+                create_mc_summary(mc_summary_data, dual_print)
+        else:
+            # Normal mode: write combined output
+            while retry_count < max_retries:
+                try:
+                    # Write to /tmp (when available) to avoid slow/locked Windows target paths, then move atomically
+                    tmp_dir = "/tmp" if os.path.isdir("/tmp") else os.path.dirname(out_path) or "."
+                    # Ensure suffix remains .xlsx so engine selection works
+                    base_no_ext, _ = os.path.splitext(os.path.basename(out_path))
+                    tmp_base = base_no_ext + ".tmp.xlsx"
+                    tmp_path = os.path.join(tmp_dir, tmp_base)
+                    with pd.ExcelWriter(tmp_path, engine="openpyxl") as writer:
+                        # Add About sheet first
+                        about_data = {
                     "Field": [
                         "KCOR Version",
                         "Analysis Date", 
@@ -4819,40 +5087,40 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             dual_print("[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)")
                     except Exception as _e_mfg:
                         dual_print(f"[WARN] Failed to add MFG M/P comparisons: {_e_mfg}")
-                
-                # Move temp file into place (atomic on POSIX; best-effort on Windows)
-                try:
-                    os.replace(tmp_path, out_path)
-                except OSError as e:
-                    # Handle cross-device move (EXDEV) by copy + replace
-                    if getattr(e, 'errno', None) == 18 or 'cross-device' in str(e).lower():
-                        shutil.copyfile(tmp_path, out_path)
-                        os.remove(tmp_path)
-                    else:
-                        # If target is open in Excel, replacement will fail with PermissionError on Windows
-                        raise
-                dual_print(f"[Done] Wrote {len(combined)} rows to {out_path} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                break
-                
-            except PermissionError as e:
-                retry_count += 1
-                if retry_count < max_retries:
-                    print(f"\n❌ Error: Cannot access output file '{out_path}'")
-                    print("   This usually means the file is open in Excel or another program.")
-                    print(f"   Attempt {retry_count}/{max_retries}")
                     
-                    response = input("   Please close the file and press Enter to retry (or 'q' to quit): ").strip().lower()
-                    if response == 'q':
-                        print("   Exiting...")
+                    # Move temp file into place (atomic on POSIX; best-effort on Windows)
+                    try:
+                        os.replace(tmp_path, out_path)
+                    except OSError as e:
+                        # Handle cross-device move (EXDEV) by copy + replace
+                        if getattr(e, 'errno', None) == 18 or 'cross-device' in str(e).lower():
+                            shutil.copyfile(tmp_path, out_path)
+                            os.remove(tmp_path)
+                        else:
+                            # If target is open in Excel, replacement will fail with PermissionError on Windows
+                            raise
+                    dual_print(f"[Done] Wrote {len(combined)} rows to {out_path} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                    break
+                    
+                except PermissionError as e:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        print(f"\n❌ Error: Cannot access output file '{out_path}'")
+                        print("   This usually means the file is open in Excel or another program.")
+                        print(f"   Attempt {retry_count}/{max_retries}")
+                        
+                        response = input("   Please close the file and press Enter to retry (or 'q' to quit): ").strip().lower()
+                        if response == 'q':
+                            print("   Exiting...")
+                            return combined
+                        print("   Retrying...")
+                    else:
+                        print(f"\n❌ Error: Failed to access '{out_path}' after {max_retries} attempts.")
+                        print("   Please ensure the file is not open in Excel or another program.")
                         return combined
-                    print("   Retrying...")
-                else:
-                    print(f"\n❌ Error: Failed to access '{out_path}' after {max_retries} attempts.")
-                    print("   Please ensure the file is not open in Excel or another program.")
+                except Exception as e:
+                    print(f"\n❌ Unexpected error writing main analysis file: {e}")
                     return combined
-            except Exception as e:
-                print(f"\n❌ Unexpected error writing main analysis file: {e}")
-                return combined
     
     # In SA mode, write a compact SA workbook instead of full summary; else create normal summary file
     if _is_sa_mode():
@@ -5085,6 +5353,94 @@ def create_summary_file(combined_data, out_path, dual_print):
             return None
     
     return None
+
+def create_mc_summary(mc_summary_data, dual_print):
+    """Create Monte Carlo summary statistics at end of 2022.
+    
+    Args:
+        mc_summary_data: List of dicts with keys: Iteration, Dose_num, Dose_den, YearOfBirth, Date, KCOR, CI_lower, CI_upper
+        dual_print: Function to print to both console and log file
+    """
+    if not mc_summary_data:
+        dual_print("[MC Summary] No Monte Carlo data available for summary")
+        return
+    
+    dual_print("\n" + "="*80)
+    dual_print("MONTE CARLO SUMMARY - KCOR VALUES AT END OF 2022")
+    dual_print("="*80)
+    
+    df_mc = pd.DataFrame(mc_summary_data)
+    
+    # Filter to end of 2022 (2022-12-31 or closest date)
+    df_mc["Date"] = pd.to_datetime(df_mc["Date"])
+    target_date = pd.to_datetime("2022-12-31")
+    
+    # Get dose pairs
+    dose_pairs = get_dose_pairs("2022_06")
+    
+    # For each dose pair, compute statistics across iterations
+    for dose_num, dose_den in dose_pairs:
+        dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
+        dual_print("-" * 60)
+        
+        # Filter to this dose pair
+        pair_data = df_mc[
+            (df_mc["Dose_num"] == dose_num) & 
+            (df_mc["Dose_den"] == dose_den)
+        ]
+        
+        if pair_data.empty:
+            dual_print("  No data available for this dose combination")
+            continue
+        
+        # Filter to YearOfBirth=-2 (all ages) if available, otherwise use all ages
+        all_ages_data = pair_data[pair_data["YearOfBirth"] == -2]
+        if all_ages_data.empty:
+            # Fallback to any available YearOfBirth
+            all_ages_data = pair_data
+        
+        if all_ages_data.empty:
+            dual_print("  No data available for all-ages cohort")
+            continue
+        
+        # Extract KCOR values (remove NaN)
+        kcor_values = all_ages_data["KCOR"].dropna()
+        
+        if len(kcor_values) == 0:
+            dual_print("  No valid KCOR values available")
+            continue
+        
+        # Count actual number of unique iterations (not just number of KCOR values)
+        # This handles cases where there might be multiple entries per iteration
+        unique_iterations = all_ages_data["Iteration"].nunique()
+        num_iterations = unique_iterations if unique_iterations > 0 else len(kcor_values)
+        
+        # Compute statistics
+        mean_kcor = kcor_values.mean()
+        median_kcor = kcor_values.median()
+        std_kcor = kcor_values.std()
+        min_kcor = kcor_values.min()
+        max_kcor = kcor_values.max()
+        
+        # Percentiles for 95% CI equivalent
+        p2_5 = kcor_values.quantile(0.025)
+        p97_5 = kcor_values.quantile(0.975)
+        p25 = kcor_values.quantile(0.25)
+        p75 = kcor_values.quantile(0.75)
+        
+        dual_print(f"  Iterations: {num_iterations}")
+        dual_print(f"  Mean KCOR:   {mean_kcor:.4f}")
+        dual_print(f"  Median KCOR: {median_kcor:.4f}")
+        dual_print(f"  Std Dev:     {std_kcor:.4f}")
+        dual_print(f"  Min:         {min_kcor:.4f}")
+        dual_print(f"  Max:         {max_kcor:.4f}")
+        dual_print(f"  2.5th %ile:  {p2_5:.4f}")
+        dual_print(f"  25th %ile:   {p25:.4f}")
+        dual_print(f"  75th %ile:   {p75:.4f}")
+        dual_print(f"  97.5th %ile: {p97_5:.4f}")
+        dual_print(f"  95% Range:   [{p2_5:.4f}, {p97_5:.4f}]")
+    
+    dual_print("\n" + "="*80)
 
 def main():
     if len(sys.argv) < 4 or len(sys.argv) > 5:

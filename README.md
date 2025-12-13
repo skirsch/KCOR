@@ -1,4 +1,4 @@
-# KCOR v5.3 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v5.4 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -1156,6 +1156,22 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Version history
+
+### 🆕 Version 5.4 (2025-01-XX)
+
+#### Major Improvements
+- **Monte Carlo Bootstrap Sampling Support**: Added Monte Carlo mode for bootstrap sampling analysis
+- **MC Processing**: Process Monte Carlo iterations (one sheet per iteration) from `KCOR_CMR_MC.xlsx`
+- **MC Summary Statistics**: Automatically computes and reports summary statistics at end of 2022 for all dose pairs
+- **Makefile Integration**: `make monte_carlo` now builds both CMR_MC and KCOR_MC outputs in sequence
+
+#### Monte Carlo Mode Details
+- **Input**: `KCOR_CMR_MC.xlsx` file with one sheet per iteration (numbered "1", "2", "3", etc.)
+- **Enrollment Date**: All MC iterations use enrollment date "2022-06" (2022-W06)
+- **Dose Processing**: Processes doses 0-3 (max_dose=3) with dose pairs: (1,0), (2,0), (2,1), (3,2), (3,1), (3,0)
+- **Output**: `KCOR_MC.xlsx` with one sheet per iteration, mirroring input structure
+- **Summary**: End-of-2022 summary statistics (mean, median, percentiles, min/max, std dev) for each dose pair
+- **Usage**: Run `make monte_carlo` or set `MONTE_CARLO=1` environment variable when calling `KCOR.py`
 
 ### 🆕 Version 5.3 (2025-01-XX)
 
