@@ -577,53 +577,17 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         if monte_carlo_mode and iteration is not None:
             print(f"[Iteration {iteration}] {msg}", flush=True)
     
-    # #region agent log
-    import json
-    import os
-    import time
-    log_path = os.path.join(os.path.dirname(__file__), '..', '.cursor', 'debug.log')
-    def log_debug(session_id, run_id, hypothesis_id, location, message, data):
-        try:
-            log_entry = {
-                'sessionId': session_id,
-                'runId': run_id,
-                'hypothesisId': hypothesis_id,
-                'location': location,
-                'message': message,
-                'data': data,
-                'timestamp': int(time.time() * 1000)
-            }
-            with open(log_path, 'a') as f:
-                f.write(json.dumps(log_entry) + '\n')
-        except:
-            pass
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_enrollment_data START', {'iteration': iteration, 'a_copy_len': len(a_copy)})
-    # #endregion
-    
     _progress("Starting process_enrollment_data...")
     
     # Assign dose group as of enrollment date (highest dose <= enrollment date) - VECTORIZED VERSION
     _progress("Computing reference dates...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before computing reference dates', {'iteration': iteration})
-    # #endregion
     # For people who died before enrollment, use their death date instead of enrollment date
     reference_dates = a_copy['DateOfDeath'].where(
         a_copy['DateOfDeath'].notna() & (a_copy['DateOfDeath'] < enrollment_date),
         enrollment_date
     )
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After computing reference dates', {'iteration': iteration})
-    # #endregion
     
     _progress("Freezing cohort moves...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before freezing cohort moves', {'iteration': iteration})
-    # #endregion
     # Optionally freeze cohort moves after enrollment by zeroing post-enrollment dose dates
     # Set env BYPASS_FREEZE=1 to treat entire dataset as one variable cohort (no truncation)
     a_var = a_copy.copy()
@@ -632,16 +596,8 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
             # Freeze transitions on or after enrollment Monday to keep fixed cohorts post-enrollment
             a_var.loc[a_var[_col] >= enrollment_date, _col] = pd.NaT
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After freezing cohort moves', {'iteration': iteration})
-    # #endregion
 
     _progress("Assigning dose groups...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before assigning dose groups', {'iteration': iteration})
-    # #endregion
     # Create boolean masks for each dose being valid (not null and <= reference_date) on the truncated dates
     dose1_valid = a_var['Date_FirstDose'].notna() & (a_var['Date_FirstDose'] <= reference_dates)
     dose2_valid = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] <= reference_dates)
@@ -664,23 +620,10 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     if max_dose < 4:
         a_copy.loc[a_copy['dose_group'] > max_dose, 'dose_group'] = max_dose
     
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After assigning dose groups', {'iteration': iteration})
-    # #endregion
-    
     _progress("Computing population base...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before computing population base', {'iteration': iteration})
-    # #endregion
     # Compute population base: count of people in each (born, sex, dose_group)
     # Freeze dose at enrollment for population base and exclude those who died before enrollment
     alive_at_enroll = a_copy[(a_copy['DateOfDeath'].isna()) | (a_copy['DateOfDeath'] >= enrollment_date)].copy()
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After computing population base', {'iteration': iteration})
-    # #endregion
     if monte_carlo_mode:
         # For Monte Carlo: aggregate by Dose only
         pop_base = alive_at_enroll.groupby(['dose_group']).size().reset_index(name='pop')
@@ -714,10 +657,6 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         a_copy.loc[a_copy['dose_at_death'] > max_dose, 'dose_at_death'] = max_dose
     
     _progress("Computing week range...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before computing week range', {'iteration': iteration})
-    # #endregion
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
     # Use all vaccination and death dates to get the full week range
     all_dates = pd.concat([
@@ -727,10 +666,6 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         a_copy['Date_FourthDose'],
         a_copy['DateOfDeath']
     ]).dropna()
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After pd.concat in week range', {'iteration': iteration, 'all_dates_len': len(all_dates)})
-    # #endregion
     min_week = all_dates.min().isocalendar().week
     min_year = all_dates.min().isocalendar().year
     max_week = all_dates.max().isocalendar().week
@@ -795,10 +730,6 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         a_copy.loc[a_copy['dose_at_week'] > max_dose, 'dose_at_week'] = max_dose
     
     _progress("Aggregating deaths...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before aggregating deaths', {'iteration': iteration})
-    # #endregion
     # Attribute all deaths by dose (enrollment dose for post-enrollment, dose at death for pre-enrollment)
     # For Monte Carlo mode: aggregate across YearOfBirth, Sex, DCCI early to reduce grid size
     if monte_carlo_mode:
@@ -847,10 +778,6 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         ]
     
     _progress("Building output grid...")
-    # #region agent log
-    if monte_carlo_mode and iteration is not None:
-        log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before building output grid', {'iteration': iteration})
-    # #endregion
     # Build output grid
     # For Monte Carlo mode: only (Week, Dose) - much smaller grid!
     # For normal mode: (Week, YearOfBirth, Sex, DCCI, Dose) - full grid
@@ -957,7 +884,24 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         # For Monte Carlo: all weeks are post-enrollment, simple cumulative deaths by Dose
         out = out.sort_values(['Dose', 'WeekIdx'])
         out['cumDead_total'] = out.groupby(['Dose'])['dead'].cumsum()
-        out['cumDead_prev'] = out.groupby(['Dose'])['dead'].cumsum().shift(fill_value=0)
+        # CRITICAL FIX: shift() must be applied WITHIN each group, not across the entire DataFrame
+        # The bug was: out.groupby(['Dose'])['dead'].cumsum().shift(fill_value=0)
+        # This shifts across all rows, pulling values from dose 0 into dose 1, etc.
+        # The fix: compute cumDead_prev separately for each dose group to ensure shift happens within group
+        # IMPORTANT: out is already sorted by ['Dose', 'WeekIdx'], so rows for each dose are contiguous and in order
+        out['cumDead_prev'] = 0
+        for d in range(max_dose + 1):
+            dose_mask = out['Dose'] == d
+            if dose_mask.any():
+                # Get the dead values for this dose group (already sorted by WeekIdx)
+                dose_indices = out.index[dose_mask].tolist()
+                dead_vals = out.loc[dose_indices, 'dead'].values
+                # Compute cumulative sum
+                cumsum_vals = np.cumsum(dead_vals)
+                # Shift by 1, filling first value with 0 (cumDead_prev = deaths from previous weeks only)
+                shifted_vals = np.concatenate([[0], cumsum_vals[:-1]])
+                # Assign back using the same indices to ensure alignment
+                out.loc[dose_indices, 'cumDead_prev'] = shifted_vals
     else:
         # For fixed cohorts, we only count deaths AFTER enrollment
         # Compute cumulative deaths per dose group, but reset at enrollment
@@ -1002,10 +946,10 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         for d in range(max_dose + 1):
             dose_mask = out['Dose'] == d
             if dose_mask.any():
-                out.loc[dose_mask, 'Alive'] = np.maximum(
-                    out.loc[dose_mask, f'pop_dose{d}'].values - out.loc[dose_mask, 'cumDead_prev'].values,
-                    0
-                ).astype(int)
+                pop_dose_vals = out.loc[dose_mask, f'pop_dose{d}'].values
+                cumDead_prev_vals = out.loc[dose_mask, 'cumDead_prev'].values
+                alive_vals = np.maximum(pop_dose_vals - cumDead_prev_vals, 0).astype(int)
+                out.loc[dose_mask, 'Alive'] = alive_vals
     else:
         # -------- Pre-enrollment weeks: Variable cohorts (track transitions) --------
         # For pre-enrollment weeks, compute Alive using transition-based approach
@@ -1182,42 +1126,12 @@ def process_monte_carlo_iteration(args):
     
     Note: Accesses _master_monte_carlo_global via fork() copy-on-write (no pickling!)
     """
-    import json
-    import os
-    import time
-    log_path = os.path.join(os.path.dirname(__file__), '..', '.cursor', 'debug.log')
-    def log_debug(session_id, run_id, hypothesis_id, location, message, data):
-        try:
-            log_entry = {
-                'sessionId': session_id,
-                'runId': run_id,
-                'hypothesisId': hypothesis_id,
-                'location': location,
-                'message': message,
-                'data': data,
-                'timestamp': int(time.time() * 1000)
-            }
-            with open(log_path, 'a') as f:
-                f.write(json.dumps(log_entry) + '\n')
-        except:
-            pass
-    
     iteration, master_count, enrollment_date, enroll_week_str, enroll_date_str, temp_dir = args
-    # #region agent log
-    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_monte_carlo_iteration START', {'iteration': iteration, 'pid': os.getpid()})
-    # #endregion
     
     # Access module-level variable via fork() copy-on-write (no pickling!)
     master_monte_carlo = _master_monte_carlo_global
     if master_monte_carlo is None:
-        # #region agent log
-        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'master_monte_carlo is None', {'iteration': iteration})
-        # #endregion
         raise RuntimeError("_master_monte_carlo_global is None - fork() may not have worked correctly")
-    
-    # #region agent log
-    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'master_monte_carlo accessed', {'iteration': iteration, 'master_count': master_count, 'master_len': len(master_monte_carlo) if master_monte_carlo is not None else 0})
-    # #endregion
     
     import datetime
     import pandas as pd
@@ -1229,20 +1143,11 @@ def process_monte_carlo_iteration(args):
         # All other iterations sample WITH REPLACEMENT from master_monte_carlo
         if iteration == 1:
             print(f"[Iteration {iteration}] Using full dataset without sampling ({len(master_monte_carlo)} records)...", flush=True)
-            # #region agent log
-            log_debug('debug-session', 'run1', 'C', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Using full dataset (iteration 1)', {'iteration': iteration, 'master_len': len(master_monte_carlo)})
-            # #endregion
             a_copy = master_monte_carlo.copy()
         else:
             # Sample WITH REPLACEMENT from master_monte_carlo
             print(f"[Iteration {iteration}] Sampling {master_count} records...", flush=True)
-            # #region agent log
-            log_debug('debug-session', 'run1', 'C', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before sampling', {'iteration': iteration, 'master_count': master_count})
-            # #endregion
             sampled_records = master_monte_carlo.sample(n=master_count, replace=True, random_state=iteration)
-            # #region agent log
-            log_debug('debug-session', 'run1', 'C', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After sampling', {'iteration': iteration, 'sampled_len': len(sampled_records)})
-            # #endregion
             # Use sampled records as a_copy for this iteration
             a_copy = sampled_records.copy()
         
@@ -1250,27 +1155,15 @@ def process_monte_carlo_iteration(args):
         # Process using shared helper function
         # For Monte Carlo mode, limit to dose 3 (treat dose 3 as "3 or more doses")
         try:
-            # #region agent log
-            log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before process_enrollment_data', {'iteration': iteration, 'a_copy_len': len(a_copy)})
-            # #endregion
             out, alive_at_enroll, all_weeks, week_index, pop_base = process_enrollment_data(
                 a_copy, enrollment_date, enroll_week_str, max_dose=3, monte_carlo_mode=True, iteration=iteration
             )
-            # #region agent log
-            log_debug('debug-session', 'run1', 'D', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After process_enrollment_data', {'iteration': iteration, 'out_len': len(out)})
-            # #endregion
             print(f"[Iteration {iteration}] Enrollment data processed (output: {len(out)} rows)", flush=True)
         except Exception as e:
-            # #region agent log
-            log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception in process_enrollment_data', {'iteration': iteration, 'error': str(e), 'error_type': type(e).__name__})
-            # #endregion
             print(f"[Iteration {iteration}] ERROR in process_enrollment_data: {e}", flush=True)
             raise
         
         print(f"[Iteration {iteration}] Aggregating results...", flush=True)
-        # #region agent log
-        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before aggregation', {'iteration': iteration})
-        # #endregion
         
         # Monte Carlo mode: Filter to YearOfBirth=-2 (all ages) and simplify columns
         # Filter to all-ages cohort only (YearOfBirth == -2)
@@ -1284,42 +1177,20 @@ def process_monte_carlo_iteration(args):
         # Select only required columns
         out_mc_final = out_mc_agg[['ISOweekDied', 'Dose', 'DateDied', 'Dead', 'Alive']].copy()
         
-        # #region agent log
-        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After aggregation', {'iteration': iteration, 'out_mc_final_len': len(out_mc_final)})
-        # #endregion
-        
         print(f"[Iteration {iteration}] Writing CSV file...", flush=True)
         # Write to temporary CSV file instead of returning DataFrame
         temp_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.csv")
-        # #region agent log
-        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before CSV write', {'iteration': iteration, 'temp_file': temp_file})
-        # #endregion
         out_mc_final.to_csv(temp_file, index=False)
-        # #region agent log
-        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After CSV write', {'iteration': iteration})
-        # #endregion
         
         print(f"[Iteration {iteration}] Writing marker file...", flush=True)
         # Write completion marker file (avoids returning values through multiprocessing queue)
         marker_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.done")
-        # #region agent log
-        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before marker write', {'iteration': iteration, 'marker_file': marker_file})
-        # #endregion
         with open(marker_file, 'w') as f:
             f.write(temp_file)
-        # #region agent log
-        log_debug('debug-session', 'run1', 'E', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After marker write', {'iteration': iteration})
-        # #endregion
         
         print(f"[Iteration {iteration}] Completed at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
-        # #region agent log
-        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_monte_carlo_iteration SUCCESS', {'iteration': iteration})
-        # #endregion
     except Exception as e:
         import traceback
-        # #region agent log
-        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'process_monte_carlo_iteration EXCEPTION', {'iteration': iteration, 'error': str(e), 'error_type': type(e).__name__, 'traceback': traceback.format_exc()})
-        # #endregion
         print(f"[Iteration {iteration}] ERROR: {e}")
         print(f"[Iteration {iteration}] Traceback: {traceback.format_exc()}")
         raise
@@ -1366,36 +1237,11 @@ if MONTE_CARLO_MODE:
     print(f"  Using multiprocessing with 'fork' - DataFrame accessed via copy-on-write (no pickling!)", flush=True)
     start_time = datetime.datetime.now()
     
-    # #region agent log
-    import json
-    log_path = os.path.join(os.path.dirname(__file__), '..', '.cursor', 'debug.log')
-    def log_debug(session_id, run_id, hypothesis_id, location, message, data):
-        try:
-            log_entry = {
-                'sessionId': session_id,
-                'runId': run_id,
-                'hypothesisId': hypothesis_id,
-                'location': location,
-                'message': message,
-                'data': data,
-                'timestamp': int(__import__('time').time() * 1000)
-            }
-            with open(log_path, 'a') as f:
-                f.write(json.dumps(log_entry) + '\n')
-        except:
-            pass
-    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before creating pool', {'MC_ITERATIONS': MC_ITERATIONS, 'MC_THREADS': MC_THREADS})
-    # #endregion
-    
     # CRITICAL FIX: Use multiprocessing with 'fork' start method (Linux/WSL)
     # With fork(), child processes get copy-on-write access to parent's memory
     # We pass master_monte_carlo via partial/closure to avoid pickling
     temp_files = {}
     completed_count = 0
-    
-    # #region agent log
-    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before creating process pool', {'MC_ITERATIONS': MC_ITERATIONS, 'MC_THREADS': MC_THREADS})
-    # #endregion
     
     # Use 'fork' start method on Linux (copy-on-write, no pickling needed!)
     # On Windows this will fail, but user is on WSL/Linux
@@ -1408,26 +1254,12 @@ if MONTE_CARLO_MODE:
         ctx = get_context()
     
     with ctx.Pool(processes=MC_THREADS) as pool:
-        # #region agent log
-        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Process pool created', {'pool_size': MC_THREADS, 'start_method': ctx.get_start_method()})
-        # #endregion
-        
         # Submit all tasks - master_monte_carlo accessed via module-level variable (copy-on-write, no pickling!)
         async_results = []
         for args in iteration_args:
             iteration = args[0]
-            # #region agent log
-            log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before submitting task', {'iteration': iteration})
-            # #endregion
             async_result = pool.apply_async(process_monte_carlo_iteration, (args,))
             async_results.append((iteration, async_result))
-            # #region agent log
-            log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Task submitted', {'iteration': iteration, 'async_result_id': id(async_result)})
-            # #endregion
-        
-        # #region agent log
-        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'All tasks submitted', {'total_submitted': len(async_results)})
-        # #endregion
         
         # Wait for all tasks to complete (process results as they finish, not in order)
         remaining = dict(async_results)  # {iteration: async_result}
@@ -1435,54 +1267,26 @@ if MONTE_CARLO_MODE:
         last_completed_count = 0
         
         while remaining:
-            # #region agent log
-            log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Polling loop iteration', {'remaining_count': len(remaining), 'remaining_iterations': list(remaining.keys()), 'completed_count': completed_count})
-            # #endregion
-            
             # Check which tasks are ready (non-blocking check)
             ready_iterations = []
             import time as time_module
             for iteration, async_result in list(remaining.items()):
                 try:
-                    # #region agent log
-                    check_start = time_module.time()
-                    log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before checking ready()', {'iteration': iteration, 'timestamp': check_start})
-                    # #endregion
-                    # Check if ready() itself hangs - measure time taken
                     is_ready = async_result.ready()
-                    check_duration = time_module.time() - check_start
-                    # #region agent log
-                    log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After checking ready()', {'iteration': iteration, 'is_ready': is_ready, 'check_duration_ms': check_duration * 1000})
-                    # #endregion
-                    if check_duration > 0.5:
-                        # #region agent log
-                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'ready() call took too long - possible hang', {'iteration': iteration, 'duration_ms': check_duration * 1000})
-                        # #endregion
                     if is_ready:
                         ready_iterations.append(iteration)
                 except Exception as e:
-                    # #region agent log
-                    log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception checking ready()', {'iteration': iteration, 'error': str(e), 'error_type': type(e).__name__})
-                    # #endregion
+                    pass
             
             # Process ready tasks
             for iteration in ready_iterations:
                 async_result = remaining.pop(iteration)
                 try:
-                    # #region agent log
-                    log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before async_result.get()', {'iteration': iteration})
-                    # #endregion
                     # Get result (should be immediate since ready() returned True)
                     # Use timeout to detect if get() hangs (shouldn't happen if ready() is True, but be safe)
                     try:
                         async_result.get(timeout=5)  # Increased timeout to 5s to be safe
-                        # #region agent log
-                        log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After async_result.get()', {'iteration': iteration})
-                        # #endregion
                     except Exception as get_error:
-                        # #region agent log
-                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception in async_result.get()', {'iteration': iteration, 'error': str(get_error), 'error_type': type(get_error).__name__})
-                        # #endregion
                         # Even if get() fails, check if marker file exists (process might have completed)
                         marker_file = os.path.join(temp_dir, f"mc_iteration_{iteration}.done")
                         if os.path.exists(marker_file):
@@ -1523,59 +1327,21 @@ if MONTE_CARLO_MODE:
             # If no tasks are ready, wait a bit before checking again
             if remaining and not ready_iterations:
                 import time
-                # #region agent log
-                log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Before sleep(0.5)', {'remaining_count': len(remaining), 'remaining_iterations': list(remaining.keys())})
-                # #endregion
-                sleep_start = time.time()
                 time.sleep(0.5)  # Check every 0.5 seconds
-                sleep_duration = time.time() - sleep_start
-                # #region agent log
-                log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'After sleep(0.5)', {'sleep_duration_ms': sleep_duration * 1000, 'remaining_count': len(remaining)})
-                # #endregion
                 
                 # Warn if no progress for a while
                 time_since_progress = (datetime.datetime.now() - last_progress_time).total_seconds()
-                # #region agent log
-                log_debug('debug-session', 'run1', 'F', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'No ready tasks, waiting', {'time_since_progress': time_since_progress, 'remaining_iterations': list(remaining.keys())})
-                # #endregion
                 if time_since_progress > 300:  # 5 minutes with no progress
                     stuck_iterations = list(remaining.keys())
-                    # #region agent log
-                    log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'STUCK ITERATIONS DETECTED', {'time_since_progress': time_since_progress, 'stuck_iterations': stuck_iterations})
-                    # #endregion
                     print(f"  WARNING: No progress for {time_since_progress:.0f} seconds. Still waiting for iterations: {stuck_iterations}", flush=True)
                     
                     # After 10 minutes of no progress, terminate stuck processes and exit with error
                     if time_since_progress > 600:  # 10 minutes
                         print(f"  ERROR: Processes stuck for {time_since_progress:.0f} seconds. Terminating pool and exiting.", flush=True)
-                        # #region agent log
-                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'TERMINATING POOL DUE TO STUCK PROCESSES', {'time_since_progress': time_since_progress, 'stuck_iterations': stuck_iterations, 'completed_count': completed_count})
-                        # #endregion
                         # Break out of loop - pool will be terminated by context manager
                         break
                     
-                    # Check if processes are actually running or dead
-                    try:
-                        # Try to get process info from async_result if available
-                        for stuck_iter in stuck_iterations:
-                            stuck_async = remaining.get(stuck_iter)
-                            if stuck_async:
-                                # #region agent log
-                                log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Checking stuck process status', {'iteration': stuck_iter, 'has_async_result': stuck_async is not None, 'ready': stuck_async.ready() if hasattr(stuck_async, 'ready') else 'N/A'})
-                                # #endregion
-                    except Exception as e:
-                        # #region agent log
-                        log_debug('debug-session', 'run1', 'B', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Exception checking process status', {'error': str(e)})
-                        # #endregion
                     last_progress_time = datetime.datetime.now()  # Reset to avoid spam
-        
-        # #region agent log
-        log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'All tasks completed', {'completed_count': completed_count, 'total': MC_ITERATIONS, 'temp_files_count': len(temp_files)})
-        # #endregion
-    
-    # #region agent log
-    log_debug('debug-session', 'run1', 'A', f'KCOR_CMR.py:{__import__("inspect").currentframe().f_lineno}', 'Pool context exited', {'completed_count': completed_count, 'temp_files_count': len(temp_files)})
-    # #endregion
     
     end_time = datetime.datetime.now()
     elapsed = (end_time - start_time).total_seconds()
