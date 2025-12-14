@@ -5430,8 +5430,8 @@ def create_mc_summary(mc_summary_data, dual_print):
         all_ages_data_unique = all_ages_data_clean.groupby("Iteration").first().reset_index()
         all_ages_data_unique = all_ages_data_unique.sort_values("Iteration")
         
-        # Store KCOR values for statistics stage
-        kcor_values = all_ages_data_unique["KCOR"]
+        # Store KCOR values for statistics stage (convert to numpy array to avoid pandas reference issues)
+        kcor_values = all_ages_data_unique["KCOR"].values.copy()
         dose_combo_stats[(dose_num, dose_den)] = {
             "kcor_values": kcor_values,
             "num_iterations": len(all_ages_data_unique)
@@ -5461,18 +5461,21 @@ def create_mc_summary(mc_summary_data, dual_print):
         dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
         dual_print("-" * 60)
         
+        # Convert to pandas Series for statistics computation (kcor_values is numpy array)
+        kcor_series = pd.Series(kcor_values)
+        
         # Compute statistics
-        mean_kcor = kcor_values.mean()
-        median_kcor = kcor_values.median()
-        std_kcor = kcor_values.std()
-        min_kcor = kcor_values.min()
-        max_kcor = kcor_values.max()
+        mean_kcor = kcor_series.mean()
+        median_kcor = kcor_series.median()
+        std_kcor = kcor_series.std()
+        min_kcor = kcor_series.min()
+        max_kcor = kcor_series.max()
         
         # Percentiles for 95% CI equivalent
-        p2_5 = kcor_values.quantile(0.025)
-        p97_5 = kcor_values.quantile(0.975)
-        p25 = kcor_values.quantile(0.25)
-        p75 = kcor_values.quantile(0.75)
+        p2_5 = kcor_series.quantile(0.025)
+        p97_5 = kcor_series.quantile(0.975)
+        p25 = kcor_series.quantile(0.25)
+        p75 = kcor_series.quantile(0.75)
         
         dual_print(f"  Iterations: {num_iterations}")
         dual_print(f"  Mean KCOR:   {mean_kcor:.4f}")
