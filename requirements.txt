@@ -5,6 +5,7 @@ numpy>=1.20.0
 
 # Excel file handling
 openpyxl>=3.0.0
+xlsxwriter>=3.0.0
 
 # Statistical analysis
 statsmodels>=0.13.0

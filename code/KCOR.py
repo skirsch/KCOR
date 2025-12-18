@@ -4806,7 +4806,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     with pd.ExcelWriter(tmp_path, engine="openpyxl") as writer:
                         # Add About sheet first
                         about_data = {
-                    "Field": [
+                            "Field": [
                         "KCOR Version",
                         "Analysis Date", 
                         "Input File",
@@ -4933,171 +4933,171 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "",
                         "",
                         ""
-                    ]
-                    }
-                    # Write main data first to ensure at least one visible sheet exists
-                    # Drop deprecated/unused columns from dose_pairs before writing
-                    drop_cols = [
-                        "MR_adj_num","MR_adj_den",
-                        "CH_actual_num","CH_actual_den",
-                        "slope_num","slope_den",
-                        "scale_factor_num","scale_factor_den",
-                        "MR_smooth_num","MR_smooth_den"
-                    ]
-                    all_data = combined.copy()
-                    for c in drop_cols:
-                        if c in all_data.columns:
-                            all_data.drop(columns=[c], inplace=True)
-                    all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
-                    all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
+                            ]
+                        }
+                        # Write main data first to ensure at least one visible sheet exists
+                        # Drop deprecated/unused columns from dose_pairs before writing
+                        drop_cols = [
+                            "MR_adj_num","MR_adj_den",
+                            "CH_actual_num","CH_actual_den",
+                            "slope_num","slope_den",
+                            "scale_factor_num","scale_factor_den",
+                            "MR_smooth_num","MR_smooth_den"
+                        ]
+                        all_data = combined.copy()
+                        for c in drop_cols:
+                            if c in all_data.columns:
+                                all_data.drop(columns=[c], inplace=True)
+                        all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                        all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
-                    # Then write About and optional debug sheet
-                    # Ensure About 'Field' and 'Value' arrays are the same length
-                    # by constructing them explicitly and padding Values as needed
-                    fields = about_data["Field"]
-                    values = [
-                        VERSION,
-                        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        src_path,
-                        out_path,
-                        "",
-                        "",
-                        "",
-                        "",
-                        f"{KCOR_NORMALIZATION_WEEKS}",
-                        f"{SLOPE_ANCHOR_T}",
-                        f"",
-                        # removed MA params
-                        f"{YEAR_RANGE}",
-                        f"{ENROLLMENT_DATES}",
-                        f"{DEBUG_VERBOSE}",
-                        f"{OVERRIDE_DOSE_PAIRS}",
-                        f"{OVERRIDE_YOBS}",
-                    ]
-                    if len(values) < len(fields):
-                        values.extend([""] * (len(fields) - len(values)))
-                    elif len(values) > len(fields):
-                        values = values[:len(fields)]
-                    about_df = pd.DataFrame({"Field": fields, "Value": values})
-                    about_df.to_excel(writer, index=False, sheet_name="About")
-                    # Always write by_dose sheet (trim to used columns)
-                    by_dose_cols = [
-                        "EnrollmentDate","Date","YearOfBirth","Dose","ISOweek",
-                        "Dead","Alive","MR","Hazard","Hazard_adj","Cum_deaths","Cumu_Person_Time","Time_Index"
-                    ]
-                    debug_trim = debug_df[[c for c in by_dose_cols if c in debug_df.columns]].copy()
-                    debug_trim.to_excel(writer, index=False, sheet_name="by_dose")
+                        # Then write About and optional debug sheet
+                        # Ensure About 'Field' and 'Value' arrays are the same length
+                        # by constructing them explicitly and padding Values as needed
+                        fields = about_data["Field"]
+                        values = [
+                            VERSION,
+                            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                            src_path,
+                            out_path,
+                            "",
+                            "",
+                            "",
+                            "",
+                            f"{KCOR_NORMALIZATION_WEEKS}",
+                            f"{SLOPE_ANCHOR_T}",
+                            f"",
+                            # removed MA params
+                            f"{YEAR_RANGE}",
+                            f"{ENROLLMENT_DATES}",
+                            f"{DEBUG_VERBOSE}",
+                            f"{OVERRIDE_DOSE_PAIRS}",
+                            f"{OVERRIDE_YOBS}",
+                        ]
+                        if len(values) < len(fields):
+                            values.extend([""] * (len(fields) - len(values)))
+                        elif len(values) > len(fields):
+                            values = values[:len(fields)]
+                        about_df = pd.DataFrame({"Field": fields, "Value": values})
+                        about_df.to_excel(writer, index=False, sheet_name="About")
+                        # Always write by_dose sheet (trim to used columns)
+                        by_dose_cols = [
+                            "EnrollmentDate","Date","YearOfBirth","Dose","ISOweek",
+                            "Dead","Alive","MR","Hazard","Hazard_adj","Cum_deaths","Cumu_Person_Time","Time_Index"
+                        ]
+                        debug_trim = debug_df[[c for c in by_dose_cols if c in debug_df.columns]].copy()
+                        debug_trim.to_excel(writer, index=False, sheet_name="by_dose")
 
-                    # Add dose_pair_deaths details sheet
-                    if pair_deaths_all:
-                        pair_deaths_df = pd.concat(pair_deaths_all, ignore_index=True)
-                    else:
-                        pair_deaths_df = pd.DataFrame(columns=[
-                            "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-                            "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
-                            "K_raw_o","KCOR_o","CMRR"
-                        ])
-                    pair_deaths_df.to_excel(writer, index=False, sheet_name="dose_pair_deaths")
+                        # Add dose_pair_deaths details sheet
+                        if pair_deaths_all:
+                            pair_deaths_df = pd.concat(pair_deaths_all, ignore_index=True)
+                        else:
+                            pair_deaths_df = pd.DataFrame(columns=[
+                                "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
+                                "Dead_num","Dead_adj_num","cumD_num","Dead_den","Dead_adj_den","cumD_den",
+                                "K_raw_o","KCOR_o","CMRR"
+                            ])
+                        pair_deaths_df.to_excel(writer, index=False, sheet_name="dose_pair_deaths")
 
-                    # --- Manufacturer KCOR (Moderna vs Pfizer) comparisons ---
-                    # Read auxiliary MFG sheets from input workbook and compute M/P KCOR by cohort
-                    try:
-                        def _read_mfg_sheet(base_sheet_name: str, dose_num: int) -> pd.DataFrame:
-                            sheet = f"{base_sheet_name}_MFG_D{dose_num}"
-                            try:
-                                return pd.read_excel(src_path, sheet_name=sheet)
-                            except Exception:
-                                return pd.DataFrame()
+                        # --- Manufacturer KCOR (Moderna vs Pfizer) comparisons ---
+                        # Read auxiliary MFG sheets from input workbook and compute M/P KCOR by cohort
+                        try:
+                            def _read_mfg_sheet(base_sheet_name: str, dose_num: int) -> pd.DataFrame:
+                                sheet = f"{base_sheet_name}_MFG_D{dose_num}"
+                                try:
+                                    return pd.read_excel(src_path, sheet_name=sheet)
+                                except Exception:
+                                    return pd.DataFrame()
 
-                        def _compute_kcor_mp(df_base: pd.DataFrame, enrollment: str, dose_num: int, by_decade: bool) -> pd.DataFrame:
-                            if df_base.empty:
-                                return pd.DataFrame()
-                            dfb = df_base.copy()
-                            # Normalize types
-                            dfb["DateDied"] = pd.to_datetime(dfb["DateDied"], errors='coerce')
-                            dfb = dfb[dfb["DateDied"].notna()]
-                            dfb["YearOfBirth"] = pd.to_numeric(dfb["YearOfBirth"], errors='coerce')
-                            dfb = dfb[dfb["YearOfBirth"].notna()]
-                            dfb["YearOfBirth"] = dfb["YearOfBirth"].astype(int)
-                            # Grouping key for ages
-                            if by_decade:
-                                dfb["YearOfBirth"] = (dfb["YearOfBirth"] // 10) * 10
-                            else:
-                                dfb["YearOfBirth"] = 0
-                            # Aggregate across Sex and DCCI within age bucket
-                            grouped = (
-                                dfb.groupby(["YearOfBirth","MFG","DateDied"], sort=False)
-                                   .agg({"ISOweekDied":"first","Alive":"sum","Dead":"sum"})
-                                   .reset_index()
-                            )
-                            grouped = grouped.sort_values(["YearOfBirth","MFG","DateDied"])\
-                                             .reset_index(drop=True)
-                            # Compute MR and hazards
-                            grouped["PT"] = grouped["Alive"].astype(float).clip(lower=0.0)
-                            grouped["Dead"] = grouped["Dead"].astype(float).clip(lower=0.0)
-                            grouped["MR"] = np.where(grouped["PT"] > 0, grouped["Dead"]/(grouped["PT"] + EPS), np.nan)
-                            grouped["t"] = grouped.groupby(["YearOfBirth","MFG"]).cumcount().astype(float)
-                            grouped["hazard_raw"] = hazard_from_mr_improved(grouped["MR"].to_numpy())
-                            grouped["hazard_eff"] = np.where(grouped["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), grouped["hazard_raw"], 0.0)
-                            grouped["CH"] = grouped.groupby(["YearOfBirth","MFG"]) ['hazard_eff'].cumsum()
-                            # Build M/P KCOR per age bucket
-                            out_rows = []
-                            for yob, g_age in grouped.groupby("YearOfBirth", sort=False):
-                                gm = g_age[g_age["MFG"] == 'M'][["DateDied","ISOweekDied","CH"]].drop_duplicates("DateDied")
-                                gp = g_age[g_age["MFG"] == 'P'][["DateDied","ISOweekDied","CH"]].drop_duplicates("DateDied")
-                                if gm.empty or gp.empty:
-                                    continue
-                                merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
-                                if merged.empty:
-                                    continue
-                                valid = merged["CH_P"] > EPS
-                                merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
-                                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-                                k0 = merged["K_raw_MP"].iloc[t0_idx]
-                                if not (np.isfinite(k0) and k0 > EPS):
-                                    k0 = 1.0
-                                merged["KCOR_MP"] = np.where(np.isfinite(merged["K_raw_MP"]), merged["K_raw_MP"] / k0, np.nan)
-                                out = merged[["DateDied","ISOweekDied_M","KCOR_MP"]].copy()
-                                out.rename(columns={"ISOweekDied_M":"ISOweekDied","DateDied":"Date"}, inplace=True)
-                                out["EnrollmentDate"] = enrollment
-                                out["YearOfBirth"] = int(yob)
-                                out["Dose_num"] = dose_num
-                                out["Dose_den"] = dose_num
-                                out["MFG_num"] = 'M'
-                                out["MFG_den"] = 'P'
-                                out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
-                                out_rows.append(out)
-                            if out_rows:
-                                cols = ["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","MFG_num","MFG_den","KCOR_MP"]
-                                return pd.concat(out_rows, ignore_index=True)[cols]
-                            return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","MFG_num","MFG_den","KCOR_MP"])
+                            def _compute_kcor_mp(df_base: pd.DataFrame, enrollment: str, dose_num: int, by_decade: bool) -> pd.DataFrame:
+                                if df_base.empty:
+                                    return pd.DataFrame()
+                                dfb = df_base.copy()
+                                # Normalize types
+                                dfb["DateDied"] = pd.to_datetime(dfb["DateDied"], errors='coerce')
+                                dfb = dfb[dfb["DateDied"].notna()]
+                                dfb["YearOfBirth"] = pd.to_numeric(dfb["YearOfBirth"], errors='coerce')
+                                dfb = dfb[dfb["YearOfBirth"].notna()]
+                                dfb["YearOfBirth"] = dfb["YearOfBirth"].astype(int)
+                                # Grouping key for ages
+                                if by_decade:
+                                    dfb["YearOfBirth"] = (dfb["YearOfBirth"] // 10) * 10
+                                else:
+                                    dfb["YearOfBirth"] = 0
+                                # Aggregate across Sex and DCCI within age bucket
+                                grouped = (
+                                    dfb.groupby(["YearOfBirth","MFG","DateDied"], sort=False)
+                                       .agg({"ISOweekDied":"first","Alive":"sum","Dead":"sum"})
+                                       .reset_index()
+                                )
+                                grouped = grouped.sort_values(["YearOfBirth","MFG","DateDied"])\
+                                                 .reset_index(drop=True)
+                                # Compute MR and hazards
+                                grouped["PT"] = grouped["Alive"].astype(float).clip(lower=0.0)
+                                grouped["Dead"] = grouped["Dead"].astype(float).clip(lower=0.0)
+                                grouped["MR"] = np.where(grouped["PT"] > 0, grouped["Dead"]/(grouped["PT"] + EPS), np.nan)
+                                grouped["t"] = grouped.groupby(["YearOfBirth","MFG"]).cumcount().astype(float)
+                                grouped["hazard_raw"] = hazard_from_mr_improved(grouped["MR"].to_numpy())
+                                grouped["hazard_eff"] = np.where(grouped["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), grouped["hazard_raw"], 0.0)
+                                grouped["CH"] = grouped.groupby(["YearOfBirth","MFG"]) ['hazard_eff'].cumsum()
+                                # Build M/P KCOR per age bucket
+                                out_rows = []
+                                for yob, g_age in grouped.groupby("YearOfBirth", sort=False):
+                                    gm = g_age[g_age["MFG"] == 'M'][["DateDied","ISOweekDied","CH"]].drop_duplicates("DateDied")
+                                    gp = g_age[g_age["MFG"] == 'P'][["DateDied","ISOweekDied","CH"]].drop_duplicates("DateDied")
+                                    if gm.empty or gp.empty:
+                                        continue
+                                    merged = pd.merge(gm, gp, on="DateDied", suffixes=("_M","_P"), how="inner").sort_values("DateDied")
+                                    if merged.empty:
+                                        continue
+                                    valid = merged["CH_P"] > EPS
+                                    merged["K_raw_MP"] = np.where(valid, merged["CH_M"] / merged["CH_P"], np.nan)
+                                    t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                                    k0 = merged["K_raw_MP"].iloc[t0_idx]
+                                    if not (np.isfinite(k0) and k0 > EPS):
+                                        k0 = 1.0
+                                    merged["KCOR_MP"] = np.where(np.isfinite(merged["K_raw_MP"]), merged["K_raw_MP"] / k0, np.nan)
+                                    out = merged[["DateDied","ISOweekDied_M","KCOR_MP"]].copy()
+                                    out.rename(columns={"ISOweekDied_M":"ISOweekDied","DateDied":"Date"}, inplace=True)
+                                    out["EnrollmentDate"] = enrollment
+                                    out["YearOfBirth"] = int(yob)
+                                    out["Dose_num"] = dose_num
+                                    out["Dose_den"] = dose_num
+                                    out["MFG_num"] = 'M'
+                                    out["MFG_den"] = 'P'
+                                    out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+                                    out_rows.append(out)
+                                if out_rows:
+                                    cols = ["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","MFG_num","MFG_den","KCOR_MP"]
+                                    return pd.concat(out_rows, ignore_index=True)[cols]
+                                return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","MFG_num","MFG_den","KCOR_MP"])
 
-                        wrote_any_mfg = False
-                        # 2021_24: Dose 2, decades
-                        df_mfg_2124 = _read_mfg_sheet("2021_24", 2)
-                        mp_2124 = _compute_kcor_mp(df_mfg_2124, "2021_24", 2, by_decade=True)
-                        if not mp_2124.empty:
-                            mp_2124.to_excel(writer, index=False, sheet_name="MFG_MP_2021_24_D2_decades")
-                            dual_print("[MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades (", len(mp_2124), "rows)")
-                            wrote_any_mfg = True
-                        # 2022_06: Dose 3, decades
-                        df_mfg_2206 = _read_mfg_sheet("2022_06", 3)
-                        mp_2206 = _compute_kcor_mp(df_mfg_2206, "2022_06", 3, by_decade=True)
-                        if not mp_2206.empty:
-                            mp_2206.to_excel(writer, index=False, sheet_name="MFG_MP_2022_06_D3_decades")
-                            dual_print("[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades (", len(mp_2206), "rows)")
-                            wrote_any_mfg = True
-                        # 2022_47: Dose 4, decades
-                        df_mfg_2247 = _read_mfg_sheet("2022_47", 4)
-                        mp_2247 = _compute_kcor_mp(df_mfg_2247, "2022_47", 4, by_decade=True)
-                        if not mp_2247.empty:
-                            mp_2247.to_excel(writer, index=False, sheet_name="MFG_MP_2022_47_D4_decades")
-                            dual_print("[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades (", len(mp_2247), "rows)")
-                            wrote_any_mfg = True
-                        if not wrote_any_mfg:
-                            dual_print("[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)")
-                    except Exception as _e_mfg:
-                        dual_print(f"[WARN] Failed to add MFG M/P comparisons: {_e_mfg}")
+                            wrote_any_mfg = False
+                            # 2021_24: Dose 2, decades
+                            df_mfg_2124 = _read_mfg_sheet("2021_24", 2)
+                            mp_2124 = _compute_kcor_mp(df_mfg_2124, "2021_24", 2, by_decade=True)
+                            if not mp_2124.empty:
+                                mp_2124.to_excel(writer, index=False, sheet_name="MFG_MP_2021_24_D2_decades")
+                                dual_print("[MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades (", len(mp_2124), "rows)")
+                                wrote_any_mfg = True
+                            # 2022_06: Dose 3, decades
+                            df_mfg_2206 = _read_mfg_sheet("2022_06", 3)
+                            mp_2206 = _compute_kcor_mp(df_mfg_2206, "2022_06", 3, by_decade=True)
+                            if not mp_2206.empty:
+                                mp_2206.to_excel(writer, index=False, sheet_name="MFG_MP_2022_06_D3_decades")
+                                dual_print("[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades (", len(mp_2206), "rows)")
+                                wrote_any_mfg = True
+                            # 2022_47: Dose 4, decades
+                            df_mfg_2247 = _read_mfg_sheet("2022_47", 4)
+                            mp_2247 = _compute_kcor_mp(df_mfg_2247, "2022_47", 4, by_decade=True)
+                            if not mp_2247.empty:
+                                mp_2247.to_excel(writer, index=False, sheet_name="MFG_MP_2022_47_D4_decades")
+                                dual_print("[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades (", len(mp_2247), "rows)")
+                                wrote_any_mfg = True
+                            if not wrote_any_mfg:
+                                dual_print("[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)")
+                        except Exception as _e_mfg:
+                            dual_print(f"[WARN] Failed to add MFG M/P comparisons: {_e_mfg}")
                     
                     # Move temp file into place (atomic on POSIX; best-effort on Windows)
                     try:
