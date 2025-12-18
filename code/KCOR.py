@@ -75,6 +75,91 @@ This approach provides robust, interpretable estimates of relative mortality ris
 between vaccination groups while accounting for underlying time trends. Version 5.1
 uses slope8 (quantile regression depletion-mode normalization) and direct hazard computation from raw MR.
 """
+
+# Version information
+VERSION = "v5.4"                # KCOR version number
+
+# Version History:
+# v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
+# v4.1 - Enhanced with discrete cumulative-hazard transform for mathematical exactness
+#        - Changed from simple cumsum(MR_adj) to cumsum(-ln(1 - MR_adj))
+#        - Removes small-rate approximation limitation
+#        - More robust for any mortality rate magnitude
+# v4.2 - Fixed ASMR pooling with Option 2+ expected-deaths weights
+#        - Changed from person-time weights to expected-deaths weights: w_a ∝ h_a × PT_a(W)
+#        - Properly weights elderly age groups who contribute most to death burden
+#        - Uses pooled quiet baseline window with smoothed mortality rates
+#        - ASMR now reflects actual mortality impact rather than population size
+# v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
+#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KOR_MIN parameters
+#        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
+# v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
+#        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
+#        - Slope calculation simplified to single-window method (no dynamic anchors)
+# v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
+#        - slope3 hazard-level normalization (slope2 windows with lowest-N averaging) and direct hazard computation from raw MR.
+#        - (Note: slope3 was replaced by slope4 in v4.8)
+# v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
+#        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
+#        - Slope calculation simplified to single-window method (no dynamic anchors)
+#        - Changed DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
+# v4.7 - Implemented Slope3 method for improved slope estimation
+#        - Instead of averaging all values in each window, now averages the lowest N values (default: 5)
+#        - More robust to outliers and noise in the data
+#        - Configurable via SLOPE3_MIN_VALUES parameter
+#        - Added "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
+#        - Different from ASMR pooling: All Ages treats all ages as one cohort, while ASMR weights across age groups
+#        - All Ages calculation displayed right after ASMR (direct) in console and summary outputs
+# v4.8 - Replaced Slope3 with Slope4 method (2024-12-XX)
+#        - Changed from averaging lowest N values to using geometric mean of all values in each window
+#        - Geometric mean provides better representation of central tendency for hazard values
+#        - More mathematically sound approach that naturally handles the multiplicative nature of hazard rates
+#        - Removed SLOPE3_MIN_VALUES parameter (no longer needed)
+# v4.9 - Replaced Slope4 with Slope5 independent flat-slope normalization method
+#        - Single global baseline window automatically selected
+#        - Each cohort normalized independently to achieve zero log-hazard slope using Quantile Regression (median)
+#        - Each cohort's own drift slope β_c is estimated and removed, centered at pivot time t_0
+#        - Normalization formula: h_c^norm(t) = e^{a_c} * e^{b_c*t} * h_c(t)
+#        - Provides mathematically precise, reproducible method per KCOR_slope5_RMS.md specification
+#        - Removed BASE_W1/BASE_W2/BASE_W3/BASE_W4 fixed windows (replaced with automatic selection)
+# v5.0 - Replaced Slope5 with Slope6 time-centered linear/quadratic quantile regression normalization
+#        - Fit window: 2022-01 to 2024-12 (same as slope5) for regression fitting
+#        - Application window: enrollment_date to 2024-16 for determining centerpoint
+#        - Time-centered approach: t_mean = mean(t) over application window, t_c = t - t_mean
+#        - Linear median regression if b_lin >= 0, quadratic with c >= 0 if b_lin < 0
+#        - Normalization: linear mode uses h_norm = h * exp(-b_lin * t_c)
+#        - Normalization: quadratic mode uses h_norm = h * exp(-(b * t_c + c * t_c^2))
+#        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
+#        - Per kcor_slope6_spec.md and kcor_slope6_helpers.md specification
+# v5.1 - Replaced quadratic mode with Slope7 depletion-mode normalization for b < 0 cohorts
+#        - Uses Levenberg-Marquardt nonlinear least squares to fit exponential relaxation depletion curve
+#        - Fit window = deployment window (enrollment to slope7_end_ISO)
+#        - Time axis s = weeks since enrollment (no centering)
+#        - Parameters: C, ka (k_0), kb (k_∞), tau (τ)
+#        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
+# v5.2 - Added Slope8 quantile regression method as diagnostic tool
+#        - Uses quantile regression with check loss instead of L2 loss for robustness to outliers
+#        - Uses scipy.optimize.minimize with L-BFGS-B method and finite bounds
+#        - Fit window = deployment window (enrollment to SLOPE_FIT_END_ISO) for all doses
+#        - Special case: For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS (default 15 weeks)
+#        - Normalization applies from s=0 (enrollment) for all cohorts, including highest dose
+#        - Results logged to debug CSV but not yet applied for normalization
+#        - Provides alternative diagnostic method alongside linear, slope7 (TRF), and slope7 (LM)
+# v5.3 - Switched to Slope8 as primary normalization method for all cohorts
+#        - Replaces Slope6/Slope7 decision logic with Slope8 for all cohorts
+#        - Tracks abnormal fits via optimizer diagnostics (status=5 or not success)
+#        - Flags KCOR results affected by abnormal fits with asterisk (*) in console/log and summary spreadsheet
+#        - Slope8 fit window starts later for highest dose, but normalization applied from s=0 for all cohorts
+# v5.4 - Hybrid normalization method with conditional fit selection based on birth cohort
+#        - Nonlinear (slope8) fit for cohorts born before SLOPE8_MAX_YOB (1940)
+#        - Linear fit for cohorts born >= 1940 and "all ages" cohorts (YearOfBirth = -2)
+#        - Fits skip SLOPE_FIT_DELAY_WEEKS (15 weeks) only for the latest/highest dose
+#        - Nonlinear fit is left-based (no centering, t_mean=0) - fits from enrollment date
+#        - Linear fit is center-based (uses t_mean) - fits centered around mean time
+#        - In general, normalization adjusts exactly what we fit (same window)
+#        - Exception: For the most recent/highest dose, fit uses data after skip weeks (SLOPE_FIT_DELAY_WEEKS)
+#          but normalization is applied to the entire period (post enrollment and post DYNAMIC_HVE_SKIP_WEEKS)
+
 import sys
 import math
 import os
@@ -497,83 +582,6 @@ OVERRIDE_YOBS = None
 
 
 # ---------------- Configuration Parameters ----------------
-# Version information
-VERSION = "v5.4"                # KCOR version number
-
-# Version History:
-# v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
-# v4.1 - Enhanced with discrete cumulative-hazard transform for mathematical exactness
-#        - Changed from simple cumsum(MR_adj) to cumsum(-ln(1 - MR_adj))
-#        - Removes small-rate approximation limitation
-#        - More robust for any mortality rate magnitude
-# v4.2 - Fixed ASMR pooling with Option 2+ expected-deaths weights
-#        - Changed from person-time weights to expected-deaths weights: w_a ∝ h_a × PT_a(W)
-#        - Properly weights elderly age groups who contribute most to death burden
-#        - Uses pooled quiet baseline window with smoothed mortality rates
-#        - ASMR now reflects actual mortality impact rather than population size
-# v4.3 - Added fine-tuning parameters for lowering the baseline value if the final KCOR value is below the minimum
-#        - Implements KCOR scaling based on FINAL_KCOR_DATE and FINAL_KOR_MIN parameters
-#        - Corrects for baseline normalization issues where unsafe vaccines create artificially high baseline mortality rates
-# v4.4 - Added enrollment cohort 2022_47 with dose comparisons 4 vs 3,2,1,0
-#        - Default processing now includes four cohorts: 2021_13, 2021_24, 2022_06, 2022_47
-#        - Slope calculation simplified to single-window method (no dynamic anchors)
-# v4.5 - Removed legacy anchor-based slope adjustments and Czech-specific corrections in favor of
-#        - slope3 hazard-level normalization (slope2 windows with lowest-N averaging) and direct hazard computation from raw MR.
-#        - (Note: slope3 was replaced by slope4 in v4.8)
-# v4.6 - Added enrollment cohort 2021-W20 with dose comparisons 2 vs 1,0
-#        - Default processing now includes five cohorts: 2021-13, 2021-W20, 2021-24, 2022-06, 2022-47
-#        - Slope calculation simplified to single-window method (no dynamic anchors)
-#        - Changed DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
-# v4.7 - Implemented Slope3 method for improved slope estimation
-#        - Instead of averaging all values in each window, now averages the lowest N values (default: 5)
-#        - More robust to outliers and noise in the data
-#        - Configurable via SLOPE3_MIN_VALUES parameter
-#        - Added "All Ages" calculation (YearOfBirth = -2) that aggregates all ages into a single cohort
-#        - Different from ASMR pooling: All Ages treats all ages as one cohort, while ASMR weights across age groups
-#        - All Ages calculation displayed right after ASMR (direct) in console and summary outputs
-# v4.8 - Replaced Slope3 with Slope4 method (2024-12-XX)
-#        - Changed from averaging lowest N values to using geometric mean of all values in each window
-#        - Geometric mean provides better representation of central tendency for hazard values
-#        - More mathematically sound approach that naturally handles the multiplicative nature of hazard rates
-#        - Removed SLOPE3_MIN_VALUES parameter (no longer needed)
-# v4.9 - Replaced Slope4 with Slope5 independent flat-slope normalization method
-#        - Single global baseline window automatically selected
-#        - Each cohort normalized independently to achieve zero log-hazard slope using Quantile Regression (median)
-#        - Each cohort's own drift slope β_c is estimated and removed, centered at pivot time t_0
-#        - Normalization formula: h_c^norm(t) = e^{a_c} * e^{b_c*t} * h_c(t)
-#        - Provides mathematically precise, reproducible method per KCOR_slope5_RMS.md specification
-#        - Removed BASE_W1/BASE_W2/BASE_W3/BASE_W4 fixed windows (replaced with automatic selection)
-# v5.0 - Replaced Slope5 with Slope6 time-centered linear/quadratic quantile regression normalization
-#        - Fit window: 2022-01 to 2024-12 (same as slope5) for regression fitting
-#        - Application window: enrollment_date to 2024-16 for determining centerpoint
-#        - Time-centered approach: t_mean = mean(t) over application window, t_c = t - t_mean
-#        - Linear median regression if b_lin >= 0, quadratic with c >= 0 if b_lin < 0
-#        - Normalization: linear mode uses h_norm = h * exp(-b_lin * t_c)
-#        - Normalization: quadratic mode uses h_norm = h * exp(-(b * t_c + c * t_c^2))
-#        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
-#        - Per kcor_slope6_spec.md and kcor_slope6_helpers.md specification
-# v5.1 - Replaced quadratic mode with Slope7 depletion-mode normalization for b < 0 cohorts
-#        - Uses Levenberg-Marquardt nonlinear least squares to fit exponential relaxation depletion curve
-#        - Fit window = deployment window (enrollment to slope7_end_ISO)
-#        - Time axis s = weeks since enrollment (no centering)
-#        - Parameters: C, ka (k_0), kb (k_∞), tau (τ)
-#        - Provides robust handling of depletion-driven curvature while preserving frailty model constraints
-# v5.2 - Added Slope8 quantile regression method as diagnostic tool
-#        - Uses quantile regression with check loss instead of L2 loss for robustness to outliers
-#        - Uses scipy.optimize.minimize with L-BFGS-B method and finite bounds
-#        - Fit window = deployment window (enrollment to SLOPE_FIT_END_ISO) for all doses
-#        - Special case: For highest dose, fit uses data from s >= SLOPE_FIT_DELAY_WEEKS (default 15 weeks)
-#        - Normalization applies from s=0 (enrollment) for all cohorts, including highest dose
-#        - Results logged to debug CSV but not yet applied for normalization
-#        - Provides alternative diagnostic method alongside linear, slope7 (TRF), and slope7 (LM)
-# v5.3 - Switched to Slope8 as primary normalization method for all cohorts
-#        - Replaces Slope6/Slope7 decision logic with Slope8 for all cohorts
-#        - Tracks abnormal fits via optimizer diagnostics (status=5 or not success)
-#        - Flags KCOR results affected by abnormal fits with asterisk (*) in console/log and summary spreadsheet
-#        - Slope8 fit window starts later for highest dose, but normalization applied from s=0 for all cohorts
-
-# latest change was setting DYNAMIC_HVE_SKIP_WEEKS to 3 to start accumulating hazards/statistics from the 4th week of cumulated data.
-
 
 
 # KCOR normalization fine-tuning parameters
