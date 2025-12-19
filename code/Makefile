@@ -188,18 +188,19 @@ help:
 	@echo "  MC:      $(MC_OUTPUT)"
 
 ## Minimal sensitivity plumbing target (kept for convenience)
-# Echos SA_* variables and runs analysis to the unified SA artifact under test/sensitivity/out
+# Runs sensitivity analysis varying tau (0.1-0.5) and normalization weeks (2-8)
+# Outputs grid tables per cohort with KCOR values
 sensitivity: $(CMR_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "[sensitivity] Environment:"
 	@echo "  SENSITIVITY_ANALYSIS = $(SENSITIVITY_ANALYSIS)"
-	@echo "  SA_SLOPE_START       = $(SA_SLOPE_START)"
-	@echo "  SA_SLOPE_LENGTH      = $(SA_SLOPE_LENGTH)"
-	@echo "  SA_YOB               = $(SA_YOB)"
 	@echo "  SA_COHORTS           = $(SA_COHORTS)"
 	@echo "  SA_DOSE_PAIRS        = $(SA_DOSE_PAIRS)"
 	@echo "Running KCOR sensitivity analysis ..."
+	@echo "  Varying SLOPE8_QUANTILE_TAU: 0.1, 0.2, 0.3, 0.4, 0.5"
+	@echo "  Varying KCOR_NORMALIZATION_WEEKS: 2, 3, 4, 5, 6, 7, 8"
+	@echo "  Computing for age=-2 cohort (all ages aggregated) only"
 	@$(PYTHON) -c "import os; os.makedirs('../test/sensitivity/out', exist_ok=True)"
-	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_SLOPE_START="$(SA_SLOPE_START)" SA_SLOPE_LENGTH="$(SA_SLOPE_LENGTH)" SA_YOB="$(SA_YOB)" SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
+	SENSITIVITY_ANALYSIS=$(SENSITIVITY_ANALYSIS) SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
 		$(PYTHON) KCOR.py $(CMR_OUTPUT) ../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
 	@echo "Sensitivity run complete! Output: test/sensitivity/out/KCOR_SA.xlsx"
 

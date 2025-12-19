@@ -1,0 +1,115 @@
+make -C test/sensitivity all DATASET=Czech
+SENSITIVITY_ANALYSIS=1 \
+SA_COHORTS="2022_06" SA_DOSE_PAIRS="1,0" \
+SA_TAU_VALUES="0.5" SA_NORM_WEEKS="4" \
+python3 ../../code/KCOR.py ../../data/Czech/KCOR_CMR.xlsx ../../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
+[DEBUG] Overriding dose pairs via SA_DOSE_PAIRS: [(1, 0)]
+================================================================================
+KCOR v5.4 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2025-12-18 18:47:31
+Mode: Sensitivity Analysis
+Input File: ../../data/Czech/KCOR_CMR.xlsx
+SA Output File: ../../test/sensitivity/out/KCOR_SA.xlsx
+Log File: ../../test/sensitivity/out/KCOR_summary_SA.log
+(Standard multi-sheet workbook suppressed in SA mode)
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = ['2022_06']
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = [(1, 0)]
+  OVERRIDE_YOBS         = None
+  KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
+  NEGATIVE_CONTROL_MODE = 0
+  SLOPE6_METHOD        = QuantReg (tau=0.5)  [Slope6: Time-centered linear quantile regression normalization for b >= 0]
+  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]
+  SLOPE6_QUANTILE_TAU  = 0.5  [Quantile level for quantile regression (0.5 = median)]
+  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]
+  SLOPE6_APPLICATION_ENDPOINT = 2024-16  [Rightmost endpoint for determining centerpoint]
+  SLOPE6_BASELINE_WINDOW_LENGTH_MIN = 30 weeks
+  SLOPE6_BASELINE_WINDOW_LENGTH_MAX = 60 weeks
+  SLOPE6_BASELINE_START_YEAR = 2023
+  SLOPE6_MIN_DATA_POINTS = 5
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2022_06']
+SLOPE6_FIT_WINDOW,selected=2022-01..2024-16 (week 1 of 2022 through 2024-16, fixed)
+[Slope6] Using fit window: 2022-01 to 2024-16
+[Slope6] Application endpoint: 2024-16 (rightmost point for determining centerpoint)
+[SA] Overriding tau values via SA_TAU_VALUES=0.5 -> [0.5]
+[SA] Overriding normalization weeks via SA_NORM_WEEKS=4 -> [4]
+[SA] Starting sensitivity analysis with 1 tau values and 1 normalization weeks
+[SA] Total parameter combinations: 1
+[SA] Processing combination 1/1: tau=0.5, norm_weeks=4
+[SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=-1,Dose=0,mode=slope8,C=-9.929577e+00,ka=2.212707e-02,kb=-4.064901e-03,tau=3.733059e+01,b_original=3.448691e-03,rms_error=1.340157e-01,points=113
+SLOPE6_FIT,EnrollmentDate=unknown,YoB=-1,Dose=1,status=insufficient_data,points=0
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1920,Dose=0,mode=slope8,C=-4.622545e+00,ka=4.630896e-05,kb=-7.146374e-03,tau=3.733420e+01,b_original=-5.269569e-03,rms_error=5.016574e-01,points=111
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1920,Dose=1,mode=slope8,C=-3.657094e+00,ka=7.114002e-03,kb=7.335692e-03,tau=2.933333e+01,b_original=7.586909e-03,rms_error=1.858820e-01,points=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1925,Dose=0,mode=slope8,C=-4.745398e+00,ka=-8.178755e-03,kb=-2.635835e-03,tau=3.733312e+01,b_original=-4.477837e-03,rms_error=2.669788e-01,points=113
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1925,Dose=1,mode=slope8,C=-5.205015e+00,ka=-3.261464e-03,kb=6.885295e-03,tau=3.166886e+01,b_original=5.015798e-03,rms_error=4.543958e-01,points=60
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1930,Dose=0,mode=slope8,C=-5.201645e+00,ka=-7.372874e-03,kb=-7.326064e-05,tau=3.733340e+01,b_original=-1.514133e-03,rms_error=2.282535e-01,points=113
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1930,Dose=1,mode=slope8,C=-5.714935e+00,ka=2.612767e-02,kb=-5.194063e-03,tau=3.201856e+01,b_original=-1.123372e-03,rms_error=6.092027e-01,points=84
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1935,Dose=0,mode=slope8,C=-5.593442e+00,ka=-1.373072e-02,kb=1.244838e-03,tau=3.733284e+01,b_original=-2.846193e-03,rms_error=1.883976e-01,points=113
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1935,Dose=1,mode=slope8,C=-5.922060e+00,ka=1.422803e-02,kb=-5.051161e-03,tau=3.232381e+01,b_original=-2.683423e-03,rms_error=5.533733e-01,points=88
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1940,Dose=0,mode=linear(yob_threshold),a=-6.438947e+00,b=-3.076943e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.990899e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1940,Dose=1,mode=linear(yob_threshold),a=-6.180143e+00,b=1.974782e-03,c=0.000000e+00,t_mean=6.579167e+01,rms_error=6.308583e-01,points=96,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1945,Dose=0,mode=linear(yob_threshold),a=-6.914987e+00,b=-1.904069e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=2.023443e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1945,Dose=1,mode=linear(yob_threshold),a=-6.692849e+00,b=-3.814757e-03,c=0.000000e+00,t_mean=6.566304e+01,rms_error=5.388997e-01,points=92,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1950,Dose=0,mode=linear(yob_threshold),a=-7.398263e+00,b=-2.977284e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.894006e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1950,Dose=1,mode=linear(yob_threshold),a=-6.960002e+00,b=-3.596722e-03,c=0.000000e+00,t_mean=6.395455e+01,rms_error=4.973560e-01,points=88,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1955,Dose=0,mode=linear(yob_threshold),a=-7.837069e+00,b=-2.656504e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.727017e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1955,Dose=1,mode=linear(yob_threshold),a=-7.322488e+00,b=5.469973e-04,c=0.000000e+00,t_mean=6.105063e+01,rms_error=5.007233e-01,points=79,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1960,Dose=0,mode=linear(yob_threshold),a=-8.444644e+00,b=-3.281087e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=2.336392e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1960,Dose=1,mode=linear(yob_threshold),a=-7.538977e+00,b=3.246853e-04,c=0.000000e+00,t_mean=6.460606e+01,rms_error=5.358539e-01,points=66,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1965,Dose=0,mode=linear(yob_threshold),a=-8.935804e+00,b=-1.761076e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=2.696033e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1965,Dose=1,mode=linear(yob_threshold),a=-8.397928e+00,b=2.154165e-04,c=0.000000e+00,t_mean=6.550000e+01,rms_error=5.686184e-01,points=58,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1970,Dose=0,mode=linear(yob_threshold),a=-9.528529e+00,b=-2.460940e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=3.035746e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1970,Dose=1,mode=linear(yob_threshold),a=-8.697312e+00,b=1.211680e-04,c=0.000000e+00,t_mean=6.542857e+01,rms_error=4.246454e-01,points=56,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1975,Dose=0,mode=linear(yob_threshold),a=-9.968997e+00,b=-2.065075e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=3.401941e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1975,Dose=1,mode=linear(yob_threshold),a=-8.943123e+00,b=6.538961e-05,c=0.000000e+00,t_mean=6.487500e+01,rms_error=4.650342e-01,points=40,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1980,Dose=0,mode=linear(yob_threshold),a=-1.052057e+01,b=2.780334e-05,c=0.000000e+00,t_mean=5.800000e+01,rms_error=4.918801e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1980,Dose=1,mode=linear(yob_threshold),a=-9.077212e+00,b=5.258994e-05,c=0.000000e+00,t_mean=5.893939e+01,rms_error=3.191736e-01,points=33,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1985,Dose=0,mode=linear(yob_threshold),a=-1.079922e+01,b=-3.803348e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=4.439463e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1985,Dose=1,mode=linear(yob_threshold),a=-9.230407e+00,b=3.568529e-05,c=0.000000e+00,t_mean=6.988462e+01,rms_error=2.718893e-01,points=26,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1990,Dose=0,mode=linear(yob_threshold),a=-1.128437e+01,b=1.344579e-05,c=0.000000e+00,t_mean=5.756481e+01,rms_error=5.103393e-01,points=108,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1990,Dose=1,mode=linear(yob_threshold),a=-9.339923e+00,b=1.642315e-05,c=0.000000e+00,t_mean=6.528571e+01,rms_error=1.512846e-01,points=21,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1995,Dose=0,mode=linear(yob_threshold),a=-1.131936e+01,b=1.020531e-05,c=0.000000e+00,t_mean=5.763953e+01,rms_error=5.534299e-01,points=86,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=1995,Dose=1,mode=linear(yob_threshold),a=-9.129472e+00,b=6.089740e-06,c=0.000000e+00,t_mean=6.185714e+01,rms_error=5.366050e-05,points=7,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=2000,Dose=0,mode=linear(yob_threshold),a=-1.119016e+01,b=8.961812e-06,c=0.000000e+00,t_mean=5.494048e+01,rms_error=5.278682e-01,points=84,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=2000,Dose=1,mode=linear(yob_threshold),a=-9.110405e+00,b=1.189948e-05,c=0.000000e+00,t_mean=6.657143e+01,rms_error=2.619768e-01,points=7,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=2005,Dose=0,mode=linear(yob_threshold),a=-1.220584e+01,b=6.421678e-03,c=0.000000e+00,t_mean=5.990141e+01,rms_error=4.682681e-01,points=71,skip_weeks=2
+SLOPE6_FIT,EnrollmentDate=unknown,YoB=2005,Dose=1,status=insufficient_data,points=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-8.904779e+00,b=-2.461405e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.204363e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=unknown,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.458905e+00,b=-4.819712e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=2.622893e-01,points=98,skip_weeks=17
+
+[DEBUG] Expected-deaths weights for ASMR pooling:
+  Age -1: weight = 0.083744
+  Age 1920: weight = 0.019525
+  Age 1925: weight = 0.046678
+  Age 1930: weight = 0.098206
+  Age 1935: weight = 0.086867
+  Age 1940: weight = 0.141849
+  Age 1945: weight = 0.153709
+  Age 1950: weight = 0.092802
+  Age 1955: weight = 0.079691
+  Age 1960: weight = 0.051857
+  Age 1965: weight = 0.041129
+  Age 1970: weight = 0.037883
+  Age 1975: weight = 0.030134
+  Age 1980: weight = 0.012373
+  Age 1985: weight = 0.008654
+  Age 1990: weight = 0.006186
+  Age 1995: weight = 0.005407
+  Age 2000: weight = 0.002141
+  Age 2005: weight = 0.001165
+  Total weight: 1.000000
+
+[SA] Creating grid output with 1 cohorts and 1 dose pairs
+[SA] Wrote grid for 2022_06, dose 1 vs 0 to sheet '2022_06_1_vs_0'
+[SA] Wrote sensitivity analysis grids to ../../test/sensitivity/out/KCOR_SA.xlsx

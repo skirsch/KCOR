@@ -1,7 +1,26 @@
+make -C test/sensitivity all DATASET=Czech
+SENSITIVITY_ANALYSIS=1 \
+SA_COHORTS="2022_06" SA_DOSE_PAIRS="1,0" \
+SA_TAU_VALUES="0.2,0.5" SA_NORM_WEEKS="4" \
+python3 ../../code/KCOR.py ../../data/Czech/KCOR_CMR.xlsx ../../test/sensitivity/out/KCOR_SA.xlsx "Sensitivity Analysis" KCOR_summary_SA.log
+Traceback (most recent call last):
+  File "/mnt/c/Users/stk/Documents/GitHub/KCOR/test/sensitivity/../../code/KCOR.py", line 3336, in create_sa_grid_output
+    with pd.ExcelWriter(sa_path, engine="openpyxl") as writer:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/pandas/io/excel/_openpyxl.py", line 60, in __init__
+    super().__init__(
+  File "/usr/lib/python3/dist-packages/pandas/io/excel/_base.py", line 1313, in __init__
+    self._handles = get_handle(
+                    ^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/pandas/io/common.py", line 865, in get_handle
+    handle = open(handle, ioargs.mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '../../test/sensitivity/out/KCOR_SA.xlsx'
+[DEBUG] Overriding dose pairs via SA_DOSE_PAIRS: [(1, 0)]
 ================================================================================
 KCOR v5.4 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-18 21:01:04
+Analysis Date: 2025-12-18 20:32:48
 Mode: Sensitivity Analysis
 Input File: ../../data/Czech/KCOR_CMR.xlsx
 SA Output File: ../../test/sensitivity/out/KCOR_SA.xlsx
@@ -36,33 +55,26 @@ SLOPE6_FIT_WINDOW,selected=2022-01..2024-16 (week 1 of 2022 through 2024-16, fix
 [Slope6] Using fit window: 2022-01 to 2024-16
 [Slope6] Application endpoint: 2024-16 (rightmost point for determining centerpoint)
 [SA] Overriding tau values via SA_TAU_VALUES=0.2,0.5 -> [0.2, 0.5]
-[SA] Overriding normalization weeks via SA_NORM_WEEKS=4,6,8 -> [4, 6, 8]
-[SA] Starting sensitivity analysis with 2 tau values and 3 normalization weeks
-[SA] Total parameter combinations: 6
-[SA] Processing combination 1/6: tau=0.2, norm_weeks=4
+[SA] Overriding normalization weeks via SA_NORM_WEEKS=4 -> [4]
+[SA] Starting sensitivity analysis with 2 tau values and 1 normalization weeks
+[SA] Total parameter combinations: 2
+[SA] Processing combination 1/2: tau=0.2, norm_weeks=4
 [SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
 SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-9.004665e+00,b=-2.137777e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.652329e-01,points=113,skip_weeks=2
 SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.655510e+00,b=-3.525161e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=3.285930e-01,points=98,skip_weeks=17
-[SA] Processing combination 2/6: tau=0.2, norm_weeks=6
-[SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-9.004665e+00,b=-2.137777e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.652329e-01,points=113,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.655510e+00,b=-3.525161e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=3.285930e-01,points=98,skip_weeks=17
-[SA] Processing combination 3/6: tau=0.2, norm_weeks=8
-[SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-9.004665e+00,b=-2.137777e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.652329e-01,points=113,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.655510e+00,b=-3.525161e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=3.285930e-01,points=98,skip_weeks=17
-[SA] Processing combination 4/6: tau=0.5, norm_weeks=4
+
+[DEBUG] Expected-deaths weights for ASMR pooling:
+  Age -2: weight = 1.000000
+  Total weight: 1.000000
+
+[SA] Processing combination 2/2: tau=0.5, norm_weeks=4
 [SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
 SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-8.904779e+00,b=-2.461405e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.204363e-01,points=113,skip_weeks=2
 SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.458905e+00,b=-4.819712e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=2.622893e-01,points=98,skip_weeks=17
-[SA] Processing combination 5/6: tau=0.5, norm_weeks=6
-[SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-8.904779e+00,b=-2.461405e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.204363e-01,points=113,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.458905e+00,b=-4.819712e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=2.622893e-01,points=98,skip_weeks=17
-[SA] Processing combination 6/6: tau=0.5, norm_weeks=8
-[SA] Restricting cohort 2022_06 to doses [0, 1] (from SA_DOSE_PAIRS)
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-8.904779e+00,b=-2.461405e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.204363e-01,points=113,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.458905e+00,b=-4.819712e-03,c=0.000000e+00,t_mean=6.550000e+01,rms_error=2.622893e-01,points=98,skip_weeks=17
+
+[DEBUG] Expected-deaths weights for ASMR pooling:
+  Age -2: weight = 1.000000
+  Total weight: 1.000000
+
 [SA] Creating grid output with 1 cohorts and 1 dose pairs
-[SA] Wrote grid for 2022_06, dose 1 vs 0 to sheet '2022_06_1_vs_0'
-[SA] Wrote sensitivity analysis grids to ../../test/sensitivity/out/KCOR_SA.xlsx
+[SA] Error creating grid output: [Errno 13] Permission denied: '../../test/sensitivity/out/KCOR_SA.xlsx'
