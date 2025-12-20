@@ -17,6 +17,7 @@
 - [🏗️ Repository Structure](#️-repository-structure)
 - [📦 Installation & Dependencies](#-installation--dependencies)
 - [🚀 Usage](#-usage)
+  - [Reproducibility checklist (enrollment, Alive/Dead, and dose timing)](#reproducibility-checklist-enrollment-alivedead-and-dose-timing)
 - [⚙️ Configuration](#️-configuration)
 - [📊 Interpretation](#-interpretation)
 - [🔧 Advanced Features](#-advanced-features)
@@ -954,6 +955,40 @@ The script expects Excel workbooks with the following schema per sheet:
 | `Dose` | Vaccination dose | 0, 1, 2, 3 |
 | `Alive` | Person-time (survivors) | 1500 |
 | `Dead` | Death count | 25 |
+
+#### Reproducibility checklist (enrollment, Alive/Dead, and dose timing)
+
+This is the most common source of “we got different numbers”. KCOR assumes **start-of-week denominators** and a single, explicit week-boundary convention.
+
+- **ISO week boundary**: Each row/week is keyed to an ISO week \(W\). `DateDied` is the **Monday** starting that ISO week (computed as `YYYY-WW-1`).
+
+- **Enrollment date/week**: Each CMR sheet corresponds to an enrollment ISO week \(W_e\) (e.g., `2021_24`). Define `enrollmentWeekStart = Monday(W_e)`.
+
+- **Alive at enrollment**: The enrollment population includes everyone **alive at the start of the enrollment week**:
+  - Alive-at-start means `DateOfDeath` is missing **or** `DateOfDeath >= enrollmentWeekStart`.
+  - Therefore, someone who dies during the enrollment week is included in `Alive(W_e)` and also contributes to `Dead(W_e)` (discrete-time risk-set semantics).
+
+- **Dose group at enrollment (fixed cohorts)**: Dose status is frozen at enrollment using **no same-week promotion**:
+  - A dose counts toward enrollment status only if its date is **strictly before** `enrollmentWeekStart`.
+  - A vaccination recorded in week \(W\) affects status starting week \(W+1\), not week \(W\).
+
+- **Weekly deaths**: `Dead(W)` is the number of cohort members whose death is recorded in ISO week \(W\) (i.e., who die **during** that week).
+
+- **Weekly Alive recursion**: `Alive(W)` is the number alive **at the start of week \(W\)**. For fixed cohorts (post-enrollment), the update is:
+
+$$
+\\text{Alive}(W{+}1)=\\text{Alive}(W)-\\text{Dead}(W).
+$$
+
+- **Post-enrollment cohort definition**: After enrollment, cohorts are **fixed** (intent-to-treat style). Post-enrollment vaccinations do not change cohort membership; only deaths reduce `Alive`.
+
+- **Analysis start in KCOR**: `code/KCOR.py` filters each enrollment sheet to `DateDied >= enrollmentWeekStart`, so only post-enrollment weeks contribute to KCOR.
+
+If your reproduction differs, check these toggles first:
+- ISO-week to Monday mapping (`YYYY-WW-1`) matches
+- dose timing uses **`DoseDate < weekStart`** (not `<=`) for start-of-week status
+- alive-at-start includes those who die during the week (`DateOfDeath >= weekStart`)
+- cohorts are frozen after enrollment (no post-enrollment switching)
 
 ### Output Files
 

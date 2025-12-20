@@ -2,6 +2,19 @@
 
 This directory contains the implementation of the KCOR mortality analysis pipeline for person-month survival analysis on Czech event-level data.
 
+## Czech2 Dataset
+Download here: 
+https://www.nzip.cz/data/2547-reprodukcni-zdravotni-udalosti-otevrena-data
+
+Stanislav Veselý wrote:
+
+```Czech officials released a data item series on births and mothers' vaccination status. There is more information there, but this is the most interesting. Until now, we only had aggregated data, which clearly showed that vaccinated women have about 30% fewer children than would correspond to their numbers.  The row dataset could show much more than agregate data. The dataset in on address https://www.nzip.cz/data/2547-reprodukcni-zdravotni-udalosti-otevrena-data. This is official data from Czech goverment.```
+
+This dataset contains the ICD10 code for the underlying cause of death.
+
+Note: This is NOT as useful as the MCOD dataset maintained by the CDC which is MULTIPLE causes of death.
+
+
 ## Overview
 
 The KCOR mortality analysis estimates whether **vaccination increased or decreased the probability of death** for recipients using:
