@@ -163,6 +163,8 @@ VERSION = "v6.0"                # KCOR version number
 #        - Fit (k, theta) per (EnrollmentDate, YearOfBirth, Dose) on quiet-window data (calendar ISO weeks)
 #        - Normalize via H0(t) = (exp(theta * H_obs(t)) - 1) / theta, with theta -> 0 limit
 #        - Uses hazard_from_mr_improved(MR) to build H_obs with skip-week rule
+#        - 560 KCOR commits since Jul 6, 2025
+#        - 12/21/2025: v6.0 implementation started and completed.
 
 import sys
 import math
