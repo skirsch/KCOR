@@ -4089,10 +4089,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             except Exception:
                 iso_int_series = None
 
-            def _log_kcor6_fit(enroll_label, yob_val, dose_val, k_hat, theta_hat, rmse_h, n_obs, success, note):
+            def _log_kcor6_fit(
+                enroll_label,
+                yob_val,
+                dose_val,
+                k_hat,
+                theta_hat,
+                rmse_h,
+                n_obs,
+                success,
+                note,
+                hspan_hobs=np.nan,
+                relrmse_hspan=np.nan,
+                z_end=np.nan,
+            ):
                 k_str = f"{float(k_hat):.6e}" if np.isfinite(k_hat) else "nan"
                 th_str = f"{float(theta_hat):.6e}" if np.isfinite(theta_hat) else "nan"
                 rmse_str = f"{float(rmse_h):.6e}" if np.isfinite(rmse_h) else "nan"
+                hspan_str = f"{float(hspan_hobs):.6e}" if np.isfinite(hspan_hobs) else "nan"
+                rel_str = f"{float(relrmse_hspan):.6e}" if np.isfinite(relrmse_hspan) else "nan"
+                z_str = f"{float(z_end):.6e}" if np.isfinite(z_end) else "nan"
                 succ_str = "1" if bool(success) else "0"
                 note_str = str(note) if note is not None else ""
                 dual_print(
@@ -4103,6 +4119,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     f"k_hat={k_str},"
                     f"theta_hat={th_str},"
                     f"RMSE_Hobs={rmse_str},"
+                    f"Hspan_Hobs={hspan_str},"
+                    f"relRMSE_HobsSpan={rel_str},"
+                    f"z_end={z_str},"
                     f"n_obs={int(n_obs)},"
                     f"success={succ_str},"
                     f"note={note_str}"
@@ -4133,12 +4152,57 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                 note = diag.get("message", "") if isinstance(diag, dict) else ""
 
-                _log_kcor6_fit(sh, yob, dose, k_hat, theta_hat, rmse_h, n_obs, success, note)
+                # Extra diagnostics for auditability:
+                # - Hspan_Hobs: observed cumulative hazard span over quiet-window fit points
+                # - relRMSE_HobsSpan: RMSE / Hspan_Hobs (unitless; interpretable as % error when small)
+                # - z_end: theta_hat * H_model(t_end) (proxy for strength of frailty correction at quiet-window end)
+                try:
+                    if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
+                        hspan_hobs = float(H_fit[-1] - H_fit[0])
+                    else:
+                        hspan_hobs = np.nan
+                except Exception:
+                    hspan_hobs = np.nan
+
+                try:
+                    if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                        relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
+                    else:
+                        relrmse_hspan = np.nan
+                except Exception:
+                    relrmse_hspan = np.nan
+
+                try:
+                    if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
+                        h_end_model = float(H_model(float(t_fit[-1]), float(k_hat), float(theta_hat)))
+                        z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
+                    else:
+                        z_end = np.nan
+                except Exception:
+                    z_end = np.nan
+
+                _log_kcor6_fit(
+                    sh,
+                    yob,
+                    dose,
+                    k_hat,
+                    theta_hat,
+                    rmse_h,
+                    n_obs,
+                    success,
+                    note,
+                    hspan_hobs=hspan_hobs,
+                    relrmse_hspan=relrmse_hspan,
+                    z_end=z_end,
+                )
 
                 kcor6_params_map[(sh, int(yob), int(dose))] = {
                     "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
                     "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
                     "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                    "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
+                    "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
+                    "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                     "n_obs": int(n_obs),
                     "success": bool(success),
                     "note": str(note),
@@ -4177,11 +4241,55 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                     note = diag.get("message", "") if isinstance(diag, dict) else ""
 
-                    _log_kcor6_fit(sh, -2, int(dose), k_hat, theta_hat, rmse_h, n_obs, success, note)
+                    # Extra diagnostics for All Ages fit
+                    try:
+                        t_fit = t_vals[fit_mask]
+                        H_fit = H_obs[fit_mask]
+                        if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
+                            hspan_hobs = float(H_fit[-1] - H_fit[0])
+                        else:
+                            hspan_hobs = np.nan
+                    except Exception:
+                        hspan_hobs = np.nan
+
+                    try:
+                        if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                            relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
+                        else:
+                            relrmse_hspan = np.nan
+                    except Exception:
+                        relrmse_hspan = np.nan
+
+                    try:
+                        if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
+                            h_end_model = float(H_model(float(t_fit[-1]), float(k_hat), float(theta_hat)))
+                            z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
+                        else:
+                            z_end = np.nan
+                    except Exception:
+                        z_end = np.nan
+
+                    _log_kcor6_fit(
+                        sh,
+                        -2,
+                        int(dose),
+                        k_hat,
+                        theta_hat,
+                        rmse_h,
+                        n_obs,
+                        success,
+                        note,
+                        hspan_hobs=hspan_hobs,
+                        relrmse_hspan=relrmse_hspan,
+                        z_end=z_end,
+                    )
                     kcor6_params_map[(sh, -2, int(dose))] = {
                         "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
                         "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
                         "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                        "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
+                        "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
+                        "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                         "n_obs": int(n_obs),
                         "success": bool(success),
                         "note": str(note),
