@@ -77,7 +77,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v5.4"                # KCOR version number
+VERSION = "v6.0"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -159,6 +159,10 @@ VERSION = "v5.4"                # KCOR version number
 #        - In general, normalization adjusts exactly what we fit (same window)
 #        - Exception: For the most recent/highest dose, fit uses data after skip weeks (SLOPE_FIT_DELAY_WEEKS)
 #          but normalization is applied to the entire period (post enrollment and post DYNAMIC_HVE_SKIP_WEEKS)
+# v6.0 - Gamma-frailty normalization (fits in cumulative-hazard space)
+#        - Fit (k, theta) per (EnrollmentDate, YearOfBirth, Dose) on quiet-window data (calendar ISO weeks)
+#        - Normalize via H0(t) = (exp(theta * H_obs(t)) - 1) / theta, with theta -> 0 limit
+#        - Uses hazard_from_mr_improved(MR) to build H_obs with skip-week rule
 
 import sys
 import math
@@ -2944,35 +2948,36 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
     all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
     
-    # KCOR 6.0 all-ages normalization uses gamma-frailty inversion (not slope8).
-    # Observed hazard is hazard_from_mr_improved(MR), accumulated after skip weeks.
+    # All-ages cohort is computed by aggregating across YearOfBirth buckets.
+    # In KCOR 6.0, this uses gamma-frailty inversion; however, for compatibility (SA mode / rollback),
+    # we fall back to the legacy slope-based normalization when kcor6_params_map is not provided.
     all_ages_agg["MR_smooth"] = all_ages_agg["MR"]  # Use raw MR for smoothing
     all_ages_agg["hazard_raw"] = hazard_from_mr_improved(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
     all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard/cumhaz level)
 
-    # Defaults (theta -> 0 fallback yields hazard_adj == hazard_raw and CH == CH_actual)
-    all_ages_agg["hazard_adj"] = 0.0
-    all_ages_agg["CH"] = 0.0
-    all_ages_agg["CH_actual"] = 0.0
+    if kcor6_params_map is not None:
+        # KCOR 6.0 path: gamma-frailty inversion
+        all_ages_agg["hazard_adj"] = 0.0
+        all_ages_agg["CH"] = 0.0
+        all_ages_agg["CH_actual"] = 0.0
 
-    for dose, g in all_ages_agg.groupby("Dose", sort=False):
-        g_sorted = g.sort_values("DateDied")
-        idx = g_sorted.index
-        t_vals = g_sorted["t"].to_numpy(dtype=float)
-        h_raw = np.nan_to_num(
-            g_sorted["hazard_raw"].to_numpy(dtype=float),
-            nan=0.0,
-            posinf=0.0,
-            neginf=0.0,
-        )
+        for dose, g in all_ages_agg.groupby("Dose", sort=False):
+            g_sorted = g.sort_values("DateDied")
+            idx = g_sorted.index
+            t_vals = g_sorted["t"].to_numpy(dtype=float)
+            h_raw = np.nan_to_num(
+                g_sorted["hazard_raw"].to_numpy(dtype=float),
+                nan=0.0,
+                posinf=0.0,
+                neginf=0.0,
+            )
 
-        # Observed cumulative hazard H_obs (skip-week rule)
-        h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
-        H_obs = np.cumsum(h_eff_obs)
+            # Observed cumulative hazard H_obs (skip-week rule)
+            h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+            H_obs = np.cumsum(h_eff_obs)
 
-        # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
-        theta = 0.0
-        if kcor6_params_map is not None:
+            # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
+            theta = 0.0
             params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
             if isinstance(params, dict):
                 th = params.get("theta_hat", np.nan)
@@ -2980,26 +2985,115 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 if ok and np.isfinite(th) and float(th) >= 0.0:
                     theta = float(th)
 
-        # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
-        H0 = invert_gamma_frailty(H_obs, theta)
-        h0_inc = np.diff(H0, prepend=0.0)
-        h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
-        h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
-        h0_inc = np.clip(h0_inc, 0.0, None)
+            # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
+            H0 = invert_gamma_frailty(H_obs, theta)
+            h0_inc = np.diff(H0, prepend=0.0)
+            h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+            h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+            h0_inc = np.clip(h0_inc, 0.0, None)
 
-        all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
-        all_ages_agg.loc[idx, "CH"] = H0
-        all_ages_agg.loc[idx, "CH_actual"] = H_obs
+            all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
+            all_ages_agg.loc[idx, "CH"] = H0
+            all_ages_agg.loc[idx, "CH_actual"] = H_obs
 
-    all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
+        # For schema compatibility: slope is not defined in KCOR6; scale_factor is per-week ratio hazard_adj/hazard_raw.
+        all_ages_agg["slope"] = 0.0
+        hraw_safe = all_ages_agg["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+        all_ages_agg["scale_factor"] = np.where(hraw_safe > EPS, all_ages_agg["hazard_adj"] / (hraw_safe + EPS), 0.0)
+    else:
+        # Legacy path: slope-based hazard normalization for all-ages cohort (used in SA mode + KCOR6 rollback)
+        def apply_slope8_norm_all_ages(row):
+            """Apply slope-based normalization to all-ages cohort using parameters from slope6_params_map."""
+            if slope6_params_map is None:
+                return row["hazard_raw"]
+
+            params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
+            if params is None:
+                params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
+
+            if params is None or not isinstance(params, dict) or params.get("mode") == "none":
+                return row["hazard_raw"]
+
+            mode = params.get("mode", "linear")
+
+            if mode == "slope8":
+                # C term excluded so adjustment is 1 at s=0
+                ka = params.get("ka", 0.0)
+                kb = params.get("kb", 0.0)
+                tau = params.get("tau", 1.0)
+                s = row["t"]
+                if not np.isfinite(tau) or tau <= EPS:
+                    tau = 1.0
+                norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+                if not np.isfinite(norm_factor):
+                    norm_factor = 1.0
+                return row["hazard_raw"] * norm_factor
+            elif mode == "linear":
+                b = params.get("b", 0.0)
+                t_mean = params.get("t_mean", 0.0)
+                t_c = row["t"] - t_mean
+                return row["hazard_raw"] * np.exp(-b * t_c)
+            else:
+                return row["hazard_raw"]
+
+        all_ages_agg["hazard_adj"] = all_ages_agg.apply(apply_slope8_norm_all_ages, axis=1)
+        all_ages_agg["hazard_adj"] = np.clip(all_ages_agg["hazard_adj"].to_numpy(dtype=float), 0.0, None)
+        all_ages_agg["CH_actual"] = all_ages_agg.groupby("Dose")["MR_adj"].cumsum()
+
+        # Add slope and scale_factor for consistency (using parameters from slope6_params_map)
+        def get_slope_for_all_ages(row):
+            if slope6_params_map is None:
+                return 0.0
+            params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
+            if params is None:
+                params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
+            if params is None or not isinstance(params, dict):
+                return 0.0
+            mode = params.get("mode", "none")
+            if mode == "slope8":
+                return params.get("b_original", 0.0)
+            if mode == "linear":
+                return params.get("b", 0.0)
+            return 0.0
+
+        def get_scale_factor_for_all_ages(row):
+            if slope6_params_map is None:
+                return 1.0
+            params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
+            if params is None:
+                params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
+            if params is None or not isinstance(params, dict):
+                return 1.0
+            mode = params.get("mode", "none")
+            s = row["t"]
+            if mode == "slope8":
+                ka = params.get("ka", 0.0)
+                kb = params.get("kb", 0.0)
+                tau = params.get("tau", 1.0)
+                if not np.isfinite(tau) or tau <= EPS:
+                    tau = 1.0
+                norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
+                return norm_factor if np.isfinite(norm_factor) else 1.0
+            if mode == "linear":
+                b = params.get("b", 0.0)
+                t_mean = params.get("t_mean", 0.0)
+                t_c = s - t_mean
+                return np.exp(-b * t_c) if np.isfinite(b) else 1.0
+            return 1.0
+
+        all_ages_agg["slope"] = all_ages_agg.apply(get_slope_for_all_ages, axis=1)
+        all_ages_agg["scale_factor"] = all_ages_agg.apply(get_scale_factor_for_all_ages, axis=1)
+
+        # Legacy CH from slope-normalized hazards (skip-week rule)
+        all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
+        all_ages_agg["CH"] = all_ages_agg.groupby("Dose")["hazard_eff"].cumsum()
+
+    # hazard_eff is needed for downstream cumhaz consistency and some debug sheets
+    if "hazard_eff" not in all_ages_agg.columns:
+        all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
     all_ages_agg["cumPT"] = all_ages_agg.groupby("Dose")["PT"].cumsum()
     all_ages_agg["cumD_adj"] = all_ages_agg["CH"] * all_ages_agg["cumPT"]
     all_ages_agg["cumD_unadj"] = all_ages_agg.groupby("Dose")["Dead"].cumsum()
-    
-    # For schema compatibility: slope is not defined in KCOR6; scale_factor is per-week ratio hazard_adj/hazard_raw.
-    all_ages_agg["slope"] = 0.0
-    hraw_safe = all_ages_agg["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    all_ages_agg["scale_factor"] = np.where(hraw_safe > EPS, all_ages_agg["hazard_adj"] / (hraw_safe + EPS), 0.0)
     
     # Now compute KCOR for all-ages aggregated data
     dose_pairs = get_dose_pairs(sheet_name)
@@ -3505,6 +3599,15 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"Output File: {out_path}")
         dual_print(f"Log File: {log_file_display}")
 
+    # KCOR 6.0 enable switch (default ON; can be disabled via KCOR6_ENABLE=0).
+    # SA mode is intentionally kept slope-based for now (grid sweep fixtures depend on it).
+    _kcor6_env_raw = str(os.environ.get("KCOR6_ENABLE", "")).strip()
+    if _kcor6_env_raw == "":
+        kcor6_enable_requested = True
+    else:
+        kcor6_enable_requested = _kcor6_env_raw.lower() in ("1", "true", "yes")
+    kcor6_enabled_effective = bool(kcor6_enable_requested) and (not _is_sa_mode())
+
     # Configuration parameter dump (always show effective values)
     dual_print("-"*80)
     dual_print("Configuration Parameters (effective):")
@@ -3524,6 +3627,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
+    dual_print(f"  KCOR6_ENABLE          = {kcor6_enabled_effective}  [env KCOR6_ENABLE={'<unset>' if _kcor6_env_raw == '' else _kcor6_env_raw}; disabled in SA mode]")
+    dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
     # Slope6 configuration
     dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear quantile regression normalization for b >= 0]")
     dual_print(f"  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]")
@@ -3938,7 +4043,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Aggregate across sexes for each dose/date/age combination
         # Optionally bucket YearOfBirth into AGE_RANGE-year bins (e.g., 10 -> 1920, 1930, ...)
         # Skip AGE_RANGE bucketing in MC mode to preserve YOB=-2
-        if not MONTE_CARLO_MODE:
+        if kcor6_enabled_effective and not MONTE_CARLO_MODE:
             try:
                 if int(AGE_RANGE) and int(AGE_RANGE) > 1:
                     df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
@@ -4687,65 +4792,66 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # will be migrated in the next step.
         # -------------------------------------------------------------------
         kcor6_norm_ok = False
-        try:
-            n_rows = int(len(df))
-            Hobs_all = np.zeros(n_rows, dtype=float)
-            hadj_all = np.zeros(n_rows, dtype=float)
-
-            for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
-                g_sorted = g.sort_values("DateDied")
-                idx = g_sorted.index.to_numpy(dtype=int)
-
-                t_vals = g_sorted["t"].to_numpy(dtype=float)
-                h_raw = np.nan_to_num(
-                    g_sorted["hazard_raw"].to_numpy(dtype=float),
-                    nan=0.0,
-                    posinf=0.0,
-                    neginf=0.0,
-                )
-
-                # Observed cumulative hazard (skip-week rule)
-                h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
-                H_obs = np.cumsum(h_eff_obs)
-
-                # Theta from quiet-window fit (fallback to 0.0 if missing/failed)
-                theta = 0.0
-                params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
-                if isinstance(params, dict):
-                    th = params.get("theta_hat", np.nan)
-                    ok = bool(params.get("success", False))
-                    if ok and np.isfinite(th) and float(th) >= 0.0:
-                        theta = float(th)
-
-                # Depletion-neutralized cumulative hazard + increments
-                H0 = invert_gamma_frailty(H_obs, theta)
-                h0_inc = np.diff(H0, prepend=0.0)
-                # Enforce skip-week rule and numeric safety
-                h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
-                h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
-                h0_inc = np.clip(h0_inc, 0.0, None)
-
-                Hobs_all[idx] = H_obs
-                hadj_all[idx] = h0_inc
-
-            # Overwrite hazard_adj with KCOR6 baseline-hazard increments
-            df["hazard_adj"] = hadj_all
-
-            # For outputs: CH_actual becomes observed cumulative hazard H_obs
-            df["CH_actual"] = Hobs_all
-
-            # For output transparency: slope is not used in KCOR6; scale_factor is per-week ratio
-            df["slope"] = 0.0
-            hraw_safe = df["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-            df["scale_factor"] = np.where(hraw_safe > EPS, df["hazard_adj"] / (hraw_safe + EPS), 0.0)
-
-            kcor6_norm_ok = True
-        except Exception as _e_kcor6_norm:
-            # Fall back to slope-based hazard_adj if anything goes wrong.
+        if kcor6_enabled_effective:
             try:
-                dual_print(f"[WARN] KCOR6_NORMALIZATION_FAILED,EnrollmentDate={sh},error={_e_kcor6_norm}")
-            except Exception:
-                pass
+                n_rows = int(len(df))
+                Hobs_all = np.zeros(n_rows, dtype=float)
+                hadj_all = np.zeros(n_rows, dtype=float)
+
+                for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+                    g_sorted = g.sort_values("DateDied")
+                    idx = g_sorted.index.to_numpy(dtype=int)
+
+                    t_vals = g_sorted["t"].to_numpy(dtype=float)
+                    h_raw = np.nan_to_num(
+                        g_sorted["hazard_raw"].to_numpy(dtype=float),
+                        nan=0.0,
+                        posinf=0.0,
+                        neginf=0.0,
+                    )
+
+                    # Observed cumulative hazard (skip-week rule)
+                    h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+                    H_obs = np.cumsum(h_eff_obs)
+
+                    # Theta from quiet-window fit (fallback to 0.0 if missing/failed)
+                    theta = 0.0
+                    params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
+                    if isinstance(params, dict):
+                        th = params.get("theta_hat", np.nan)
+                        ok = bool(params.get("success", False))
+                        if ok and np.isfinite(th) and float(th) >= 0.0:
+                            theta = float(th)
+
+                    # Depletion-neutralized cumulative hazard + increments
+                    H0 = invert_gamma_frailty(H_obs, theta)
+                    h0_inc = np.diff(H0, prepend=0.0)
+                    # Enforce skip-week rule and numeric safety
+                    h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+                    h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+                    h0_inc = np.clip(h0_inc, 0.0, None)
+
+                    Hobs_all[idx] = H_obs
+                    hadj_all[idx] = h0_inc
+
+                # Overwrite hazard_adj with KCOR6 baseline-hazard increments
+                df["hazard_adj"] = hadj_all
+
+                # For outputs: CH_actual becomes observed cumulative hazard H_obs
+                df["CH_actual"] = Hobs_all
+
+                # For output transparency: slope is not used in KCOR6; scale_factor is per-week ratio
+                df["slope"] = 0.0
+                hraw_safe = df["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+                df["scale_factor"] = np.where(hraw_safe > EPS, df["hazard_adj"] / (hraw_safe + EPS), 0.0)
+
+                kcor6_norm_ok = True
+            except Exception as _e_kcor6_norm:
+                # Fall back to slope-based hazard_adj if anything goes wrong.
+                try:
+                    dual_print(f"[WARN] KCOR6_NORMALIZATION_FAILED,EnrollmentDate={sh},error={_e_kcor6_norm}")
+                except Exception:
+                    pass
 
         # Backward compatibility: keep 'hazard' as the adjusted hazard used in KCOR
         df["hazard"] = df["hazard_adj"]
@@ -4877,7 +4983,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # In MC mode, use "2022_06" as sheet_name for enrollment date processing
         # but keep iteration number for output sheet naming
         effective_sheet_name = "2022_06" if MONTE_CARLO_MODE else sh
-        out_sh = build_kcor_rows(df, effective_sheet_name, dual_print, slope6_params_map, kcor6_params_map)
+        out_sh = build_kcor_rows(
+            df,
+            effective_sheet_name,
+            dual_print,
+            slope6_params_map,
+            (kcor6_params_map if kcor6_enabled_effective else None),
+        )
         # Compute KCOR_ns and merge into output
         # In MC mode, use effective_sheet_name (2022_06) for consistency
         kcor_ns = build_kcor_ns_rows(df, effective_sheet_name)
