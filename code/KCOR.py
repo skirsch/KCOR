@@ -2532,7 +2532,7 @@ def _parse_enrollment_date(enrollment_date_str):
     enrollment_date = first_monday + timedelta(weeks=week-1)
     return enrollment_date
 
-def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
+def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kcor6_params_map=None):
     """
     Build per-age KCOR rows for all PAIRS and ASMR pooled rows (YearOfBirth=0).
     Assumptions:
@@ -2944,113 +2944,62 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None):
     all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
     all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
     
-    # Compute hazard from aggregated MR (hazard-level normalization, not MR-level)
+    # KCOR 6.0 all-ages normalization uses gamma-frailty inversion (not slope8).
+    # Observed hazard is hazard_from_mr_improved(MR), accumulated after skip weeks.
     all_ages_agg["MR_smooth"] = all_ages_agg["MR"]  # Use raw MR for smoothing
-    all_ages_agg["hazard_raw"] = hazard_from_mr_improved(all_ages_agg["MR"])
-    
-    # Use slope8 normalization parameters from slope6_params_map (already computed in compute_slope6_normalization)
-    # Do NOT overwrite the parameters - they were correctly computed with slope8 for cohort -2
-    # Apply normalization using the same logic as regular cohorts
-    
-    def apply_slope8_norm_all_ages(row):
-        """Apply slope8 normalization to all-ages cohort using parameters from slope6_params_map."""
-        if slope6_params_map is None:
-            return row["hazard_raw"]
-        
-        # Get normalization parameters for this dose (cohort -2 was already computed in compute_slope6_normalization)
-        params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
-        if params is None:
-            # Fallback: try without int conversion
-            params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
-        
-        if params is None or not isinstance(params, dict) or params.get("mode") == "none":
-            return row["hazard_raw"]
-        
-        mode = params.get("mode", "linear")
-        
-        if mode == "slope8":
-            # Slope8 mode: h_norm = h * exp(-kb*s - (ka - kb)*tau*(1 - exp(-s/tau)))
-            # C term excluded so adjustment is 1 at s=0
-            ka = params.get("ka", 0.0)
-            kb = params.get("kb", 0.0)
-            tau = params.get("tau", 1.0)
-            # Use s = t (time since enrollment, NOT centered)
-            s = row["t"]
-            # Ensure tau is positive and finite
-            if not np.isfinite(tau) or tau <= EPS:
-                tau = 1.0
-            norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
-            if not np.isfinite(norm_factor):
-                norm_factor = 1.0
-            return row["hazard_raw"] * norm_factor
-        elif mode == "linear":
-            # Linear mode: h_norm = h * exp(-b * t_c) where t_c = t - t_mean
-            b = params.get("b", 0.0)
-            t_mean = params.get("t_mean", 0.0)
-            t_c = row["t"] - t_mean
-            return row["hazard_raw"] * np.exp(-b * t_c)
-        else:
-            # Unknown mode (shouldn't happen with slope8, but be safe)
-            return row["hazard_raw"]
-    
-    all_ages_agg["hazard_adj"] = all_ages_agg.apply(apply_slope8_norm_all_ages, axis=1)
-    all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard level)
+    all_ages_agg["hazard_raw"] = hazard_from_mr_improved(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
+    all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard/cumhaz level)
+
+    # Defaults (theta -> 0 fallback yields hazard_adj == hazard_raw and CH == CH_actual)
+    all_ages_agg["hazard_adj"] = 0.0
+    all_ages_agg["CH"] = 0.0
+    all_ages_agg["CH_actual"] = 0.0
+
+    for dose, g in all_ages_agg.groupby("Dose", sort=False):
+        g_sorted = g.sort_values("DateDied")
+        idx = g_sorted.index
+        t_vals = g_sorted["t"].to_numpy(dtype=float)
+        h_raw = np.nan_to_num(
+            g_sorted["hazard_raw"].to_numpy(dtype=float),
+            nan=0.0,
+            posinf=0.0,
+            neginf=0.0,
+        )
+
+        # Observed cumulative hazard H_obs (skip-week rule)
+        h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+        H_obs = np.cumsum(h_eff_obs)
+
+        # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
+        theta = 0.0
+        if kcor6_params_map is not None:
+            params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
+            if isinstance(params, dict):
+                th = params.get("theta_hat", np.nan)
+                ok = bool(params.get("success", False))
+                if ok and np.isfinite(th) and float(th) >= 0.0:
+                    theta = float(th)
+
+        # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
+        H0 = invert_gamma_frailty(H_obs, theta)
+        h0_inc = np.diff(H0, prepend=0.0)
+        h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+        h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+        h0_inc = np.clip(h0_inc, 0.0, None)
+
+        all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
+        all_ages_agg.loc[idx, "CH"] = H0
+        all_ages_agg.loc[idx, "CH_actual"] = H_obs
+
     all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
-    all_ages_agg["CH"] = all_ages_agg.groupby("Dose")["hazard_eff"].cumsum()
-    all_ages_agg["CH_actual"] = all_ages_agg.groupby("Dose")["MR_adj"].cumsum()
     all_ages_agg["cumPT"] = all_ages_agg.groupby("Dose")["PT"].cumsum()
     all_ages_agg["cumD_adj"] = all_ages_agg["CH"] * all_ages_agg["cumPT"]
     all_ages_agg["cumD_unadj"] = all_ages_agg.groupby("Dose")["Dead"].cumsum()
     
-    # Add slope and scale_factor for consistency (using parameters from slope6_params_map)
-    def get_slope_for_all_ages(row):
-        """Get slope value from slope6_params_map for display purposes."""
-        if slope6_params_map is None:
-            return 0.0
-        params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
-        if params is None:
-            params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
-        if params is None or not isinstance(params, dict):
-            return 0.0
-        mode = params.get("mode", "none")
-        if mode == "slope8":
-            # For slope8, use b_original (the original linear slope) for display
-            return params.get("b_original", 0.0)
-        elif mode == "linear":
-            return params.get("b", 0.0)
-        else:
-            return 0.0
-    
-    def get_scale_factor_for_all_ages(row):
-        """Compute scale_factor from slope8 parameters for display purposes."""
-        if slope6_params_map is None:
-            return 1.0
-        params = slope6_params_map.get((sheet_name, -2, int(row["Dose"])), None)
-        if params is None:
-            params = slope6_params_map.get((sheet_name, -2, row["Dose"]), None)
-        if params is None or not isinstance(params, dict):
-            return 1.0
-        mode = params.get("mode", "none")
-        s = row["t"]
-        if mode == "slope8":
-            # C term excluded so adjustment is 1 at s=0
-            ka = params.get("ka", 0.0)
-            kb = params.get("kb", 0.0)
-            tau = params.get("tau", 1.0)
-            if not np.isfinite(tau) or tau <= EPS:
-                tau = 1.0
-            norm_factor = np.exp(-kb * s - (ka - kb) * tau * (1.0 - np.exp(-s / (tau + EPS))))
-            return norm_factor if np.isfinite(norm_factor) else 1.0
-        elif mode == "linear":
-            b = params.get("b", 0.0)
-            t_mean = params.get("t_mean", 0.0)
-            t_c = s - t_mean
-            return np.exp(-b * t_c) if np.isfinite(b) else 1.0
-        else:
-            return 1.0
-    
-    all_ages_agg["slope"] = all_ages_agg.apply(get_slope_for_all_ages, axis=1)
-    all_ages_agg["scale_factor"] = all_ages_agg.apply(get_scale_factor_for_all_ages, axis=1)
+    # For schema compatibility: slope is not defined in KCOR6; scale_factor is per-week ratio hazard_adj/hazard_raw.
+    all_ages_agg["slope"] = 0.0
+    hraw_safe = all_ages_agg["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    all_ages_agg["scale_factor"] = np.where(hraw_safe > EPS, all_ages_agg["hazard_adj"] / (hraw_safe + EPS), 0.0)
     
     # Now compute KCOR for all-ages aggregated data
     dose_pairs = get_dose_pairs(sheet_name)
@@ -4928,7 +4877,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # In MC mode, use "2022_06" as sheet_name for enrollment date processing
         # but keep iteration number for output sheet naming
         effective_sheet_name = "2022_06" if MONTE_CARLO_MODE else sh
-        out_sh = build_kcor_rows(df, effective_sheet_name, dual_print, slope6_params_map)
+        out_sh = build_kcor_rows(df, effective_sheet_name, dual_print, slope6_params_map, kcor6_params_map)
         # Compute KCOR_ns and merge into output
         # In MC mode, use effective_sheet_name (2022_06) for consistency
         kcor_ns = build_kcor_ns_rows(df, effective_sheet_name)
