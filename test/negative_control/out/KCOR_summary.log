@@ -1,122 +1,221 @@
 ================================================================================
-KCOR v4.3 - Kirsch Cumulative Outcomes Ratio Analysis
+KCOR v6.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-09-10 18:17:27
+Analysis Date: 2025-12-21 19:54:01
 Mode: KCOR_summary_neg_control.log
 Input File: ../../test/negative_control/data/KCOR_synthetic_neg_control.xlsx
 Output File: ../../test/negative_control/out/KCOR_processed_neg_control.xlsx
 Log File: ../../test/negative_control/out/KCOR_summary.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = None
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
+  NEGATIVE_CONTROL_MODE = 0
+  KCOR6_ENABLE          = True  [env KCOR6_ENABLE=<unset>; disabled in SA mode]
+  KCOR6_QUIET_WINDOW    = 2022-24..2024-16
+  SLOPE6_METHOD        = QuantReg (tau=0.5)  [Slope6: Time-centered linear quantile regression normalization for b >= 0]
+  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]
+  SLOPE6_QUANTILE_TAU  = 0.5  [Quantile level for quantile regression (0.5 = median)]
+  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]
+  SLOPE6_APPLICATION_ENDPOINT = 2024-16  [Rightmost endpoint for determining centerpoint]
+  SLOPE6_BASELINE_WINDOW_LENGTH_MIN = 30 weeks
+  SLOPE6_BASELINE_WINDOW_LENGTH_MAX = 60 weeks
+  SLOPE6_BASELINE_START_YEAR = 2023
+  SLOPE6_MIN_DATA_POINTS = 5
 ================================================================================
 
-[DEBUG] Limiting to age range: 1920-2000
+[INFO] Auto-derived enrollment dates from Excel file: ['2021_24', '2022_06']
+[DEBUG] Limiting to age range: 1920-2009
 [DEBUG] Limiting to enrollment dates: ['2021_24', '2022_06']
+SLOPE6_FIT_WINDOW,selected=2022-01..2024-16 (week 1 of 2022 through 2024-16, fixed)
+[Slope6] Using fit window: 2022-01 to 2024-16
+[Slope6] Application endpoint: 2024-16 (rightmost point for determining centerpoint)
 [Info] Processing sheet: 2021_24
-[DEBUG] Filtered to start from enrollment date 06/14/2021: 9396 rows
-[DEBUG] Filtered to 9396 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 9396 rows
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 18792 rows
+[DEBUG] Filtered to 18792 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 18792 rows
 [DEBUG] Aggregated across sexes: 1566 rows
-
-[DEBUG] Computed slopes for sheet 2021_24:
-  YoB 1940, Dose 0: slope = 0.001494
-  YoB 1950, Dose 0: slope = -0.001739
-  YoB 1960, Dose 0: slope = 0.000548
-  YoB 1940, Dose 1: slope = 0.002283
-  YoB 1950, Dose 1: slope = -0.002361
-  YoB 1960, Dose 1: slope = 0.000922
-  YoB 1940, Dose 2: slope = 0.001673
-  YoB 1950, Dose 2: slope = -0.000635
-  YoB 1960, Dose 2: slope = 0.000817
-
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,k_hat=1.983694e-03,theta_hat=8.662789e-16,RMSE_Hobs=6.281244e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=1,k_hat=6.217561e-04,theta_hat=2.028804e-11,RMSE_Hobs=1.903545e-03,n_obs=97,success=1,note=`xtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=2,k_hat=2.359058e-04,theta_hat=3.464969e-17,RMSE_Hobs=6.307644e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,k_hat=4.292027e-03,theta_hat=8.021978e-01,RMSE_Hobs=3.371416e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=1,k_hat=1.746761e-03,theta_hat=2.973756e+00,RMSE_Hobs=1.293284e-03,n_obs=97,success=1,note=`ftol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=2,k_hat=6.890195e-04,theta_hat=6.976506e+00,RMSE_Hobs=3.792498e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,k_hat=2.333126e-03,theta_hat=7.793296e-17,RMSE_Hobs=2.793346e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=1,k_hat=7.888844e-04,theta_hat=2.028851e-17,RMSE_Hobs=6.007465e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=2,k_hat=3.221545e-04,theta_hat=1.043205e+00,RMSE_Hobs=1.935736e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=0,k_hat=2.329427e-03,theta_hat=8.100512e-17,RMSE_Hobs=2.784776e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=1,k_hat=7.894751e-04,theta_hat=5.330582e-12,RMSE_Hobs=5.796742e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=2,k_hat=3.430941e-04,theta_hat=2.115199e+00,RMSE_Hobs=2.044854e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+  YoB 1940, % vaxxed=84  alive_by_dose= 16% 43% 42% total=1188630
+  YoB 1950, % vaxxed=89  alive_by_dose= 11% 31% 58% total=488344
+  YoB 1960, % vaxxed=88  alive_by_dose= 12% 35% 52% total=2079484
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=0,mode=linear(yob_threshold),a=-6.199860e+00,b=1.876256e-03,c=0.000000e+00,t_mean=7.500000e+01,rms_error=1.294594e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=1,mode=linear(yob_threshold),a=-7.350111e+00,b=1.996814e-03,c=0.000000e+00,t_mean=7.500000e+01,rms_error=1.317165e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1940,Dose=2,mode=linear(yob_threshold),a=-8.296599e+00,b=1.076995e-03,c=0.000000e+00,t_mean=8.250000e+01,rms_error=1.254841e-01,points=132,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,mode=linear(yob_threshold),a=-5.725708e+00,b=-1.147133e-03,c=0.000000e+00,t_mean=7.500000e+01,rms_error=2.248144e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=1,mode=linear(yob_threshold),a=-6.718421e+00,b=-2.423593e-03,c=0.000000e+00,t_mean=7.500000e+01,rms_error=2.105558e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=2,mode=linear(yob_threshold),a=-7.591444e+00,b=-3.478405e-03,c=0.000000e+00,t_mean=8.250000e+01,rms_error=1.836545e-01,points=132,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=0,mode=linear(yob_threshold),a=-6.065780e+00,b=7.686907e-04,c=0.000000e+00,t_mean=7.500000e+01,rms_error=1.429923e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=1,mode=linear(yob_threshold),a=-7.153343e+00,b=5.045060e-04,c=0.000000e+00,t_mean=7.500000e+01,rms_error=1.407999e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=1960,Dose=2,mode=linear(yob_threshold),a=-8.050083e+00,b=-5.719855e-04,c=0.000000e+00,t_mean=8.250000e+01,rms_error=1.287438e-01,points=132,skip_weeks=17
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-6.069508e+00,b=8.004849e-04,c=0.000000e+00,t_mean=7.500000e+01,rms_error=1.435829e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-7.157150e+00,b=3.311625e-04,c=0.000000e+00,t_mean=7.500000e+01,rms_error=1.429060e-01,points=147,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2021_24,YoB=-2,Dose=2,mode=linear(yob_threshold),a=-8.016892e+00,b=-1.104981e-03,c=0.000000e+00,t_mean=8.250000e+01,rms_error=1.340604e-01,points=132,skip_weeks=17
+[DEBUG] Checking normalization parameters for 2021_24:
+  Total cohorts in slope6_params: 12
+  YoB=1940, Dose=0: mode=linear
+  YoB=1940, Dose=1: mode=linear
+  YoB=1940, Dose=2: mode=linear
+  YoB=1950, Dose=0: mode=linear
+  YoB=1950, Dose=1: mode=linear
+  ... and 7 more cohorts
+[DEBUG] Normalization samples for 2021_24:
+  Sample 1: YoB=1940, Dose=0, mode=linear, norm_factor=1.151101e+00
+  Sample 2: YoB=1940, Dose=0, mode=linear, norm_factor=1.148944e+00
+  Sample 3: YoB=1940, Dose=0, mode=linear, norm_factor=1.146790e+00
+[DEBUG] Normalization check for 2021_24: 1560/1566 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1940, Dose=0, t=0.0, hazard_raw=1.436972e-03, hazard_adj=1.654100e-03, ratio=1.151101
+  Sample: YoB=1940, Dose=0, t=1.0, hazard_raw=1.401953e-03, hazard_adj=1.610765e-03, ratio=1.148944
+  Sample: YoB=1940, Dose=0, t=2.0, hazard_raw=1.430449e-03, hazard_adj=1.640424e-03, ratio=1.146790
+[DEBUG] Normalization modes applied for 2021_24: linear: 12
 [Info] Processing sheet: 2022_06
-[DEBUG] Filtered to start from enrollment date 02/07/2022: 7560 rows
-[DEBUG] Filtered to 7560 rows for ages 1920-2000
-[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 7560 rows
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 15120 rows
+[DEBUG] Filtered to 15120 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 15120 rows
 [DEBUG] Aggregated across sexes: 1260 rows
-
-[DEBUG] Computed slopes for sheet 2022_06:
-  YoB 1940, Dose 0: slope = -0.001089
-  YoB 1950, Dose 0: slope = -0.001322
-  YoB 1960, Dose 0: slope = 0.001138
-  YoB 1940, Dose 1: slope = -0.001138
-  YoB 1950, Dose 1: slope = -0.001644
-  YoB 1960, Dose 1: slope = 0.001338
-  YoB 1940, Dose 2: slope = -0.001831
-  YoB 1950, Dose 2: slope = -0.000938
-  YoB 1960, Dose 2: slope = 0.000553
-
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,k_hat=3.517516e-03,theta_hat=6.987184e-01,RMSE_Hobs=2.631927e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,k_hat=1.210360e-03,theta_hat=1.479479e+00,RMSE_Hobs=9.060790e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,k_hat=4.324815e-04,theta_hat=3.757497e+00,RMSE_Hobs=1.940189e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,k_hat=3.850884e-03,theta_hat=6.576674e-01,RMSE_Hobs=3.596048e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,k_hat=1.477074e-03,theta_hat=2.347674e+00,RMSE_Hobs=1.295538e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,k_hat=5.872580e-04,theta_hat=5.919616e+00,RMSE_Hobs=4.050420e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,k_hat=2.340292e-03,theta_hat=1.985985e-16,RMSE_Hobs=2.707004e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,k_hat=7.740415e-04,theta_hat=1.122068e-12,RMSE_Hobs=8.454558e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=2,k_hat=3.063239e-04,theta_hat=2.029149e-15,RMSE_Hobs=2.595607e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,k_hat=2.553675e-03,theta_hat=3.423042e-02,RMSE_Hobs=2.439718e-03,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,k_hat=8.622704e-04,theta_hat=2.286426e-02,RMSE_Hobs=6.978849e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+KCOR6_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=2,k_hat=3.488357e-04,theta_hat=1.098237e+00,RMSE_Hobs=2.307907e-04,n_obs=97,success=1,note=`gtol` termination condition is satisfied.
+  YoB 1940, % vaxxed=91  alive_by_dose= 9% 30% 61% total=295847
+  YoB 1950, % vaxxed=88  alive_by_dose= 12% 31% 57% total=297526
+  YoB 1960, % vaxxed=88  alive_by_dose= 12% 35% 53% total=2028151
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=0,mode=linear(yob_threshold),a=-5.797174e+00,b=-2.022708e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.722308e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=1,mode=linear(yob_threshold),a=-6.836460e+00,b=-2.414855e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.566624e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1940,Dose=2,mode=linear(yob_threshold),a=-7.829920e+00,b=-1.769210e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.430080e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=0,mode=linear(yob_threshold),a=-5.691808e+00,b=-2.185705e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.922059e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=1,mode=linear(yob_threshold),a=-6.713059e+00,b=-2.616831e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.741053e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1950,Dose=2,mode=linear(yob_threshold),a=-7.614611e+00,b=-2.339179e-03,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.539724e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=0,mode=linear(yob_threshold),a=-6.052499e+00,b=2.480338e-04,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.211016e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=1,mode=linear(yob_threshold),a=-7.145058e+00,b=2.000141e-04,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.107517e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=1960,Dose=2,mode=linear(yob_threshold),a=-8.075239e+00,b=9.145625e-05,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.043646e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-5.974884e+00,b=-5.103048e-04,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.271644e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-7.058349e+00,b=-6.672810e-04,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.167707e-01,points=113,skip_weeks=2
+SLOPE8_FIT,EnrollmentDate=2022_06,YoB=-2,Dose=2,mode=linear(yob_threshold),a=-7.969339e+00,b=-8.289344e-04,c=0.000000e+00,t_mean=5.800000e+01,rms_error=1.086872e-01,points=113,skip_weeks=2
+[DEBUG] Checking normalization parameters for 2022_06:
+  Total cohorts in slope6_params: 16
+  YoB=1940, Dose=0: mode=linear
+  YoB=1940, Dose=1: mode=linear
+  YoB=1940, Dose=2: mode=linear
+  YoB=1950, Dose=0: mode=linear
+  YoB=1950, Dose=1: mode=linear
+  ... and 11 more cohorts
+[DEBUG] Normalization samples for 2022_06:
+  Sample 1: YoB=1940, Dose=0, mode=linear, norm_factor=8.893032e-01
+  Sample 2: YoB=1940, Dose=0, mode=linear, norm_factor=8.911038e-01
+  Sample 3: YoB=1940, Dose=0, mode=linear, norm_factor=8.929081e-01
+[DEBUG] Normalization check for 2022_06: 1250/1260 rows have different hazard_adj vs hazard_raw
+  Sample: YoB=1940, Dose=0, t=0.0, hazard_raw=4.647937e-03, hazard_adj=4.133425e-03, ratio=0.889303
+  Sample: YoB=1940, Dose=0, t=1.0, hazard_raw=5.039184e-03, hazard_adj=4.490436e-03, ratio=0.891104
+  Sample: YoB=1940, Dose=0, t=2.0, hazard_raw=4.730413e-03, hazard_adj=4.223824e-03, ratio=0.892908
+[DEBUG] Normalization modes applied for 2022_06: linear: 12, none: 4
 
 ================================================================================
-KCOR VALUES AT END OF 2022 - ALL SHEETS
+KCOR VALUES AT REPORTING DATES - ALL SHEETS
 ================================================================================
+
+Sheet: 2021_24 — Reporting date: 2023-01-02
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age 1940: weight = 0.208353
+  Age 1950: weight = 0.255080
+  Age 1960: weight = 0.536567
+  Total weight: 1.000000
+
 
 Dose combination: 1 vs 0 [2021_24]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
-  ASMR (pooled)   |   1.0097 [0.992, 1.027]
-  1940            |   1.1032 [1.067, 1.141]
-  1950            |   0.9330 [0.898, 0.970]
-  1960            |   1.0041 [0.981, 1.028]
 
 Dose combination: 2 vs 0 [2021_24]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
-  ASMR (pooled)   |   1.0213 [1.000, 1.043]
-  1940            |   1.2507 [1.192, 1.313]
-  1950            |   0.8769 [0.841, 0.914]
-  1960            |   0.9967 [0.970, 1.024]
 
 Dose combination: 2 vs 1 [2021_24]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
-  ASMR (pooled)   |   1.0115 [0.991, 1.033]
-  1940            |   1.1337 [1.079, 1.191]
-  1950            |   0.9398 [0.903, 0.978]
-  1960            |   0.9926 [0.966, 1.020]
+  ASMR (direct)   |   1.0283 [1.017, 1.040] |  1.0242 |   |       ---       --- ---       ---       --- ---
+  All Ages        |   1.0161 [1.005, 1.028] |  0.9883 |   |       ---       --- ---       ---       --- ---
+  1940            |   1.1591 [1.131, 1.188] |  1.1591 |   |       ---       --- ---       ---       --- ---
+  1950            |   0.9477 [0.925, 0.971] |  0.9587 |   |       ---       --- ---       ---       --- ---
+  1960            |   1.0205 [1.005, 1.036] |  1.0073 |   |       ---       --- ---       ---       --- ---
+
+Sheet: 2022_06 — Reporting date: 2023-01-02
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age 1940: weight = 0.164690
+  Age 1950: weight = 0.204412
+  Age 1960: weight = 0.630898
+  Total weight: 1.000000
+
 
 Dose combination: 1 vs 0 [2022_06]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
-  ASMR (pooled)   |   0.9858 [0.970, 1.002]
-  1940            |   0.9316 [0.894, 0.971]
-  1950            |   0.9868 [0.948, 1.027]
-  1960            |   1.0002 [0.980, 1.021]
 
 Dose combination: 2 vs 0 [2022_06]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
-  ASMR (pooled)   |   1.0756 [1.055, 1.097]
-  1940            |   1.1580 [1.102, 1.217]
-  1950            |   1.0349 [0.990, 1.082]
-  1960            |   1.0660 [1.041, 1.092]
 
 Dose combination: 2 vs 1 [2022_06]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
-  ASMR (pooled)   |   1.0911 [1.070, 1.112]
-  1940            |   1.2430 [1.185, 1.304]
-  1950            |   1.0488 [1.003, 1.096]
-  1960            |   1.0657 [1.041, 1.092]
 
 Dose combination: 3 vs 2 [2022_06]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
+--------------------------------------------------
+  No data available for this dose combination
+
+Dose combination: 3 vs 1 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
   No data available for this dose combination
 
 Dose combination: 3 vs 0 [2022_06]
 --------------------------------------------------
-            YoB | KCOR [95% CI]
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
 --------------------------------------------------
   No data available for this dose combination
 ================================================================================
-[Done] Wrote 3768 rows to ../../test/negative_control/out/KCOR_processed_neg_control.xlsx
+[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)
+[Done] Wrote 4698 rows to ../../test/negative_control/out/KCOR_processed_neg_control.xlsx at 2025-12-21 19:54:19
 [Summary] Creating summary file: ../../test/negative_control/out/KCOR_summary.xlsx
-  - 2021_24: 3 dose combinations, 18 summary rows
-  - 2022_06: 3 dose combinations, 18 summary rows
+  - 2021_24: 3 dose combinations, 22 summary rows
+  - 2022_06: 3 dose combinations, 22 summary rows
 [Summary] Created summary with 2 enrollment periods

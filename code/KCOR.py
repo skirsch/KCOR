@@ -3629,16 +3629,19 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     dual_print(f"  KCOR6_ENABLE          = {kcor6_enabled_effective}  [env KCOR6_ENABLE={'<unset>' if _kcor6_env_raw == '' else _kcor6_env_raw}; disabled in SA mode]")
     dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
-    # Slope6 configuration
-    dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear quantile regression normalization for b >= 0]")
-    dual_print(f"  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]")
-    dual_print(f"  SLOPE6_QUANTILE_TAU  = {SLOPE6_QUANTILE_TAU}  [Quantile level for quantile regression (0.5 = median)]")
-    dual_print(f"  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]")
-    dual_print(f"  SLOPE6_APPLICATION_ENDPOINT = {SLOPE6_APPLICATION_END_ISO}  [Rightmost endpoint for determining centerpoint]")
-    dual_print(f"  SLOPE6_BASELINE_WINDOW_LENGTH_MIN = {SLOPE6_BASELINE_WINDOW_LENGTH_MIN} weeks")
-    dual_print(f"  SLOPE6_BASELINE_WINDOW_LENGTH_MAX = {SLOPE6_BASELINE_WINDOW_LENGTH_MAX} weeks")
-    dual_print(f"  SLOPE6_BASELINE_START_YEAR = {SLOPE6_BASELINE_START_YEAR}")
-    dual_print(f"  SLOPE6_MIN_DATA_POINTS = {SLOPE6_MIN_DATA_POINTS}")
+    # Slope normalization config is only relevant when KCOR6 is disabled (or in MC mode).
+    if (not kcor6_enabled_effective) or MONTE_CARLO_MODE:
+        dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear quantile regression normalization for b >= 0]")
+        dual_print(f"  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]")
+        dual_print(f"  SLOPE6_QUANTILE_TAU  = {SLOPE6_QUANTILE_TAU}  [Quantile level for quantile regression (0.5 = median)]")
+        dual_print(f"  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]")
+        dual_print(f"  SLOPE6_APPLICATION_ENDPOINT = {SLOPE6_APPLICATION_END_ISO}  [Rightmost endpoint for determining centerpoint]")
+        dual_print(f"  SLOPE6_BASELINE_WINDOW_LENGTH_MIN = {SLOPE6_BASELINE_WINDOW_LENGTH_MIN} weeks")
+        dual_print(f"  SLOPE6_BASELINE_WINDOW_LENGTH_MAX = {SLOPE6_BASELINE_WINDOW_LENGTH_MAX} weeks")
+        dual_print(f"  SLOPE6_BASELINE_START_YEAR = {SLOPE6_BASELINE_START_YEAR}")
+        dual_print(f"  SLOPE6_MIN_DATA_POINTS = {SLOPE6_MIN_DATA_POINTS}")
+    else:
+        dual_print("  SLOPE_NORMALIZATION   = disabled (KCOR6)")
     dual_print("="*80)
     dual_print("")
     
@@ -3685,10 +3688,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
     mc_summary_data = [] if MONTE_CARLO_MODE else None
     
-    # Slope6: Select fixed baseline window (fit window, no data collection needed since window is fixed)
-    baseline_window = select_slope6_baseline_window([], dual_print)  # Empty list since we don't need data
-    dual_print(f"[Slope6] Using fit window: {baseline_window[0]} to {baseline_window[1]}")
-    dual_print(f"[Slope6] Application endpoint: {SLOPE6_APPLICATION_END_ISO} (rightmost point for determining centerpoint)")
+    # Slope6 baseline window is only needed when slope normalization is active (SA mode / MC mode / KCOR6 rollback).
+    if (not kcor6_enabled_effective) or MONTE_CARLO_MODE:
+        baseline_window = select_slope6_baseline_window([], dual_print)  # Empty list since we don't need data
+        dual_print(f"[Slope6] Using fit window: {baseline_window[0]} to {baseline_window[1]}")
+        dual_print(f"[Slope6] Application endpoint: {SLOPE6_APPLICATION_END_ISO} (rightmost point for determining centerpoint)")
+    else:
+        # Placeholder; not used when KCOR6 is enabled.
+        baseline_window = ("2022-01", SLOPE_FIT_END_ISO)
     
     # --- Sensitivity Analysis (SA) mode: grid sweep over tau × normalization weeks ---
     # We early-return here to avoid running the (very large) normal workbook processing loop in SA mode.
@@ -4414,56 +4421,56 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             continue
         else:
             # Dynamic anchor slope calculation (default).
-            slopes = compute_group_slopes_dynamic(df, sh, dual_print)
+            # Not used in KCOR6 mode; keep for legacy/slope-based outputs.
+            slopes = {} if kcor6_enabled_effective else compute_group_slopes_dynamic(df, sh, dual_print)
         
         # Debug slope lines suppressed
 
-        # Total slope by YoB (Alive-weighted at enrollment week t=0 across included doses)
-        try:
-            first_rows = (
-                df.sort_values(["YearOfBirth","Dose","t"])\
-                  .groupby(["YearOfBirth","Dose"], sort=False)
-                  .first()
-                  .reset_index()
-            )
-            alive0_map = {
-                (int(r["YearOfBirth"]), int(r["Dose"])): float(r.get("Alive", np.nan))
-                for _, r in first_rows.iterrows()
-            }
-        except Exception:
-            alive0_map = {}
+        # Legacy informational logging (not used for KCOR6 normalization)
+        if not kcor6_enabled_effective:
+            # Total slope by YoB (Alive-weighted at enrollment week t=0 across included doses)
+            try:
+                first_rows = (
+                    df.sort_values(["YearOfBirth","Dose","t"])\
+                      .groupby(["YearOfBirth","Dose"], sort=False)
+                      .first()
+                      .reset_index()
+                )
+                alive0_map = {
+                    (int(r["YearOfBirth"]), int(r["Dose"])): float(r.get("Alive", np.nan))
+                    for _, r in first_rows.iterrows()
+                }
+            except Exception:
+                alive0_map = {}
 
-        for yob in sorted(df["YearOfBirth"].unique()):
-            numerator = 0.0
-            denominator = 0.0
-            alive_vax = 0.0
-            alive_total = 0.0
-            # Collect alive counts per dose present at t=0 for this YoB
-            dose_alive = []  # list of (dose, alive_count)
-            for dose in range(max_dose + 1):
-                if (yob, dose) in slopes:
-                    w = float(alive0_map.get((yob, dose), 0.0))
-                    if np.isfinite(w) and w > 0.0:
-                        numerator += w * float(slopes.get((yob, dose), 0.0))
-                        denominator += w
-                        alive_total += w
-                        if dose >= 1:
-                            alive_vax += w
-                        dose_alive.append((dose, w))
-            pct_vax = (alive_vax / alive_total * 100.0) if alive_total > EPS else np.nan
-            if alive_total > EPS and dose_alive:
-                percents = [f"{(w / alive_total * 100.0):.0f}%" for (dose, w) in dose_alive]
-                alive_str = " ".join(percents)
-            else:
-                alive_str = "-"
-            total_str = f" total={int(alive_total)}" if alive_total > EPS else ""
-            if np.isfinite(pct_vax):
-                dual_print(f"  YoB {yob}, % vaxxed={pct_vax:.0f}  alive_by_dose= {alive_str}{total_str}")
-            else:
-                dual_print(f"  YoB {yob}, % vaxxed=-  alive_by_dose= {alive_str}{total_str}")
-
-        # done printing total slopes so we can print the note on how to interpret it
-        # dual_print("\nNote: Note that computed mortality rate slopes should be positive since people don't get younger.")
+            for yob in sorted(df["YearOfBirth"].unique()):
+                numerator = 0.0
+                denominator = 0.0
+                alive_vax = 0.0
+                alive_total = 0.0
+                # Collect alive counts per dose present at t=0 for this YoB
+                dose_alive = []  # list of (dose, alive_count)
+                for dose in range(max_dose + 1):
+                    if (yob, dose) in slopes:
+                        w = float(alive0_map.get((yob, dose), 0.0))
+                        if np.isfinite(w) and w > 0.0:
+                            numerator += w * float(slopes.get((yob, dose), 0.0))
+                            denominator += w
+                            alive_total += w
+                            if dose >= 1:
+                                alive_vax += w
+                            dose_alive.append((dose, w))
+                pct_vax = (alive_vax / alive_total * 100.0) if alive_total > EPS else np.nan
+                if alive_total > EPS and dose_alive:
+                    percents = [f"{(w / alive_total * 100.0):.0f}%" for (dose, w) in dose_alive]
+                    alive_str = " ".join(percents)
+                else:
+                    alive_str = "-"
+                total_str = f" total={int(alive_total)}" if alive_total > EPS else ""
+                if np.isfinite(pct_vax):
+                    dual_print(f"  YoB {yob}, % vaxxed={pct_vax:.0f}  alive_by_dose= {alive_str}{total_str}")
+                else:
+                    dual_print(f"  YoB {yob}, % vaxxed=-  alive_by_dose= {alive_str}{total_str}")
         
 
         # Slope normalization: Slope6 applies only at hazard level.
@@ -4505,44 +4512,50 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Apply Slope8 normalization: Quantile regression depletion-mode normalization for all cohorts
         # Note: baseline_window (fit window) was selected globally before processing sheets
         
-        # Add sheet_name to df for compute_slope6_normalization
-        # In MC mode, use "2022_06" as the enrollment date, not the iteration number
+        # Slope-based normalization parameters are only computed when KCOR6 is disabled (or in MC mode).
+        # In KCOR6 mode we avoid computing slope6/slope8 entirely to prevent confusion and wasted work.
         effective_sheet_name_for_processing = "2022_06" if MONTE_CARLO_MODE else sh
-        df["sheet_name"] = effective_sheet_name_for_processing
-        
-        # Compute Slope6 normalization parameters for this sheet
-        # In MC mode, force linear mode (skip slope8 attempts)
-        slope6_params = compute_slope6_normalization(df, baseline_window, effective_sheet_name_for_processing, dual_print, force_linear_mode=MONTE_CARLO_MODE)
-        
-        # Persist normalization parameters (dict with mode, a, b, c, t_mean, tau) for this sheet for later summary printing
-        # Use effective_sheet_name_for_processing (2022_06 in MC mode) for consistency
-        for (yob_k, dose_k), params in slope6_params.items():
-            try:
-                # Store params dict
-                if isinstance(params, dict):
-                    slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = params
-                else:
-                    # Legacy format: shouldn't happen with new code, but be safe
-                    slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = {
-                        "mode": "none",
-                        "a": 0.0,
-                        "b": 0.0,
-                        "c": 0.0,
-                        "t_mean": 0.0,
-                        "tau": None  # tau only valid for slope8 mode
-                    }
-            except Exception:
-                if isinstance(params, dict):
-                    slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = params
-                else:
-                    slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = {
-                        "mode": "none",
-                        "a": 0.0,
-                        "b": 0.0,
-                        "c": 0.0,
-                        "t_mean": 0.0,
-                        "tau": None  # tau only valid for slope8 mode
-                    }
+        if (not kcor6_enabled_effective) or MONTE_CARLO_MODE:
+            df["sheet_name"] = effective_sheet_name_for_processing
+
+            # Compute Slope6 normalization parameters for this sheet
+            # In MC mode, force linear mode (skip slope8 attempts)
+            slope6_params = compute_slope6_normalization(
+                df,
+                baseline_window,
+                effective_sheet_name_for_processing,
+                dual_print,
+                force_linear_mode=MONTE_CARLO_MODE,
+            )
+
+            # Persist normalization parameters (dict with mode, a, b, c, t_mean, tau) for later summary printing
+            for (yob_k, dose_k), params in slope6_params.items():
+                try:
+                    if isinstance(params, dict):
+                        slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = params
+                    else:
+                        slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = {
+                            "mode": "none",
+                            "a": 0.0,
+                            "b": 0.0,
+                            "c": 0.0,
+                            "t_mean": 0.0,
+                            "tau": None,
+                        }
+                except Exception:
+                    if isinstance(params, dict):
+                        slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = params
+                    else:
+                        slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = {
+                            "mode": "none",
+                            "a": 0.0,
+                            "b": 0.0,
+                            "c": 0.0,
+                            "t_mean": 0.0,
+                            "tau": None,
+                        }
+        else:
+            slope6_params = {}
 
         # Note: Do NOT modify raw MR. Normalization is applied later at the hazard level.
         # Czech-specific MR correction removed; use raw MR moving forward
@@ -5180,7 +5193,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             for (dose_num, dose_den) in dose_pairs:
                 dual_print(f"\nDose combination: {dose_num} vs {dose_den} [{sheet_name}]")
                 dual_print("-" * 50)
-                dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>19} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
+                if kcor6_enabled_effective:
+                    dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>19}")
+                else:
+                    dual_print(f"{'YoB':>15} | KCOR [95% CI] | {'KCOR_ns':>19} | {'*':>1} | {'ka_num':>9} {'kb_num':>9} {'t_n':>3} {'ka_den':>9} {'kb_den':>9} {'t_d':>3}")
                 dual_print("-" * 50)
                 
                 # Get data for this dose combination and sheet at reporting date
@@ -5194,80 +5210,95 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     continue
                 
                 # Show results by age (including ASMR = 0, all ages = -2)
-            # Sort ages: negative ages first (0, -2, -1), then positive ages
-            def age_sort_key(age):
-                if age == 0:
-                    return (0, 0)  # ASMR first
-                elif age == -2:
-                    return (0, 1)  # All ages second
-                elif age == -1:
-                    return (0, 2)  # Unknown third
-                else:
-                    return (1, age)  # Regular ages after
-            
-            ages_sorted = sorted(dose_data["YearOfBirth"].unique(), key=age_sort_key)
-            for age in ages_sorted:
-                age_data = dose_data[dose_data["YearOfBirth"] == age]
-                if not age_data.empty:
-                    kcor_val = age_data["KCOR"].iloc[0]
-                    ci_lower = age_data["CI_lower"].iloc[0]
-                    ci_upper = age_data["CI_upper"].iloc[0]
-                    # Check if abnormal fit flag is present
-                    if "abnormal_fit" in age_data.columns:
-                        abnormal_fit_flag = bool(age_data["abnormal_fit"].iloc[0])
-                    else:
-                        abnormal_fit_flag = False
-                    abnormal_marker = "*" if abnormal_fit_flag else ""
-                    # KCOR_ns: For ASMR (age == 0), compute from age-group KCOR_ns values using same weights as KCOR
-                    # For other ages, get from the data directly
+                # Sort ages: negative ages first (0, -2, -1), then positive ages
+                def age_sort_key(age):
                     if age == 0:
-                        # Compute ASMR KCOR_ns by pooling age-group KCOR_ns values
-                        # Use the same expected-deaths weights as used for KCOR pooling
-                        try:
-                            # Get stored weights for this sheet (already declared global at function level)
-                            weights_ns = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
-                            
-                            # Get all age groups for this dose combination at reporting date
-                            age_groups_data = end_data[
-                                (end_data["Dose_num"] == dose_num) & 
-                                (end_data["Dose_den"] == dose_den) &
-                                (end_data["YearOfBirth"] > 0)  # Exclude ASMR and special ages
-                            ]
-                            if not age_groups_data.empty and "KCOR_ns" in age_groups_data.columns:
-                                # If weights are available, use them; otherwise fall back to equal weights
-                                if not weights_ns:
-                                    # Fallback to equal weights if weights not available
-                                    age_list = list(age_groups_data["YearOfBirth"].unique())
-                                    weights_ns = {yob: 1.0 / len(age_list) for yob in age_list}
+                        return (0, 0)  # ASMR first
+                    elif age == -2:
+                        return (0, 1)  # All ages second
+                    elif age == -1:
+                        return (0, 2)  # Unknown third
+                    else:
+                        return (1, age)  # Regular ages after
+                
+                ages_sorted = sorted(dose_data["YearOfBirth"].unique(), key=age_sort_key)
+                for age in ages_sorted:
+                    age_data = dose_data[dose_data["YearOfBirth"] == age]
+                    if not age_data.empty:
+                        kcor_val = age_data["KCOR"].iloc[0]
+                        ci_lower = age_data["CI_lower"].iloc[0]
+                        ci_upper = age_data["CI_upper"].iloc[0]
+                        # Check if abnormal fit flag is present
+                        if "abnormal_fit" in age_data.columns:
+                            abnormal_fit_flag = bool(age_data["abnormal_fit"].iloc[0])
+                        else:
+                            abnormal_fit_flag = False
+                        abnormal_marker = "*" if abnormal_fit_flag else ""
+                        # KCOR_ns: For ASMR (age == 0), compute from age-group KCOR_ns values using same weights as KCOR
+                        # For other ages, get from the data directly
+                        if age == 0:
+                            # Compute ASMR KCOR_ns by pooling age-group KCOR_ns values
+                            # Use the same expected-deaths weights as used for KCOR pooling
+                            try:
+                                # Get stored weights for this sheet (already declared global at function level)
+                                weights_ns = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
                                 
-                                # Pool KCOR_ns values using log-space weighted average (same as KCOR)
-                                logs_ns = []
-                                wts_ns = []
-                                for yob_check, group_data in age_groups_data.groupby("YearOfBirth"):
-                                    kcor_ns_age = group_data["KCOR_ns"].iloc[0] if "KCOR_ns" in group_data.columns else np.nan
-                                    if np.isfinite(kcor_ns_age) and kcor_ns_age > EPS:
-                                        logs_ns.append(safe_log(kcor_ns_age))
-                                        wts_ns.append(weights_ns.get(yob_check, 0.0))
-                                
-                                if len(logs_ns) > 0 and sum(wts_ns) > 0:
-                                    logs_arr_ns = np.array(logs_ns)
-                                    wts_arr_ns = np.array(wts_ns)
-                                    logK_ns = np.average(logs_arr_ns, weights=wts_arr_ns)
-                                    kcor_ns_val = float(safe_exp(logK_ns))
+                                # Get all age groups for this dose combination at reporting date
+                                age_groups_data = end_data[
+                                    (end_data["Dose_num"] == dose_num) & 
+                                    (end_data["Dose_den"] == dose_den) &
+                                    (end_data["YearOfBirth"] > 0)  # Exclude ASMR and special ages
+                                ]
+                                if not age_groups_data.empty and "KCOR_ns" in age_groups_data.columns:
+                                    # If weights are available, use them; otherwise fall back to equal weights
+                                    if not weights_ns:
+                                        # Fallback to equal weights if weights not available
+                                        age_list = list(age_groups_data["YearOfBirth"].unique())
+                                        weights_ns = {yob: 1.0 / len(age_list) for yob in age_list}
+                                    
+                                    # Pool KCOR_ns values using log-space weighted average (same as KCOR)
+                                    logs_ns = []
+                                    wts_ns = []
+                                    for yob_check, group_data in age_groups_data.groupby("YearOfBirth"):
+                                        kcor_ns_age = group_data["KCOR_ns"].iloc[0] if "KCOR_ns" in group_data.columns else np.nan
+                                        if np.isfinite(kcor_ns_age) and kcor_ns_age > EPS:
+                                            logs_ns.append(safe_log(kcor_ns_age))
+                                            wts_ns.append(weights_ns.get(yob_check, 0.0))
+                                    
+                                    if len(logs_ns) > 0 and sum(wts_ns) > 0:
+                                        logs_arr_ns = np.array(logs_ns)
+                                        wts_arr_ns = np.array(wts_ns)
+                                        logK_ns = np.average(logs_arr_ns, weights=wts_arr_ns)
+                                        kcor_ns_val = float(safe_exp(logK_ns))
+                                    else:
+                                        kcor_ns_val = np.nan
                                 else:
                                     kcor_ns_val = np.nan
-                            else:
+                            except Exception:
                                 kcor_ns_val = np.nan
-                        except Exception:
-                            kcor_ns_val = np.nan
-                        kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
-                    else:
-                        # For non-ASMR ages, get KCOR_ns from data
-                        try:
-                            kcor_ns_val = age_data.get("KCOR_ns", pd.Series([np.nan])).iloc[0]
-                        except Exception:
-                            kcor_ns_val = np.nan
-                        kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
+                            kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
+                        else:
+                            # For non-ASMR ages, get KCOR_ns from data
+                            try:
+                                kcor_ns_val = age_data.get("KCOR_ns", pd.Series([np.nan])).iloc[0]
+                            except Exception:
+                                kcor_ns_val = np.nan
+                            kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
+
+                        # Age label for output
+                        if age == 0:
+                            age_label = "ASMR (direct)"
+                        elif age == -2:
+                            age_label = "All Ages"
+                        elif age == -1:
+                            age_label = "(unknown)"
+                        else:
+                            age_label = f"{age}"
+
+                        # KCOR6 mode: suppress slope parameter extraction/printing (no slope6/slope8).
+                        if kcor6_enabled_effective:
+                            dual_print(f"  {age_label:15} | {kcor_val:8.4f} [{ci_lower:.3f}, {ci_upper:.3f}] | {kcor_ns_str:>7}")
+                            continue
                     
                     # Fetch Slope6 normalization parameters (dict with mode, a, b, c, t_mean, tau) for numerator and denominator cohorts
                     key_age = int(age) if pd.notna(age) and not isinstance(age, (int, np.integer)) else age
