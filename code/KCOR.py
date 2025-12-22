@@ -3624,6 +3624,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     debug_data = []
     # Store slope6 normalization parameters per (EnrollmentDate, YoB, Dose) for later summary printing
     slope6_params_map = {}
+    # Store KCOR 6.0 gamma-frailty fit parameters per (EnrollmentDate, YoB, Dose)
+    # (Introduced in Step 2; not yet applied to outputs until Step 3.)
+    kcor6_params_map = {}
     
     # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
     mc_summary_data = [] if MONTE_CARLO_MODE else None
@@ -4007,6 +4010,127 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["Dead"] = df["Dead"].astype(float).clip(lower=0.0)
         df["MR"]   = np.where(df["PT"] > 0, df["Dead"]/(df["PT"] + EPS), np.nan)
         df["t"]    = df.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
+
+        # -------------------------------------------------------------------
+        # KCOR 6.0 (gamma-frailty) fits in quiet window (logging only; not applied yet)
+        # -------------------------------------------------------------------
+        # Spec: documentation/specs/KCORv6/kcor_6_0_spec.md
+        # Fit method: nonlinear least squares in cumulative-hazard space on quiet-window points.
+        # Observed hazard: hazard_from_mr_improved(MR)
+        # Time axis: t = weeks since enrollment
+        # Skip weeks: hazard_eff = 0 for t < DYNAMIC_HVE_SKIP_WEEKS
+        #
+        # NOTE: SA mode early-returns before this loop; MC mode is explicitly skipped here.
+        if not MONTE_CARLO_MODE:
+            try:
+                iso_parts = df["DateDied"].dt.isocalendar()
+                iso_int_series = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int))
+            except Exception:
+                iso_int_series = None
+
+            def _log_kcor6_fit(enroll_label, yob_val, dose_val, k_hat, theta_hat, rmse_h, n_obs, success, note):
+                k_str = f"{float(k_hat):.6e}" if np.isfinite(k_hat) else "nan"
+                th_str = f"{float(theta_hat):.6e}" if np.isfinite(theta_hat) else "nan"
+                rmse_str = f"{float(rmse_h):.6e}" if np.isfinite(rmse_h) else "nan"
+                succ_str = "1" if bool(success) else "0"
+                note_str = str(note) if note is not None else ""
+                dual_print(
+                    "KCOR6_FIT,"
+                    f"EnrollmentDate={enroll_label},"
+                    f"YoB={int(yob_val)},"
+                    f"Dose={int(dose_val)},"
+                    f"k_hat={k_str},"
+                    f"theta_hat={th_str},"
+                    f"RMSE_Hobs={rmse_str},"
+                    f"n_obs={int(n_obs)},"
+                    f"success={succ_str},"
+                    f"note={note_str}"
+                )
+
+            # Fit per (YearOfBirth, Dose) cohort
+            for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+                g_sorted = g.sort_values("DateDied")
+                t_vals = g_sorted["t"].to_numpy(dtype=float)
+                mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
+                H_obs = np.cumsum(hazard_eff)
+
+                if iso_int_series is not None:
+                    iso_int = iso_int_series.loc[g_sorted.index].to_numpy(dtype=int)
+                    quiet_mask = (iso_int >= KCOR6_QUIET_START_INT) & (iso_int <= KCOR6_QUIET_END_INT)
+                else:
+                    quiet_mask = np.ones_like(t_vals, dtype=bool)
+
+                fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
+                t_fit = t_vals[fit_mask]
+                H_fit = H_obs[fit_mask]
+
+                (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_fit, H_fit)
+                rmse_h = diag.get("rmse_Hobs", np.nan) if isinstance(diag, dict) else np.nan
+                n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
+                success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
+                note = diag.get("message", "") if isinstance(diag, dict) else ""
+
+                _log_kcor6_fit(sh, yob, dose, k_hat, theta_hat, rmse_h, n_obs, success, note)
+
+                kcor6_params_map[(sh, int(yob), int(dose))] = {
+                    "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
+                    "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                    "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                    "n_obs": int(n_obs),
+                    "success": bool(success),
+                    "note": str(note),
+                }
+
+            # Fit All Ages cohort (YearOfBirth = -2) aggregated across YoB groups, per Dose
+            try:
+                all_ages = df.groupby(["Dose", "DateDied"], sort=False).agg({
+                    "Alive": "sum",
+                    "Dead": "sum",
+                }).reset_index()
+                all_ages = all_ages.sort_values(["Dose", "DateDied"]).reset_index(drop=True)
+                all_ages["PT"] = all_ages["Alive"].astype(float).clip(lower=0.0)
+                all_ages["Dead"] = all_ages["Dead"].astype(float).clip(lower=0.0)
+                all_ages["MR"] = np.where(all_ages["PT"] > 0, all_ages["Dead"] / (all_ages["PT"] + EPS), np.nan)
+                all_ages["t"] = all_ages.groupby("Dose").cumcount().astype(float)
+
+                iso_parts_all = all_ages["DateDied"].dt.isocalendar()
+                iso_int_all = (iso_parts_all.year.astype(int) * 100 + iso_parts_all.week.astype(int)).to_numpy(dtype=int)
+
+                for dose, g in all_ages.groupby("Dose", sort=False):
+                    g_sorted = g.sort_values("DateDied")
+                    t_vals = g_sorted["t"].to_numpy(dtype=float)
+                    mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                    hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                    hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
+                    H_obs = np.cumsum(hazard_eff)
+
+                    iso_int = iso_int_all[g_sorted.index.to_numpy(dtype=int)]
+                    quiet_mask = (iso_int >= KCOR6_QUIET_START_INT) & (iso_int <= KCOR6_QUIET_END_INT)
+                    fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
+
+                    (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_vals[fit_mask], H_obs[fit_mask])
+                    rmse_h = diag.get("rmse_Hobs", np.nan) if isinstance(diag, dict) else np.nan
+                    n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
+                    success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
+                    note = diag.get("message", "") if isinstance(diag, dict) else ""
+
+                    _log_kcor6_fit(sh, -2, int(dose), k_hat, theta_hat, rmse_h, n_obs, success, note)
+                    kcor6_params_map[(sh, -2, int(dose))] = {
+                        "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
+                        "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                        "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                        "n_obs": int(n_obs),
+                        "success": bool(success),
+                        "note": str(note),
+                    }
+            except Exception as _e_kcor6_all:
+                # Do not interrupt the main pipeline for diagnostics-only fits.
+                try:
+                    dual_print(f"[WARN] KCOR6_FIT all-ages aggregation failed for {sh}: {_e_kcor6_all}")
+                except Exception:
+                    pass
 
         # Apply centered moving average smoothing before quantile regression
         df = apply_moving_average(df)
@@ -4601,6 +4725,79 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             df["slope"] = 0.0
             df["scale_factor"] = 1.0
         
+        # -------------------------------------------------------------------
+        # KCOR 6.0 gamma-frailty normalization (core swap)
+        #
+        # Replace slope-based hazard_adj with baseline-hazard increments derived from:
+        #   H_obs(t) = sum_{s<=t} h_obs^eff(s),   h_obs = hazard_from_mr_improved(MR) == hazard_raw
+        #   H0(t)    = (exp(theta * H_obs(t)) - 1) / theta
+        #   hazard_adj(t) := H0(t) - H0(t-1)
+        #
+        # NOTE: This applies to the age-stratified cohorts present in df (YoB != -2).
+        # The YoB=-2 "All Ages" KCOR rows are computed inside build_kcor_rows() and
+        # will be migrated in the next step.
+        # -------------------------------------------------------------------
+        kcor6_norm_ok = False
+        try:
+            n_rows = int(len(df))
+            Hobs_all = np.zeros(n_rows, dtype=float)
+            hadj_all = np.zeros(n_rows, dtype=float)
+
+            for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+                g_sorted = g.sort_values("DateDied")
+                idx = g_sorted.index.to_numpy(dtype=int)
+
+                t_vals = g_sorted["t"].to_numpy(dtype=float)
+                h_raw = np.nan_to_num(
+                    g_sorted["hazard_raw"].to_numpy(dtype=float),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
+
+                # Observed cumulative hazard (skip-week rule)
+                h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+                H_obs = np.cumsum(h_eff_obs)
+
+                # Theta from quiet-window fit (fallback to 0.0 if missing/failed)
+                theta = 0.0
+                params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
+                if isinstance(params, dict):
+                    th = params.get("theta_hat", np.nan)
+                    ok = bool(params.get("success", False))
+                    if ok and np.isfinite(th) and float(th) >= 0.0:
+                        theta = float(th)
+
+                # Depletion-neutralized cumulative hazard + increments
+                H0 = invert_gamma_frailty(H_obs, theta)
+                h0_inc = np.diff(H0, prepend=0.0)
+                # Enforce skip-week rule and numeric safety
+                h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+                h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+                h0_inc = np.clip(h0_inc, 0.0, None)
+
+                Hobs_all[idx] = H_obs
+                hadj_all[idx] = h0_inc
+
+            # Overwrite hazard_adj with KCOR6 baseline-hazard increments
+            df["hazard_adj"] = hadj_all
+
+            # For outputs: CH_actual becomes observed cumulative hazard H_obs
+            df["CH_actual"] = Hobs_all
+
+            # For output transparency: slope is not used in KCOR6; scale_factor is per-week ratio
+            df["slope"] = 0.0
+            hraw_safe = df["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+            df["scale_factor"] = np.where(hraw_safe > EPS, df["hazard_adj"] / (hraw_safe + EPS), 0.0)
+
+            kcor6_norm_ok = True
+        except Exception as _e_kcor6_norm:
+            # Fall back to slope-based hazard_adj if anything goes wrong.
+            try:
+                dual_print(f"[WARN] KCOR6_NORMALIZATION_FAILED,EnrollmentDate={sh},error={_e_kcor6_norm}")
+            except Exception:
+                pass
+
         # Backward compatibility: keep 'hazard' as the adjusted hazard used in KCOR
         df["hazard"] = df["hazard_adj"]
         # Extra bug diagnostics for the 1950/Dose2 cohort on two dates — include hazard and CH
@@ -4641,7 +4838,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             pass
         
         # Keep unadjusted data for comparison
-        df["CH_actual"] = df.groupby(["YearOfBirth","Dose"]) ["MR_eff"].cumsum()
+        if not kcor6_norm_ok:
+            # Legacy behavior: cumulative "actual" measured in MR space
+            df["CH_actual"] = df.groupby(["YearOfBirth","Dose"]) ["MR_eff"].cumsum()
         
         # Keep cumD_adj for backward compatibility (now represents adjusted cumulative deaths)
         df["cumPT"] = df.groupby(["YearOfBirth","Dose"]) ["PT"].cumsum()
