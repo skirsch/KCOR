@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v6.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-21 19:54:20
+Analysis Date: 2025-12-22 20:15:04
 Mode: Sensitivity Analysis
 Input File: ../../data/Czech/KCOR_CMR.xlsx
 SA Output File: ../../test/sensitivity/out/KCOR_SA.xlsx
@@ -13,37 +13,26 @@ Configuration Parameters (effective):
   DYNAMIC_HVE_SKIP_WEEKS = 2
   AGE_RANGE             = 10
   YEAR_RANGE            = (1920, 2009)
-  ENROLLMENT_DATES      = None
+  ENROLLMENT_DATES      = ['2021_24']
   DEBUG_VERBOSE         = True
   OVERRIDE_DOSE_PAIRS   = None
   OVERRIDE_YOBS         = None
   KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
   NEGATIVE_CONTROL_MODE = 0
-  KCOR6_ENABLE          = False  [env KCOR6_ENABLE=<unset>; disabled in SA mode]
   KCOR6_QUIET_WINDOW    = 2022-24..2024-16
-  SLOPE6_METHOD        = QuantReg (tau=0.5)  [Slope6: Time-centered linear quantile regression normalization for b >= 0]
-  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]
-  SLOPE6_QUANTILE_TAU  = 0.5  [Quantile level for quantile regression (0.5 = median)]
-  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]
-  SLOPE6_APPLICATION_ENDPOINT = 2024-16  [Rightmost endpoint for determining centerpoint]
-  SLOPE6_BASELINE_WINDOW_LENGTH_MIN = 30 weeks
-  SLOPE6_BASELINE_WINDOW_LENGTH_MAX = 60 weeks
-  SLOPE6_BASELINE_START_YEAR = 2023
-  SLOPE6_MIN_DATA_POINTS = 5
+  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)
 ================================================================================
 
-[INFO] Auto-derived enrollment dates from Excel file: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
 [DEBUG] Limiting to age range: 1920-2009
-[DEBUG] Limiting to enrollment dates: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
-SLOPE6_FIT_WINDOW,selected=2022-01..2024-16 (week 1 of 2022 through 2024-16, fixed)
-[Slope6] Using fit window: 2022-01 to 2024-16
-[Slope6] Application endpoint: 2024-16 (rightmost point for determining centerpoint)
-[SA] Starting sensitivity analysis with 5 tau values and 7 normalization weeks
-[SA] Total parameter combinations: 35
-[SA] Processing combination 1/35: tau=0.1, norm_weeks=2
-SLOPE8_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-8.993653e+00,b=-7.833043e-04,c=0.000000e+00,t_mean=8.050000e+01,rms_error=1.971965e-01,points=158,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-7.793714e+00,b=1.695155e-03,c=0.000000e+00,t_mean=8.050000e+01,rms_error=2.078872e-01,points=158,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2021_13,YoB=-2,Dose=2,mode=linear(yob_threshold),a=-7.099616e+00,b=5.430628e-04,c=0.000000e+00,t_mean=8.800000e+01,rms_error=1.978135e-01,points=143,skip_weeks=17
-SLOPE8_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=0,mode=linear(yob_threshold),a=-9.151699e+00,b=-1.846022e-03,c=0.000000e+00,t_mean=7.700000e+01,rms_error=2.101310e-01,points=151,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=1,mode=linear(yob_threshold),a=-8.666657e+00,b=2.404263e-03,c=0.000000e+00,t_mean=7.700000e+01,rms_error=1.967332e-01,points=151,skip_weeks=2
-SLOPE8_FIT,EnrollmentDate=2021_20,YoB=-2,Dose=2,mode=linear(yob_threshold),a=-7.428576e+00,b=4.240054e-04,c=0.000000e+00,t_mean=8.450000e+01,rms_error=1.786088e-01,points=136,skip_weeks=17
+[DEBUG] Limiting to enrollment dates: ['2021_24']
+[SA] Starting sensitivity analysis (KCOR6)
+[SA] Cohorts: ['2021_24']
+[SA] Baseline weeks: [2, 3, 4, 5, 6, 7, 8]
+[SA] Quiet-start offsets (weeks from 2022-24): [-12, -8, -4, 0, 4, 8, 12]
+[SA] Quiet-window end fixed: 2024-16
+[SA] Processing cohort 2021_24
+[SA] Creating grid output with 1 cohorts and 3 dose pairs
+[SA] Wrote grid for 2021_24, dose 1 vs 0 to sheet '2021_24_1_vs_0'
+[SA] Wrote grid for 2021_24, dose 2 vs 0 to sheet '2021_24_2_vs_0'
+[SA] Wrote grid for 2021_24, dose 2 vs 1 to sheet '2021_24_2_vs_1'
+[SA] Wrote sensitivity analysis grids to ../../test/sensitivity/out/KCOR_SA.xlsx
