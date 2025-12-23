@@ -3601,6 +3601,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"Output File: {out_path}")
         dual_print(f"Log File: {log_file_display}")
 
+    # Monte Carlo enrollment cohort (controls dose-pairs + reporting-date label for MC runs)
+    mc_enrollment_label = None
+    mc_enrollment_iso = None
+    if MONTE_CARLO_MODE:
+        _raw_mc = str(os.environ.get("MC_ENROLLMENT_DATE", "2022_06")).strip()
+        if not _raw_mc:
+            _raw_mc = "2022_06"
+        mc_enrollment_label = _raw_mc.replace("-", "_")
+        # Normalize/pad week if possible (YYYY_WW)
+        try:
+            _y_str, _w_str = mc_enrollment_label.split("_")
+            mc_enrollment_label = f"{int(_y_str)}_{int(_w_str):02d}"
+        except Exception:
+            pass
+        mc_enrollment_iso = mc_enrollment_label.replace("_", "-")
+
     # KCOR 6.0 (gamma-frailty) is always enabled (no legacy toggle).
     kcor6_enabled_effective = True
 
@@ -3616,6 +3632,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Moving-average parameters removed
     dual_print(f"  YEAR_RANGE            = {YEAR_RANGE}")
     dual_print(f"  ENROLLMENT_DATES      = {ENROLLMENT_DATES}")
+    if MONTE_CARLO_MODE:
+        dual_print(f"  MC_ENROLLMENT_DATE    = {mc_enrollment_label}")
     # MR is computed in annualized per 100k units; no additional display scaling applied
     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
@@ -3642,7 +3660,19 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             if name.isdigit() or (name.replace('-', '').replace('_', '').isdigit())
         ]
         ENROLLMENT_DATES = sorted(enrollment_sheets, key=lambda x: int(x.replace('-', '').replace('_', '')))  # Sort numerically
-        dual_print(f"[INFO] Monte Carlo mode: Processing {len(ENROLLMENT_DATES)} iterations")
+        _mc_iter_env = str(os.environ.get("MC_ITERATIONS", "")).strip()
+        if _mc_iter_env:
+            try:
+                _mc_n = int(_mc_iter_env)
+            except Exception:
+                _mc_n = None
+            if _mc_n is not None and _mc_n > 0:
+                ENROLLMENT_DATES = ENROLLMENT_DATES[:_mc_n]
+                dual_print(f"[INFO] Monte Carlo mode: Found {len(enrollment_sheets)} iteration sheets; processing first {len(ENROLLMENT_DATES)} (MC_ITERATIONS={_mc_n})")
+            else:
+                dual_print(f"[INFO] Monte Carlo mode: Found {len(enrollment_sheets)} iteration sheets; processing {len(ENROLLMENT_DATES)}")
+        else:
+            dual_print(f"[INFO] Monte Carlo mode: Processing {len(ENROLLMENT_DATES)} iterations")
     elif ENROLLMENT_DATES is None:
         # Filter out summary and MFG sheets (keep only main enrollment date sheets)
         enrollment_sheets = [
@@ -3736,7 +3766,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     return iso_to_int(int(iso.year), int(iso.week))
                 except Exception:
                     return int(KCOR6_QUIET_START_INT)
-
             for sh in cohorts_to_process:
                 try:
                     dual_print(f"[SA] Processing cohort {sh}")
@@ -3821,12 +3850,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         H_obs = np.cumsum(h_eff_obs)
                         iso_parts = g_sorted["DateDied"].dt.isocalendar()
                         iso_int = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int)).to_numpy(dtype=int)
-                        per_dose[int(dose)] = {
-                            "DateDied": g_sorted["DateDied"].to_numpy(),
-                            "t": t_vals,
-                            "H_obs": H_obs,
-                            "iso_int": iso_int,
-                        }
+                        per_dose[int(dose)] = {"DateDied": g_sorted["DateDied"].to_numpy(), "t": t_vals, "H_obs": H_obs, "iso_int": iso_int}
 
                     # Dose pairs to compute (optionally restricted)
                     dose_pairs_use = dose_pairs_sa
@@ -3847,7 +3871,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             t_fit = t_vals[fit_mask]
                             H_fit = H_obs[fit_mask]
 
-                            (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_fit, H_fit)
+                            (_k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_fit, H_fit)
                             theta = 0.0
                             if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                                 theta = float(theta_hat)
@@ -3859,10 +3883,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             h0_inc = np.clip(h0_inc, 0.0, None)
                             CH = np.cumsum(h0_inc)
 
-                            ch_by_dose[dose_i] = {
-                                "DateDied": d["DateDied"],
-                                "CH": CH,
-                            }
+                            ch_by_dose[dose_i] = {"DateDied": d["DateDied"], "CH": CH}
                         ch_by_offset[int(off)] = ch_by_dose
 
                     # Pre-merge K_raw series per (offset, dose_pair), then baseline-normalize per baseline weeks.
@@ -3873,14 +3894,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             dn, dd = int(dose_num), int(dose_den)
                             if dn not in ch_by_dose or dd not in ch_by_dose:
                                 continue
-                            df_num = pd.DataFrame({
-                                "DateDied": ch_by_dose[dn]["DateDied"],
-                                "CH_num": ch_by_dose[dn]["CH"],
-                            })
-                            df_den = pd.DataFrame({
-                                "DateDied": ch_by_dose[dd]["DateDied"],
-                                "CH_den": ch_by_dose[dd]["CH"],
-                            })
+                            df_num = pd.DataFrame({"DateDied": ch_by_dose[dn]["DateDied"], "CH_num": ch_by_dose[dn]["CH"]})
+                            df_den = pd.DataFrame({"DateDied": ch_by_dose[dd]["DateDied"], "CH_den": ch_by_dose[dd]["CH"]})
                             merged = pd.merge(df_num, df_den, on="DateDied", how="inner").sort_values("DateDied").reset_index(drop=True)
                             if merged.empty:
                                 continue
@@ -3904,7 +3919,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                                 diffs = (merged["DateDied"] - report_date).abs().to_numpy()
                                 idxmin = int(np.argmin(diffs)) if len(diffs) > 0 else -1
-                                kcor_val = float(kcor_series[idxmin]) if idxmin >= 0 and idxmin < len(kcor_series) else np.nan
+                                kcor_val = float(kcor_series[idxmin]) if 0 <= idxmin < len(kcor_series) else np.nan
                                 if np.isfinite(kcor_val):
                                     sa_results[(sh, dn, dd, int(baseline_weeks), int(off))] = kcor_val
 
@@ -3950,11 +3965,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Filter to start from enrollment date
         if MONTE_CARLO_MODE:
-            # In MC mode, all iterations use enrollment date 2022-06
-            enrollment_date_str = "2022-06"
+            # In MC mode, all iterations share a single enrollment cohort (default 2022_06; override via MC_ENROLLMENT_DATE)
+            enrollment_date_str = mc_enrollment_iso or "2022-06"
             enrollment_date = pd.to_datetime(enrollment_date_str + '-1', format='%G-%V-%u', errors='coerce')
             df = df[df["DateDied"] >= enrollment_date]
-            dual_print(f"[DEBUG] Monte Carlo mode: Using enrollment date {enrollment_date.strftime('%m/%d/%Y')} (2022-06) for iteration {sh}")
+            dual_print(f"[DEBUG] Monte Carlo mode: Using enrollment date {enrollment_date.strftime('%m/%d/%Y')} ({enrollment_date_str}) for iteration {sh}")
             dual_print(f"[DEBUG] Filtered to start from enrollment date: {len(df)} rows")
         elif "_" in sh:
             # Normal mode: parse enrollment date from sheet name (format: YYYY_WW)
@@ -4000,10 +4015,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Apply sheet-specific dose filtering
         if MONTE_CARLO_MODE:
-            # In MC mode, use 2022-06 dose pairs and limit to doses 0-3
-            dose_pairs = get_dose_pairs("2022_06")
-            max_dose = 3  # MC mode uses max_dose=3
-            valid_doses = [0, 1, 2, 3]
+            # In MC mode, use the enrollment cohort's dose-pair configuration
+            dose_pairs = get_dose_pairs(mc_enrollment_label or "2022_06")
+            max_dose = max(max(pair) for pair in dose_pairs) if dose_pairs else 0
+            valid_doses = list(range(max_dose + 1))
             df = df[df["Dose"].isin(valid_doses)]
             dual_print(f"[DEBUG] Monte Carlo mode: Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
         else:
@@ -4456,7 +4471,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Slope-based normalization parameters are only computed when KCOR6 is disabled (or in MC mode).
         # In KCOR6 mode we avoid computing slope6/slope8 entirely to prevent confusion and wasted work.
-        effective_sheet_name_for_processing = "2022_06" if MONTE_CARLO_MODE else sh
+        effective_sheet_name_for_processing = (mc_enrollment_label or "2022_06") if MONTE_CARLO_MODE else sh
         if not kcor6_enabled_effective:
             df["sheet_name"] = effective_sheet_name_for_processing
 
@@ -4935,12 +4950,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
 
-        # In MC mode, use "2022_06" as sheet_name for enrollment date processing
-        # but keep iteration number for output sheet naming
-        effective_sheet_name = "2022_06" if MONTE_CARLO_MODE else sh
+        # In MC mode, use the configured enrollment cohort label for dose-pair/reporting-date semantics
+        # but keep the iteration number for output sheet naming.
+        effective_sheet_name = (mc_enrollment_label or "2022_06") if MONTE_CARLO_MODE else sh
         # build_kcor_rows() computes an additional YoB=-2 "All Ages" block internally; in MC mode we
         # remap per-iteration (-2, dose) fits (keyed by iteration sheet name) onto the fixed enrollment
-        # label used for MC outputs ("2022_06") so that All-Ages normalization is consistent.
+        # label used for MC outputs (effective_sheet_name) so that All-Ages normalization is consistent.
         kcor6_params_map_for_build = kcor6_params_map
         if MONTE_CARLO_MODE:
             try:
@@ -4963,7 +4978,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             kcor6_params_map_for_build,
         )
         # Compute KCOR_ns and merge into output
-        # In MC mode, use effective_sheet_name (2022_06) for consistency
         kcor_ns = build_kcor_ns_rows(df, effective_sheet_name)
         if not kcor_ns.empty and not out_sh.empty:
             out_sh = pd.merge(
@@ -4974,22 +4988,23 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             )
         all_out.append(out_sh)
         
-        # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
+        # For Monte Carlo mode: collect KCOR values at the cohort reporting date for summary
         if MONTE_CARLO_MODE:
-            # Get KCOR values at end of 2022 (2022-12-31) for this iteration
             out_sh_copy = out_sh.copy()
             out_sh_copy["Date"] = pd.to_datetime(out_sh_copy["Date"])
-            target_date = pd.to_datetime("2022-12-31")
+            target_date_str = KCOR_REPORTING_DATE.get(effective_sheet_name, "2022-12-31")
+            target_date = pd.to_datetime(target_date_str)
             # Find closest date to target
             if not out_sh_copy.empty:
-                # Filter to dates in 2022 or early 2023
-                out_sh_2022 = out_sh_copy[out_sh_copy["Date"].dt.year <= 2023]
-                if not out_sh_2022.empty:
-                    diffs = (out_sh_2022["Date"] - target_date).abs()
+                # Allow a one-year buffer beyond the target year (e.g., 2022->2023, 2023->2024)
+                year_cap = int(target_date.year) + 1
+                out_sh_window = out_sh_copy[out_sh_copy["Date"].dt.year <= year_cap]
+                if not out_sh_window.empty:
+                    diffs = (out_sh_window["Date"] - target_date).abs()
                     idx_closest = diffs.idxmin()
-                    closest_date = out_sh_2022.loc[idx_closest, "Date"]
+                    closest_date = out_sh_window.loc[idx_closest, "Date"]
                     # Collect data for all dose pairs at closest date
-                    closest_data = out_sh_2022[out_sh_2022["Date"] == closest_date]
+                    closest_data = out_sh_window[out_sh_window["Date"] == closest_date]
                     for _, row in closest_data.iterrows():
                         mc_summary_data.append({
                             "Iteration": int(sh) if sh.isdigit() else sh,
@@ -5003,7 +5018,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         })
         
         # Collect per-pair deaths details for new output sheet
-        # In MC mode, use effective_sheet_name (2022_06) for consistency
         pair_details = build_kcor_o_deaths_details(df, effective_sheet_name)
         if not pair_details.empty:
             pair_deaths_all.append(pair_details)
@@ -5578,7 +5592,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             
             # Create MC summary
             if mc_summary_data:
-                create_mc_summary(mc_summary_data, dual_print)
+                create_mc_summary(mc_summary_data, dual_print, mc_enrollment_label or "2022_06")
         else:
             # Normal mode: write combined output
             while retry_count < max_retries:
@@ -6083,29 +6097,30 @@ def create_summary_file(combined_data, out_path, dual_print):
     
     return None
 
-def create_mc_summary(mc_summary_data, dual_print):
-    """Create Monte Carlo summary statistics at end of 2022.
+def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
+    """Create Monte Carlo summary statistics at the cohort reporting date.
     
     Args:
         mc_summary_data: List of dicts with keys: Iteration, Dose_num, Dose_den, YearOfBirth, Date, KCOR, CI_lower, CI_upper
         dual_print: Function to print to both console and log file
+        enrollment_label: Enrollment cohort label (e.g., 2022_06) used to choose dose pairs for reporting
     """
     if not mc_summary_data:
         dual_print("[MC Summary] No Monte Carlo data available for summary")
         return
     
+    label = str(enrollment_label or "2022_06")
     dual_print("\n" + "="*80)
-    dual_print("MONTE CARLO SUMMARY - KCOR VALUES AT END OF 2022")
+    dual_print(f"MONTE CARLO SUMMARY - KCOR VALUES AT REPORTING DATE ({label})")
     dual_print("="*80)
     
     df_mc = pd.DataFrame(mc_summary_data)
     
-    # Filter to end of 2022 (2022-12-31 or closest date)
+    # Date is already chosen when collecting mc_summary_data; keep here for consistency
     df_mc["Date"] = pd.to_datetime(df_mc["Date"])
-    target_date = pd.to_datetime("2022-12-31")
     
     # Get dose pairs
-    dose_pairs = get_dose_pairs("2022_06")
+    dose_pairs = get_dose_pairs(label)
     
     # Store processed data for each dose combination (for statistics stage)
     dose_combo_stats = {}

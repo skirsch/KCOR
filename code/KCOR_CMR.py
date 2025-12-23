@@ -245,11 +245,33 @@ excel_writer = pd.ExcelWriter(excel_out_path, engine='xlsxwriter')
 # because the deaths start declining in Q2 of 2024
 enrollment_dates = ['2021-13', '2021-20', '2021-24', '2021-30', '2022-06', '2022-26', '2022-47']  # Full set of enrollment dates
 
-# In Monte Carlo mode, only process 2022-06 enrollment
+# In Monte Carlo mode, only process a single enrollment cohort (default 2022-06; override via MC_ENROLLMENT_DATE)
+MC_ENROLL_DATE_STR = None
+MC_MAX_DOSE_EFFECTIVE = None
 if MONTE_CARLO_MODE:
-    enrollment_dates = ['2022-06']
-    print(f"Monte Carlo mode: Processing only 2022-06 enrollment with {MC_ITERATIONS} iterations", flush=True)
+    _env_mc_enroll = str(os.environ.get('MC_ENROLLMENT_DATE', '2022-06')).strip()
+    if not _env_mc_enroll:
+        _env_mc_enroll = '2022-06'
+    _env_mc_enroll = _env_mc_enroll.replace('_', '-')
+    _mc_ts = pd.to_datetime(_env_mc_enroll + '-1', format='%G-%V-%u', errors='coerce')
+    if pd.isna(_mc_ts):
+        print(f"ERROR: Invalid MC_ENROLLMENT_DATE={_env_mc_enroll!r} (expected YYYY-WW or YYYY_WW)", flush=True)
+        sys.exit(2)
+    MC_ENROLL_DATE_STR = _mc_ts.strftime('%G-%V')
+    enrollment_dates = [MC_ENROLL_DATE_STR]
+
+    # Dose-group cap for MC runs (matches cohort semantics used in KCOR analysis)
+    if MC_ENROLL_DATE_STR in ('2021-13', '2021-20', '2021-24', '2021-30'):
+        MC_MAX_DOSE_EFFECTIVE = 2
+    elif MC_ENROLL_DATE_STR in ('2022-47',):
+        MC_MAX_DOSE_EFFECTIVE = 4
+    else:
+        # Default (booster-1 style): treat dose 3 as \"3 or more doses\"
+        MC_MAX_DOSE_EFFECTIVE = 3
+
+    print(f"Monte Carlo mode: Processing only {MC_ENROLL_DATE_STR} enrollment with {MC_ITERATIONS} iterations", flush=True)
     print(f"  Using {MC_THREADS} parallel processes", flush=True)
+    print(f"  Max dose group: {MC_MAX_DOSE_EFFECTIVE}", flush=True)
 
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
 # (Only applies if not in Monte Carlo mode)
@@ -519,14 +541,14 @@ dose_date_cols = [
     (4, 'Date_FourthDose'),  # 4 means 4+
 ]
 
-# Monte Carlo mode: Extract master population for 2022-06 enrollment
+# Monte Carlo mode: Extract master population for the requested enrollment
 # Store as module-level variable so worker processes can access via fork() copy-on-write (no pickling!)
 _master_monte_carlo_global = None
 master_monte_carlo = None
 if MONTE_CARLO_MODE:
     # For MC mode, we need to extract master population before the loop
-    # Process 2022-06 enrollment to get the master population
-    enroll_date_str_mc = '2022-06'
+    # Process the selected enrollment to get the master population
+    enroll_date_str_mc = MC_ENROLL_DATE_STR or enrollment_dates[0]
     enrollment_date_mc = pd.to_datetime(enroll_date_str_mc + '-1', format='%G-%V-%u', errors='coerce')
     print(f"Monte Carlo mode: Extracting master population for {enroll_date_str_mc} enrollment...")
     a_copy_mc = a.copy()
@@ -1153,10 +1175,15 @@ def process_monte_carlo_iteration(args):
         
         print(f"[Iteration {iteration}] Processing enrollment data (input: {len(a_copy)} records)...", flush=True)
         # Process using shared helper function
-        # For Monte Carlo mode, limit to dose 3 (treat dose 3 as "3 or more doses")
+        # For Monte Carlo mode, cap dose groups to match the selected enrollment cohort
         try:
             out, alive_at_enroll, all_weeks, week_index, pop_base = process_enrollment_data(
-                a_copy, enrollment_date, enroll_week_str, max_dose=3, monte_carlo_mode=True, iteration=iteration
+                a_copy,
+                enrollment_date,
+                enroll_week_str,
+                max_dose=int(MC_MAX_DOSE_EFFECTIVE) if MC_MAX_DOSE_EFFECTIVE is not None else 3,
+                monte_carlo_mode=True,
+                iteration=iteration,
             )
             print(f"[Iteration {iteration}] Enrollment data processed (output: {len(out)} rows)", flush=True)
         except Exception as e:
@@ -1208,8 +1235,8 @@ if MONTE_CARLO_MODE:
     print(f"{'='*60}", flush=True)
     
     # Prepare arguments for parallel processing
-    # We only process one enrollment date in MC mode: 2022-06
-    enroll_date_str = enrollment_dates[0]  # Should be '2022-06'
+    # We only process one enrollment date in MC mode (selected via MC_ENROLLMENT_DATE)
+    enroll_date_str = enrollment_dates[0]
     enrollment_date = pd.to_datetime(enroll_date_str + '-1', format='%G-%V-%u', errors='coerce')
     enroll_week_str = enrollment_date.strftime('%G-%V')
     

@@ -86,15 +86,23 @@ CMR: $(CMR_OUTPUT)
 
 # Monte Carlo mode - generates bootstrap samples
 MC_ITERATIONS ?= 100
+# Monte Carlo enrollment cohort (ISO week label; accepts YYYY_WW or YYYY-WW)
+MC_ENROLLMENT_DATE ?= 2022_06
+MC_ENROLLMENT_DATE_SAFE := $(subst -,_,$(MC_ENROLLMENT_DATE))
+MC_STAMP := ../data/$(DATASET)/.kcor_mc_$(MC_ENROLLMENT_DATE_SAFE)_$(MC_ITERATIONS).stamp
 TMP_MC := /tmp/KCOR_CMR_MC.$(DATASET).xlsx
 
 monte_carlo: $(KCOR_MC_OUTPUT)
 
-$(MC_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
+$(MC_STAMP): | ../data/$(DATASET)
+	@echo "MC_ITERATIONS=$(MC_ITERATIONS)" > $@
+	@echo "MC_ENROLLMENT_DATE=$(MC_ENROLLMENT_DATE)" >> $@
+
+$(MC_OUTPUT): $(INPUT_DATA) KCOR_CMR.py $(MC_STAMP) | ../data/$(DATASET)
 	@echo "Running KCOR CMR Monte Carlo aggregation... (writing to $(TMP_MC) then moving)"
 	@echo "  Monte Carlo iterations: $(MC_ITERATIONS)"
 	@rm -f $(TMP_MC)
-	MONTE_CARLO=1 MC_ITERATIONS=$(MC_ITERATIONS) $(PYTHON) KCOR_CMR.py $(INPUT_DATA) $(TMP_MC)
+	MONTE_CARLO=1 MC_ITERATIONS=$(MC_ITERATIONS) MC_ENROLLMENT_DATE=$(MC_ENROLLMENT_DATE) $(PYTHON) KCOR_CMR.py $(INPUT_DATA) $(TMP_MC)
 	@echo "Wrote temporary: $(TMP_MC)"
 	@ls -lh $(TMP_MC)
 	@# Guard: do not move a zero-byte temp file
@@ -108,7 +116,7 @@ $(KCOR_MC_OUTPUT): $(MC_OUTPUT) KCOR.py | ../data/$(DATASET)
 	@echo "Running KCOR analysis on Monte Carlo CMR data..."
 	@echo "  Input: $(MC_OUTPUT)"
 	@echo "  Output: $(KCOR_MC_OUTPUT)"
-	MONTE_CARLO=1 $(PYTHON) KCOR.py $(MC_OUTPUT) $(KCOR_MC_OUTPUT) "Monte Carlo Analysis" KCOR_MC_summary.log
+	MONTE_CARLO=1 MC_ITERATIONS=$(MC_ITERATIONS) MC_ENROLLMENT_DATE=$(MC_ENROLLMENT_DATE) $(PYTHON) KCOR.py $(MC_OUTPUT) $(KCOR_MC_OUTPUT) "Monte Carlo Analysis" KCOR_MC_summary.log
 	@echo "Monte Carlo KCOR analysis complete!"
 
 # Variable cohort aggregation (single-sheet; current dose per week)

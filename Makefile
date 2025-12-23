@@ -17,6 +17,8 @@ DATASET ?= Czech
 
 # Monte Carlo iterations (override on CLI: make monte_carlo MC_ITERATIONS=50)
 MC_ITERATIONS ?= 100
+# Monte Carlo enrollment cohort (ISO week label; accepts YYYY_WW or YYYY-WW)
+MC_ENROLLMENT_DATE ?= 2022_06
 
 # Virtual environment path
 VENV_DIR := .venv
@@ -76,7 +78,7 @@ CMR:
 
 # Monte Carlo mode (delegates to code/Makefile target monte_carlo)
 monte_carlo:
-	$(MAKE) -C $(CODE_DIR) monte_carlo DATASET=$(DATASET) MC_ITERATIONS=$(MC_ITERATIONS)
+	$(MAKE) -C $(CODE_DIR) monte_carlo DATASET=$(DATASET) MC_ITERATIONS=$(MC_ITERATIONS) MC_ENROLLMENT_DATE=$(MC_ENROLLMENT_DATE)
 
 # Run CMR on KRF input by adapting to Czech-like format first
 CMR_from_krf:
@@ -213,6 +215,7 @@ help:
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
 	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 25)"
+	@echo "  MC_ENROLLMENT_DATE=<YYYY_WW> - (Monte Carlo) Enrollment cohort used for MC CMR + analysis (default: 2022_06)"
 	@echo "  SA_COHORTS=<list>     - (Sensitivity) Restrict cohorts, e.g. 2022_06 or 2021_24,2022_06"
 	@echo "  SA_DOSE_PAIRS=<pairs> - (Sensitivity) Restrict dose pairs, e.g. 1,0 or 1,0;2,0"
 	@echo "  SA_BASELINE_WEEKS=<vals> - (Sensitivity) Baseline weeks list/range, e.g. 4,6,8 or 2,8,1"
