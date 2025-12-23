@@ -1,14 +1,16 @@
 # Sensitivity analysis Makefile
 # Run from the root Makefile as make test
 # 
-# Sensitivity analysis computes KCOR for age=-2 cohort (all ages aggregated) 
-# varying SLOPE8_QUANTILE_TAU (0.1, 0.2, 0.3, 0.4, 0.5) and 
-# KCOR_NORMALIZATION_WEEKS (2, 3, 4, 5, 6, 7, 8).
-# Outputs grid tables (tau as columns, normalization weeks as rows) per cohort.
+# Sensitivity analysis computes KCOR for age=-2 cohort (all ages aggregated)
+# varying:
+# - SA_BASELINE_WEEKS (baseline normalization week count, e.g. 2..8)
+# - SA_QUIET_START_OFFSETS (quiet-window start offsets in weeks, relative to 2022-24)
+# Quiet-window end remains fixed at 2024-16.
+# Outputs grid tables (offsets as columns, baseline weeks as rows) per cohort.
 #
 # Quick test overrides:
-# - SA_TAU_VALUES: e.g. "0.5" or "0.1,0.5,0.1" (start,end,step)
-# - SA_NORM_WEEKS: e.g. "4" or "2,8,1" (start,end,step)
+# - SA_BASELINE_WEEKS: e.g. "4" or "2,8,1" (start,end,step)
+# - SA_QUIET_START_OFFSETS: e.g. "-12,-8,-4,0,4,8,12" or "-12,12,4"
 
 # Suppress Entering/Leaving directory noise from sub-makes
 MAKEFLAGS += --no-print-directory
@@ -24,8 +26,8 @@ OUT_XLSX := $(OUT_DIR)/KCOR_SA.xlsx
 # Optional overrides (if not provided, processes all cohorts and all dose pairs)
 SA_COHORTS ?= 
 SA_DOSE_PAIRS ?= 
-SA_TAU_VALUES ?=
-SA_NORM_WEEKS ?=
+SA_BASELINE_WEEKS ?=
+SA_QUIET_START_OFFSETS ?=
 
 .PHONY: all clean
 
@@ -38,7 +40,7 @@ $(OUT_DIR):
 $(OUT_XLSX): $(CMR) $(ROOT)/code/KCOR.py | $(OUT_DIR)
 	SENSITIVITY_ANALYSIS=1 \
 	SA_COHORTS="$(SA_COHORTS)" SA_DOSE_PAIRS="$(SA_DOSE_PAIRS)" \
-	SA_TAU_VALUES="$(SA_TAU_VALUES)" SA_NORM_WEEKS="$(SA_NORM_WEEKS)" \
+	SA_BASELINE_WEEKS="$(SA_BASELINE_WEEKS)" SA_QUIET_START_OFFSETS="$(SA_QUIET_START_OFFSETS)" \
 	$(PY) $(ROOT)/code/KCOR.py $(CMR) $(OUT_XLSX) "Sensitivity Analysis" KCOR_summary_SA.log
 
 clean:

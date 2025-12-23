@@ -583,8 +583,8 @@ DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 # SA_COHORTS: comma-separated list of sheet names, e.g., "2021_24,2022_06"
 # SA_DOSE_PAIRS: semicolon-separated list of pairs as a,b; e.g., "1,0;2,0"
 # SA_YOB: "0" for ASMR only, or range "start,end,step", or list "y1,y2,y3"
-# SA_TAU_VALUES: optional tau list/range for SA grid sweep, e.g., "0.5" or "0.1,0.5,0.1"
-# SA_NORM_WEEKS: optional normalization weeks list/range for SA grid sweep, e.g., "4" or "2,8,1"
+# SA_BASELINE_WEEKS: optional baseline weeks list/range for SA grid sweep, e.g., "4" or "2,8,1"
+# SA_QUIET_START_OFFSETS: optional quiet-start offsets (weeks) list/range, e.g., "-12,-8,-4,0,4,8,12" or "-12,12,4"
 OVERRIDE_DOSE_PAIRS = None
 OVERRIDE_YOBS = None
 
@@ -3492,17 +3492,17 @@ def build_kcor_o_deaths_details(df, sheet_name):
         "K_raw_o","KCOR_o","CMRR"
     ])
 
-def create_sa_grid_output(sa_results, out_path, dual_print, tau_values, norm_weeks_values):
+def create_sa_grid_output(sa_results, out_path, dual_print, baseline_weeks_values, quiet_start_offsets):
     """
     Create Excel workbook with grid tables for sensitivity analysis.
-    Each sheet represents one cohort+dose-pair, with normalization weeks as rows and tau values as columns.
+    Each sheet represents one cohort+dose-pair, with baseline weeks as rows and quiet-start offsets as columns.
 
     Parameters:
-    - sa_results: Dictionary mapping (cohort, dose_num, dose_den, tau, norm_weeks) -> KCOR value
+    - sa_results: Dictionary mapping (cohort, dose_num, dose_den, baseline_weeks, quiet_start_offset_weeks) -> KCOR value
     - out_path: Output file path (used to derive output directory)
     - dual_print: Logging function
-    - tau_values: List of tau values used
-    - norm_weeks_values: List of normalization week values used
+    - baseline_weeks_values: List of baseline week values used (KCOR_NORMALIZATION_WEEKS)
+    - quiet_start_offsets: List of quiet-start offsets in weeks (relative to 2022-24)
     """
     try:
         out_dir = os.path.dirname(out_path)
@@ -3511,7 +3511,7 @@ def create_sa_grid_output(sa_results, out_path, dual_print, tau_values, norm_wee
         # Group results by cohort and dose pair
         cohorts = set()
         dose_pairs = set()
-        for (cohort, dose_num, dose_den, tau, norm_weeks) in sa_results.keys():
+        for (cohort, dose_num, dose_den, baseline_weeks, quiet_off) in sa_results.keys():
             cohorts.add(cohort)
             dose_pairs.add((cohort, dose_num, dose_den))
 
@@ -3528,12 +3528,12 @@ def create_sa_grid_output(sa_results, out_path, dual_print, tau_values, norm_wee
 
                 for dose_num, dose_den in sorted(cohort_dose_pairs):
                     grid_data = []
-                    for norm_weeks in norm_weeks_values:
-                        row = {"Normalization_Weeks": norm_weeks}
-                        for tau in tau_values:
-                            key = (cohort, dose_num, dose_den, tau, norm_weeks)
+                    for baseline_weeks in baseline_weeks_values:
+                        row = {"Baseline_Weeks": int(baseline_weeks)}
+                        for quiet_off in quiet_start_offsets:
+                            key = (cohort, dose_num, dose_den, int(baseline_weeks), int(quiet_off))
                             kcor_val = sa_results.get(key, np.nan)
-                            row[f"tau_{tau:.1f}"] = kcor_val
+                            row[f"offset_{int(quiet_off)}w"] = kcor_val
                         grid_data.append(row)
 
                     grid_df = pd.DataFrame(grid_data)
@@ -3601,14 +3601,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"Output File: {out_path}")
         dual_print(f"Log File: {log_file_display}")
 
-    # KCOR 6.0 enable switch (default ON; can be disabled via KCOR6_ENABLE=0).
-    # SA mode is intentionally kept slope-based for now (grid sweep fixtures depend on it).
-    _kcor6_env_raw = str(os.environ.get("KCOR6_ENABLE", "")).strip()
-    if _kcor6_env_raw == "":
-        kcor6_enable_requested = True
-    else:
-        kcor6_enable_requested = _kcor6_env_raw.lower() in ("1", "true", "yes")
-    kcor6_enabled_effective = bool(kcor6_enable_requested) and (not _is_sa_mode())
+    # KCOR 6.0 (gamma-frailty) is always enabled (no legacy toggle).
+    kcor6_enabled_effective = True
 
     # Configuration parameter dump (always show effective values)
     dual_print("-"*80)
@@ -3629,21 +3623,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
-    dual_print(f"  KCOR6_ENABLE          = {kcor6_enabled_effective}  [env KCOR6_ENABLE={'<unset>' if _kcor6_env_raw == '' else _kcor6_env_raw}; disabled in SA mode]")
     dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
-    # Slope normalization config is only relevant when KCOR6 is disabled (or in MC mode).
-    if (not kcor6_enabled_effective) or MONTE_CARLO_MODE:
-        dual_print(f"  SLOPE6_METHOD        = QuantReg (tau={SLOPE6_QUANTILE_TAU})  [Slope6: Time-centered linear quantile regression normalization for b >= 0]")
-        dual_print(f"  SLOPE8_METHOD        = Quantile Regression (L-BFGS-B)  [Slope8: Depletion-mode normalization for all cohorts]")
-        dual_print(f"  SLOPE6_QUANTILE_TAU  = {SLOPE6_QUANTILE_TAU}  [Quantile level for quantile regression (0.5 = median)]")
-        dual_print(f"  SLOPE6_FIT_WINDOW    = 2022-01 to 2024-12  [Fixed window for regression fitting]")
-        dual_print(f"  SLOPE6_APPLICATION_ENDPOINT = {SLOPE6_APPLICATION_END_ISO}  [Rightmost endpoint for determining centerpoint]")
-        dual_print(f"  SLOPE6_BASELINE_WINDOW_LENGTH_MIN = {SLOPE6_BASELINE_WINDOW_LENGTH_MIN} weeks")
-        dual_print(f"  SLOPE6_BASELINE_WINDOW_LENGTH_MAX = {SLOPE6_BASELINE_WINDOW_LENGTH_MAX} weeks")
-        dual_print(f"  SLOPE6_BASELINE_START_YEAR = {SLOPE6_BASELINE_START_YEAR}")
-        dual_print(f"  SLOPE6_MIN_DATA_POINTS = {SLOPE6_MIN_DATA_POINTS}")
-    else:
-        dual_print("  SLOPE_NORMALIZATION   = disabled (KCOR6)")
+    dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
     dual_print("="*80)
     dual_print("")
     
@@ -3690,263 +3671,248 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
     mc_summary_data = [] if MONTE_CARLO_MODE else None
     
-    # Slope6 baseline window is only needed when slope normalization is active (SA mode / MC mode / KCOR6 rollback).
-    if (not kcor6_enabled_effective) or MONTE_CARLO_MODE:
-        baseline_window = select_slope6_baseline_window([], dual_print)  # Empty list since we don't need data
-        dual_print(f"[Slope6] Using fit window: {baseline_window[0]} to {baseline_window[1]}")
-        dual_print(f"[Slope6] Application endpoint: {SLOPE6_APPLICATION_END_ISO} (rightmost point for determining centerpoint)")
-    else:
-        # Placeholder; not used when KCOR6 is enabled.
-        baseline_window = ("2022-01", SLOPE_FIT_END_ISO)
+    # Legacy slope baseline window (retained only for backward-compatibility code paths).
+    # KCOR6 is the only active normalization method, so this is not used in normal/MC/SA runs.
+    baseline_window = ("2022-01", SLOPE_FIT_END_ISO)
     
-    # --- Sensitivity Analysis (SA) mode: grid sweep over tau × normalization weeks ---
+    # --- Sensitivity Analysis (SA) mode: KCOR6-only sweep over baseline weeks × quiet-start offsets ---
     # We early-return here to avoid running the (very large) normal workbook processing loop in SA mode.
     if _is_sa_mode():
-        original_slope6_tau = SLOPE6_QUANTILE_TAU
-        original_tau = SLOPE8_QUANTILE_TAU
         original_norm_weeks = KCOR_NORMALIZATION_WEEKS
         original_norm_weeks_effective = KCOR_NORMALIZATION_WEEKS_EFFECTIVE
         original_override_yobs = OVERRIDE_YOBS
         try:
-            tau_values = [0.1, 0.2, 0.3, 0.4, 0.5]
-            norm_weeks_values = [2, 3, 4, 5, 6, 7, 8]
+            baseline_weeks_values = [2, 3, 4, 5, 6, 7, 8]
+            quiet_start_offsets = [-12, -8, -4, 0, 4, 8, 12]
 
-            # Quick override hooks for fast SA tests
-            _env_tau = str(os.environ.get("SA_TAU_VALUES", "")).strip()
-            if _env_tau:
-                parsed_tau = _parse_float_triplet_range(_env_tau)
-                if parsed_tau:
-                    tau_values = parsed_tau
-                    dual_print(f"[SA] Overriding tau values via SA_TAU_VALUES={_env_tau} -> {tau_values}")
+            # Optional overrides for fast SA runs
+            _env_baseline = str(os.environ.get("SA_BASELINE_WEEKS", "")).strip()
+            if _env_baseline:
+                parsed_baseline = _parse_int_values_or_range(_env_baseline)
+                if parsed_baseline:
+                    baseline_weeks_values = [int(x) for x in parsed_baseline if int(x) > 0]
+                    dual_print(f"[SA] Overriding baseline weeks via SA_BASELINE_WEEKS={_env_baseline} -> {baseline_weeks_values}")
                 else:
-                    dual_print(f"[SA] Warning: Could not parse SA_TAU_VALUES={_env_tau}. Using defaults: {tau_values}")
+                    dual_print(f"[SA] Warning: Could not parse SA_BASELINE_WEEKS={_env_baseline}. Using defaults: {baseline_weeks_values}")
 
-            _env_norm = str(os.environ.get("SA_NORM_WEEKS", "")).strip()
-            if _env_norm:
-                parsed_norm = _parse_int_values_or_range(_env_norm)
-                if parsed_norm:
-                    norm_weeks_values = [int(x) for x in parsed_norm if int(x) > 0]
-                    dual_print(f"[SA] Overriding normalization weeks via SA_NORM_WEEKS={_env_norm} -> {norm_weeks_values}")
+            _env_offsets = str(os.environ.get("SA_QUIET_START_OFFSETS", "")).strip()
+            if _env_offsets:
+                parsed_offsets = _parse_int_values_or_range(_env_offsets)
+                if parsed_offsets:
+                    quiet_start_offsets = [int(x) for x in parsed_offsets]
+                    dual_print(f"[SA] Overriding quiet start offsets via SA_QUIET_START_OFFSETS={_env_offsets} -> {quiet_start_offsets}")
                 else:
-                    dual_print(f"[SA] Warning: Could not parse SA_NORM_WEEKS={_env_norm}. Using defaults: {norm_weeks_values}")
+                    dual_print(f"[SA] Warning: Could not parse SA_QUIET_START_OFFSETS={_env_offsets}. Using defaults: {quiet_start_offsets}")
+
+            baseline_weeks_values = sorted({int(x) for x in baseline_weeks_values if int(x) > 0})
+            quiet_start_offsets = [int(x) for x in quiet_start_offsets]
 
             sa_results = {}
-
-            dual_print(f"[SA] Starting sensitivity analysis with {len(tau_values)} tau values and {len(norm_weeks_values)} normalization weeks")
-            dual_print(f"[SA] Total parameter combinations: {len(tau_values) * len(norm_weeks_values)}")
+            skip_weeks = int(DYNAMIC_HVE_SKIP_WEEKS)
 
             # Respect SA_COHORTS via ENROLLMENT_DATES override (set near the top-level env override block)
             cohorts_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else sheets_to_process
+            OVERRIDE_YOBS = [-2]  # force all-ages only for SA
 
-            # Force all-ages cohort (-2) in SA mode (build_kcor_rows creates -2 by aggregation; we filter output later)
-            OVERRIDE_YOBS = [-2]
+            dual_print(f"[SA] Starting sensitivity analysis (KCOR6)")
+            dual_print(f"[SA] Cohorts: {cohorts_to_process}")
+            dual_print(f"[SA] Baseline weeks: {baseline_weeks_values}")
+            dual_print(f"[SA] Quiet-start offsets (weeks from {KCOR6_QUIET_START_ISO}): {quiet_start_offsets}")
+            dual_print(f"[SA] Quiet-window end fixed: {KCOR6_QUIET_END_ISO}")
 
-            total_combinations = len(tau_values) * len(norm_weeks_values)
-            combination_num = 0
+            # Quiet-start baseline date (Monday of KCOR6_QUIET_START_ISO)
+            try:
+                y0, w0 = [int(x) for x in str(KCOR6_QUIET_START_ISO).split("-")]
+                quiet_start_base_dt = datetime.fromisocalendar(int(y0), int(w0), 1)
+            except Exception:
+                quiet_start_base_dt = None
 
-            for tau in tau_values:
-                for norm_weeks in norm_weeks_values:
-                    combination_num += 1
-                    dual_print(f"[SA] Processing combination {combination_num}/{total_combinations}: tau={tau}, norm_weeks={norm_weeks}")
+            def _quiet_start_int_for_offset(offset_weeks: int) -> int:
+                try:
+                    if quiet_start_base_dt is None:
+                        return int(KCOR6_QUIET_START_INT)
+                    dt = quiet_start_base_dt + timedelta(weeks=int(offset_weeks))
+                    iso = dt.isocalendar()
+                    return iso_to_int(int(iso.year), int(iso.week))
+                except Exception:
+                    return int(KCOR6_QUIET_START_INT)
 
-                    # Override parameters for this run
-                    # NOTE: slope8 uses a linear fit for YOB>=SLOPE8_MAX_YOB and YOB=-2, which is controlled by SLOPE6_QUANTILE_TAU.
-                    # We set BOTH taus here so SA_TAU_VALUES affects whichever mode is used (linear or slope8), and is future-proof.
-                    SLOPE6_QUANTILE_TAU = tau
-                    SLOPE8_QUANTILE_TAU = tau
-                    KCOR_NORMALIZATION_WEEKS = norm_weeks
-                    KCOR_NORMALIZATION_WEEKS_EFFECTIVE = KCOR_NORMALIZATION_WEEKS + DYNAMIC_HVE_SKIP_WEEKS - 1
+            for sh in cohorts_to_process:
+                try:
+                    dual_print(f"[SA] Processing cohort {sh}")
+                    df_sa_raw = pd.read_excel(src_path, sheet_name=sh)
+                    df_sa_raw["DateDied"] = pd.to_datetime(df_sa_raw["DateDied"])
 
-                    sa_all_out = []
-                    sa_slope6_params_map = {}
+                    # Filter out unreasonably large birth years (keep -1, -2)
+                    if "YearOfBirth" in df_sa_raw.columns:
+                        df_sa_raw = df_sa_raw[df_sa_raw["YearOfBirth"] <= 2020]
+                    if df_sa_raw.empty:
+                        continue
 
-                    for sh in cohorts_to_process:
+                    # Parse enrollment date to filter start
+                    if "_" in sh:
                         try:
-                            df_sa = pd.read_excel(src_path, sheet_name=sh)
-                            df_sa["DateDied"] = pd.to_datetime(df_sa["DateDied"])
+                            year_str, week_str = sh.split("_")
+                            enrollment_date = datetime.fromisocalendar(int(year_str), int(week_str), 1)
+                            df_sa_raw = df_sa_raw[df_sa_raw["DateDied"] >= enrollment_date]
+                        except Exception:
+                            pass
 
-                            # Filter out unreasonably large birth years (keep -1, -2)
-                            df_sa = df_sa[df_sa["YearOfBirth"] <= 2020]
-                            if df_sa.empty:
+                    # Limit to valid doses for this cohort
+                    dose_pairs_sa = get_dose_pairs(sh)
+                    max_dose_sa = max(max(pair) for pair in dose_pairs_sa) if dose_pairs_sa else 0
+                    valid_doses_sa = list(range(max_dose_sa + 1))
+                    df_sa_raw = df_sa_raw[df_sa_raw["Dose"].isin(valid_doses_sa)]
+
+                    # Optional speed-up: if user restricted SA_DOSE_PAIRS, only keep the doses we need
+                    if OVERRIDE_DOSE_PAIRS is not None:
+                        needed_doses = sorted({int(d) for pair in OVERRIDE_DOSE_PAIRS for d in pair})
+                        df_sa_raw = df_sa_raw[df_sa_raw["Dose"].isin(needed_doses)]
+                        if DEBUG_VERBOSE:
+                            dual_print(f"[SA] Restricting cohort {sh} to doses {needed_doses} (from SA_DOSE_PAIRS)")
+
+                    if df_sa_raw.empty:
+                        continue
+
+                    # Aggregate across sexes AND ages to compute the all-ages cohort only (YearOfBirth=-2)
+                    df_sa = df_sa_raw.groupby(["Dose", "DateDied"]).agg({
+                        "ISOweekDied": "first",
+                        "Alive": "sum",
+                        "Dead": "sum",
+                    }).reset_index()
+                    df_sa["YearOfBirth"] = -2
+
+                    df_sa = df_sa.sort_values(["Dose", "DateDied"]).reset_index(drop=True)
+                    df_sa["PT"] = df_sa["Alive"].astype(float).clip(lower=0.0)
+                    df_sa["Dead"] = df_sa["Dead"].astype(float).clip(lower=0.0)
+                    df_sa["MR"] = np.where(df_sa["PT"] > 0, df_sa["Dead"] / (df_sa["PT"] + EPS), np.nan)
+                    df_sa["t"] = df_sa.groupby(["Dose"]).cumcount().astype(float)
+
+                    # Apply moving average smoothing (adds MR_smooth; currently passthrough)
+                    df_sa = apply_moving_average(df_sa)
+
+                    # Reporting date for this cohort
+                    target_str = KCOR_REPORTING_DATE.get(sh)
+                    if target_str:
+                        try:
+                            target_dt = pd.to_datetime(target_str)
+                        except Exception:
+                            target_dt = None
+                    else:
+                        target_dt = None
+                    dates_sorted = df_sa.drop_duplicates(subset=["DateDied"]).sort_values("DateDied")
+                    if dates_sorted.empty:
+                        continue
+                    if target_dt is not None:
+                        diffs = (dates_sorted["DateDied"] - target_dt).abs()
+                        idxmin = diffs.idxmin()
+                        report_date = dates_sorted.loc[idxmin, "DateDied"]
+                    else:
+                        report_date = dates_sorted["DateDied"].max()
+
+                    # Precompute observed cumulative hazard series per dose (independent of theta/offset)
+                    per_dose = {}
+                    for dose, g in df_sa.groupby("Dose", sort=False):
+                        g_sorted = g.sort_values("DateDied").reset_index(drop=True)
+                        t_vals = g_sorted["t"].to_numpy(dtype=float)
+                        mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                        h_raw = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                        h_eff_obs = np.where(t_vals >= float(skip_weeks), h_raw, 0.0)
+                        H_obs = np.cumsum(h_eff_obs)
+                        iso_parts = g_sorted["DateDied"].dt.isocalendar()
+                        iso_int = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int)).to_numpy(dtype=int)
+                        per_dose[int(dose)] = {
+                            "DateDied": g_sorted["DateDied"].to_numpy(),
+                            "t": t_vals,
+                            "H_obs": H_obs,
+                            "iso_int": iso_int,
+                        }
+
+                    # Dose pairs to compute (optionally restricted)
+                    dose_pairs_use = dose_pairs_sa
+                    if OVERRIDE_DOSE_PAIRS is not None:
+                        dose_pairs_use = [p for p in dose_pairs_sa if p in OVERRIDE_DOSE_PAIRS]
+
+                    # Compute CH series per (offset, dose) by fitting theta on the quiet window.
+                    ch_by_offset = {}
+                    for off in quiet_start_offsets:
+                        qs_int = int(_quiet_start_int_for_offset(int(off)))
+                        ch_by_dose = {}
+                        for dose_i, d in per_dose.items():
+                            t_vals = d["t"]
+                            H_obs = d["H_obs"]
+                            iso_int = d["iso_int"]
+
+                            fit_mask = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
+                            t_fit = t_vals[fit_mask]
+                            H_fit = H_obs[fit_mask]
+
+                            (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_fit, H_fit)
+                            theta = 0.0
+                            if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
+                                theta = float(theta_hat)
+
+                            H0 = invert_gamma_frailty(H_obs, theta)
+                            h0_inc = np.diff(H0, prepend=0.0)
+                            h0_inc = np.where(t_vals >= float(skip_weeks), h0_inc, 0.0)
+                            h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+                            h0_inc = np.clip(h0_inc, 0.0, None)
+                            CH = np.cumsum(h0_inc)
+
+                            ch_by_dose[dose_i] = {
+                                "DateDied": d["DateDied"],
+                                "CH": CH,
+                            }
+                        ch_by_offset[int(off)] = ch_by_dose
+
+                    # Pre-merge K_raw series per (offset, dose_pair), then baseline-normalize per baseline weeks.
+                    merged_by_offset_pair = {}
+                    for off in quiet_start_offsets:
+                        ch_by_dose = ch_by_offset.get(int(off), {})
+                        for (dose_num, dose_den) in dose_pairs_use:
+                            dn, dd = int(dose_num), int(dose_den)
+                            if dn not in ch_by_dose or dd not in ch_by_dose:
                                 continue
-
-                            # Parse enrollment date to filter start
-                            if "_" in sh:
-                                year_str, week_str = sh.split("_")
-                                enrollment_year = int(year_str)
-                                enrollment_week = int(week_str)
-                                jan1 = datetime(enrollment_year, 1, 1)
-                                days_to_monday = (7 - jan1.weekday()) % 7
-                                if days_to_monday == 0 and jan1.weekday() != 0:
-                                    days_to_monday = 7
-                                first_monday = jan1 + timedelta(days=days_to_monday)
-                                enrollment_date = first_monday + timedelta(weeks=enrollment_week - 1)
-                                df_sa = df_sa[df_sa["DateDied"] >= enrollment_date]
-
-                            # Limit to valid doses for this cohort
-                            dose_pairs_sa = get_dose_pairs(sh)
-                            max_dose_sa = max(max(pair) for pair in dose_pairs_sa) if dose_pairs_sa else 0
-                            valid_doses_sa = list(range(max_dose_sa + 1))
-                            df_sa = df_sa[df_sa["Dose"].isin(valid_doses_sa)]
-
-                            # Optional speed-up: if user restricted SA_DOSE_PAIRS, only keep the doses we need
-                            if OVERRIDE_DOSE_PAIRS is not None:
-                                needed_doses = sorted({int(d) for pair in OVERRIDE_DOSE_PAIRS for d in pair})
-                                df_sa = df_sa[df_sa["Dose"].isin(needed_doses)]
-                                if DEBUG_VERBOSE:
-                                    dual_print(f"[SA] Restricting cohort {sh} to doses {needed_doses} (from SA_DOSE_PAIRS)")
-
-                            # Aggregate across sexes AND ages to compute the all-ages cohort only (YearOfBirth=-2)
-                            # This avoids doing per-YOB fits/printing when SA mode is intended to evaluate only YOB=-2.
-                            df_sa = df_sa.groupby(["Dose", "DateDied"]).agg({
-                                "ISOweekDied": "first",
-                                "Alive": "sum",
-                                "Dead": "sum"
-                            }).reset_index()
-                            df_sa["YearOfBirth"] = -2
-
-                            df_sa = df_sa.sort_values(["YearOfBirth", "Dose", "DateDied"]).reset_index(drop=True)
-                            df_sa["PT"] = df_sa["Alive"].astype(float).clip(lower=0.0)
-                            df_sa["Dead"] = df_sa["Dead"].astype(float).clip(lower=0.0)
-                            df_sa["MR"] = np.where(df_sa["PT"] > 0, df_sa["Dead"] / (df_sa["PT"] + EPS), np.nan)
-                            df_sa["t"] = df_sa.groupby(["YearOfBirth", "Dose"]).cumcount().astype(float)
-                            df_sa["sheet_name"] = sh
-
-                            # Apply moving average smoothing (adds MR_smooth)
-                            df_sa = apply_moving_average(df_sa)
-
-                            # Compute slope6 normalization parameters
-                            slope6_params_sa = compute_slope6_normalization(df_sa, baseline_window, sh, dual_print, force_linear_mode=False)
-
-                            # Store params (used by build_kcor_rows to report slope6 metadata)
-                            for (yob_k, dose_k), params in slope6_params_sa.items():
-                                if isinstance(params, dict):
-                                    sa_slope6_params_map[(sh, int(yob_k), int(dose_k))] = params
-
-                            # build_kcor_rows expects hazard + cumulative fields to exist
-                            df_sa["hazard_raw"] = hazard_from_mr_improved(np.clip(df_sa["MR"], 0.0, 0.999))
-                            df_sa["hazard_adj"] = df_sa["hazard_raw"].copy()
-
-                            # Apply normalization at hazard level using slope6 parameters
-                            for (yob, dose), g in df_sa.groupby(["YearOfBirth", "Dose"], sort=False):
-                                params = slope6_params_sa.get((yob, dose), {})
-                                if not isinstance(params, dict):
-                                    continue
-                                mode = params.get("mode", "none")
-                                if mode == "linear":
-                                    b = params.get("b", 0.0)
-                                    t_mean = params.get("t_mean", 0.0)
-                                    if np.isfinite(b) and np.abs(b) > EPS:
-                                        g_sorted = g.sort_values("DateDied").copy()
-                                        t_vals = g_sorted["t"].values
-                                        norm_factor = safe_exp(-b * (t_vals - t_mean))
-                                        df_sa.loc[g_sorted.index, "hazard_adj"] = g_sorted["hazard_raw"].values * norm_factor
-                                elif mode == "slope8":
-                                    ka = params.get("ka", 0.0)
-                                    kb = params.get("kb", 0.0)
-                                    tau_loc = params.get("tau", None)
-                                    if tau_loc is not None and np.isfinite(tau_loc) and tau_loc > EPS:
-                                        g_sorted = g.sort_values("DateDied").copy()
-                                        s_vals = g_sorted["t"].values
-                                        norm_factor = safe_exp(-kb * s_vals - (ka - kb) * tau_loc * (1.0 - safe_exp(-s_vals / tau_loc)))
-                                        df_sa.loc[g_sorted.index, "hazard_adj"] = g_sorted["hazard_raw"].values * norm_factor
-
-                            # Create slope and scale_factor columns for downstream diagnostics
-                            def get_slope_sa(row):
-                                params = slope6_params_sa.get((row["YearOfBirth"], row["Dose"]), {})
-                                if not isinstance(params, dict):
-                                    return 0.0
-                                mode = params.get("mode", "none")
-                                if mode == "linear":
-                                    return params.get("b", 0.0)
-                                if mode == "slope8":
-                                    return params.get("kb", 0.0)
-                                return 0.0
-
-                            def get_scale_factor_sa(row):
-                                params = slope6_params_sa.get((row["YearOfBirth"], row["Dose"]), {})
-                                if not isinstance(params, dict):
-                                    return 1.0
-                                mode = params.get("mode", "none")
-                                if mode == "linear":
-                                    b = params.get("b", 0.0)
-                                    t_mean = params.get("t_mean", 0.0)
-                                    return safe_exp(-b * (row["t"] - t_mean))
-                                if mode == "slope8":
-                                    ka = params.get("ka", 0.0)
-                                    kb = params.get("kb", 0.0)
-                                    tau_loc = params.get("tau", 1.0)
-                                    s = row["t"]
-                                    return safe_exp(-kb * s - (ka - kb) * tau_loc * (1.0 - safe_exp(-s / (tau_loc + EPS))))
-                                return 1.0
-
-                            df_sa["slope"] = df_sa.apply(get_slope_sa, axis=1)
-                            df_sa["scale_factor"] = df_sa.apply(get_scale_factor_sa, axis=1)
-                            df_sa["hazard"] = df_sa["hazard_adj"]
-                            df_sa["MR_adj"] = df_sa["MR"]  # MR_adj = MR (normalization is at hazard level)
-
-                            # Apply DYNAMIC_HVE_SKIP_WEEKS
-                            df_sa["hazard_eff"] = np.where(df_sa["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df_sa["hazard"], 0.0)
-                            df_sa["MR_eff"] = np.where(df_sa["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df_sa["MR"], 0.0)
-
-                            # Cumulative hazard and deaths proxies
-                            df_sa["CH"] = df_sa.groupby(["YearOfBirth", "Dose"])["hazard_eff"].cumsum()
-                            df_sa["CH_actual"] = df_sa.groupby(["YearOfBirth", "Dose"])["MR_eff"].cumsum()
-                            df_sa["cumPT"] = df_sa.groupby(["YearOfBirth", "Dose"])["PT"].cumsum()
-                            df_sa["cumD_adj"] = df_sa["CH"] * df_sa["cumPT"]
-                            df_sa["cumD_unadj"] = df_sa.groupby(["YearOfBirth", "Dose"])["Dead"].cumsum()
-
-                            # Build KCOR rows (creates YearOfBirth=-2 via aggregation)
-                            out_sh_sa = build_kcor_rows(df_sa, sh, dual_print, sa_slope6_params_map)
-                            if not out_sh_sa.empty:
-                                out_sh_sa = out_sh_sa[out_sh_sa["YearOfBirth"] == -2]
-                                if not out_sh_sa.empty:
-                                    sa_all_out.append(out_sh_sa)
-
-                        except Exception as e:
-                            dual_print(f"[SA] Error processing sheet {sh} with tau={tau}, norm_weeks={norm_weeks}: {e}")
-                            continue
-
-                    if sa_all_out:
-                        sa_combined = pd.concat(sa_all_out, ignore_index=True).sort_values(
-                            ["EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den", "Date"]
-                        )
-                        sa_combined["Date"] = pd.to_datetime(sa_combined["Date"])
-                        sa_combined = sa_combined[sa_combined["YearOfBirth"] == -2]
-
-                        for sheet_name in sa_combined["EnrollmentDate"].unique():
-                            sheet_data = sa_combined[sa_combined["EnrollmentDate"] == sheet_name]
-                            if sheet_data.empty:
+                            df_num = pd.DataFrame({
+                                "DateDied": ch_by_dose[dn]["DateDied"],
+                                "CH_num": ch_by_dose[dn]["CH"],
+                            })
+                            df_den = pd.DataFrame({
+                                "DateDied": ch_by_dose[dd]["DateDied"],
+                                "CH_den": ch_by_dose[dd]["CH"],
+                            })
+                            merged = pd.merge(df_num, df_den, on="DateDied", how="inner").sort_values("DateDied").reset_index(drop=True)
+                            if merged.empty:
                                 continue
+                            valid = merged["CH_den"] > EPS
+                            merged["K_raw"] = np.where(valid, merged["CH_num"] / merged["CH_den"], np.nan)
+                            merged_by_offset_pair[(int(off), dn, dd)] = merged
 
-                            target_str = KCOR_REPORTING_DATE.get(sheet_name)
-                            if target_str:
-                                try:
-                                    target_dt = pd.to_datetime(target_str)
-                                except Exception:
-                                    target_dt = None
-                            else:
-                                target_dt = None
-
-                            if target_dt is not None and not sheet_data.empty:
-                                diffs = (sheet_data["Date"] - target_dt).abs()
-                                idxmin = diffs.idxmin()
-                                report_date = sheet_data.loc[idxmin, "Date"]
-                            else:
-                                report_date = sheet_data["Date"].max()
-
-                            report_data = sheet_data[sheet_data["Date"] == report_date]
-                            for _, row in report_data.iterrows():
-                                dose_num = int(row["Dose_num"])
-                                dose_den = int(row["Dose_den"])
-                                if OVERRIDE_DOSE_PAIRS is not None and (dose_num, dose_den) not in OVERRIDE_DOSE_PAIRS:
+                    for baseline_weeks in baseline_weeks_values:
+                        t0_idx = int(baseline_weeks) + skip_weeks - 1
+                        for off in quiet_start_offsets:
+                            for (dose_num, dose_den) in dose_pairs_use:
+                                dn, dd = int(dose_num), int(dose_den)
+                                merged = merged_by_offset_pair.get((int(off), dn, dd))
+                                if merged is None or merged.empty:
                                     continue
-                                key = (sheet_name, dose_num, dose_den, tau, norm_weeks)
-                                kcor_val = row["KCOR"]
+                                idx0 = t0_idx if len(merged) > t0_idx else 0
+                                baseline_k_raw = merged["K_raw"].iloc[idx0]
+                                if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+                                    baseline_k_raw = 1.0
+                                kcor_series = np.where(np.isfinite(merged["K_raw"]), merged["K_raw"] / baseline_k_raw, np.nan)
+
+                                diffs = (merged["DateDied"] - report_date).abs().to_numpy()
+                                idxmin = int(np.argmin(diffs)) if len(diffs) > 0 else -1
+                                kcor_val = float(kcor_series[idxmin]) if idxmin >= 0 and idxmin < len(kcor_series) else np.nan
                                 if np.isfinite(kcor_val):
-                                    sa_results[key] = kcor_val
+                                    sa_results[(sh, dn, dd, int(baseline_weeks), int(off))] = kcor_val
 
-            create_sa_grid_output(sa_results, out_path, dual_print, tau_values, norm_weeks_values)
+                except Exception as e:
+                    dual_print(f"[SA] Error processing cohort {sh}: {e}")
+                    continue
+
+            create_sa_grid_output(sa_results, out_path, dual_print, baseline_weeks_values, quiet_start_offsets)
 
         except Exception as e:
             print(f"\n❌ Error creating SA workbook: {e}")
@@ -3954,8 +3920,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             traceback.print_exc()
         finally:
             # Restore globals even if SA sweep fails mid-run
-            SLOPE6_QUANTILE_TAU = original_slope6_tau
-            SLOPE8_QUANTILE_TAU = original_tau
             KCOR_NORMALIZATION_WEEKS = original_norm_weeks
             KCOR_NORMALIZATION_WEEKS_EFFECTIVE = original_norm_weeks_effective
             OVERRIDE_YOBS = original_override_yobs
@@ -4083,8 +4047,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Time axis: t = weeks since enrollment
         # Skip weeks: hazard_eff = 0 for t < DYNAMIC_HVE_SKIP_WEEKS
         #
-        # NOTE: SA mode early-returns before this loop; MC mode is explicitly skipped here.
-        if not MONTE_CARLO_MODE:
+        # KCOR6 fits run in all modes (including Monte Carlo).
+        if kcor6_enabled_effective:
             try:
                 iso_parts = df["DateDied"].dt.isocalendar()
                 iso_int_series = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int))
@@ -4317,139 +4281,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #             print(f"    Original MR range: {mr_orig.min():.6f} to {mr_orig.max():.6f}")
         #             print(f"    Smoothed MR range: {mr_smooth.min():.6f} to {mr_smooth.max():.6f}")
         
-        # Monte Carlo mode: simplified processing path (skip SA mode and dynamic slopes)
-        if MONTE_CARLO_MODE:
-            # MC mode: skip SA mode and dynamic slope calculation, go directly to normalization
-            # Remove legacy slope-adjusted columns and scale factors; keep raw MR only
-            df["slope"] = 0.0
-            df["scale_factor"] = 1.0
-            df["MR_adj"] = df["MR"]
-            
-            # Apply discrete cumulative-hazard transform for mathematical exactness
-            # Apply Slope6 normalization: Force linear mode for MC (all YOB=-2)
-            effective_sheet_name_for_processing = "2022_06"
-            df["sheet_name"] = effective_sheet_name_for_processing
-            
-            # Compute Slope6 normalization parameters for this sheet (force linear mode)
-            slope6_params = compute_slope6_normalization(df, baseline_window, effective_sheet_name_for_processing, dual_print, force_linear_mode=True)
-            
-            # Persist normalization parameters
-            for (yob_k, dose_k), params in slope6_params.items():
-                try:
-                    if isinstance(params, dict):
-                        slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = params
-                    else:
-                        slope6_params_map[(effective_sheet_name_for_processing, int(yob_k), int(dose_k))] = {
-                            "mode": "none",
-                            "a": 0.0,
-                            "b": 0.0,
-                            "c": 0.0,
-                            "t_mean": 0.0,
-                            "tau": None
-                        }
-                except Exception:
-                    if isinstance(params, dict):
-                        slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = params
-                    else:
-                        slope6_params_map[(effective_sheet_name_for_processing, yob_k, dose_k)] = {
-                            "mode": "none",
-                            "a": 0.0,
-                            "b": 0.0,
-                            "c": 0.0,
-                            "t_mean": 0.0,
-                            "tau": None
-                        }
-            
-            # Note: Do NOT modify raw MR. Normalization is applied later at the hazard level.
-            mr_used = df["MR"]
-            
-            # Clip to avoid log(0) and ensure numerical stability
-            df["hazard_raw"] = hazard_from_mr_improved(np.clip(mr_used, 0.0, 0.999))
-            # Initialize adjusted hazard equal to raw
-            df["hazard_adj"] = df["hazard_raw"]
-            
-            # Apply Slope6 normalization at hazard level using stored parameters
-            for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
-                params = slope6_params.get((yob, dose), {})
-                if not isinstance(params, dict):
-                    continue
-                mode = params.get("mode", "none")
-                if mode == "linear":
-                    # Linear normalization: h_adj = h_raw * exp(-b * (t - t_mean))
-                    a = params.get("a", 0.0)
-                    b = params.get("b", 0.0)
-                    t_mean = params.get("t_mean", 0.0)
-                    if np.isfinite(b) and np.abs(b) > EPS:
-                        g_sorted = g.sort_values("DateDied").copy()
-                        t_vals = g_sorted["t"].values
-                        # Apply linear normalization: exp(-b * (t - t_mean))
-                        norm_factor = safe_exp(-b * (t_vals - t_mean))
-                        df.loc[g_sorted.index, "hazard_adj"] = g_sorted["hazard_raw"].values * norm_factor
-                elif mode == "slope8":
-                    # Should not happen in MC mode, but handle gracefully
-                    C = params.get("C", 0.0)
-                    ka = params.get("ka", 0.0)
-                    kb = params.get("kb", 0.0)
-                    tau = params.get("tau", None)
-                    if tau is not None and np.isfinite(tau) and tau > EPS:
-                        g_sorted = g.sort_values("DateDied").copy()
-                        s_vals = g_sorted["t"].values
-                        # Apply slope8 normalization
-                        norm_factor = safe_exp(-kb * s_vals - (ka - kb) * tau * (1.0 - safe_exp(-s_vals / tau)))
-                        df.loc[g_sorted.index, "hazard_adj"] = g_sorted["hazard_raw"].values * norm_factor
-            
-            # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
-            df["hazard_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["hazard_adj"], 0.0)
-            df["CH"] = df.groupby(["YearOfBirth", "Dose"])["hazard_eff"].cumsum()
-            df["CH_actual"] = df.groupby(["YearOfBirth", "Dose"])["hazard_eff"].cumsum()
-            df["cumPT"] = df.groupby(["YearOfBirth", "Dose"])["PT"].cumsum()
-            df["cumD_adj"] = df["CH"] * df["cumPT"]
-            df["cumD_unadj"] = df.groupby(["YearOfBirth", "Dose"])["Dead"].cumsum()
-            
-            # Build KCOR rows using shared function
-            out_sh = build_kcor_rows(df, effective_sheet_name_for_processing, dual_print, slope6_params_map)
-            # Compute KCOR_ns and merge into output
-            kcor_ns = build_kcor_ns_rows(df, effective_sheet_name_for_processing)
-            if not kcor_ns.empty and not out_sh.empty:
-                out_sh = pd.merge(
-                    out_sh,
-                    kcor_ns,
-                    on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
-                    how="left"
-                )
-            all_out.append(out_sh)
-            
-            # For Monte Carlo mode: collect KCOR values at end of 2022 for summary
-            if MONTE_CARLO_MODE:
-                out_sh_copy = out_sh.copy()
-                out_sh_copy["Date"] = pd.to_datetime(out_sh_copy["Date"])
-                target_date = pd.to_datetime("2022-12-31")
-                if not out_sh_copy.empty:
-                    out_sh_2022 = out_sh_copy[out_sh_copy["Date"].dt.year <= 2023]
-                    if not out_sh_2022.empty:
-                        diffs = (out_sh_2022["Date"] - target_date).abs()
-                        idx_closest = diffs.idxmin()
-                        closest_date = out_sh_2022.loc[idx_closest, "Date"]
-                        closest_data = out_sh_2022[out_sh_2022["Date"] == closest_date]
-                        for _, row in closest_data.iterrows():
-                            mc_summary_data.append({
-                                "Iteration": int(sh) if sh.isdigit() else sh,
-                                "Dose_num": row["Dose_num"],
-                                "Dose_den": row["Dose_den"],
-                                "YearOfBirth": row["YearOfBirth"],
-                                "Date": row["Date"],
-                                "KCOR": row["KCOR"],
-                                "CI_lower": row.get("CI_lower", np.nan),
-                                "CI_upper": row.get("CI_upper", np.nan)
-                            })
-            
-            # Collect per-pair deaths details for new output sheet
-            pair_details = build_kcor_o_deaths_details(df, effective_sheet_name_for_processing)
-            if not pair_details.empty:
-                pair_deaths_all.append(pair_details)
-            
-            # Continue to next sheet in MC mode
-            continue
+        # Monte Carlo mode runs through the standard KCOR6 pipeline (no special-case branch).
         
         # SA: iterate slope ranges if provided; else compute once
         sa_mode = _is_sa_mode()
@@ -4625,7 +4457,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Slope-based normalization parameters are only computed when KCOR6 is disabled (or in MC mode).
         # In KCOR6 mode we avoid computing slope6/slope8 entirely to prevent confusion and wasted work.
         effective_sheet_name_for_processing = "2022_06" if MONTE_CARLO_MODE else sh
-        if (not kcor6_enabled_effective) or MONTE_CARLO_MODE:
+        if not kcor6_enabled_effective:
             df["sheet_name"] = effective_sheet_name_for_processing
 
             # Compute Slope6 normalization parameters for this sheet
@@ -5106,12 +4938,29 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # In MC mode, use "2022_06" as sheet_name for enrollment date processing
         # but keep iteration number for output sheet naming
         effective_sheet_name = "2022_06" if MONTE_CARLO_MODE else sh
+        # build_kcor_rows() computes an additional YoB=-2 "All Ages" block internally; in MC mode we
+        # remap per-iteration (-2, dose) fits (keyed by iteration sheet name) onto the fixed enrollment
+        # label used for MC outputs ("2022_06") so that All-Ages normalization is consistent.
+        kcor6_params_map_for_build = kcor6_params_map
+        if MONTE_CARLO_MODE:
+            try:
+                kcor6_params_map_for_build = {}
+                for _dose in sorted(df["Dose"].unique()):
+                    try:
+                        dose_i = int(_dose)
+                    except Exception:
+                        continue
+                    params = kcor6_params_map.get((sh, -2, dose_i), None)
+                    if isinstance(params, dict):
+                        kcor6_params_map_for_build[(effective_sheet_name, -2, dose_i)] = params
+            except Exception:
+                kcor6_params_map_for_build = kcor6_params_map
         out_sh = build_kcor_rows(
             df,
             effective_sheet_name,
             dual_print,
             slope6_params_map,
-            (kcor6_params_map if kcor6_enabled_effective else None),
+            kcor6_params_map_for_build,
         )
         # Compute KCOR_ns and merge into output
         # In MC mode, use effective_sheet_name (2022_06) for consistency
