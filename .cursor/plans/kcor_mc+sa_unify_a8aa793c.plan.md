@@ -115,5 +115,3 @@ flowchart TD
 - Grep logs to confirm no legacy slope tags.
 
 ## Risks / watchouts
-
-- **MC workbook structure**: if MC sheets already contain `YearOfBirth=-2`, ensure we don’t double-aggregate or duplicate fits.
