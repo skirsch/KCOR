@@ -42,7 +42,7 @@ However, when intervention uptake is voluntary, prioritized, or otherwise select
 
 Selection does not merely shift mortality **levels**; it can alter mortality **curvature**—the time-evolution of cohort hazards. Frailty heterogeneity and depletion of susceptibles naturally induce curvature even when individual-level hazards are simple functions of time. When selection concentrates high-frailty individuals into one cohort (or preferentially removes them from another), the resulting cohort-level hazard trajectories can be strongly non-proportional.
 
-One convenient way to formalize “curvature” is in cumulative-hazard space: if $H(t)$ were perfectly linear over time then $d^2H(t)/dt^2=0$ (or discrete second differences are near zero), whereas selection-induced depletion generally produces concavity in $H^{\mathrm{obs}}(t)$ during otherwise stable periods.
+One convenient way to formalize "curvature" is in cumulative-hazard space: if the cumulative hazard $H(t)$ were perfectly linear in time, then its second derivative would be zero, whereas selection-induced depletion generally produces concavity in observed cumulative hazards during otherwise stable periods.
 
 This violates core assumptions of many standard tools:
 
@@ -90,6 +90,8 @@ This manuscript is **methods-only**:
 - We present the estimator, model assumptions, and uncertainty quantification.
 - We validate the method using prespecified negative and positive controls designed to stress selection-induced curvature.
 - We defer any applied real-world intervention conclusions to a separate, dedicated applied paper.
+
+KCOR is proposed as a diagnostic and normalization estimator for selection-induced hazard curvature; causal interpretation requires additional assumptions beyond the scope of this methods paper.
 
 ---
 
@@ -157,7 +159,7 @@ z_{i,d} \sim \mathrm{Gamma}(\mathrm{mean}=1,\ \mathrm{var}=\theta_d).
 $$
 {#eq:individual-hazard-frailty}
 
-Gamma frailty is used not as a claim of biological truth, but as a mathematically minimal and widely used model for unobserved heterogeneity whose Laplace transform yields a closed-form relationship between observed and baseline cumulative hazards. In KCOR, gamma frailty is therefore a **depletion-neutralizing approximation**: its adequacy is treated as empirically testable and is assessed using prespecified negative controls and sensitivity analyses rather than assumed dogmatically.
+Gamma frailty is used not as a claim of biological truth, but as a mathematically minimal and widely used model for unobserved heterogeneity whose Laplace transform yields a closed-form relationship between observed and baseline cumulative hazards [@vaupel1979]. In KCOR, gamma frailty is therefore a **depletion-neutralizing approximation**: its adequacy is treated as empirically testable and is assessed using prespecified negative controls and sensitivity analyses rather than assumed dogmatically.
 
 Frailty $z_{i,d}$ captures latent heterogeneity in baseline risk and drives selective depletion: higher-frailty individuals die earlier, changing the cohort composition over time and inducing curvature in $h_d^{\mathrm{obs}}(t)$ even when $h_{0,d}(t)$ is simple.
 
@@ -186,7 +188,7 @@ $$
 
 This inversion is the **KCOR v6 normalization step**: it transforms the observed cumulative hazard into a depletion-neutralized baseline cumulative hazard for each cohort.
 
-![Three-panel schematic illustrating the KCOR v6 normalization logic. Left: individual hazards differ only by multiplicative frailty $z$, with no treatment effect. Middle: aggregation over heterogeneous frailty induces cohort-level curvature in observed cumulative hazards $H^{\mathrm{obs}}(t)$ despite identical baseline hazards. Right: inversion of the gamma-frailty identity recovers aligned baseline cumulative hazards $H_0(t)$, demonstrating depletion-neutralization.](figures/fig1_kcor_v6_schematic.png){#fig:kcor_v6_schematic}
+![Three-panel schematic illustrating the KCOR v6 normalization logic. Left: individual hazards differ only by multiplicative frailty $z$, with no treatment effect. Middle: aggregation over heterogeneous frailty induces cohort-level curvature in observed cumulative hazards $H^{\mathrm{obs}}(t)$ despite identical baseline hazards. Right: inversion of the gamma-frailty identity recovers aligned baseline cumulative hazards $H_0(t)$, demonstrating depletion-neutralization. This figure is schematic and intended for conceptual illustration; it does not represent empirical data.](figures/fig1_kcor_v6_schematic.png){#fig:kcor_v6_schematic}
 
 #### 2.4.3 Baseline shape for fitting (default)
 
@@ -703,4 +705,7 @@ Recommended diagnostic: overlay the prespecified quiet window on hazard and cumu
 
 Visual inspection of quiet-window placement relative to mortality dynamics is an essential diagnostic step.
 
+---
+
+## References
 
