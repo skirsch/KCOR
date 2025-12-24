@@ -10,7 +10,21 @@ VALIDATION_GLM_DIR := validation/GLM
 VALIDATION_HVE_DIR := validation/HVE
 VALIDATION_ASMR_DIR := validation/ASMR_analysis
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test help
+# Paper build (Pandoc)
+PAPER_DIR ?= documentation/preprint
+PAPER_MD ?= paper.md
+PAPER_DOCX ?= paper.docx
+PAPER_PDF ?= paper.pdf
+PAPER_BIB ?= refs.bib
+PAPER_CSL ?= vancouver-superscript.csl
+PAPER_REFERENCE_DOC ?= reference.docx
+# PDF engine (override on CLI if needed). Default: xelatex.
+PAPER_PDF_ENGINE ?= xelatex
+PAPER_PDF_GEOMETRY ?= margin=1in
+PAPER_PDF_MAINFONT ?= TeX Gyre Termes
+PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
+
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -135,6 +149,71 @@ clean:
 sensitivity:
 	$(MAKE) -C test/sensitivity all DATASET=$(DATASET)
 
+# Build methods paper (Pandoc → Word)
+#
+# Default inputs live in documentation/preprint/:
+# - paper.md (Pandoc-crossref markup)
+# - refs.bib
+# - vancouver-superscript.csl
+#
+# Usage:
+#   make paper
+#   make paper PAPER_MD=paper_v7.md PAPER_DOCX=paper_v7.docx
+paper: $(PAPER_DIR)/$(PAPER_DOCX) $(PAPER_DIR)/$(PAPER_PDF)
+
+paper-docx: $(PAPER_DIR)/$(PAPER_DOCX)
+paper-pdf: $(PAPER_DIR)/$(PAPER_PDF)
+
+$(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/$(PAPER_REFERENCE_DOC) $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_DOCX)"
+	@cd $(PAPER_DIR) && \
+		pandoc $(PAPER_MD) \
+			--to=docx \
+			--reference-doc=$(PAPER_REFERENCE_DOC) \
+			--filter pandoc-crossref \
+			--citeproc \
+			--bibliography=$(PAPER_BIB) \
+			--csl=$(PAPER_CSL) \
+			-o $(PAPER_DOCX).new
+	@cd $(PAPER_DIR) && \
+		mv -f $(PAPER_DOCX).new $(PAPER_DOCX) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_DOCX) (is it open in Word?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(PAPER_DOCX).new"; \
+			exit 1; \
+		)
+
+$(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
+	@cd $(PAPER_DIR) && \
+		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+			exit 1; \
+		fi; \
+		pandoc $(PAPER_MD) \
+			--to=pdf \
+			--pdf-engine="$(PAPER_PDF_ENGINE)" \
+			--filter pandoc-crossref \
+			--citeproc \
+			-V geometry:$(PAPER_PDF_GEOMETRY) \
+			-V mainfont="$(PAPER_PDF_MAINFONT)" \
+			-V mathfont="$(PAPER_PDF_MATHFONT)" \
+			--bibliography=$(PAPER_BIB) \
+			--csl=$(PAPER_CSL) \
+			-o $(PAPER_PDF).new
+	@cd $(PAPER_DIR) && \
+		mv -f $(PAPER_PDF).new $(PAPER_PDF) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_PDF) (is it open?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(PAPER_PDF).new"; \
+			exit 1; \
+		)
+
+# Create a default Pandoc reference.docx if missing (customize in Word as needed)
+$(PAPER_DIR)/$(PAPER_REFERENCE_DOC):
+	@echo "Creating default Pandoc reference doc: $(PAPER_DIR)/$(PAPER_REFERENCE_DOC)"
+	@cd $(PAPER_DIR) && \
+		pandoc --print-default-data-file reference.docx > $(PAPER_REFERENCE_DOC).new && \
+		mv -f $(PAPER_REFERENCE_DOC).new $(PAPER_REFERENCE_DOC)
+
 # HVE simulator (not part of default all)
 HVE:
 	$(MAKE) -C $(VALIDATION_HVE_DIR) run DATASET=$(DATASET)
@@ -201,6 +280,9 @@ help:
 	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
 	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
 	@echo "  icd_population_shift - Run ICD-10 population structural shift analysis (data/Czech2/)"
+	@echo "  paper           - Build documentation/preprint/paper.md -> paper.docx + paper.pdf (Pandoc + crossref + citeproc)"
+	@echo "  paper-docx      - Build only documentation/preprint/paper.docx"
+	@echo "  paper-pdf       - Build only documentation/preprint/paper.pdf"
 	@echo ""
 	@echo "KCOR Mortality Analysis (Czech2 dataset):"
 	@echo "  mortality       - Run basic KCOR mortality analysis pipeline"
