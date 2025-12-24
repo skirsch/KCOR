@@ -89,12 +89,15 @@
   </macro>
   <macro name="access">
     <choose>
-      <if variable="URL">
+      <if variable="DOI">
+        <text variable="DOI" prefix="doi:"/>
+      </if>
+      <else-if variable="URL">
         <group delimiter=": ">
           <text term="available at" text-case="capitalize-first"/>
           <text variable="URL"/>
         </group>
-      </if>
+      </else-if>
     </choose>
   </macro>
   <macro name="accessed-date">
