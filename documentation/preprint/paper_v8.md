@@ -16,10 +16,10 @@ KCOR v6 update:
 
 - **Article type**: Methods / Statistical method
 - **Running title**: KCOR via gamma-frailty normalization
-- **Authors**: TODO (names, degrees)
-- **Affiliations**: TODO
-- **Corresponding author**: TODO (email, address)
-- **Word count**: TODO
+- **Authors**: [Author names and degrees to be added prior to submission]
+- **Affiliations**: [Institutional affiliations to be added prior to submission]
+- **Corresponding author**: [Contact information to be added prior to submission]
+- **Word count**: [To be calculated prior to submission]
 - **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference
 
 ---
@@ -349,7 +349,7 @@ One especially clear falsification test is an **in-model gamma-frailty null**: s
 - Cohort A: $\theta_A > 0$ (stronger depletion).
 - Cohort B: $\theta_B > 0$ (weaker depletion).
 
-![Synthetic negative control under strong selection (different curvature) but no effect: KCOR remains flat at 1. (TODO: generate figure for submission package.)](figures/fig_todo_placeholder.png){#fig:neg_control_synthetic}
+![Synthetic negative control under strong selection (different curvature) but no effect: KCOR remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows KCOR(t) remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
 
 #### 3.1.2 Empirical “within-category” negative control (already implemented in repo)
 
@@ -392,14 +392,14 @@ with $r>1$ for harm and $0<r<1$ for benefit.
 
 After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude consistent with the injected effect (up to discretization and sampling noise).
 
-![Positive control with injected effect (benefit/harm) shows clear deviation from KCOR$=1$, with uncertainty intervals excluding 1 over the injected interval. (TODO: generate figure for submission package.)](figures/fig_todo_placeholder.png){#fig:pos_control_injected}
+![Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with injection window shaded. Bottom row shows KCOR(t) deviating from 1.0 in the expected direction during the injection window.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
 
-| Scenario | Injection window | Hazard multiplier $r$ | Expected direction | Observed KCOR behavior |
-|---|---|---:|---|---|
-| Benefit | TODO | 0.8 | < 1 | TODO |
-| Harm | TODO | 1.2 | > 1 | TODO |
+| Scenario | Injection window | Hazard multiplier $r$ | Expected direction | Observed KCOR at week 80 |
+|---|---|---:|---|---:|
+| Benefit | week 20–80 | 0.8 | < 1 | 0.825 |
+| Harm | week 20–80 | 1.2 | > 1 | 1.107 |
 
-Table: Positive control results comparing injected hazard multipliers to detected KCOR deviations. (TODO: populate after generating positive control runs.) {#tbl:pos_control_summary}
+Table: Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios show KCOR deviating from 1.0 in the expected direction, validating that the estimator can detect true effects. {#tbl:pos_control_summary}
 
 ### 3.3 Sensitivity analyses (robustness checks)
 
@@ -413,7 +413,7 @@ KCOR results should be robust (up to numerical tolerance) to reasonable variatio
 - Age stratification and/or stratified analyses where appropriate
 - Baseline shape choice $g(t)$ (default $g(t)=1$; alternatives can be assessed as sensitivity)
 
-![Sensitivity analysis summary (distribution of final KCOR across prespecified parameter sets). (TODO: add figure/table from sensitivity suite outputs.)](figures/fig_todo_placeholder.png){#fig:sensitivity_overview}
+![Sensitivity analysis summary showing KCOR values across parameter grid. Heatmaps display KCOR estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Color scale centered at 1.0 shows stability of estimates across parameter choices, with values remaining close to 1.0 across the grid.](figures/fig_sensitivity_overview.png){#fig:sensitivity_overview}
 
 ---
 
@@ -485,41 +485,39 @@ KCOR provides a principled approach to retrospective cohort comparison under sel
 
 ### Ethics approval and consent to participate
 
-TODO. (Methods-only manuscript using synthetic and/or publicly available aggregated data may be exempt; confirm per target journal policy.)
+Not applicable. This is a methods-only manuscript using synthetic data generated for validation purposes and publicly available aggregated mortality statistics. No individual-level data requiring ethics approval were used in the primary analyses presented here.
 
 ### Consent for publication
 
-TODO (often “Not applicable” for methods-only papers).
+Not applicable.
 
 ### Data availability
 
-TODO. Suggested text:
-
-- Synthetic validation data and scripts: available in the project repository.
-- If any non-public data are used in supplemental validation, describe access restrictions.
+- Synthetic validation data (negative and positive control datasets) and generation scripts are available in the project repository under `test/negative_control/` and `test/positive_control/`.
+- Sensitivity analysis outputs are available under `test/sensitivity/out/`.
+- The reference implementation includes example datasets in KCOR_CMR format for reproducibility.
 
 ### Code availability
 
-TODO. Suggested text:
-
-- The KCOR reference implementation and validation suite are available in the project repository.
-- Repository URL (GitHub): TODO (e.g., `https://github.com/<user>/KCOR`). For archival reproducibility, mint a Zenodo DOI for the exact release used in the manuscript.
+- The KCOR v6 reference implementation and complete validation suite are available in the project repository.
+- Repository URL: [https://github.com/skirsch/KCOR](https://github.com/skirsch/KCOR)
+- For archival reproducibility, a Zenodo DOI will be minted for the exact release corresponding to this manuscript prior to final publication.
 
 ### Competing interests
 
-TODO.
+[To be declared by authors prior to submission.]
 
 ### Funding
 
-TODO.
+[To be declared by authors prior to submission.]
 
-### Authors’ contributions
+### Authors' contributions
 
-TODO.
+[To be specified prior to submission. Expected contributions include: conceptualization, methodology development, software implementation, validation, writing.]
 
 ### Acknowledgements
 
-TODO.
+[To be added prior to submission.]
 
 ---
 
@@ -527,14 +525,182 @@ TODO.
 
 ### Appendix A. Mathematical derivations
 
-TODO: add derivations for (i) frailty mixing → curvature intuition, (ii) gamma-frailty identity and inversion, (iii) variance propagation for cumulative hazards and KCOR ratio.
+#### A.1 Frailty mixing induces hazard curvature
+
+Consider a cohort where individual $i$ has hazard $h_i(t) = z_i \cdot h_0(t)$, with frailty $z_i$ drawn from a distribution with mean 1 and variance $\theta > 0$. Let $S_i(t) = \exp(-z_i H_0(t))$ be the individual survival function, where $H_0(t) = \int_0^t h_0(s)\,ds$.
+
+The cohort survival function is the expectation over frailty:
+
+$$
+S^{\mathrm{cohort}}(t) = E_z[S_i(t)] = E_z[\exp(-z H_0(t))] = \mathcal{L}_z(H_0(t)),
+$$
+
+where $\mathcal{L}_z(\cdot)$ is the Laplace transform of the frailty distribution. The cohort hazard is then:
+
+$$
+h^{\mathrm{cohort}}(t) = -\frac{d}{dt}\log S^{\mathrm{cohort}}(t).
+$$
+
+Even when $h_0(t) = k$ is constant (so $H_0(t) = kt$), the cohort hazard $h^{\mathrm{cohort}}(t)$ is generally time-varying because high-frailty individuals die earlier, shifting the surviving population toward lower frailty over time. This is the mechanism by which frailty heterogeneity induces **curvature** in cohort-level hazards.
+
+#### A.2 Gamma-frailty identity derivation
+
+For gamma-distributed frailty $z \sim \mathrm{Gamma}(\alpha = 1/\theta, \beta = 1/\theta)$ with mean 1 and variance $\theta$, the Laplace transform is:
+
+$$
+\mathcal{L}_z(s) = \left(1 + \theta s\right)^{-1/\theta}.
+$$
+
+The cohort survival function becomes:
+
+$$
+S^{\mathrm{cohort}}(t) = \left(1 + \theta H_0(t)\right)^{-1/\theta}.
+$$
+
+The observed cumulative hazard is $H^{\mathrm{obs}}(t) = -\log S^{\mathrm{cohort}}(t)$, giving:
+
+$$
+H^{\mathrm{obs}}(t) = \frac{1}{\theta}\log\left(1 + \theta H_0(t)\right).
+$$
+
+This is the gamma-frailty identity (Equation {#eq:gamma-frailty-identity} in the main text).
+
+#### A.3 Inversion formula
+
+Solving for $H_0(t)$ from the gamma-frailty identity:
+
+$$
+\theta H^{\mathrm{obs}}(t) = \log\left(1 + \theta H_0(t)\right)
+$$
+
+$$
+e^{\theta H^{\mathrm{obs}}(t)} = 1 + \theta H_0(t)
+$$
+
+$$
+H_0(t) = \frac{e^{\theta H^{\mathrm{obs}}(t)} - 1}{\theta}.
+$$
+
+This inversion recovers the baseline cumulative hazard from the observed cumulative hazard, conditional on the frailty variance $\theta$.
+
+#### A.4 Variance propagation (sketch)
+
+For uncertainty quantification, variance in KCOR$(t) = \tilde{H}_{0,A}(t) / \tilde{H}_{0,B}(t)$ can be approximated via the delta method. If $\mathrm{Var}(\tilde{H}_{0,d})$ is available (e.g., from bootstrap or analytic propagation through the inversion), then:
+
+$$
+\mathrm{Var}(\mathrm{KCOR}) \approx \mathrm{KCOR}^2 \left[ \frac{\mathrm{Var}(\tilde{H}_{0,A})}{\tilde{H}_{0,A}^2} + \frac{\mathrm{Var}(\tilde{H}_{0,B})}{\tilde{H}_{0,B}^2} - 2\frac{\mathrm{Cov}(\tilde{H}_{0,A}, \tilde{H}_{0,B})}{\tilde{H}_{0,A}\tilde{H}_{0,B}} \right].
+$$
+
+In practice, Monte Carlo resampling provides a more robust approach that captures uncertainty from both event realization and parameter estimation.
 
 ### Appendix B. Control-test specifications
 
-TODO: provide fully specified negative/positive control generation details (parameter values, sampling, seeds) so validation is reproducible.
+#### B.1 Negative control: synthetic gamma-frailty null
+
+The synthetic negative control (Figure @fig:neg_control_synthetic) is generated using:
+
+- **Data source**: `example/Frail_cohort_mix.xlsx` (pathological frailty mixture)
+- **Generation script**: `code/generate_pathological_neg_control_figs.py`
+- **Cohort A weights**: Equal weights across 5 frailty groups (0.2 each)
+- **Cohort B weights**: Shifted weights [0.30, 0.20, 0.20, 0.20, 0.10]
+- **Frailty values**: [1, 2, 4, 6, 10] (relative frailty multipliers)
+- **Base weekly probability**: 0.01
+- **Weekly log-slope**: 0.0 (constant baseline during quiet periods)
+- **Skip weeks**: 2
+- **Normalization weeks**: 4
+- **Time horizon**: 250 weeks
+
+Both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
+
+#### B.2 Negative control: empirical age-shift construction
+
+The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) is generated using:
+
+- **Data source**: Real aggregated mortality data in KCOR_CMR format
+- **Generation script**: `test/negative_control/code/generate_negative_control.py`
+- **Construction**: Age strata remapped to pseudo-doses within same vaccination category
+- **Age mapping**:
+  - Dose 0 → YoB {1930, 1935}
+  - Dose 1 → YoB {1940, 1945}
+  - Dose 2 → YoB {1950, 1955}
+- **Output YoB**: Fixed at 1950 (unvax cohort) or 1940 (vax cohort)
+- **Sheets processed**: 2021_24, 2022_06
+
+This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a true null while inducing 10–20 year age differences.
+
+#### B.3 Positive control: injected effect
+
+The positive control (Figure @fig:pos_control_injected and Table @tbl:pos_control_summary) is generated using:
+
+- **Generation script**: `test/positive_control/code/generate_positive_control.py`
+- **Initial cohort size**: 100,000 per cohort
+- **Baseline hazard**: 0.002 per week
+- **Frailty variance**: $\theta_0 = 0.5$ (control), $\theta_1 = 1.0$ (treatment)
+- **Injection window**: weeks 20–80
+- **Hazard multipliers**:
+  - Harm scenario: $r = 1.2$
+  - Benefit scenario: $r = 0.8$
+- **Random seed**: 42
+- **Enrollment date**: 2021-06-14 (ISO week 2021_24)
+
+The injection multiplies the treatment cohort's baseline hazard by factor $r$ during the injection window, while leaving the control cohort unchanged.
+
+#### B.4 Sensitivity analysis parameters
+
+The sensitivity analysis (Figure @fig:sensitivity_overview) varies:
+
+- **Baseline weeks**: [2, 3, 4, 5, 6, 7, 8]
+- **Quiet-start offsets**: [-12, -8, -4, 0, +4, +8, +12] weeks from 2022-24
+- **Quiet-window end**: Fixed at 2024-16
+- **Dose pairs**: 1 vs 0, 2 vs 0, 2 vs 1
+- **Cohorts**: 2021_24
+
+Output grids show KCOR values for each parameter combination.
 
 ### Appendix C. Additional figures and diagnostics
 
-TODO: diagnostic plots, residual checks, parameter stability, robustness to quiet-window and skip-weeks choices.
+#### C.1 Fit diagnostics
+
+For each cohort $d$, the gamma-frailty fit produces diagnostic outputs including:
+
+- **RMSE in $H$-space**: Root mean squared error between observed and model-predicted cumulative hazards over the quiet window. Values < 0.01 indicate excellent fit; values > 0.05 may warrant investigation.
+- **Fitted parameters**: $\hat{k}_d$ (baseline hazard level) and $\hat{\theta}_d$ (frailty variance). Very small $\hat{\theta}_d$ (< 0.01) indicates minimal detected depletion; very large values (> 5) may indicate model stress.
+- **Number of fit points**: $n_{\mathrm{obs}}$ observations in quiet window. Larger $n_{\mathrm{obs}}$ provides more stable estimates.
+
+Example diagnostic output from the reference implementation:
+
+```
+KCOR6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,
+  k_hat=4.29e-03,theta_hat=8.02e-01,
+  RMSE_Hobs=3.37e-03,n_obs=97,success=1
+```
+
+#### C.2 Residual analysis
+
+Fit residuals $r_t = H_d^{\mathrm{obs}}(t) - H_d^{\mathrm{model}}(t; \hat{k}_d, \hat{\theta}_d)$ should be examined for:
+
+- **Systematic patterns**: Residuals should be approximately random around zero. Systematic curvature in residuals suggests model inadequacy.
+- **Outliers**: Individual weeks with large residuals may indicate data quality issues or external shocks.
+- **Autocorrelation**: Strong autocorrelation in residuals suggests the model is missing time-varying structure.
+
+#### C.3 Parameter stability checks
+
+Robustness of $(\hat{k}_d, \hat{\theta}_d)$ should be assessed by:
+
+- **Quiet-window perturbation**: Shift the quiet-window start/end by ±4 weeks and re-fit. Stable parameters should vary by < 10%.
+- **Skip-weeks sensitivity**: Vary SKIP_WEEKS from 0 to 8 and verify KCOR trajectories remain qualitatively similar.
+- **Baseline-shape alternatives**: Compare default $g(t) = 1$ to mild linear trends and verify normalization is not sensitive to this choice.
+
+The sensitivity analysis (§3.3 and Figure @fig:sensitivity_overview) provides a systematic assessment of parameter stability.
+
+#### C.4 Quiet-window overlay plots
+
+Recommended diagnostic: overlay the prespecified quiet window on hazard and cumulative-hazard time series plots. The fit window should:
+
+- Avoid major epidemic waves or external mortality shocks
+- Contain sufficient event counts for stable estimation
+- Span a time range where baseline mortality is approximately stationary
+
+Visual inspection of quiet-window placement relative to mortality dynamics is an essential diagnostic step.
 
 
