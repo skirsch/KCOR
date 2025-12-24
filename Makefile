@@ -182,7 +182,7 @@ $(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $
 			exit 1; \
 		)
 
-$(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(wildcard $(PAPER_DIR)/figures/*)
+$(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
 	@cd $(PAPER_DIR) && \
 		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
@@ -197,6 +197,7 @@ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(
 			-V geometry:$(PAPER_PDF_GEOMETRY) \
 			-V mainfont="$(PAPER_PDF_MAINFONT)" \
 			-V mathfont="$(PAPER_PDF_MATHFONT)" \
+			-H header.tex \
 			--bibliography=$(PAPER_BIB) \
 			--csl=$(PAPER_CSL) \
 			-o $(PAPER_PDF).new
