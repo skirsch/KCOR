@@ -70,7 +70,7 @@ This is a direct statement that observational designs—even with careful matchi
 
 #### 1.3.2 Qatar (time-varying HVE despite meticulous matching)
 
-Chemaitelly et al. analyzed matched national cohorts and explicitly measured the **time-varying healthy vaccinee effect** using non-COVID mortality as a control outcome. They report a pronounced early-period reduction in non-COVID mortality among vaccinated individuals despite meticulous matching, followed by reversal later in follow-up, consistent with dynamic selection and depletion processes. [@chemaitelly2025]
+Chemaitelly et al. analyzed matched national cohorts and explicitly measured the **time-varying healthy vaccinee effect (HVE)** using non-COVID mortality as a control outcome. They report a pronounced early-period reduction in non-COVID mortality among vaccinated individuals despite meticulous matching, followed by reversal later in follow-up, consistent with dynamic selection and depletion processes. [@chemaitelly2025]
 
 Together, these studies motivate a methods gap: we need estimators that explicitly address **time-evolving selection-induced curvature**, not only baseline covariate imbalance.
 
@@ -520,6 +520,8 @@ Not applicable.
 ### Acknowledgements
 
 [To be added prior to submission.]
+
+Supplementary appendices provide mathematical derivations and full control-test specifications.
 
 ---
 
