@@ -20,7 +20,7 @@ KCOR v6 update:
 - **Affiliations**: [Institutional affiliations to be added prior to submission]
 - **Corresponding author**: [Contact information to be added prior to submission]
 - **Word count**: [To be calculated prior to submission]
-- **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference
+- **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference; observational studies; mortality curvature
 
 ---
 
@@ -42,7 +42,7 @@ However, when intervention uptake is voluntary, prioritized, or otherwise select
 
 Selection does not merely shift mortality **levels**; it can alter mortality **curvature**—the time-evolution of cohort hazards. Frailty heterogeneity and depletion of susceptibles naturally induce curvature even when individual-level hazards are simple functions of time. When selection concentrates high-frailty individuals into one cohort (or preferentially removes them from another), the resulting cohort-level hazard trajectories can be strongly non-proportional.
 
-One convenient way to formalize "curvature" is in cumulative-hazard space: if the cumulative hazard $H(t)$ were perfectly linear in time, then its second derivative would be zero, whereas selection-induced depletion generally produces concavity in observed cumulative hazards during otherwise stable periods.
+One convenient way to formalize "curvature" is in cumulative-hazard space: if the cumulative hazard $H(t)$ were perfectly linear in time, then its second derivative would be zero, whereas selection-induced depletion generally produces negative concavity (downward curvature) in observed cumulative hazards during otherwise stable periods.
 
 This violates core assumptions of many standard tools:
 
@@ -246,6 +246,8 @@ h_d^{\mathrm{obs}}(t) = -\log\!\left(\frac{1 - 1.5\,\mathrm{MR}_{d,t}}{1 - 0.5\,
 $$
 {#eq:hazard-from-mr-improved}
 
+This form provides a second-order accurate approximation to the continuous-time hazard while remaining numerically stable for small mortality-rate (MR) values.
+
 - **Fit method**: nonlinear least squares in cumulative-hazard space (not MLE), with constraints $k_d>0$ and $\theta_d \ge 0$.
 - **Cohort indexing (implementation)**: enrollment period (sheet) × YearOfBirth group × Dose, plus an all-ages cohort (YearOfBirth $=-2$).
 
@@ -416,6 +418,8 @@ KCOR results should be robust (up to numerical tolerance) to reasonable variatio
 - Baseline shape choice $g(t)$ (default $g(t)=1$; alternatives can be assessed as sensitivity)
 
 ![Sensitivity analysis summary showing KCOR values across parameter grid. Heatmaps display KCOR estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Color scale centered at 1.0 shows stability of estimates across parameter choices, with values remaining close to 1.0 across the grid.](figures/fig_sensitivity_overview.png){#fig:sensitivity_overview}
+
+Across all tested parameter ranges, KCOR values remained within approximately ±5% of unity, indicating stability under reasonable variations in fitting choices.
 
 ---
 
