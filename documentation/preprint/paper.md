@@ -108,7 +108,7 @@ KCOR is proposed as a diagnostic and normalization estimator for selection-induc
 | $\theta_d$ | frailty variance (selection strength) for cohort $d$ |
 | $k_d$ | baseline hazard level for cohort $d$ under default baseline shape |
 
-Table: Notation used throughout the Methods section. {#tbl:notation}
+Table: Notation used throughout the Methods section. θ_d denotes the cohort-specific depletion (frailty variance) parameter governing curvature in the observed cumulative hazard. {#tbl:notation}
 
 ### 2.1 Conceptual framework: level vs curvature under selection
 
@@ -456,6 +456,7 @@ Recommended reporting includes:
 - **Sparse events**: When event counts are small, hazard estimation and parameter fitting can be unstable.
 - **Contamination of quiet periods**: External shocks (e.g., epidemic waves) overlapping the quiet window can bias selection-parameter estimation.
 - **Causal interpretation**: KCOR supports interpretable cohort comparison under stated assumptions, but it is not a substitute for randomization; causal claims require explicit causal assumptions and careful validation.
+- **Non-gamma frailty**: The KCOR framework assumes that selection acts approximately multiplicatively through a time-invariant frailty distribution, for which the gamma family provides a convenient and empirically testable approximation. In settings where depletion dynamics are driven by more complex mechanisms—such as time-varying frailty variance, interacting risk factors, or shared frailty correlations within subgroups—the curvature structure exploited by KCOR may be misspecified. In such cases, KCOR diagnostics (e.g., poor curvature fit or unstable θ̂ estimates) serve as indicators of model inadequacy rather than targets for parameter tuning. Extending the framework to accommodate dynamic or correlated frailty structures would require explicit model generalization rather than modification of KCOR normalization steps and is left to future work.
 
 ### 5.1 Failure modes and diagnostics (recommended)
 
