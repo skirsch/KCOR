@@ -376,7 +376,7 @@ Two snapshots illustrate that KCOR is near-flat even under 10–20 year age diff
 | 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] |
 | 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] |
 
-Table: Example end-of-window KCOR values from the empirical negative control (pooled/ASMR summaries), demonstrating near-null behavior under large composition differences. (Source: `../../test/negative_control/out/KCOR_summary.log`) {#tbl:neg_control_summary}
+Table: Example end-of-window KCOR values from the empirical negative control (pooled/ASMR summaries), demonstrating near-null behavior under large composition differences. (Source: `test/negative_control/out/KCOR_summary.log`) {#tbl:neg_control_summary}
 
 <!--
 NOTE: The empirical negative control is built from real-world data where non-proportional external hazards (e.g., epidemic waves) can create small deviations from an idealized null.
