@@ -16,10 +16,10 @@ KCOR v6 update:
 
 - **Article type**: Methods / Statistical method
 - **Running title**: KCOR via gamma-frailty normalization
-- **Authors**: [Author names and degrees to be added prior to submission]
-- **Affiliations**: [Institutional affiliations to be added prior to submission]
-- **Corresponding author**: [Contact information to be added prior to submission]
-- **Word count**: [To be calculated prior to submission]
+- **Authors**: Steven T. Kirsch
+- **Affiliations**: Independent Researcher, United States
+- **Corresponding author**: stk@alum.mit.edu
+- **Word count**: 4,373
 - **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference; observational studies; mortality curvature
 
 ---
@@ -467,7 +467,7 @@ Recommended reporting includes:
 KCOR is designed to neutralize selection-induced depletion curvature under its stated model and windowing assumptions. Reviewers and readers should expect the method to degrade when those assumptions are violated. Common failure modes include:
 
 - **Mis-specified quiet window**: If the quiet window overlaps major external shocks (epidemic waves, policy changes, reporting artifacts), the fitted $(\hat k_d,\hat\theta_d)$ may absorb non-selection dynamics, biasing normalization.
-- **External time-varying hazards masquerading as frailty depletion**: Strong secular trends, seasonality, or outcome-definition changes can introduce curvature that is not well captured by gamma-frailty depletion alone.
+- **External time-varying hazards masquerading as frailty depletion**: Strong secular trends, seasonality, or outcome-definition changes can introduce curvature that is not well captured by gamma-frailty depletion alone. For example, COVID-19 waves disproportionately increase mortality among frail individuals; if one cohort has higher baseline frailty, such a wave can preferentially deplete that cohort, producing the appearance of a benefit in the lower-frailty cohort that is actually due to differential frailty-specific mortality from the external hazard rather than from the intervention under study.
 - **Extremely sparse cohorts**: When events are rare, $H_d^{\mathrm{obs}}(t)$ becomes noisy and $(k_d,\theta_d)$ can be weakly identified, often manifesting as unstable $\hat\theta_d$ or wide uncertainty.
 - **Non-frailty-driven curvature**: Administrative censoring, cohort-definition drift, changes in risk-set construction, or differential loss can induce curvature unrelated to latent frailty.
 
@@ -520,25 +520,25 @@ Not applicable.
 
 ### Competing interests
 
-[To be declared by authors prior to submission.]
+The author is a board member of the Vaccine Safety Research Foundation.
 
 ### Funding
 
-[To be declared by authors prior to submission.]
+This research received no external funding.
 
 ### Authors' contributions
 
-[To be specified prior to submission. Expected contributions include: conceptualization, methodology development, software implementation, validation, writing.]
+Steven T. Kirsch conceived the study, developed the methodology, performed the analysis, and wrote the manuscript.
 
 ### Acknowledgements
 
-[To be added prior to submission.]
-
-Supplementary appendices provide mathematical derivations and full control-test specifications.
+[TODO]
 
 ---
 
-## Supplementary material (appendix placeholders)
+## Supplementary material
+
+Supplementary appendices provide mathematical derivations and full control-test specifications.
 
 ### Appendix A. Mathematical derivations
 
