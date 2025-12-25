@@ -503,7 +503,7 @@ Not applicable.
 
 - The KCOR v6 reference implementation and complete validation suite are available in the project repository.
 - Repository URL: [https://github.com/skirsch/KCOR](https://github.com/skirsch/KCOR)
-- For archival reproducibility, a Zenodo DOI will be minted for the exact release corresponding to this manuscript prior to final publication.
+- Zenodo DOI: [10.5281/zenodo.18050329](https://doi.org/10.5281/zenodo.18050329)
 
 ### Competing interests
 
