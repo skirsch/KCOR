@@ -380,11 +380,13 @@ The repository includes a pragmatic negative control construction that repurpose
 
 These age-shift negative controls deliberately induce extreme baseline mortality differences (10–20 year age gaps) while preserving a true null effect by construction, since all vaccination states are compared symmetrically. The near-flat KCOR trajectories demonstrate that the estimator neutralizes selection-induced depletion curvature without introducing spurious time trends or cumulative drift.
 
+For the empirical age-shift negative control (Figures 3–4), we use aggregated weekly cohort summaries derived from the Czech Republic administrative mortality and vaccination dataset and exported in KCOR_CMR format.
+
 Two snapshots illustrate that KCOR is near-flat even under 10–20 year age differences:
 
-![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, KCOR remains near-flat at 1 over follow-up, consistent with a true null effect.](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, KCOR remains near-flat at 1 over follow-up, consistent with a true null effect. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2) [@sanca2024].](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
 
-![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, KCOR exhibits no systematic drift, demonstrating robustness to selection-induced curvature.](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
+![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, KCOR exhibits no systematic drift, demonstrating robustness to selection-induced curvature. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
 
 | Enrollment | Dose comparison | KCOR (pooled/ASMR) | 95% CI |
 |---|---|---:|---|
@@ -519,7 +521,7 @@ KCOR provides a principled approach to retrospective cohort comparison under sel
 
 ### Ethics approval and consent to participate
 
-Not applicable. This is a methods-only manuscript using synthetic data generated for validation purposes and publicly available aggregated mortality statistics. No individual-level data requiring ethics approval were used in the primary analyses presented here.
+Not applicable. This is a methods-only manuscript. The primary validation results use synthetic data. Empirical negative-control figures (Figures 3–4) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript. [@sanca2024]
 
 ### Consent for publication
 
@@ -653,7 +655,7 @@ Both cohorts share identical per-frailty-group death probabilities; only the mix
 
 The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) is generated using:
 
-- **Data source**: Real aggregated mortality data in KCOR_CMR format
+- **Data source**: Czech Republic administrative mortality and vaccination data, aggregated into KCOR_CMR format
 - **Generation script**: `test/negative_control/code/generate_negative_control.py`
 - **Construction**: Age strata remapped to pseudo-doses within same vaccination category
 - **Age mapping**:
