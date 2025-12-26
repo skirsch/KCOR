@@ -129,6 +129,25 @@ KCOR is defined for **fixed cohorts** at enrollment. Required inputs are minimal
 
 This fixed-cohort design corresponds to an intent-to-treat–like estimand under selection. It is chosen deliberately to avoid time-varying deferral bias, immortal time bias, and dynamic health-based sorting that arise when individuals change exposure status during follow-up. Dynamic “as-treated” formulations are treated as sensitivity analyses rather than primary estimands.
 
+#### 2.2.1 KCOR data representation and reproducibility
+
+All analyses were performed using the KCOR (Kirsch Cumulative Outcomes Ratio) framework, which operates on fixed-cohort, time-indexed observational data under explicitly defined enrollment and outcome semantics.
+
+To ensure reproducibility across jurisdictions with differing privacy and disclosure-control regimes, KCOR supports three formally defined data representations:
+
+1. Record-level data  
+2. Aggregated outcome summary data  
+3. Hazard summary data  
+
+These formats differ only in disclosure surface; they are analytically equivalent under the KCOR methodology.
+
+The precise definitions of enrollment, cohort freezing, time indexing, risk sets, outcomes, stratifiers, and disclosure-control constraints are specified in the **KCOR data format specification**, which is versioned and publicly available:
+
+> *KCOR File Format Specification*  
+> `documentation/specs/KCOR_file_format.md`
+
+All KCOR results presented in this paper can be reproduced from any data representation that conforms to this specification.
+
 ### 2.3 Hazard estimation and cumulative hazards (discrete time)
 
 Let $t$ denote event time since enrollment (e.g., weeks), $D_d(t)$ deaths during interval $t$ in cohort $d$, and $N_d(t)$ the number at risk at the start of interval $t$. In discrete time, hazards are treated as piecewise-constant and can be computed from interval risk as
@@ -511,6 +530,7 @@ Not applicable.
 - Synthetic validation data (negative and positive control datasets) and generation scripts are available in the project repository under `test/negative_control/` and `test/positive_control/`.
 - Sensitivity analysis outputs are available under `test/sensitivity/out/`.
 - The reference implementation includes example datasets in KCOR_CMR format for reproducibility.
+- A formal specification of the KCOR data formats is provided in `documentation/specs/KCOR_file_format.md`, including schema definitions and disclosure-control semantics.
 
 ### Code availability
 
