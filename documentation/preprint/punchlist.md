@@ -1,98 +1,86 @@
-# KCOR Paper – Figure 3 Provenance & Consistency Punchlist
+# KCOR paper polish: bridge COVID context + “injection” wording cleanup (Cursor punchlist)
 
-## Objective
-Explicitly document the data provenance for Figure 3 (and Figure 4) and align captions, main text, and declarations so there is no ambiguity about the Czech data source or the use of aggregated vs record-level data.
-
----
-
-## Tasks
-
-### 1. Figure 3 caption (mandatory)
-**Action**
-- Edit the Figure 3 caption to explicitly name the data source.
-
-**Add sentence**
-> Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).
-
-**Acceptance check**
-- Caption clearly names “Czech Republic”
-- Mentions KCOR_CMR
-- References Appendix B.2
+Target file: `paper.md`
 
 ---
 
-### 2. Figure 4 caption (consistency)
-**Action**
-- Apply the same data provenance language used in Figure 3.
+## A) Add a bridging paragraph to fix the “general method → COVID/non-COVID mortality” context jump
 
-**Acceptance check**
-- Figure 3 and Figure 4 captions use parallel wording
-- No ambiguity about dataset origin
+### Insert location
+Insert **one new paragraph** in **§1 Introduction**, immediately **before** the heading:
 
----
+`### 1.3 Evidence from the literature: residual confounding despite meticulous matching`
 
-### 3. Main text clarification (Section 3.1.2 or nearest methods subsection)
-**Action**
-- Insert a single sentence clarifying the empirical data source used for the negative control.
+(So it lands after §1.2 and before §1.3.)
 
-**Insert sentence**
-> For the empirical age-shift negative control (Figures 3–4), we use aggregated weekly cohort summaries derived from the Czech Republic administrative mortality and vaccination dataset and exported in KCOR_CMR format.
+### Exact text to insert (paste verbatim)
 
-**Acceptance check**
-- Appears in main text, not only caption
-- Explicitly says “aggregated”
-- Explicitly says “Czech Republic”
+Although this manuscript is motivated in part by mortality analyses conducted during the COVID-19 vaccination period, the methodological problem addressed here is general. The COVID setting provides unusually clear examples of selection-induced non-proportional hazards—because uptake was voluntary, rapidly time-varying, and correlated with baseline health—making residual confounding easy to diagnose using control outcomes such as non-COVID mortality. However, KCOR is not specific to COVID, vaccination, or infectious disease. The estimator applies to any retrospective cohort comparison in which selection induces differential depletion dynamics that violate proportional hazards assumptions.
+
+### Acceptance check
+- The first mention of COVID/non-COVID mortality now has a clean bridge that says:
+  - COVID is illustrative
+  - the problem is general
+  - non-COVID mortality is used as a control outcome example
 
 ---
 
-### 4. Declarations / Ethics / Data Availability consistency check
-**Action**
-- Review the Declarations section and ensure it is consistent with the above statements.
+## B) Replace ambiguous “injection” language with “intervention”, while keeping “injected effect” for simulations
 
-**If aggregated-only use is claimed**
-- Confirm language states:
-  - Synthetic data for primary validation
-  - Aggregated Czech-derived summaries for illustrative empirical figures
-  - No record-level data shared in the manuscript
+Goal: avoid “injection” sounding vaccine-specific, except where it literally means “injecting an effect into synthetic data” (positive controls).
 
-**Suggested wording (if needed)**
-> The primary validation results use synthetic data. Empirical negative-control figures use aggregated cohort summaries derived from Czech administrative data; no record-level data are shared in this manuscript.
+### Step B1: Global search to review occurrences
+Search for these tokens in `paper.md`:
+- `injection`
+- `inject`
+- `injected`
 
-**Acceptance check**
-- No contradiction between figures and declarations
-- No implication that record-level data are published if they are not
+### Step B2: Mandatory changes (real-world / general framing)
+
+#### Rule 1
+If the text is referring to the real-world concept (treatment/exposure), replace:
+- `injection` → `intervention`
+- `inject` → `apply` or `introduce` (choose the one that reads best)
+- `injected` → `introduced`
+
+Examples:
+- “medical injections” → “medical interventions”
+- “after rollout” is fine; no change needed
+
+### Step B3: Keep simulation language (positive controls) but make it explicit
+
+In §3.2 (“Positive controls”), you currently use “injecting a known effect”.
+Keep the simulation meaning but ensure it’s explicitly “into data” (to avoid vaccine connotation).
+
+#### Exact edits (apply verbatim)
+
+1) In §3.2 first paragraph, change:
+
+Positive controls are constructed by starting from a negative-control dataset and injecting a known effect into one cohort, for example by multiplying the *baseline* hazard by a constant factor $r$ over a prespecified interval:
+
+TO:
+
+Positive controls are constructed by starting from a negative-control dataset and **injecting a known effect into the data-generating process** for one cohort, for example by multiplying the *baseline* hazard by a constant factor $r$ over a prespecified interval:
+
+2) Keep “Injection window” in tables/figures if it is clearly simulation-specific, but optionally rename to be more general:
+
+Optional (recommended for generality):
+- `Injection window` → `Effect window`
+
+If you do this, apply consistently in:
+- Table header in §3.2
+- Figure captions that mention “injection window”
+- Appendix B.3 bullets (“Injection window”)
+
+### Step B4: “Never use injection for real-world intervention” final sweep
+After edits, do a final search:
+- If `injection` appears anywhere outside §3.2 / Appendix B.3 / positive-control figure captions/tables, change it to `intervention`.
 
 ---
 
-### 5. Appendix cross-reference verification
-**Action**
-- Verify Appendix B.2 accurately describes:
-  - The KCOR_CMR format
-  - That the Czech data appear only as aggregated cohort summaries
-
-**Acceptance check**
-- Appendix B.2 description matches caption and main text wording
-- No need to infer data provenance from context
-
----
-
-### 6. Final consistency sweep
-**Action**
-- Search the document for:
-  - “empirical”
-  - “real data”
-  - “aggregated mortality”
-- Ensure none of these phrases imply an unnamed or generic dataset when Figures 3–4 are referenced.
-
-**Acceptance check**
-- No “floating” empirical figures without provenance
-- Reviewer can identify the dataset in ≤10 seconds
-
----
-
-## Completion Criteria
-- Figures 3 and 4 explicitly name the Czech Republic
-- Main text states aggregated Czech source once
-- Declarations are internally consistent
-- No new methodological claims introduced
+## Done criteria
+- There is a single bridge paragraph before §1.3.
+- All real-world mentions use “intervention” (not “injection”).
+- Simulation sections may still use “injecting an effect”, but explicitly “into the data-generating process” (or use “introduced effect”).
+- No remaining ambiguous “injection” phrasing in general narrative text.
 

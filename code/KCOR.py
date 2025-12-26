@@ -56,14 +56,13 @@ INPUT WORKBOOK SCHEMA per sheet (e.g., '2021-13', '2021_24', '2022_06', ...):
 
 OUTPUTS (two main sheets):
     - "by_dose": Individual dose curves with complete methodology transparency including:
-      EnrollmentDate, Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR, MR_adj, CH, CH_actual, Hazard, 
-      Slope, Scale_Factor, Cumu_Adj_Deaths, Cumu_Unadj_Deaths, Cumu_Person_Time, 
-      Smoothed_Raw_MR, Smoothed_Adjusted_MR, Time_Index
+      EnrollmentDate, Date, YearOfBirth, Dose, ISOweek, Dead, Alive, MR,
+      hazard (raw), cum_hazard (raw cumulative), adj_cum_hazard (adjusted cumulative),
+      Slope, Cum_deaths, Cumu_Person_Time, Time_Index
     - "dose_pairs": KCOR values for all dose comparisons with complete methodology transparency:
-      EnrollmentDate, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -1 = unknown age), Dose_num, Dose_den,
-      KCOR, CI_lower, CI_upper, MR_num, MR_adj_num, CH_num, CH_actual_num, hazard_num, 
-      slope_num, scale_factor_num, MR_smooth_num, t_num, MR_den, MR_adj_den, CH_den, 
-      CH_actual_den, hazard_den, slope_den, scale_factor_den, MR_smooth_den, t_den
+      EnrollmentDate, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -2 = all ages), Dose_num, Dose_den,
+      KCOR, CI_lower, CI_upper, hazard_num, cum_hazard_num, adj_cum_hazard_num, t_num,
+      hazard_den, cum_hazard_den, adj_cum_hazard_den, t_den, abnormal_fit
 
 USAGE:
     python KCOR.py KCOR_output.xlsx KCOR_processed_REAL.xlsx
@@ -2569,8 +2568,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             if gv is None or gu is None:
                 continue
             # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","hazard_adj","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
+            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
             
             merged = pd.merge(
                 gv_unique,
@@ -2642,12 +2641,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             # Post-anchor cumulative hazard increments
             dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
             dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
-            # Slope-normalization scale per week: s = hazard_adj / hazard_raw
-            s_num = (merged.get("hazard_adj_num", np.nan) / (merged.get("hazard_raw_num", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-            s_den = (merged.get("hazard_adj_den", np.nan) / (merged.get("hazard_raw_den", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-            # Nelson–Aalen incremental variances, scaled by s^2
-            var_inc_num = (merged.get("Dead_num", 0.0).astype(float) / (merged.get("Alive_num", 0.0).astype(float) + EPS)**2) * (s_num.astype(float)**2)
-            var_inc_den = (merged.get("Dead_den", 0.0).astype(float) / (merged.get("Alive_den", 0.0).astype(float) + EPS)**2) * (s_den.astype(float)**2)
+            # Nelson–Aalen incremental variances using raw hazard
+            var_inc_num = (merged.get("Dead_num", 0.0).astype(float) / (merged.get("Alive_num", 0.0).astype(float) + EPS)**2)
+            var_inc_den = (merged.get("Dead_den", 0.0).astype(float) / (merged.get("Alive_den", 0.0).astype(float) + EPS)**2)
             # Cumulative from anchor forward (exclude anchor point)
             var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
             var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
@@ -2668,11 +2664,13 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             # Blank CI for all weeks up to and including baseline (t <= t0)
             merged.loc[merged.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
 
-            # Build explicit hazard columns: unadjusted from hazard_raw_*, adjusted from hazard_adj_*
+            # Build explicit hazard columns: hazard, cum_hazard, adj_cum_hazard
             merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
             merged["hazard_den"] = merged.get("hazard_raw_den", np.nan)
-            merged["hazard_adj_num"] = merged.get("hazard_adj_num", np.nan)
-            merged["hazard_adj_den"] = merged.get("hazard_adj_den", np.nan)
+            merged["cum_hazard_num"] = merged.get("CH_actual_num", np.nan)
+            merged["cum_hazard_den"] = merged.get("CH_actual_den", np.nan)
+            merged["adj_cum_hazard_num"] = merged.get("CH_num", np.nan)
+            merged["adj_cum_hazard_den"] = merged.get("CH_den", np.nan)
             
             # Check if either numerator or denominator cohort had abnormal fit
             abnormal_fit_num = False
@@ -2686,10 +2684,10 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     abnormal_fit_den = params_den.get("abnormal_fit", False)
             merged["abnormal_fit"] = abnormal_fit_num or abnormal_fit_den
             
-            # Order: unadjusted first, then adjusted
+            # Output columns: hazard=raw, cum_hazard=raw cumulative, adj_cum_hazard=adjusted cumulative
             out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "CH_num","hazard_num","hazard_adj_num","t_num",
-                          "CH_den","hazard_den","hazard_adj_den","t_den","abnormal_fit"]].copy()
+                          "hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
+                          "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den","abnormal_fit"]].copy()
 
             # MR fields are written raw; no display scaling
             # Remove redundant merged suffix columns like *_den copies of ISOweek
@@ -2843,12 +2841,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     # ΔCH at dt
                     dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
                     dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
-                    # Scale factors s = hazard_adj / hazard_raw
-                    s_num_age = (gvn_upto["hazard_adj"] / (gvn_upto["hazard_raw"] + EPS)).to_numpy()
-                    s_den_age = (gdn_upto["hazard_adj"] / (gdn_upto["hazard_raw"] + EPS)).to_numpy()
-                    # NA variance increments
-                    var_inc_num_age = (gvn_upto["Dead"].astype(float) / (gvn_upto["Alive"].astype(float) + EPS)**2).to_numpy() * (s_num_age**2)
-                    var_inc_den_age = (gdn_upto["Dead"].astype(float) / (gdn_upto["Alive"].astype(float) + EPS)**2).to_numpy() * (s_den_age**2)
+                    # NA variance increments using raw hazard
+                    var_inc_num_age = (gvn_upto["Dead"].astype(float) / (gvn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
+                    var_inc_den_age = (gdn_upto["Dead"].astype(float) / (gdn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
                     # Cumulative from anchor forward
                     csum_num = np.cumsum(var_inc_num_age)
                     csum_den = np.cumsum(var_inc_den_age)
@@ -2917,13 +2912,13 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     "CI_lower": CI_lower,
                     "CI_upper": CI_upper,
                     # Keep schema consistent with dose_pairs rows; pooled ASMR has no per-age hazards/CH
-                    "CH_num": np.nan,
-                    "hazard_adj_num": np.nan,
                     "hazard_num": np.nan,
+                    "cum_hazard_num": np.nan,
+                    "adj_cum_hazard_num": np.nan,
                     "t_num": np.nan,
-                    "CH_den": np.nan,
-                    "hazard_adj_den": np.nan,
                     "hazard_den": np.nan,
+                    "cum_hazard_den": np.nan,
+                    "adj_cum_hazard_den": np.nan,
                     "t_den": np.nan,
                     "abnormal_fit": abnormal_fit_pooled
                 })
@@ -3113,9 +3108,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         # Merge numerator and denominator
         merged_all = pd.merge(
             gv_all[["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj", 
-                   "hazard_raw", "hazard_adj", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
+                   "hazard_raw", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
             gu_all[["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj",
-                   "hazard_raw", "hazard_adj", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
+                   "hazard_raw", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
             on="DateDied", suffixes=("_num", "_den"), how="inner"
         ).sort_values("DateDied")
         
@@ -3145,10 +3140,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
         dCH_num = merged_all["CH_num"] - float(merged_all["CH_num"].iloc[t0_idx])
         dCH_den = merged_all["CH_den"] - float(merged_all["CH_den"].iloc[t0_idx])
-        s_num = (merged_all.get("hazard_adj_num", np.nan) / (merged_all.get("hazard_raw_num", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-        s_den = (merged_all.get("hazard_adj_den", np.nan) / (merged_all.get("hazard_raw_den", np.nan) + EPS)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-        var_inc_num = (merged_all.get("Dead_num", 0.0).astype(float) / (merged_all.get("Alive_num", 0.0).astype(float) + EPS)**2) * (s_num.astype(float)**2)
-        var_inc_den = (merged_all.get("Dead_den", 0.0).astype(float) / (merged_all.get("Alive_den", 0.0).astype(float) + EPS)**2) * (s_den.astype(float)**2)
+        # Nelson–Aalen incremental variances using raw hazard
+        var_inc_num = (merged_all.get("Dead_num", 0.0).astype(float) / (merged_all.get("Alive_num", 0.0).astype(float) + EPS)**2)
+        var_inc_den = (merged_all.get("Dead_den", 0.0).astype(float) / (merged_all.get("Alive_den", 0.0).astype(float) + EPS)**2)
         var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
         var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
         var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
@@ -3175,7 +3169,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             if isinstance(params_den_all, dict):
                 abnormal_fit_all_ages = abnormal_fit_all_ages or params_den_all.get("abnormal_fit", False)
         
-        # Build output rows for all-ages
+        # Build output rows for all-ages: hazard, cum_hazard, adj_cum_hazard
         for _, row in merged_all.iterrows():
             all_ages_rows.append({
                 "EnrollmentDate": sheet_name,
@@ -3187,13 +3181,13 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 "KCOR": row["KCOR"],
                 "CI_lower": row["CI_lower"],
                 "CI_upper": row["CI_upper"],
-                "CH_num": row["CH_num"],
-                "hazard_adj_num": row["hazard_adj_num"],
                 "hazard_num": row["hazard_raw_num"],
+                "cum_hazard_num": row["CH_actual_num"],
+                "adj_cum_hazard_num": row["CH_num"],
                 "t_num": row["t_num"],
-                "CH_den": row["CH_den"],
-                "hazard_adj_den": row["hazard_adj_den"],
                 "hazard_den": row["hazard_raw_den"],
+                "cum_hazard_den": row["CH_actual_den"],
+                "adj_cum_hazard_den": row["CH_den"],
                 "t_den": row["t_den"],
                 "abnormal_fit": abnormal_fit_all_ages
             })
@@ -3202,8 +3196,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         return pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
     return pd.DataFrame(columns=[
         "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","CH_num","hazard_adj_num","hazard_num","t_num",
-        "CH_den","hazard_adj_den","hazard_den","t_den","abnormal_fit"
+        "KCOR","CI_lower","CI_upper","hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
+        "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den","abnormal_fit"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -4890,7 +4884,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "CH": "mean",
                     "CH_actual": "mean",
                     "hazard_raw": "mean",
-                    "hazard_adj": "mean",
                     "cumD_unadj": "mean",
                     "t": "first",
                 }).reset_index().sort_values(["DateDied", "YearOfBirth"]) 
@@ -4914,9 +4907,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "Dead": row["Dead"],
                     "Alive": row["Alive"],
                     "MR": row["MR"],
-                    # removed Cum_MR and Cum_MR_Actual per request
-                    "Hazard": row["hazard_raw"],
-                    "Hazard_adj": row["hazard_adj"],
+                    # Output hazard and cumulative hazard columns with mathematical notation
+                    "hazard": row["hazard_raw"],
+                    "cum_hazard": row["CH_actual"],
+                    "adj_cum_hazard": row["CH"],
                     "Slope": slope_val,
                     "Cum_deaths": row["cumD_unadj"],
                     "Cumu_Person_Time": row["PT"],
@@ -5783,7 +5777,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         # Always write by_dose sheet (trim to used columns)
                         by_dose_cols = [
                             "EnrollmentDate","Date","YearOfBirth","Dose","ISOweek",
-                            "Dead","Alive","MR","Hazard","Hazard_adj","Cum_deaths","Cumu_Person_Time","Time_Index"
+                            "Dead","Alive","MR","hazard","cum_hazard","adj_cum_hazard","Cum_deaths","Cumu_Person_Time","Time_Index"
                         ]
                         debug_trim = debug_df[[c for c in by_dose_cols if c in debug_df.columns]].copy()
                         debug_trim.to_excel(writer, index=False, sheet_name="by_dose")

@@ -52,6 +52,8 @@ This violates core assumptions of many standard tools:
 
 KCOR is designed for this failure mode: **cohorts whose hazards are not proportional because selection induces different depletion dynamics (curvature).**
 
+Although this manuscript is motivated in part by mortality analyses conducted during the COVID-19 vaccination period, the methodological problem addressed here is general. The COVID setting provides unusually clear examples of selection-induced non-proportional hazards—because uptake was voluntary, rapidly time-varying, and correlated with baseline health—making residual confounding easy to diagnose using control outcomes such as non-COVID mortality. However, KCOR is not specific to COVID, vaccination, or infectious disease. The estimator applies to any retrospective cohort comparison in which selection induces differential depletion dynamics that violate proportional hazards assumptions.
+
 ### 1.3 Evidence from the literature: residual confounding despite meticulous matching
 
 Two large, rigorously designed observational analyses illustrate the core empirical motivation: even extremely careful matching and adjustment can leave large residual differences in non-COVID mortality, indicating confounding and selection that standard pipelines do not eliminate.
@@ -406,7 +408,9 @@ The key validation claim is that KCOR does not produce spurious *drift* under la
 
 ### 3.2 Positive controls: detect injected harm/benefit
 
-Positive controls are constructed by starting from a negative-control dataset and injecting a known effect into one cohort, for example by multiplying the *baseline* hazard by a constant factor $r$ over a prespecified interval:
+The effect window is a simulation construct used solely for positive-control validation and does not represent a real-world intervention period or biological effect window.
+
+Positive controls are constructed by starting from a negative-control dataset and injecting a known effect into the data-generating process for one cohort, for example by multiplying the *baseline* hazard by a constant factor $r$ over a prespecified interval:
 
 $$
 h_{0,\mathrm{treated}}(t) = r \cdot h_{0,\mathrm{control}}(t) \quad \text{for } t \in [t_1, t_2],
@@ -417,9 +421,9 @@ with $r>1$ for harm and $0<r<1$ for benefit.
 
 After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude consistent with the injected effect (up to discretization and sampling noise).
 
-![Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with injection window shaded. Bottom row shows KCOR(t) deviating from 1.0 in the expected direction during the injection window.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
+![Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows KCOR(t) deviating from 1.0 in the expected direction during the effect window.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
 
-| Scenario | Injection window | Hazard multiplier $r$ | Expected direction | Observed KCOR at week 80 |
+| Scenario | Effect window | Hazard multiplier $r$ | Expected direction | Observed KCOR at week 80 |
 |---|---|---:|---|---:|
 | Benefit | week 20–80 | 0.8 | < 1 | 0.825 |
 | Harm | week 20–80 | 1.2 | > 1 | 1.107 |
@@ -675,14 +679,14 @@ The positive control (Figure @fig:pos_control_injected and Table @tbl:pos_contro
 - **Initial cohort size**: 100,000 per cohort
 - **Baseline hazard**: 0.002 per week
 - **Frailty variance**: $\theta_0 = 0.5$ (control), $\theta_1 = 1.0$ (treatment)
-- **Injection window**: weeks 20–80
+- **Effect window**: weeks 20–80
 - **Hazard multipliers**:
   - Harm scenario: $r = 1.2$
   - Benefit scenario: $r = 0.8$
 - **Random seed**: 42
 - **Enrollment date**: 2021-06-14 (ISO week 2021_24)
 
-The injection multiplies the treatment cohort's baseline hazard by factor $r$ during the injection window, while leaving the control cohort unchanged.
+The injection multiplies the treatment cohort's baseline hazard by factor $r$ during the effect window, while leaving the control cohort unchanged.
 
 #### B.4 Sensitivity analysis parameters
 
