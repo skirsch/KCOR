@@ -123,7 +123,7 @@ Selection bias commonly produces curvature differences through frailty mixing an
 
 KCOR is defined for **fixed cohorts** at enrollment. Required inputs are minimal: for each individual, the intervention or enrollment date(s) and the date of death, with birth date or year included only if age stratification is performed.
 
-- Cohorts are fixed at enrollment and defined by intervention status at a specified time.
+- Cohorts are fixed at enrollment and defined by intervention status at the start of the enrollment week; doses administered during the enrollment week do not affect cohort assignment (i.e., dose status is determined by doses received **strictly before** the enrollment week start).
 - No censoring or cohort switching is permitted in the primary estimand.
 - Analysis proceeds in **event time** $t$ (time since enrollment).
 
@@ -528,7 +528,7 @@ This research received no external funding.
 
 ### Authors' contributions
 
-Steven T. Kirsch conceived the study, developed the methodology, performed the analysis, and wrote the manuscript.
+Steven T. Kirsch conceived the method, wrote the code, performed the analysis, and wrote the manuscript.
 
 ### Acknowledgements
 
