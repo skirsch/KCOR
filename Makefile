@@ -16,7 +16,7 @@ PAPER_MD ?= paper.md
 PAPER_DOCX ?= paper.docx
 PAPER_PDF ?= paper.pdf
 PAPER_BIB ?= refs.bib
-PAPER_CSL ?= vancouver-superscript.csl
+PAPER_CSL ?= american-medical-association.csl
 PAPER_REFERENCE_DOC ?= reference.docx
 # PDF engine (override on CLI if needed). Default: xelatex.
 PAPER_PDF_ENGINE ?= xelatex
@@ -158,7 +158,7 @@ sensitivity:
 # Default inputs live in documentation/preprint/:
 # - paper.md (Pandoc-crossref markup)
 # - refs.bib
-# - vancouver-superscript.csl
+# - american-medical-association.csl
 #
 # Usage:
 #   make paper
