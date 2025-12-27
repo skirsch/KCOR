@@ -19,7 +19,7 @@ KCOR v6 update:
 - **Authors**: Steven T. Kirsch
 - **Affiliations**: Independent Researcher, United States
 - **Corresponding author**: stk@alum.mit.edu
-- **Word count**: 4,373
+- **Word count**: 5,770
 - **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference; observational studies; mortality curvature
 
 ---
@@ -101,7 +101,7 @@ KCOR is proposed as a diagnostic and normalization estimator for selection-induc
 
 | Symbol | Meaning |
 |---|---|
-| $d$ | cohort index (enrollment definition × age group × dose/exposure) |
+| $d$ | cohort index (enrollment definition × age group × intervention count (discrete exposure index)) |
 | $t$ | event time since enrollment (discrete bins, e.g., weeks) |
 | $h_d^{\mathrm{obs}}(t)$ | observed cohort hazard at time $t$ |
 | $H_d^{\mathrm{obs}}(t)$ | observed cumulative hazard (after skip/stabilization) |
@@ -111,6 +111,8 @@ KCOR is proposed as a diagnostic and normalization estimator for selection-induc
 | $k_d$ | baseline hazard level for cohort $d$ under default baseline shape |
 
 Table: Notation used throughout the Methods section. θ_d denotes the cohort-specific depletion (frailty variance) parameter governing curvature in the observed cumulative hazard. {#tbl:notation}
+
+For COVID-19 vaccination analyses, intervention count corresponds to the number of vaccine doses received; more generally, this can index any discrete exposure level.
 
 ### 2.1 Conceptual framework: level vs curvature under selection
 
@@ -125,7 +127,7 @@ Figure @fig:kcor_workflow provides a schematic overview of the KCOR workflow.
 
 ### 2.2 Cohort construction and estimand
 
-KCOR is defined for **fixed cohorts** at enrollment. Required inputs are minimal: for each individual, the intervention or enrollment date(s) and the date of death, with birth date or year included only if age stratification is performed.
+KCOR is defined for **fixed cohorts** at enrollment. Required inputs are minimal: for each individual, the intervention or enrollment date(s) and the **event date** (e.g., death for mortality analyses), with birth date or year included only if age stratification is performed. Throughout, we use "event" to denote the outcome of interest, with event timing recorded relative to cohort enrollment.
 
 - Cohorts are fixed at enrollment and defined by intervention status at the start of the enrollment week; doses administered during the enrollment week do not affect cohort assignment (i.e., dose status is determined by doses received **strictly before** the enrollment week start).
 - No censoring or cohort switching is permitted in the primary estimand.
@@ -469,7 +471,7 @@ Across all tested parameter ranges, KCOR values remained within approximately ±
 
 ### 3.4 Simulation grid: operating characteristics and failure-mode diagnostics
 
-We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, and sparse events. Code to reproduce all simulations and figures is included in the repository. Near-flat is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients.
+We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, and sparse events. Code to reproduce all simulations and figures is included in the repository. *Near-flat* is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients.
 
 ![Simulation grid overview: KCOR(t) trajectories across prespecified scenarios, including gamma-frailty null with strong selection, injected hazard increase and decrease, non-gamma frailty, quiet-window contamination, and sparse-event regimes. Under true null, KCOR remains near-flat at 1; injected effects are detected in the expected direction; adverse regimes are accompanied by degraded diagnostics and reduced interpretability.](figures/fig_sim_grid_overview.png){#fig:sim_grid_overview}
 
@@ -490,7 +492,7 @@ Under the working assumptions that:
 
 then the remaining differences between cohorts are interpretable, **conditional on the stated selection model and quiet-window validity**, as differences in baseline hazard level (on a cumulative scale), summarized by KCOR$(t)$.
 
-The observation that frailty correction is negligible for vaccinated cohorts but substantial for the unvaccinated cohort is not incidental. It reflects the asymmetric action of healthy-vaccinee selection, which concentrates lower-frailty individuals into vaccinated cohorts at enrollment while leaving the unvaccinated cohort heterogeneous. KCOR explicitly detects and removes this asymmetry by mapping cohorts into a frailty-factored comparison space rather than assuming proportional hazards.
+The observation that frailty correction is negligible for vaccinated cohorts but substantial for the unvaccinated cohort is not incidental. It reflects the asymmetric action of healthy-vaccinee selection, which concentrates lower-frailty individuals into vaccinated cohorts at enrollment while leaving the unvaccinated cohort heterogeneous. KCOR explicitly detects and removes this asymmetry by mapping cohorts into a depletion-neutralized comparison space rather than assuming proportional hazards.
 
 ### 4.2 Relationship to negative control methods
 
