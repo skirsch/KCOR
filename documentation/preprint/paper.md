@@ -26,7 +26,7 @@ KCOR v6 update:
 
 ## Abstract
 
-Retrospective cohort studies often estimate the mortality impact of medical interventions, but selection can create non-exchangeable cohorts that defeat standard comparisons. In particular, selective uptake can induce systematic differences in mortality curvature—differences in the time-evolution of cohort hazards driven by frailty heterogeneity and depletion of susceptibles—that violate the assumptions of standard epidemiologic tools such as Cox proportional hazards models, age-standardized mortality rates, and inverse-probability weighting. We introduce **KCOR (Kirsch Cumulative Outcomes Ratio)**, a method that neutralizes selection-induced curvature before cohort comparison by estimating and inverting a gamma-frailty mixture model in **cumulative-hazard space**. KCOR v6 fits cohort-specific selection parameters during epidemiologically quiet periods and transforms observed cumulative hazards to depletion-neutralized baseline cumulative hazards, which are then compared cumulatively via ratios. We describe the KCOR framework, its mathematical foundation, and its validation using prespecified negative and positive control tests designed to stress selection-induced curvature. KCOR requires only event timing—dates of intervention (enrollment) and dates of death (with birth date or year needed only for age stratification)—making it applicable to minimal record-level mortality datasets. Empirically, in illustrative applications, KCOR v6 frequently estimates negligible frailty variance for some cohorts while estimating substantial frailty-driven depletion for others, reflecting asymmetric selection at cohort entry. Importantly, these differences arise from observed hazard curvature rather than from any exposure-specific assumptions. After frailty neutralization, cumulative hazards are approximately linear, enabling direct cohort comparison free of selection-induced curvature. KCOR therefore enables interpretable cumulative cohort comparisons in settings where treated and untreated hazards are non-proportional because selection induces different depletion dynamics.
+Retrospective cohort studies often estimate the mortality impact of medical interventions, but selection can create non-exchangeable cohorts that defeat standard comparisons. In particular, selective uptake can induce systematic differences in mortality curvature—differences in the time-evolution of cohort hazards driven by frailty heterogeneity and depletion of susceptibles—that violate the assumptions of standard epidemiologic tools such as Cox proportional hazards models, age-standardized mortality rates, and inverse-probability weighting. We introduce **KCOR (Kirsch Cumulative Outcomes Ratio)**, a method that normalizes selection-induced curvature before cohort comparison by estimating and inverting a gamma-frailty mixture model in **cumulative-hazard space**. KCOR v6 fits cohort-specific selection parameters during epidemiologically quiet periods and transforms observed cumulative hazards to depletion-neutralized baseline cumulative hazards, which are then compared cumulatively via ratios. We describe the KCOR framework, its mathematical foundation, and its validation using prespecified negative and positive control tests designed to stress selection-induced curvature. KCOR requires only event timing—dates of intervention (enrollment) and dates of death (with birth date or year needed only for age stratification)—making it applicable to minimal record-level mortality datasets. Empirically, in illustrative applications, KCOR v6 frequently estimates negligible frailty variance for some cohorts while estimating substantial frailty-driven depletion for others, reflecting asymmetric selection at cohort entry. Importantly, these differences arise from observed hazard curvature rather than from any exposure-specific assumptions. After frailty neutralization, cumulative hazards are approximately linear, enabling direct cohort comparison free of selection-induced curvature. KCOR therefore enables interpretable cumulative cohort comparisons in settings where treated and untreated hazards are non-proportional because selection induces different depletion dynamics.
 
 ---
 
@@ -121,6 +121,8 @@ Differences in mortality between cohorts can arise from:
 
 Selection bias commonly produces curvature differences through frailty mixing and depletion. KCOR’s strategy is to **estimate and remove the selection-induced depletion component**, then compare cohorts on a cumulative scale.
 
+Figure @fig:kcor_workflow provides a schematic overview of the KCOR workflow.
+
 ### 2.2 Cohort construction and estimand
 
 KCOR is defined for **fixed cohorts** at enrollment. Required inputs are minimal: for each individual, the intervention or enrollment date(s) and the date of death, with birth date or year included only if age stratification is performed.
@@ -180,7 +182,7 @@ z_{i,d} \sim \mathrm{Gamma}(\mathrm{mean}=1,\ \mathrm{var}=\theta_d).
 $$
 {#eq:individual-hazard-frailty}
 
-Gamma frailty is used not as a claim of biological truth, but as a mathematically minimal and widely used model for unobserved heterogeneity whose Laplace transform yields a closed-form relationship between observed and baseline cumulative hazards [@vaupel1979]. In KCOR, gamma frailty is therefore a **depletion-neutralizing approximation**: its adequacy is treated as empirically testable and is assessed using prespecified negative controls and sensitivity analyses rather than assumed dogmatically.
+Gamma frailty is used not as a claim of biological truth, but as a mathematically minimal and widely used model for unobserved heterogeneity whose Laplace transform yields a closed-form relationship between observed and baseline cumulative hazards [@vaupel1979]. In KCOR, gamma frailty therefore serves as a **geometric approximation for depletion normalization**: its adequacy is treated as empirically testable and is assessed using prespecified negative controls and sensitivity analyses rather than assumed dogmatically.
 
 Frailty $z_{i,d}$ captures latent heterogeneity in baseline risk and drives selective depletion: higher-frailty individuals die earlier, changing the cohort composition over time and inducing curvature in $h_d^{\mathrm{obs}}(t)$ even when $h_{0,d}(t)$ is simple.
 
@@ -350,6 +352,9 @@ Table: Step-by-step KCOR v6 algorithm (high-level), with recommended prespecific
 
 ---
 
+![Two-column schematic of the KCOR v6 workflow. Left column shows fixed-cohort construction, observed cumulative hazards, and frailty estimation during a quiet window. Right column shows depletion-neutralized cumulative hazards, KCOR construction, and diagnostic checks. Arrows indicate the normalization flow from frailty estimation to depletion-neutralized comparison.](figures/fig_kcor_workflow.png){#fig:kcor_workflow}
+
+
 ## 3. Validation and control tests
 
 This section is the core validation claim of KCOR:
@@ -363,7 +368,7 @@ Across examined age strata in the Czech Republic mortality dataset, fitted frail
 
 As a consequence, KCOR normalization leaves some cohorts' cumulative hazards nearly unchanged, while substantially increasing the depletion-neutralized cumulative hazard for others. This behavior is consistent with curvature-driven normalization rather than cohort identity. This pattern is visible directly in adjusted versus unadjusted cumulative hazard plots and is summarized quantitatively in the fitted-parameter logs (see `KCOR_summary.log`).
 
-After frailty neutralization, the adjusted cumulative hazards $\tilde H_{0,d}(t)$ are approximately linear in event time. Residual deviations from linearity reflect real time-varying risk—such as seasonality or epidemic waves—rather than selection-induced depletion. This linearization serves as an internal diagnostic indicating that frailty-driven curvature has been effectively removed.
+After frailty normalization, the adjusted cumulative hazards $\tilde H_{0,d}(t)$ are approximately linear in event time. Residual deviations from linearity reflect real time-varying risk—such as seasonality or epidemic waves—rather than selection-induced depletion. This linearization serves as an internal diagnostic indicating that frailty-driven curvature has been effectively removed.
 
 ### 3.1 Negative controls: null under selection-induced curvature
 
@@ -394,7 +399,7 @@ One especially clear falsification test is an **in-model gamma-frailty null**: s
 
 The repository includes a pragmatic negative control construction that repurposes a real dataset by comparing “like with like” while inducing large composition differences (e.g., age band shifts). In this construction, age strata are remapped into pseudo-doses so that comparisons are, by construction, within the same underlying category; the expected differential effect is near zero, but the baseline hazards differ strongly.
 
-These age-shift negative controls deliberately induce extreme baseline mortality differences (10–20 year age gaps) while preserving a true null effect by construction, since all vaccination states are compared symmetrically. The near-flat KCOR trajectories are consistent with the estimator neutralizing selection-induced depletion curvature without introducing spurious time trends or cumulative drift.
+These age-shift negative controls deliberately induce extreme baseline mortality differences (10–20 year age gaps) while preserving a true null effect by construction, since all vaccination states are compared symmetrically. The near-flat KCOR trajectories are consistent with the estimator normalizing selection-induced depletion curvature without introducing spurious time trends or cumulative drift.
 
 For the empirical age-shift negative control (Figures 3–4), we use aggregated weekly cohort summaries derived from the Czech Republic administrative mortality and vaccination dataset and exported in KCOR_CMR format.
 
@@ -489,7 +494,7 @@ The observation that frailty correction is negligible for vaccinated cohorts but
 
 ### 4.2 Relationship to negative control methods
 
-Negative control outcomes/tests are widely used to *detect* confounding. KCOR's objective is different: it is an estimator intended to *neutralize a specific confounding structure*—selection-induced depletion dynamics—prior to comparison. Negative and positive controls are nevertheless central to validating the estimator's behavior.
+Negative control outcomes/tests are widely used to *detect* confounding. KCOR's objective is different: it is an estimator intended to *normalize away a specific confounding structure*—selection-induced depletion dynamics—prior to comparison. Negative and positive controls are nevertheless central to validating the estimator's behavior.
 
 This asymmetry helps explain why standard observational analyses often report large apparent mortality benefits during periods lacking a plausible causal mechanism: vaccinated cohorts are already selection-filtered, while unvaccinated hazards are suppressed by ongoing frailty depletion. Unadjusted comparisons therefore systematically understate unvaccinated baseline risk and exaggerate apparent benefit.
 
@@ -518,7 +523,7 @@ Recommended reporting includes:
 
 ### 5.1 Failure modes and diagnostics (recommended)
 
-KCOR is designed to neutralize selection-induced depletion curvature under its stated model and windowing assumptions. Reviewers and readers should expect the method to degrade when those assumptions are violated. Common failure modes include:
+KCOR is designed to normalize selection-induced depletion curvature under its stated model and windowing assumptions. Reviewers and readers should expect the method to degrade when those assumptions are violated. Common failure modes include:
 
 - **Mis-specified quiet window**: If the quiet window overlaps major external shocks (epidemic waves, policy changes, reporting artifacts), the fitted $(\hat k_d,\hat\theta_d)$ may absorb non-selection dynamics, biasing normalization.
 - **External time-varying hazards masquerading as frailty depletion**: Strong secular trends, seasonality, or outcome-definition changes can introduce curvature that is not well captured by gamma-frailty depletion alone. For example, COVID-19 waves disproportionately increase mortality among frail individuals; if one cohort has higher baseline frailty, such a wave can preferentially deplete that cohort, producing the appearance of a benefit in the lower-frailty cohort that is actually due to differential frailty-specific mortality from the external hazard rather than from the intervention under study.
@@ -589,7 +594,8 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-[TODO]
+The author thanks Clare Craig and Jasmin Cardinal for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+
 
 ---
 
