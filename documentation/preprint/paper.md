@@ -585,7 +585,7 @@ KCOR provides a principled approach to retrospective cohort comparison under sel
 
 ### Ethics approval and consent to participate
 
-Not applicable. This is a methods-only manuscript. The primary validation results use synthetic data. Empirical negative-control figures (Figures 3–4) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript. [@sanca2024]
+Not applicable. This is a methods-only manuscript. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript. [@sanca2024]
 
 ### Consent for publication
 
@@ -618,7 +618,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks Clare Craig and Jasmin Cardinal for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks MIT Professor Retsef Levi and HART group chair Dr. Clare Craig for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 
 ---
