@@ -24,7 +24,7 @@ PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf help
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf sim_grid help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -136,6 +136,10 @@ slope-test: $(VENV_PYTHON)
 	@echo "Running slope normalization test..."
 	cd test/slope_normalization && $(abspath $(VENV_PYTHON)) test.py
 	@echo "Slope normalization test complete!"
+
+# Simulation grid (operating characteristics and failure-mode diagnostics)
+sim_grid: $(VENV_PYTHON)
+	$(MAKE) -C test/sim_grid all PYTHON=$(abspath $(VENV_PYTHON))
 
 clean:
 	-$(MAKE) -C $(CODE_DIR) clean DATASET=$(DATASET)
@@ -272,6 +276,7 @@ help:
 	@echo "  glm-compare     - Compare GLM outputs"
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
+	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid)"
 	@echo ""
 	@echo "Sensitivity quick-test examples (optional overrides):"
 	@echo "  make sensitivity DATASET=Czech SA_COHORTS=2022_06 SA_DOSE_PAIRS=1,0 SA_BASELINE_WEEKS=4 SA_QUIET_START_OFFSETS=0"

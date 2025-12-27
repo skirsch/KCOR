@@ -462,6 +462,14 @@ KCOR results should be robust (up to numerical tolerance) to reasonable variatio
 
 Across all tested parameter ranges, KCOR values remained within approximately ±5% of unity, indicating stability under reasonable variations in fitting choices.
 
+### 3.4 Simulation grid: operating characteristics and failure-mode diagnostics
+
+We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, and sparse events. Code to reproduce all simulations and figures is included in the repository. Near-flat is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients.
+
+![Simulation grid overview: KCOR(t) trajectories across prespecified scenarios, including gamma-frailty null with strong selection, injected hazard increase and decrease, non-gamma frailty, quiet-window contamination, and sparse-event regimes. Under true null, KCOR remains near-flat at 1; injected effects are detected in the expected direction; adverse regimes are accompanied by degraded diagnostics and reduced interpretability.](figures/fig_sim_grid_overview.png){#fig:sim_grid_overview}
+
+![Simulation diagnostics across scenarios: (i) cumulative-hazard fit RMSE over the quiet window, (ii) fitted frailty variance estimates, and (iii) a post-normalization linearity metric for normalized cumulative hazards. Diagnostics identify regimes in which frailty normalization is well identified versus weakly identified.](figures/fig_sim_grid_diagnostics.png){#fig:sim_grid_diagnostics}
+
 ---
 
 ## 4. Discussion
@@ -533,6 +541,8 @@ Because KCOR compares fixed enrollment cohorts, subsequent uptake of the interve
 KCOR analyses commonly exclude an initial post-enrollment window to avoid dynamic Healthy Vaccinee Effect artifacts. If an intervention induces an acute mortality effect concentrated entirely within this skipped window, that transient signal will not be captured by the primary analysis. This limitation is addressed by reporting sensitivity analyses with reduced or zero skip-weeks and/or by separately evaluating a prespecified acute-risk window.
 
 In degenerate scenarios where an intervention induces a purely proportional level-shift in hazard that remains constant over time and does not alter depletion-driven curvature, KCOR's curvature-based contrast may have limited ability to distinguish such effects from residual baseline level differences under minimal-data constraints. Such cases are pathological in the sense that they produce no detectable depletion signature; in practice, KCOR diagnostics and control tests help identify when curvature-based inference is not informative.
+
+Simulation results in §3.4 illustrate that when key assumptions are violated—such as non-gamma frailty geometry, contamination of the quiet window by external shocks, or extreme event sparsity—frailty normalization may become weakly identified. In such regimes, KCOR's diagnostics, including poor cumulative-hazard fit and reduced post-normalization linearity, explicitly signal that curvature-based inference is unreliable without model generalization or revised window selection.
 
 ---
 
