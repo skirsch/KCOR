@@ -26,7 +26,7 @@ KCOR v6 update:
 
 ## Abstract
 
-Retrospective cohort studies often estimate the mortality impact of medical interventions, but selection can create non-exchangeable cohorts that defeat standard comparisons. In particular, selective uptake can induce systematic differences in mortality curvature—differences in the time-evolution of cohort hazards driven by frailty heterogeneity and depletion of susceptibles. Such differences violate the assumptions of standard epidemiologic tools such as Cox proportional hazards models, age-standardized mortality rates, and inverse-probability weighting. We introduce **KCOR (Kirsch Cumulative Outcomes Ratio)**, a method that normalizes selection-induced curvature before cohort comparison by estimating and inverting a gamma-frailty mixture model in **cumulative-hazard space**. KCOR v6 fits cohort-specific selection parameters during epidemiologically quiet periods and transforms observed cumulative hazards to depletion-neutralized baseline cumulative hazards, which are then compared cumulatively via ratios. We describe the KCOR framework, its mathematical foundation, and its validation using prespecified negative and positive control tests designed to stress selection-induced curvature. KCOR requires only event timing—dates of intervention (enrollment) and dates of death (with birth date or year for age stratification)—making it applicable to minimal record-level mortality datasets. Empirically, in illustrative applications, KCOR v6 frequently estimates negligible frailty variance for some cohorts while estimating substantial frailty-driven depletion for others, reflecting asymmetric selection at cohort entry. Importantly, these differences arise from observed hazard curvature rather than from any exposure-specific assumptions. After frailty neutralization, cumulative hazards are approximately linear, enabling direct cohort comparison free of selection-induced curvature. KCOR therefore enables interpretable cumulative cohort comparisons in settings where treated and untreated hazards are non-proportional because selection induces different depletion dynamics.
+Retrospective cohort studies often estimate the mortality impact of medical interventions, but selection can create non-exchangeable cohorts that defeat standard comparisons. Selective uptake can induce systematic differences in mortality curvature—differences in the time-evolution of cohort hazards driven by frailty heterogeneity and depletion of susceptibles—violating the assumptions of Cox proportional hazards models, age-standardized mortality rates, and inverse-probability weighting. We introduce **KCOR (Kirsch Cumulative Outcomes Ratio)**, a method that normalizes selection-induced curvature before cohort comparison by estimating and inverting a gamma-frailty mixture model in **cumulative-hazard space**. KCOR fits cohort-specific selection parameters during epidemiologically quiet periods and transforms observed cumulative hazards to depletion-neutralized baseline cumulative hazards, which are then compared cumulatively via ratios. Because selection and treatment can be confounded in observational data, KCOR is presented as a depletion-normalization and diagnostic framework; causal interpretation requires additional assumptions and is evaluated via prespecified control tests and simulations. We describe the KCOR framework, its mathematical foundation, and its validation using prespecified negative and positive control tests designed to stress selection-induced curvature. KCOR requires only event timing—dates of intervention (enrollment) and dates of death (with birth date or year for age stratification)—making it applicable to minimal record-level mortality datasets. Empirically, KCOR frequently estimates negligible frailty variance for some cohorts while estimating substantial frailty-driven depletion for others, reflecting asymmetric selection at cohort entry. After frailty neutralization, the depletion-neutralized cumulative hazards are expected to be approximately linear during epidemiologically quiet periods; departures from linearity serve as a built-in diagnostic of assumption violation or quiet-window contamination. KCOR therefore enables interpretable cumulative cohort comparisons in settings where treated and untreated hazards are non-proportional because selection induces different depletion dynamics, while also providing explicit failure-mode signals when curvature cannot be explained by the depletion model.
 
 ---
 
@@ -54,11 +54,25 @@ KCOR is designed for this failure mode: **cohorts whose hazards are not proporti
 
 Although this manuscript is motivated in part by mortality analyses conducted during the COVID-19 vaccination period, the methodological problem addressed here is general. The COVID setting provides unusually clear examples of selection-induced non-proportional hazards—because uptake was voluntary, rapidly time-varying, and correlated with baseline health—making residual confounding easy to diagnose using control outcomes such as non-COVID mortality. However, KCOR is not specific to COVID, vaccination, or infectious disease. The estimator applies to any retrospective cohort comparison in which selection induces differential depletion dynamics that violate proportional hazards assumptions.
 
-### 1.3 Evidence from the literature: residual confounding despite meticulous matching
+In this paper we distinguish two mechanisms often lumped as the 'healthy vaccinee effect' (HVE):
+
+- **Static HVE:** baseline differences in latent frailty distributions at cohort entry (e.g., vaccinated cohorts are healthier on average). In the KCOR framework, this manifests as differing depletion curvature (different $\theta_d$) and is the primary target of frailty normalization.
+
+- **Dynamic HVE:** short-horizon, time-local selection processes around enrollment that create transient hazard suppression immediately after enrollment (e.g., deferral of vaccination during acute illness, administrative timing, or short-term behavioral/health-seeking changes). Dynamic HVE is operationally addressed by prespecifying a skip/stabilization window (§2.7) and can be evaluated empirically by comparing early-period signatures across related cohorts in multi-dose settings.
+
+### 1.3 Related work: frailty, depletion of susceptibles, and selection-induced non-proportional hazards
+
+KCOR builds on a long literature on unobserved heterogeneity ('frailty') and depletion of susceptibles, in which population-level hazards can decelerate over time even when individual hazards are simple. The gamma frailty model is widely used because its Laplace transform yields a closed-form relationship between baseline and observed survival/cumulative hazard, enabling tractable inference and interpretation [@vaupel1979].
+
+A separate literature emphasizes that observational estimates of vaccine effectiveness can remain confounded despite extensive matching and adjustment, often revealed by negative control outcomes and time-varying non-COVID mortality differences [@obel2024; @chemaitelly2025]. KCOR is complementary: rather than using negative controls only to detect confounding, it targets a specific confounding geometry—selection-induced depletion curvature—and then requires controls and simulations to validate that the intended curvature component has been removed.
+
+We do not claim that KCOR subsumes all approaches to confounding adjustment; rather, it provides a dedicated normalization and diagnostic toolkit for settings where non-proportional hazards arise primarily from selection-induced depletion dynamics.
+
+### 1.4 Evidence from the literature: residual confounding despite meticulous matching
 
 Two large, rigorously designed observational analyses illustrate the core empirical motivation: even extremely careful matching and adjustment can leave large residual differences in non-COVID mortality, indicating confounding and selection that standard pipelines do not eliminate.
 
-#### 1.3.1 Denmark (negative controls highlight confounding)
+#### 1.4.1 Denmark (negative controls highlight confounding)
 
 Obel et al. used Danish registry data to build 1:1 matched cohorts and applied negative control outcomes to assess confounding. Their plain-language summary includes the following:
 
@@ -70,7 +84,7 @@ Obel et al. used Danish registry data to build 1:1 matched cohorts and applied n
 
 This is a direct statement that observational designs—even with careful matching and covariate adjustment—can remain substantially confounded when selection and health-seeking behavior differ between cohorts.
 
-#### 1.3.2 Qatar (time-varying HVE despite meticulous matching)
+#### 1.4.2 Qatar (time-varying HVE despite meticulous matching)
 
 Chemaitelly et al. analyzed matched national cohorts and explicitly measured the **time-varying healthy vaccinee effect (HVE)** using non-COVID mortality as a control outcome. They report a pronounced early-period reduction in non-COVID mortality among vaccinated individuals despite meticulous matching, followed by reversal later in follow-up, consistent with dynamic selection and depletion processes. [@chemaitelly2025]
 
@@ -83,7 +97,7 @@ Together, these studies motivate a methods gap: we need estimators that explicit
 
 Table: Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching. {#tbl:HVE_motivation}
 
-### 1.4 Contribution of this work
+### 1.5 Contribution of this work
 
 This paper introduces **KCOR**, a method that transforms observed cohort hazards to remove selection-induced depletion dynamics prior to comparison, enabling interpretable cumulative cohort comparisons under selection-induced non-proportional hazards.
 
@@ -138,6 +152,8 @@ KCOR relies on the following assumptions for valid inference:
 - **Baseline hazard regularity**: The underlying baseline hazard is assumed slowly varying or approximately linear over the quiet window.
 - **Diagnostics required when assumptions fail**: Poor fit, near-zero frailty variance, or non-linear residuals signal that assumptions may be violated and results should be interpreted cautiously.
 - **Sensitivity analyses recommended**: Quiet-window boundaries should be varied to assess robustness of fitted parameters and KCOR trajectories.
+
+**Selection vs treatment is not generically identifiable from two cohort hazard curves without additional structure.** KCOR does not claim universal identifiability. Instead, it targets a specific, testable confounding structure: curvature induced by depletion under time-invariant multiplicative heterogeneity. When this structure adequately explains curvature in quiet periods (as indicated by fit diagnostics and post-normalization linearity), KCOR removes that component and compares cohorts in depletion-neutralized space. Residual differences may reflect treatment effects, residual selection not captured by the model, or time-varying external hazards; therefore, KCOR's inferential workflow requires prespecified control tests and simulation-based operating-characteristic checks (Section 3), rather than assuming that normalization alone proves causality.
 
 ### 2.2 Cohort construction and estimand
 
@@ -314,6 +330,20 @@ $$
 
 The key object for KCOR is $\tilde H_{0,d}(t)$; differenced hazards are optional diagnostics.
 
+#### 2.6.1 Internal diagnostics and 'self-check' behavior
+
+KCOR includes internal diagnostics intended to make model stress visible rather than hidden.
+
+1. **Post-normalization linearity in quiet periods.** During a prespecified quiet window, the working model assumes that curvature in observed cumulative hazard is primarily driven by depletion under heterogeneity. After inversion, the depletion-neutralized cumulative hazard $\tilde H_{0,d}(t)$ should be approximately linear in event time over the same quiet window. Systematic residual curvature (e.g., sustained concavity/convexity) indicates that the quiet-window assumption is violated (external shocks, secular trends) or that the depletion geometry is misspecified for that cohort.
+
+2. **Fit residual structure in cumulative-hazard space.** Define residuals $r_{d}(t)=H_d^{\mathrm{obs}}(t)-H_{d}^{\mathrm{model}}(t;\hat k_d,\hat\theta_d)$ over the fit set $\mathcal{T}_d$. KCOR expects residuals to be small and not systematically time-structured. Strongly patterned residuals indicate that the curvature attributed to depletion is instead being driven by unmodeled time-varying hazards.
+
+3. **Parameter stability to window perturbations.** Under valid quiet-window selection, $(\hat k_d,\hat\theta_d)$ should be stable to small perturbations of the quiet-window boundaries (e.g., ±4 weeks). Large changes in $\hat\theta_d$ under small boundary shifts signal that the fitted curvature is sensitive to transient dynamics rather than stable depletion.
+
+4. **Non-identifiability manifests as $\hat\theta\rightarrow 0$.** When the observed cumulative hazard is near-linear (weak curvature) or events are sparse, $\theta$ is weakly identified. In such cases, KCOR should be interpreted primarily as a diagnostic (limited evidence of detectable depletion curvature) rather than a strong correction.
+
+These diagnostics are reported alongside KCOR curves. Importantly, the goal is not to assert that a single parametric form is always correct, but to ensure that when the form is incorrect or the window is contaminated, the method signals this explicitly rather than silently producing a misleading 'corrected' estimate.
+
 ### 2.7 Stabilization (early weeks)
 
 In many applications, the first few post-enrollment intervals can be unstable due to immediate post-enrollment artifacts (e.g., rapid deferral, short-term sorting, administrative effects). KCOR supports a prespecified stabilization rule by excluding early weeks from accumulation and from quiet-window fitting. The skip-weeks parameter is prespecified and evaluated via sensitivity analysis to exclude early enrollment instability rather than to tune estimates.
@@ -386,7 +416,7 @@ Across examined age strata in the Czech Republic mortality dataset, fitted frail
 
 As a consequence, KCOR normalization leaves some cohorts' cumulative hazards nearly unchanged, while substantially increasing the depletion-neutralized cumulative hazard for others. This behavior is consistent with curvature-driven normalization rather than cohort identity. This pattern is visible directly in adjusted versus unadjusted cumulative hazard plots and is summarized quantitatively in the fitted-parameter logs (see `KCOR_summary.log`).
 
-After frailty normalization, the adjusted cumulative hazards $\tilde H_{0,d}(t)$ are approximately linear in event time. Residual deviations from linearity reflect real time-varying risk—such as seasonality or epidemic waves—rather than selection-induced depletion. This linearization serves as an internal diagnostic indicating that frailty-driven curvature has been effectively removed.
+After frailty normalization, the adjusted cumulative hazards $\tilde H_{0,d}(t)$ are approximately linear in event time. Residual deviations from linearity reflect real time-varying risk—such as seasonality or epidemic waves—rather than selection-induced depletion. This linearization is a diagnostic consistent with successful removal of depletion-driven curvature under the working model; persistent nonlinearity or parameter instability indicates model stress or quiet-window contamination.
 
 ### 3.1 Negative controls: null under selection-induced curvature
 
@@ -493,11 +523,21 @@ Across all tested parameter ranges, KCOR values remained within approximately ±
 
 ### 3.4 Simulation grid: operating characteristics and failure-mode diagnostics
 
-We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, and sparse events. Code to reproduce all simulations and figures is included in the repository. *Near-flat* is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients. See Figures @fig:sim_grid_overview and @fig:sim_grid_diagnostics below.
+We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, sparse events, and **tail-sampling / bimodal selection** (cohorts drawn from different parts of the same underlying frailty distribution, e.g., vaccinated sampled from mid-quantiles; unvaccinated from low+high tails, producing non-gamma mixture geometry at the cohort level). Code to reproduce all simulations and figures is included in the repository. *Near-flat* is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients. See Figures @fig:sim_grid_overview and @fig:sim_grid_diagnostics below.
+
+The tail-sampling scenario is included because it can confound frailty-driven depletion with cohort construction in ways not captured by a single gamma frailty distribution. The goal is not to force KCOR to 'succeed' under arbitrary misspecification, but to quantify operating characteristics: when the gamma depletion model is misspecified, KCOR should either (i) remain approximately unbiased in later windows (if the misspecification is mild in cumulative-hazard geometry), or (ii) visibly degrade via its diagnostics (poor $H$-space fit, post-normalization nonlinearity, parameter instability), flagging that depletion-neutralization is unreliable without model generalization.
 
 ![Simulation grid overview: KCOR(t) trajectories across prespecified scenarios, including gamma-frailty null with strong selection, injected hazard increase and decrease, non-gamma frailty, quiet-window contamination, and sparse-event regimes. Under true null, KCOR remains near-flat at 1; injected effects are detected in the expected direction; adverse regimes are accompanied by degraded diagnostics and reduced interpretability.](figures/fig_sim_grid_overview.png){#fig:sim_grid_overview}
 
 ![Simulation diagnostics across scenarios: (i) cumulative-hazard fit RMSE over the quiet window, (ii) fitted frailty variance estimates, and (iii) a post-normalization linearity metric for normalized cumulative hazards. Diagnostics identify regimes in which frailty normalization is well identified versus weakly identified.](figures/fig_sim_grid_diagnostics.png){#fig:sim_grid_diagnostics}
+
+### 3.5 Dynamic HVE diagnostic tests
+
+Dynamic HVE refers to transient hazard suppression immediately after enrollment driven by short-horizon selection around intervention timing (e.g., deferral during illness). It produces a characteristic early-time pattern: an abrupt early reduction in observed hazard that decays over several weeks and is not explained by stable depletion curvature.
+
+**Empirical signature in multi-dose settings (diagnostic, not proof).** When multiple 'treatment intensities' exist (e.g., dose-2 and dose-3 cohorts defined at enrollment), dynamic HVE should affect adjacent-dose cohorts similarly at early times because both enrollments are subject to the same short-horizon deferral mechanisms. Therefore, if early post-enrollment curvature is dominated by dynamic HVE, then early-time deviations in KCOR(t) versus the same comparator should show similar transient shapes across adjacent-dose cohorts. Conversely, if early-time behavior differs substantially across adjacent-dose cohorts while post-normalization quiet-window linearity holds, it is less consistent with a single shared dynamic deferral artifact.
+
+**Simulation check.** We include simulations where a transient early hazard suppression is injected around enrollment (multiplying hazard by factor $q<1$ for weeks 0–S), separately from gamma frailty depletion, and confirm that (i) the effect is attenuated/removed by prespecified skip weeks, and (ii) remaining KCOR trajectories in later windows behave as expected under negative and positive controls.
 
 ---
 
@@ -515,6 +555,8 @@ Under the working assumptions that:
 then the remaining differences between cohorts are interpretable, **conditional on the stated selection model and quiet-window validity**, as differences in baseline hazard level (on a cumulative scale), summarized by KCOR$(t)$.
 
 The observation that frailty correction is negligible for vaccinated cohorts but substantial for the unvaccinated cohort is not incidental. It reflects the asymmetric action of healthy-vaccinee selection, which concentrates lower-frailty individuals into vaccinated cohorts at enrollment while leaving the unvaccinated cohort heterogeneous. KCOR explicitly detects and removes this asymmetry by mapping cohorts into a depletion-neutralized comparison space rather than assuming proportional hazards.
+
+Because the normalization targets selection-induced depletion curvature, KCOR results alone do not justify claims about net lives saved or lost by a particular intervention. Such claims require (i) clearly specified causal estimands, (ii) validated control outcomes, (iii) sensitivity analyses for remaining time-varying selection mechanisms and external shocks, and (iv) preferably replication across settings and outcomes. Accordingly, this manuscript focuses on method definition, diagnostics, and operating characteristics; applied causal conclusions are deferred to separate intervention-specific analyses.
 
 ### 4.2 Relationship to negative control methods
 
@@ -572,6 +614,10 @@ KCOR analyses commonly exclude an initial post-enrollment window to avoid dynami
 In degenerate scenarios where an intervention induces a purely proportional level-shift in hazard that remains constant over time and does not alter depletion-driven curvature, KCOR's curvature-based contrast may have limited ability to distinguish such effects from residual baseline level differences under minimal-data constraints. Such cases are pathological in the sense that they produce no detectable depletion signature; in practice, KCOR diagnostics and control tests help identify when curvature-based inference is not informative.
 
 Simulation results in §3.4 illustrate that when key assumptions are violated—such as non-gamma frailty geometry, contamination of the quiet window by external shocks, or extreme event sparsity—frailty normalization may become weakly identified. In such regimes, KCOR's diagnostics, including poor cumulative-hazard fit and reduced post-normalization linearity, explicitly signal that curvature-based inference is unreliable without model generalization or revised window selection.
+
+### 5.3 Data requirements and external validation
+
+**External validation across interventions.** A natural next step is to apply KCOR to other vaccines and interventions where large-scale individual-level event timing data are available. Many RCTs are underpowered for all-cause mortality and typically do not provide record-level timing needed for KCOR-style hazard-space normalization, while large observational studies often publish only aggregated effect estimates. Where sufficiently detailed time-to-event data exist (registries, integrated health systems, or open individual-level datasets), cross-intervention comparisons can help characterize how often selection-induced depletion dominates observed hazard curvature and how frequently post-normalization trajectories remain stable under negative controls.
 
 ---
 
@@ -760,6 +806,24 @@ The sensitivity analysis (Figure @fig:sensitivity_overview) varies:
 - **Cohorts**: 2021_24
 
 Output grids show KCOR values for each parameter combination.
+
+#### B.5 Tail-sampling / bimodal selection (adversarial selection geometry)
+
+We generate a base frailty population distribution with mean 1. Cohort construction differs by selection rule:
+
+- **Mid-sampled cohort**: frailty restricted to central quantiles (e.g., 25th–75th percentile) and renormalized to mean 1.
+- **Tail-sampled cohort**: mixture of low and high tails (e.g., 0–15th and 85th–100th percentiles) with mixture weights chosen to yield mean 1.
+
+Both cohorts share the same baseline hazard $h_0(t)$ and no treatment effect (negative-control version). We also generate positive-control versions by applying a known hazard multiplier in a prespecified window. We evaluate (i) KCOR drift, (ii) quiet-window fit RMSE, (iii) post-normalization linearity, and (iv) parameter stability under window perturbation.
+
+- **Generation script**: `test/sim_grid/code/generate_tail_sampling_sim.py`
+- **Base frailty distribution**: Log-normal with mean 1, variance 0.5
+- **Mid-quantile cohort**: 25th–75th percentile
+- **Tail-mixture cohort**: [0–15th] + [85th–100th] percentiles, equal weights
+- **Baseline hazard**: 0.002 per week (constant)
+- **Positive-control hazard multiplier**: $r = 1.2$ (harm) or $r = 0.8$ (benefit)
+- **Effect window**: weeks 20–80
+- **Random seed**: 42
 
 ### Appendix C. Additional figures and diagnostics
 
