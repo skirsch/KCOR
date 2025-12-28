@@ -115,7 +115,7 @@ Journal abbreviations per Chemical Abstracts / PubMed conventions
 
 6. Terminology Conventions (LOCKED)
 6.1 Frailty-related terms
-Conceptual role	Approved term	Usage
+Conceptual role	| Approved term	| Usage
 Process	Frailty normalization	Section headers, algorithm steps
 Result	Depletion-neutralized	Adjective for hazards, KCOR
 Model	Gamma-frailty model / fit	Technical description only
