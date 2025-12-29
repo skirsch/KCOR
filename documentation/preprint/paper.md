@@ -589,13 +589,19 @@ Across all tested parameter ranges, KCOR values remained within approximately ±
 
 ### 3.4 Simulation grid: operating characteristics and failure-mode diagnostics
 
-We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, sparse events, and **tail-sampling / bimodal selection** (cohorts drawn from different parts of the same underlying frailty distribution, e.g., vaccinated sampled from mid-quantiles; unvaccinated from low+high tails, producing non-gamma mixture geometry at the cohort level). Code to reproduce all simulations and figures is included in the repository. *Near-flat* is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients. See Figures @fig:sim_grid_overview and @fig:sim_grid_diagnostics below.
+We further evaluate KCOR using a compact simulation grid designed to (i) confirm near-null behavior under selection-induced curvature, (ii) confirm detection of injected effects, and (iii) characterize failure modes and diagnostics under model misspecification and adverse data regimes. Each scenario generates cohort-level weekly counts in KCOR_CMR format. KCOR is then fit using the same prespecified quiet-window procedure as in the empirical analyses, and we report both KCOR(t) trajectories and diagnostic summaries, including cumulative-hazard fit error and post-normalization linearity. The scenarios isolate specific stresses, including non-gamma frailty, contamination of the quiet window by an external shock, sparse events, **joint frailty and treatment effects (S7)**, and **tail-sampling / bimodal selection** (cohorts drawn from different parts of the same underlying frailty distribution, e.g., vaccinated sampled from mid-quantiles; unvaccinated from low+high tails, producing non-gamma mixture geometry at the cohort level). Code to reproduce all simulations and figures is included in the repository. *Near-flat* is defined operationally as median KCOR(t) remaining within ±5% of unity over the diagnostic window (weeks 20–100), excluding early transients. See Figures @fig:sim_grid_overview and @fig:sim_grid_diagnostics below.
+
+To evaluate identifiability when both selection-induced depletion and a true treatment effect are present simultaneously, we introduce a joint frailty-plus-effect simulation (S7). Frailty parameters are estimated exclusively during a quiet window in which no treatment effect is present, after which a known hazard modification is introduced. Under this design, KCOR correctly remains near-null during the quiet window and deviates only during the effect window, demonstrating separation of selection-induced curvature from true treatment effects when their temporal supports do not overlap (Figure @fig:s7_overview). An overlap variant intentionally violates temporal separability to validate that diagnostics flag assumption violations (Figure @fig:s7_diagnostics; see Appendix B.6).
 
 The tail-sampling scenario is included because it can confound frailty-driven depletion with cohort construction in ways not captured by a single gamma frailty distribution. The goal is not to force KCOR to 'succeed' under arbitrary misspecification, but to quantify operating characteristics: when the gamma depletion model is misspecified, KCOR should either (i) remain approximately unbiased in later windows (if the misspecification is mild in cumulative-hazard geometry), or (ii) visibly degrade via its diagnostics (poor $H$-space fit, post-normalization nonlinearity, parameter instability), flagging that depletion-neutralization is unreliable without model generalization.
 
 ![Simulation grid overview: KCOR(t) trajectories across prespecified scenarios, including gamma-frailty null with strong selection, injected hazard increase and decrease, non-gamma frailty, quiet-window contamination, and sparse-event regimes. Under true null, KCOR remains near-flat at 1; injected effects are detected in the expected direction; adverse regimes are accompanied by degraded diagnostics and reduced interpretability.](figures/fig_sim_grid_overview.png){#fig:sim_grid_overview}
 
 ![Simulation diagnostics across scenarios: (i) cumulative-hazard fit RMSE over the quiet window, (ii) fitted frailty variance estimates, and (iii) a post-normalization linearity metric for normalized cumulative hazards. Diagnostics identify regimes in which frailty normalization is well identified versus weakly identified.](figures/fig_sim_grid_diagnostics.png){#fig:sim_grid_diagnostics}
+
+![S7 simulation results: KCOR(t) trajectories demonstrating temporal separability. Left panel shows harm scenario (r=1.2) with effect window (weeks 10-25) and quiet window (weeks 80-140) non-overlapping. Middle panel shows benefit scenario (r=0.8). Right panel shows overlap variant where effect window intersects quiet window, demonstrating diagnostic degradation. KCOR remains approximately flat during the quiet window and deviates only during the effect window when temporal separability holds.](figures/fig_s7_overview.png){#fig:s7_overview}
+
+![S7 simulation diagnostics: Fitted frailty variance parameters (θ₀, θ₁), fit quality (RMSE), and convergence status across S7 scenarios. The overlap variant shows degraded fit quality, correctly signaling violation of temporal separability assumptions.](figures/fig_s7_diagnostics.png){#fig:s7_diagnostics}
 
 ### 3.5 Dynamic HVE diagnostic tests
 
@@ -918,6 +924,59 @@ Both cohorts share the same baseline hazard $h_0(t)$ and no treatment effect (ne
 - **Positive-control hazard multiplier**: $r = 1.2$ (harm) or $r = 0.8$ (benefit)
 - **Effect window**: weeks 20–80
 - **Random seed**: 42
+
+#### B.6 Joint frailty and treatment-effect simulation (S7)
+
+This simulation evaluates KCOR under conditions in which **both selection-induced depletion (frailty heterogeneity)** and a **true treatment effect (harm or benefit)** are present simultaneously. The purpose is to assess whether KCOR can (i) correctly identify and neutralize frailty-driven curvature using a quiet period and (ii) detect a true treatment effect outside that period without confounding the two mechanisms.
+
+##### Design
+
+Two fixed cohorts are generated with identical baseline hazards but differing frailty variance. Individual hazards are multiplicatively scaled by a latent frailty term drawn from a gamma distribution with unit mean and cohort-specific variance. A treatment effect is then injected over a prespecified time window that does not overlap the quiet period used for frailty estimation.
+
+Formally, individual hazards are generated as
+
+$$
+h_i(t) = z_i \cdot h_0(t) \cdot r(t),
+$$
+
+where $z_i$ is individual frailty, $h_0(t)$ is a shared baseline hazard, and $r(t)$ is a time-localized multiplicative treatment effect applied to one cohort only.
+
+##### Frailty structure
+
+* Cohort 0: $z \sim \text{Gamma}(\theta_0)$
+* Cohort 1: $z \sim \text{Gamma}(\theta_1)$, with $\theta_1 \neq \theta_0$
+
+Frailty distributions are normalized to unit mean, differing only in variance, thereby inducing different depletion dynamics and cumulative-hazard curvature across cohorts in the absence of any treatment effect.
+
+##### Treatment effect
+
+A known treatment effect is applied to Cohort 1 during a finite window $[t_{\text{on}}, t_{\text{off}}]$. Three effect shapes are considered:
+
+1. Step change (constant multiplicative factor),
+2. Linear ramp,
+3. Smooth pulse ("bump").
+
+Both harmful ($r(t) > 1$) and protective ($r(t) < 1$) effects are evaluated. The treatment window is chosen to lie strictly outside the quiet period used for frailty estimation.
+
+##### Quiet period and estimation
+
+Frailty parameters are estimated independently for each cohort using observed cumulative hazards over a prespecified quiet window $[t_q^{\text{start}}, t_q^{\text{end}}]$ during which $r(t)=1$ by construction. KCOR normalization is then applied to the full time horizon using these estimated parameters.
+
+This design enforces **temporal separability** between selection-induced depletion and treatment effects.
+
+##### Evaluation criteria
+
+The simulation is considered successful if:
+
+1. KCOR remains approximately flat and near unity during the quiet window,
+2. KCOR deviates in the correct direction and magnitude during the treatment window,
+3. Fit diagnostics (e.g., residual curvature, post-normalization linearity) remain stable outside intentionally violated scenarios.
+
+An additional stress-test variant intentionally overlaps the treatment window with the quiet period. In this case, KCOR diagnostics degrade and normalized trajectories fail to stabilize, correctly signaling violation of the identifiability assumptions rather than producing spurious treatment effects.
+
+##### Interpretation
+
+This simulation demonstrates that when selection-induced depletion and treatment effects are temporally separable, KCOR can disentangle the two mechanisms: frailty parameters are identified from quiet-period curvature, and true treatment effects manifest as deviations from unity outside that window. When separability is violated, KCOR does not silently misattribute effects; instead, diagnostics flag reduced interpretability.
 
 ### Appendix C. Additional figures and diagnostics
 

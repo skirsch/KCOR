@@ -34,9 +34,16 @@ SIM_DIAGNOSTICS := $(OUT_DIR)/sim_grid_diagnostics.csv
 FIG_OVERVIEW := $(OUT_DIR)/fig_sim_grid_overview.png
 FIG_DIAGNOSTICS := $(OUT_DIR)/fig_sim_grid_diagnostics.png
 
-.PHONY: all clean generate run figures copy-figures
+# S7 simulation files
+S7_DATA := $(DATA_DIR)/s7_data.xlsx
+S7_RESULTS := $(OUT_DIR)/s7_results.xlsx
+S7_DIAGNOSTICS := $(OUT_DIR)/s7_diagnostics.csv
+FIG_S7_OVERVIEW := $(OUT_DIR)/fig_s7_overview.png
+FIG_S7_DIAGNOSTICS := $(OUT_DIR)/fig_s7_diagnostics.png
 
-all: copy-figures
+.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures
+
+all: copy-figures copy-s7-figures
 
 # Generate simulation data and run KCOR fitting
 $(SIM_RESULTS) $(SIM_DIAGNOSTICS): $(CODE_DIR)/generate_sim_grid.py
@@ -61,6 +68,35 @@ copy-figures: $(FIG_OVERVIEW) $(FIG_DIAGNOSTICS)
 	cp $(FIG_DIAGNOSTICS) $(FIG_DIR)/fig_sim_grid_diagnostics.png
 	@echo "Copied figures to $(FIG_DIR)"
 
+# S7 simulation generation
+$(S7_RESULTS) $(S7_DIAGNOSTICS): $(CODE_DIR)/generate_s7_sim.py
+	@mkdir -p $(DATA_DIR) $(OUT_DIR)
+	$(PY) $(CODE_DIR)/generate_s7_sim.py \
+		--output-data $(S7_DATA) \
+		--output-results $(S7_RESULTS) \
+		--output-diagnostics $(S7_DIAGNOSTICS)
+
+# S7 figures
+$(FIG_S7_OVERVIEW) $(FIG_S7_DIAGNOSTICS): $(S7_RESULTS) $(S7_DIAGNOSTICS) $(CODE_DIR)/plot_s7_sim.py
+	$(PY) $(CODE_DIR)/plot_s7_sim.py \
+		--input-results $(S7_RESULTS) \
+		--input-diagnostics $(S7_DIAGNOSTICS) \
+		--output-overview $(FIG_S7_OVERVIEW) \
+		--output-diagnostics $(FIG_S7_DIAGNOSTICS)
+
+# Copy S7 figures
+copy-s7-figures: $(FIG_S7_OVERVIEW) $(FIG_S7_DIAGNOSTICS)
+	@mkdir -p $(FIG_DIR)
+	cp $(FIG_S7_OVERVIEW) $(FIG_DIR)/fig_s7_overview.png
+	cp $(FIG_S7_DIAGNOSTICS) $(FIG_DIR)/fig_s7_diagnostics.png
+	@echo "Copied S7 figures to $(FIG_DIR)"
+
+s7: $(S7_RESULTS)
+	@echo "Generated S7 simulation data and results"
+
+s7-figures: $(FIG_S7_OVERVIEW) $(FIG_S7_DIAGNOSTICS)
+	@echo "Generated S7 figures: $(FIG_S7_OVERVIEW) $(FIG_S7_DIAGNOSTICS)"
+
 generate: $(SIM_RESULTS)
 	@echo "Generated simulation data and results"
 
@@ -74,4 +110,6 @@ clean:
 	rm -f $(OUT_DIR)/*.png
 	rm -f $(FIG_DIR)/fig_sim_grid_overview.png
 	rm -f $(FIG_DIR)/fig_sim_grid_diagnostics.png
+	rm -f $(FIG_DIR)/fig_s7_overview.png
+	rm -f $(FIG_DIR)/fig_s7_diagnostics.png
 
