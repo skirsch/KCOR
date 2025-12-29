@@ -707,7 +707,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks MIT Professor Retsef Levi and HART group chair Dr. Clare Craig for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks HART group chair Dr. Clare Craig and Benjamin Jackson for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 
 ---
