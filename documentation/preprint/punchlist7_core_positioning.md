@@ -104,7 +104,7 @@ Add to **§3.4 Simulation grid**:
 
 #### Design
 
-* Two cohorts differ in frailty variance (θ₁ ≠ θ₀)
+* Two cohorts differ in frailty variance ($\theta_1 \neq \theta_0$)
 * A treatment effect (harm or benefit) is injected **outside the quiet window**
 * Fit θ during quiet window
 * Evaluate KCOR outside quiet window
