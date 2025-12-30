@@ -496,14 +496,14 @@ This section is the core validation claim of KCOR:
 
 | Age band (years) | $\hat{\theta}$ Dose 0 (median) | $\hat{\theta}$ Dose 2 (median) |
 | ---------------- | -----------------: | -----------------: |
-| 40–49            |               16.8 |           2.7×10⁻⁶ |
-| 50–59            |               18.1 |           8.8×10⁻⁶ |
-| 60–69            |               9.85 |           1.0×10⁻⁷ |
-| 70+              |              0.964 |          5.7×10⁻¹² |
+| 40–49            |               16.79 |           $2.66 \times 10^{-6}$ |
+| 50–59            |               23.02 |           $1.87 \times 10^{-4}$ |
+| 60–69            |               13.13 |           $7.01 \times 10^{-18}$ |
+| 70+              |               1.89 |           $4.50 \times 10^{-16}$ |
 
-Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vaccination status for Czech cohorts enrolled in 2021_13. {#tbl:frailty_diagnostics}
+Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vaccination status for Czech cohorts enrolled in 2021_24. {#tbl:frailty_diagnostics}
 
-$\hat{\theta}$ quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts. Values are summarized as medians across enrollment subcohorts within 2021_13.
+$\hat{\theta}$ quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts. Values are summarized as medians across enrollment subcohorts within 2021_24.
 
 As shown in Table 2, unvaccinated cohorts exhibit substantial frailty heterogeneity ($\hat{\theta} > 0$), while Dose 2 cohorts show near-zero estimated frailty ($\hat{\theta} \approx 0$) across all age bands, consistent with strong selective uptake prior to follow-up. Frailty variance is largest at younger ages, where low baseline mortality amplifies the impact of heterogeneity on cumulative hazard curvature, and declines at older ages where mortality is compressed and survivors are more homogeneous. No diagnostic reversals or instabilities are observed.
 
@@ -754,7 +754,7 @@ In practice, prespecified negative controls—such as the age-shift controls pre
 
 Because KCOR compares fixed enrollment cohorts, subsequent uptake of the intervention among initially unexposed individuals (or additional dosing among exposed cohorts) introduces treatment crossover over time. Such crossover attenuates between-cohort contrasts and biases KCOR(t) toward unity, making the estimator conservative with respect to detecting sustained net benefit or harm. Analyses should therefore restrict follow-up to periods before substantial crossover or stratify by dosing state when the data permit.
 
-Because KCOR defines explicit diagnostic failure modes—instability, dose reversals, age incoherence, or absence of asymptotic convergence—the absence of such failures in the Czech 2021_13 Dose 0 versus Dose 2 cohorts provides stronger validation than goodness-of-fit alone.
+Because KCOR defines explicit diagnostic failure modes—instability, dose reversals, age incoherence, or absence of asymptotic convergence—the absence of such failures in the Czech 2021_24 Dose 0 versus Dose 2 cohorts provides stronger validation than goodness-of-fit alone.
 
 **Conservativeness under overlap.**  
 When treatment effects overlap temporally with the quiet window used for frailty estimation, KCOR does not attribute the resulting curvature to treatment nor amplify it into a spurious cumulative effect. Instead, overlap manifests as degraded quiet-window fit, reduced post-normalization linearity, and instability of estimated frailty parameters, all of which are explicitly surfaced by KCOR's diagnostics. In these regimes, KCOR trajectories tend to attenuate toward unity rather than diverge, reflecting loss of identifiability rather than false detection. This behavior is illustrated in the S7 overlap variant, where treatment and selection are deliberately confounded in time: KCOR does not recover a clean effect signal, and diagnostic criteria correctly indicate that the assumptions required for interpretable normalization are violated. As a result, KCOR is conservative under temporal overlap—preferring diagnostic failure and attenuation over over-interpretation—rather than producing misleading treatment effects when separability is not supported by the data. This design choice reflects an intentional bias toward false negatives rather than false positives in ambiguous regimes. See §2.1.1 and Simulation S7 (Appendix B.6) for the corresponding identifiability assumptions and stress tests.
