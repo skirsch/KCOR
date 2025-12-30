@@ -295,7 +295,7 @@ Gamma frailty is used not as a claim of biological truth, but as a mathematicall
 
 Frailty $z_{i,d}$ captures latent heterogeneity in baseline risk and drives selective depletion: higher-frailty individuals die earlier, changing the cohort composition over time and inducing curvature in $h_d^{\mathrm{obs}}(t)$ even when $h_{0,d}(t)$ is simple.
 
-**Interpretation of frailty in this work.** Here "frailty" denotes unobserved, time-invariant multiplicative heterogeneity in baseline mortality risk at cohort entry. It is not interpreted as a specific biological attribute and is not treated as a causal mediator of vaccination. Rather, it is a statistical construct capturing latent heterogeneity that produces selective depletion over time and induces curvature in cohort-level hazards and cumulative hazards. KCOR uses frailty as a geometric device to model and remove selection-induced curvature prior to cohort comparison.
+**Interpretation of frailty in this work.** Here "frailty" denotes unobserved, time-invariant multiplicative heterogeneity in baseline mortality risk at cohort entry. It is not interpreted as a specific biological attribute and is not treated as a causal mediator of vaccination. Rather, it is a statistical construct capturing latent heterogeneity that produces selective depletion over time and induces curvature in cohort-level hazards and cumulative hazards. KCOR uses frailty as a geometric device to model and remove selection-induced curvature prior to cohort comparison. Frailty in KCOR is not interpreted as a causal variable or mediator of the intervention; it is a statistical construct used to model and remove selection-induced depletion geometry prior to cohort comparison.
 
 #### 2.4.2 Gamma-frailty identity (core mathematics)
 
@@ -684,7 +684,9 @@ These limitations are intrinsic to the data constraints KCOR is designed to oper
 
 ### 4.1 What KCOR estimates
 
-KCOR operates at a specific but critical layer of the retrospective inference stack: it both neutralizes selection-induced depletion dynamics and defines how the resulting depletion-neutralized hazards must be compared. The method's strength is not the frailty inversion in isolation, but the fact that inversion, diagnostics, and cumulative comparison are mathematically and operationally coupled. Once cohorts are mapped into depletion-neutralized hazard space, KCOR$(t)$ directly answers whether one cohort experienced higher or lower cumulative event risk than another over follow-up, conditional on the stated assumptions. Interpreting normalized hazards without this comparison step discards the central inferential content of the method. Like all causal methods, KCOR relies on identifiable structure; its contribution is to make that structure explicit, testable, and diagnostically enforced rather than implicit.
+KCOR operates at a specific but critical layer of the retrospective inference stack: it both neutralizes selection-induced depletion dynamics and defines how the resulting depletion-neutralized hazards must be compared. The method's strength is not the frailty inversion in isolation, but the fact that inversion, diagnostics, and cumulative comparison are mathematically and operationally coupled. Once cohorts are mapped into depletion-neutralized hazard space, KCOR$(t)$ directly answers whether one cohort experienced higher or lower cumulative event risk than another over follow-up, conditional on the stated assumptions. Interpreting normalized hazards without this comparison step discards the central inferential content of the method. Like all causal methods, KCOR relies on identifiable structure; its contribution is to make that structure explicit, testable, and diagnostically enforced rather than implicit. Accordingly, KCOR should not be interpreted as a standalone estimator of vaccine efficacy; it is a cumulative normalization-and-comparison framework whose causal interpretation depends on additional design assumptions, controls, and diagnostics.
+
+As emphasized above, the frailty term is not causal and does not represent a treatment mechanism; it functions solely as a geometric normalization for selection-induced depletion.
 
 KCOR is a **cumulative** comparison of depletion-neutralized cumulative hazards; it does not estimate instantaneous hazard ratios. It is designed for settings where selection induces non-proportional hazards such that conventional proportional-hazards estimators can be difficult to interpret. We did not pursue model selection among Cox-based specifications (with or without frailty) because these models target instantaneous hazard ratios under proportional-hazards assumptions, whereas KCOR targets cumulative, depletion-neutralized outcomes; BIC comparisons across models with different estimands are therefore not informative for the question addressed here.
 
@@ -816,7 +818,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks HART group chair Dr. Clare Craig and Benjamin Jackson for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks HART group chair Dr. Clare Craig for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 
 ---
