@@ -223,7 +223,7 @@ The assumptions in §2.1.1 specify the conditions under which KCOR is a valid an
 5. **Diagnostic coherence.**
    Fitted frailty parameters and residual diagnostics are stable under reasonable perturbations of skip weeks and quiet-window boundaries.
 
-Failure of any interpretability check limits the scope of inference but does not invalidate the KCOR estimator itself. Formal diagnostics underlying these checks, including frailty-parameter coherence and stability, are detailed in Appendix D.
+Failure of any interpretability check narrows what can be inferred, but does not invalidate the KCOR estimator itself. Formal diagnostics underlying these checks, including frailty-parameter coherence and stability, are detailed in Appendix D.
 
 #### 2.1.2a Multiplicity and ensemble interpretation
 
@@ -979,7 +979,7 @@ $$
 H^{\mathrm{obs}}(t) = \frac{1}{\theta}\log\left(1 + \theta H_0(t)\right).
 $$
 
-This is the gamma-frailty identity (Equation @eq:gamma-frailty-identity in the main text).
+This is the gamma-frailty identity (see Equation @eq:gamma-frailty-identity in the main text).
 
 #### A.3 Inversion formula
 
@@ -1163,7 +1163,7 @@ For each cohort $d$, the gamma-frailty fit produces diagnostic outputs including
 Example diagnostic output from the reference implementation:
 
 ```
-KCOR6_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,
+KCOR_FIT,EnrollmentDate=2021_24,YoB=1950,Dose=0,
   k_hat=4.29e-03,theta_hat=8.02e-01,
   RMSE_Hobs=3.37e-03,n_obs=97,success=1
 ```

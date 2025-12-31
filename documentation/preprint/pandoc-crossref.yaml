@@ -5,8 +5,11 @@ figPrefix: ""
 tblPrefix: ""
 figureTemplate: "$$i$$"
 tableTemplate: "$$i$$"
+figPrefixTemplate: "$$i$$"
+tblPrefixTemplate: "$$i$$"
 eqnPrefix: ""
 eqnTemplate: "($$i$$)"
+eqnPrefixTemplate: "($$i$$)"
 lofTitle: "List of Figures"
 lotTitle: "List of Tables"
 lolTitle: "List of Listings"
@@ -14,5 +17,5 @@ chapters: false
 numberSections: false
 chapDelim: "."
 rangeDelim: "–"
-titleDelim: " "
+titleDelim: ""
 ...
