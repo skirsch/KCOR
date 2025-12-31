@@ -564,13 +564,13 @@ These results demonstrate that **frailty heterogeneity alone is sufficient to in
 
 Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect; cohorts differ only in gamma frailty variance ($\theta$). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as $\theta$ increases, reflecting depletion-induced non-proportional hazards. KCOR remains centered near unity with negligible post-normalization slope across $\theta$ values. (Exact values depend on simulation seed and follow-up horizon.) {#tbl:cox_bias_demo}
 
-![Cox regression produces spurious non-null hazard ratios under a synthetic null as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in frailty variance ($\theta$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
+![Cox regression produces spurious non-null hazard ratios under a *synthetic null* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in frailty variance ($\theta$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
 
 ![KCOR remains null under a synthetic null across increasing frailty heterogeneity. KCOR asymptotes remain near 1 across $\theta$ in the same simulations, consistent with correct null behavior after depletion normalization.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
 
 **Interpretation.**
 
-This demonstration shows that Cox proportional hazards regression can report statistically significant hazard ratios **even when the true causal effect is identically zero**, solely due to selection-induced depletion arising from frailty heterogeneity. KCOR, by explicitly normalizing depletion geometry in cumulative-hazard space, correctly returns a null result under the same conditions. This controlled example motivates the use of KCOR for retrospective vaccine studies, where frailty heterogeneity and non-proportional hazards are expected to be substantial.
+This demonstration shows that Cox proportional hazards regression can report highly statistically significant non-null hazard ratios—even when the true treatment effect is identically zero—solely due to frailty-induced depletion (e.g., $p < 10^{-300}$ at $\theta=20$), with the magnitude and direction of the apparent effect depending on follow-up horizon, not any causal signal. KCOR, by explicitly normalizing depletion geometry in cumulative-hazard space, correctly returns a null result under the same conditions, remaining centered near unity with negligible post-normalization slope across all frailty variance values. This controlled example motivates the use of KCOR for retrospective vaccine studies, where frailty heterogeneity and non-proportional hazards are expected to be substantial.
 
 ## 3. Validation and control tests
 
@@ -578,6 +578,8 @@ This section is the core validation claim of KCOR:
 
 - **Negative controls (null under selection):** under a true null effect, KCOR remains approximately flat at 1 even when selection induces large curvature differences.
 - **Positive controls (detect injected effects):** when known harm/benefit is injected into otherwise-null data, KCOR reliably detects it.
+
+Throughout, curvature in cumulative hazard plots reflects selection-induced depletion, while linearity after normalization indicates successful removal of that curvature.
 
 | Age band (years) | $\hat{\theta}$ Dose 0 | $\hat{\theta}$ Dose 2 |
 | ---------------- | -----------------: | -----------------: |
@@ -800,7 +802,7 @@ then the remaining differences between cohorts are interpretable, **conditional 
 
 The observation that frailty correction is negligible for vaccinated cohorts but substantial for the unvaccinated cohort is not incidental. It reflects the asymmetric action of healthy-vaccinee selection, which concentrates lower-frailty individuals into vaccinated cohorts at enrollment while leaving the unvaccinated cohort heterogeneous. KCOR explicitly detects and removes this asymmetry by mapping cohorts into a depletion-neutralized comparison space rather than assuming proportional hazards.
 
-Because the normalization targets selection-induced depletion curvature, KCOR results alone do not justify claims about net lives saved or lost by a particular intervention. Such claims require (i) clearly specified causal estimands, (ii) validated control outcomes, (iii) sensitivity analyses for remaining time-varying selection mechanisms and external shocks, and (iv) preferably replication across settings and outcomes. Accordingly, this manuscript focuses on method definition, diagnostics, and operating characteristics; applied causal conclusions are deferred to separate intervention-specific analyses.
+Because the normalization targets selection-induced depletion curvature, KCOR results alone do not justify claims about net lives saved or lost by a particular intervention. Such claims require (i) clearly specified causal estimands, (ii) validated control outcomes, (iii) sensitivity analyses for remaining time-varying selection mechanisms and external shocks, and (iv) preferably replication across settings and outcomes. Having established the behavior of KCOR and the failure modes of standard estimators under controlled conditions, we apply KCOR to complete national registry data from the Czech Republic in a companion analysis. Accordingly, this manuscript focuses on method definition, diagnostics, and operating characteristics; applied causal conclusions are deferred to separate intervention-specific analyses.
 
 Although cumulative hazards and survival functions are in one-to-one correspondence, KCOR operates in cumulative-hazard space because curvature induced by frailty depletion is additive and more readily diagnosed there. While survival-based summaries such as restricted mean survival time may be derived from normalized hazards, KCOR's primary estimand remains cumulative by construction.
 
