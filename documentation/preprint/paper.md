@@ -16,10 +16,10 @@ KCOR v6 update:
 
 - **Article type**: Methods / Statistical method
 - **Running title**: KCOR via gamma-frailty normalization
-- **Authors**: Steven T. Kirsch
+- **Author**: Steven T. Kirsch
 - **Affiliations**: Independent Researcher, United States
 - **Corresponding author**: stk@alum.mit.edu
-- **Word count**: 5,770
+- **Word count**: 12,100 (excluding Abstract, References, and Supplementary material)
 - **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference; observational studies; mortality curvature
 
 ---
@@ -236,6 +236,10 @@ The assumptions in §2.1.1 specify the conditions under which KCOR is a valid an
 
 Failure of any interpretability check limits the scope of inference but does not invalidate the KCOR estimator itself. Formal diagnostics underlying these checks, including frailty-parameter coherence and stability, are detailed in Appendix D.
 
+#### 2.1.2a Multiplicity and ensemble interpretation
+
+KCOR is not intended as a mass univariate hypothesis-testing framework. When applied across multiple age strata, enrollment periods, or dose comparisons, resulting KCOR trajectories should be interpreted as correlated views of a shared underlying process rather than as independent statistical tests. Accordingly, inference emphasizes diagnostic coherence, temporal stability, and consistency of cumulative-outcome patterns across strata, rather than reliance on nominal significance thresholds or formal multiple-comparison corrections.
+
 #### 2.1.3 Identifiability and scope of inference
 
 Identifiability in the KCOR framework concerns whether cumulative outcome differences can be meaningfully interpreted after explicit normalization of selection-induced depletion. KCOR does not seek to decompose selection and treatment effects into separate causal components; instead, it tests whether observed cumulative outcomes depart from the null hypothesis of no net harm or benefit under shared external hazards and diagnosed frailty structure. When diagnostic and interpretability conditions are satisfied, persistent departures of KCOR(t) from unity reflect differences in cumulative outcomes that cannot be attributed to selection alone. When those conditions are not met, KCOR explicitly signals loss of identifiability rather than producing misleading estimates.
@@ -303,6 +307,10 @@ H_d^{\mathrm{obs}}(t) = \sum_{s \le t} h_d^{\mathrm{eff}}(s)\,\Delta t,
 \qquad \Delta t = 1 \text{ (one time bin)}.
 $$
 {#eq:cumhazard-observed}
+
+#### 2.3.1 Discrete time and tied events
+
+KCOR is formulated in discrete time using aggregated event counts and therefore naturally accommodates tied event times. For population registry data, weekly or similarly coarse time bins are generally appropriate and reduce noise without sacrificing identifiability. Finer binning does not improve depletion normalization and may destabilize frailty estimation when event counts per bin are small. Bin width should be guided by diagnostic stability rather than temporal resolution alone.
 
 ### 2.4 Selection model: gamma frailty and the cumulative-hazard identity
 
@@ -439,7 +447,11 @@ Normalization is necessary but not sufficient. The depletion-neutralized cumulat
 
 In KCOR, the parametric model is used solely to estimate and invert selection-induced curvature in cumulative-hazard space; treatment comparisons are then made directly on the adjusted data. In contrast, Cox regression fits a hazard model to the observed data and derives treatment effects from model coefficients, implicitly attributing all systematic hazard divergence—including selection effects—to the exposure.
 
-#### 2.6.1 Internal diagnostics and 'self-check' behavior
+#### 2.6.1 Computational considerations
+
+KCOR operates on aggregated event counts in discrete time and cumulative-hazard space. Computational complexity scales linearly with the number of time bins and strata rather than the number of individuals, making the method feasible for very large population registries. In practice, KCOR analyses on national-scale datasets (millions of individuals) are memory-bound rather than CPU-bound and can be implemented efficiently using standard vectorized numerical libraries. No iterative optimization over individual-level records is required.
+
+#### 2.6.2 Internal diagnostics and 'self-check' behavior
 
 KCOR includes internal diagnostics intended to make model stress visible rather than hidden.
 
@@ -537,7 +549,7 @@ For each simulated dataset, we fitted a standard Cox proportional hazards model 
 
 **KCOR analysis.**
 
-The same simulated datasets were analyzed using KCOR. Frailty parameters were estimated during a prespecified quiet window, followed by cumulative-hazard normalization and computation of KCOR(t). Post-normalization slope and asymptotic KCOR values were examined to assess departure from the null.
+The same simulated datasets were analyzed using KCOR. For the synthetic datasets, cohort-specific observed cumulative hazards $\hat H(t)$ were estimated nonparametrically using the Nelson–Aalen estimator, then mapped to depletion-neutralized baseline cumulative hazards via the gamma-frailty inversion prior to computing KCOR(t). Although the data-generating process specifies individual hazards, cumulative hazards were estimated from simulated event-time data using Nelson–Aalen to mirror the information available to analysts in observational registry studies, rather than exploiting simulator-only knowledge. Frailty parameters were estimated during a prespecified quiet window, followed by cumulative-hazard normalization and computation of KCOR(t). Post-normalization slope and asymptotic KCOR values were examined to assess departure from the null.
 
 **Expected behavior under the null.**
 
@@ -571,6 +583,10 @@ Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity.
 **Interpretation.**
 
 This demonstration shows that Cox proportional hazards regression can report highly statistically significant non-null hazard ratios—even when the true treatment effect is identically zero—solely due to frailty-induced depletion (e.g., $p < 10^{-300}$ at $\theta=20$), with the magnitude and direction of the apparent effect depending on follow-up horizon, not any causal signal. KCOR, by explicitly normalizing depletion geometry in cumulative-hazard space, correctly returns a null result under the same conditions, remaining centered near unity with negligible post-normalization slope across all frailty variance values. This controlled example motivates the use of KCOR for retrospective vaccine studies, where frailty heterogeneity and non-proportional hazards are expected to be substantial.
+
+#### 2.11.2 Relation to other approaches addressing selection effects
+
+Several existing approaches, including inverse-probability weighting, marginal structural models, and joint frailty formulations, aim to mitigate selection bias in observational survival analyses. These methods rely on explicit modeling of treatment assignment or hazard structure and generally operate in instantaneous-hazard space. KCOR differs in focusing directly on depletion geometry in cumulative-hazard space and enforcing diagnostic checks that signal loss of identifiability when normalization fails. A full comparison is beyond scope; the synthetic null demonstration illustrates the specific failure mode KCOR is designed to address.
 
 ## 3. Validation and control tests
 
@@ -825,6 +841,10 @@ Recommended reporting includes:
 - Sensitivity analysis plan and results
 
 KCOR should therefore be applied and reported as a complete pipeline—from cohort freezing, through depletion normalization, to cumulative comparison and diagnostics—rather than as a standalone adjustment step.
+
+### 4.4 Extension to other outcomes
+
+Although this paper focuses on all-cause mortality, KCOR is applicable to other irreversible outcomes provided that event timing and risk sets are well defined. Application to cause-specific mortality requires careful consideration of competing risks and interpretation of cumulative hazards within cause-restricted populations. Extension to non-fatal outcomes such as hospitalization is conceptually straightforward but may require additional attention to outcome definitions, censoring mechanisms, and recurrent events. These considerations affect interpretation rather than the core KCOR framework.
 
 ---
 
@@ -1280,7 +1300,15 @@ Several diagnostics operate across assumptions A4 and A5, including stabilizatio
 
 ---
 
-#### D.7 Summary: Diagnostic enforcement rather than assumption inflation
+#### D.7 Identifiability under sparse data
+
+KCOR does not require large sample sizes by assumption; however, reliable estimation of frailty parameters and depletion-neutralized cumulative hazards requires sufficient event information within the identification window. When event counts are very small, frailty estimates may become unstable, resulting in noisy normalization, non-linear baseline cumulative hazards, or drifting KCOR trajectories.
+
+Importantly, such failures are diagnosable: sparse-data regimes are characterized by instability of estimated frailty parameters under small perturbations of the quiet window, loss of post-normalization linearity, and non-stabilizing KCOR(t). In these cases, KCOR signals loss of identifiability rather than producing spurious effects. Applicability should therefore be assessed via diagnostic stability rather than nominal sample size thresholds.
+
+---
+
+#### D.8 Summary: Diagnostic enforcement rather than assumption inflation
 
 KCOR relies on exactly five assumptions (A1–A5), stated exhaustively in §2.1.1. This appendix demonstrates that each assumption has **explicit, observable diagnostics** and **well-defined failure modes**. When assumptions are violated, KCOR signals reduced interpretability through instability, poor fit, or residual structure rather than producing misleading cumulative contrasts. This diagnostic enforcement is a core design feature of the KCOR framework.
 
