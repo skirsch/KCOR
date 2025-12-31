@@ -41,9 +41,14 @@ S7_DIAGNOSTICS := $(OUT_DIR)/s7_diagnostics.csv
 FIG_S7_OVERVIEW := $(OUT_DIR)/fig_s7_overview.png
 FIG_S7_DIAGNOSTICS := $(OUT_DIR)/fig_s7_diagnostics.png
 
-.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures
+# Cox bias demonstration files
+COX_BIAS_RESULTS := $(OUT_DIR)/cox_bias_results.csv
+FIG_COX_BIAS_HR := $(OUT_DIR)/fig_cox_bias_hr_vs_theta.png
+FIG_COX_BIAS_KCOR := $(OUT_DIR)/fig_cox_bias_kcor_vs_theta.png
 
-all: copy-figures copy-s7-figures
+.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures cox-bias cox-bias-figures copy-cox-bias-figures
+
+all: copy-figures copy-s7-figures copy-cox-bias-figures
 
 # Generate simulation data and run KCOR fitting
 $(SIM_RESULTS) $(SIM_DIAGNOSTICS): $(CODE_DIR)/generate_sim_grid.py
@@ -97,6 +102,32 @@ s7: $(S7_RESULTS)
 s7-figures: $(FIG_S7_OVERVIEW) $(FIG_S7_DIAGNOSTICS)
 	@echo "Generated S7 figures: $(FIG_S7_OVERVIEW) $(FIG_S7_DIAGNOSTICS)"
 
+# Cox bias simulation generation
+$(COX_BIAS_RESULTS): $(CODE_DIR)/generate_cox_bias_sim.py
+	@mkdir -p $(OUT_DIR)
+	$(PY) $(CODE_DIR)/generate_cox_bias_sim.py \
+		--output-results $(COX_BIAS_RESULTS)
+
+# Cox bias figures
+$(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR): $(COX_BIAS_RESULTS) $(CODE_DIR)/plot_cox_bias_sim.py
+	$(PY) $(CODE_DIR)/plot_cox_bias_sim.py \
+		--input-results $(COX_BIAS_RESULTS) \
+		--output-hr-figure $(FIG_COX_BIAS_HR) \
+		--output-kcor-figure $(FIG_COX_BIAS_KCOR)
+
+# Copy Cox bias figures
+copy-cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)
+	@mkdir -p $(FIG_DIR)
+	cp $(FIG_COX_BIAS_HR) $(FIG_DIR)/fig_cox_bias_hr_vs_theta.png
+	cp $(FIG_COX_BIAS_KCOR) $(FIG_DIR)/fig_cox_bias_kcor_vs_theta.png
+	@echo "Copied Cox bias figures to $(FIG_DIR)"
+
+cox-bias: $(COX_BIAS_RESULTS)
+	@echo "Generated Cox bias simulation results"
+
+cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)
+	@echo "Generated Cox bias figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)"
+
 generate: $(SIM_RESULTS)
 	@echo "Generated simulation data and results"
 
@@ -112,4 +143,6 @@ clean:
 	rm -f $(FIG_DIR)/fig_sim_grid_diagnostics.png
 	rm -f $(FIG_DIR)/fig_s7_overview.png
 	rm -f $(FIG_DIR)/fig_s7_diagnostics.png
+	rm -f $(FIG_DIR)/fig_cox_bias_hr_vs_theta.png
+	rm -f $(FIG_DIR)/fig_cox_bias_kcor_vs_theta.png
 
