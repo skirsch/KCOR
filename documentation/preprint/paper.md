@@ -510,6 +510,15 @@ Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vacci
 
 $\hat{\theta}$ quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts. Each entry reports a single fitted gamma-frailty variance $\hat{\theta}$ for the specified age band and vaccination status within the 2021_24 enrollment cohort. The "All ages (full population)" row corresponds to an independent fit over the full pooled age range. The "All ages (full population)" row is included as a global diagnostic; Table 3 reports raw outcome contrasts for ages 40+ (YOB ≤ 1980) where event counts are stable.
 
+Table 2 satisfies all pre-specified KCOR sanity checks:
+
+- **Dose ordering:** $\hat{\theta}$ is large and positive for Dose 0 and collapses toward zero for Dose 2 across all age strata, consistent with strong selective uptake.
+- **Magnitude separation:** Dose 2 estimates are effectively zero relative to Dose 0, indicating near-linear cumulative hazards rather than forced curvature.
+- **Age coherence:** $\hat{\theta}$ decreases at older ages as baseline mortality rises and survivor populations become more homogeneous; monotonicity is not imposed.
+- **Stability:** No sign reversals, boundary pathologies, or numerical instabilities are observed.
+- **Falsifiability:** Failure of any one of these checks would constitute evidence against model adequacy.
+- **Implication for raw contrasts:** Because Table 2 demonstrates substantial selection-induced heterogeneity, unadjusted cumulative outcome contrasts are expected to conflate depletion effects with any true treatment differences; Table 3 therefore reports raw cumulative hazards solely as a pre-normalization diagnostic.
+
 As shown in Table 2, unvaccinated cohorts exhibit substantial frailty heterogeneity ($\hat{\theta} > 0$), while Dose 2 cohorts show near-zero estimated frailty ($\hat{\theta} \approx 0$) across all age bands, consistent with strong selective uptake prior to follow-up. Frailty variance is largest at younger ages, where low baseline mortality amplifies the impact of heterogeneity on cumulative hazard curvature, and declines at older ages where mortality is compressed and survivors are more homogeneous. No diagnostic reversals or instabilities are observed.
 
 Table 2 establishes strong selection-induced heterogeneity; Table 3 therefore reports raw cumulative outcome contrasts prior to normalization.
