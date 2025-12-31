@@ -411,6 +411,8 @@ The key object for KCOR is $\tilde H_{0,d}(t)$; differenced hazards are optional
 
 Normalization is necessary but not sufficient. The depletion-neutralized cumulative hazard $\tilde H_{0,d}(t)$ is not itself the estimand of interest. Its role is to place cohorts into a common comparison space in which selection-induced depletion dynamics have been removed. The substantive comparison—and therefore the inferential signal—arises only when these normalized cumulative hazards are compared across cohorts via the KCOR estimator (§2.8). Because normalization operates in cumulative-hazard space and removes time-varying curvature rather than rescaling instantaneous hazards, applying Cox regression to normalized outputs generally re-introduces misspecification. Applying standard proportional-hazards or regression-based estimators after normalization is generally inappropriate, because the comparison is cumulative by construction and because residual non-proportionality is precisely what KCOR is designed to reveal. KCOR therefore integrates normalization and comparison into a single, internally consistent system.
 
+In KCOR, the parametric model is used solely to estimate and invert selection-induced curvature in cumulative-hazard space; treatment comparisons are then made directly on the adjusted data. In contrast, Cox regression fits a hazard model to the observed data and derives treatment effects from model coefficients, implicitly attributing all systematic hazard divergence—including selection effects—to the exposure.
+
 #### 2.6.1 Internal diagnostics and 'self-check' behavior
 
 KCOR includes internal diagnostics intended to make model stress visible rather than hidden.
@@ -494,18 +496,23 @@ This section is the core validation claim of KCOR:
 - **Negative controls (null under selection):** under a true null effect, KCOR remains approximately flat at 1 even when selection induces large curvature differences.
 - **Positive controls (detect injected effects):** when known harm/benefit is injected into otherwise-null data, KCOR reliably detects it.
 
-| Age band (years) | $\hat{\theta}$ Dose 0 (median) | $\hat{\theta}$ Dose 2 (median) |
+| Age band (years) | $\hat{\theta}$ Dose 0 | $\hat{\theta}$ Dose 2 |
 | ---------------- | -----------------: | -----------------: |
 | 40–49            |               16.79 |           $2.66 \times 10^{-6}$ |
 | 50–59            |               23.02 |           $1.87 \times 10^{-4}$ |
 | 60–69            |               13.13 |           $7.01 \times 10^{-18}$ |
-| 70+              |               1.89 |           $4.50 \times 10^{-16}$ |
+| 70–79            |                6.98 |           $3.46 \times 10^{-17}$ |
+| 80–89            |                2.97 |           $2.03 \times 10^{-11}$ |
+| 90–99            |                0.80 |           $8.66 \times 10^{-16}$ |
+| All ages (full population) |                4.98 |           $1.02 \times 10^{-11}$ |
 
 Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vaccination status for Czech cohorts enrolled in 2021_24. {#tbl:frailty_diagnostics}
 
-$\hat{\theta}$ quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts. Values are summarized as medians across enrollment subcohorts within 2021_24.
+$\hat{\theta}$ quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts. Each entry reports a single fitted gamma-frailty variance $\hat{\theta}$ for the specified age band and vaccination status within the 2021_24 enrollment cohort. The "All ages (full population)" row corresponds to an independent fit over the full pooled age range. The "All ages (full population)" row is included as a global diagnostic; Table 3 reports raw outcome contrasts for ages 40+ (YOB ≤ 1980) where event counts are stable.
 
 As shown in Table 2, unvaccinated cohorts exhibit substantial frailty heterogeneity ($\hat{\theta} > 0$), while Dose 2 cohorts show near-zero estimated frailty ($\hat{\theta} \approx 0$) across all age bands, consistent with strong selective uptake prior to follow-up. Frailty variance is largest at younger ages, where low baseline mortality amplifies the impact of heterogeneity on cumulative hazard curvature, and declines at older ages where mortality is compressed and survivors are more homogeneous. No diagnostic reversals or instabilities are observed.
+
+Table 2 establishes strong selection-induced heterogeneity; Table 3 therefore reports raw cumulative outcome contrasts prior to normalization.
 
 Given the strong frailty heterogeneity shown in Table 2, raw cumulative outcome contrasts (Table 3) are expected to reflect both selection-induced depletion effects and any underlying treatment differences. KCOR normalization removes the depletion component, enabling interpretable comparison of the remaining differences.
 
@@ -518,7 +525,9 @@ Given the strong frailty heterogeneity shown in Table 2, raw cumulative outcome 
 
 Table 3. Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021_24. {#tbl:raw_cumulative_outcomes}
 
-Values reflect raw cumulative outcome differences prior to KCOR normalization and are not interpreted causally due to cohort non-exchangeability. Cumulative hazards were integrated from cohort enrollment through the end of available follow-up (week 2024-16), identically for Dose 0 and Dose 2 cohorts.
+Values reflect raw cumulative outcome differences prior to KCOR normalization and are not interpreted causally due to cohort non-exchangeability. Cumulative hazards were integrated from cohort enrollment through the end of available follow-up for the 2021_24 enrollment window (through week 2024-16), identically for Dose 0 and Dose 2 cohorts.
+
+These raw contrasts reflect both selection and depletion effects and are not interpreted causally.
 
 ### 3.0 Frailty normalization behavior under empirical validation
 
@@ -684,7 +693,7 @@ These limitations are intrinsic to the data constraints KCOR is designed to oper
 
 ### 4.1 What KCOR estimates
 
-KCOR operates at a specific but critical layer of the retrospective inference stack: it both neutralizes selection-induced depletion dynamics and defines how the resulting depletion-neutralized hazards must be compared. The method's strength is not the frailty inversion in isolation, but the fact that inversion, diagnostics, and cumulative comparison are mathematically and operationally coupled. Once cohorts are mapped into depletion-neutralized hazard space, KCOR$(t)$ directly answers whether one cohort experienced higher or lower cumulative event risk than another over follow-up, conditional on the stated assumptions. Interpreting normalized hazards without this comparison step discards the central inferential content of the method. Like all causal methods, KCOR relies on identifiable structure; its contribution is to make that structure explicit, testable, and diagnostically enforced rather than implicit. Accordingly, KCOR should not be interpreted as a standalone estimator of vaccine efficacy; it is a cumulative normalization-and-comparison framework whose causal interpretation depends on additional design assumptions, controls, and diagnostics.
+KCOR operates at a specific but critical layer of the retrospective inference stack: it both neutralizes selection-induced depletion dynamics and defines how the resulting depletion-neutralized hazards must be compared. The method's strength is not the frailty inversion in isolation, but the fact that inversion, diagnostics, and cumulative comparison are mathematically and operationally coupled. Once cohorts are mapped into depletion-neutralized hazard space, KCOR$(t)$ directly answers whether one cohort experienced higher or lower cumulative event risk than another over follow-up, conditional on the stated assumptions. Interpreting normalized hazards without this comparison step discards the central inferential content of the method. Like all causal methods, KCOR relies on identifiable structure; its contribution is to make that structure explicit, testable, and diagnostically enforced rather than implicit. Accordingly, KCOR should not be interpreted as a standalone estimator of vaccine efficacy; it is a cumulative normalization-and-comparison framework whose causal interpretation depends on additional design assumptions, controls, and diagnostics. Whereas Cox regression infers treatment effects through fitted model coefficients, KCOR uses modeling only to normalize selection effects, allowing causal contrasts to be read directly from the adjusted data via cumulative hazard ratios. For infectious-disease vaccines, any plausible mortality effect is inherently time-local, occurring only during periods of pathogen circulation; the proportional hazards assumption therefore fails structurally, as a constant multiplicative effect over the entire follow-up is biologically implausible.
 
 As emphasized above, the frailty term is not causal and does not represent a treatment mechanism; it functions solely as a geometric normalization for selection-induced depletion.
 
