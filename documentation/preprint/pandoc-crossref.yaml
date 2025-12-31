@@ -1,0 +1,18 @@
+---
+figureTitle: "Figure"
+tableTitle: "Table"
+figPrefix: ""
+tblPrefix: ""
+figureTemplate: "$$i$$"
+tableTemplate: "$$i$$"
+eqnPrefix: ""
+eqnTemplate: "($$i$$)"
+lofTitle: "List of Figures"
+lotTitle: "List of Tables"
+lolTitle: "List of Listings"
+chapters: false
+numberSections: false
+chapDelim: "."
+rangeDelim: "–"
+titleDelim: " "
+...

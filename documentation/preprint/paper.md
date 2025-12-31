@@ -1,17 +1,5 @@
 # KCOR: Depletion-Neutralized Cohort Comparison via Gamma-Frailty Normalization Under Selection-Induced Hazard Curvature
 
-<!--
-paper_v5.md (methods-only manuscript; updated to KCOR v6)
-
-Goal: Submit a methods paper focused on the KCOR methodology + validation via negative/positive controls.
-This version deliberately avoids presenting any applied Czech2 vaccine-effect results (to be a separate paper).
-
-KCOR v6 update:
-- Replace v4 “slope/curvature normalization + anchoring” with a gamma-frailty normalization in cumulative-hazard space.
-- Math formatting follows documentation/style_guide/KCOR_Markdown_Math_Style_Guide.md:
-  use `$...$` for inline math and double-dollar blocks for display math (delimiter alone on its line).
--->
-
 ## Manuscript metadata
 
 - **Article type**: Methods / Statistical method
@@ -125,8 +113,9 @@ Table: Comparison of Cox proportional hazards, Cox with frailty, and KCOR across
 | Negative control methods | Bias detection (diagnostic) | No | Valid negative controls | Detects bias but does not remove it |
 | **KCOR (this work)** | **KCOR(t): ratio of depletion-neutralized cumulative hazards** | **Yes (targeted)** | **DOB/DOD/DOI; valid quiet window; identifiable curvature; prespecified diagnostics and controls** | **If depletion model or quiet window fails, diagnostics flag nonlinearity or instability and comparison is not interpretable** |
 
-**Table 1. Positioning KCOR among retrospective methods (corrected).**  
-Most retrospective approaches either compare cohorts under proportional-hazards assumptions, balance measured confounding, or diagnose bias without removing it. KCOR occupies a distinct role: it **neutralizes selection-induced depletion dynamics** via gamma-frailty inversion and then **extracts the cohort contrast using a cumulative hazard ratio (KCOR), which is the estimand reported**. Normalization alone does not yield an interpretable signal; the KCOR ratio is the estimand that answers whether one cohort experienced higher or lower cumulative event risk than another under the stated assumptions. KCOR's estimand is cumulative by construction; instantaneous hazard ratios are not recovered even after normalization. {#tbl:positioning}
+Table: Positioning KCOR among retrospective methods. {#tbl:positioning}
+
+Most retrospective approaches either compare cohorts under proportional-hazards assumptions, balance measured confounding, or diagnose bias without removing it. KCOR occupies a distinct role: it **neutralizes selection-induced depletion dynamics** via gamma-frailty inversion and then **extracts the cohort contrast using a cumulative hazard ratio (KCOR), which is the estimand reported**. Normalization alone does not yield an interpretable signal; the KCOR ratio is the estimand that answers whether one cohort experienced higher or lower cumulative event risk than another under the stated assumptions. KCOR's estimand is cumulative by construction; instantaneous hazard ratios are not recovered even after normalization.
 
 KCOR is not merely a frailty-normalization method. While gamma-frailty inversion is a necessary step, the central contribution of KCOR is the end-to-end comparison system that follows normalization. KCOR transforms observed cumulative hazards into a depletion-neutralized space and then defines the correct comparison operator in that space—a cumulative hazard ratio—together with diagnostics that determine when such comparisons are interpretable. Normalization alone does not yield a signal; the signal emerges only through the KCOR comparison itself. In this sense, KCOR should be understood as a complete retrospective comparison framework rather than a preprocessing adjustment that can be substituted into standard estimators. The integrated nature of KCOR—normalization, comparison, and diagnostics as a single system—is illustrated schematically in Figure @fig:kcor_workflow.
 
@@ -354,9 +343,9 @@ H_{0,d}(t) = \frac{e^{\theta_d H_d^{\mathrm{obs}}(t)} - 1}{\theta_d}.
 $$
 {#eq:gamma-frailty-inversion}
 
-This inversion is the **KCOR v6 normalization step**: it transforms the observed cumulative hazard into a depletion-neutralized baseline cumulative hazard for each cohort. Figure @fig:kcor_v6_schematic illustrates this logic schematically.
+This inversion is the **KCOR normalization step**: it transforms the observed cumulative hazard into a depletion-neutralized baseline cumulative hazard for each cohort. Figure @fig:kcor_v6_schematic illustrates this logic schematically.
 
-![Three-panel schematic illustrating the KCOR v6 normalization logic. Left: individual hazards differ only by multiplicative frailty $z$, with no treatment effect. Middle: aggregation over heterogeneous frailty induces cohort-level curvature in observed cumulative hazards $H^{\mathrm{obs}}(t)$ despite identical baseline hazards. Right: inversion of the gamma-frailty identity recovers aligned baseline cumulative hazards $H_0(t)$, demonstrating depletion-neutralization. This figure is schematic and intended for conceptual illustration; it does not represent empirical data.](figures/fig1_kcor_v6_schematic.png){#fig:kcor_v6_schematic}
+![Three-panel schematic illustrating the KCOR normalization logic. Left: individual hazards differ only by multiplicative frailty $z$, with no treatment effect. Middle: aggregation over heterogeneous frailty induces cohort-level curvature in observed cumulative hazards $H^{\mathrm{obs}}(t)$ despite identical baseline hazards. Right: inversion of the gamma-frailty identity recovers aligned baseline cumulative hazards $H_0(t)$, demonstrating depletion-neutralization. This figure is schematic and intended for conceptual illustration; it does not represent empirical data.](figures/fig1_kcor_v6_schematic.png){#fig:kcor_v6_schematic}
 
 #### 2.4.3 Baseline shape for fitting (default)
 
@@ -405,7 +394,7 @@ We fit in cumulative-hazard space rather than maximizing a likelihood because th
 
 #### Reference implementation defaults (this repo)
 
-The manuscript describes KCOR generically; for reproducibility, this repository’s KCOR v6 defaults are:
+The manuscript describes KCOR generically; for reproducibility, this repository's KCOR defaults are:
 
 - **Quiet window**: ISO weeks `2022-24` through `2024-16` (inclusive).
 - **Skip weeks**: a fixed prespecified skip, `SKIP_WEEKS = DYNAMIC_HVE_SKIP_WEEKS` (see code), applied by setting $h_d^{\mathrm{eff}}(t)=0$ for $t < \mathrm{SKIP\_WEEKS}$.
@@ -482,7 +471,7 @@ $$
 
 Then compute $H_d^{\mathrm{obs}}(t)$ from $h_d^{\mathrm{eff}}(t)$ as in §2.3.
 
-### 2.8 KCOR estimator (v6)
+### 2.8 KCOR estimator
 
 For cohorts $A$ and $B$, KCOR compares depletion-neutralized cumulative hazards:
 
@@ -504,7 +493,7 @@ Uncertainty intervals reflect stochastic event realization and model-fit uncerta
 
 ### 2.10 Algorithm summary and reproducibility checklist
 
-Table @tbl:KCOR_algorithm summarizes the complete KCOR v6 pipeline.
+Table @tbl:KCOR_algorithm summarizes the complete KCOR pipeline.
 
 | Step | Operation | Output | Prespecify? | Diagnostics |
 |---|---|---|---|---|
@@ -517,7 +506,7 @@ Table @tbl:KCOR_algorithm summarizes the complete KCOR v6 pipeline.
 | 7 | Cumulate and ratio: compute $\mathrm{KCOR}(t)$ | KCOR$(t)$ curve | Yes (horizon) | Flat under negative controls |
 | 8 | Uncertainty | CI / intervals | Yes | Coverage on positive controls |
 
-Table: Step-by-step KCOR v6 algorithm (high-level), with recommended prespecification and diagnostics. {#tbl:KCOR_algorithm}
+Table: Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. {#tbl:KCOR_algorithm}
 
 ![KCOR as an integrated depletion-neutralized comparison system. The KCOR pipeline operates as a single, end-to-end system. Observed cohort cumulative hazards are first mapped into depletion-neutralized hazard space via gamma-frailty inversion. This normalization step alone does not constitute inference. The KCOR estimator then compares normalized cumulative hazards via a cumulative ratio, which is the estimand that determines whether one cohort experienced higher or lower cumulative event risk than another under the stated assumptions. Diagnostic checks shown alongside the workflow indicate when depletion-neutralization is valid and when results should be interpreted cautiously.](figures/fig_kcor_workflow.png){#fig:kcor_workflow}
 
@@ -605,13 +594,13 @@ Throughout, curvature in cumulative hazard plots reflects selection-induced depl
 | 90–99            |                0.80 |           $8.66 \times 10^{-16}$ |
 | All ages (full population) |                4.98 |           $1.02 \times 10^{-11}$ |
 
-Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vaccination status for Czech cohorts enrolled in 2021_24. {#tbl:frailty_diagnostics}
+Table: Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vaccination status for Czech cohorts enrolled in 2021_24. {#tbl:frailty_diagnostics}
 
 **Notes:**
 - $\hat{\theta}$ quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts.
 - Each entry reports a single fitted gamma-frailty variance $\hat{\theta}$ for the specified age band and vaccination status within the 2021_24 enrollment cohort.
 - The "All ages (full population)" row corresponds to an independent fit over the full pooled age range, included as a global diagnostic.
-- Table 3 reports raw outcome contrasts for ages 40+ (YOB ≤ 1980) where event counts are stable.
+- Table @tbl:raw_cumulative_outcomes reports raw outcome contrasts for ages 40+ (YOB ≤ 1980) where event counts are stable.
 
 **Diagnostic checks:**
 - **Dose ordering:** $\hat{\theta}$ is positive for Dose 0 and collapses toward zero for Dose 2 across all age strata, consistent with selective uptake.
@@ -620,7 +609,7 @@ Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vacci
 - **Stability:** No sign reversals, boundary pathologies, or numerical instabilities are observed.
 - **Falsifiability:** Failure of any one of these checks would constitute evidence against model adequacy.
 
-**Interpretation:** Unvaccinated cohorts exhibit frailty heterogeneity ($\hat{\theta} > 0$), while Dose 2 cohorts show near-zero estimated frailty ($\hat{\theta} \approx 0$) across all age bands, consistent with selective uptake prior to follow-up. Frailty variance is largest at younger ages, where low baseline mortality amplifies the impact of heterogeneity on cumulative hazard curvature, and declines at older ages where mortality is compressed and survivors are more homogeneous. Because Table 2 demonstrates selection-induced heterogeneity, unadjusted cumulative outcome contrasts are expected to conflate depletion effects with any true treatment differences; Table 3 therefore reports raw cumulative hazards solely as a pre-normalization diagnostic. KCOR normalization removes the depletion component, enabling interpretable comparison of the remaining differences.
+**Interpretation:** Unvaccinated cohorts exhibit frailty heterogeneity ($\hat{\theta} > 0$), while Dose 2 cohorts show near-zero estimated frailty ($\hat{\theta} \approx 0$) across all age bands, consistent with selective uptake prior to follow-up. Frailty variance is largest at younger ages, where low baseline mortality amplifies the impact of heterogeneity on cumulative hazard curvature, and declines at older ages where mortality is compressed and survivors are more homogeneous. Because Table @tbl:frailty_diagnostics demonstrates selection-induced heterogeneity, unadjusted cumulative outcome contrasts are expected to conflate depletion effects with any true treatment differences; Table @tbl:raw_cumulative_outcomes therefore reports raw cumulative hazards solely as a pre-normalization diagnostic. KCOR normalization removes the depletion component, enabling interpretable comparison of the remaining differences.
 
 | Age band (years) | Dose 0 cumulative hazard | Dose 2 cumulative hazard | Ratio |
 | ---------------- | ----------------------: | -----------------------: | ----: |
@@ -632,9 +621,9 @@ Table 2. Estimated gamma-frailty variance ($\hat{\theta}$) by age band and vacci
 | 90–99            |               0.776341 |                0.517284 | 1.5008 |
 | All ages (full population) |               0.023160 |                0.073323 | 0.3159 |
 
-Table 3. Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021_24. {#tbl:raw_cumulative_outcomes}
+Table: Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021_24. {#tbl:raw_cumulative_outcomes}
 
-Table 3 reports unadjusted cumulative hazards derived directly from the raw data, prior to any frailty normalization or depletion correction, and is shown to illustrate the magnitude and direction of selection-induced curvature addressed by KCOR.
+This table reports unadjusted cumulative hazards derived directly from the raw data, prior to any frailty normalization or depletion correction, and is shown to illustrate the magnitude and direction of selection-induced curvature addressed by KCOR.
 
 Values reflect raw cumulative outcome differences prior to KCOR normalization and are not interpreted causally due to cohort non-exchangeability. Cumulative hazards were integrated from cohort enrollment through the end of available follow-up for the 2021_24 enrollment window (through week 2024-16), identically for Dose 0 and Dose 2 cohorts.
 
@@ -920,7 +909,7 @@ Not applicable.
 
 ### Code availability
 
-- The KCOR v6 reference implementation and complete validation suite are available in the project repository.
+- The KCOR reference implementation and complete validation suite are available in the project repository.
 - Repository URL: [https://github.com/skirsch/KCOR](https://github.com/skirsch/KCOR)
 - Zenodo DOI: [10.5281/zenodo.18050329](https://doi.org/10.5281/zenodo.18050329)
 

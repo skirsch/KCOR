@@ -185,6 +185,9 @@ $(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $
 			--to=docx \
 			--reference-doc=$(PAPER_REFERENCE_DOC) \
 			--filter pandoc-crossref \
+			-M figPrefix="" \
+			-M tblPrefix="" \
+			-M eqnPrefix="" \
 			--citeproc \
 			--bibliography=$(PAPER_BIB) \
 			--csl=$(PAPER_CSL) \
@@ -207,6 +210,9 @@ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(
 			--to=pdf \
 			--pdf-engine="$(PAPER_PDF_ENGINE)" \
 			--filter pandoc-crossref \
+			-M figPrefix="" \
+			-M tblPrefix="" \
+			-M eqnPrefix="" \
 			--citeproc \
 			-V geometry:$(PAPER_PDF_GEOMETRY) \
 			-V mainfont="$(PAPER_PDF_MAINFONT)" \
