@@ -5,3 +5,11 @@
 \titleformat{\subparagraph}[block]{\normalfont\normalsize\bfseries}{\thesubparagraph}{1em}{}
 \titlespacing*{\subparagraph}{0pt}{3.25ex plus 1ex minus .2ex}{0.5em}
 
+% Disable TeX hyphenation (reviewer-friendly) and avoid PDF soft-hyphen artifacts.
+% Note: this does not prevent manual hyphens, only automatic word-breaking.
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\pretolerance=10000
+\tolerance=2000
+\emergencystretch=3em
+

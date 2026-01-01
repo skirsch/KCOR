@@ -54,9 +54,9 @@ In this paper we distinguish two mechanisms often lumped as the 'healthy vaccine
 
 ### 1.3 Related work: frailty, depletion of susceptibles, and selection-induced non-proportional hazards
 
-KCOR builds on a long literature on unobserved heterogeneity ('frailty') and depletion of susceptibles, in which population-level hazards can decelerate over time even when individual hazards are simple. The gamma frailty model is widely used because its Laplace transform yields a closed-form relationship between baseline and observed survival/cumulative hazard, enabling tractable inference and interpretation [@vaupel1979].
+KCOR builds on a long literature on unobserved heterogeneity ('frailty') and depletion of susceptibles, in which population-level hazards can decelerate over time even when individual hazards are simple. The gamma frailty model is widely used because its Laplace transform yields a closed-form relationship between baseline and observed survival/cumulative hazard, enabling tractable inference and interpretation.[@vaupel1979]
 
-A separate literature emphasizes that observational estimates of vaccine effectiveness can remain confounded despite extensive matching and adjustment, often revealed by negative control outcomes and time-varying non-COVID mortality differences [@obel2024; @chemaitelly2025]. KCOR is complementary: rather than using negative controls only to detect confounding, it targets a specific confounding geometry—selection-induced depletion curvature—and then requires controls and simulations to validate that the intended curvature component has been removed.
+A separate literature emphasizes that observational estimates of vaccine effectiveness can remain confounded despite extensive matching and adjustment, often revealed by negative control outcomes and time-varying non-COVID mortality differences.[@obel2024; @chemaitelly2025] KCOR is complementary: rather than using negative controls only to detect confounding, it targets a specific confounding geometry—selection-induced depletion curvature—and then requires controls and simulations to validate that the intended curvature component has been removed.
 
 We do not claim that KCOR subsumes all approaches to confounding adjustment; rather, it provides a dedicated normalization and diagnostic toolkit for settings where non-proportional hazards arise primarily from selection-induced depletion dynamics.
 
@@ -72,13 +72,13 @@ Obel et al. used Danish registry data to build 1:1 matched cohorts and applied n
 > substantial confounding which may impact the observed associations. This bias may both lead to underestimation of vaccine
 > effectiveness (increased risk of SARS-CoV2 infection among vaccinated individuals) and overestimation of the vaccine effectiveness (decreased risk of death after of SARS-CoV2 infection among vaccinated individuals). Our results highlight the need
 > for randomized vaccine efficacy studies after the emergence of new SARS-CoV-2 variants and the rollout of multiple booster
-> vaccines. [@obel2024]
+> vaccines.[@obel2024]
 
 This is a direct statement that observational designs—even with careful matching and covariate adjustment—can remain substantially confounded when selection and health-seeking behavior differ between cohorts.
 
 #### 1.4.2 Qatar (time-varying HVE despite meticulous matching)
 
-Chemaitelly et al. analyzed matched national cohorts and explicitly measured the **time-varying healthy vaccinee effect (HVE)** using non-COVID mortality as a control outcome. They report a pronounced early-period reduction in non-COVID mortality among vaccinated individuals despite meticulous matching, followed by reversal later in follow-up, consistent with dynamic selection and depletion processes. [@chemaitelly2025]
+Chemaitelly et al. analyzed matched national cohorts and explicitly measured the **time-varying healthy vaccinee effect (HVE)** using non-COVID mortality as a control outcome. They report a pronounced early-period reduction in non-COVID mortality among vaccinated individuals despite meticulous matching, followed by reversal later in follow-up, consistent with dynamic selection and depletion processes.[@chemaitelly2025]
 
 Together, these studies motivate a methods gap: we need estimators that explicitly address **time-evolving selection-induced curvature**, not only baseline covariate imbalance. Table @tbl:HVE_motivation summarizes these findings.
 
@@ -202,6 +202,8 @@ There exists a prespecified period during which selection-induced depletion domi
 
 Of these five assumptions, **A1–A3 are structural and are typically satisfied by cohort construction in national mortality datasets**, while **A4–A5 are empirically evaluated using diagnostics**. Failure of any assumption limits interpretability and is explicitly signaled by KCOR's diagnostic outputs (Appendix D). Sanity checks on frailty estimates—including magnitude, stability, and coherence with observed cumulative-hazard curvature—are treated diagnostically rather than as assumptions (Appendix D; see also diagnostic coherence in §2.1.2). KCOR does not assume causal separability of selection and treatment effects; rather, it identifies cumulative outcome differences under explicit normalization of selection-induced depletion, making departures from the null of no net harm or benefit interpretable when diagnostic and interpretability conditions are satisfied.
 
+KCOR is designed for settings in which selection-induced depletion of susceptibles is the dominant source of non-proportionality in cohort hazards; regimes in which timing misalignment or denominator redefinition dominate are typically identifiable through early instability, lack of a valid quiet window, or failure of post-normalization linearity and therefore fall outside the intended scope of the method.
+
 #### 2.1.2 Interpretability checklist for KCOR results
 
 The assumptions in §2.1.1 specify the conditions under which KCOR is a valid and diagnostically enforceable estimator. Interpretation of a specific KCOR result—particularly as evidence of harm or benefit—requires additional prespecified checks. These checks do not constitute assumptions of the method, but determine what inferential question a given KCOR trajectory answers.
@@ -314,7 +316,7 @@ z_{i,d} \sim \mathrm{Gamma}(\mathrm{mean}=1,\ \mathrm{var}=\theta_d).
 $$
 {#eq:individual-hazard-frailty}
 
-Gamma frailty is used not as a claim of biological truth, but as a mathematically minimal and widely used model for unobserved heterogeneity whose Laplace transform yields a closed-form relationship between observed and baseline cumulative hazards [@vaupel1979]. In KCOR, gamma frailty therefore serves as a **geometric approximation for depletion normalization**: its adequacy is treated as empirically testable and is assessed using prespecified negative controls and sensitivity analyses rather than assumed dogmatically.
+Gamma frailty is used not as a claim of biological truth, but as a mathematically minimal and widely used model for unobserved heterogeneity whose Laplace transform yields a closed-form relationship between observed and baseline cumulative hazards.[@vaupel1979] In KCOR, gamma frailty therefore serves as a **geometric approximation for depletion normalization**: its adequacy is treated as empirically testable and is assessed using prespecified negative controls and sensitivity analyses rather than assumed dogmatically.
 
 Frailty $z_{i,d}$ captures latent heterogeneity in baseline risk and drives selective depletion: higher-frailty individuals die earlier, changing the cohort composition over time and inducing curvature in $h_d^{\mathrm{obs}}(t)$ even when $h_{0,d}(t)$ is simple.
 
@@ -512,15 +514,17 @@ Table: Step-by-step KCOR algorithm (high-level), with recommended prespecificati
 
 ### 2.11 Relationship to Cox proportional hazards
 
-Cox proportional hazards models estimate instantaneous hazard under the assumption of time-invariant hazard ratios. In observational cohorts with selective uptake and frailty heterogeneity, this assumption is structurally violated, leading to time-varying hazard ratios and cumulative hazard trajectories inconsistent with observed data. Cox estimates are therefore presented here solely for diagnostic illustration to demonstrate assumption failure, not as a competing causal estimator.
+Cox proportional hazards models estimate an instantaneous hazard ratio under the assumption that hazards differ by a time-invariant multiplicative factor. Under selective uptake with latent frailty heterogeneity, this assumption is typically violated, yielding time-varying hazard ratios induced purely by depletion dynamics. Accordingly, Cox results are presented here only as a diagnostic demonstration of assumption failure, not as a competing causal estimator.
+
+Conceptually, Cox regression estimates a treatment effect by fitting a hazard model to the observed data and reading the effect from the fitted coefficients, whereas KCOR uses a parametric model only to adjust the observed data for selection-induced depletion and then computes cohort contrasts directly from the adjusted cumulative hazards themselves.
 
 #### 2.11.1 Demonstration: Cox bias under frailty heterogeneity with no treatment effect
 
-To illustrate the behavior of Cox proportional hazards regression in the presence of selection-induced depletion, we conducted a controlled synthetic experiment in which the **true causal effect is known to be zero by construction**. This demonstration isolates the effect of latent frailty heterogeneity on standard Cox estimates and contrasts it with KCOR under identical conditions.
+We conducted a controlled synthetic experiment in which the **true causal effect is known to be zero by construction**, isolating latent frailty heterogeneity as the sole driver of depletion-induced non-proportional hazards. Cox and KCOR were applied to the same simulated datasets under identical information constraints.
 
 **Data-generating process.**
 
-We simulated two cohorts of equal size exposed to the same baseline hazard function over time. Individual event times were generated from a shared baseline hazard $h_0(t)$, optionally Gompertz or constant, multiplied by an individual-specific frailty term $z$, where
+Two cohorts of equal size were simulated under the same baseline hazard $h_0(t)$ over time (constant or Gompertz). Individual hazards were generated as $z\,h_0(t)$, with frailty
 $$
 z \sim \text{Gamma}(\theta^{-1}, \theta^{-1}),
 $$
@@ -530,13 +534,13 @@ Cohort A was generated with $\theta = 0$ (no frailty heterogeneity), while Cohor
 
 Simulations were repeated over a grid of frailty variances $\theta \in \{0, 0.5, 1, 2, 5, 10, 20\}$.
 
-**Cox regression analysis.**
+**Cox analysis.**
 
-For each simulated dataset, we fitted a standard Cox proportional hazards model using partial likelihood (statsmodels `PHReg`), with cohort membership as the sole covariate. No time-varying covariates or interactions were included. The resulting hazard ratio estimates and confidence intervals therefore reflect **only differences induced by frailty-driven depletion**, not any causal effect.
+For each simulated dataset, we fitted a standard Cox proportional hazards model using partial likelihood (statsmodels `PHReg`), with cohort membership as the sole covariate (no time-varying covariates or interactions). The resulting hazard ratio estimates and confidence intervals therefore reflect **only differences induced by frailty-driven depletion**, not any causal effect.
 
 **KCOR analysis.**
 
-The same simulated datasets were analyzed using KCOR. For the synthetic datasets, cohort-specific observed cumulative hazards $\hat H(t)$ were estimated nonparametrically using the Nelson–Aalen estimator, then mapped to depletion-neutralized baseline cumulative hazards via the gamma-frailty inversion prior to computing KCOR(t). Although the data-generating process specifies individual hazards, cumulative hazards were estimated from simulated event-time data using Nelson–Aalen to mirror the information available to analysts in observational registry studies, rather than exploiting simulator-only knowledge. Frailty parameters were estimated during a prespecified quiet window, followed by cumulative-hazard normalization and computation of KCOR(t). Post-normalization slope and asymptotic KCOR values were examined to assess departure from the null.
+The same simulated datasets were analyzed using KCOR. For the synthetic datasets, cohort-specific observed cumulative hazards $\hat H(t)$ were estimated nonparametrically using the Nelson–Aalen estimator, then mapped to depletion-neutralized baseline cumulative hazards via the gamma-frailty inversion prior to computing KCOR$(t)$. Although the data-generating process specifies individual hazards, cumulative hazards were estimated from simulated event-time data using Nelson–Aalen to mirror the information available in observational registry studies, rather than exploiting simulator-only knowledge. Frailty parameters were estimated during a prespecified quiet window, followed by cumulative-hazard normalization and computation of KCOR$(t)$. Post-normalization slope and asymptotic KCOR values were examined to assess departure from the null.
 
 **Expected behavior under the null.**
 
@@ -547,9 +551,9 @@ Because the data-generating process includes **no treatment effect**, any valid 
 
 **Summary of findings.**
 
-Across increasing values of $\theta$, Cox regression produced progressively larger apparent deviations from a hazard ratio of 1, despite the absence of any causal effect. The direction and magnitude of the apparent effect depended on the follow-up horizon and degree of frailty heterogeneity. In contrast, KCOR trajectories remained stable and centered near unity, with post-normalization slopes approximately zero across all simulated conditions.
+Across increasing values of $\theta$, Cox regression produced progressively larger apparent deviations from a hazard ratio of 1. The direction and magnitude of the apparent effect depended on the follow-up horizon and degree of frailty heterogeneity. In contrast, KCOR trajectories remained stable and centered near unity, with post-normalization slopes approximately zero across all simulated conditions.
 
-These results demonstrate that **frailty heterogeneity alone is sufficient to induce spurious hazard ratios in Cox regression**, even when no treatment effect exists, while KCOR correctly returns a null result under the same conditions.
+These results demonstrate that **frailty heterogeneity alone is sufficient to induce spurious hazard ratios in Cox regression**, while KCOR correctly returns a null result under the same conditions.
 
 | Frailty variance ($\theta$) | Cox HR | 95% CI | Cox p-value | KCOR asymptote | KCOR post-norm slope |
 | --------------------------: | -----: | -----: | ----------: | -------------: | -------------------: |
@@ -561,7 +565,7 @@ These results demonstrate that **frailty heterogeneity alone is sufficient to in
 |                        10.0 |  0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
 |                        20.0 |  0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
 
-Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect; cohorts differ only in gamma frailty variance ($\theta$). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as $\theta$ increases, reflecting depletion-induced non-proportional hazards. KCOR remains centered near unity with negligible post-normalization slope across $\theta$ values. (Exact values depend on simulation seed and follow-up horizon.) {#tbl:cox_bias_demo}
+Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect *(null by construction)*; cohorts differ only in gamma frailty variance ($\theta$). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as $\theta$ increases, reflecting depletion-induced non-proportional hazards. KCOR remains centered near unity with negligible post-normalization slope across $\theta$ values. (Exact values depend on simulation seed and follow-up horizon.) {#tbl:cox_bias_demo}
 
 ![Cox regression produces spurious non-null hazard ratios under a *synthetic null* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in frailty variance ($\theta$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
 
@@ -570,6 +574,8 @@ Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity.
 **Interpretation.**
 
 This demonstration shows that Cox proportional hazards regression can report highly statistically significant non-null hazard ratios—even when the true treatment effect is identically zero—solely due to frailty-induced depletion (e.g., $p < 10^{-300}$ at $\theta=20$), with the magnitude and direction of the apparent effect depending on follow-up horizon, not any causal signal. KCOR, by explicitly normalizing depletion geometry in cumulative-hazard space, correctly returns a null result under the same conditions, remaining centered near unity with negligible post-normalization slope across all frailty variance values. This controlled example motivates the use of KCOR for retrospective vaccine studies, where frailty heterogeneity and non-proportional hazards are expected to be substantial.
+
+This synthetic null isolates depletion-driven non-proportionality as a sufficient cause of strongly non-null Cox estimates, motivating cumulative-hazard–based normalization when selection-induced curvature is present.
 
 #### 2.11.2 Relation to other approaches addressing selection effects
 
@@ -680,7 +686,7 @@ Notably, KCOR estimates frailty parameters independently for each cohort without
 
 Two snapshots illustrate that KCOR is near-flat even under 10–20 year age differences:
 
-![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, KCOR remains near-flat at 1 over follow-up, consistent with a true null effect. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2) [@sanca2024].](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, KCOR remains near-flat at 1 over follow-up, consistent with a true null effect. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).[@sanca2024]](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
 
 ![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, KCOR exhibits no systematic drift, demonstrating robustness to selection-induced curvature. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
 
@@ -894,7 +900,7 @@ KCOR provides a principled approach to retrospective cohort comparison under sel
 
 ### Ethics approval and consent to participate
 
-Not applicable. This is a methods-only manuscript. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript. [@sanca2024]
+Not applicable. This is a methods-only manuscript. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript.[@sanca2024]
 
 ### Consent for publication
 
