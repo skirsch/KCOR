@@ -198,7 +198,7 @@ Differences between cohorts at enrollment arise primarily through selection on l
 Gamma frailty provides a sufficient approximation to the cumulative-hazard curvature induced by frailty-driven depletion over the estimation window. This assumption is not asserted a priori and is evaluated empirically.
 
 **A5. Existence of a valid quiet window for frailty identification.**
-There exists a prespecified period during which selection-induced depletion dominates other sources of curvature, permitting identification of frailty parameters. This assumption is assessed empirically and is the primary dataset-specific requirement for KCOR applicability.
+There exists a prespecified epidemiologically quiet period *(i.e., periods with approximately stable baseline hazard and no major external mortality shocks, rather than simply periods of low mortality)* during which selection-induced depletion dominates other sources of curvature, permitting identification of frailty parameters. This assumption is assessed empirically and is the primary dataset-specific requirement for KCOR applicability.
 
 Of these five assumptions, **A1–A3 are structural and are typically satisfied by cohort construction in national mortality datasets**, while **A4–A5 are empirically evaluated using diagnostics**. Failure of any assumption limits interpretability and is explicitly signaled by KCOR's diagnostic outputs (Appendix D). Sanity checks on frailty estimates—including magnitude, stability, and coherence with observed cumulative-hazard curvature—are treated diagnostically rather than as assumptions (Appendix D; see also diagnostic coherence in §2.1.2). KCOR does not assume causal separability of selection and treatment effects; rather, it identifies cumulative outcome differences under explicit normalization of selection-induced depletion, making departures from the null of no net harm or benefit interpretable when diagnostic and interpretability conditions are satisfied.
 
@@ -238,6 +238,8 @@ Identifiability in the KCOR framework concerns whether cumulative outcome differ
 #### 2.1.4 What KCOR is not: distinction from Cox and frailty regression
 
 KCOR is **not** a Cox proportional hazards model, with or without frailty. Cox models—whether standard or augmented with gamma frailty—are regression models whose primary estimand is a coefficient vector $\beta$, typically interpreted through hazard ratios. Estimation proceeds by (penalized) partial likelihood based on risk sets, and interpretation relies on proportional hazards (at least conditional on frailty in frailty-augmented Cox models).
+
+In causal terminology, latent frailty heterogeneity functions as an unmeasured confounder; however, its defining feature in this setting is not baseline imbalance per se but the induced time-evolution of the risk set, which violates proportional hazards even under a true null effect.
 
 In contrast, KCOR does not estimate regression coefficients, does not condition on risk sets, and does not assume proportional hazards. KCOR treats cohort heterogeneity (frailty-driven selection and depletion) as the primary object of inference rather than as a nuisance random effect. Specifically, KCOR estimates cohort-specific frailty parameters from curvature in observed cumulative hazards during epidemiologically quiet periods and uses these parameters to compute **depletion-neutralized baseline cumulative hazards**. KCOR then compares cohorts cumulatively using ratios of these depletion-neutralized quantities.
 
