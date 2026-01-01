@@ -183,7 +183,6 @@ $(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $
 	@cd $(PAPER_DIR) && \
 		pandoc $(PAPER_MD) \
 			--to=docx \
-			--reference-doc=$(PAPER_REFERENCE_DOC) \
 			--filter pandoc-crossref \
 			--metadata-file pandoc-crossref.yaml \
 			--citeproc \
