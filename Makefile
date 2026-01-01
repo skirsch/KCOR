@@ -184,7 +184,7 @@ $(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $
 		pandoc $(PAPER_MD) \
 			--to=docx \
 			--filter pandoc-crossref \
-			--metadata-file pandoc-crossref.yaml \
+			--metadata-file pandoc-crossref-docx.yaml \
 			--citeproc \
 			--bibliography=$(PAPER_BIB) \
 			--csl=$(PAPER_CSL) \
