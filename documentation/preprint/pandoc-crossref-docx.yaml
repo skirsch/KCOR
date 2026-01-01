@@ -9,8 +9,8 @@ figPrefixTemplate: "$$i$$"
 tblPrefixTemplate: "$$i$$"
 
 # Captions: number-only caption labels (the surrounding prose already says "Figure"/"Table").
-figureTemplate: "$$i$$"
-tableTemplate: "$$i$$"
+figureTemplate: "$$figureTitle$$ $$i$$. $$t$$"
+tableTemplate: "$$tableTitle$$ $$i$$. $$t$$"
 
 # Equations: DOCX-only layout with a right-aligned equation number.
 # This uses pandoc-crossref's tableEqns mode with Word tab stops via OOXML.
