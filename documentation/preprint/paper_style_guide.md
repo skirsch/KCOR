@@ -196,3 +196,19 @@ alters numbering behavior,
 or changes citation style
 
 must first update this STYLE_GUIDE.md.
+
+
+## other items to make it journal ready
+- Left justified, not justified
+- no separators between sections (---)
+- use math mode for things like theta hat
+- Figures, tables, equations all auto number
+- Equations also referenced as "see Equation (5)"
+- Bibliography references at end of sentence after all punctuation, e.g., this is a test.[@wood2024]
+- Figure caption below figure
+- Table caption above table
+- The template should make sure to insert the figure and table caption with Figure 1. description.
+- References section after the main text and before supplement
+- References are superscripts 
+- AMA style .csl file
+- no spaces in front of the figure, table, or equation auto number reference
