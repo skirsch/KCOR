@@ -1,4 +1,4 @@
-# KCOR: Depletion-Neutralized Cohort Comparison via Gamma-Frailty Normalization Under Selection-Induced Hazard Curvature
+# KCOR: A Depletion-Neutralized Cohort Comparison Framework Using Gamma-Frailty Normalization Under Selection-Induced Hazard Curvature
 
 ## Manuscript metadata
 
@@ -8,11 +8,13 @@
 - **Affiliations**: Independent Researcher, United States
 - **Corresponding author**: stk@alum.mit.edu
 - **Word count**: 12,100 (excluding Abstract, References, and Supplementary material)
-- **Keywords**: selection bias; healthy vaccinee effect; non-proportional hazards; frailty; gamma frailty; negative controls; causal inference; observational studies; mortality curvature
+- **Keywords**: survival analysis; frailty models; non-proportional hazards; cumulative hazard; selection bias; retrospective cohort studies; observational studies; simulation study
 
 ## Abstract
 
-Retrospective cohort studies often estimate the mortality impact of medical interventions, but selection can create non-exchangeable cohorts that defeat standard comparisons. Selective uptake can induce systematic differences in mortality curvature—differences in the time-evolution of cohort hazards driven by frailty heterogeneity and depletion of susceptibles—violating the assumptions of Cox proportional hazards models, age-standardized mortality rates, and inverse-probability weighting. We introduce **KCOR (Kirsch Cumulative Outcomes Ratio)**, a method that normalizes selection-induced curvature before cohort comparison by estimating and inverting a gamma-frailty mixture model in **cumulative-hazard space**. KCOR fits cohort-specific selection parameters during epidemiologically quiet periods and transforms observed cumulative hazards into depletion-neutralized baseline cumulative hazards. Cohorts are then compared using a **cumulative hazard ratio**, which is the estimand reported by the method. Because selection and treatment may be confounded in observational data, KCOR is presented as a normalization-and-comparison framework rather than a general causal estimator; interpretability is evaluated using prespecified diagnostics, negative controls, and simulations. KCOR requires only event timing—dates of enrollment and death, with optional age stratification—making it applicable to minimal record-level mortality datasets. Simulation studies confirm that KCOR remains near-null under selection-only regimes and reliably detects injected cumulative effects when present.
+Retrospective cohort comparisons are widely used when randomized trials are infeasible, but selection-induced frailty heterogeneity can produce non-proportional hazards that invalidate standard survival estimands. We introduce the Kirsch Cumulative Outcomes Ratio (KCOR), a cumulative-hazard normalization and comparison framework designed for retrospective cohorts using minimal registry data (e.g., dates of birth, intervention, and event). KCOR operates by estimating cohort-specific frailty during epidemiologically quiet periods, transforming observed cumulative hazards into a depletion-neutralized space, and defining a cumulative hazard ratio as the target estimand.
+
+Using simulation studies structured to vary frailty heterogeneity and selection strength, we evaluate KCOR alongside commonly used alternative estimands under both null and non-null conditions. Under selection-only scenarios, KCOR remains centered near the null with stable trajectories, whereas survival-based and hazard-based estimands exhibit systematic non-null behavior driven by residual depletion effects. KCOR is intended as a diagnostic and normalization framework for retrospective data; causal interpretation requires additional assumptions beyond the scope of this work.
 
 ## Key messages
 
@@ -20,7 +22,7 @@ Retrospective cohort studies often estimate the mortality impact of medical inte
 
 • KCOR enables depletion-neutralized cumulative outcome comparisons using only minimal event-time information (e.g., dates of birth, intervention, and death), without requiring covariate completeness or proportional hazards assumptions.
 
-• Simulation studies show that KCOR remains stable under selection-only regimes, while standard Cox regression can yield strongly non-null hazard ratios despite a true null effect.
+• Simulation studies show that KCOR remains stable under selection-only regimes, whereas proportional hazards–based Cox regression can produce non-null hazard ratios driven by selection-induced depletion rather than true signal.
 
 ## 1. Introduction
 
