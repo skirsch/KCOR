@@ -28,6 +28,8 @@ Retrospective cohort studies often estimate the mortality impact of medical inte
 
 Randomized controlled trials (RCTs) are the gold standard for causal inference, but are often infeasible, underpowered for rare outcomes, or unavailable for questions that arise after rollout. As a result, observational cohort comparisons are widely used to estimate intervention effects on outcomes such as all-cause mortality.
 
+Although mortality is used throughout this paper as a motivating and concrete example, the method applies more generally to any irreversible event process observed in a fixed cohort, including hospitalization, disease onset, or other terminal or absorbing states. Mortality is emphasized here because it is objectively defined, reliably recorded in many national datasets, and free from outcome-dependent ascertainment biases that complicate other endpoints.
+
 However, when intervention uptake is voluntary, prioritized, or otherwise selective, treated and untreated cohorts are frequently **non-exchangeable** at baseline and evolve differently over follow-up. This problem is not limited to any single intervention class; it arises whenever the same factors that influence treatment uptake also influence outcome risk.
 
 ### 1.2 Curvature (shape) is the hard part: non-proportional hazards from frailty depletion
@@ -54,15 +56,17 @@ In this paper we distinguish two mechanisms often lumped as the 'healthy vaccine
 
 ### 1.3 Related work: frailty, depletion of susceptibles, and selection-induced non-proportional hazards
 
+The examples in this section are intended to be illustrative rather than exhaustive, and are chosen to demonstrate common patterns that arise in retrospective cohort data. They should not be interpreted as defining the scope of applicability of the method, which is agnostic to the specific intervention or event under study.
+
 KCOR builds on a long literature on unobserved heterogeneity ('frailty') and depletion of susceptibles, in which population-level hazards can decelerate over time even when individual hazards are simple. The gamma frailty model is widely used because its Laplace transform yields a closed-form relationship between baseline and observed survival/cumulative hazard, enabling tractable inference and interpretation.[@vaupel1979]
 
-A separate literature emphasizes that observational estimates of vaccine effectiveness can remain confounded despite extensive matching and adjustment, often revealed by negative control outcomes and time-varying non-COVID mortality differences.[@obel2024; @chemaitelly2025] KCOR is complementary: rather than using negative controls only to detect confounding, it targets a specific confounding geometry—selection-induced depletion curvature—and then requires controls and simulations to validate that the intended curvature component has been removed.
+As a concrete illustration, a separate literature emphasizes that observational estimates of vaccine effectiveness can remain confounded despite extensive matching and adjustment, often revealed by negative control outcomes and time-varying non-COVID mortality differences.[@obel2024; @chemaitelly2025] KCOR is complementary: rather than using negative controls only to detect confounding, it targets a specific confounding geometry—selection-induced depletion curvature—and then requires controls and simulations to validate that the intended curvature component has been removed.
 
 We do not claim that KCOR subsumes all approaches to confounding adjustment; rather, it provides a dedicated normalization and diagnostic toolkit for settings where non-proportional hazards arise primarily from selection-induced depletion dynamics.
 
-### 1.3a Related work beyond proportional hazards: time-varying effects and flexible hazard modeling
+#### 1.3.1 Related work beyond proportional hazards: time-varying effects and flexible hazard modeling
 
-A large literature relaxes proportional hazards by allowing either (i) covariate effects to vary over time, or (ii) the baseline hazard to be modeled flexibly. Representative examples include time-varying coefficient Cox models, flexible parametric survival models (e.g., spline-based log-cumulative hazard models), additive hazards models (Aalen-type formulations), landmarking/dynamic prediction approaches, and weighting-based approaches such as marginal structural models (MSMs) for time-varying confounding.[@tvcox_placeholder; @flexparam_placeholder; @aalen_placeholder; @landmark_placeholder; @msm_placeholder] These methods are valuable when the scientific target is an instantaneous contrast (e.g., a time-specific hazard ratio) and when the available covariate history is sufficiently rich to support identification. These approaches typically target instantaneous contrasts (e.g., HR(t)) conditional on survival, whereas KCOR targets cumulative contrasts under depletion normalization.
+A large literature relaxes proportional hazards by allowing either (i) covariate effects to vary over time or (ii) the baseline hazard to be modeled flexibly. Representative examples include time-varying coefficient Cox models, flexible parametric survival models (e.g., spline-based log-cumulative hazard models), additive hazards models (Aalen-type formulations), landmarking and dynamic prediction approaches, and weighting-based approaches such as marginal structural models (MSMs) for time-varying confounding.[@grambsch1994; @andersen1982; @royston2002; @aalen1989; @lin1994; @vanhouwelingen2007; @robins2000; @cole2008] These methods are most effective when the scientific target is an instantaneous contrast (e.g., a time-specific hazard ratio) and when sufficiently rich covariate histories are available to support identification. In contrast, KCOR targets cumulative contrasts under explicit depletion normalization in cumulative-hazard space, rather than instantaneous hazard ratios conditional on survival.
 
 KCOR is motivated by a different failure mode that remains even when proportional hazards is relaxed: cohort-level *curvature* in cumulative-hazard space arising from selection-induced frailty heterogeneity and depletion of susceptibles. Allowing hazard ratios to vary over time can improve descriptive fit, but it does not by itself normalize depletion geometry or make cohorts exchangeable. Similarly, flexible baselines can absorb curvature without distinguishing whether it arises from latent selection/depletion versus genuine time-varying external hazards. KCOR therefore occupies a distinct role: it uses a mixture-model identity in cumulative-hazard space to estimate and invert selection-induced depletion dynamics during prespecified quiet periods, and then defines a cumulative comparison operator (KCOR) on the depletion-neutralized scale.
 
@@ -70,7 +74,7 @@ In settings where rich covariate histories and credible causal designs (e.g., ta
 
 ### 1.4 Evidence from the literature: residual confounding despite meticulous matching
 
-Two large, rigorously designed observational analyses illustrate the core empirical motivation: even extremely careful matching and adjustment can leave large residual differences in non-COVID mortality, indicating confounding and selection that standard pipelines do not eliminate.
+One motivating illustrative case involves two large, rigorously designed observational analyses that demonstrate the core empirical motivation: even extremely careful matching and adjustment can leave large residual differences in non-COVID mortality, indicating confounding and selection that standard pipelines do not eliminate.
 
 #### 1.4.1 Denmark (negative controls highlight confounding)
 
@@ -135,6 +139,9 @@ This manuscript is **methods-only**:
 
 KCOR is proposed as a diagnostic and normalization estimator for selection-induced hazard curvature; causal interpretation requires additional assumptions beyond the scope of this methods paper.
 
+**Scope and role of the method.**
+This work does not claim that observational analyses can replace randomized clinical trials for causal inference. Rather, the objective is to provide a descriptive and diagnostic framework for analyzing time-indexed outcomes in fixed cohorts when randomized evidence is unavailable, incomplete, or inapplicable. The proposed method is intended to complement—not substitute for—trial-based evidence by identifying systematic temporal distortions and cohort effects that can arise in retrospective data. The method makes no claims regarding causality or mechanism and does not rely on assumptions of proportional hazards, exchangeability, or treatment randomization.
+
 ### 1.6 Relation to causal inference frameworks
 
 KCOR is not intended to replace established causal inference designs such as instrumental variables, regression discontinuity, difference-in-differences, or target trial emulation. Those frameworks address distinct identification problems and typically require either exogenous instruments, sharp intervention thresholds, rich covariate histories, or well-defined intervention regimes.
@@ -189,6 +196,8 @@ $$
 6. **Diagnostics**: Post-normalization linearity in quiet periods, fit residuals, and parameter stability under window perturbations serve as internal checks that depletion normalization is valid and assumptions are met.
 
 ## 2. Methods
+
+While mortality is used as the primary example throughout this section, KCOR applies to any irreversible event process. The methodological framework is event-agnostic; mortality serves as a concrete illustration because it is objectively defined and reliably recorded in many administrative datasets.
 
 Table @tbl:notation defines the notation used throughout the Methods section.
 
@@ -961,7 +970,7 @@ Although this paper focuses on all-cause mortality, KCOR is applicable to other 
 ## 5. Limitations
 
 - **Model dependence**: Normalization relies on the adequacy of the gamma-frailty model and the baseline-shape assumption during the quiet window.
-- **Relation to existing non-PH methods**: KCOR is complementary to time-varying Cox, flexible parametric, additive hazards, and MSM approaches; these methods address different estimands and identification strategies, whereas KCOR targets depletion-geometry normalization under minimal-data constraints (see §1.3a).
+- **Relation to existing non-PH methods**: KCOR is complementary to time-varying Cox, flexible parametric, additive hazards, and MSM approaches; these methods address different estimands and identification strategies, whereas KCOR targets depletion-geometry normalization under minimal-data constraints (see §1.3.1).
 - **θ estimation is data-driven**: KCOR does not impose θ = 0 for any cohort. The frequent observation that fitted frailty variance estimates collapse toward zero for vaccinated cohorts is a data-driven result of the frailty fit and should not be interpreted as an assumption of homogeneity.
 - **Sparse events**: When event counts are small, hazard estimation and parameter fitting can be unstable.
 - **Contamination of quiet periods**: External shocks (e.g., epidemic waves) overlapping the quiet window can bias selection-parameter estimation.
@@ -1048,7 +1057,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks HART group chair Dr. Clare Craig for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks James Lyons-Weiler and Dr. Clare Craig for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 
 ## References
