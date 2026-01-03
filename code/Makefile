@@ -9,9 +9,9 @@ RECORDS_CSV      = ../data/$(DATASET)/records.csv
 # Optional KRF input produced by dataset converters
 RECORDS_KRF      = ../data/$(DATASET)/krf.csv
 # Raw Czech CSV (compressed asset) — used only for datasets that ship this file
-RAW_CSV_GZ       = ../data/$(DATASET)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gzip
-# Keep the same base name when unzipped (…csv.gzip -> …csv)
-RAW_CSV          = $(RAW_CSV_GZ:.gzip=)
+RAW_CSV_GZ       = ../data/$(DATASET)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gz
+# Keep the same base name when unzipped (…csv.gz -> …csv)
+RAW_CSV          = $(RAW_CSV_GZ:.gz=)
 # Always target the standardized records.csv as input; provide a single rule to build it
 INPUT_DATA       = $(RECORDS_CSV)
 CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
@@ -62,7 +62,7 @@ $(RECORDS_CSV): | ../data/$(DATASET)
 	    gzip -dc "$(RAW_CSV_GZ)" > "$(RAW_CSV)"; \
 	  fi; \
 	  echo "Using raw CSV as standardized input (dataset ships Czech-format raw file)"; \
-	  cp "$(RAW_CSV)" "$(RECORDS_CSV)"; \
+	  mv "$(RAW_CSV)" "$(RECORDS_CSV)"; \
 	else \
 	  echo "ERROR: No input found. Provide $(RECORDS_KRF) or $(RAW_CSV_GZ)."; \
 	  exit 1; \
