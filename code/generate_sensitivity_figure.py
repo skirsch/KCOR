@@ -91,6 +91,30 @@ def plot_sensitivity_heatmaps(
     elif n_cols == 1:
         axes = axes.reshape(-1, 1)
     
+    # Compute unified color scale across all panels
+    all_values = []
+    for key, data in results.items():
+        df = data['df']
+        values = df.values.flatten()
+        values = values[~np.isnan(values)]
+        all_values.extend(values)
+    
+    if len(all_values) > 0:
+        global_vmin = min(all_values)
+        global_vmax = max(all_values)
+        # Center colormap at 1.0, symmetric around 1.0
+        if global_vmin < 1.0 < global_vmax:
+            max_dev = max(abs(global_vmin - 1.0), abs(global_vmax - 1.0))
+            unified_vmin = 1.0 - max_dev
+            unified_vmax = 1.0 + max_dev
+        else:
+            unified_vmin = global_vmin
+            unified_vmax = global_vmax
+    else:
+        unified_vmin = 0.95
+        unified_vmax = 1.05
+    
+    # Plot heatmaps with unified color scale
     for idx, (key, data) in enumerate(results.items()):
         row = idx // n_cols
         col = idx % n_cols
@@ -98,35 +122,60 @@ def plot_sensitivity_heatmaps(
         
         df = data['df']
         
-        # Create heatmap
-        # Use diverging colormap centered at 1.0
-        vmin = df.min().min()
-        vmax = df.max().max()
-        
-        # Center colormap at 1.0
-        vcenter = 1.0
-        if vmin < 1.0 < vmax:
-            # Symmetric around 1.0
-            max_dev = max(abs(vmin - 1.0), abs(vmax - 1.0))
-            vmin = 1.0 - max_dev
-            vmax = 1.0 + max_dev
+        # Use unified color scale for all panels
+        # Only show colorbar on the last panel
+        cbar = (idx == n_grids - 1)
         
         sns.heatmap(
             df, 
             ax=ax, 
             cmap='RdBu_r',
             center=1.0,
-            vmin=vmin,
-            vmax=vmax,
+            vmin=unified_vmin,
+            vmax=unified_vmax,
             annot=True,
             fmt='.3f',
-            annot_kws={'size': 7},
-            cbar_kws={'label': 'KCOR'},
+            annot_kws={'size': 10},
+            cbar=cbar,
+            cbar_kws={'label': 'KCOR(t) value', 'shrink': 0.8} if cbar else None,
         )
         
-        ax.set_title(key, fontsize=10)
-        ax.set_xlabel('Quiet-start offset (weeks)')
-        ax.set_ylabel('Baseline weeks')
+        ax.set_title(key, fontsize=12, fontweight='bold')
+        ax.set_xlabel('Quiet-window start offset (weeks)', fontsize=12)
+        ax.set_ylabel('Baseline weeks', fontsize=12)
+        ax.tick_params(labelsize=10)
+        
+        # Simplify x-axis labels: convert "offset_-12w" format to "-12, -8, -4, 0, +4, +8, +12"
+        # Get current tick labels and convert them
+        x_tick_labels = ax.get_xticklabels()
+        new_x_labels = []
+        for label in x_tick_labels:
+            text = label.get_text()
+            # Extract numeric value from column names like "offset_-12w"
+            if 'offset_' in text and 'w' in text:
+                # Extract number from "offset_-12w" format
+                num_str = text.replace('offset_', '').replace('w', '')
+                try:
+                    num = int(num_str)
+                    # Format: negative numbers as "-12", zero as "0", positive as "+4"
+                    if num > 0:
+                        new_x_labels.append(f'+{num}')
+                    else:
+                        new_x_labels.append(str(num))
+                except ValueError:
+                    new_x_labels.append(text)
+            else:
+                # Already in a different format, try to parse as number
+                try:
+                    num = int(text.replace('+', ''))
+                    if num > 0:
+                        new_x_labels.append(f'+{num}')
+                    else:
+                        new_x_labels.append(str(num))
+                except ValueError:
+                    new_x_labels.append(text)
+        
+        ax.set_xticklabels(new_x_labels)
     
     # Hide unused axes
     for idx in range(n_grids, n_rows * n_cols):
@@ -134,8 +183,21 @@ def plot_sensitivity_heatmaps(
         col = idx % n_cols
         axes[row, col].set_visible(False)
     
+    # Add legend explaining axes (add as text annotation)
+    # Place legend in the first subplot's corner
+    if n_grids > 0:
+        first_ax = axes[0, 0] if n_rows > 1 else axes[0]
+        legend_text = (
+            'X-axis: Quiet-window start offset (weeks)\n'
+            'Y-axis: Baseline weeks\n'
+            'Color: KCOR(t) value (centered at 1.0)'
+        )
+        first_ax.text(0.02, 0.98, legend_text, transform=first_ax.transAxes,
+                     fontsize=10, verticalalignment='top',
+                     bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
     fig.suptitle('Sensitivity Analysis: KCOR Robustness to Parameter Choices', 
-                 fontsize=12, fontweight='bold')
+                 fontsize=14, fontweight='bold')
     fig.tight_layout()
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)

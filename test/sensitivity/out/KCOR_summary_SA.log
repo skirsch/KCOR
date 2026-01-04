@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v6.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-22 20:15:04
+Analysis Date: 2026-01-04 12:51:06
 Mode: Sensitivity Analysis
 Input File: ../../data/Czech/KCOR_CMR.xlsx
 SA Output File: ../../test/sensitivity/out/KCOR_SA.xlsx
@@ -13,26 +13,64 @@ Configuration Parameters (effective):
   DYNAMIC_HVE_SKIP_WEEKS = 2
   AGE_RANGE             = 10
   YEAR_RANGE            = (1920, 2009)
-  ENROLLMENT_DATES      = ['2021_24']
+  ENROLLMENT_DATES      = None
   DEBUG_VERBOSE         = True
   OVERRIDE_DOSE_PAIRS   = None
   OVERRIDE_YOBS         = None
   KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
   NEGATIVE_CONTROL_MODE = 0
-  KCOR6_QUIET_WINDOW    = 2022-24..2024-16
+  KCOR6_QUIET_WINDOW    = 2023-01..2023-52
   NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)
 ================================================================================
 
+[INFO] Auto-derived enrollment dates from Excel file: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
 [DEBUG] Limiting to age range: 1920-2009
-[DEBUG] Limiting to enrollment dates: ['2021_24']
+[DEBUG] Limiting to enrollment dates: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
 [SA] Starting sensitivity analysis (KCOR6)
-[SA] Cohorts: ['2021_24']
+[SA] Cohorts: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
 [SA] Baseline weeks: [2, 3, 4, 5, 6, 7, 8]
-[SA] Quiet-start offsets (weeks from 2022-24): [-12, -8, -4, 0, 4, 8, 12]
-[SA] Quiet-window end fixed: 2024-16
+[SA] Quiet-start offsets (weeks from 2023-01): [-12, -8, -4, 0, 4, 8, 12]
+[SA] Quiet-window end fixed: 2023-52
+[SA] Processing cohort 2021_13
+[SA] Processing cohort 2021_20
 [SA] Processing cohort 2021_24
-[SA] Creating grid output with 1 cohorts and 3 dose pairs
+[SA] Processing cohort 2021_30
+[SA] Processing cohort 2022_06
+[SA] Processing cohort 2022_26
+[SA] Processing cohort 2022_47
+[SA] Creating grid output with 7 cohorts and 34 dose pairs
+[SA] Wrote grid for 2021_13, dose 1 vs 0 to sheet '2021_13_1_vs_0'
+[SA] Wrote grid for 2021_13, dose 2 vs 0 to sheet '2021_13_2_vs_0'
+[SA] Wrote grid for 2021_13, dose 2 vs 1 to sheet '2021_13_2_vs_1'
+[SA] Wrote grid for 2021_20, dose 1 vs 0 to sheet '2021_20_1_vs_0'
+[SA] Wrote grid for 2021_20, dose 2 vs 0 to sheet '2021_20_2_vs_0'
+[SA] Wrote grid for 2021_20, dose 2 vs 1 to sheet '2021_20_2_vs_1'
 [SA] Wrote grid for 2021_24, dose 1 vs 0 to sheet '2021_24_1_vs_0'
 [SA] Wrote grid for 2021_24, dose 2 vs 0 to sheet '2021_24_2_vs_0'
 [SA] Wrote grid for 2021_24, dose 2 vs 1 to sheet '2021_24_2_vs_1'
+[SA] Wrote grid for 2021_30, dose 1 vs 0 to sheet '2021_30_1_vs_0'
+[SA] Wrote grid for 2021_30, dose 2 vs 0 to sheet '2021_30_2_vs_0'
+[SA] Wrote grid for 2021_30, dose 2 vs 1 to sheet '2021_30_2_vs_1'
+[SA] Wrote grid for 2022_06, dose 1 vs 0 to sheet '2022_06_1_vs_0'
+[SA] Wrote grid for 2022_06, dose 2 vs 0 to sheet '2022_06_2_vs_0'
+[SA] Wrote grid for 2022_06, dose 2 vs 1 to sheet '2022_06_2_vs_1'
+[SA] Wrote grid for 2022_06, dose 3 vs 0 to sheet '2022_06_3_vs_0'
+[SA] Wrote grid for 2022_06, dose 3 vs 1 to sheet '2022_06_3_vs_1'
+[SA] Wrote grid for 2022_06, dose 3 vs 2 to sheet '2022_06_3_vs_2'
+[SA] Wrote grid for 2022_26, dose 1 vs 0 to sheet '2022_26_1_vs_0'
+[SA] Wrote grid for 2022_26, dose 2 vs 0 to sheet '2022_26_2_vs_0'
+[SA] Wrote grid for 2022_26, dose 2 vs 1 to sheet '2022_26_2_vs_1'
+[SA] Wrote grid for 2022_26, dose 3 vs 0 to sheet '2022_26_3_vs_0'
+[SA] Wrote grid for 2022_26, dose 3 vs 1 to sheet '2022_26_3_vs_1'
+[SA] Wrote grid for 2022_26, dose 3 vs 2 to sheet '2022_26_3_vs_2'
+[SA] Wrote grid for 2022_47, dose 1 vs 0 to sheet '2022_47_1_vs_0'
+[SA] Wrote grid for 2022_47, dose 2 vs 0 to sheet '2022_47_2_vs_0'
+[SA] Wrote grid for 2022_47, dose 2 vs 1 to sheet '2022_47_2_vs_1'
+[SA] Wrote grid for 2022_47, dose 3 vs 0 to sheet '2022_47_3_vs_0'
+[SA] Wrote grid for 2022_47, dose 3 vs 1 to sheet '2022_47_3_vs_1'
+[SA] Wrote grid for 2022_47, dose 3 vs 2 to sheet '2022_47_3_vs_2'
+[SA] Wrote grid for 2022_47, dose 4 vs 0 to sheet '2022_47_4_vs_0'
+[SA] Wrote grid for 2022_47, dose 4 vs 1 to sheet '2022_47_4_vs_1'
+[SA] Wrote grid for 2022_47, dose 4 vs 2 to sheet '2022_47_4_vs_2'
+[SA] Wrote grid for 2022_47, dose 4 vs 3 to sheet '2022_47_4_vs_3'
 [SA] Wrote sensitivity analysis grids to ../../test/sensitivity/out/KCOR_SA.xlsx

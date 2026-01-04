@@ -858,36 +858,54 @@ Output:
 git clone https://github.com/skirsch/KCOR
 cd KCOR
 
-# Install dependencies
-pip install pandas numpy openpyxl
+# Install dependencies (creates virtual environment and installs from requirements.txt)
+make install
 
-# That's it — Czech data is included under data/Czech. Run:
-make
+# Run the main KCOR analysis
+make KCOR
 ```
+
+**Note:** The `make install` command creates a Python virtual environment (`.venv`) and installs all required dependencies. The `make KCOR` command runs the main analysis pipeline on the default dataset (Czech). Czech data is included under `data/Czech/`.
 
 ## 🚀 Usage
 
 ### Quick Start
 
-#### Using Make (Cross-Platform)
-Root Makefile orchestrates both the KCOR pipeline and the validation suite.
+#### Running the Main Analysis
+
+To run the main KCOR analysis:
+
 ```bash
-# From repo root
-make                    # runs analysis (run) + validation + tests
-make run                # main KCOR pipeline
+# Step 1: Install dependencies (creates virtual environment)
+make install
+
+# Step 2: Run the main KCOR analysis
+make KCOR
+```
+
+This will:
+1. Create a Python virtual environment (`.venv`) if it doesn't exist
+2. Install all dependencies from `requirements.txt`
+3. Run the KCOR analysis pipeline on the default dataset (Czech)
+
+#### Other Make Targets
+
+```bash
+# Additional analysis options
+make                    # runs analysis + validation + tests
+make KCOR_variable      # variable-cohort aggregation
 make ts                 # time series analysis (KCOR_ts)
 make validation         # DS-CMRR + KM validation
 make test               # negative-control and sensitivity tests (see test/)
 
 # Dataset targeting (default DATASET=Czech)
-make DATASET=Czech
-make run DATASET=USA
-make ts DATASET=Czech
+make KCOR DATASET=Czech
+make KCOR DATASET=japan
 make sensitivity DATASET=Czech
 ```
 
 Notes:
-- `make run` delegates to `code/Makefile KCOR`.
+- `make KCOR` delegates to `code/Makefile KCOR` and uses the virtual environment automatically.
 - `make validation` delegates to `validation/DS-CMRR/Makefile run`.
 - Subdirectory Makefiles remain runnable directly; use `make -C <dir> <target>`.
 
@@ -983,6 +1001,8 @@ $$
 - **Post-enrollment cohort definition**: After enrollment, cohorts are **fixed** (intent-to-treat style). Post-enrollment vaccinations do not change cohort membership; only deaths reduce `Alive`.
 
 - **Analysis start in KCOR**: `code/KCOR.py` filters each enrollment sheet to `DateDied >= enrollmentWeekStart`, so only post-enrollment weeks contribute to KCOR.
+
+**Reproducibility.** Reproduce all figures and tables with: `make paper`.
 
 If your reproduction differs, check these toggles first:
 - ISO-week to Monday mapping (`YYYY-WW-1`) matches

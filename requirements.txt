@@ -11,6 +11,7 @@ xlsxwriter>=3.0.0
 statsmodels>=0.13.0
 scipy>=1.7.0
 cvxpy>=1.2.0  # Optional: Only needed for legacy fit_quadratic_quantile (not used in v5.1+ with slope7)
+lifelines>=0.27.0  # For Cox regression comparisons in rollout simulation
 
 # Plotting and visualization
 matplotlib>=3.5.0

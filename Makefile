@@ -24,7 +24,7 @@ PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures help
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -151,6 +151,18 @@ cox-bias-figures: $(VENV_PYTHON)
 copy-cox-bias-figures: $(VENV_PYTHON)
 	$(MAKE) -C test/sim_grid copy-cox-bias-figures PYTHON=$(abspath $(VENV_PYTHON))
 
+# Skip-weeks sensitivity figure
+skip-weeks: $(VENV_PYTHON)
+	$(MAKE) -C test/sim_grid skip-weeks PYTHON=$(abspath $(VENV_PYTHON))
+
+# Cohort size sensitivity analysis
+cohort-size: $(VENV_PYTHON)
+	$(MAKE) -C test/sim_grid cohort-size PYTHON=$(abspath $(VENV_PYTHON))
+
+# Rollout design-mimic simulation
+rollout: $(VENV_PYTHON)
+	$(MAKE) -C test/sim_grid rollout PYTHON=$(abspath $(VENV_PYTHON))
+
 clean:
 	-$(MAKE) -C $(CODE_DIR) clean DATASET=$(DATASET)
 	-$(MAKE) -C $(VALIDATION_DSCMRR_DIR) clean DATASET=$(DATASET)
@@ -174,6 +186,10 @@ sensitivity:
 #   make paper
 #   make paper PAPER_MD=paper_v7.md PAPER_DOCX=paper_v7.docx
 paper: $(PAPER_DIR)/$(PAPER_DOCX) $(PAPER_DIR)/$(PAPER_PDF)
+	@echo "Copying paper files to website..."
+	@scp $(PAPER_DIR)/$(PAPER_DOCX) truenas:/mnt/main/www/skirsch.com/covid/KCOR
+	@scp $(PAPER_DIR)/$(PAPER_PDF) truenas:/mnt/main/www/skirsch.com/covid/KCOR/KCOR.pdf
+	@echo "Paper files copied to website."
 
 paper-docx: $(PAPER_DIR)/$(PAPER_DOCX)
 paper-pdf: $(PAPER_DIR)/$(PAPER_PDF)
@@ -291,6 +307,9 @@ help:
 	@echo "  cox-bias        - Run Cox bias demonstration simulation (test/sim_grid)"
 	@echo "  cox-bias-figures - Generate Cox bias demonstration figures"
 	@echo "  copy-cox-bias-figures - Copy Cox bias figures to preprint directory"
+	@echo "  skip-weeks      - Generate skip-weeks sensitivity figure"
+	@echo "  cohort-size     - Run cohort size sensitivity analysis"
+	@echo "  rollout         - Run rollout design-mimic simulation"
 	@echo ""
 	@echo "Sensitivity quick-test examples (optional overrides):"
 	@echo "  make sensitivity DATASET=Czech SA_COHORTS=2022_06 SA_DOSE_PAIRS=1,0 SA_BASELINE_WEEKS=4 SA_QUIET_START_OFFSETS=0"

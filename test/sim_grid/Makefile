@@ -46,9 +46,9 @@ COX_BIAS_RESULTS := $(OUT_DIR)/cox_bias_results.csv
 FIG_COX_BIAS_HR := $(OUT_DIR)/fig_cox_bias_hr_vs_theta.png
 FIG_COX_BIAS_KCOR := $(OUT_DIR)/fig_cox_bias_kcor_vs_theta.png
 
-.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures cox-bias cox-bias-figures copy-cox-bias-figures
+.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout
 
-all: copy-figures copy-s7-figures copy-cox-bias-figures
+all: copy-figures copy-s7-figures copy-cox-bias-figures skip-weeks cohort-size rollout
 
 # Generate simulation data and run KCOR fitting
 $(SIM_RESULTS) $(SIM_DIAGNOSTICS): $(CODE_DIR)/generate_sim_grid.py
@@ -127,6 +127,38 @@ cox-bias: $(COX_BIAS_RESULTS)
 
 cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)
 	@echo "Generated Cox bias figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)"
+
+# Skip-weeks sensitivity figure
+SKIP_WEEKS_FIG := $(OUT_DIR)/fig_skip_weeks_sensitivity.png
+
+$(SKIP_WEEKS_FIG): $(CODE_DIR)/generate_skip_weeks_sensitivity.py
+	@mkdir -p $(OUT_DIR)
+	$(PY) $(CODE_DIR)/generate_skip_weeks_sensitivity.py --output-figure $(SKIP_WEEKS_FIG)
+
+skip-weeks: $(SKIP_WEEKS_FIG)
+	@mkdir -p $(FIG_DIR)
+	cp $(SKIP_WEEKS_FIG) $(FIG_DIR)/fig_skip_weeks_sensitivity.png
+	@echo "Generated and copied skip-weeks sensitivity figure"
+
+# Cohort size sensitivity analysis
+COHORT_SIZE_RESULTS := $(OUT_DIR)/cohort_size_sensitivity.csv
+
+$(COHORT_SIZE_RESULTS): $(CODE_DIR)/generate_cohort_size_sim.py
+	@mkdir -p $(OUT_DIR)
+	$(PY) $(CODE_DIR)/generate_cohort_size_sim.py --output-results $(COHORT_SIZE_RESULTS)
+
+cohort-size: $(COHORT_SIZE_RESULTS)
+	@echo "Generated cohort size sensitivity analysis"
+
+# Rollout design-mimic simulation
+ROLLOUT_RESULTS := $(OUT_DIR)/rollout_sim_results.csv
+
+$(ROLLOUT_RESULTS): $(CODE_DIR)/generate_rollout_sim.py
+	@mkdir -p $(OUT_DIR)
+	$(PY) $(CODE_DIR)/generate_rollout_sim.py --output-results $(ROLLOUT_RESULTS)
+
+rollout: $(ROLLOUT_RESULTS)
+	@echo "Generated rollout design-mimic simulation"
 
 generate: $(SIM_RESULTS)
 	@echo "Generated simulation data and results"
