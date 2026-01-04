@@ -803,6 +803,12 @@ def hazard_from_mr_improved(mr: np.ndarray) -> np.ndarray:
 KCOR6_QUIET_START_ISO = "2022-24"
 KCOR6_QUIET_END_ISO = "2024-16"
 
+# changed on 1/3/2026 to use a 1 year quiet window so it doesn't
+# look cherry picked
+KCOR6_QUIET_START_ISO = "2023-01"
+KCOR6_QUIET_END_ISO = "2023-52"
+
+
 # Numerical threshold for theta -> 0 limits
 KCOR6_THETA_EPS = 1e-10
 
