@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v6.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2025-12-26 11:27:19
+Analysis Date: 2026-01-03 17:25:15
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -18,7 +18,7 @@ Configuration Parameters (effective):
   OVERRIDE_YOBS         = None
   KCOR_REPORTING_DATE   = {'2021-13': '2022-12-31', '2021_13': '2022-12-31', '2021-20': '2022-12-31', '2021_20': '2022-12-31', '2021_24': '2022-12-31', '2022_06': '2022-12-31', '2022_47': '2023-12-31'}
   NEGATIVE_CONTROL_MODE = 0
-  KCOR6_QUIET_WINDOW    = 2022-24..2024-16
+  KCOR6_QUIET_WINDOW    = 2023-01..2023-52
   NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)
 ================================================================================
 
@@ -1010,7 +1010,7 @@ M/P by decades (Dose 4)
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
-[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2025-12-26 11:32:08
+[Done] Wrote 51247 rows to ../data/Czech/KCOR.xlsx at 2026-01-03 17:30:15
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 40 summary rows
   - 2021_20: 3 dose combinations, 40 summary rows
