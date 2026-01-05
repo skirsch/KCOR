@@ -878,6 +878,8 @@ Applying KCOR to this setting removes curvature attributable to depletion and yi
 
 An applied illustration using Czech national records is provided in the Supplement to demonstrate end-to-end use of KCOR on administrative data; the primary validation in the main text is based on synthetic and empirical control experiments designed to probe failure modes.
 
+As a validation check, adequacy of the gamma-frailty normalization was assessed using quiet-window fit diagnostics, including the estimated frailty variance, residual dispersion, maximum deviation from linearity, and residual drift per year. For the all-ages cohort—which represents the most heterogeneous and challenging case—these diagnostics showed minimal residual curvature and negligible drift, indicating that gamma frailty adequately explains the observed hazard curvature during the quiet window. Full diagnostic outputs for all cohorts are reported in KCOR_summary.xlsx.
+
 ## 4. Discussion
 
 In this discussion, KCOR is understood as a normalization-and-comparison framework designed to remove selection-induced depletion curvature in cumulative-hazard space and then report a cumulative cohort contrast (KCOR). It does not claim to identify a treatment-specific causal effect under arbitrary baseline and time-varying confounding, and it should be interpreted in conjunction with prespecified controls, diagnostics, and sensitivity analyses.
