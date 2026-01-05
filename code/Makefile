@@ -85,9 +85,9 @@ CMR_from_krf: | ../data/$(DATASET)
 CMR: $(CMR_OUTPUT)
 
 # Monte Carlo mode - generates bootstrap samples
-MC_ITERATIONS ?= 100
+MC_ITERATIONS ?= 4
 # Monte Carlo enrollment cohort (ISO week label; accepts YYYY_WW or YYYY-WW)
-MC_ENROLLMENT_DATE ?= 2022_06
+MC_ENROLLMENT_DATE ?= 2021_24
 MC_ENROLLMENT_DATE_SAFE := $(subst -,_,$(MC_ENROLLMENT_DATE))
 MC_STAMP := ../data/$(DATASET)/.kcor_mc_$(MC_ENROLLMENT_DATE_SAFE)_$(MC_ITERATIONS).stamp
 TMP_MC := /tmp/KCOR_CMR_MC.$(DATASET).xlsx

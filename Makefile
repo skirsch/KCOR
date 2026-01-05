@@ -30,9 +30,9 @@ PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 DATASET ?= Czech
 
 # Monte Carlo iterations (override on CLI: make monte_carlo MC_ITERATIONS=50)
-MC_ITERATIONS ?= 100
+MC_ITERATIONS ?= 4
 # Monte Carlo enrollment cohort (ISO week label; accepts YYYY_WW or YYYY-WW)
-MC_ENROLLMENT_DATE ?= 2022_06
+MC_ENROLLMENT_DATE ?= 2021_24
 
 # Virtual environment path
 VENV_DIR := .venv
@@ -295,7 +295,7 @@ help:
 	@echo "  KCOR            - Run main KCOR pipeline (code/)"
 	@echo "  CMR             - Run only CMR aggregation step (code/)"
 	@echo "  CMR_from_krf    - Adapt KRF CSV to Czech-like and run CMR (code/)"
-	@echo "  monte_carlo     - Run Monte Carlo bootstrap sampling (100 iterations by default, override with MC_ITERATIONS=N)"
+	@echo "  monte_carlo     - Run Monte Carlo bootstrap sampling (4 iterations by default, override with MC_ITERATIONS=N)"
 	@echo "  convert         - Run dataset converter (data/$(DATASET)/)"
 	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
 	@echo "  km              - Run only Kaplan–Meier validation"
@@ -335,8 +335,8 @@ help:
 	@echo ""
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
-	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 25)"
-	@echo "  MC_ENROLLMENT_DATE=<YYYY_WW> - (Monte Carlo) Enrollment cohort used for MC CMR + analysis (default: 2022_06)"
+	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 4)"
+	@echo "  MC_ENROLLMENT_DATE=<YYYY_WW> - (Monte Carlo) Enrollment cohort used for MC CMR + analysis (default: 2021_24)"
 	@echo "  SA_COHORTS=<list>     - (Sensitivity) Restrict cohorts, e.g. 2022_06 or 2021_24,2022_06"
 	@echo "  SA_DOSE_PAIRS=<pairs> - (Sensitivity) Restrict dose pairs, e.g. 1,0 or 1,0;2,0"
 	@echo "  SA_BASELINE_WEEKS=<vals> - (Sensitivity) Baseline weeks list/range, e.g. 4,6,8 or 2,8,1"

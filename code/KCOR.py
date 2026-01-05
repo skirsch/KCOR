@@ -824,8 +824,9 @@ def iso_label_to_int(iso_label: str) -> int:
     return iso_to_int(int(y), int(w))
 
 
-KCOR6_QUIET_START_INT = iso_to_int(2022, 24)
-KCOR6_QUIET_END_INT = iso_to_int(2024, 16)
+# Compute INT values from ISO strings (so they stay in sync)
+KCOR6_QUIET_START_INT = iso_label_to_int(KCOR6_QUIET_START_ISO)
+KCOR6_QUIET_END_INT = iso_label_to_int(KCOR6_QUIET_END_ISO)
 
 
 def in_quiet_window(iso_year: int, iso_week: int) -> bool:
@@ -2543,7 +2544,7 @@ def _parse_enrollment_date(enrollment_date_str):
     enrollment_date = first_monday + timedelta(weeks=week-1)
     return enrollment_date
 
-def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kcor6_params_map=None):
+def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kcor6_params_map=None, iteration_number=None):
     """
     Build per-age KCOR rows for all PAIRS and ASMR pooled rows (YearOfBirth=0).
     Assumptions:
@@ -2556,38 +2557,90 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
       - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
     """
     out_rows = []
-    # Fast access by (age,dose)
-    by_age_dose = {(y,d): g.sort_values("DateDied")
-                   for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
+    # Fast access by (age,dose) - in MC mode, also group by mc_id to preserve separate iterations
+    groupby_cols = ["YearOfBirth","Dose"]
+    if MONTE_CARLO_MODE and "mc_id" in df.columns:
+        groupby_cols = ["mc_id"] + groupby_cols
+    # CRITICAL FIX: When grouping by mc_id, pandas puts it in the groupby key, not as a column
+    # We need to extract it from the key and add it back as a column so it's preserved
+    by_age_dose = {}
+    for key, g in df.groupby(groupby_cols, sort=False):
+        g_sorted = g.sort_values("DateDied").copy()
+        # If we grouped by mc_id, extract it from the key and add it as a column
+        if MONTE_CARLO_MODE and "mc_id" in groupby_cols:
+            # Key is a tuple: (mc_id, YearOfBirth, Dose) when grouping by ["mc_id", "YearOfBirth", "Dose"]
+            if isinstance(key, tuple) and len(key) == len(groupby_cols):
+                mc_id_from_key = key[0]  # First element is mc_id
+                g_sorted["mc_id"] = mc_id_from_key
+        by_age_dose[key] = g_sorted
     
     # Scale factors logic removed (FINAL_KCOR_* deprecated)
 
     # -------- per-age KCOR rows --------
     dose_pairs = get_dose_pairs(sheet_name)
-    for yob in df["YearOfBirth"].unique():
+    # In Monte Carlo mode, process all YearOfBirth values (don't filter by OVERRIDE_YOBS)
+    yob_values = df["YearOfBirth"].unique()
+    if OVERRIDE_YOBS is not None and not MONTE_CARLO_MODE:
+        yob_values = [yob for yob in yob_values if yob in OVERRIDE_YOBS]
+    for yob in yob_values:
         for num, den in dose_pairs:
             # Apply debug dose pair filter
             if DEBUG_DOSE_PAIR_ONLY and (num, den) != DEBUG_DOSE_PAIR_ONLY:
                 continue
-            gv = by_age_dose.get((yob, num))
-            gu = by_age_dose.get((yob, den))
-            if gv is None or gu is None:
-                continue
-            # Ensure we have exactly one row per date by taking the first occurrence
-            gv_unique = gv[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","slope","scale_factor","MR_smooth","t","Alive","Dead"]].drop_duplicates(subset=["DateDied"], keep="first")
+            # In MC mode, process each mc_id separately
+            mc_id_values_for_yob = [None]
+            if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                mc_id_values_for_yob = sorted(df["mc_id"].dropna().unique().tolist())
+                if not mc_id_values_for_yob:
+                    mc_id_values_for_yob = [None]
             
-            merged = pd.merge(
-                gv_unique,
-                gu_unique,
-                on="DateDied", suffixes=("_num","_den"), how="inner"
-            ).sort_values("DateDied")
-            if merged.empty:
-                continue
-            # Ensure standalone frame (not a slice) to avoid chained-assignment warnings downstream
-            merged = merged.reset_index(drop=True).copy(deep=True)
+            for mc_id_val_yob in mc_id_values_for_yob:
+                # Get the right group key based on whether we're grouping by mc_id
+                if mc_id_val_yob is not None and MONTE_CARLO_MODE and "mc_id" in df.columns:
+                    key_v = (mc_id_val_yob, yob, num)
+                    key_u = (mc_id_val_yob, yob, den)
+                else:
+                    key_v = (yob, num)
+                    key_u = (yob, den)
                 
-            # Debug: Print detailed info for each date
+                gv = by_age_dose.get(key_v)
+                gu = by_age_dose.get(key_u)
+                if gv is None or gu is None:
+                    continue
+                # Ensure we have exactly one row per date by taking the first occurrence
+                # Include mc_id if present (Monte Carlo mode)
+                base_cols = ["DateDied","ISOweekDied","MR","MR_adj","CH","CH_actual","cumD_adj","cumD_unadj","hazard_raw","slope","scale_factor","MR_smooth","t","Alive","Dead"]
+                has_mc_id = "mc_id" in gv.columns
+                # Check if mc_id should be present
+                if MONTE_CARLO_MODE and mc_id_val_yob is not None:
+                    if not has_mc_id:
+                        dual_print(f"[WARNING] mc_id_val_yob={mc_id_val_yob} but gv.columns doesn't have mc_id. gv.columns: {list(gv.columns)}")
+                if has_mc_id:
+                    base_cols = ["mc_id"] + base_cols
+                    # In MC mode, preserve mc_id when dropping duplicates (each iteration has its own rows)
+                    gv_unique = gv[base_cols].drop_duplicates(subset=["DateDied", "mc_id"], keep="first")
+                    gu_unique = gu[base_cols].drop_duplicates(subset=["DateDied", "mc_id"], keep="first")
+                else:
+                    gv_unique = gv[base_cols].drop_duplicates(subset=["DateDied"], keep="first")
+                    gu_unique = gu[base_cols].drop_duplicates(subset=["DateDied"], keep="first")
+                
+                # Merge on DateDied (and mc_id if present)
+                merge_on = ["DateDied"]
+                if has_mc_id:
+                    merge_on = ["DateDied", "mc_id"]
+                merged = pd.merge(
+                    gv_unique,
+                    gu_unique,
+                    on=merge_on, suffixes=("_num","_den"), how="inner"
+                ).sort_values(["DateDied"] + (["mc_id"] if has_mc_id else []))
+                if MONTE_CARLO_MODE and mc_id_val_yob is not None and "mc_id" not in merged.columns:
+                    dual_print(f"[WARNING] mc_id missing from merged after merge! merge_on={merge_on}, has_mc_id={has_mc_id}")
+                if merged.empty:
+                    continue
+                # Ensure standalone frame (not a slice) to avoid chained-assignment warnings downstream
+                merged = merged.reset_index(drop=True).copy(deep=True)
+                
+                # Debug: Print detailed info for each date
             # if DEBUG_VERBOSE:
             #     print(f"\n[DEBUG] Age {yob}, Doses {num} vs {den}")
             #     print(f"  Number of merged rows: {len(merged)}")
@@ -2610,25 +2663,25 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             #         print(f"      Dose {den}: MR={row['MR_den']:.6f}, MR_adj={row['MR_adj_den']:.6f}, CH={row['CH_den']:.6f}, cumD_adj={row['cumD_adj_den']:.6f}")
             #     print()
 
-            # Handle division by zero or very small denominators
-            # Note: CH_num and CH_den are cumulative hazards, not mortality rates
-            valid_denom = merged["CH_den"] > EPS
-            merged["K_raw"] = np.where(valid_denom,
-                                      merged["CH_num"] / merged["CH_den"], 
-                                      np.nan)
-            
-            # Get baseline K_raw value at effective normalization week (KCOR_NORMALIZATION_WEEKS weeks after accumulation starts)
-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-            baseline_k_raw = merged["K_raw"].iloc[t0_idx]
-            if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
-                baseline_k_raw = 1.0
-            
-            # Compute final KCOR values normalized to baseline (no extra scaling)
-            merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
-                                      merged["K_raw"] / baseline_k_raw,
-                                     np.nan)
-            
-            # Debug: Check for suspiciously large KCOR values
+                # Handle division by zero or very small denominators
+                # Note: CH_num and CH_den are cumulative hazards, not mortality rates
+                valid_denom = merged["CH_den"] > EPS
+                merged["K_raw"] = np.where(valid_denom,
+                                          merged["CH_num"] / merged["CH_den"], 
+                                          np.nan)
+                
+                # Get baseline K_raw value at effective normalization week (KCOR_NORMALIZATION_WEEKS weeks after accumulation starts)
+                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                baseline_k_raw = merged["K_raw"].iloc[t0_idx]
+                if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+                    baseline_k_raw = 1.0
+                
+                # Compute final KCOR values normalized to baseline (no extra scaling)
+                merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
+                                          merged["K_raw"] / baseline_k_raw,
+                                         np.nan)
+                
+                # Debug: Check for suspiciously large KCOR values
             # if merged["KCOR"].max() > 10:
             #     print(f"\n[DEBUG] Large KCOR detected in {sheet_name}, Age {yob}, Doses {num} vs {den}")
             #     print(f"  CH_num range: {merged['CH_num'].min():.6f} to {merged['CH_num'].max():.6f}")
@@ -2641,75 +2694,178 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             #         print(f"    Date: {row['DateDied']}, CH_num: {row['CH_num']:.6f}, CH_den: {row['CH_den']:.6f}, K_raw: {row['K_raw']:.6f}, KCOR: {row['KCOR']:.6f}")
             #     print()
 
-            # KCOR 95% CI using post-anchor increments (Nelson–Aalen), adjusted for slope-normalization
-            # Anchor index
-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-            # Post-anchor cumulative hazard increments
-            dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
-            dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
-            # Nelson–Aalen incremental variances using raw hazard
-            var_inc_num = (merged.get("Dead_num", 0.0).astype(float) / (merged.get("Alive_num", 0.0).astype(float) + EPS)**2)
-            var_inc_den = (merged.get("Dead_den", 0.0).astype(float) / (merged.get("Alive_den", 0.0).astype(float) + EPS)**2)
-            # Cumulative from anchor forward (exclude anchor point)
-            var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
-            var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
-            var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
-            var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
-            # SE on log scale
-            denom_num = np.maximum(np.abs(dCH_num.values), EPS)
-            denom_den = np.maximum(np.abs(dCH_den.values), EPS)
-            se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
-            merged["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
+                # KCOR 95% CI using post-anchor increments (Nelson–Aalen), adjusted for slope-normalization
+                # Anchor index
+                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                # Post-anchor cumulative hazard increments
+                dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
+                dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
+                # Nelson–Aalen incremental variances using raw hazard
+                var_inc_num = (merged.get("Dead_num", 0.0).astype(float) / (merged.get("Alive_num", 0.0).astype(float) + EPS)**2)
+                var_inc_den = (merged.get("Dead_den", 0.0).astype(float) / (merged.get("Alive_den", 0.0).astype(float) + EPS)**2)
+                # Cumulative from anchor forward (exclude anchor point)
+                var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
+                var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
+                var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+                var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+                # SE on log scale
+                denom_num = np.maximum(np.abs(dCH_num.values), EPS)
+                denom_den = np.maximum(np.abs(dCH_den.values), EPS)
+                se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
+                merged["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
             
-            # Calculate 95% CI bounds on log scale, then exponentiate, with clipping applied at creation
-            # CI = exp(log(KCOR) ± 1.96 * SE_logKCOR)
-            _ci_lower_raw = merged["KCOR"] * safe_exp(-1.96 * merged["SE_logKCOR"])
-            _ci_upper_raw = merged["KCOR"] * safe_exp(1.96 * merged["SE_logKCOR"])
-            merged["CI_lower"] = np.clip(_ci_lower_raw, 0, merged["KCOR"] * 10)
-            merged["CI_upper"] = np.clip(_ci_upper_raw, merged["KCOR"] * 0.1, merged["KCOR"] * 10)
-            # Blank CI for all weeks up to and including baseline (t <= t0)
-            merged.loc[merged.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
+                # Calculate 95% CI bounds on log scale, then exponentiate, with clipping applied at creation
+                # CI = exp(log(KCOR) ± 1.96 * SE_logKCOR)
+                _ci_lower_raw = merged["KCOR"] * safe_exp(-1.96 * merged["SE_logKCOR"])
+                _ci_upper_raw = merged["KCOR"] * safe_exp(1.96 * merged["SE_logKCOR"])
+                merged["CI_lower"] = np.clip(_ci_lower_raw, 0, merged["KCOR"] * 10)
+                merged["CI_upper"] = np.clip(_ci_upper_raw, merged["KCOR"] * 0.1, merged["KCOR"] * 10)
+                # Blank CI for all weeks up to and including baseline (t <= t0)
+                merged.loc[merged.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
 
-            # Build explicit hazard columns: hazard, cum_hazard, adj_cum_hazard
-            merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
-            merged["hazard_den"] = merged.get("hazard_raw_den", np.nan)
-            merged["cum_hazard_num"] = merged.get("CH_actual_num", np.nan)
-            merged["cum_hazard_den"] = merged.get("CH_actual_den", np.nan)
-            merged["adj_cum_hazard_num"] = merged.get("CH_num", np.nan)
-            merged["adj_cum_hazard_den"] = merged.get("CH_den", np.nan)
+                # Build explicit hazard columns: hazard, cum_hazard, adj_cum_hazard
+                merged["hazard_num"] = merged.get("hazard_raw_num", np.nan)
+                merged["hazard_den"] = merged.get("hazard_raw_den", np.nan)
+                merged["cum_hazard_num"] = merged.get("CH_actual_num", np.nan)
+                merged["cum_hazard_den"] = merged.get("CH_actual_den", np.nan)
+                merged["adj_cum_hazard_num"] = merged.get("CH_num", np.nan)
+                merged["adj_cum_hazard_den"] = merged.get("CH_den", np.nan)
             
-            # Check if either numerator or denominator cohort had abnormal fit
-            abnormal_fit_num = False
-            abnormal_fit_den = False
-            if slope6_params_map is not None:
-                params_num = slope6_params_map.get((sheet_name, int(yob), int(num)), {})
-                params_den = slope6_params_map.get((sheet_name, int(yob), int(den)), {})
-                if isinstance(params_num, dict):
-                    abnormal_fit_num = params_num.get("abnormal_fit", False)
-                if isinstance(params_den, dict):
-                    abnormal_fit_den = params_den.get("abnormal_fit", False)
-            merged["abnormal_fit"] = abnormal_fit_num or abnormal_fit_den
+                # Check if either numerator or denominator cohort had abnormal fit
+                abnormal_fit_num = False
+                abnormal_fit_den = False
+                if slope6_params_map is not None:
+                    params_num = slope6_params_map.get((sheet_name, int(yob), int(num)), {})
+                    params_den = slope6_params_map.get((sheet_name, int(yob), int(den)), {})
+                    if isinstance(params_num, dict):
+                        abnormal_fit_num = params_num.get("abnormal_fit", False)
+                    if isinstance(params_den, dict):
+                        abnormal_fit_den = params_den.get("abnormal_fit", False)
+                # Set abnormal_fit: blank if normal fit, True if abnormal
+                abnormal_fit_value = abnormal_fit_num or abnormal_fit_den
+                merged["abnormal_fit"] = True if abnormal_fit_value else ""  # Blank for normal fit
             
-            # Output columns: hazard=raw, cum_hazard=raw cumulative, adj_cum_hazard=adjusted cumulative
-            out = merged[["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
-                          "hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
-                          "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den","abnormal_fit"]].copy()
+                # Extract theta_num and theta_den from KCOR6 params map
+                theta_num = np.nan
+                theta_den = np.nan
+                if kcor6_params_map is not None:
+                    # In Monte Carlo mode, include mc_id in the lookup key
+                    if MONTE_CARLO_MODE and mc_id_val_yob is not None:
+                        params_num_kcor6 = kcor6_params_map.get((sheet_name, int(mc_id_val_yob), int(yob), int(num)), {})
+                        params_den_kcor6 = kcor6_params_map.get((sheet_name, int(mc_id_val_yob), int(yob), int(den)), {})
+                    else:
+                        params_num_kcor6 = kcor6_params_map.get((sheet_name, int(yob), int(num)), {})
+                        params_den_kcor6 = kcor6_params_map.get((sheet_name, int(yob), int(den)), {})
+                    if isinstance(params_num_kcor6, dict):
+                        theta_num_val = params_num_kcor6.get("theta_hat", np.nan)
+                        if np.isfinite(theta_num_val):
+                            theta_num = float(theta_num_val)
+                    if isinstance(params_den_kcor6, dict):
+                        theta_den_val = params_den_kcor6.get("theta_hat", np.nan)
+                        if np.isfinite(theta_den_val):
+                            theta_den = float(theta_den_val)
+                merged["theta_num"] = theta_num
+                merged["theta_den"] = theta_den
+            
+                # Output columns: hazard=raw, cum_hazard=raw cumulative, adj_cum_hazard=adjusted cumulative
+                # Include mc_id if present (Monte Carlo mode)
+                output_cols = ["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
+                              "hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
+                              "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den",
+                              "theta_num","theta_den","abnormal_fit"]
+                # CRITICAL FIX: Always include mc_id if it exists in merged, regardless of has_mc_id flag
+                # (has_mc_id might be False if gv/gu don't have it, but merged might have it from the merge)
+                if "mc_id" in merged.columns:
+                    output_cols = ["mc_id"] + output_cols
+                elif has_mc_id:
+                    # mc_id should be in merged but isn't - this is a bug, but try to preserve from gv
+                    if "mc_id" in gv.columns:
+                        # Try to add mc_id from gv (should be same for all rows in this group)
+                        merged["mc_id"] = gv["mc_id"].iloc[0] if len(gv) > 0 else None
+                        output_cols = ["mc_id"] + output_cols
+                out = merged[output_cols].copy()
 
-            # MR fields are written raw; no display scaling
-            # Remove redundant merged suffix columns like *_den copies of ISOweek
-            if "ISOweekDied_den" in out.columns and "ISOweekDied" not in out.columns:
-                out.rename(columns={"ISOweekDied_num":"ISOweekDied"}, inplace=True)
-                out.drop(columns=[c for c in out.columns if c.endswith("_den") and c.startswith("ISOweekDied")], inplace=True)
-            out["EnrollmentDate"] = sheet_name
-            out["YearOfBirth"] = yob
-            out["Dose_num"] = num
-            out["Dose_den"] = den
-            out.rename(columns={"ISOweekDied_num":"ISOweekDied",
-                                "DateDied":"Date"}, inplace=True)
-            # CI_95 column removed as it's redundant with CI_lower and CI_upper columns
-            # Convert Date to standard pandas date format (same as debug sheet)
-            out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
-            out_rows.append(out)
+                # MR fields are written raw; no display scaling
+                # Remove redundant merged suffix columns like *_den copies of ISOweek
+                if "ISOweekDied_den" in out.columns and "ISOweekDied" not in out.columns:
+                    out.rename(columns={"ISOweekDied_num":"ISOweekDied"}, inplace=True)
+                    out.drop(columns=[c for c in out.columns if c.endswith("_den") and c.startswith("ISOweekDied")], inplace=True)
+                out["EnrollmentDate"] = sheet_name
+                out["YearOfBirth"] = yob
+                out["Dose_num"] = num
+                out["Dose_den"] = den
+                out.rename(columns={"ISOweekDied_num":"ISOweekDied",
+                                    "DateDied":"Date"}, inplace=True)
+                # CI_95 column removed as it's redundant with CI_lower and CI_upper columns
+                # Convert Date to standard pandas date format (same as debug sheet)
+                out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+            
+                # Add mc_id column in MC mode (iteration number)
+                # In MC mode, mc_id should already be in the dataframe from KCOR_CMR.py
+                # If not present, try to derive it from iteration_number parameter or sheet_name
+                if MONTE_CARLO_MODE:
+                    # CRITICAL FIX: Check if mc_id column exists AND has valid values
+                    # If column exists but is empty/NaN, we need to set it from mc_id_val_yob
+                    mc_id_needs_setting = False
+                    if "mc_id" not in out.columns:
+                        mc_id_needs_setting = True
+                    elif out["mc_id"].isna().all() or len(out["mc_id"].dropna().unique()) == 0:
+                        # Column exists but is empty - need to set it
+                        mc_id_needs_setting = True
+                    
+                    if mc_id_needs_setting:
+                        # Try to use mc_id_val_yob first (most reliable)
+                        if mc_id_val_yob is not None:
+                            out["mc_id"] = mc_id_val_yob
+                        elif iteration_number is not None:
+                            # Use explicitly passed iteration number
+                            try:
+                                out["mc_id"] = int(iteration_number)
+                            except (ValueError, TypeError):
+                                out["mc_id"] = None
+                        else:
+                            # Fallback: try to parse sheet_name as integer (iteration number)
+                            try:
+                                if sheet_name.isdigit():
+                                    out["mc_id"] = int(sheet_name)
+                                else:
+                                    out["mc_id"] = None
+                            except (ValueError, AttributeError):
+                                out["mc_id"] = None
+                    # If mc_id already exists with valid values, keep it (it was set by KCOR_CMR.py)
+                else:
+                    out["mc_id"] = None
+            
+                # Rename columns to match requested format and add missing columns
+                # CH_num = cum_hazard_num, CH_den = cum_hazard_den
+                # hazard_adj_num = adj_cum_hazard_num, hazard_adj_den = adj_cum_hazard_den
+                # t = t_num (same as t_den)
+                out.rename(columns={
+                    "cum_hazard_num": "CH_num",
+                    "cum_hazard_den": "CH_den",
+                    "adj_cum_hazard_num": "hazard_adj_num",
+                    "adj_cum_hazard_den": "hazard_adj_den",
+                    "t_num": "t"
+                }, inplace=True)
+            
+                # Reorder columns to match requested order:
+                # mc_id, ISOweekDied, KCOR, CI_lower, CI_upper, EnrollmentDate, YearOfBirth, 
+                # Dose_num, Dose_den, theta_num, theta_den, CH_num, CH_den, 
+                # hazard_num, hazard_den, hazard_adj_num, hazard_adj_den, t, abnormal_fit
+                column_order = [
+                    "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+                    "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                    "theta_num", "theta_den", "CH_num", "CH_den",
+                    "hazard_num", "hazard_den", "hazard_adj_num", "hazard_adj_den",
+                    "t", "abnormal_fit"
+                ]
+                # Only include columns that exist
+                existing_cols = [c for c in column_order if c in out.columns]
+                # Add any remaining columns that weren't in the order list
+                remaining_cols = [c for c in out.columns if c not in column_order]
+                out = out[existing_cols + remaining_cols]
+            
+                out_rows.append(out)
 
     # -------- ASMR pooled rows (YearOfBirth = 0) --------
     # Expected-deaths weights using pooled quiet baseline window
@@ -2767,51 +2923,67 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     pooled_rows = []
     all_dates = sorted(df_sorted["DateDied"].unique())
 
+    # In MC mode, process each mc_id separately to preserve separate iterations
+    mc_id_values = [None]
+    if MONTE_CARLO_MODE and "mc_id" in df_sorted.columns:
+        mc_id_values = sorted(df_sorted["mc_id"].dropna().unique().tolist())
+        if not mc_id_values:
+            mc_id_values = [None]
+
     dose_pairs = get_dose_pairs(sheet_name)
     for num, den in dose_pairs:
-        # Per-age anchors at t0 for this (num,den)
-        anchors = {}
-        for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
-            gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
-            gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
-            if gvn.empty or gdn.empty:
-                continue
-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-            c1 = gvn["CH"].iloc[t0_idx]
-            c0 = gdn["CH"].iloc[t0_idx]
-            if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
-                anchors[yob] = c1 / c0
+        # Process each mc_id separately in MC mode
+        for mc_id_val in mc_id_values:
+            # Filter to this iteration's data
+            df_for_iteration = df_sorted
+            if mc_id_val is not None:
+                df_for_iteration = df_sorted[df_sorted["mc_id"] == mc_id_val]
+                if df_for_iteration.empty:
+                    continue
+            
+            # Per-age anchors at t0 for this (num,den) and iteration
+            anchors = {}
+            for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
+                gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
+                gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
+                if gvn.empty or gdn.empty:
+                    continue
+                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                c1 = gvn["CH"].iloc[t0_idx]
+                c0 = gdn["CH"].iloc[t0_idx]
+                if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
+                    anchors[yob] = c1 / c0
 
-        for dt in all_dates:
-            logs, wts, var_terms = [], [], []
-            for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
-                if yob not in anchors:
-                    continue
-                gv = g_age[(g_age["Dose"]==num) & (g_age["DateDied"]==dt)]
-                gu = g_age[(g_age["Dose"]==den) & (g_age["DateDied"]==dt)]
-                if gv.empty or gu.empty:
-                    continue
-                # Take first occurrence if multiple rows per date
-                gv = gv.iloc[[0]]
-                gu = gu.iloc[[0]]
-                denom_ch = gu["CH"].values[0]
-                if denom_ch > EPS:
-                    k = (gv["CH"].values[0]) / denom_ch
-                else:
-                    continue  # Skip this comparison if denominator is too small
-                k0 = anchors[yob]
-                if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
-                    continue
-                kstar = k / k0
-                
-                # ASMR pooled values should not be scaled; use raw kstar
-                
-                logs.append(safe_log(kstar))
-                wts.append(weights.get(yob, 0.0))
-                Dv = float(gv["cumD_adj"].values[0])
-                Du = float(gu["cumD_adj"].values[0])
-                if Dv > EPS and Du > EPS:
-                    var_terms.append((weights.get(yob,0.0)**2) * (1.0/Dv + 1.0/Du))
+            for dt in all_dates:
+                logs, wts, var_terms = [], [], []
+                for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
+                    if yob not in anchors:
+                        continue
+                    gv = g_age[(g_age["Dose"]==num) & (g_age["DateDied"]==dt)]
+                    gu = g_age[(g_age["Dose"]==den) & (g_age["DateDied"]==dt)]
+                    if gv.empty or gu.empty:
+                        continue
+                    # Take first occurrence if multiple rows per date
+                    gv = gv.iloc[[0]]
+                    gu = gu.iloc[[0]]
+                    denom_ch = gu["CH"].values[0]
+                    if denom_ch > EPS:
+                        k = (gv["CH"].values[0]) / denom_ch
+                    else:
+                        continue  # Skip this comparison if denominator is too small
+                    k0 = anchors[yob]
+                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
+                        continue
+                    kstar = k / k0
+                    
+                    # ASMR pooled values should not be scaled; use raw kstar
+                    
+                    logs.append(safe_log(kstar))
+                    wts.append(weights.get(yob, 0.0))
+                    Dv = float(gv["cumD_adj"].values[0])
+                    Du = float(gu["cumD_adj"].values[0])
+                    if Dv > EPS and Du > EPS:
+                        var_terms.append((weights.get(yob,0.0)**2) * (1.0/Dv + 1.0/Du))
 
             # Pool only over valid, finite entries; ignore NaNs/inf entirely
             if logs and sum(wts) > 0:
@@ -2832,7 +3004,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 
                 # Pooled CI via weighted aggregation of per-age log-variance using post-anchor ΔCH (Nelson–Aalen)
                 var_terms = []
-                for yob, g_age in df_sorted.groupby("YearOfBirth", sort=False):
+                for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
                     if yob not in anchors:
                         continue
                     gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
@@ -2897,6 +3069,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
                             abnormal_fit_pooled = True
                             break
+                # Set abnormal_fit: blank if normal fit, True if abnormal
+                abnormal_fit_pooled_value = True if abnormal_fit_pooled else ""
                 
                 # Debug: Check for suspiciously large pooled KCOR values
                 if Kpool > 10:
@@ -2907,26 +3081,50 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     print(f"  Weights: {[f'{w:.6f}' for w in wts[:5]]}...")
                     print(f"  Final logK: {logK:.6f}")
                     print()
+                # Extract theta_num and theta_den from KCOR6 params map for pooled rows
+                theta_num_pooled = np.nan
+                theta_den_pooled = np.nan
+                if kcor6_params_map is not None:
+                    # For pooled rows, we need to aggregate theta across age groups
+                    # Use weighted average or take from highest-weight age group
+                    # For simplicity, use theta from first contributing age group
+                    for yob_check in df_sorted["YearOfBirth"].unique():
+                        if yob_check not in anchors:
+                            continue
+                        params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                        params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                        if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled):
+                            theta_num_val = params_num_check.get("theta_hat", np.nan)
+                            if np.isfinite(theta_num_val):
+                                theta_num_pooled = float(theta_num_val)
+                        if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled):
+                            theta_den_val = params_den_check.get("theta_hat", np.nan)
+                            if np.isfinite(theta_den_val):
+                                theta_den_pooled = float(theta_den_val)
+                        if not (np.isnan(theta_num_pooled) or np.isnan(theta_den_pooled)):
+                            break
+                
+                # mc_id_val is already set from the outer loop
                 pooled_rows.append({
-                    "EnrollmentDate": sheet_name,
+                    "mc_id": mc_id_val,
                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
-                    "Date": pd.to_datetime(dt).date(),  # Convert to standard pandas date format (same as debug sheet)
-                    "YearOfBirth": 0,      # ASMR pooled row
-                    "Dose_num": num,
-                    "Dose_den": den,
                     "KCOR": Kpool,
                     "CI_lower": CI_lower,
                     "CI_upper": CI_upper,
-                    # Keep schema consistent with dose_pairs rows; pooled ASMR has no per-age hazards/CH
+                    "EnrollmentDate": sheet_name,
+                    "YearOfBirth": 0,      # ASMR pooled row
+                    "Dose_num": num,
+                    "Dose_den": den,
+                    "theta_num": theta_num_pooled,
+                    "theta_den": theta_den_pooled,
+                    "CH_num": np.nan,  # Pooled ASMR has no per-dose CH
+                    "CH_den": np.nan,
                     "hazard_num": np.nan,
-                    "cum_hazard_num": np.nan,
-                    "adj_cum_hazard_num": np.nan,
-                    "t_num": np.nan,
                     "hazard_den": np.nan,
-                    "cum_hazard_den": np.nan,
-                    "adj_cum_hazard_den": np.nan,
-                    "t_den": np.nan,
-                    "abnormal_fit": abnormal_fit_pooled
+                    "hazard_adj_num": np.nan,
+                    "hazard_adj_den": np.nan,
+                    "t": np.nan,  # Use t_num (same as t_den)
+                    "abnormal_fit": abnormal_fit_pooled_value
                 })
 
     # -------- All Ages rows (YearOfBirth = -2) --------
@@ -2936,8 +3134,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     df_sorted = df.sort_values("DateDied")
     
     # Aggregate across all YearOfBirth values for each Dose and DateDied
+    # In MC mode, also group by mc_id to preserve separate iterations
     # First, aggregate basic counts
-    all_ages_agg = df_sorted.groupby(["Dose", "DateDied"]).agg({
+    groupby_cols = ["Dose", "DateDied"]
+    if MONTE_CARLO_MODE and "mc_id" in df_sorted.columns:
+        groupby_cols = ["mc_id"] + groupby_cols
+    all_ages_agg = df_sorted.groupby(groupby_cols).agg({
         "ISOweekDied": "first",
         "Alive": "sum",
         "Dead": "sum",
@@ -2948,8 +3150,14 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0, all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS), np.nan)
     
     # Sort and compute time index
-    all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
-    all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
+    # In MC mode, group by mc_id as well to preserve separate iterations
+    sort_cols = ["Dose", "DateDied"]
+    groupby_for_t = ["Dose"]
+    if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+        sort_cols = ["mc_id"] + sort_cols
+        groupby_for_t = ["mc_id", "Dose"]
+    all_ages_agg = all_ages_agg.sort_values(sort_cols)
+    all_ages_agg["t"] = all_ages_agg.groupby(groupby_for_t).cumcount().astype(float)
     
     # All-ages cohort is computed by aggregating across YearOfBirth buckets.
     # In KCOR 6.0, this uses gamma-frailty inversion; however, for compatibility (SA mode / rollback),
@@ -2964,40 +3172,95 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         all_ages_agg["CH"] = 0.0
         all_ages_agg["CH_actual"] = 0.0
 
-        for dose, g in all_ages_agg.groupby("Dose", sort=False):
-            g_sorted = g.sort_values("DateDied")
-            idx = g_sorted.index
-            t_vals = g_sorted["t"].to_numpy(dtype=float)
-            h_raw = np.nan_to_num(
-                g_sorted["hazard_raw"].to_numpy(dtype=float),
-                nan=0.0,
-                posinf=0.0,
-                neginf=0.0,
-            )
+        # In MC mode, group by mc_id as well to preserve separate iterations
+        if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+            groupby_for_ch = ["mc_id", "Dose"]
+            for dose_key, g in all_ages_agg.groupby(groupby_for_ch, sort=False):
+                # Extract dose number (last element when grouped by mc_id and Dose)
+                dose = dose_key[-1]
+                g_sorted = g.sort_values("DateDied")
+                idx = g_sorted.index
+                t_vals = g_sorted["t"].to_numpy(dtype=float)
+                h_raw = np.nan_to_num(
+                    g_sorted["hazard_raw"].to_numpy(dtype=float),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
 
-            # Observed cumulative hazard H_obs (skip-week rule)
-            h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
-            H_obs = np.cumsum(h_eff_obs)
+                # Observed cumulative hazard H_obs (skip-week rule)
+                h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+                H_obs = np.cumsum(h_eff_obs)
 
-            # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
-            theta = 0.0
-            params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
-            if isinstance(params, dict):
-                th = params.get("theta_hat", np.nan)
-                ok = bool(params.get("success", False))
-                if ok and np.isfinite(th) and float(th) >= 0.0:
-                    theta = float(th)
+                # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
+                theta = 0.0
+                params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
+                if isinstance(params, dict):
+                    th = params.get("theta_hat", np.nan)
+                    ok = bool(params.get("success", False))
+                    if ok and np.isfinite(th) and float(th) >= 0.0:
+                        theta = float(th)
 
-            # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
-            H0 = invert_gamma_frailty(H_obs, theta)
-            h0_inc = np.diff(H0, prepend=0.0)
-            h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
-            h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
-            h0_inc = np.clip(h0_inc, 0.0, None)
+                # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
+                H0 = invert_gamma_frailty(H_obs, theta)
+                h0_inc = np.diff(H0, prepend=0.0)
+                h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+                h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+                h0_inc = np.clip(h0_inc, 0.0, None)
 
-            all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
-            all_ages_agg.loc[idx, "CH"] = H0
-            all_ages_agg.loc[idx, "CH_actual"] = H_obs
+                all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
+                all_ages_agg.loc[idx, "CH"] = H0
+                all_ages_agg.loc[idx, "CH_actual"] = H_obs
+        else:
+            # CRITICAL FIX: In MC mode, still need to group by mc_id even if not in columns check failed
+            # This handles the case where mc_id exists but wasn't detected
+            groupby_for_ch = "Dose"
+            if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+                groupby_for_ch = ["mc_id", "Dose"]
+            for dose_key, g in all_ages_agg.groupby(groupby_for_ch, sort=False):
+                # Extract dose and mc_id from key
+                if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns and isinstance(dose_key, tuple):
+                    mc_id_all_ages_else, dose = dose_key[0], dose_key[1]
+                else:
+                    dose = dose_key if not isinstance(dose_key, tuple) else dose_key[0]
+                    mc_id_all_ages_else = None
+                g_sorted = g.sort_values("DateDied")
+                idx = g_sorted.index
+                t_vals = g_sorted["t"].to_numpy(dtype=float)
+                h_raw = np.nan_to_num(
+                    g_sorted["hazard_raw"].to_numpy(dtype=float),
+                    nan=0.0,
+                    posinf=0.0,
+                    neginf=0.0,
+                )
+
+                # Observed cumulative hazard H_obs (skip-week rule)
+                h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+                H_obs = np.cumsum(h_eff_obs)
+
+                # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
+                # In Monte Carlo mode, include mc_id in the lookup key
+                theta = 0.0
+                if MONTE_CARLO_MODE and mc_id_all_ages_else is not None:
+                    params = kcor6_params_map.get((sheet_name, int(mc_id_all_ages_else), -2, int(dose)), None)
+                else:
+                    params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
+                if isinstance(params, dict):
+                    th = params.get("theta_hat", np.nan)
+                    ok = bool(params.get("success", False))
+                    if ok and np.isfinite(th) and float(th) >= 0.0:
+                        theta = float(th)
+
+                # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
+                H0 = invert_gamma_frailty(H_obs, theta)
+                h0_inc = np.diff(H0, prepend=0.0)
+                h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+                h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+                h0_inc = np.clip(h0_inc, 0.0, None)
+
+                all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
+                all_ages_agg.loc[idx, "CH"] = H0
+                all_ages_agg.loc[idx, "CH_actual"] = H_obs
 
         # For schema compatibility: slope is not defined in KCOR6; scale_factor is per-week ratio hazard_adj/hazard_raw.
         all_ages_agg["slope"] = 0.0
@@ -3041,7 +3304,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
 
         all_ages_agg["hazard_adj"] = all_ages_agg.apply(apply_slope8_norm_all_ages, axis=1)
         all_ages_agg["hazard_adj"] = np.clip(all_ages_agg["hazard_adj"].to_numpy(dtype=float), 0.0, None)
-        all_ages_agg["CH_actual"] = all_ages_agg.groupby("Dose")["MR_adj"].cumsum()
+        # In MC mode, group by mc_id as well for cumsum
+        groupby_for_ch_actual = ["Dose"]
+        if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+            groupby_for_ch_actual = ["mc_id", "Dose"]
+        all_ages_agg["CH_actual"] = all_ages_agg.groupby(groupby_for_ch_actual)["MR_adj"].cumsum()
 
         # Add slope and scale_factor for consistency (using parameters from slope6_params_map)
         def get_slope_for_all_ages(row):
@@ -3088,122 +3355,201 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         all_ages_agg["scale_factor"] = all_ages_agg.apply(get_scale_factor_for_all_ages, axis=1)
 
         # Legacy CH from slope-normalized hazards (skip-week rule)
+        # In MC mode, group by mc_id as well for cumsum
+        groupby_for_ch_legacy = ["Dose"]
+        if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+            groupby_for_ch_legacy = ["mc_id", "Dose"]
         all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
-        all_ages_agg["CH"] = all_ages_agg.groupby("Dose")["hazard_eff"].cumsum()
+        all_ages_agg["CH"] = all_ages_agg.groupby(groupby_for_ch_legacy)["hazard_eff"].cumsum()
 
     # hazard_eff is needed for downstream cumhaz consistency and some debug sheets
     if "hazard_eff" not in all_ages_agg.columns:
         all_ages_agg["hazard_eff"] = np.where(all_ages_agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg["hazard_adj"], 0.0)
-    all_ages_agg["cumPT"] = all_ages_agg.groupby("Dose")["PT"].cumsum()
+    # In MC mode, group by mc_id as well for cumsum operations
+    groupby_for_cumsum = ["Dose"]
+    if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+        groupby_for_cumsum = ["mc_id", "Dose"]
+    all_ages_agg["cumPT"] = all_ages_agg.groupby(groupby_for_cumsum)["PT"].cumsum()
     all_ages_agg["cumD_adj"] = all_ages_agg["CH"] * all_ages_agg["cumPT"]
-    all_ages_agg["cumD_unadj"] = all_ages_agg.groupby("Dose")["Dead"].cumsum()
+    all_ages_agg["cumD_unadj"] = all_ages_agg.groupby(groupby_for_cumsum)["Dead"].cumsum()
     
     # Now compute KCOR for all-ages aggregated data
     dose_pairs = get_dose_pairs(sheet_name)
-    for num, den in dose_pairs:
-        # Apply debug dose pair filter
-        if DEBUG_DOSE_PAIR_ONLY and (num, den) != DEBUG_DOSE_PAIR_ONLY:
-            continue
+    # CRITICAL FIX: In Monte Carlo mode, process each mc_id separately for All Ages
+    mc_id_values_all_ages = [None]
+    if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+        mc_id_values_all_ages = sorted(all_ages_agg["mc_id"].dropna().unique().tolist())
+        if not mc_id_values_all_ages:
+            mc_id_values_all_ages = [None]
+    
+    for mc_id_all_ages_val in mc_id_values_all_ages:
+        for num, den in dose_pairs:
+            # Apply debug dose pair filter
+            if DEBUG_DOSE_PAIR_ONLY and (num, den) != DEBUG_DOSE_PAIR_ONLY:
+                continue
+                
+            # Filter by dose and mc_id (if in Monte Carlo mode)
+            gv_all = all_ages_agg[all_ages_agg["Dose"] == num].sort_values("DateDied")
+            gu_all = all_ages_agg[all_ages_agg["Dose"] == den].sort_values("DateDied")
+            if MONTE_CARLO_MODE and mc_id_all_ages_val is not None and "mc_id" in all_ages_agg.columns:
+                gv_all = gv_all[gv_all["mc_id"] == mc_id_all_ages_val]
+                gu_all = gu_all[gu_all["mc_id"] == mc_id_all_ages_val]
             
-        gv_all = all_ages_agg[all_ages_agg["Dose"] == num].sort_values("DateDied")
-        gu_all = all_ages_agg[all_ages_agg["Dose"] == den].sort_values("DateDied")
-        
-        if gv_all.empty or gu_all.empty:
-            continue
-        
-        # Merge numerator and denominator
-        merged_all = pd.merge(
-            gv_all[["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj", 
-                   "hazard_raw", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
-            gu_all[["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj",
-                   "hazard_raw", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]],
-            on="DateDied", suffixes=("_num", "_den"), how="inner"
-        ).sort_values("DateDied")
-        
-        if merged_all.empty:
-            continue
-        
-        merged_all = merged_all.reset_index(drop=True).copy(deep=True)
-        
-        # Compute KCOR same way as per-age
-        valid_denom = merged_all["CH_den"] > EPS
-        merged_all["K_raw"] = np.where(valid_denom,
-                                      merged_all["CH_num"] / merged_all["CH_den"], 
-                                      np.nan)
-        
-        # Get baseline K_raw value at effective normalization week
-        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-        baseline_k_raw = merged_all["K_raw"].iloc[t0_idx]
-        if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
-            baseline_k_raw = 1.0
-        
-        # Compute final KCOR values normalized to baseline
-        merged_all["KCOR"] = np.where(np.isfinite(merged_all["K_raw"]), 
-                                      merged_all["K_raw"] / baseline_k_raw,
-                                     np.nan)
-        
-        # KCOR 95% CI using post-anchor increments (Nelson–Aalen)
-        t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-        dCH_num = merged_all["CH_num"] - float(merged_all["CH_num"].iloc[t0_idx])
-        dCH_den = merged_all["CH_den"] - float(merged_all["CH_den"].iloc[t0_idx])
-        # Nelson–Aalen incremental variances using raw hazard
-        var_inc_num = (merged_all.get("Dead_num", 0.0).astype(float) / (merged_all.get("Alive_num", 0.0).astype(float) + EPS)**2)
-        var_inc_den = (merged_all.get("Dead_den", 0.0).astype(float) / (merged_all.get("Alive_den", 0.0).astype(float) + EPS)**2)
-        var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
-        var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
-        var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
-        var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
-        denom_num = np.maximum(np.abs(dCH_num.values), EPS)
-        denom_den = np.maximum(np.abs(dCH_den.values), EPS)
-        se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
-        merged_all["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
-        
-        # Calculate 95% CI bounds on log scale, then exponentiate
-        _ci_lower_raw = merged_all["KCOR"] * safe_exp(-1.96 * merged_all["SE_logKCOR"])
-        _ci_upper_raw = merged_all["KCOR"] * safe_exp(1.96 * merged_all["SE_logKCOR"])
-        merged_all["CI_lower"] = np.clip(_ci_lower_raw, 0, merged_all["KCOR"] * 10)
-        merged_all["CI_upper"] = np.clip(_ci_upper_raw, merged_all["KCOR"] * 0.1, merged_all["KCOR"] * 10)
-        merged_all.loc[merged_all.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
-        
-        # Check if either numerator or denominator cohort had abnormal fit (for all-ages)
-        abnormal_fit_all_ages = False
-        if slope6_params_map is not None:
-            params_num_all = slope6_params_map.get((sheet_name, -2, int(num)), {})
-            params_den_all = slope6_params_map.get((sheet_name, -2, int(den)), {})
-            if isinstance(params_num_all, dict):
-                abnormal_fit_all_ages = abnormal_fit_all_ages or params_num_all.get("abnormal_fit", False)
-            if isinstance(params_den_all, dict):
-                abnormal_fit_all_ages = abnormal_fit_all_ages or params_den_all.get("abnormal_fit", False)
-        
-        # Build output rows for all-ages: hazard, cum_hazard, adj_cum_hazard
-        for _, row in merged_all.iterrows():
-            all_ages_rows.append({
-                "EnrollmentDate": sheet_name,
+            if gv_all.empty or gu_all.empty:
+                continue
+            
+            # Merge numerator and denominator
+            # Include mc_id in merge if present (Monte Carlo mode)
+            merge_cols_gv = ["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj", 
+                             "hazard_raw", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]
+            merge_cols_gu = ["DateDied", "ISOweekDied", "MR", "MR_adj", "CH", "CH_actual", "cumD_adj", "cumD_unadj",
+                             "hazard_raw", "slope", "scale_factor", "MR_smooth", "t", "Alive", "Dead", "PT"]
+            merge_on = ["DateDied"]
+            if MONTE_CARLO_MODE and "mc_id" in gv_all.columns and "mc_id" in gu_all.columns:
+                merge_cols_gv = ["mc_id"] + merge_cols_gv
+                merge_cols_gu = ["mc_id"] + merge_cols_gu
+                merge_on = ["mc_id", "DateDied"]
+            merged_all = pd.merge(
+                gv_all[merge_cols_gv],
+                gu_all[merge_cols_gu],
+                on=merge_on, suffixes=("_num", "_den"), how="inner"
+            ).sort_values(["DateDied"] + (["mc_id"] if "mc_id" in merge_on else []))
+            
+            if merged_all.empty:
+                continue
+            
+            merged_all = merged_all.reset_index(drop=True).copy(deep=True)
+            
+            # Compute KCOR same way as per-age
+            valid_denom = merged_all["CH_den"] > EPS
+            merged_all["K_raw"] = np.where(valid_denom,
+                                          merged_all["CH_num"] / merged_all["CH_den"], 
+                                          np.nan)
+            
+            # Get baseline K_raw value at effective normalization week
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+            baseline_k_raw = merged_all["K_raw"].iloc[t0_idx]
+            if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+                baseline_k_raw = 1.0
+            
+            # Compute final KCOR values normalized to baseline
+            merged_all["KCOR"] = np.where(np.isfinite(merged_all["K_raw"]), 
+                                          merged_all["K_raw"] / baseline_k_raw,
+                                         np.nan)
+            
+            # KCOR 95% CI using post-anchor increments (Nelson–Aalen)
+            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+            dCH_num = merged_all["CH_num"] - float(merged_all["CH_num"].iloc[t0_idx])
+            dCH_den = merged_all["CH_den"] - float(merged_all["CH_den"].iloc[t0_idx])
+            # Nelson–Aalen incremental variances using raw hazard
+            var_inc_num = (merged_all.get("Dead_num", 0.0).astype(float) / (merged_all.get("Alive_num", 0.0).astype(float) + EPS)**2)
+            var_inc_den = (merged_all.get("Dead_den", 0.0).astype(float) / (merged_all.get("Alive_den", 0.0).astype(float) + EPS)**2)
+            var_cum_num = var_inc_num.cumsum() - float(var_inc_num.iloc[t0_idx])
+            var_cum_den = var_inc_den.cumsum() - float(var_inc_den.iloc[t0_idx])
+            var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+            var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
+            denom_num = np.maximum(np.abs(dCH_num.values), EPS)
+            denom_den = np.maximum(np.abs(dCH_den.values), EPS)
+            se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
+            merged_all["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
+            
+            # Calculate 95% CI bounds on log scale, then exponentiate
+            _ci_lower_raw = merged_all["KCOR"] * safe_exp(-1.96 * merged_all["SE_logKCOR"])
+            _ci_upper_raw = merged_all["KCOR"] * safe_exp(1.96 * merged_all["SE_logKCOR"])
+            merged_all["CI_lower"] = np.clip(_ci_lower_raw, 0, merged_all["KCOR"] * 10)
+            merged_all["CI_upper"] = np.clip(_ci_upper_raw, merged_all["KCOR"] * 0.1, merged_all["KCOR"] * 10)
+            merged_all.loc[merged_all.index <= t0_idx, ["CI_lower", "CI_upper"]] = np.nan
+            
+            # Check if either numerator or denominator cohort had abnormal fit (for all-ages)
+            abnormal_fit_all_ages = False
+            if slope6_params_map is not None:
+                params_num_all = slope6_params_map.get((sheet_name, -2, int(num)), {})
+                params_den_all = slope6_params_map.get((sheet_name, -2, int(den)), {})
+                if isinstance(params_num_all, dict):
+                    abnormal_fit_all_ages = abnormal_fit_all_ages or params_num_all.get("abnormal_fit", False)
+                if isinstance(params_den_all, dict):
+                    abnormal_fit_all_ages = abnormal_fit_all_ages or params_den_all.get("abnormal_fit", False)
+            # Set abnormal_fit: blank if normal fit, True if abnormal
+            abnormal_fit_all_ages_value = True if abnormal_fit_all_ages else ""
+            
+            # Extract theta_num and theta_den from KCOR6 params map for all-ages
+            # In Monte Carlo mode, include mc_id in the lookup key
+            theta_num_all = np.nan
+            theta_den_all = np.nan
+            if kcor6_params_map is not None:
+                if MONTE_CARLO_MODE and mc_id_all_ages_val is not None:
+                    params_num_all_kcor6 = kcor6_params_map.get((sheet_name, int(mc_id_all_ages_val), -2, int(num)), {})
+                    params_den_all_kcor6 = kcor6_params_map.get((sheet_name, int(mc_id_all_ages_val), -2, int(den)), {})
+                else:
+                    params_num_all_kcor6 = kcor6_params_map.get((sheet_name, -2, int(num)), {})
+                    params_den_all_kcor6 = kcor6_params_map.get((sheet_name, -2, int(den)), {})
+                if isinstance(params_num_all_kcor6, dict):
+                    theta_num_val = params_num_all_kcor6.get("theta_hat", np.nan)
+                    if np.isfinite(theta_num_val):
+                        theta_num_all = float(theta_num_val)
+                if isinstance(params_den_all_kcor6, dict):
+                    theta_den_val = params_den_all_kcor6.get("theta_hat", np.nan)
+                    if np.isfinite(theta_den_val):
+                        theta_den_all = float(theta_den_val)
+            
+            # Build output rows for all-ages: hazard, cum_hazard, adj_cum_hazard
+            # Preserve mc_id from merged data if present
+            for _, row in merged_all.iterrows():
+                mc_id_val = None
+                if MONTE_CARLO_MODE and "mc_id" in row:
+                    mc_id_val = row["mc_id"]
+                elif MONTE_CARLO_MODE:
+                    # Fallback: use iteration_number parameter if available
+                    if iteration_number is not None:
+                        try:
+                            mc_id_val = int(iteration_number)
+                        except (ValueError, TypeError):
+                            mc_id_val = None
+                    elif sheet_name.isdigit():
+                        mc_id_val = int(sheet_name)
+                all_ages_rows.append({
+                "mc_id": mc_id_val,
                 "ISOweekDied": row["ISOweekDied_num"],
-                "Date": pd.to_datetime(row["DateDied"]).date(),
-                "YearOfBirth": -2,  # -2 = all ages aggregated
-                "Dose_num": num,
-                "Dose_den": den,
                 "KCOR": row["KCOR"],
                 "CI_lower": row["CI_lower"],
                 "CI_upper": row["CI_upper"],
+                "EnrollmentDate": sheet_name,
+                "YearOfBirth": -2,  # -2 = all ages aggregated
+                "Dose_num": num,
+                "Dose_den": den,
+                "theta_num": theta_num_all,
+                "theta_den": theta_den_all,
+                "CH_num": row["CH_actual_num"],  # CH_num = cum_hazard_num
+                "CH_den": row["CH_actual_den"],  # CH_den = cum_hazard_den
                 "hazard_num": row["hazard_raw_num"],
-                "cum_hazard_num": row["CH_actual_num"],
-                "adj_cum_hazard_num": row["CH_num"],
-                "t_num": row["t_num"],
                 "hazard_den": row["hazard_raw_den"],
-                "cum_hazard_den": row["CH_actual_den"],
-                "adj_cum_hazard_den": row["CH_den"],
-                "t_den": row["t_den"],
-                "abnormal_fit": abnormal_fit_all_ages
+                "hazard_adj_num": row["CH_num"],  # hazard_adj_num = adj_cum_hazard_num
+                "hazard_adj_den": row["CH_den"],  # hazard_adj_den = adj_cum_hazard_den
+                "t": row["t_num"],  # Use t_num (same as t_den)
+                "abnormal_fit": abnormal_fit_all_ages_value
             })
 
     if out_rows or pooled_rows or all_ages_rows:
-        return pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
+        combined = pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
+        # Ensure column order matches requested format
+        column_order = [
+            "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+            "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+            "theta_num", "theta_den", "CH_num", "CH_den",
+            "hazard_num", "hazard_den", "hazard_adj_num", "hazard_adj_den",
+            "t", "abnormal_fit"
+        ]
+        # Only include columns that exist
+        existing_cols = [c for c in column_order if c in combined.columns]
+        # Add any remaining columns that weren't in the order list
+        remaining_cols = [c for c in combined.columns if c not in column_order]
+        return combined[existing_cols + remaining_cols]
     return pd.DataFrame(columns=[
-        "EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den",
-        "KCOR","CI_lower","CI_upper","hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
-        "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den","abnormal_fit"
+        "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+        "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+        "theta_num", "theta_den", "CH_num", "CH_den",
+        "hazard_num", "hazard_den", "hazard_adj_num", "hazard_adj_den",
+        "t", "abnormal_fit"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -3231,39 +3577,75 @@ def build_kcor_o_rows(df, sheet_name):
     df["Dead_adj_o"] = df.apply(apply_death_slope, axis=1)
     
     # Cumulative adjusted deaths per group
-    df["cumD_o"] = df.groupby(["YearOfBirth","Dose"])['Dead_adj_o'].cumsum()
+    # In MC mode, group by mc_id as well to preserve separate iterations
+    groupby_cols_o = ["YearOfBirth","Dose"]
+    if MONTE_CARLO_MODE and "mc_id" in df.columns:
+        groupby_cols_o = ["mc_id"] + groupby_cols_o
+    df["cumD_o"] = df.groupby(groupby_cols_o)['Dead_adj_o'].cumsum()
     
     out_rows = []
-    by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
+    # In MC mode, group by mc_id as well
+    by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(groupby_cols_o, sort=False)}
     dose_pairs = get_dose_pairs(sheet_name)
     for yob in df["YearOfBirth"].unique():
         for num, den in dose_pairs:
-            gv = by_age_dose.get((yob, num))
-            gu = by_age_dose.get((yob, den))
-            if gv is None or gu is None:
-                continue
-            gv_unique = gv[["DateDied","ISOweekDied","cumD_o"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","cumD_o"]].drop_duplicates(subset=["DateDied"], keep="first")
-            merged = pd.merge(gv_unique, gu_unique, on="DateDied", suffixes=("_num","_den"), how="inner").sort_values("DateDied")
-            if merged.empty:
-                continue
-            # Raw ratio of cumulative adjusted deaths
-            valid = merged["cumD_o_den"] > EPS
-            merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
-            # Normalize at anchor week index (effective normalization week or first)
-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-            k0 = merged["K_raw_o"].iloc[t0_idx]
-            if not (np.isfinite(k0) and k0 > EPS):
-                k0 = 1.0
-            merged["KCOR_o"] = np.where(np.isfinite(merged["K_raw_o"]), merged["K_raw_o"] / k0, np.nan)
-            out = merged[["DateDied","ISOweekDied_num","KCOR_o"]].copy()
-            out["EnrollmentDate"] = sheet_name
-            out["YearOfBirth"] = yob
-            out["Dose_num"] = num
-            out["Dose_den"] = den
-            out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
-            out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
-            out_rows.append(out)
+            # In MC mode, need to process each mc_id separately
+            mc_id_values_o = [None]
+            if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                mc_id_values_o = sorted(df["mc_id"].dropna().unique().tolist())
+                if not mc_id_values_o:
+                    mc_id_values_o = [None]
+            
+            for mc_id_val_o in mc_id_values_o:
+                # Get the right group key
+                if mc_id_val_o is not None:
+                    key_v = (mc_id_val_o, yob, num)
+                    key_u = (mc_id_val_o, yob, den)
+                else:
+                    key_v = (yob, num)
+                    key_u = (yob, den)
+                
+                gv = by_age_dose.get(key_v)
+                gu = by_age_dose.get(key_u)
+                if gv is None or gu is None:
+                    continue
+                
+                # Include mc_id in drop_duplicates and merge if present
+                base_cols_gv = ["DateDied","ISOweekDied","cumD_o"]
+                base_cols_gu = ["DateDied","ISOweekDied","cumD_o"]
+                drop_dup_cols = ["DateDied"]
+                merge_on_cols = ["DateDied"]
+                if MONTE_CARLO_MODE and "mc_id" in gv.columns and "mc_id" in gu.columns:
+                    base_cols_gv = ["mc_id"] + base_cols_gv
+                    base_cols_gu = ["mc_id"] + base_cols_gu
+                    drop_dup_cols = ["mc_id", "DateDied"]
+                    merge_on_cols = ["mc_id", "DateDied"]
+                
+                gv_unique = gv[base_cols_gv].drop_duplicates(subset=drop_dup_cols, keep="first")
+                gu_unique = gu[base_cols_gu].drop_duplicates(subset=drop_dup_cols, keep="first")
+                merged = pd.merge(gv_unique, gu_unique, on=merge_on_cols, suffixes=("_num","_den"), how="inner").sort_values(["DateDied"] + (["mc_id"] if "mc_id" in merge_on_cols else []))
+                if merged.empty:
+                    continue
+                # Raw ratio of cumulative adjusted deaths
+                valid = merged["cumD_o_den"] > EPS
+                merged["K_raw_o"] = np.where(valid, merged["cumD_o_num"] / merged["cumD_o_den"], np.nan)
+                # Normalize at anchor week index (effective normalization week or first)
+                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                k0 = merged["K_raw_o"].iloc[t0_idx]
+                if not (np.isfinite(k0) and k0 > EPS):
+                    k0 = 1.0
+                merged["KCOR_o"] = np.where(np.isfinite(merged["K_raw_o"]), merged["K_raw_o"] / k0, np.nan)
+                out_cols = ["DateDied","ISOweekDied_num","KCOR_o"]
+                if MONTE_CARLO_MODE and "mc_id" in merged.columns:
+                    out_cols = ["mc_id"] + out_cols
+                out = merged[out_cols].copy()
+                out["EnrollmentDate"] = sheet_name
+                out["YearOfBirth"] = yob
+                out["Dose_num"] = num
+                out["Dose_den"] = den
+                out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
+                out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+                out_rows.append(out)
     if out_rows:
         return pd.concat(out_rows, ignore_index=True)
     return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR_o"])
@@ -3283,40 +3665,76 @@ def build_kcor_ns_rows(df, sheet_name):
     # Accumulation start consistent with main KCOR path, but using hazard_raw
     df_ns["hazard_eff_ns"] = np.where(df_ns["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df_ns.get("hazard_raw", np.nan), 0.0)
     # Cumulative raw hazard per cohort/dose
-    df_ns["CH_ns"] = df_ns.groupby(["YearOfBirth","Dose"]) ["hazard_eff_ns"].cumsum()
+    # In MC mode, group by mc_id as well to preserve separate iterations
+    groupby_cols_ns = ["YearOfBirth","Dose"]
+    if MONTE_CARLO_MODE and "mc_id" in df_ns.columns:
+        groupby_cols_ns = ["mc_id"] + groupby_cols_ns
+    df_ns["CH_ns"] = df_ns.groupby(groupby_cols_ns)["hazard_eff_ns"].cumsum()
 
     out_rows = []
-    by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df_ns.groupby(["YearOfBirth","Dose"], sort=False)}
+    # Dictionary comprehension handles both 2-tuple (non-MC) and 3-tuple (MC) keys
+    by_age_dose = {key: g.sort_values("DateDied") for key, g in df_ns.groupby(groupby_cols_ns, sort=False)}
     dose_pairs = get_dose_pairs(sheet_name)
     for yob in df_ns["YearOfBirth"].unique():
         for num, den in dose_pairs:
-            gv = by_age_dose.get((yob, num))
-            gu = by_age_dose.get((yob, den))
-            if gv is None or gu is None:
-                continue
-            gv_unique = gv[["DateDied","ISOweekDied","CH_ns"]].drop_duplicates(subset=["DateDied"], keep="first")
-            gu_unique = gu[["DateDied","ISOweekDied","CH_ns"]].drop_duplicates(subset=["DateDied"], keep="first")
-            merged = pd.merge(gv_unique, gu_unique, on="DateDied", suffixes=("_num","_den"), how="inner").sort_values("DateDied")
-            if merged.empty:
-                continue
-            # Raw ratio of cumulative raw hazards
-            valid = merged["CH_ns_den"] > EPS
-            merged["K_raw_ns"] = np.where(valid, merged["CH_ns_num"] / merged["CH_ns_den"], np.nan)
-            # Normalize at anchor index
-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-            k0 = merged["K_raw_ns"].iloc[t0_idx]
-            if not (np.isfinite(k0) and k0 > EPS):
-                k0 = 1.0
-            merged["KCOR_ns"] = np.where(np.isfinite(merged["K_raw_ns"]), merged["K_raw_ns"] / k0, np.nan)
+            # In MC mode, process each mc_id separately
+            mc_id_values_ns = [None]
+            if MONTE_CARLO_MODE and "mc_id" in df_ns.columns:
+                mc_id_values_ns = sorted(df_ns["mc_id"].dropna().unique().tolist())
+                if not mc_id_values_ns:
+                    mc_id_values_ns = [None]
+            
+            for mc_id_val_ns in mc_id_values_ns:
+                # Get the right group key
+                if mc_id_val_ns is not None:
+                    key_v = (mc_id_val_ns, yob, num)
+                    key_u = (mc_id_val_ns, yob, den)
+                else:
+                    key_v = (yob, num)
+                    key_u = (yob, den)
+                
+                gv = by_age_dose.get(key_v)
+                gu = by_age_dose.get(key_u)
+                if gv is None or gu is None:
+                    continue
+                
+                # Include mc_id in drop_duplicates and merge if present
+                base_cols_gv = ["DateDied","ISOweekDied","CH_ns"]
+                base_cols_gu = ["DateDied","ISOweekDied","CH_ns"]
+                drop_dup_cols = ["DateDied"]
+                merge_on_cols = ["DateDied"]
+                if MONTE_CARLO_MODE and "mc_id" in gv.columns and "mc_id" in gu.columns:
+                    base_cols_gv = ["mc_id"] + base_cols_gv
+                    base_cols_gu = ["mc_id"] + base_cols_gu
+                    drop_dup_cols = ["mc_id", "DateDied"]
+                    merge_on_cols = ["mc_id", "DateDied"]
+                
+                gv_unique = gv[base_cols_gv].drop_duplicates(subset=drop_dup_cols, keep="first")
+                gu_unique = gu[base_cols_gu].drop_duplicates(subset=drop_dup_cols, keep="first")
+                merged = pd.merge(gv_unique, gu_unique, on=merge_on_cols, suffixes=("_num","_den"), how="inner").sort_values(["DateDied"] + (["mc_id"] if "mc_id" in merge_on_cols else []))
+                if merged.empty:
+                    continue
+                # Raw ratio of cumulative raw hazards
+                valid = merged["CH_ns_den"] > EPS
+                merged["K_raw_ns"] = np.where(valid, merged["CH_ns_num"] / merged["CH_ns_den"], np.nan)
+                # Normalize at anchor index
+                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                k0 = merged["K_raw_ns"].iloc[t0_idx]
+                if not (np.isfinite(k0) and k0 > EPS):
+                    k0 = 1.0
+                merged["KCOR_ns"] = np.where(np.isfinite(merged["K_raw_ns"]), merged["K_raw_ns"] / k0, np.nan)
 
-            out = merged[["DateDied","ISOweekDied_num","KCOR_ns"]].copy()
-            out["EnrollmentDate"] = sheet_name
-            out["YearOfBirth"] = yob
-            out["Dose_num"] = num
-            out["Dose_den"] = den
-            out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
-            out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
-            out_rows.append(out)
+                out_cols = ["DateDied","ISOweekDied_num","KCOR_ns"]
+                if MONTE_CARLO_MODE and "mc_id" in merged.columns:
+                    out_cols = ["mc_id"] + out_cols
+                out = merged[out_cols].copy()
+                out["EnrollmentDate"] = sheet_name
+                out["YearOfBirth"] = yob
+                out["Dose_num"] = num
+                out["Dose_den"] = den
+                out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
+                out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+                out_rows.append(out)
 
     # -------- All Ages rows (YearOfBirth = -2) for KCOR_ns --------
     # Aggregate all ages together as a single cohort (no age grouping) for non-slope-corrected KCOR
@@ -3605,9 +4023,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     mc_enrollment_label = None
     mc_enrollment_iso = None
     if MONTE_CARLO_MODE:
-        _raw_mc = str(os.environ.get("MC_ENROLLMENT_DATE", "2022_06")).strip()
+        _raw_mc = str(os.environ.get("MC_ENROLLMENT_DATE", "2021_24")).strip()
         if not _raw_mc:
-            _raw_mc = "2022_06"
+            _raw_mc = "2021_24"
         mc_enrollment_label = _raw_mc.replace("-", "_")
         # Normalize/pad week if possible (YYYY_WW)
         try:
@@ -3653,26 +4071,16 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Auto-derive enrollment dates from sheet names if not explicitly set
     if MONTE_CARLO_MODE:
-        # In MC mode, all sheets are iterations (numbered "1", "2", "3", etc.)
-        # Filter out any non-numeric sheets
+        # In MC mode, sheets are named after enrollment dates (e.g., "2021_24")
+        # All iterations for each enrollment date are combined into a single sheet
+        # Filter to enrollment date sheets (exclude summary/MFG sheets)
         enrollment_sheets = [
             name for name in xls.sheet_names 
-            if name.isdigit() or (name.replace('-', '').replace('_', '').isdigit())
+            if not name.endswith('_summary') and '_MFG_' not in name
         ]
-        ENROLLMENT_DATES = sorted(enrollment_sheets, key=lambda x: int(x.replace('-', '').replace('_', '')))  # Sort numerically
-        _mc_iter_env = str(os.environ.get("MC_ITERATIONS", "")).strip()
-        if _mc_iter_env:
-            try:
-                _mc_n = int(_mc_iter_env)
-            except Exception:
-                _mc_n = None
-            if _mc_n is not None and _mc_n > 0:
-                ENROLLMENT_DATES = ENROLLMENT_DATES[:_mc_n]
-                dual_print(f"[INFO] Monte Carlo mode: Found {len(enrollment_sheets)} iteration sheets; processing first {len(ENROLLMENT_DATES)} (MC_ITERATIONS={_mc_n})")
-            else:
-                dual_print(f"[INFO] Monte Carlo mode: Found {len(enrollment_sheets)} iteration sheets; processing {len(ENROLLMENT_DATES)}")
-        else:
-            dual_print(f"[INFO] Monte Carlo mode: Processing {len(ENROLLMENT_DATES)} iterations")
+        ENROLLMENT_DATES = sorted(enrollment_sheets)  # Sort for consistent ordering
+        dual_print(f"[INFO] Monte Carlo mode: Found {len(ENROLLMENT_DATES)} enrollment date sheet(s): {ENROLLMENT_DATES}")
+        # Note: Each sheet contains all iterations combined (with mc_id column)
     elif ENROLLMENT_DATES is None:
         # Filter out summary and MFG sheets (keep only main enrollment date sheets)
         enrollment_sheets = [
@@ -3688,7 +4096,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         start_year, end_year = YEAR_RANGE
         dual_print(f"[DEBUG] Limiting to age range: {start_year}-{end_year}")
     if ENROLLMENT_DATES:
-        dual_print(f"[DEBUG] Limiting to enrollment dates: {ENROLLMENT_DATES}")
+        # In Monte Carlo mode, show the actual enrollment date instead of iteration numbers
+        if MONTE_CARLO_MODE:
+            enrollment_display = mc_enrollment_label or "2022_06"
+            # Note: ENROLLMENT_DATES is the list of sheet names (enrollment dates), not iteration count
+            # The actual iteration count will be determined from mc_id values in the data
+            dual_print(f"[DEBUG] Limiting to enrollment dates: [{enrollment_display}] (processing {len(ENROLLMENT_DATES)} enrollment date sheet(s))")
+        else:
+            dual_print(f"[DEBUG] Limiting to enrollment dates: {ENROLLMENT_DATES}")
     
     # Initialize debug data collection (will be populated inside sheet loop)
     debug_data = []
@@ -3949,17 +4364,47 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["DateDied"] = pd.to_datetime(df["DateDied"])
         # (Removed temporary diagnostics)
         
-        # In MC mode, add YearOfBirth column if missing (should be -2 for all-ages)
+        # In MC mode, use the configured enrollment cohort label for EnrollmentDate
+        # but keep the iteration number for output sheet naming.
+        effective_sheet_name = (mc_enrollment_label or "2022_06") if MONTE_CARLO_MODE else sh
+        
+        # Debug: Check input data columns and values
+        if MONTE_CARLO_MODE:
+            dual_print(f"[DEBUG] Input data for sheet {sh}:")
+            dual_print(f"  Columns: {list(df.columns)}")
+            dual_print(f"  Rows: {len(df)}")
+            if "mc_id" in df.columns:
+                mc_id_count = df["mc_id"].notna().sum()
+                mc_id_unique = sorted(df["mc_id"].dropna().unique().tolist())
+                dual_print(f"  mc_id column: {mc_id_count}/{len(df)} non-NaN, unique values: {mc_id_unique}")
+                dual_print(f"  mc_id range: {df['mc_id'].min()} to {df['mc_id'].max()}")
+                dual_print(f"[INFO] Processing {len(mc_id_unique)} Monte Carlo iteration(s): {mc_id_unique}")
+            else:
+                dual_print(f"  WARNING: 'mc_id' column missing! This should be present in MC mode.")
+            if "Alive" in df.columns:
+                alive_count = df["Alive"].notna().sum()
+                alive_nonzero = (df["Alive"] > 0).sum()
+                dual_print(f"  Alive column: {alive_count}/{len(df)} non-NaN, {alive_nonzero}/{len(df)} > 0")
+                dual_print(f"  Alive range: {df['Alive'].min()} to {df['Alive'].max()}")
+            else:
+                dual_print(f"  ERROR: 'Alive' column missing!")
+            if "Dead" in df.columns:
+                dead_count = df["Dead"].notna().sum()
+                dual_print(f"  Dead column: {dead_count}/{len(df)} non-NaN, range: {df['Dead'].min()} to {df['Dead'].max()}")
+            if "ISOweekDied" in df.columns:
+                dual_print(f"  ISOweekDied sample: {df['ISOweekDied'].head(3).tolist()}")
+        
+        # In MC mode, add YearOfBirth column if missing
         if MONTE_CARLO_MODE and "YearOfBirth" not in df.columns:
             df["YearOfBirth"] = -2
         
         # Filter out unreasonably large birth years (keep -1 for "not available", -2 for all ages in MC mode)
         if MONTE_CARLO_MODE:
-            # In MC mode, YearOfBirth=-2 is valid (all ages aggregated)
+            # In MC mode, YearOfBirth=-2 (all ages) and individual birth years (1930-1960) are valid
             df = df[df["YearOfBirth"] <= 2020]
-            # Filter to only YOB=-2 in MC mode (all ages aggregated)
-            df = df[df["YearOfBirth"] == -2]
-            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to only YOB=-2 (all ages aggregated): {len(df)} rows")
+            # Filter to only valid YearOfBirth values: -2 (all ages) and 1930-1960 (individual birth years)
+            df = df[(df["YearOfBirth"] == -2) | ((df["YearOfBirth"] >= 1930) & (df["YearOfBirth"] <= 1960))]
+            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to YOB=-2 and 1930-1960: {len(df)} rows")
         else:
             df = df[df["YearOfBirth"] <= 2020]
         
@@ -4030,18 +4475,41 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Aggregate across sexes for each dose/date/age combination
         # Optionally bucket YearOfBirth into AGE_RANGE-year bins (e.g., 10 -> 1920, 1930, ...)
-        # Skip AGE_RANGE bucketing in MC mode to preserve YOB=-2
-        if kcor6_enabled_effective and not MONTE_CARLO_MODE:
+        # In MC mode, apply bucketing to individual birth years but preserve YOB=-2 (all ages)
+        if kcor6_enabled_effective:
             try:
                 if int(AGE_RANGE) and int(AGE_RANGE) > 1:
-                    df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
+                    if MONTE_CARLO_MODE:
+                        # In MC mode, bucket individual birth years but preserve YOB=-2
+                        mask_individual = df["YearOfBirth"] >= 0  # Individual birth years (exclude -1, -2)
+                        df.loc[mask_individual, "YearOfBirth"] = (df.loc[mask_individual, "YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
+                    else:
+                        # Normal mode: bucket all YearOfBirth values
+                        df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
             except Exception:
                 pass
-        df = df.groupby(["YearOfBirth", "Dose", "DateDied"]).agg({
-            "ISOweekDied": "first",
-            "Alive": "sum",
-            "Dead": "sum"
-        }).reset_index()
+        # In MC mode, group by ISOweekDied (not DateDied) to avoid duplicate rows per week
+        # DateDied can vary within the same ISOweekDied, causing duplicates
+        if MONTE_CARLO_MODE:
+            # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+            groupby_cols_agg = ["YearOfBirth", "Dose", "ISOweekDied"]
+            if "mc_id" in df.columns:
+                groupby_cols_agg = ["mc_id"] + groupby_cols_agg
+            df = df.groupby(groupby_cols_agg).agg({
+                "DateDied": "first",  # Take first DateDied for this ISOweekDied
+                "Alive": "sum",
+                "Dead": "sum"
+            }).reset_index()
+        else:
+            # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+            groupby_cols_agg2 = ["YearOfBirth", "Dose", "DateDied"]
+            if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                groupby_cols_agg2 = ["mc_id"] + groupby_cols_agg2
+            df = df.groupby(groupby_cols_agg2).agg({
+                "ISOweekDied": "first",
+                "Alive": "sum",
+                "Dead": "sum"
+            }).reset_index()
         # Suppress debug message in MC mode (always aggregated, not informative)
         if not MONTE_CARLO_MODE:
             dual_print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
@@ -4065,9 +4533,48 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # KCOR6 fits run in all modes (including Monte Carlo).
         if kcor6_enabled_effective:
             try:
-                iso_parts = df["DateDied"].dt.isocalendar()
-                iso_int_series = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int))
-            except Exception:
+                # In Monte Carlo mode, use ISOweekDied directly if available (more accurate than deriving from DateDied)
+                if MONTE_CARLO_MODE and "ISOweekDied" in df.columns:
+                    # Parse ISOweekDied format (e.g., "2021-24" or "2021_24")
+                    def parse_iso_week(iso_str):
+                        try:
+                            if pd.isna(iso_str):
+                                return np.nan
+                            iso_str = str(iso_str).strip()
+                            # Handle both "-" and "_" separators
+                            parts = iso_str.replace('_', '-').split('-')
+                            if len(parts) >= 2:
+                                year = int(parts[0])
+                                week = int(parts[1])
+                                return iso_to_int(year, week)
+                        except Exception as e:
+                            if MONTE_CARLO_MODE:
+                                dual_print(f"[DEBUG] Failed to parse ISO week '{iso_str}': {e}")
+                            pass
+                        return np.nan
+                    iso_int_series = df["ISOweekDied"].apply(parse_iso_week).astype(float)
+                    # Debug: show sample of parsed ISO weeks
+                    if MONTE_CARLO_MODE:
+                        sample_iso = df["ISOweekDied"].head(5).tolist()
+                        sample_parsed = iso_int_series.head(5).tolist()
+                        dual_print(f"[DEBUG] Sample ISOweekDied values: {sample_iso}")
+                        dual_print(f"[DEBUG] Sample parsed ISO int values: {sample_parsed}")
+                        dual_print(f"[DEBUG] Quiet window: {KCOR6_QUIET_START_ISO} ({iso_label_to_int(KCOR6_QUIET_START_ISO)}) to {KCOR6_QUIET_END_ISO} ({iso_label_to_int(KCOR6_QUIET_END_ISO)})")
+                        valid_count = np.sum(np.isfinite(iso_int_series))
+                        dual_print(f"[DEBUG] Valid ISO int values: {valid_count}/{len(iso_int_series)}")
+                        if valid_count > 0:
+                            iso_min = int(np.nanmin(iso_int_series))
+                            iso_max = int(np.nanmax(iso_int_series))
+                            dual_print(f"[DEBUG] ISO int range in data: {iso_min} to {iso_max}")
+                else:
+                    # Normal mode: derive from DateDied
+                    iso_parts = df["DateDied"].dt.isocalendar()
+                    iso_int_series = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int))
+            except Exception as e:
+                if MONTE_CARLO_MODE:
+                    dual_print(f"[DEBUG] Exception creating iso_int_series: {e}")
+                    import traceback
+                    dual_print(f"[DEBUG] Traceback: {traceback.format_exc()}")
                 iso_int_series = None
 
             # Track if header has been printed for this enrollment date
@@ -4086,35 +4593,91 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 hspan_hobs=np.nan,
                 relrmse_hspan=np.nan,
                 z_end=np.nan,
+                mc_id_val=None,
             ):
                 nonlocal _header_printed_for_enrollment
                 
                 # Print header on first call for this enrollment date
                 if not _header_printed_for_enrollment:
-                    dual_print("enroll | YoB | dose | theta | k | relRMSE | bins")
+                    if MONTE_CARLO_MODE and mc_id_val is not None:
+                        dual_print("enroll | iter | YoB | dose | theta | k | relRMSE | bins")
+                    else:
+                        dual_print("enroll | YoB | dose | theta | k | relRMSE | bins")
                     dual_print("-" * 70)
                     _header_printed_for_enrollment = True
                 
                 # Format values for tabular output
-                th_str = f"{float(theta_hat):.6e}" if np.isfinite(theta_hat) else "nan"
+                # Format theta: use regular number if > 0.01, otherwise scientific notation
+                if np.isfinite(theta_hat):
+                    theta_val = float(theta_hat)
+                    if theta_val > 0.01:
+                        th_str = f"{theta_val:.1f}"
+                    else:
+                        th_str = f"{theta_val:.6e}"
+                else:
+                    th_str = "nan"
                 k_str = f"{float(k_hat):.6e}" if np.isfinite(k_hat) else "nan"
                 rel_str = f"{float(relrmse_hspan):.6e}" if np.isfinite(relrmse_hspan) else "nan"
                 
                 # Print tabular row
-                dual_print(f"{enroll_label} | {int(yob_val)} | {int(dose_val)} | {th_str} | {k_str} | {rel_str} | {int(n_obs)}")
+                if MONTE_CARLO_MODE and mc_id_val is not None:
+                    dual_print(f"{enroll_label} | {int(mc_id_val)} | {int(yob_val)} | {int(dose_val)} | {th_str} | {k_str} | {rel_str} | {int(n_obs)}")
+                else:
+                    dual_print(f"{enroll_label} | {int(yob_val)} | {int(dose_val)} | {th_str} | {k_str} | {rel_str} | {int(n_obs)}")
 
             # Fit per (YearOfBirth, Dose) cohort
-            for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+            # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode so each iteration gets its own fit
+            # CRITICAL FIX: Exclude YearOfBirth=-2 (all-ages) from per-age loop - it's computed separately below
+            df_per_age = df[df["YearOfBirth"] != -2].copy()
+            groupby_fit = ["YearOfBirth", "Dose"]
+            if MONTE_CARLO_MODE and "mc_id" in df_per_age.columns:
+                groupby_fit = ["mc_id"] + groupby_fit
+            for key, g in df_per_age.groupby(groupby_fit, sort=False):
+                # Extract yob, dose, and mc_id from key
+                if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                    mc_id_fit, yob, dose = key[0], key[1], key[2]
+                else:
+                    yob, dose = key[0], key[1]
+                    mc_id_fit = None
                 g_sorted = g.sort_values("DateDied")
                 t_vals = g_sorted["t"].to_numpy(dtype=float)
                 mr_vals = g_sorted["MR"].to_numpy(dtype=float)
                 hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
                 hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
                 H_obs = np.cumsum(hazard_eff)
+                
+                # Debug: check for NaN in hazard calculation
+                if MONTE_CARLO_MODE and np.any(np.isnan(H_obs)):
+                    nan_count_hazard_obs = np.sum(np.isnan(hazard_obs))
+                    nan_count_hazard_eff = np.sum(np.isnan(hazard_eff))
+                    nan_count_H_obs = np.sum(np.isnan(H_obs))
+                    nan_count_mr = np.sum(np.isnan(mr_vals))
+                    dual_print(f"[DEBUG] NaN in hazard calculation: enroll={effective_sheet_name}, yob={yob}, dose={dose}")
+                    dual_print(f"  NaN in mr_vals: {nan_count_mr}/{len(mr_vals)}")
+                    dual_print(f"  NaN in hazard_obs: {nan_count_hazard_obs}/{len(hazard_obs)}")
+                    dual_print(f"  NaN in hazard_eff: {nan_count_hazard_eff}/{len(hazard_eff)}")
+                    dual_print(f"  NaN in H_obs: {nan_count_H_obs}/{len(H_obs)}")
+                    if nan_count_mr > 0:
+                        dual_print(f"  MR range: {np.nanmin(mr_vals)} to {np.nanmax(mr_vals)}")
+                    if nan_count_hazard_obs > 0:
+                        dual_print(f"  hazard_obs range: {np.nanmin(hazard_obs)} to {np.nanmax(hazard_obs)}")
+                    if 'PT' in g_sorted.columns:
+                        pt_vals = g_sorted["PT"].to_numpy(dtype=float)
+                        nan_count_pt = np.sum(np.isnan(pt_vals) | (pt_vals <= 0))
+                        dual_print(f"  PT <= 0 or NaN: {nan_count_pt}/{len(pt_vals)}")
+                    if 'Dead' in g_sorted.columns:
+                        dead_vals = g_sorted["Dead"].to_numpy(dtype=float)
+                        dual_print(f"  Dead range: {np.nanmin(dead_vals)} to {np.nanmax(dead_vals)}")
 
                 if iso_int_series is not None:
-                    iso_int = iso_int_series.loc[g_sorted.index].to_numpy(dtype=int)
-                    quiet_mask = (iso_int >= KCOR6_QUIET_START_INT) & (iso_int <= KCOR6_QUIET_END_INT)
+                    iso_int = iso_int_series.loc[g_sorted.index].to_numpy(dtype=float)
+                    # Handle NaN values (use False for quiet_mask where ISO week is unknown)
+                    # Compare against quiet window INT values (derived from ISO strings)
+                    quiet_start_int = iso_label_to_int(KCOR6_QUIET_START_ISO)
+                    quiet_end_int = iso_label_to_int(KCOR6_QUIET_END_ISO)
+                    valid_iso = np.isfinite(iso_int)
+                    quiet_mask = np.zeros_like(t_vals, dtype=bool)
+                    quiet_mask[valid_iso] = (iso_int[valid_iso] >= quiet_start_int) & (iso_int[valid_iso] <= quiet_end_int)
                 else:
                     quiet_mask = np.ones_like(t_vals, dtype=bool)
 
@@ -4127,6 +4690,32 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
                 success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                 note = diag.get("message", "") if isinstance(diag, dict) else ""
+                
+                # Print debug output only if we got 0 bins (diagnostic for NaN issue)
+                if MONTE_CARLO_MODE and n_obs == 0:
+                    if iso_int_series is None:
+                        dual_print(f"[DEBUG] KCOR6 fit FAILED: enroll={effective_sheet_name}, yob={yob}, dose={dose}")
+                        dual_print(f"  ERROR: iso_int_series is None - cannot check quiet window!")
+                        dual_print(f"  ISOweekDied column present: {'ISOweekDied' in df.columns}")
+                        dual_print(f"  Data shape: {len(g_sorted)} rows")
+                    else:
+                        iso_int_debug = iso_int_series.loc[g_sorted.index].to_numpy(dtype=float)
+                        valid_iso_debug = np.isfinite(iso_int_debug)
+                        if np.any(valid_iso_debug):
+                            iso_min = int(np.nanmin(iso_int_debug[valid_iso_debug]))
+                            iso_max = int(np.nanmax(iso_int_debug[valid_iso_debug]))
+                            dual_print(f"[DEBUG] KCOR6 fit FAILED: enroll={effective_sheet_name}, yob={yob}, dose={dose}")
+                            dual_print(f"  ISO weeks in data: {iso_min} to {iso_max}")
+                            dual_print(f"  Quiet window: {KCOR6_QUIET_START_ISO} ({quiet_start_int}) to {KCOR6_QUIET_END_ISO} ({quiet_end_int})")
+                            dual_print(f"  Quiet mask matches: {np.sum(quiet_mask)}/{len(quiet_mask)}")
+                            dual_print(f"  t_vals >= DYNAMIC_HVE_SKIP_WEEKS ({DYNAMIC_HVE_SKIP_WEEKS}): {np.sum(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))}/{len(t_vals)}")
+                            dual_print(f"  Fit mask (quiet & skip): {np.sum(fit_mask)}/{len(fit_mask)} points")
+                            dual_print(f"  t_fit range: {t_fit.min() if len(t_fit) > 0 else 'N/A'} to {t_fit.max() if len(t_fit) > 0 else 'N/A'}")
+                            dual_print(f"  H_fit range: {H_fit.min() if len(H_fit) > 0 else 'N/A'} to {H_fit.max() if len(H_fit) > 0 else 'N/A'}")
+                        else:
+                            dual_print(f"[DEBUG] KCOR6 fit FAILED: enroll={effective_sheet_name}, yob={yob}, dose={dose}")
+                            dual_print(f"  ERROR: No valid ISO week values found in iso_int_series!")
+                            dual_print(f"  ISOweekDied sample: {g_sorted['ISOweekDied'].head(3).tolist() if 'ISOweekDied' in g_sorted.columns else 'N/A'}")
 
                 # Compute normalized cumulative hazard H0 for diagnostics
                 theta = 0.0
@@ -4168,8 +4757,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 except Exception:
                     z_end = np.nan
 
+                # Use effective_sheet_name (enrollment date) instead of sh (iteration number) in MC mode
+                enroll_label_for_log = effective_sheet_name if MONTE_CARLO_MODE else sh
                 _log_kcor6_fit(
-                    sh,
+                    enroll_label_for_log,
                     yob,
                     dose,
                     k_hat,
@@ -4181,6 +4772,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     hspan_hobs=hspan_hobs,
                     relrmse_hspan=relrmse_hspan,
                     z_end=z_end,
+                    mc_id_val=mc_id_fit,
                 )
 
                 params_dict = {
@@ -4213,125 +4805,166 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         "n_bins": int(n_obs),
                     })
                 
-                kcor6_params_map[(sh, int(yob), int(dose))] = params_dict
+                # Store params with mc_id in key for Monte Carlo mode
+                if MONTE_CARLO_MODE and mc_id_fit is not None:
+                    kcor6_params_map[(effective_sheet_name, int(mc_id_fit), int(yob), int(dose))] = params_dict
+                else:
+                    kcor6_params_map[(sh, int(yob), int(dose))] = params_dict
 
             # Fit All Ages cohort (YearOfBirth = -2) aggregated across YoB groups, per Dose
             try:
-                all_ages = df.groupby(["Dose", "DateDied"], sort=False).agg({
-                    "Alive": "sum",
-                    "Dead": "sum",
-                }).reset_index()
-                all_ages = all_ages.sort_values(["Dose", "DateDied"]).reset_index(drop=True)
-                all_ages["PT"] = all_ages["Alive"].astype(float).clip(lower=0.0)
-                all_ages["Dead"] = all_ages["Dead"].astype(float).clip(lower=0.0)
-                all_ages["MR"] = np.where(all_ages["PT"] > 0, all_ages["Dead"] / (all_ages["PT"] + EPS), np.nan)
-                all_ages["t"] = all_ages.groupby("Dose").cumcount().astype(float)
+                # CRITICAL FIX: Exclude YearOfBirth=-2 from aggregation (if already present, use it directly)
+                # Otherwise aggregate from individual birth years
+                df_for_all_ages = df[df["YearOfBirth"] != -2].copy()
+                if not df_for_all_ages.empty:
+                    # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+                    groupby_all_ages_agg = ["Dose", "DateDied"]
+                    if MONTE_CARLO_MODE and "mc_id" in df_for_all_ages.columns:
+                        groupby_all_ages_agg = ["mc_id"] + groupby_all_ages_agg
+                    all_ages = df_for_all_ages.groupby(groupby_all_ages_agg, sort=False).agg({
+                        "Alive": "sum",
+                        "Dead": "sum",
+                    }).reset_index()
+                    # CRITICAL FIX: Include mc_id in sort and groupby for cumulative count
+                    sort_cols = ["Dose", "DateDied"]
+                    groupby_t = ["Dose"]
+                    if MONTE_CARLO_MODE and "mc_id" in all_ages.columns:
+                        sort_cols = ["mc_id"] + sort_cols
+                        groupby_t = ["mc_id"] + groupby_t
+                    all_ages = all_ages.sort_values(sort_cols).reset_index(drop=True)
+                    all_ages["PT"] = all_ages["Alive"].astype(float).clip(lower=0.0)
+                    all_ages["Dead"] = all_ages["Dead"].astype(float).clip(lower=0.0)
+                    all_ages["MR"] = np.where(all_ages["PT"] > 0, all_ages["Dead"] / (all_ages["PT"] + EPS), np.nan)
+                    all_ages["t"] = all_ages.groupby(groupby_t).cumcount().astype(float)
 
-                iso_parts_all = all_ages["DateDied"].dt.isocalendar()
-                iso_int_all = (iso_parts_all.year.astype(int) * 100 + iso_parts_all.week.astype(int)).to_numpy(dtype=int)
+                    iso_parts_all = all_ages["DateDied"].dt.isocalendar()
+                    iso_int_all = (iso_parts_all.year.astype(int) * 100 + iso_parts_all.week.astype(int)).to_numpy(dtype=int)
 
-                for dose, g in all_ages.groupby("Dose", sort=False):
-                    g_sorted = g.sort_values("DateDied")
-                    t_vals = g_sorted["t"].to_numpy(dtype=float)
-                    mr_vals = g_sorted["MR"].to_numpy(dtype=float)
-                    hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
-                    hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
-                    H_obs = np.cumsum(hazard_eff)
-
-                    iso_int = iso_int_all[g_sorted.index.to_numpy(dtype=int)]
-                    quiet_mask = (iso_int >= KCOR6_QUIET_START_INT) & (iso_int <= KCOR6_QUIET_END_INT)
-                    fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
-
-                    (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_vals[fit_mask], H_obs[fit_mask])
-                    rmse_h = diag.get("rmse_Hobs", np.nan) if isinstance(diag, dict) else np.nan
-                    n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
-                    success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
-                    note = diag.get("message", "") if isinstance(diag, dict) else ""
-
-                    # Compute normalized cumulative hazard H0 for diagnostics
-                    theta = 0.0
-                    if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
-                        theta = float(theta_hat)
-                    H0_full = invert_gamma_frailty(H_obs, theta)
-                    H0_quiet = H0_full[fit_mask]
-                    t_quiet = t_vals[fit_mask]
-                    
-                    # Compute fit diagnostics
-                    fit_diagnostics = _compute_fit_diagnostics(H0_quiet, t_quiet)
-
-                    # Extra diagnostics for All Ages fit
-                    try:
-                        t_fit = t_vals[fit_mask]
-                        H_fit = H_obs[fit_mask]
-                        if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
-                            hspan_hobs = float(H_fit[-1] - H_fit[0])
+                    # CRITICAL FIX: Group by Dose first, then mc_id in Monte Carlo mode
+                    # This ensures all iterations for each dose are processed together (matching per-age pattern)
+                    groupby_all_ages_fit = ["Dose"]
+                    if MONTE_CARLO_MODE and "mc_id" in all_ages.columns:
+                        groupby_all_ages_fit = groupby_all_ages_fit + ["mc_id"]  # Dose first, then mc_id
+                    # Sort the groups to ensure consistent ordering: dose 0 (all iterations), then dose 1, etc.
+                    all_ages_sorted = all_ages.sort_values(["Dose"] + (["mc_id"] if MONTE_CARLO_MODE and "mc_id" in all_ages.columns else []))
+                    for key, g in all_ages_sorted.groupby(groupby_all_ages_fit, sort=False):
+                        # Extract dose and mc_id from key
+                        if MONTE_CARLO_MODE and "mc_id" in all_ages.columns:
+                            dose, mc_id_all = key[0], key[1]  # Dose is first, mc_id is second
                         else:
+                            dose = key[0] if isinstance(key, tuple) else key
+                            mc_id_all = None
+                        g_sorted = g.sort_values("DateDied")
+                        t_vals = g_sorted["t"].to_numpy(dtype=float)
+                        mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                        hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                        hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
+                        H_obs = np.cumsum(hazard_eff)
+
+                        iso_int = iso_int_all[g_sorted.index.to_numpy(dtype=int)]
+                        # Compare against quiet window INT values (derived from ISO strings)
+                        quiet_start_int = iso_label_to_int(KCOR6_QUIET_START_ISO)
+                        quiet_end_int = iso_label_to_int(KCOR6_QUIET_END_ISO)
+                        quiet_mask = (iso_int >= quiet_start_int) & (iso_int <= quiet_end_int)
+                        fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
+
+                        (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_vals[fit_mask], H_obs[fit_mask])
+                        rmse_h = diag.get("rmse_Hobs", np.nan) if isinstance(diag, dict) else np.nan
+                        n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
+                        success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
+                        note = diag.get("message", "") if isinstance(diag, dict) else ""
+
+                        # Compute normalized cumulative hazard H0 for diagnostics
+                        theta = 0.0
+                        if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
+                            theta = float(theta_hat)
+                        H0_full = invert_gamma_frailty(H_obs, theta)
+                        H0_quiet = H0_full[fit_mask]
+                        t_quiet = t_vals[fit_mask]
+                        
+                        # Compute fit diagnostics
+                        fit_diagnostics = _compute_fit_diagnostics(H0_quiet, t_quiet)
+
+                        # Extra diagnostics for All Ages fit
+                        try:
+                            t_fit = t_vals[fit_mask]
+                            H_fit = H_obs[fit_mask]
+                            if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
+                                hspan_hobs = float(H_fit[-1] - H_fit[0])
+                            else:
+                                hspan_hobs = np.nan
+                        except Exception:
                             hspan_hobs = np.nan
-                    except Exception:
-                        hspan_hobs = np.nan
 
-                    try:
-                        if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
-                            relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
-                        else:
+                        try:
+                            if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                                relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
+                            else:
+                                relrmse_hspan = np.nan
+                        except Exception:
                             relrmse_hspan = np.nan
-                    except Exception:
-                        relrmse_hspan = np.nan
 
-                    try:
-                        if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
-                            h_end_model = float(H_model(float(t_fit[-1]), float(k_hat), float(theta_hat)))
-                            z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
-                        else:
+                        try:
+                            if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
+                                h_end_model = float(H_model(float(t_fit[-1]), float(k_hat), float(theta_hat)))
+                                z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
+                            else:
+                                z_end = np.nan
+                        except Exception:
                             z_end = np.nan
-                    except Exception:
-                        z_end = np.nan
 
-                    _log_kcor6_fit(
-                        sh,
-                        -2,
-                        int(dose),
-                        k_hat,
-                        theta_hat,
-                        rmse_h,
-                        n_obs,
-                        success,
-                        note,
-                        hspan_hobs=hspan_hobs,
-                        relrmse_hspan=relrmse_hspan,
-                        z_end=z_end,
-                    )
-                    params_dict = {
-                        "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
-                        "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
-                        "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
-                        "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
-                        "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
-                        "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
-                        "n_obs": int(n_obs),
-                        "success": bool(success),
-                        "note": str(note),
-                    }
-                    
-                    # Add fit diagnostics if available
-                    if fit_diagnostics is not None:
-                        params_dict.update({
-                            "mean": fit_diagnostics["mean"],
-                            "sd": fit_diagnostics["sd"],
-                            "max_abs_dev": fit_diagnostics["max_abs_dev"],
-                            "drift_per_year": fit_diagnostics["drift_per_year"],
-                            "n_bins": fit_diagnostics["n_bins"],
-                        })
-                    else:
-                        params_dict.update({
-                            "mean": np.nan,
-                            "sd": np.nan,
-                            "max_abs_dev": np.nan,
-                            "drift_per_year": np.nan,
-                            "n_bins": int(n_obs),
-                        })
-                    
-                    kcor6_params_map[(sh, -2, int(dose))] = params_dict
+                        # Use effective_sheet_name (enrollment date) instead of sh (iteration number) in MC mode
+                        enroll_label_all_ages = effective_sheet_name if MONTE_CARLO_MODE else sh
+                        _log_kcor6_fit(
+                            enroll_label_all_ages,
+                            -2,
+                            int(dose),
+                            k_hat,
+                            theta_hat,
+                            rmse_h,
+                            n_obs,
+                            success,
+                            note,
+                            hspan_hobs=hspan_hobs,
+                            relrmse_hspan=relrmse_hspan,
+                            z_end=z_end,
+                            mc_id_val=mc_id_all,
+                        )
+                        params_dict = {
+                            "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
+                            "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                            "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                            "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
+                            "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
+                            "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
+                            "n_obs": int(n_obs),
+                            "success": bool(success),
+                            "note": str(note),
+                        }
+                        
+                        # Add fit diagnostics if available
+                        if fit_diagnostics is not None:
+                            params_dict.update({
+                                "mean": fit_diagnostics["mean"],
+                                "sd": fit_diagnostics["sd"],
+                                "max_abs_dev": fit_diagnostics["max_abs_dev"],
+                                "drift_per_year": fit_diagnostics["drift_per_year"],
+                                "n_bins": fit_diagnostics["n_bins"],
+                            })
+                        else:
+                            params_dict.update({
+                                "mean": np.nan,
+                                "sd": np.nan,
+                                "max_abs_dev": np.nan,
+                                "drift_per_year": np.nan,
+                                "n_bins": int(n_obs),
+                            })
+                        
+                        # Store params with mc_id in key for Monte Carlo mode
+                        if MONTE_CARLO_MODE and mc_id_all is not None:
+                            kcor6_params_map[(effective_sheet_name, int(mc_id_all), -2, int(dose))] = params_dict
+                        else:
+                            kcor6_params_map[(sh, -2, int(dose))] = params_dict
             except Exception as _e_kcor6_all:
                 # Do not interrupt the main pipeline for diagnostics-only fits.
                 try:
@@ -4825,7 +5458,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 Hobs_all = np.zeros(n_rows, dtype=float)
                 hadj_all = np.zeros(n_rows, dtype=float)
 
-                for (yob, dose), g in df.groupby(["YearOfBirth", "Dose"], sort=False):
+                # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+                groupby_norm = ["YearOfBirth", "Dose"]
+                if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                    groupby_norm = ["mc_id"] + groupby_norm
+                for key, g in df.groupby(groupby_norm, sort=False):
+                    # Extract yob, dose, and mc_id from key
+                    if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                        mc_id_norm, yob, dose = key[0], key[1], key[2]
+                    else:
+                        yob, dose = key[0], key[1]
+                        mc_id_norm = None
                     g_sorted = g.sort_values("DateDied")
                     idx = g_sorted.index.to_numpy(dtype=int)
 
@@ -4843,7 +5486,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                     # Theta from quiet-window fit (fallback to 0.0 if missing/failed)
                     theta = 0.0
-                    params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
+                    # In Monte Carlo mode, include mc_id in the lookup key
+                    if MONTE_CARLO_MODE and mc_id_norm is not None:
+                        params = kcor6_params_map.get((effective_sheet_name, int(mc_id_norm), int(yob), int(dose)), None)
+                    else:
+                        params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
                     if isinstance(params, dict):
                         th = params.get("theta_hat", np.nan)
                         ok = bool(params.get("success", False))
@@ -4890,7 +5537,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["MR_eff"] = np.where(df["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df["MR"], 0.0)
         
         # Calculate cumulative hazard (mathematically exact, not approximation)
-        df["CH"] = df.groupby(["YearOfBirth","Dose"]) ["hazard_eff"].cumsum()
+        # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+        groupby_ch = ["YearOfBirth","Dose"]
+        if MONTE_CARLO_MODE and "mc_id" in df.columns:
+            groupby_ch = ["mc_id"] + groupby_ch
+        df["CH"] = df.groupby(groupby_ch) ["hazard_eff"].cumsum()
 
         # Debug: print CH_raw vs CH_adj for specific cohort on request
         try:
@@ -4922,14 +5573,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Keep unadjusted data for comparison
         if not kcor6_norm_ok:
             # Legacy behavior: cumulative "actual" measured in MR space
-            df["CH_actual"] = df.groupby(["YearOfBirth","Dose"]) ["MR_eff"].cumsum()
+            # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+            groupby_ch_actual = ["YearOfBirth","Dose"]
+            if MONTE_CARLO_MODE and "mc_id" in df.columns:
+                groupby_ch_actual = ["mc_id"] + groupby_ch_actual
+            df["CH_actual"] = df.groupby(groupby_ch_actual) ["MR_eff"].cumsum()
         
         # Keep cumD_adj for backward compatibility (now represents adjusted cumulative deaths)
-        df["cumPT"] = df.groupby(["YearOfBirth","Dose"]) ["PT"].cumsum()
+        # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+        groupby_cumpt = ["YearOfBirth","Dose"]
+        if MONTE_CARLO_MODE and "mc_id" in df.columns:
+            groupby_cumpt = ["mc_id"] + groupby_cumpt
+        df["cumPT"] = df.groupby(groupby_cumpt) ["PT"].cumsum()
         df["cumD_adj"] = df["CH"] * df["cumPT"]
         
         # Keep unadjusted data for comparison
-        df["cumD_unadj"] = df.groupby(["YearOfBirth","Dose"]) ["Dead"].cumsum()
+        # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+        groupby_cumd = ["YearOfBirth","Dose"]
+        if MONTE_CARLO_MODE and "mc_id" in df.columns:
+            groupby_cumd = ["mc_id"] + groupby_cumd
+        df["cumD_unadj"] = df.groupby(groupby_cumd) ["Dead"].cumsum()
         
         # Collect debug data for this sheet (after all columns are created)
         # Build per-dose per-age aggregates (needed for negative-control direct age comparisons)
@@ -4954,7 +5617,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             # Collect minimal columns for NC
             if not dose_data.empty:
                 tmp = dose_data[["DateDied","YearOfBirth","CH","t"]].copy()
-                tmp["EnrollmentDate"] = sh
+                tmp["EnrollmentDate"] = effective_sheet_name
                 tmp["Dose"] = dose
                 by_dose_nc_all.append(tmp)
             # Populate debug_data (by_dose) for all doses
@@ -4962,7 +5625,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 # Get slope from Slope6 parameters (stored in df["slope"] column)
                 slope_val = row.get("slope", 0.0) if "slope" in row else 0.0
                 debug_data.append({
-                    "EnrollmentDate": sh,
+                    "EnrollmentDate": effective_sheet_name,
                     "Date": row["DateDied"].date(),
                     "YearOfBirth": row["YearOfBirth"],
                     "Dose": dose,
@@ -5007,9 +5670,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
 
-        # In MC mode, use the configured enrollment cohort label for dose-pair/reporting-date semantics
-        # but keep the iteration number for output sheet naming.
-        effective_sheet_name = (mc_enrollment_label or "2022_06") if MONTE_CARLO_MODE else sh
         # build_kcor_rows() computes an additional YoB=-2 "All Ages" block internally; in MC mode we
         # remap per-iteration (-2, dose) fits (keyed by iteration sheet name) onto the fixed enrollment
         # label used for MC outputs (effective_sheet_name) so that All-Ages normalization is consistent.
@@ -5027,20 +5687,38 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         kcor6_params_map_for_build[(effective_sheet_name, -2, dose_i)] = params
             except Exception:
                 kcor6_params_map_for_build = kcor6_params_map
+        # In MC mode, mc_id should already be in the dataframe from KCOR_CMR.py
+        # Only pass iteration_number if mc_id is missing (for backward compatibility)
+        iteration_num_for_mc_id = None
+        if MONTE_CARLO_MODE and "mc_id" not in df.columns:
+            # mc_id missing - try to derive from sheet name (backward compatibility)
+            iteration_num_for_mc_id = sh if sh.isdigit() else None
         out_sh = build_kcor_rows(
             df,
             effective_sheet_name,
             dual_print,
             slope6_params_map,
             kcor6_params_map_for_build,
+            iteration_number=iteration_num_for_mc_id,
         )
+        # Check if mc_id is preserved in output
+        if MONTE_CARLO_MODE:
+            if not out_sh.empty:
+                if "mc_id" not in out_sh.columns:
+                    dual_print(f"[WARNING] mc_id column missing from build_kcor_rows output!")
+            else:
+                dual_print(f"[WARNING] build_kcor_rows returned empty DataFrame!")
         # Compute KCOR_ns and merge into output
         kcor_ns = build_kcor_ns_rows(df, effective_sheet_name)
         if not kcor_ns.empty and not out_sh.empty:
+            # Include mc_id in merge keys if present (Monte Carlo mode)
+            merge_keys = ["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"]
+            if MONTE_CARLO_MODE and "mc_id" in out_sh.columns and "mc_id" in kcor_ns.columns:
+                merge_keys = ["mc_id"] + merge_keys
             out_sh = pd.merge(
                 out_sh,
                 kcor_ns,
-                on=["EnrollmentDate","Date","YearOfBirth","Dose_num","Dose_den"],
+                on=merge_keys,
                 how="left"
             )
         all_out.append(out_sh)
@@ -5057,22 +5735,52 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 year_cap = int(target_date.year) + 1
                 out_sh_window = out_sh_copy[out_sh_copy["Date"].dt.year <= year_cap]
                 if not out_sh_window.empty:
-                    diffs = (out_sh_window["Date"] - target_date).abs()
-                    idx_closest = diffs.idxmin()
-                    closest_date = out_sh_window.loc[idx_closest, "Date"]
-                    # Collect data for all dose pairs at closest date
-                    closest_data = out_sh_window[out_sh_window["Date"] == closest_date]
-                    for _, row in closest_data.iterrows():
-                        mc_summary_data.append({
-                            "Iteration": int(sh) if sh.isdigit() else sh,
-                            "Dose_num": row["Dose_num"],
-                            "Dose_den": row["Dose_den"],
-                            "YearOfBirth": row["YearOfBirth"],
-                            "Date": row["Date"],
-                            "KCOR": row["KCOR"],
-                            "CI_lower": row.get("CI_lower", np.nan),
-                            "CI_upper": row.get("CI_upper", np.nan)
-                        })
+                    # In MC mode, find closest date per iteration (mc_id) to preserve all iterations
+                    if "mc_id" in out_sh_window.columns:
+                        # Group by mc_id and find closest date for each iteration
+                        mc_id_vals = sorted(out_sh_window["mc_id"].dropna().unique())
+                        for mc_id_val in mc_id_vals:
+                            iter_data = out_sh_window[out_sh_window["mc_id"] == mc_id_val]
+                            if iter_data.empty:
+                                dual_print(f"[WARNING] No data found for iteration {int(mc_id_val) + 1} (mc_id={mc_id_val})")
+                                continue
+                            diffs = (iter_data["Date"] - target_date).abs()
+                            idx_closest = diffs.idxmin()
+                            closest_date = iter_data.loc[idx_closest, "Date"]
+                            # Collect data for all dose pairs at closest date for this iteration
+                            closest_data = iter_data[iter_data["Date"] == closest_date]
+                            for _, row in closest_data.iterrows():
+                                iteration_id = int(row["mc_id"])
+                                mc_summary_data.append({
+                                    "Iteration": iteration_id,
+                                    "Dose_num": row["Dose_num"],
+                                    "Dose_den": row["Dose_den"],
+                                    "YearOfBirth": row["YearOfBirth"],
+                                    "Date": row["Date"],
+                                    "KCOR": row["KCOR"],
+                                    "CI_lower": row.get("CI_lower", np.nan),
+                                    "CI_upper": row.get("CI_upper", np.nan)
+                                })
+                    else:
+                        # Fallback: no mc_id column (backward compatibility)
+                        diffs = (out_sh_window["Date"] - target_date).abs()
+                        idx_closest = diffs.idxmin()
+                        closest_date = out_sh_window.loc[idx_closest, "Date"]
+                        # Collect data for all dose pairs at closest date
+                        closest_data = out_sh_window[out_sh_window["Date"] == closest_date]
+                        for _, row in closest_data.iterrows():
+                            # Use sheet name as iteration (backward compatibility)
+                            iteration_id = int(sh) if sh.isdigit() else sh
+                            mc_summary_data.append({
+                                "Iteration": iteration_id,
+                                "Dose_num": row["Dose_num"],
+                                "Dose_den": row["Dose_den"],
+                                "YearOfBirth": row["YearOfBirth"],
+                                "Date": row["Date"],
+                                "KCOR": row["KCOR"],
+                                "CI_lower": row.get("CI_lower", np.nan),
+                                "CI_upper": row.get("CI_upper", np.nan)
+                            })
         
         # Collect per-pair deaths details for new output sheet
         pair_details = build_kcor_o_deaths_details(df, effective_sheet_name)
@@ -5649,7 +6357,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             
             # Create MC summary
             if mc_summary_data:
+                dual_print(f"[MC Summary] Creating summary with {len(mc_summary_data)} data points")
                 create_mc_summary(mc_summary_data, dual_print, mc_enrollment_label or "2022_06")
+            else:
+                dual_print(f"[MC Summary] WARNING: mc_summary_data is empty or None - no summary will be created")
+                dual_print(f"[MC Summary] mc_summary_data type: {type(mc_summary_data)}, value: {mc_summary_data}")
         else:
             # Normal mode: write combined output
             while retry_count < max_retries:
@@ -6334,14 +7046,22 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
     # Get dose pairs
     dose_pairs = get_dose_pairs(label)
     
-    # Store processed data for each dose combination (for statistics stage)
+    # Helper function to sort YearOfBirth values: negative values first (-2, -1, 0), then positive ages
+    def age_sort_key(age):
+        if age == 0:
+            return (0, 0)  # ASMR first
+        elif age == -2:
+            return (0, 1)  # All ages second
+        elif age == -1:
+            return (0, 2)  # Unknown third
+        else:
+            return (1, age)  # Regular ages after
+    
+    # Store processed data for each dose combination and YearOfBirth (for statistics stage)
     dose_combo_stats = {}
     
-    # STAGE 1: Print per-iteration tables for each dose combination
+    # STAGE 1: Print per-iteration tables for each dose combination and YearOfBirth
     for dose_num, dose_den in dose_pairs:
-        dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
-        dual_print("-" * 60)
-        
         # Filter to this dose pair
         pair_data = df_mc[
             (df_mc["Dose_num"] == dose_num) & 
@@ -6349,90 +7069,119 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
         ]
         
         if pair_data.empty:
+            dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
             dual_print("  No data available for this dose combination")
             continue
         
-        # Filter to YearOfBirth=-2 (all ages) if available, otherwise use all ages
-        all_ages_data = pair_data[pair_data["YearOfBirth"] == -2]
-        if all_ages_data.empty:
-            # Fallback to any available YearOfBirth
-            all_ages_data = pair_data
+        # Get all unique YearOfBirth values, sorted: negative values first (-2, -1), then positive ages
+        # EXCLUDE age 0 (ASMR pooled) - only show -2 (all ages) and individual birth years
+        unique_yobs = [yob for yob in sorted(pair_data["YearOfBirth"].unique(), key=age_sort_key) if yob != 0]
         
-        if all_ages_data.empty:
-            dual_print("  No data available for this dose combination")
-            continue
-        
-        # Extract KCOR values (remove NaN) and sort by iteration
-        all_ages_data_clean = all_ages_data[all_ages_data["KCOR"].notna()].copy()
-        
-        if len(all_ages_data_clean) == 0:
-            dual_print("  No valid KCOR values available")
-            continue
-        
-        # Group by iteration and take one KCOR value per iteration (deduplicate)
-        # Since all rows for the same iteration should have the same KCOR value,
-        # we can just take the first one per iteration
-        all_ages_data_unique = all_ages_data_clean.groupby("Iteration").first().reset_index()
-        all_ages_data_unique = all_ages_data_unique.sort_values("Iteration")
-        
-        # Store KCOR values for statistics stage (convert to numpy array to avoid pandas reference issues)
-        kcor_values = all_ages_data_unique["KCOR"].values.copy()
-        dose_combo_stats[(dose_num, dose_den)] = {
-            "kcor_values": kcor_values,
-            "num_iterations": len(all_ages_data_unique)
-        }
-        
-        # Print per-iteration table (show KCOR values for each iteration)
-        dual_print(f"{'Iteration':>12} {'KCOR':>12}")
-        dual_print("-" * 25)
-        for _, row in all_ages_data_unique.iterrows():
-            iteration = row["Iteration"]
-            kcor_val = row["KCOR"]
-            dual_print(f"{iteration:>12} {kcor_val:>12.4f}")
+        # Iterate through each YearOfBirth value
+        for yob in unique_yobs:
+            # Format age label
+            if yob == -2:
+                age_label = "All Ages"
+            elif yob == -1:
+                age_label = "(unknown)"
+            else:
+                age_label = f"Year {yob}"
+            
+            dual_print(f"\nDose combination: {dose_num} vs {dose_den} - {age_label}")
+            dual_print("-" * 60)
+            
+            # Filter to this YearOfBirth
+            yob_data = pair_data[pair_data["YearOfBirth"] == yob]
+            
+            if yob_data.empty:
+                dual_print("  No data available for this age group")
+                continue
+            
+            # Extract KCOR values (remove NaN) and sort by iteration
+            yob_data_clean = yob_data[yob_data["KCOR"].notna()].copy()
+            
+            if len(yob_data_clean) == 0:
+                dual_print("  No valid KCOR values available")
+                continue
+            
+            # Group by iteration and take one KCOR value per iteration (deduplicate)
+            # Since all rows for the same iteration should have the same KCOR value,
+            # we can just take the first one per iteration
+            yob_data_unique = yob_data_clean.groupby("Iteration").first().reset_index()
+            yob_data_unique = yob_data_unique.sort_values("Iteration")
+            
+            # Store KCOR values for statistics stage (convert to numpy array to avoid pandas reference issues)
+            kcor_values = yob_data_unique["KCOR"].values.copy()
+            dose_combo_stats[(dose_num, dose_den, yob)] = {
+                "kcor_values": kcor_values,
+                "num_iterations": len(yob_data_unique),
+                "age_label": age_label
+            }
+            
+            # Print per-iteration table (show KCOR values for each iteration)
+            dual_print(f"{'Iteration':>12} {'KCOR':>12}")
+            dual_print("-" * 25)
+            for _, row in yob_data_unique.iterrows():
+                iteration = row["Iteration"]
+                kcor_val = row["KCOR"]
+                dual_print(f"{iteration:>12} {kcor_val:>12.4f}")
     
-    # STAGE 2: Print summary statistics for all dose combinations
+    # STAGE 2: Print summary statistics for all dose combinations and YearOfBirth values
     dual_print("\n" + "="*80)
     dual_print("SUMMARY STATISTICS")
     dual_print("="*80)
     
     for dose_num, dose_den in dose_pairs:
-        if (dose_num, dose_den) not in dose_combo_stats:
+        # Get all YearOfBirth values for this dose pair from stats
+        yob_keys = [key for key in dose_combo_stats.keys() if key[0] == dose_num and key[1] == dose_den]
+        
+        if not yob_keys:
             continue
         
-        stats = dose_combo_stats[(dose_num, dose_den)]
-        kcor_values = stats["kcor_values"]
-        num_iterations = stats["num_iterations"]
+        # Sort YearOfBirth values using the same sort key
+        def age_sort_key_for_key(key):
+            yob = key[2]
+            return age_sort_key(yob)
         
-        dual_print(f"\nDose combination: {dose_num} vs {dose_den}")
-        dual_print("-" * 60)
+        yob_keys_sorted = sorted(yob_keys, key=age_sort_key_for_key)
         
-        # Convert to pandas Series for statistics computation (kcor_values is numpy array)
-        kcor_series = pd.Series(kcor_values)
-        
-        # Compute statistics
-        mean_kcor = kcor_series.mean()
-        median_kcor = kcor_series.median()
-        std_kcor = kcor_series.std()
-        min_kcor = kcor_series.min()
-        max_kcor = kcor_series.max()
-        
-        # Percentiles for 95% CI equivalent
-        p2_5 = kcor_series.quantile(0.025)
-        p97_5 = kcor_series.quantile(0.975)
-        p25 = kcor_series.quantile(0.25)
-        p75 = kcor_series.quantile(0.75)
-        
-        dual_print(f"  Iterations: {num_iterations}")
-        dual_print(f"  Mean KCOR:   {mean_kcor:.4f}")
-        dual_print(f"  Median KCOR: {median_kcor:.4f}")
-        dual_print(f"  Std Dev:     {std_kcor:.4f}")
-        dual_print(f"  Min:         {min_kcor:.4f}")
-        dual_print(f"  Max:         {max_kcor:.4f}")
-        dual_print(f"  2.5th %ile:  {p2_5:.4f}")
-        dual_print(f"  25th %ile:   {p25:.4f}")
-        dual_print(f"  75th %ile:   {p75:.4f}")
-        dual_print(f"  97.5th %ile: {p97_5:.4f}")
-        dual_print(f"  95% Range:   [{p2_5:.4f}, {p97_5:.4f}]")
+        for key in yob_keys_sorted:
+            dose_num_key, dose_den_key, yob = key
+            stats = dose_combo_stats[key]
+            kcor_values = stats["kcor_values"]
+            num_iterations = stats["num_iterations"]
+            age_label = stats["age_label"]
+            
+            dual_print(f"\nDose combination: {dose_num} vs {dose_den} - {age_label}")
+            dual_print("-" * 60)
+            
+            # Convert to pandas Series for statistics computation (kcor_values is numpy array)
+            kcor_series = pd.Series(kcor_values)
+            
+            # Compute statistics
+            mean_kcor = kcor_series.mean()
+            median_kcor = kcor_series.median()
+            std_kcor = kcor_series.std()
+            min_kcor = kcor_series.min()
+            max_kcor = kcor_series.max()
+            
+            # Percentiles for 95% CI equivalent
+            p2_5 = kcor_series.quantile(0.025)
+            p97_5 = kcor_series.quantile(0.975)
+            p25 = kcor_series.quantile(0.25)
+            p75 = kcor_series.quantile(0.75)
+            
+            dual_print(f"  Iterations: {num_iterations}")
+            dual_print(f"  Mean KCOR:   {mean_kcor:.4f}")
+            dual_print(f"  Median KCOR: {median_kcor:.4f}")
+            dual_print(f"  Std Dev:     {std_kcor:.4f}")
+            dual_print(f"  Min:         {min_kcor:.4f}")
+            dual_print(f"  Max:         {max_kcor:.4f}")
+            dual_print(f"  2.5th %ile:  {p2_5:.4f}")
+            dual_print(f"  25th %ile:   {p25:.4f}")
+            dual_print(f"  75th %ile:   {p75:.4f}")
+            dual_print(f"  97.5th %ile: {p97_5:.4f}")
+            dual_print(f"  95% Range:   [{p2_5:.4f}, {p97_5:.4f}]")
     
     dual_print("\n" + "="*80)
 
