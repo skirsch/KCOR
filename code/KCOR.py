@@ -5934,14 +5934,136 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     return combined
     
     # Standard summary (SA mode is handled earlier via early-return grid sweep)
-    create_summary_file(combined, out_path, dual_print)
+    create_summary_file(combined, out_path, dual_print, kcor6_params_map=kcor6_params_map, src_path=src_path)
     
     # Close log file
     log_file_handle.close()
     
     return combined
 
-def create_summary_file(combined_data, out_path, dual_print):
+def _compute_gamma_frailty_diagnostics(sheet_name, enrollment_date, age_group, year_of_birth, dose, kcor6_params_map, src_path):
+    """Compute gamma-frailty fit diagnostics for a single cohort.
+    
+    Args:
+        sheet_name: Enrollment date sheet name (e.g., "2021_24")
+        enrollment_date: Enrollment date string (same as sheet_name)
+        age_group: Age group label (e.g., "All Ages" or year value)
+        year_of_birth: YearOfBirth value (e.g., -2 for all ages, or year)
+        dose: Dose value
+        kcor6_params_map: Dictionary mapping (sheet_name, year_of_birth, dose) to fit parameters
+        src_path: Path to source workbook
+        
+    Returns:
+        Dictionary with diagnostic metrics, or None if computation fails
+    """
+    import os
+    import pandas as pd
+    import numpy as np
+    
+    # Check if parameters are available
+    if kcor6_params_map is None or src_path is None:
+        return None
+    
+    if not os.path.exists(src_path):
+        return None
+    
+    # Get fit parameters
+    params_key = (sheet_name, int(year_of_birth), int(dose))
+    params = kcor6_params_map.get(params_key)
+    if params is None:
+        return None
+    
+    theta_hat = params.get("theta_hat", np.nan)
+    k_hat = params.get("k_hat", np.nan)
+    n_obs = params.get("n_obs", 0)
+    
+    if not np.isfinite(theta_hat) or not np.isfinite(k_hat) or n_obs < 2:
+        return None
+    
+    try:
+        # Read raw data from source workbook
+        df = pd.read_excel(src_path, sheet_name=sheet_name)
+        df["DateDied"] = pd.to_datetime(df["DateDied"])
+        
+        # Filter to YearOfBirth and Dose
+        if int(year_of_birth) == -2:
+            # All Ages: aggregate across all YearOfBirth
+            df_cohort = df.groupby(["Dose", "DateDied"], sort=False).agg({
+                "Alive": "sum",
+                "Dead": "sum",
+            }).reset_index()
+            df_cohort = df_cohort[df_cohort["Dose"] == int(dose)]
+        else:
+            df_cohort = df[
+                (df["YearOfBirth"] == int(year_of_birth)) & 
+                (df["Dose"] == int(dose))
+            ]
+        
+        if df_cohort.empty:
+            return None
+        
+        # Sort by DateDied and compute time since enrollment
+        df_cohort = df_cohort.sort_values("DateDied").reset_index(drop=True)
+        df_cohort["PT"] = df_cohort["Alive"].astype(float).clip(lower=0.0)
+        df_cohort["Dead"] = df_cohort["Dead"].astype(float).clip(lower=0.0)
+        df_cohort["MR"] = np.where(df_cohort["PT"] > 0, df_cohort["Dead"] / (df_cohort["PT"] + EPS), np.nan)
+        df_cohort["t"] = df_cohort.groupby("Dose").cumcount().astype(float) if int(year_of_birth) == -2 else df_cohort.groupby(["YearOfBirth", "Dose"]).cumcount().astype(float)
+        
+        # Compute observed cumulative hazard
+        mr_vals = df_cohort["MR"].to_numpy(dtype=float)
+        t_vals = df_cohort["t"].to_numpy(dtype=float)
+        hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+        hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
+        H_obs = np.cumsum(hazard_eff)
+        
+        # Apply gamma-frailty inversion to get normalized cumhaz H0
+        H0 = invert_gamma_frailty(H_obs, theta_hat)
+        
+        # Filter to quiet window bins
+        iso_parts = df_cohort["DateDied"].dt.isocalendar()
+        iso_int = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int)).to_numpy(dtype=int)
+        quiet_mask = (iso_int >= KCOR6_QUIET_START_INT) & (iso_int <= KCOR6_QUIET_END_INT)
+        fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
+        
+        if np.sum(fit_mask) < 2:
+            return None
+        
+        # Extract quiet-window data
+        H0_quiet = H0[fit_mask]
+        t_quiet = t_vals[fit_mask]
+        t_quiet_years = t_quiet / 52.0  # Convert to years for drift_per_year
+        
+        # Compute diagnostics
+        mean = float(np.mean(H0_quiet))
+        sd = float(np.std(H0_quiet, ddof=1))  # Sample standard deviation
+        
+        # OLS linear regression: H0(t) ≈ a + b*t_years
+        if len(t_quiet_years) >= 2:
+            coeffs = np.polyfit(t_quiet_years, H0_quiet, 1)
+            a, b = coeffs[1], coeffs[0]  # polyfit returns [slope, intercept] in reverse order
+            H0_pred = a + b * t_quiet_years
+            max_abs_dev = float(np.max(np.abs(H0_quiet - H0_pred)))
+            drift_per_year = float(b)
+        else:
+            max_abs_dev = np.nan
+            drift_per_year = np.nan
+        
+        n_bins = int(np.sum(fit_mask))
+        
+        return {
+            "mean": mean,
+            "sd": sd,
+            "max_abs_dev": max_abs_dev,
+            "drift_per_year": drift_per_year,
+            "n_bins": n_bins,
+            "theta_hat": float(theta_hat),
+            "k_hat": float(k_hat),
+        }
+    except Exception as e:
+        # Return None on any error
+        return None
+
+def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=None, src_path=None):
     """Create KCOR_summary.xlsx with one sheet per enrollment date, formatted like console output."""
     import os
     
@@ -5956,6 +6078,96 @@ def create_summary_file(combined_data, out_path, dual_print):
     
     # Group data by EnrollmentDate (enrollment date)
     sheets = combined_data["EnrollmentDate"].unique()
+    
+    # Build gamma-frailty fit diagnostics rows
+    gamma_frailty_rows = []
+    if kcor6_params_map is not None and src_path is not None and os.path.exists(src_path):
+        # Get unique combinations of (EnrollmentDate, YearOfBirth, Dose)
+        # We need to extract unique doses from the data - check both Dose_num and Dose_den columns
+        # But actually, we need to iterate over all unique (EnrollmentDate, YearOfBirth, Dose) combinations
+        # where Dose comes from the actual cohort data, not from dose pairs
+        
+        # Get all unique enrollment dates
+        enrollment_dates = combined_data["EnrollmentDate"].unique()
+        
+        # Format quiet window label (e.g., "2023W01–2023W52")
+        # Convert ISO format "YYYY-WW" to "YYYYWww" format
+        def iso_to_w_format(iso_str):
+            y, w = iso_str.split("-")
+            return f"{y}W{w:02d}"
+        quiet_window_label = f"{iso_to_w_format(KCOR6_QUIET_START_ISO)}–{iso_to_w_format(KCOR6_QUIET_END_ISO)}"
+        
+        for enrollment_date in enrollment_dates:
+            # Get reporting date for this enrollment
+            reporting_date_str = KCOR_REPORTING_DATE.get(enrollment_date, "")
+            if not reporting_date_str:
+                # Fallback: use max date from combined_data for this enrollment
+                sheet_data = combined_data[combined_data["EnrollmentDate"] == enrollment_date]
+                if not sheet_data.empty:
+                    reporting_date_str = sheet_data["Date"].max().strftime("%Y-%m-%d")
+                else:
+                    reporting_date_str = ""
+            
+            # Get unique YearOfBirth values for this enrollment
+            enrollment_data = combined_data[combined_data["EnrollmentDate"] == enrollment_date]
+            unique_yobs = enrollment_data["YearOfBirth"].unique()
+            
+            # For each YearOfBirth, get unique doses from Dose_num and Dose_den
+            for year_of_birth in unique_yobs:
+                yob_data = enrollment_data[enrollment_data["YearOfBirth"] == year_of_birth]
+                unique_doses = set()
+                if "Dose_num" in yob_data.columns:
+                    unique_doses.update(yob_data["Dose_num"].unique())
+                if "Dose_den" in yob_data.columns:
+                    unique_doses.update(yob_data["Dose_den"].unique())
+                
+                for dose in unique_doses:
+                    # Determine age_group label
+                    if year_of_birth == 0:
+                        age_group = "ASMR (direct)"
+                        yob_label = "All"
+                    elif year_of_birth == -2:
+                        age_group = "All Ages"
+                        yob_label = "All"
+                    elif year_of_birth == -1:
+                        age_group = "(unknown)"
+                        yob_label = "Unknown"
+                    else:
+                        age_group = str(int(year_of_birth))
+                        yob_label = str(int(year_of_birth))
+                    
+                    # Compute diagnostics
+                    diag_result = _compute_gamma_frailty_diagnostics(
+                        enrollment_date, enrollment_date, age_group, year_of_birth, dose,
+                        kcor6_params_map, src_path
+                    )
+                    
+                    if diag_result is not None:
+                        gamma_frailty_rows.append({
+                            "reporting_date": reporting_date_str,
+                            "enrollment_date": enrollment_date,
+                            "age_group": age_group,
+                            "year_of_birth": yob_label,
+                            "dose": int(dose),
+                            "quiet_window": quiet_window_label,
+                            "theta_hat": diag_result["theta_hat"],
+                            "k_hat": diag_result["k_hat"],
+                            "mean": diag_result["mean"],
+                            "sd": diag_result["sd"],
+                            "max_abs_dev": diag_result["max_abs_dev"],
+                            "drift_per_year": diag_result["drift_per_year"],
+                            "n_bins": diag_result["n_bins"],
+                        })
+    
+    # Sort gamma_frailty_rows by: reporting_date, enrollment_date, age_group, year_of_birth, dose
+    if gamma_frailty_rows:
+        gamma_frailty_rows.sort(key=lambda x: (
+            x["reporting_date"],
+            x["enrollment_date"],
+            x["age_group"],
+            x["year_of_birth"],
+            x["dose"]
+        ))
     
     # Write summary file with retry logic
     max_retries = 3
@@ -6070,6 +6282,19 @@ def create_summary_file(combined_data, out_path, dual_print):
                     summary_df.to_excel(writer, index=False, sheet_name=sheet_name)
                     
                     dual_print(f"  - {sheet_name}: {len(dose_pairs)} dose combinations, {len(summary_rows)} summary rows")
+                
+                # Write gamma-frailty fit diagnostics worksheet
+                if gamma_frailty_rows:
+                    gamma_frailty_df = pd.DataFrame(gamma_frailty_rows)
+                    # Ensure columns are in the correct order
+                    column_order = [
+                        "reporting_date", "enrollment_date", "age_group", "year_of_birth", "dose",
+                        "quiet_window", "theta_hat", "k_hat", "mean", "sd", "max_abs_dev",
+                        "drift_per_year", "n_bins"
+                    ]
+                    gamma_frailty_df = gamma_frailty_df[[col for col in column_order if col in gamma_frailty_df.columns]]
+                    gamma_frailty_df.to_excel(writer, index=False, sheet_name="gamma_frailty_fit")
+                    dual_print(f"  - gamma_frailty_fit: {len(gamma_frailty_df)} diagnostic rows")
             
             # If we get here, the file was written successfully
             dual_print(f"[Summary] Created summary with {len(sheets)} enrollment periods")
