@@ -940,6 +940,39 @@ def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
         }
 
 
+# Cache for dataset dose pairs config (loaded once per run)
+_DATASET_DOSE_PAIRS_CACHE = None
+
+def _load_dataset_dose_pairs_config():
+    """Load dose pairs configuration from dataset YAML file."""
+    global _DATASET_DOSE_PAIRS_CACHE
+    if _DATASET_DOSE_PAIRS_CACHE is not None:
+        return _DATASET_DOSE_PAIRS_CACHE
+    
+    _DATASET_DOSE_PAIRS_CACHE = {}
+    _dataset_name = os.environ.get('DATASET', 'Czech')
+    _dataset_yaml_path = os.path.join('..', 'data', _dataset_name, f'{_dataset_name}.yaml')
+    
+    if os.path.exists(_dataset_yaml_path):
+        try:
+            import yaml as _yaml_module
+            with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
+                _dataset_config = _yaml_module.safe_load(_f) or {}
+            _dose_pairs_config = _dataset_config.get('dosePairs', {})
+            if isinstance(_dose_pairs_config, dict):
+                # Convert list format to tuple format
+                for key, value in _dose_pairs_config.items():
+                    if isinstance(value, list):
+                        _DATASET_DOSE_PAIRS_CACHE[key] = [tuple(pair) if isinstance(pair, list) else pair for pair in value]
+                if _DATASET_DOSE_PAIRS_CACHE:
+                    if DEBUG_VERBOSE:
+                        print(f"[DEBUG] Loaded dose pairs config from {_dataset_yaml_path}", flush=True)
+        except Exception as _e_config:
+            if DEBUG_VERBOSE:
+                print(f"[DEBUG] Could not load dose pairs from {_dataset_yaml_path}: {_e_config}", flush=True)
+    
+    return _DATASET_DOSE_PAIRS_CACHE
+
 def get_dose_pairs(sheet_name):
     """
     Get dose pairs based on sheet name.
@@ -954,6 +987,25 @@ def get_dose_pairs(sheet_name):
     if OVERRIDE_DOSE_PAIRS is not None:
         return OVERRIDE_DOSE_PAIRS
 
+    # Try to load from dataset YAML config
+    _dose_pairs_config = _load_dataset_dose_pairs_config()
+    if _dose_pairs_config:
+        # Try exact match first
+        if sheet_name in _dose_pairs_config:
+            return _dose_pairs_config[sheet_name]
+        # Try normalized format (replace - with _)
+        _normalized = sheet_name.replace('-', '_')
+        if _normalized in _dose_pairs_config:
+            return _dose_pairs_config[_normalized]
+        # Try reverse normalization (replace _ with -)
+        _reverse_normalized = sheet_name.replace('_', '-')
+        if _reverse_normalized in _dose_pairs_config:
+            return _dose_pairs_config[_reverse_normalized]
+        # Fall back to default if specified
+        if 'default' in _dose_pairs_config:
+            return _dose_pairs_config['default']
+
+    # Hardcoded defaults (backward compatibility)
     if sheet_name in ("2021-13", "2021_13"):
         # Early 2021 sheet: max dose is 2, only doses 0, 1, 2
         return [(1,0), (2,0), (2,1)]

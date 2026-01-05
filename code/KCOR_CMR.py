@@ -274,14 +274,34 @@ if MONTE_CARLO_MODE:
     print(f"  Using {MC_THREADS} parallel processes", flush=True)
     print(f"  Max dose group: {MC_MAX_DOSE_EFFECTIVE}", flush=True)
 
+# Try to load enrollment dates from dataset YAML config
+# Look for data/{DATASET}/{DATASET}.yaml
+_dataset_name = os.environ.get('DATASET', 'Czech')
+_dataset_yaml_path = os.path.join('..', 'data', _dataset_name, f'{_dataset_name}.yaml')
+if os.path.exists(_dataset_yaml_path):
+    try:
+        import yaml as _yaml_module
+        with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
+            _dataset_config = _yaml_module.safe_load(_f) or {}
+        _config_enrollment_dates = _dataset_config.get('enrollmentDates')
+        if _config_enrollment_dates and isinstance(_config_enrollment_dates, list):
+            # Convert to list of strings, normalize format
+            _parsed_config_dates = [str(d).strip().replace('_', '-') for d in _config_enrollment_dates if d]
+            if _parsed_config_dates:
+                enrollment_dates = _parsed_config_dates
+                print(f"Loaded enrollment dates from dataset config: {', '.join(enrollment_dates)}", flush=True)
+    except Exception as _e_config:
+        print(f"Warning: Could not load enrollment dates from {_dataset_yaml_path}: {_e_config}", flush=True)
+
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
-# (Only applies if not in Monte Carlo mode)
+# (Only applies if not in Monte Carlo mode, and takes precedence over config file)
 if not MONTE_CARLO_MODE:
     _env_dates = os.environ.get('ENROLLMENT_DATES')
     if _env_dates:
         _parsed = [d.strip().replace('_', '-') for d in _env_dates.split(',') if d.strip()]
         if _parsed:
             enrollment_dates = _parsed
+            print(f"Overriding enrollment dates from ENROLLMENT_DATES env var: {', '.join(enrollment_dates)}", flush=True)
 
 # Process latest enrollment first to avoid any chance of state leakage across runs
 try:
