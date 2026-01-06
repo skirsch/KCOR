@@ -273,6 +273,8 @@ Table: Notation used throughout the Methods section. {#tbl:notation}
 | $$\hat{\theta}_d$$ | Estimated frailty variance from quiet-window fitting |
 | $$k_d$$ | Baseline hazard level for cohort $d$ under the default baseline shape |
 | $$\hat{k}_d$$ | Estimated baseline hazard level from quiet-window fitting |
+| $$t_0$$ | Anchor time for baseline normalization (prespecified) |
+| $$\mathrm{KCOR}(t; t_0)$$ | Anchored KCOR: $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$ |
 
 For COVID-19 vaccination analyses, intervention count corresponds to the number of vaccine doses received; more generally, this can index any discrete exposure level.
 
@@ -299,6 +301,16 @@ $$
 \mathrm{KCOR}(t) = \frac{\tilde{H}_{0,A}(t)}{\tilde{H}_{0,B}(t)}.
 $$
 {#eq:kcor-estimand}
+
+In some applications we additionally report an **anchored (baseline-normalized) KCOR** that removes the time-invariant multiplicative level difference between cohorts:
+
+$$
+\mathrm{KCOR}(t; t_0) \;=\; \frac{\mathrm{KCOR}(t)}{\mathrm{KCOR}(t_0)}
+\;=\;
+\frac{\tilde{H}_{0,A}(t) / \tilde{H}_{0,B}(t)}{\tilde{H}_{0,A}(t_0) / \tilde{H}_{0,B}(t_0)}.
+$$
+
+Here $t_0$ is a prespecified post-enrollment anchor time (e.g., a few weeks after enrollment) chosen after any initial stabilization period but early enough to avoid masking near-term intervention effects. By construction, $\mathrm{KCOR}(t_0; t_0)=1$, so departures from 1 reflect **relative divergence after $t_0$**, whereas the unanchored $\mathrm{KCOR}(t)$ also preserves baseline level differences that may reflect residual baseline-risk differences.
 
 $\mathrm{KCOR}(t)$ is a **cumulative outcome contrast** after removal of curvature attributed to selection-induced depletion under the working frailty model. The estimand is defined regardless of whether it has a causal interpretation.
 
@@ -734,6 +746,8 @@ This section is the core validation claim of KCOR:
 
 Throughout, curvature in cumulative hazard plots reflects selection-induced depletion, while linearity after normalization indicates successful removal of that curvature.
 
+In vaccinated–unvaccinated comparisons, large early differences in $\mathrm{KCOR}(t)$ may reflect baseline risk selection rather than intervention effects; in such cases we therefore emphasize $\mathrm{KCOR}(t; t_0)$, which reports deviations relative to an early post-enrollment reference while preserving time-varying divergence.
+
 ### 3.1 Negative controls: null under selection-induced curvature
 
 #### 3.1.1 Fully synthetic negative control (recommended)
@@ -773,9 +787,9 @@ Notably, KCOR estimates frailty parameters independently for each cohort without
 
 Two snapshots illustrate that KCOR is near-flat even under 10–20 year age differences:
 
-![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ remains near-flat at 1 over follow-up, consistent with a true null effect. Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).[@sanca2024]](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ remains near-flat at 1 over follow-up, consistent with a true null effect. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).[@sanca2024]](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
 
-![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, $\mathrm{KCOR}(t)$ exhibits no systematic drift, demonstrating robustness to selection-induced curvature. Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
+![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, $\mathrm{KCOR}(t)$ exhibits no systematic drift, demonstrating robustness to selection-induced curvature. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Appendix B.2).](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
 
 Table @tbl:neg_control_summary provides numeric summaries.
 
@@ -1411,15 +1425,17 @@ Visual inspection of quiet-window placement relative to mortality dynamics is an
 
 #### C.5 Robustness to age stratification
 
-![Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.](figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png){#fig:kcor_realdata_yob1930}
+![Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.](figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png){#fig:kcor_realdata_yob1930}
 
-![Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.](figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png){#fig:kcor_realdata_yob1940}
+![Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.](figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png){#fig:kcor_realdata_yob1940}
 
-![Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.](figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png){#fig:kcor_realdata_yob1950}
+![Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.](figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png){#fig:kcor_realdata_yob1950}
 
 ### Appendix C.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data
 
 The Czech results do not validate KCOR; they represent an application that satisfies all pre-specified diagnostic criteria. Substantive implications follow only if the identification assumptions hold.
+
+Unless otherwise noted, KCOR curves in the Czech analyses are shown anchored at $t_0 = 4$ weeks for interpretability.
 
 #### C.1.1 Illustrative empirical context: COVID-19 mortality data
 
@@ -1516,7 +1532,7 @@ We include a brief illustrative application to demonstrate end-to-end KCOR behav
 
 Figure @fig:kcor_realdata_allages shows $\mathrm{KCOR}(t)$ trajectories for dose 2 and dose 3 relative to dose 0 for an all-ages analysis. We deliberately present an all-ages analysis as a high-heterogeneity stress test, since aggregation across age induces substantial baseline hazard and frailty variation. To assess whether apparent stability could arise from cancellation across strata, we also present narrow birth-year cohorts spanning advanced ages (1930, 1940, 1950) in Figures @fig:kcor_realdata_yob1930–@fig:kcor_realdata_yob1950. Across aggregation levels, $\mathrm{KCOR}(t)$ remains stable over the evaluation window after depletion normalization, consistent with effective removal of selection-induced curvature in a real-data setting. These figures are presented descriptively to illustrate estimator behavior; no hypothesis testing is performed.
 
-![All-ages stress test: $\mathrm{KCOR}(t)$ trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference.](figures/kcor_realdata_allages_enroll2022w26_eval2023.png){#fig:kcor_realdata_allages}
+![All-ages stress test: $\mathrm{KCOR}(t)$ trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference.](figures/kcor_realdata_allages_enroll2022w26_eval2023.png){#fig:kcor_realdata_allages}
 
 ### Appendix D — Diagnostics and Failure Modes for KCOR Assumptions
 
