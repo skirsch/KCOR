@@ -25,3 +25,55 @@ Computing coverage for Injected effect (harm)...
   Simulation replicates: 200
   Target week: 80
   Simulation 100/200
+  Simulation 200/200
+  Valid replicates: 200/200
+  Median KCOR: 1.1511
+  95% CI: [1.1511, 1.1511]
+  True KCOR in CI: False (coverage: 0.0%)
+
+Injected effect (harm):
+  Coverage: 0.0%
+
+Computing coverage for Injected effect (benefit)...
+  True KCOR: 0.8
+  Simulation replicates: 200
+  Target week: 80
+  Simulation 100/200
+  Simulation 200/200
+  Valid replicates: 200/200
+  Median KCOR: 0.9626
+  95% CI: [0.9626, 0.9626]
+  True KCOR in CI: False (coverage: 0.0%)
+
+Injected effect (benefit):
+  Coverage: 0.0%
+
+Computing coverage for Non-gamma frailty...
+  True KCOR: 1.0
+  Simulation replicates: 200
+  Target week: 80
+  Simulation 100/200
+  Simulation 200/200
+  Valid replicates: 200/200
+  Median KCOR: 1.0290
+  95% CI: [0.9608, 1.1108]
+  True KCOR in CI: True (coverage: 100.0%)
+
+Non-gamma frailty:
+  Coverage: 100.0%
+
+Computing coverage for Sparse events...
+  True KCOR: 1.0
+  Simulation replicates: 200
+  Target week: 80
+  Simulation 100/200
+  Simulation 200/200
+  Valid replicates: 200/200
+  Median KCOR: 1.0127
+  95% CI: [1.0127, 1.0127]
+  True KCOR in CI: False (coverage: 0.0%)
+
+Sparse events:
+  Coverage: 0.0%
+
+Saved coverage results to: ../out/bootstrap_coverage.csv

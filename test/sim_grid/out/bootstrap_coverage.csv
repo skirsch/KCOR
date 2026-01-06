@@ -1,6 +1,6 @@
 scenario,true_kcor,coverage_percent,coverage_proportion,n_simulations,ci_lower,ci_upper,median_kcor
-Gamma-frailty null,1.0,,,5,,,
-Injected effect (harm),1.2,,,5,,,
-Injected effect (benefit),0.8,,,5,,,
-Non-gamma frailty,1.0,,,5,,,
-Sparse events,1.0,,,5,,,
+Gamma-frailty null,1.0,0.0,0.0,200,1.00943851579404,1.00943851579404,1.00943851579404
+Injected effect (harm),1.2,0.0,0.0,200,1.1511348305379185,1.1511348305379185,1.1511348305379185
+Injected effect (benefit),0.8,0.0,0.0,200,0.9625549099317127,0.9625549099317127,0.9625549099317127
+Non-gamma frailty,1.0,100.0,1.0,200,0.9608311599651834,1.1108444046261146,1.0289559793873557
+Sparse events,1.0,0.0,0.0,200,1.0127308718663242,1.0127308718663242,1.0127308718663242
