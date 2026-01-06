@@ -74,6 +74,12 @@ def resolve_inputs(input_arg: str) -> List[str]:
         if not files:
             # Fall back to .csv files if no .xz files found
             files = sorted(glob.glob(os.path.join(input_arg, "*.csv")))
+        if files:
+            print(f"Found {len(files)} input file(s) in {input_arg}:", flush=True)
+            for f in files:
+                size = os.path.getsize(f) if os.path.exists(f) else 0
+                size_mb = size / (1024 * 1024)
+                print(f"  - {os.path.basename(f)} ({size_mb:.1f} MB)", flush=True)
         return files
     return [input_arg]
 
@@ -81,10 +87,15 @@ def resolve_inputs(input_arg: str) -> List[str]:
 def read_concat(inputs: List[str]) -> pd.DataFrame:
     """Read and concatenate multiple CSV files, handling .xz compression."""
     frames: List[pd.DataFrame] = []
-    for path in inputs:
+    total_files = len(inputs)
+    for idx, path in enumerate(inputs, 1):
         try:
+            file_basename = os.path.basename(path)
+            print(f"[{idx}/{total_files}] Reading {file_basename}...", flush=True)
+            
             # Handle .xz compressed files
             if path.endswith(".xz"):
+                print(f"  Decompressing {file_basename}...", flush=True)
                 # Try python lzma module first (more reliable)
                 try:
                     import lzma
@@ -98,7 +109,9 @@ def read_concat(inputs: List[str]) -> pd.DataFrame:
                             encoding="utf-8",
                             low_memory=False,
                         )
-                except Exception:
+                    print(f"  Decompressed and read {file_basename}: {len(df)} rows", flush=True)
+                except Exception as e_lzma:
+                    print(f"  lzma module failed, trying xzcat subprocess...", flush=True)
                     # Fallback: use xzcat subprocess
                     import subprocess
                     proc = subprocess.Popen(["xzcat", path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -115,6 +128,7 @@ def read_concat(inputs: List[str]) -> pd.DataFrame:
                     if proc.returncode != 0:
                         stderr = proc.stderr.read().decode('utf-8', errors='ignore')
                         raise Exception(f"xzcat failed with return code {proc.returncode}: {stderr}")
+                    print(f"  Decompressed and read {file_basename}: {len(df)} rows", flush=True)
             else:
                 df = pd.read_csv(
                     path,
@@ -125,13 +139,20 @@ def read_concat(inputs: List[str]) -> pd.DataFrame:
                     encoding="utf-8",
                     low_memory=False,
                 )
+                print(f"  Read {file_basename}: {len(df)} rows", flush=True)
             frames.append(df)
         except Exception as e:
-            print(f"Warning: Failed to read {path}: {e}", flush=True)
+            print(f"ERROR: Failed to read {path}: {e}", flush=True)
             continue
+    
     if not frames:
+        print("ERROR: No files were successfully read!", flush=True)
         return pd.DataFrame()
-    return pd.concat(frames, axis=0, ignore_index=True)
+    
+    print(f"\nConcatenating {len(frames)} file(s)...", flush=True)
+    combined = pd.concat(frames, axis=0, ignore_index=True)
+    print(f"Total rows after concatenation: {len(combined)}", flush=True)
+    return combined
 
 
 def extract_age_band(age_str: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
@@ -199,6 +220,7 @@ def build_output(
     df: pd.DataFrame, start_date: Optional[str], end_date: Optional[str]
 ) -> pd.DataFrame:
     """Convert japan2 wide format to KRF format."""
+    print(f"\nConverting {len(df)} records to KRF format...", flush=True)
     df = df.fillna("")
 
     # Preserve first-appearance order of each ID
@@ -296,13 +318,17 @@ def build_output(
     death_per_id = death_df.groupby("id")["death"].min()
 
     # Assemble output
-    # Get all unique IDs (from wide format if it exists, otherwise from df)
+    # Get all unique IDs from original dataframe (include people with and without doses)
+    all_ids = df["id"].drop_duplicates().values
+    
+    # Start with all IDs, then merge in dose data
     if not wide.empty:
-        out = wide.reset_index()
-        all_ids = out["ID"].unique()
+        # Merge dose data for people who have doses
+        out = pd.DataFrame({"ID": all_ids})
+        wide_reset = wide.reset_index()
+        out = out.merge(wide_reset, on="ID", how="left")
     else:
-        # If no doses, create DataFrame with unique IDs
-        all_ids = df["id"].drop_duplicates().values
+        # If no doses, create DataFrame with unique IDs only
         out = pd.DataFrame({"ID": all_ids})
 
     # Map per-ID fields - create mapping from ID to YOB
@@ -330,6 +356,16 @@ def build_output(
     # Restore original first-appearance ID order
     out["_order"] = out["ID"].map(first_order)
     out = out.sort_values("_order").drop(columns=["_order"]).reset_index(drop=True)
+    
+    # Print summary statistics
+    unique_ids = out["ID"].nunique()
+    ids_with_doses = out[[c for c in out.columns if c.startswith("V") and c.endswith("Date")]].notna().any(axis=1).sum()
+    ids_with_death = out["DeathDate"].ne("").sum()
+    print(f"Conversion complete:", flush=True)
+    print(f"  Unique IDs: {unique_ids}", flush=True)
+    print(f"  IDs with vaccination doses: {ids_with_doses}", flush=True)
+    print(f"  IDs with death dates: {ids_with_death}", flush=True)
+    
     return out
 
 
@@ -390,12 +426,21 @@ def main() -> None:
     if not inputs:
         raise SystemExit(f"No input files found under: {input_path}")
 
+    print(f"\n{'='*60}", flush=True)
+    print(f"Starting conversion: {len(inputs)} file(s) -> {output_path}", flush=True)
+    print(f"{'='*60}\n", flush=True)
+    
     df = read_concat(inputs)
     if df.empty:
         raise SystemExit(f"No data read from input files: {inputs}")
 
     out_df = build_output(df, args.start_date, args.end_date)
+    
+    print(f"\nWriting output to {output_path}...", flush=True)
     write_output_csv(out_df, output_path)
+    output_size = os.path.getsize(output_path) if os.path.exists(output_path) else 0
+    output_size_mb = output_size / (1024 * 1024)
+    print(f"Wrote {len(out_df)} rows to {output_path} ({output_size_mb:.1f} MB)", flush=True)
 
     # Avoid overwriting the converter config YAML if sidecar path equals config path
     if sidecar_path and (not args.config or os.path.abspath(sidecar_path) != os.path.abspath(args.config)):

@@ -49,8 +49,14 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@ls -lh $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
 
+# If krf.csv is missing, build it via the dataset converter
+$(RECORDS_KRF):
+	@echo "Building KRF via dataset converter in data/$(DATASET)..."
+	@$(MAKE) -C ../data/$(DATASET) convert
+
 # Build standardized records.csv from available inputs (prefer krf.csv)
-$(RECORDS_CSV): | ../data/$(DATASET)
+# Note: $(RECORDS_KRF) is listed as dependency so it gets built first if needed
+$(RECORDS_CSV): $(RECORDS_KRF) | ../data/$(DATASET)
 	@set -e; \
 	if [ -f "$(RECORDS_KRF)" ]; then \
 	  echo "Adapting KRF CSV to Czech-like input..."; \
@@ -67,11 +73,6 @@ $(RECORDS_CSV): | ../data/$(DATASET)
 	  echo "ERROR: No input found. Provide $(RECORDS_KRF) or $(RAW_CSV_GZ)."; \
 	  exit 1; \
 	fi
-
-# If krf.csv is missing, build it via the dataset converter
-$(RECORDS_KRF):
-	@echo "Building KRF via dataset converter in data/$(DATASET)..."
-	@$(MAKE) -C ../data/$(DATASET) convert
 
 # Keep convenience target to run CMR on KRF explicitly
 .PHONY: KCOR_from_krf

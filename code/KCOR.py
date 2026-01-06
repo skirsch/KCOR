@@ -550,15 +550,26 @@ def log_slope7_fit_debug(record: dict) -> None:
         # Debug logging must never break the main computation
         return
 
-KCOR_REPORTING_DATE = {
-    '2021-13': '2022-12-31',
-    '2021_13': '2022-12-31',
-    '2021-20': '2022-12-31',
-    '2021_20': '2022-12-31',
-    '2021_24': '2022-12-31',
-    '2022_06': '2022-12-31',
-    '2022_47': '2023-12-31',
-}
+def get_reporting_date(enrollment_date_str):
+    """Compute reporting date as 1 year from enrollment date.
+    
+    Args:
+        enrollment_date_str: Enrollment date string (e.g., '2021_24' or '2021-24')
+    
+    Returns:
+        Reporting date string in YYYY-MM-DD format, or None if enrollment date cannot be parsed
+    """
+    try:
+        enrollment_date = _parse_enrollment_date(enrollment_date_str)
+        # Add exactly 1 year (handles leap years correctly)
+        reporting_date = datetime(
+            enrollment_date.year + 1,
+            enrollment_date.month,
+            enrollment_date.day
+        )
+        return reporting_date.strftime('%Y-%m-%d')
+    except Exception:
+        return None
 
 # Check for Monte Carlo mode
 MONTE_CARLO_MODE = str(os.environ.get('MONTE_CARLO', '')).strip().lower() in ('1', 'true', 'yes')
@@ -951,24 +962,43 @@ def _load_dataset_dose_pairs_config():
     
     _DATASET_DOSE_PAIRS_CACHE = {}
     _dataset_name = os.environ.get('DATASET', 'Czech')
-    _dataset_yaml_path = os.path.join('..', 'data', _dataset_name, f'{_dataset_name}.yaml')
+    # Resolve path relative to script location to handle different execution contexts
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    _dataset_yaml_paths = [
+        os.path.join(_script_dir, '..', 'data', _dataset_name, f'{_dataset_name}.yaml'),  # From code/ directory
+        os.path.join(_script_dir, '..', '..', 'data', _dataset_name, f'{_dataset_name}.yaml'),  # From root if script moved
+    ]
+    _dataset_yaml_path = None
+    for _path in _dataset_yaml_paths:
+        _abs_path = os.path.abspath(_path)
+        if os.path.exists(_abs_path):
+            _dataset_yaml_path = _abs_path
+            break
     
-    if os.path.exists(_dataset_yaml_path):
+    if _dataset_yaml_path:
         try:
-            import yaml as _yaml_module
-            with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
-                _dataset_config = _yaml_module.safe_load(_f) or {}
-            _dose_pairs_config = _dataset_config.get('dosePairs', {})
-            if isinstance(_dose_pairs_config, dict):
-                # Convert list format to tuple format
-                for key, value in _dose_pairs_config.items():
-                    if isinstance(value, list):
-                        _DATASET_DOSE_PAIRS_CACHE[key] = [tuple(pair) if isinstance(pair, list) else pair for pair in value]
-                if _DATASET_DOSE_PAIRS_CACHE:
-                    if DEBUG_VERBOSE:
-                        print(f"[DEBUG] Loaded dose pairs config from {_dataset_yaml_path}", flush=True)
+            # Try to import yaml module - handle ImportError gracefully
+            try:
+                import yaml as _yaml_module
+            except ImportError:
+                # yaml module not available - skip config loading silently
+                _yaml_module = None
+            
+            if _yaml_module is not None:
+                with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
+                    _dataset_config = _yaml_module.safe_load(_f) or {}
+                _dose_pairs_config = _dataset_config.get('dosePairs', {})
+                if isinstance(_dose_pairs_config, dict):
+                    # Convert list format to tuple format
+                    for key, value in _dose_pairs_config.items():
+                        if isinstance(value, list):
+                            _DATASET_DOSE_PAIRS_CACHE[key] = [tuple(pair) if isinstance(pair, list) else pair for pair in value]
+                    if _DATASET_DOSE_PAIRS_CACHE:
+                        if DEBUG_VERBOSE:
+                            print(f"[DEBUG] Loaded dose pairs config from {_dataset_yaml_path}", flush=True)
         except Exception as _e_config:
-            if DEBUG_VERBOSE:
+            # Only print warning for non-ImportError exceptions (file read errors, etc.)
+            if DEBUG_VERBOSE and 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower():
                 print(f"[DEBUG] Could not load dose pairs from {_dataset_yaml_path}: {_e_config}", flush=True)
     
     return _DATASET_DOSE_PAIRS_CACHE
@@ -1886,23 +1916,28 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     
     # Create all-ages cohort (YearOfBirth=-2) by aggregating across all YearOfBirth values
     # This is done before processing so it's treated like any other cohort
-    df_sorted = df.sort_values("DateDied")
-    all_ages_agg = df_sorted.groupby(["Dose", "DateDied"]).agg({
-        "ISOweekDied": "first",
-        "Alive": "sum",
-        "Dead": "sum",
-        "PT": "sum"
-    }).reset_index()
-    all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
-                                  all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
-                                  np.nan)
-    all_ages_agg["hazard"] = hazard_from_mr_improved(all_ages_agg["MR"].clip(lower=0.0, upper=0.999))
-    all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
-    all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
-    all_ages_agg["YearOfBirth"] = -2  # Mark as all-ages cohort
-    
-    # Append all-ages cohort to main dataframe (iso_label will be added for all rows below)
-    df = pd.concat([df, all_ages_agg[["YearOfBirth", "Dose", "DateDied", "MR", "hazard", "t", "ISOweekDied", "Alive", "Dead", "PT"]]], ignore_index=True)
+    # NOTE: If KCOR_CMR.py already outputs YearOfBirth=-2, skip creation to avoid duplicates
+    if -2 not in df["YearOfBirth"].values:
+        df_sorted = df.sort_values("DateDied")
+        # Exclude any existing -2 rows from aggregation (shouldn't be any, but be safe)
+        df_for_agg = df_sorted[df_sorted["YearOfBirth"] != -2].copy()
+        if not df_for_agg.empty:
+            all_ages_agg = df_for_agg.groupby(["Dose", "DateDied"]).agg({
+                "ISOweekDied": "first",
+                "Alive": "sum",
+                "Dead": "sum",
+                "PT": "sum"
+            }).reset_index()
+            all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
+                                          all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
+                                          np.nan)
+            all_ages_agg["hazard"] = hazard_from_mr_improved(all_ages_agg["MR"].clip(lower=0.0, upper=0.999))
+            all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
+            all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
+            all_ages_agg["YearOfBirth"] = -2  # Mark as all-ages cohort
+            
+            # Append all-ages cohort to main dataframe (iso_label will be added for all rows below)
+            df = pd.concat([df, all_ages_agg[["YearOfBirth", "Dose", "DateDied", "MR", "hazard", "t", "ISOweekDied", "Alive", "Dead", "PT"]]], ignore_index=True)
     
     # Annotate ISO week labels
     iso_parts = df["DateDied"].dt.isocalendar()
@@ -4109,7 +4144,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
     # Legacy quiet-anchor config removed
-    dual_print(f"  KCOR_REPORTING_DATE   = {KCOR_REPORTING_DATE}")
+    dual_print(f"  Reporting date calculation: 1 year from enrollment date")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
     dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
@@ -4287,8 +4322,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     # Apply moving average smoothing (adds MR_smooth; currently passthrough)
                     df_sa = apply_moving_average(df_sa)
 
-                    # Reporting date for this cohort
-                    target_str = KCOR_REPORTING_DATE.get(sh)
+                    # Reporting date for this cohort (1 year from enrollment)
+                    target_str = get_reporting_date(sh)
                     if target_str:
                         try:
                             target_dt = pd.to_datetime(target_str)
@@ -5779,7 +5814,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         if MONTE_CARLO_MODE:
             out_sh_copy = out_sh.copy()
             out_sh_copy["Date"] = pd.to_datetime(out_sh_copy["Date"])
-            target_date_str = KCOR_REPORTING_DATE.get(effective_sheet_name, "2022-12-31")
+            target_date_str = get_reporting_date(effective_sheet_name) or "2022-12-31"
             target_date = pd.to_datetime(target_date_str)
             # Find closest date to target
             if not out_sh_copy.empty:
@@ -5850,7 +5885,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             # Prepare per-dose, per-age cumulative hazard time series from earlier aggregation
             by_dose_nc = pd.concat(by_dose_nc_all, ignore_index=True) if by_dose_nc_all else pd.DataFrame()
             for sheet_name in sorted(combined["EnrollmentDate"].unique()):
-                target_str = KCOR_REPORTING_DATE.get(sheet_name)
+                target_str = get_reporting_date(sheet_name)
                 target_dt = pd.to_datetime(target_str) if target_str else None
                 data_sheet = combined[combined["EnrollmentDate"] == sheet_name]
                 if data_sheet.empty:
@@ -5942,9 +5977,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Ensure Date is datetime
         combined["Date"] = pd.to_datetime(combined["Date"]) 
         
-        # Iterate through each sheet and report at its configured reporting date
+        # Iterate through each sheet and report at its reporting date (1 year from enrollment)
         for sheet_name in sorted(combined["EnrollmentDate"].unique()):
-            target_str = KCOR_REPORTING_DATE.get(sheet_name)
+            target_str = get_reporting_date(sheet_name)
             if target_str:
                 try:
                     target_dt = pd.to_datetime(target_str)
@@ -6840,8 +6875,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
         enrollment_dates = combined_data["EnrollmentDate"].unique()
         
         for enrollment_date in enrollment_dates:
-            # Get reporting date for this enrollment
-            reporting_date_str = KCOR_REPORTING_DATE.get(enrollment_date, "")
+            # Get reporting date for this enrollment (1 year from enrollment)
+            reporting_date_str = get_reporting_date(enrollment_date) or ""
             if not reporting_date_str:
                 # Fallback: use max date from combined_data for this enrollment
                 sheet_data = combined_data[combined_data["EnrollmentDate"] == enrollment_date]
@@ -6930,9 +6965,9 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                 for sheet_name in sorted(sheets):
                     sheet_data = combined_data[combined_data["EnrollmentDate"] == sheet_name].copy()
                     
-                    # Use reporting date per cohort (sheet) similar to console output
+                    # Use reporting date per cohort (sheet) - 1 year from enrollment
                     sheet_data["Date"] = pd.to_datetime(sheet_data["Date"])
-                    target_str = KCOR_REPORTING_DATE.get(sheet_name)
+                    target_str = get_reporting_date(sheet_name)
                     if target_str:
                         try:
                             target_dt = pd.to_datetime(target_str)

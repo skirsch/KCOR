@@ -87,6 +87,8 @@
 
 import pandas as pd
 import numpy as np
+# Suppress FutureWarning about fillna downcasting (we handle conversions explicitly)
+pd.set_option('future.no_silent_downcasting', True)
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
@@ -276,22 +278,44 @@ if MONTE_CARLO_MODE:
 
 # Try to load enrollment dates from dataset YAML config
 # Look for data/{DATASET}/{DATASET}.yaml
+# Resolve path relative to script location to handle different execution contexts
 _dataset_name = os.environ.get('DATASET', 'Czech')
-_dataset_yaml_path = os.path.join('..', 'data', _dataset_name, f'{_dataset_name}.yaml')
-if os.path.exists(_dataset_yaml_path):
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_dataset_yaml_paths = [
+    os.path.join(_script_dir, '..', 'data', _dataset_name, f'{_dataset_name}.yaml'),  # From code/ directory
+    os.path.join(_script_dir, '..', '..', 'data', _dataset_name, f'{_dataset_name}.yaml'),  # From root if script moved
+]
+_dataset_yaml_path = None
+for _path in _dataset_yaml_paths:
+    _abs_path = os.path.abspath(_path)
+    if os.path.exists(_abs_path):
+        _dataset_yaml_path = _abs_path
+        break
+
+if _dataset_yaml_path:
     try:
-        import yaml as _yaml_module
-        with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
-            _dataset_config = _yaml_module.safe_load(_f) or {}
-        _config_enrollment_dates = _dataset_config.get('enrollmentDates')
-        if _config_enrollment_dates and isinstance(_config_enrollment_dates, list):
-            # Convert to list of strings, normalize format
-            _parsed_config_dates = [str(d).strip().replace('_', '-') for d in _config_enrollment_dates if d]
-            if _parsed_config_dates:
-                enrollment_dates = _parsed_config_dates
-                print(f"Loaded enrollment dates from dataset config: {', '.join(enrollment_dates)}", flush=True)
+        # Try to import yaml module
+        try:
+            import yaml as _yaml_module
+        except ImportError:
+            # yaml module not available - skip config loading silently
+            _yaml_module = None
+        
+        if _yaml_module is not None:
+            with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
+                _dataset_config = _yaml_module.safe_load(_f) or {}
+            _config_enrollment_dates = _dataset_config.get('enrollmentDates')
+            if _config_enrollment_dates and isinstance(_config_enrollment_dates, list):
+                # Convert to list of strings, normalize format
+                _parsed_config_dates = [str(d).strip().replace('_', '-') for d in _config_enrollment_dates if d]
+                if _parsed_config_dates:
+                    enrollment_dates = _parsed_config_dates
+                    print(f"Loaded enrollment dates from dataset config: {', '.join(enrollment_dates)}", flush=True)
     except Exception as _e_config:
-        print(f"Warning: Could not load enrollment dates from {_dataset_yaml_path}: {_e_config}", flush=True)
+        # Only print warning for non-ImportError exceptions (file read errors, etc.)
+        # Skip warnings about missing yaml module
+        if 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower() and 'no module' not in str(_e_config).lower():
+            print(f"Warning: Could not load enrollment dates from {_dataset_yaml_path}: {_e_config}", flush=True)
 
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
 # (Only applies if not in Monte Carlo mode, and takes precedence over config file)
@@ -391,9 +415,12 @@ a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([-1, 0, 1, 3, 5]), -1).astype('Int8')
 needed_cols = [
     'Infection', 'Sex', 'YearOfBirth',
     'Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose',
+    'Date_FifthDose', 'Date_SixthDose',
     'VaccineCode_FirstDose', 'VaccineCode_SecondDose', 'VaccineCode_ThirdDose', 'VaccineCode_FourthDose',
     'Date_COVID_death', 'DateOfDeath', 'DCCI'
 ]
+# Filter to only columns that actually exist in the dataframe
+needed_cols = [col for col in needed_cols if col in a.columns]
 # Take only needed columns as a fresh copy to avoid chained-assignment warnings
 a = a.loc[:, needed_cols].copy()
 
@@ -402,7 +429,10 @@ a = a.loc[:, needed_cols].copy()
 
 # Remove records where Infection > 1
 # Filter to single-infection rows as a fresh copy
-a = a[(a['Infection'].fillna(0).astype(int) <= 1)].copy()
+# Fix pandas FutureWarning: use infer_objects instead of fillna().astype()
+# Fix pandas FutureWarning: avoid fillna() downcasting by using fillna with downcast=None
+_infection_series = a['Infection'].fillna(0, downcast=None)
+a = a[(_infection_series.astype(int) <= 1)].copy()
 
 # Filter out records where person got a non-mRNA vaccine for any dose
 try:
@@ -483,13 +513,13 @@ a['birth_year'] = pd.to_numeric(a['birth_year'], errors='coerce')
 
 # --------- Parse all dose dates ONCE before the enrollment loop ---------
 print(f"Parsing dose date columns (one time only)...")
-# Add dose date columns if not already present (up to 4th dose only)
-for col in ['Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose']:
+# Add dose date columns if not already present (up to 6th dose)
+for col in ['Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose', 'Date_FifthDose', 'Date_SixthDose']:
     if col not in a.columns:
         a[col] = pd.NaT
 
-# Use the fast vectorized ISO week parsing approach (up to 4th dose only)
-dose_date_columns = ['Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose']
+# Use the fast vectorized ISO week parsing approach (up to 6th dose)
+dose_date_columns = ['Date_FirstDose', 'Date_SecondDose', 'Date_ThirdDose', 'Date_FourthDose', 'Date_FifthDose', 'Date_SixthDose']
 for col in dose_date_columns:
     print(f"  Parsing {col}...")
     # Fast vectorized ISO week parsing: YYYY-WW + '-1' -> datetime (keep as Timestamp, not .date)
@@ -591,7 +621,7 @@ if MONTE_CARLO_MODE:
     print(f"  Master Monte Carlo population: {master_count:,} records (alive at start of enrollment week)")
     print(f"  Will perform {MC_ITERATIONS} bootstrap iterations using {MC_THREADS} parallel processes")
 
-def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4, monte_carlo_mode=False, iteration=None):
+def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=6, monte_carlo_mode=False, iteration=None):
     """
     Core processing function for a given dataset and enrollment date.
     This function is shared between Monte Carlo and normal modes.
@@ -600,7 +630,7 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         a_copy: DataFrame with the dataset to process
         enrollment_date: pandas Timestamp for enrollment date
         enroll_week_str: ISO week string (e.g., '2022-06')
-        max_dose: Maximum dose to process (default 4). Doses above this are collapsed into max_dose.
+        max_dose: Maximum dose to process (default 6). Doses above this are collapsed into max_dose.
                   For Monte Carlo mode, use max_dose=3 to treat dose 3 as "3 or more doses".
         monte_carlo_mode: If True, filter output to only post-enrollment weeks (reduces grid size).
         iteration: Optional iteration number for progress tracking (Monte Carlo mode only)
@@ -638,7 +668,7 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     a_var = a_copy.copy()
     _bypass_freeze = str(os.environ.get('BYPASS_FREEZE','')).strip().lower() in ('1','true','yes')
     if not _bypass_freeze:
-        for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
+        for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose','Date_FifthDose','Date_SixthDose']:
             # Freeze transitions on or after enrollment Monday to keep fixed cohorts post-enrollment
             a_var.loc[a_var[_col] >= enrollment_date, _col] = pd.NaT
 
@@ -648,6 +678,8 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     dose2_valid = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] <= reference_dates)
     dose3_valid = a_var['Date_ThirdDose'].notna() & (a_var['Date_ThirdDose'] <= reference_dates)
     dose4_valid = a_var['Date_FourthDose'].notna() & (a_var['Date_FourthDose'] <= reference_dates)
+    dose5_valid = a_var['Date_FifthDose'].notna() & (a_var['Date_FifthDose'] <= reference_dates) if 'Date_FifthDose' in a_var.columns else pd.Series([False] * len(a_var), index=a_var.index)
+    dose6_valid = a_var['Date_SixthDose'].notna() & (a_var['Date_SixthDose'] <= reference_dates) if 'Date_SixthDose' in a_var.columns else pd.Series([False] * len(a_var), index=a_var.index)
     
     # Start with dose group 0 for everyone
     a_copy['dose_group'] = 0
@@ -661,9 +693,16 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     else:
         # For max_dose=3, collapse dose 4+ into dose 3
         a_copy.loc[dose4_valid, 'dose_group'] = 3
+    if max_dose >= 5:
+        a_copy.loc[dose5_valid, 'dose_group'] = 5
+    else:
+        a_copy.loc[dose5_valid, 'dose_group'] = max_dose
+    if max_dose >= 6:
+        a_copy.loc[dose6_valid, 'dose_group'] = 6
+    else:
+        a_copy.loc[dose6_valid, 'dose_group'] = max_dose
     # Collapse any doses above max_dose into max_dose
-    if max_dose < 4:
-        a_copy.loc[a_copy['dose_group'] > max_dose, 'dose_group'] = max_dose
+    a_copy.loc[a_copy['dose_group'] > max_dose, 'dose_group'] = max_dose
     
     _progress("Computing population base...")
     # Compute population base: count of people in each (born, sex, dose_group)
@@ -689,28 +728,42 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     d2_at = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] < death_ref)
     d3_at = a_var['Date_ThirdDose'].notna() & (a_var['Date_ThirdDose'] < death_ref)
     d4_at = a_var['Date_FourthDose'].notna() & (a_var['Date_FourthDose'] < death_ref)
+    d5_at = a_var['Date_FifthDose'].notna() & (a_var['Date_FifthDose'] < death_ref) if 'Date_FifthDose' in a_var.columns else pd.Series([False] * len(a_var), index=a_var.index)
+    d6_at = a_var['Date_SixthDose'].notna() & (a_var['Date_SixthDose'] < death_ref) if 'Date_SixthDose' in a_var.columns else pd.Series([False] * len(a_var), index=a_var.index)
     a_copy['dose_at_death'] = 0
     a_copy.loc[d1_at, 'dose_at_death'] = 1
     a_copy.loc[d2_at, 'dose_at_death'] = 2
     a_copy.loc[d3_at, 'dose_at_death'] = 3
     if max_dose >= 4:
-        a_copy.loc[d4_at, 'dose_at_death'] = 4  # 4 = 4+
+        a_copy.loc[d4_at, 'dose_at_death'] = 4
     else:
         a_copy.loc[d4_at, 'dose_at_death'] = max_dose  # Collapse 4+ into max_dose
+    if max_dose >= 5:
+        a_copy.loc[d5_at, 'dose_at_death'] = 5
+    else:
+        a_copy.loc[d5_at, 'dose_at_death'] = max_dose
+    if max_dose >= 6:
+        a_copy.loc[d6_at, 'dose_at_death'] = 6
+    else:
+        a_copy.loc[d6_at, 'dose_at_death'] = max_dose
     # Collapse any doses above max_dose into max_dose
-    if max_dose < 4:
-        a_copy.loc[a_copy['dose_at_death'] > max_dose, 'dose_at_death'] = max_dose
+    a_copy.loc[a_copy['dose_at_death'] > max_dose, 'dose_at_death'] = max_dose
     
     _progress("Computing week range...")
     # Get all weeks in the study period (from database start to end, including pre-enrollment period)
     # Use all vaccination and death dates to get the full week range
-    all_dates = pd.concat([
+    date_cols_to_concat = [
         a_copy['Date_FirstDose'],
         a_copy['Date_SecondDose'],
         a_copy['Date_ThirdDose'],
         a_copy['Date_FourthDose'],
         a_copy['DateOfDeath']
-    ]).dropna()
+    ]
+    if 'Date_FifthDose' in a_copy.columns:
+        date_cols_to_concat.append(a_copy['Date_FifthDose'])
+    if 'Date_SixthDose' in a_copy.columns:
+        date_cols_to_concat.append(a_copy['Date_SixthDose'])
+    all_dates = pd.concat(date_cols_to_concat).dropna()
     min_week = all_dates.min().isocalendar().week
     min_year = all_dates.min().isocalendar().year
     max_week = all_dates.max().isocalendar().week
@@ -757,6 +810,8 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
     d2_pre = a_var['Date_SecondDose'].notna() & (a_var['Date_SecondDose'] < week_monday) & ~is_post_enroll_death
     d3_pre = a_var['Date_ThirdDose'].notna() & (a_var['Date_ThirdDose'] < week_monday) & ~is_post_enroll_death
     d4_pre = a_var['Date_FourthDose'].notna() & (a_var['Date_FourthDose'] < week_monday) & ~is_post_enroll_death
+    d5_pre = a_var['Date_FifthDose'].notna() & (a_var['Date_FifthDose'] < week_monday) & ~is_post_enroll_death if 'Date_FifthDose' in a_var.columns else pd.Series([False] * len(a_var), index=a_var.index)
+    d6_pre = a_var['Date_SixthDose'].notna() & (a_var['Date_SixthDose'] < week_monday) & ~is_post_enroll_death if 'Date_SixthDose' in a_var.columns else pd.Series([False] * len(a_var), index=a_var.index)
     
     # Post-enrollment deaths: use enrollment dose group (fixed cohorts)
     # For post-enrollment deaths, use the enrollment dose_group directly
@@ -768,11 +823,18 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
         a_copy.loc[d4_pre, 'dose_at_week'] = 4
     else:
         a_copy.loc[d4_pre, 'dose_at_week'] = max_dose  # Collapse 4+ into max_dose
+    if max_dose >= 5:
+        a_copy.loc[d5_pre, 'dose_at_week'] = 5
+    else:
+        a_copy.loc[d5_pre, 'dose_at_week'] = max_dose
+    if max_dose >= 6:
+        a_copy.loc[d6_pre, 'dose_at_week'] = 6
+    else:
+        a_copy.loc[d6_pre, 'dose_at_week'] = max_dose
     # For post-enrollment deaths, use enrollment dose_group
     a_copy.loc[is_post_enroll_death, 'dose_at_week'] = a_copy.loc[is_post_enroll_death, 'dose_group']
     # Collapse any doses above max_dose into max_dose
-    if max_dose < 4:
-        a_copy.loc[a_copy['dose_at_week'] > max_dose, 'dose_at_week'] = max_dose
+    a_copy.loc[a_copy['dose_at_week'] > max_dose, 'dose_at_week'] = max_dose
     
     _progress("Aggregating deaths...")
     # Attribute all deaths by dose (enrollment dose for post-enrollment, dose at death for pre-enrollment)
@@ -925,8 +987,30 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
             values='pop',
             fill_value=0
         ).reset_index()
-        # Rename columns to pop_dose0, pop_dose1, etc.
-        pop_base_pivot.columns = ['YearOfBirth', 'Sex', 'DCCI'] + [f'pop_dose{d}' for d in range(max_dose + 1)]
+        # Get actual dose groups from pivot columns (excluding index columns)
+        index_cols = ['YearOfBirth', 'Sex', 'DCCI']
+        actual_dose_cols = [col for col in pop_base_pivot.columns if col not in index_cols]
+        # Rename existing dose columns from numeric to pop_doseN format
+        rename_map = {}
+        for col in actual_dose_cols:
+            try:
+                dose_num = int(col)
+                # Only rename if dose is within expected range (0 to max_dose)
+                if 0 <= dose_num <= max_dose:
+                    rename_map[col] = f'pop_dose{dose_num}'
+            except (ValueError, TypeError):
+                # Skip non-numeric columns (shouldn't happen, but be safe)
+                pass
+        if rename_map:
+            pop_base_pivot = pop_base_pivot.rename(columns=rename_map)
+        # Ensure we have columns for all doses 0 through max_dose (add missing ones with 0)
+        expected_dose_cols = [f'pop_dose{d}' for d in range(max_dose + 1)]
+        for col_name in expected_dose_cols:
+            if col_name not in pop_base_pivot.columns:
+                pop_base_pivot[col_name] = 0
+        # Reorder columns: index cols first, then dose cols in order (only select columns that exist)
+        final_cols = index_cols + expected_dose_cols
+        pop_base_pivot = pop_base_pivot[final_cols]
         
         # Merge enrollment counts into output grid
         out = out.merge(pop_base_pivot, on=['YearOfBirth', 'Sex', 'DCCI'], how='left')
@@ -1029,7 +1113,7 @@ def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=4
             
             # Track transitions into doses 1-max_dose (pre-enrollment only, since a_var has post-enrollment frozen)
             trans_frames_pre = [trans_0_pre[['ISOweekDied', 'YearOfBirth', 'Sex', 'DCCI', 'trans_0']]]
-            dose_cols = [(1, 'Date_FirstDose'), (2, 'Date_SecondDose'), (3, 'Date_ThirdDose'), (4, 'Date_FourthDose')]
+            dose_cols = [(1, 'Date_FirstDose'), (2, 'Date_SecondDose'), (3, 'Date_ThirdDose'), (4, 'Date_FourthDose'), (5, 'Date_FifthDose'), (6, 'Date_SixthDose')]
             for dose_num, col in dose_cols:
                 wk = a_var[col].dt.strftime('%G-%V')
                 trans_mask = (wk.notna()) & (pd.to_datetime(wk + '-1', format='%G-%V-%u', errors='coerce') < enrollment_date)
@@ -1486,11 +1570,41 @@ else:
             a_copy, enrollment_date, enroll_week_str
         )
         
+        # Create all-ages aggregation (YearOfBirth = -2) by summing across all YearOfBirth, Sex, and DCCI
+        print(f"  Creating all-ages aggregation (YearOfBirth = -2)...")
+        # Aggregate basic columns (don't include cumDead_prev in aggregation - will compute it fresh)
+        out_all_ages = out.groupby(['ISOweekDied', 'Dose']).agg({
+            'Alive': 'sum',
+            'Dead': 'sum',
+            'Dead_COVID': 'sum',
+            'DateDied': 'first'  # Keep first DateDied for each week
+        }).reset_index()
+        
+        # Compute cumDead_prev correctly for all-ages: cumulative sum of Dead per Dose, shifted by 1
+        # This represents cumulative deaths from previous weeks (not including current week)
+        out_all_ages = out_all_ages.sort_values(['Dose', 'ISOweekDied'])
+        out_all_ages['cumDead_prev'] = (
+            out_all_ages.groupby('Dose')['Dead']
+              .cumsum()
+              .shift(fill_value=0)
+        )
+        
+        out_all_ages['YearOfBirth'] = -2  # Mark as all-ages
+        # Set Sex and DCCI to placeholder values (KCOR.py will ignore these for -2)
+        out_all_ages['Sex'] = 'O'
+        out_all_ages['DCCI'] = -1
+        
+        # Combine individual birth years and all-ages aggregation
+        # Select columns in the same order as out
+        out_cols = list(out.columns)
+        out_all_ages = out_all_ages[out_cols]
+        out_final = pd.concat([out, out_all_ages], ignore_index=True)
+        
         # Write to Excel sheet
         sheet_name = enroll_date_str.replace('-', '_')
         print(f"  Writing to Excel sheet...")
-        out.to_excel(excel_writer, sheet_name=sheet_name, index=False)
-        print(f"  Wrote sheet '{sheet_name}' ({len(out)} rows)")
+        out_final.to_excel(excel_writer, sheet_name=sheet_name, index=False)
+        print(f"  Wrote sheet '{sheet_name}' ({len(out_final)} rows: {len(out)} individual birth years + {len(out_all_ages)} all-ages)")
         
         # Enrollment-week per-dose totals for quick cross-check
         try:
@@ -1514,28 +1628,6 @@ else:
                 print(f"  WARNING: Summary is empty after grouping by Dose for enrollment week {enroll_week_str}")
             else:
                 print(f"  Created summary with {len(summary)} dose groups")
-            
-            # Add manufacturer composition at enrollment for doses 2-4
-            def _mfg_counts(dose_num: int, mfg_col: str):
-                dfc = alive_at_enroll[alive_at_enroll['dose_group'] == dose_num]
-                counts = dfc[mfg_col].value_counts()
-                p = int(counts.get('P', 0))
-                m = int(counts.get('M', 0))
-                o = int(counts.get('O', 0))
-                return p, m, o
-
-            for d in (2, 3, 4):
-                for k in ('P', 'M', 'O'):
-                    col = f"Dose{d}_MFG_{k}"
-                    if col not in summary.columns:
-                        summary[col] = 0
-            for d, mcol in ((2, 'Dose2_MFG'), (3, 'Dose3_MFG'), (4, 'Dose4_MFG')):
-                try:
-                    p, m, o = _mfg_counts(d, mcol)
-                    if len(summary) > 0:
-                        summary.loc[summary['Dose'] == d, [f'Dose{d}_MFG_P', f'Dose{d}_MFG_M', f'Dose{d}_MFG_O']] = [p, m, o]
-                except Exception as _e_sum_mfg:
-                    print(f"  CAUTION: Failed to compute summary MFG counts for dose {d}: {_e_sum_mfg}")
             
             if len(summary) > 0:
                 summary.to_excel(excel_writer, sheet_name=sheet_name + "_summary", index=False)
@@ -1562,8 +1654,9 @@ else:
                 a_var_local = a_copy.copy()
                 _bypass_freeze = str(os.environ.get('BYPASS_FREEZE','')).strip().lower() in ('1','true','yes')
                 if not _bypass_freeze:
-                    for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose']:
-                        a_var_local.loc[a_var_local[_col] >= enrollment_date, _col] = pd.NaT
+                    for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose','Date_FifthDose','Date_SixthDose']:
+                        if _col in a_var_local.columns:
+                            a_var_local.loc[a_var_local[_col] >= enrollment_date, _col] = pd.NaT
                 
                 sub = a_var_local[(a_var_local[mcol] == mfg_label)].copy()
                 if sub.empty:
