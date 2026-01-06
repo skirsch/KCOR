@@ -60,7 +60,7 @@ OUTPUTS (two main sheets):
       hazard (raw), cum_hazard (raw cumulative), adj_cum_hazard (adjusted cumulative),
       Slope, Cum_deaths, Cumu_Person_Time, Time_Index
     - "dose_pairs": KCOR values for all dose comparisons with complete methodology transparency:
-      EnrollmentDate, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -2 = all ages), Dose_num, Dose_den,
+      EnrollmentDate, ISOweekDied, Date, YearOfBirth (0 = ASMR pooled, -3 = all ages ASMR, -2 = aggregated all ages), Dose_num, Dose_den,
       KCOR, CI_lower, CI_upper, hazard_num, cum_hazard_num, adj_cum_hazard_num, t_num,
       hazard_den, cum_hazard_den, adj_cum_hazard_den, t_den, abnormal_fit
 
@@ -3217,6 +3217,221 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     "abnormal_fit": abnormal_fit_pooled_value
                 })
 
+    # -------- All Ages ASMR rows (YearOfBirth = -3) --------
+    # Pool KCOR values from individual birth years using ASMR (expected-deaths) weights
+    # This is different from -2 All Ages which aggregates raw data first
+    # Uses the same weights as ASMR pooling but pools all individual birth years
+    all_ages_asmr_rows = []
+    all_dates_asmr = sorted(df_sorted["DateDied"].unique())
+    
+    # Use the same ASMR weights that were computed above
+    weights_asmr = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
+    
+    # In MC mode, process each mc_id separately
+    mc_id_values_asmr = [None]
+    if MONTE_CARLO_MODE and "mc_id" in df_sorted.columns:
+        mc_id_values_asmr = sorted(df_sorted["mc_id"].dropna().unique().tolist())
+        if not mc_id_values_asmr:
+            mc_id_values_asmr = [None]
+    
+    dose_pairs_asmr = get_dose_pairs(sheet_name)
+    for num, den in dose_pairs_asmr:
+        # Process each mc_id separately in MC mode
+        for mc_id_val_asmr in mc_id_values_asmr:
+            # Filter to this iteration's data
+            df_for_iteration_asmr = df_sorted
+            if mc_id_val_asmr is not None:
+                df_for_iteration_asmr = df_sorted[df_sorted["mc_id"] == mc_id_val_asmr]
+                if df_for_iteration_asmr.empty:
+                    continue
+            
+            # Per-age anchors at t0 for this (num,den) and iteration
+            anchors_asmr = {}
+            for yob, g_age in df_for_iteration_asmr.groupby("YearOfBirth", sort=False):
+                # Skip special ages (0=ASMR, -1=unknown, -2=aggregated all ages, -3=all ages ASMR)
+                if yob <= 0:
+                    continue
+                gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
+                gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
+                if gvn.empty or gdn.empty:
+                    continue
+                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                c1 = gvn["CH"].iloc[t0_idx]
+                c0 = gdn["CH"].iloc[t0_idx]
+                if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
+                    anchors_asmr[yob] = c1 / c0
+
+            for dt in all_dates_asmr:
+                logs_asmr, wts_asmr, var_terms_asmr = [], [], []
+                for yob, g_age in df_for_iteration_asmr.groupby("YearOfBirth", sort=False):
+                    # Skip special ages
+                    if yob <= 0:
+                        continue
+                    if yob not in anchors_asmr:
+                        continue
+                    gv = g_age[(g_age["Dose"]==num) & (g_age["DateDied"]==dt)]
+                    gu = g_age[(g_age["Dose"]==den) & (g_age["DateDied"]==dt)]
+                    if gv.empty or gu.empty:
+                        continue
+                    # Take first occurrence if multiple rows per date
+                    gv = gv.iloc[[0]]
+                    gu = gu.iloc[[0]]
+                    denom_ch = gu["CH"].values[0]
+                    if denom_ch > EPS:
+                        k = (gv["CH"].values[0]) / denom_ch
+                    else:
+                        continue
+                    k0 = anchors_asmr[yob]
+                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
+                        continue
+                    kstar = k / k0
+                    logs_asmr.append(safe_log(kstar))
+                    wts_asmr.append(weights_asmr.get(yob, 0.0))
+                    Dv = float(gv["cumD_adj"].values[0])
+                    Du = float(gu["cumD_adj"].values[0])
+                    if Dv > EPS and Du > EPS:
+                        var_terms_asmr.append((weights_asmr.get(yob,0.0)**2) * (1.0/Dv + 1.0/Du))
+
+                # Pool only over valid, finite entries; ignore NaNs/inf entirely
+                if logs_asmr and sum(wts_asmr) > 0:
+                    logs_arr_asmr = np.array(logs_asmr, dtype=float)
+                    wts_arr_asmr = np.array(wts_asmr, dtype=float)
+                    valid_mask_asmr = np.isfinite(logs_arr_asmr) & (wts_arr_asmr > 0)
+                    if np.any(valid_mask_asmr):
+                        logs_arr_asmr = logs_arr_asmr[valid_mask_asmr]
+                        wts_arr_asmr = wts_arr_asmr[valid_mask_asmr]
+                        # Re-normalize weights among valid ages to avoid implicit down-weighting
+                        w_sum_asmr = wts_arr_asmr.sum()
+                        if w_sum_asmr <= 0:
+                            continue
+                        logK_asmr = np.average(logs_arr_asmr, weights=wts_arr_asmr)
+                        Kpool_asmr = float(safe_exp(logK_asmr))
+                    else:
+                        continue
+                else:
+                    continue
+                
+                # Pooled CI via weighted aggregation of per-age log-variance using post-anchor ΔCH (Nelson–Aalen)
+                var_terms_asmr_final = []
+                for yob, g_age in df_for_iteration_asmr.groupby("YearOfBirth", sort=False):
+                    if yob <= 0 or yob not in anchors_asmr:
+                        continue
+                    gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
+                    gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
+                    if gvn.empty or gdn.empty:
+                        continue
+                    gvn_upto = gvn[gvn["DateDied"] <= dt]
+                    gdn_upto = gdn[gdn["DateDied"] <= dt]
+                    if len(gvn_upto) == 0 or len(gdn_upto) == 0:
+                        continue
+                    t0_idx_age = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                    # ΔCH at dt
+                    dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
+                    dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
+                    # NA variance increments using raw hazard
+                    var_inc_num_age = (gvn_upto["Dead"].astype(float) / (gvn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
+                    var_inc_den_age = (gdn_upto["Dead"].astype(float) / (gdn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
+                    # Cumulative from anchor forward
+                    csum_num = np.cumsum(var_inc_num_age)
+                    csum_den = np.cumsum(var_inc_den_age)
+                    var_cum_num_age = float(csum_num[-1] - csum_num[t0_idx_age]) if csum_num.size > 0 else 0.0
+                    var_cum_den_age = float(csum_den[-1] - csum_den[t0_idx_age]) if csum_den.size > 0 else 0.0
+                    # Per-age log-variance contribution
+                    denom_num_age = max(abs(dCH_num_age), EPS)
+                    denom_den_age = max(abs(dCH_den_age), EPS)
+                    var_log_age = (var_cum_num_age / (denom_num_age**2)) + (var_cum_den_age / (denom_den_age**2))
+                    w = weights_asmr.get(yob, 0.0)
+                    var_terms_asmr_final.append((w**2) * var_log_age)
+                
+                # Final pooled SE on log scale
+                total_uncertainty_asmr = sum(var_terms_asmr_final)
+                SE_total_asmr = safe_sqrt(total_uncertainty_asmr) / sum(wts_asmr) if sum(wts_asmr) > 0 else np.nan
+                
+                # Clip SE to prevent overflow
+                if np.isfinite(SE_total_asmr):
+                    SE_total_asmr = min(SE_total_asmr, 10.0)
+                else:
+                    SE_total_asmr = np.nan
+                
+                # Calculate 95% CI bounds on log scale, then exponentiate
+                if np.isfinite(SE_total_asmr):
+                    CI_lower_asmr = Kpool_asmr * safe_exp(-1.96 * SE_total_asmr)
+                    CI_upper_asmr = Kpool_asmr * safe_exp(1.96 * SE_total_asmr)
+                    # Clip CI bounds to reasonable values
+                    CI_lower_asmr = max(0, min(CI_lower_asmr, Kpool_asmr * 10))
+                    CI_upper_asmr = max(Kpool_asmr * 0.1, min(CI_upper_asmr, Kpool_asmr * 10))
+                else:
+                    CI_lower_asmr = np.nan
+                    CI_upper_asmr = np.nan
+                
+                # After clipping: blank CI at baseline and earlier dates (t <= t0)
+                if dt <= all_dates_asmr[min(KCOR_NORMALIZATION_WEEKS_EFFECTIVE, len(all_dates_asmr)-1)]:
+                    CI_lower_asmr = np.nan
+                    CI_upper_asmr = np.nan
+                
+                # Check if any contributing age group had abnormal fit
+                abnormal_fit_pooled_asmr = False
+                if slope6_params_map is not None:
+                    for yob_check in df_sorted["YearOfBirth"].unique():
+                        if yob_check <= 0 or yob_check not in anchors_asmr:
+                            continue
+                        params_num_check = slope6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                        params_den_check = slope6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                        if isinstance(params_num_check, dict) and params_num_check.get("abnormal_fit", False):
+                            abnormal_fit_pooled_asmr = True
+                            break
+                        if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
+                            abnormal_fit_pooled_asmr = True
+                            break
+                # Set abnormal_fit: blank if normal fit, True if abnormal
+                abnormal_fit_pooled_value_asmr = True if abnormal_fit_pooled_asmr else ""
+                
+                # Extract theta_num and theta_den from KCOR6 params map for pooled rows
+                theta_num_pooled_asmr = np.nan
+                theta_den_pooled_asmr = np.nan
+                if kcor6_params_map is not None:
+                    # Use theta from first contributing age group
+                    for yob_check in df_sorted["YearOfBirth"].unique():
+                        if yob_check <= 0 or yob_check not in anchors_asmr:
+                            continue
+                        params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                        params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                        if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled_asmr):
+                            theta_num_val = params_num_check.get("theta_hat", np.nan)
+                            if np.isfinite(theta_num_val):
+                                theta_num_pooled_asmr = float(theta_num_val)
+                        if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled_asmr):
+                            theta_den_val = params_den_check.get("theta_hat", np.nan)
+                            if np.isfinite(theta_den_val):
+                                theta_den_pooled_asmr = float(theta_den_val)
+                        if not (np.isnan(theta_num_pooled_asmr) or np.isnan(theta_den_pooled_asmr)):
+                            break
+                
+                # Extract Date from dt
+                date_val_asmr = dt.date() if hasattr(dt, 'date') else pd.to_datetime(dt).date()
+                all_ages_asmr_rows.append({
+                    "mc_id": mc_id_val_asmr,
+                    "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                    "Date": date_val_asmr,
+                    "KCOR": Kpool_asmr,
+                    "CI_lower": CI_lower_asmr,
+                    "CI_upper": CI_upper_asmr,
+                    "EnrollmentDate": sheet_name,
+                    "YearOfBirth": -3,      # All Ages ASMR pooled row
+                    "Dose_num": num,
+                    "Dose_den": den,
+                    "theta_num": theta_num_pooled_asmr,
+                    "theta_den": theta_den_pooled_asmr,
+                    "CH_num": np.nan,  # Pooled All Ages ASMR has no per-dose CH
+                    "CH_den": np.nan,
+                    "hazard_num": np.nan,
+                    "hazard_den": np.nan,
+                    "hazard_adj_num": np.nan,
+                    "hazard_adj_den": np.nan,
+                    "t": np.nan,
+                    "abnormal_fit": abnormal_fit_pooled_value_asmr
+                })
+
     # -------- All Ages rows (YearOfBirth = -2) --------
     # Aggregate all ages together as a single cohort (no age grouping)
     # This is different from ASMR pooling which weights across age groups
@@ -3622,8 +3837,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 "abnormal_fit": abnormal_fit_all_ages_value
             })
 
-    if out_rows or pooled_rows or all_ages_rows:
-        combined = pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
+    if out_rows or pooled_rows or all_ages_asmr_rows or all_ages_rows:
+        combined = pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_asmr_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
         # Ensure column order matches requested format
         column_order = [
             "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
@@ -6048,15 +6263,17 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     dual_print("  No data available for this dose combination")
                     continue
                 
-                # Show results by age (including ASMR = 0, all ages = -2)
-                # Sort ages: negative ages first (0, -2, -1), then positive ages
+                # Show results by age (including ASMR = 0, all ages ASMR = -3, aggregated all ages = -2)
+                # Sort ages: negative ages first (0, -3, -2, -1), then positive ages
                 def age_sort_key(age):
                     if age == 0:
                         return (0, 0)  # ASMR first
+                    elif age == -3:
+                        return (0, 1)  # All Ages ASMR second
                     elif age == -2:
-                        return (0, 1)  # All ages second
+                        return (0, 2)  # Aggregated All Ages third
                     elif age == -1:
-                        return (0, 2)  # Unknown third
+                        return (0, 3)  # Unknown fourth
                     else:
                         return (1, age)  # Regular ages after
                 
@@ -6073,7 +6290,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         else:
                             abnormal_fit_flag = False
                         abnormal_marker = "*" if abnormal_fit_flag else ""
-                        # KCOR_ns: For ASMR (age == 0), compute from age-group KCOR_ns values using same weights as KCOR
+                        # KCOR_ns: For ASMR (age == 0) and computed All Ages (age == -3), compute from age-group KCOR_ns values
                         # For other ages, get from the data directly
                         if age == 0:
                             # Compute ASMR KCOR_ns by pooling age-group KCOR_ns values
@@ -6116,6 +6333,46 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             except Exception:
                                 kcor_ns_val = np.nan
                             kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
+                        elif age == -3:
+                            # Compute All Ages ASMR KCOR_ns by pooling age-group KCOR_ns values using ASMR weights
+                            try:
+                                # Get stored weights for this sheet (same as ASMR)
+                                weights_ns_asmr = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
+                                
+                                # Get all age groups for this dose combination at reporting date
+                                age_groups_data_asmr = end_data[
+                                    (end_data["Dose_num"] == dose_num) & 
+                                    (end_data["Dose_den"] == dose_den) &
+                                    (end_data["YearOfBirth"] > 0)  # Exclude ASMR and special ages
+                                ]
+                                if not age_groups_data_asmr.empty and "KCOR_ns" in age_groups_data_asmr.columns:
+                                    # If weights are available, use them; otherwise fall back to equal weights
+                                    if not weights_ns_asmr:
+                                        # Fallback to equal weights if weights not available
+                                        age_list_asmr = list(age_groups_data_asmr["YearOfBirth"].unique())
+                                        weights_ns_asmr = {yob: 1.0 / len(age_list_asmr) for yob in age_list_asmr}
+                                    
+                                    # Pool KCOR_ns values using log-space weighted average (same as ASMR)
+                                    logs_ns_asmr = []
+                                    wts_ns_asmr = []
+                                    for yob_check_asmr, group_data_asmr in age_groups_data_asmr.groupby("YearOfBirth"):
+                                        kcor_ns_age_asmr = group_data_asmr["KCOR_ns"].iloc[0] if "KCOR_ns" in group_data_asmr.columns else np.nan
+                                        if np.isfinite(kcor_ns_age_asmr) and kcor_ns_age_asmr > EPS:
+                                            logs_ns_asmr.append(safe_log(kcor_ns_age_asmr))
+                                            wts_ns_asmr.append(weights_ns_asmr.get(yob_check_asmr, 0.0))
+                                    
+                                    if len(logs_ns_asmr) > 0 and sum(wts_ns_asmr) > 0:
+                                        logs_arr_ns_asmr = np.array(logs_ns_asmr)
+                                        wts_arr_ns_asmr = np.array(wts_ns_asmr)
+                                        logK_ns_asmr = np.average(logs_arr_ns_asmr, weights=wts_arr_ns_asmr)
+                                        kcor_ns_val = float(safe_exp(logK_ns_asmr))
+                                    else:
+                                        kcor_ns_val = np.nan
+                                else:
+                                    kcor_ns_val = np.nan
+                            except Exception:
+                                kcor_ns_val = np.nan
+                            kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
                         else:
                             # For non-ASMR ages, get KCOR_ns from data
                             try:
@@ -6127,6 +6384,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         # Age label for output
                         if age == 0:
                             age_label = "ASMR (direct)"
+                        elif age == -3:
+                            age_label = "All Ages ASMR"
                         elif age == -2:
                             age_label = "All Ages"
                         elif age == -1:
