@@ -551,13 +551,16 @@ def log_slope7_fit_debug(record: dict) -> None:
         return
 
 def get_reporting_date(enrollment_date_str):
-    """Compute reporting date as 1 year from enrollment date.
+    """Compute reporting date as 1 year from enrollment date, rounded to nearest Monday.
+    
+    Since all data is weekly (Monday-based), we ensure the reporting date is a Monday
+    to match valid weekly dates in the data.
     
     Args:
         enrollment_date_str: Enrollment date string (e.g., '2021_24' or '2021-24')
     
     Returns:
-        Reporting date string in YYYY-MM-DD format, or None if enrollment date cannot be parsed
+        Reporting date string in YYYY-MM-DD format (always a Monday), or None if enrollment date cannot be parsed
     """
     try:
         enrollment_date = _parse_enrollment_date(enrollment_date_str)
@@ -567,6 +570,14 @@ def get_reporting_date(enrollment_date_str):
             enrollment_date.month,
             enrollment_date.day
         )
+        # Round to nearest Monday (since all weekly data is Monday-based)
+        # Get days since previous Monday (Monday = 0, Sunday = 6)
+        days_since_monday = reporting_date.weekday()
+        if days_since_monday > 3:  # Thursday or later, round forward to next Monday
+            days_to_add = 7 - days_since_monday
+            reporting_date = reporting_date + timedelta(days=days_to_add)
+        else:  # Monday through Wednesday, round back to previous Monday
+            reporting_date = reporting_date - timedelta(days=days_since_monday)
         return reporting_date.strftime('%Y-%m-%d')
     except Exception:
         return None
@@ -3189,7 +3200,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 
                 # mc_id_val is already set from the outer loop
                 # Extract Date from dt (which is a pandas Timestamp)
-                date_val = dt.date() if hasattr(dt, 'date') else pd.to_datetime(dt).date()
+                # Keep as Timestamp for consistency with other rows (will be converted to datetime later)
+                date_val = pd.to_datetime(dt) if isinstance(dt, pd.Timestamp) else pd.to_datetime(dt)
                 pooled_rows.append({
                     "mc_id": mc_id_val,
                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
@@ -3203,12 +3215,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     "Dose_den": den,
                     "theta_num": theta_num_pooled,
                     "theta_den": theta_den_pooled,
-                    "CH_num": np.nan,  # Pooled ASMR has no per-dose CH
-                    "CH_den": np.nan,
-                    "hazard_num": np.nan,
+                    "hazard_num": np.nan,  # Pooled ASMR has no per-dose hazards
+                    "cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose cumulative hazards
+                    "adj_cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose adjusted cumulative hazards
                     "hazard_den": np.nan,
-                    "hazard_adj_num": np.nan,
-                    "hazard_adj_den": np.nan,
+                    "cum_hazard_den": np.nan,
+                    "adj_cum_hazard_den": np.nan,
                     "t": np.nan,  # Use t_num (same as t_den)
                     "abnormal_fit": abnormal_fit_pooled_value
                 })
@@ -6129,15 +6141,19 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             pair_deaths_all.append(pair_details)
 
     # Combine all results
-    combined = pd.concat(all_out, ignore_index=True).sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
+    combined = pd.concat(all_out, ignore_index=True)
     
     # Ensure Date column exists and is datetime type (for filtering at reporting date)
     # Some rows (pooled_rows, all_ages_rows) may have Date as date objects, convert to datetime
+    # CRITICAL: Do this BEFORE sorting to avoid type mismatch errors
     if "Date" in combined.columns:
         combined["Date"] = pd.to_datetime(combined["Date"], errors='coerce')
     elif "DateDied" in combined.columns:
         # Fallback: if Date doesn't exist but DateDied does, use DateDied
         combined["Date"] = pd.to_datetime(combined["DateDied"], errors='coerce')
+    
+    # Now sort after ensuring Date is datetime type
+    combined = combined.sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
 
     # Negative control mode: output summarized KCOR by (EnrollmentDate, YoB1, YoB2=YoB1+10, Dose)
     if int(NEGATIVE_CONTROL_MODE) == 1:
@@ -6253,12 +6269,21 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             if sheet_data_all.empty:
                 continue
             # Choose the closest available date to the configured reporting date; fallback to latest
-            if target_dt is not None and not sheet_data_all.empty:
-                diffs = (sheet_data_all["Date"] - target_dt).abs()
-                idxmin = diffs.idxmin()
-                report_date = sheet_data_all.loc[idxmin, "Date"]
+            # Use dates from regular rows (not ASMR) to determine report_date, so ASMR rows match
+            # Get all unique dates from regular rows (these are the valid weekly dates)
+            regular_rows = sheet_data_all[sheet_data_all["YearOfBirth"] > 0]  # Exclude ASMR (0) and special ages
+            if regular_rows.empty:
+                regular_rows = sheet_data_all  # Fallback to all rows if no regular rows
+            
+            available_dates = regular_rows["Date"].unique()
+            
+            if target_dt is not None and len(available_dates) > 0:
+                # Find the closest available date to the target reporting date
+                diffs = np.abs([(pd.to_datetime(d) - target_dt).total_seconds() for d in available_dates])
+                closest_idx = np.argmin(diffs)
+                report_date = pd.to_datetime(available_dates[closest_idx])
             else:
-                report_date = sheet_data_all["Date"].max()
+                report_date = pd.to_datetime(available_dates.max()) if len(available_dates) > 0 else sheet_data_all["Date"].max()
             dual_print(f"\nSheet: {sheet_name} — Reporting date: {report_date.strftime('%Y-%m-%d')}")
             dual_print("=" * 60)
             
@@ -6272,6 +6297,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 dual_print(f"  Total weight: {sum(weights_display.values()):.6f}")
                 dual_print("")
             
+            # Filter to reporting date - now report_date is guaranteed to be a valid date in the data
             end_data = sheet_data_all[sheet_data_all["Date"] == report_date]
             
             # Get dose pairs for this specific sheet
@@ -6297,13 +6323,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     continue
                 
                 # Show results by age (including ASMR = 0, aggregated all ages = -2)
-                # Sort ages: negative ages first (0, -2, -1), then positive ages
+                # Sort ages: All Ages first, then ASMR, then positive ages
                 # Note: -3 (All Ages ASMR) is computed but not displayed
                 def age_sort_key(age):
-                    if age == 0:
-                        return (0, 0)  # ASMR first
-                    elif age == -2:
-                        return (0, 1)  # Aggregated All Ages second
+                    if age == -2:
+                        return (0, 0)  # Aggregated All Ages first
+                    elif age == 0:
+                        return (0, 1)  # ASMR second
                     elif age == -1:
                         return (0, 2)  # Unknown third
                     elif age == -3:
