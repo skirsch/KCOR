@@ -2923,28 +2923,24 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 else:
                     out["mc_id"] = None
             
-                # Rename columns to match requested format and add missing columns
-                # CH_num = cum_hazard_num, CH_den = cum_hazard_den
-                # hazard_adj_num = adj_cum_hazard_num, hazard_adj_den = adj_cum_hazard_den
+                # Rename columns to match requested format
                 # t = t_num (same as t_den)
+                # Keep cum_hazard_num, cum_hazard_den, adj_cum_hazard_num, adj_cum_hazard_den as-is
                 out.rename(columns={
-                    "cum_hazard_num": "CH_num",
-                    "cum_hazard_den": "CH_den",
-                    "adj_cum_hazard_num": "hazard_adj_num",
-                    "adj_cum_hazard_den": "hazard_adj_den",
                     "t_num": "t"
                 }, inplace=True)
             
-                # Reorder columns to match requested order:
+                # Reorder columns to match requested order (Czech format):
                 # mc_id, ISOweekDied, KCOR, CI_lower, CI_upper, EnrollmentDate, YearOfBirth, 
-                # Dose_num, Dose_den, theta_num, theta_den, CH_num, CH_den, 
-                # hazard_num, hazard_den, hazard_adj_num, hazard_adj_den, t, abnormal_fit
+                # Dose_num, Dose_den, theta_num, theta_den, 
+                # hazard_num, cum_hazard_num, adj_cum_hazard_num, t_num,
+                # hazard_den, cum_hazard_den, adj_cum_hazard_den, t_den, abnormal_fit
                 column_order = [
                     "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
                     "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-                    "theta_num", "theta_den", "CH_num", "CH_den",
-                    "hazard_num", "hazard_den", "hazard_adj_num", "hazard_adj_den",
-                    "t", "abnormal_fit"
+                    "theta_num", "theta_den",
+                    "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+                    "hazard_den", "cum_hazard_den", "adj_cum_hazard_den", "abnormal_fit"
                 ]
                 # Only include columns that exist
                 existing_cols = [c for c in column_order if c in out.columns]
@@ -3827,37 +3823,74 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 "Dose_den": den,
                 "theta_num": theta_num_all,
                 "theta_den": theta_den_all,
-                "CH_num": row["CH_actual_num"],  # CH_num = cum_hazard_num
-                "CH_den": row["CH_actual_den"],  # CH_den = cum_hazard_den
                 "hazard_num": row["hazard_raw_num"],
+                "cum_hazard_num": row["CH_actual_num"],  # cum_hazard_num = raw cumulative hazard
+                "adj_cum_hazard_num": row["CH_num"],  # adj_cum_hazard_num = adjusted cumulative hazard
                 "hazard_den": row["hazard_raw_den"],
-                "hazard_adj_num": row["CH_num"],  # hazard_adj_num = adj_cum_hazard_num
-                "hazard_adj_den": row["CH_den"],  # hazard_adj_den = adj_cum_hazard_den
+                "cum_hazard_den": row["CH_actual_den"],  # cum_hazard_den = raw cumulative hazard
+                "adj_cum_hazard_den": row["CH_den"],  # adj_cum_hazard_den = adjusted cumulative hazard
                 "t": row["t_num"],  # Use t_num (same as t_den)
                 "abnormal_fit": abnormal_fit_all_ages_value
             })
 
-    if out_rows or pooled_rows or all_ages_asmr_rows or all_ages_rows:
-        combined = pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_asmr_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
-        # Ensure column order matches requested format
-        column_order = [
+    if out_rows or pooled_rows or all_ages_rows:
+        # Note: all_ages_asmr_rows (YearOfBirth = -3) are computed but not included in output
+        combined = pd.concat(out_rows + [pd.DataFrame(pooled_rows)] + [pd.DataFrame(all_ages_rows)], ignore_index=True)
+        
+        # STANDARD COLUMN FORMAT: Use Czech format consistently for all datasets
+        # Clean up any merge suffixes that might have been left behind
+        # Remove any columns with suffixes like _num, _den, _X, _y that shouldn't be in final output
+        # Keep standard columns: Dose_num, Dose_den, theta_num, theta_den, hazard_num, hazard_den,
+        # cum_hazard_num, cum_hazard_den, adj_cum_hazard_num, adj_cum_hazard_den
+        cols_to_drop = [c for c in combined.columns if any(c.endswith(suffix) for suffix in ["_num", "_den", "_X", "_y", "_M", "_P"]) 
+                       and c not in ["Dose_num", "Dose_den", "theta_num", "theta_den",
+                                    "hazard_num", "hazard_den", "cum_hazard_num", "cum_hazard_den",
+                                    "adj_cum_hazard_num", "adj_cum_hazard_den"]]
+        for col in cols_to_drop:
+            if col in combined.columns:
+                combined.drop(columns=[col], inplace=True)
+        
+        # Ensure ISOweekDied is clean (no suffixes)
+        if "ISOweekDied_num" in combined.columns and "ISOweekDied" not in combined.columns:
+            combined.rename(columns={"ISOweekDied_num": "ISOweekDied"}, inplace=True)
+        if "ISOweekDied_den" in combined.columns:
+            combined.drop(columns=["ISOweekDied_den"], inplace=True)
+        if "ISOweekDied_X" in combined.columns and "ISOweekDied" not in combined.columns:
+            combined.rename(columns={"ISOweekDied_X": "ISOweekDied"}, inplace=True)
+        if "ISOweekDied_y" in combined.columns:
+            combined.drop(columns=["ISOweekDied_y"], inplace=True)
+        
+        # Ensure Date column exists and is clean
+        if "DateDied" in combined.columns and "Date" not in combined.columns:
+            combined.rename(columns={"DateDied": "Date"}, inplace=True)
+        if "Date_num" in combined.columns and "Date" not in combined.columns:
+            combined.rename(columns={"Date_num": "Date"}, inplace=True)
+        if "Date_den" in combined.columns:
+            combined.drop(columns=["Date_den"], inplace=True)
+        
+        # STANDARD COLUMN ORDER (Czech format)
+        standard_columns = [
             "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-            "theta_num", "theta_den", "CH_num", "CH_den",
-            "hazard_num", "hazard_den", "hazard_adj_num", "hazard_adj_den",
-            "t", "abnormal_fit"
+            "theta_num", "theta_den",
+            "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+            "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
+            "abnormal_fit", "Date"
         ]
-        # Only include columns that exist
-        existing_cols = [c for c in column_order if c in combined.columns]
-        # Add any remaining columns that weren't in the order list
-        remaining_cols = [c for c in combined.columns if c not in column_order]
-        return combined[existing_cols + remaining_cols]
+        
+        # Only include standard columns that exist in the data
+        existing_standard_cols = [c for c in standard_columns if c in combined.columns]
+        # Drop any non-standard columns to ensure consistency
+        combined = combined[existing_standard_cols].copy()
+        
+        return combined
     return pd.DataFrame(columns=[
         "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
         "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-        "theta_num", "theta_den", "CH_num", "CH_den",
-        "hazard_num", "hazard_den", "hazard_adj_num", "hazard_adj_den",
-        "t", "abnormal_fit"
+        "theta_num", "theta_den",
+        "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+        "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
+        "abnormal_fit", "Date"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -6263,22 +6296,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     dual_print("  No data available for this dose combination")
                     continue
                 
-                # Show results by age (including ASMR = 0, all ages ASMR = -3, aggregated all ages = -2)
-                # Sort ages: negative ages first (0, -3, -2, -1), then positive ages
+                # Show results by age (including ASMR = 0, aggregated all ages = -2)
+                # Sort ages: negative ages first (0, -2, -1), then positive ages
+                # Note: -3 (All Ages ASMR) is computed but not displayed
                 def age_sort_key(age):
                     if age == 0:
                         return (0, 0)  # ASMR first
-                    elif age == -3:
-                        return (0, 1)  # All Ages ASMR second
                     elif age == -2:
-                        return (0, 2)  # Aggregated All Ages third
+                        return (0, 1)  # Aggregated All Ages second
                     elif age == -1:
-                        return (0, 3)  # Unknown fourth
+                        return (0, 2)  # Unknown third
+                    elif age == -3:
+                        return (2, 0)  # All Ages ASMR - exclude from display (sort to end)
                     else:
                         return (1, age)  # Regular ages after
                 
                 ages_sorted = sorted(dose_data["YearOfBirth"].unique(), key=age_sort_key)
                 for age in ages_sorted:
+                    # Skip -3 (All Ages ASMR) from display
+                    if age == -3:
+                        continue
                     age_data = dose_data[dose_data["YearOfBirth"] == age]
                     if not age_data.empty:
                         kcor_val = age_data["KCOR"].iloc[0]
@@ -6877,7 +6914,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         for c in drop_cols:
                             if c in all_data.columns:
                                 all_data.drop(columns=[c], inplace=True)
-                        all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                        
+                        # Ensure Date column exists and is in correct format
+                        if "Date" not in all_data.columns and "DateDied" in all_data.columns:
+                            all_data["Date"] = all_data["DateDied"]
+                        if "Date" in all_data.columns:
+                            all_data["Date"] = all_data["Date"].apply(lambda x: x.date() if hasattr(x, 'date') else x)
+                        
+                        # Enforce standard column order (Czech format) for consistency across all datasets
+                        standard_col_order = [
+                            "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+                            "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                            "theta_num", "theta_den",
+                            "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+                            "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
+                            "abnormal_fit", "Date"
+                        ]
+                        # Only include columns that exist, in the standard order
+                        existing_cols_ordered = [c for c in standard_col_order if c in all_data.columns]
+                        all_data = all_data[existing_cols_ordered].copy()
+                        
                         all_data.to_excel(writer, index=False, sheet_name="dose_pairs")
 
                         # Then write About and optional debug sheet
