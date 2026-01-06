@@ -1,7 +1,7 @@
 ================================================================================
 KCOR v6.0 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2026-01-05 21:35:50
+Analysis Date: 2026-01-05 22:36:24
 Mode: Primary Analysis
 Input File: ../data/japan2/KCOR_CMR.xlsx
 Output File: ../data/japan2/KCOR.xlsx
@@ -330,16 +330,36 @@ ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
   Age 2000: weight = 0.001490
   Total weight: 1.000000
 
-[DEBUG] ASMR rows in sheet_data_all: 3 rows
-[DEBUG] ASMR dates: [Timestamp('2025-03-31 00:00:00')]
-[DEBUG] Report date: 2022-07-25 00:00:00
-[DEBUG] ASMR rows at report date: 0 rows
+
+[DEBUG ASMR] === Checking ASMR rows for sheet: 2021_30 ===
+[DEBUG ASMR] report_date: 2022-07-25 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Total rows in sheet_data_all: 5793
+[DEBUG ASMR] Total ASMR rows (YearOfBirth==0) in sheet_data_all: 3
+[DEBUG ASMR] ASMR row dates in sheet_data_all: [Timestamp('2025-03-31 00:00:00')]
+[DEBUG ASMR] ASMR row date types: [<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>]
+[DEBUG ASMR] ASMR rows at exact report_date: 0
+[DEBUG ASMR] NO ASMR rows at exact report_date
+[DEBUG ASMR] Attempting to find closest ASMR date to report_date
+[DEBUG ASMR] Closest ASMR date found: 2025-03-31 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Adding 3 ASMR rows at closest date to end_data
+[DEBUG ASMR] end_data now has 33 total rows
 
 Dose combination: 1 vs 0 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 1 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.1810 [1.127, 1.238] |  1.2619
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.1701 [1.140, 1.200] |  1.2322
   1920            |   0.8643 [0.780, 0.958] |  0.8876
   1930            |   1.3176 [1.212, 1.433] |  1.4086
   1940            |   1.3597 [1.238, 1.493] |  1.4605
@@ -354,7 +374,18 @@ Dose combination: 2 vs 1 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 2 vs 1
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.3665 [1.308, 1.427] |  1.3665
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.5804 [1.544, 1.618] |  1.4082
   1920            |   1.7350 [1.587, 1.897] |  1.7393
   1930            |   1.5005 [1.393, 1.616] |  1.5005
   1940            |   1.1902 [1.088, 1.302] |  1.1902
@@ -369,7 +400,18 @@ Dose combination: 2 vs 0 [2021_30]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 2 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.6138 [1.564, 1.665] |  1.7243
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.8380 [1.806, 1.870] |  1.7301
   1920            |   1.4996 [1.405, 1.601] |  1.5437
   1930            |   1.9771 [1.870, 2.090] |  2.1136
   1940            |   1.6183 [1.511, 1.733] |  1.7383
@@ -395,16 +437,36 @@ ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
   Age 2000: weight = 0.002419
   Total weight: 1.000000
 
-[DEBUG] ASMR rows in sheet_data_all: 3 rows
-[DEBUG] ASMR dates: [Timestamp('2025-03-31 00:00:00')]
-[DEBUG] Report date: 2023-02-27 00:00:00
-[DEBUG] ASMR rows at report date: 0 rows
+
+[DEBUG ASMR] === Checking ASMR rows for sheet: 2022_09 ===
+[DEBUG ASMR] report_date: 2023-02-27 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Total rows in sheet_data_all: 4863
+[DEBUG ASMR] Total ASMR rows (YearOfBirth==0) in sheet_data_all: 3
+[DEBUG ASMR] ASMR row dates in sheet_data_all: [Timestamp('2025-03-31 00:00:00')]
+[DEBUG ASMR] ASMR row date types: [<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>]
+[DEBUG ASMR] ASMR rows at exact report_date: 0
+[DEBUG ASMR] NO ASMR rows at exact report_date
+[DEBUG ASMR] Attempting to find closest ASMR date to report_date
+[DEBUG ASMR] Closest ASMR date found: 2025-03-31 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Adding 3 ASMR rows at closest date to end_data
+[DEBUG ASMR] end_data now has 33 total rows
 
 Dose combination: 2 vs 0 [2022_09]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 2 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   0.9199 [0.882, 0.959] |  0.9244
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.8583 [0.836, 0.881] |  0.8739
   1920            |   0.6655 [0.609, 0.727] |  0.6655
   1930            |   0.8493 [0.788, 0.916] |  0.8416
   1940            |   1.1414 [1.045, 1.247] |  1.1730
@@ -419,7 +481,18 @@ Dose combination: 3 vs 2 [2022_09]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 3 vs 2
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.5330 [1.489, 1.578] |  1.6053
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.7709 [1.737, 1.806] |  1.6656
   1920            |   1.6888 [1.599, 1.784] |  1.6888
   1930            |   1.5637 [1.491, 1.641] |  1.6272
   1940            |   1.6679 [1.559, 1.784] |  1.7027
@@ -434,7 +507,18 @@ Dose combination: 3 vs 0 [2022_09]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 3 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.4103 [1.354, 1.469] |  1.4839
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.5439 [1.505, 1.584] |  1.5017
   1920            |   1.1239 [1.034, 1.221] |  1.1239
   1930            |   1.3281 [1.234, 1.429] |  1.3695
   1940            |   1.9036 [1.745, 2.077] |  1.9973
@@ -460,16 +544,36 @@ ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
   Age 2000: weight = 0.003373
   Total weight: 1.000000
 
-[DEBUG] ASMR rows in sheet_data_all: 4 rows
-[DEBUG] ASMR dates: [Timestamp('2025-03-31 00:00:00')]
-[DEBUG] Report date: 2023-08-28 00:00:00
-[DEBUG] ASMR rows at report date: 0 rows
+
+[DEBUG ASMR] === Checking ASMR rows for sheet: 2022_35 ===
+[DEBUG ASMR] report_date: 2023-08-28 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Total rows in sheet_data_all: 5444
+[DEBUG ASMR] Total ASMR rows (YearOfBirth==0) in sheet_data_all: 4
+[DEBUG ASMR] ASMR row dates in sheet_data_all: [Timestamp('2025-03-31 00:00:00')]
+[DEBUG ASMR] ASMR row date types: [<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>]
+[DEBUG ASMR] ASMR rows at exact report_date: 0
+[DEBUG ASMR] NO ASMR rows at exact report_date
+[DEBUG ASMR] Attempting to find closest ASMR date to report_date
+[DEBUG ASMR] Closest ASMR date found: 2025-03-31 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Adding 4 ASMR rows at closest date to end_data
+[DEBUG ASMR] end_data now has 44 total rows
 
 Dose combination: 2 vs 0 [2022_35]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 2 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   0.9317 [0.883, 0.983] |  0.8219
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.8967 [0.868, 0.926] |  0.8323
   1920            |   1.1765 [1.040, 1.331] |  1.1361
   1930            |   0.9152 [0.833, 1.006] |  0.7925
   1940            |   0.8804 [0.784, 0.988] |  0.7649
@@ -484,7 +588,18 @@ Dose combination: 3 vs 2 [2022_35]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 3 vs 2
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   0.9733 [0.931, 1.017] |  1.0269
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.9471 [0.922, 0.973] |  1.0101
   1920            |   0.7746 [0.697, 0.860] |  0.7723
   1930            |   1.0252 [0.951, 1.105] |  1.1143
   1940            |   0.9228 [0.835, 1.019] |  1.0091
@@ -499,7 +614,18 @@ Dose combination: 4 vs 3 [2022_35]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 4 vs 3
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.5267 [1.485, 1.570] |  1.7874
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.5636 [1.535, 1.593] |  1.7580
   1920            |   1.7282 [1.644, 1.817] |  1.9610
   1930            |   1.4495 [1.385, 1.517] |  1.6567
   1940            |   1.5693 [1.468, 1.677] |  1.7562
@@ -514,7 +640,18 @@ Dose combination: 4 vs 0 [2022_35]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 4 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.3844 [1.329, 1.442] |  1.5086
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.3375 [1.303, 1.373] |  1.4820
   1920            |   1.5750 [1.452, 1.708] |  1.7206
   1930            |   1.3601 [1.264, 1.463] |  1.4629
   1940            |   1.2748 [1.167, 1.393] |  1.3555
@@ -540,16 +677,36 @@ ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
   Age 2000: weight = 0.003905
   Total weight: 1.000000
 
-[DEBUG] ASMR rows in sheet_data_all: 5 rows
-[DEBUG] ASMR dates: [Timestamp('2025-03-31 00:00:00')]
-[DEBUG] Report date: 2024-01-01 00:00:00
-[DEBUG] ASMR rows at report date: 0 rows
+
+[DEBUG ASMR] === Checking ASMR rows for sheet: 2023_01 ===
+[DEBUG ASMR] report_date: 2024-01-01 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Total rows in sheet_data_all: 5905
+[DEBUG ASMR] Total ASMR rows (YearOfBirth==0) in sheet_data_all: 5
+[DEBUG ASMR] ASMR row dates in sheet_data_all: [Timestamp('2025-03-31 00:00:00')]
+[DEBUG ASMR] ASMR row date types: [<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>]
+[DEBUG ASMR] ASMR rows at exact report_date: 0
+[DEBUG ASMR] NO ASMR rows at exact report_date
+[DEBUG ASMR] Attempting to find closest ASMR date to report_date
+[DEBUG ASMR] Closest ASMR date found: 2025-03-31 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Adding 5 ASMR rows at closest date to end_data
+[DEBUG ASMR] end_data now has 55 total rows
 
 Dose combination: 2 vs 0 [2023_01]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 2 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.0173 [0.950, 1.089] |  0.9329
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.0167 [0.968, 1.068] |  0.9700
   1920            |   1.1424 [0.973, 1.341] |  1.1424
   1930            |   1.1886 [1.059, 1.334] |  0.9932
   1940            |   0.8753 [0.748, 1.025] |  0.8753
@@ -564,7 +721,18 @@ Dose combination: 3 vs 2 [2023_01]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 3 vs 2
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   0.9794 [0.920, 1.043] |  0.9039
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.9935 [0.951, 1.038] |  0.8912
   1920            |   1.0187 [0.879, 1.181] |  0.8594
   1930            |   0.8497 [0.767, 0.941] |  0.8889
   1940            |   1.0453 [0.900, 1.214] |  0.8679
@@ -579,7 +747,18 @@ Dose combination: 4 vs 3 [2023_01]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 4 vs 3
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.0812 [1.040, 1.124] |  1.1638
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.0261 [1.000, 1.053] |  1.1756
   1920            |   1.1187 [1.038, 1.206] |  1.2487
   1930            |   1.0554 [0.987, 1.128] |  1.1502
   1940            |   1.0171 [0.934, 1.108] |  1.1158
@@ -594,7 +773,18 @@ Dose combination: 5 vs 4 [2023_01]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 5 vs 4
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.3026 [1.261, 1.345] |  1.4297
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.4426 [1.408, 1.478] |  1.3855
   1920            |   1.2647 [1.196, 1.337] |  1.3430
   1930            |   1.3372 [1.269, 1.409] |  1.4036
   1940            |   1.5051 [1.399, 1.619] |  1.6523
@@ -609,7 +799,18 @@ Dose combination: 5 vs 0 [2023_01]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 5 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.4030 [1.337, 1.473] |  1.4030
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.4980 [1.446, 1.552] |  1.3999
   1920            |   1.6465 [1.491, 1.818] |  1.6465
   1930            |   1.4254 [1.308, 1.554] |  1.4254
   1940            |   1.4007 [1.267, 1.549] |  1.4007
@@ -635,16 +836,36 @@ ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
   Age 2000: weight = 0.007616
   Total weight: 1.000000
 
-[DEBUG] ASMR rows in sheet_data_all: 6 rows
-[DEBUG] ASMR dates: [Timestamp('2025-03-31 00:00:00')]
-[DEBUG] Report date: 2024-06-24 00:00:00
-[DEBUG] ASMR rows at report date: 0 rows
+
+[DEBUG ASMR] === Checking ASMR rows for sheet: 2023_26 ===
+[DEBUG ASMR] report_date: 2024-06-24 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Total rows in sheet_data_all: 5586
+[DEBUG ASMR] Total ASMR rows (YearOfBirth==0) in sheet_data_all: 6
+[DEBUG ASMR] ASMR row dates in sheet_data_all: [Timestamp('2025-03-31 00:00:00')]
+[DEBUG ASMR] ASMR row date types: [<class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>, <class 'pandas._libs.tslibs.timestamps.Timestamp'>]
+[DEBUG ASMR] ASMR rows at exact report_date: 0
+[DEBUG ASMR] NO ASMR rows at exact report_date
+[DEBUG ASMR] Attempting to find closest ASMR date to report_date
+[DEBUG ASMR] Closest ASMR date found: 2025-03-31 00:00:00 (type: <class 'pandas._libs.tslibs.timestamps.Timestamp'>)
+[DEBUG ASMR] Adding 6 ASMR rows at closest date to end_data
+[DEBUG ASMR] end_data now has 66 total rows
 
 Dose combination: 2 vs 0 [2023_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 2 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   0.8992 [0.836, 0.967] |  0.8992
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.0924 [1.034, 1.154] |  0.8238
   1920            |   1.0832 [0.923, 1.271] |  1.0832
   1930            |   0.7230 [0.642, 0.815] |  0.6191
   1940            |   1.1490 [1.017, 1.298] |  0.8053
@@ -659,7 +880,18 @@ Dose combination: 3 vs 2 [2023_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 3 vs 2
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   0.9556 [0.887, 1.029] |  0.9556
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.8669 [0.819, 0.918] |  1.0271
   1920            |   0.7575 [0.643, 0.892] |  0.7575
   1930            |   1.3359 [1.186, 1.505] |  1.5602
   1940            |   0.7216 [0.632, 0.824] |  1.0296
@@ -674,7 +906,18 @@ Dose combination: 4 vs 3 [2023_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 4 vs 3
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.0071 [0.954, 1.063] |  1.0071
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.9625 [0.919, 1.007] |  1.0068
   1920            |   0.9299 [0.833, 1.038] |  0.9299
   1930            |   0.8353 [0.765, 0.912] |  0.8353
   1940            |   1.1153 [0.986, 1.261] |  1.1153
@@ -689,7 +932,18 @@ Dose combination: 5 vs 4 [2023_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 5 vs 4
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.0237 [0.983, 1.066] |  1.0237
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   0.9970 [0.961, 1.035] |  0.9839
   1920            |   1.0844 [1.007, 1.168] |  1.0844
   1930            |   0.9423 [0.883, 1.006] |  0.9423
   1940            |   1.0735 [0.978, 1.178] |  1.0735
@@ -704,7 +958,18 @@ Dose combination: 6 vs 5 [2023_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 6 vs 5
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.6505 [1.592, 1.711] |  1.6505
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.7566 [1.697, 1.818] |  1.6669
   1920            |   1.4142 [1.330, 1.503] |  1.4142
   1930            |   1.8331 [1.734, 1.938] |  1.8331
   1940            |   1.6338 [1.502, 1.777] |  1.6338
@@ -719,7 +984,18 @@ Dose combination: 6 vs 0 [2023_26]
 --------------------------------------------------
             YoB | KCOR [95% CI] |             KCOR_ns
 --------------------------------------------------
+[DEBUG ASMR] Processing dose 6 vs 0
+[DEBUG ASMR] ages_sorted: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] Is age 0 (ASMR) in ages_sorted? True
+[DEBUG ASMR] Total rows in dose_data: 11
+[DEBUG ASMR] YearOfBirth values in dose_data: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] ASMR rows (YearOfBirth==0) in dose_data: 1
   All Ages        |   1.4622 [1.394, 1.534] |  1.4622
+[DEBUG ASMR] Checking age=0 (ASMR)
+[DEBUG ASMR] dose_data shape: (11, 22), YearOfBirth values: [np.int64(-2), np.int64(0), np.int64(1920), np.int64(1930), np.int64(1940), np.int64(1950), np.int64(1960), np.int64(1970), np.int64(1980), np.int64(1990), np.int64(2000)]
+[DEBUG ASMR] age_data shape: (1, 22)
+[DEBUG ASMR] SUCCESS: age_data found with 1 row(s)
+  ASMR (direct)   |   1.3989 [1.341, 1.459] |  1.4324
   1920            |   1.1700 [1.062, 1.290] |  1.1700
   1930            |   1.3936 [1.285, 1.512] |  1.3936
   1940            |   1.6219 [1.463, 1.799] |  1.6219
@@ -731,7 +1007,7 @@ Dose combination: 6 vs 0 [2023_26]
   2000            |   0.0000 [0.000, 0.000] |       -
 ================================================================================
 [MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)
-[Done] Wrote 27591 rows to ../data/japan2/KCOR.xlsx at 2026-01-05 21:38:25
+[Done] Wrote 27591 rows to ../data/japan2/KCOR.xlsx at 2026-01-05 22:39:29
 [Summary] Creating summary file: ../data/japan2/KCOR_summary.xlsx
   - 2021_30: 3 dose combinations, 37 summary rows
   - 2022_09: 3 dose combinations, 37 summary rows

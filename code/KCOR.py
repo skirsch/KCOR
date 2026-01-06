@@ -2941,23 +2941,27 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     "t_num": "t"
                 }, inplace=True)
             
-                # Reorder columns to match requested order (Czech format):
-                # mc_id, ISOweekDied, KCOR, CI_lower, CI_upper, EnrollmentDate, YearOfBirth, 
-                # Dose_num, Dose_den, theta_num, theta_den, 
-                # hazard_num, cum_hazard_num, adj_cum_hazard_num, t_num,
-                # hazard_den, cum_hazard_den, adj_cum_hazard_den, t_den, abnormal_fit
+                # Reorder columns: Date first, mc_id last
                 column_order = [
-                    "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+                    "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
                     "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
                     "theta_num", "theta_den",
                     "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
-                    "hazard_den", "cum_hazard_den", "adj_cum_hazard_den", "abnormal_fit"
+                    "hazard_den", "cum_hazard_den", "adj_cum_hazard_den", "abnormal_fit", "mc_id"
                 ]
-                # Only include columns that exist
+                # Only include columns that exist, in the specified order
                 existing_cols = [c for c in column_order if c in out.columns]
-                # Add any remaining columns that weren't in the order list
+                # Add any remaining columns that weren't in the order list (before mc_id)
                 remaining_cols = [c for c in out.columns if c not in column_order]
-                out = out[existing_cols + remaining_cols]
+                # Final order: Date first, then ordered cols (excluding Date and mc_id), then remaining cols, then mc_id last
+                if existing_cols:
+                    ordered_without_date_mc = [c for c in existing_cols if c not in ["Date", "mc_id"]]
+                    date_col = ["Date"] if "Date" in existing_cols else []
+                    mc_col = ["mc_id"] if "mc_id" in existing_cols else []
+                    out = out[date_col + ordered_without_date_mc + remaining_cols + mc_col]
+                else:
+                    # Fallback if no ordered cols exist
+                    out = out[remaining_cols]
             
                 out_rows.append(out)
 
@@ -3037,10 +3041,15 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             
             # Per-age anchors at t0 for this (num,den) and iteration
             anchors = {}
+            # Use CH column directly - it's already the theta-adjusted cumulative hazard (adj_cum_hazard)
+            # CH is computed from hazard_eff which comes from theta-adjusted hazard_adj
             for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
                 gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
                 gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
                 if gvn.empty or gdn.empty:
+                    continue
+                # CH is already the adjusted cumulative hazard (theta-adjusted)
+                if "CH" not in gvn.columns or "CH" not in gdn.columns:
                     continue
                 t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
                 c1 = gvn["CH"].iloc[t0_idx]
@@ -3057,14 +3066,21 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     gu = g_age[(g_age["Dose"]==den) & (g_age["DateDied"]==dt)]
                     if gv.empty or gu.empty:
                         continue
-                    # Take first occurrence if multiple rows per date
-                    gv = gv.iloc[[0]]
-                    gu = gu.iloc[[0]]
-                    denom_ch = gu["CH"].values[0]
+                    # Use CH column directly - it's already the theta-adjusted cumulative hazard (adj_cum_hazard)
+                    gv_full = g_age[g_age["Dose"] == num].sort_values("DateDied")
+                    gu_full = g_age[g_age["Dose"] == den].sort_values("DateDied")
+                    if gv_full.empty or gu_full.empty or "CH" not in gv_full.columns or "CH" not in gu_full.columns:
+                        continue
+                    # Get CH (adjusted cumulative hazard) value at this date
+                    gv_at_dt = gv_full[gv_full["DateDied"] == dt]
+                    gu_at_dt = gu_full[gu_full["DateDied"] == dt]
+                    if gv_at_dt.empty or gu_at_dt.empty:
+                        continue
+                    denom_ch = gu_at_dt["CH"].iloc[0]
                     if denom_ch > EPS:
-                        k = (gv["CH"].values[0]) / denom_ch
+                        k = gv_at_dt["CH"].iloc[0] / denom_ch
                     else:
-                        continue  # Skip this comparison if denominator is too small
+                        continue
                     k0 = anchors[yob]
                     if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
                         continue
@@ -3080,6 +3096,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         var_terms.append((weights.get(yob,0.0)**2) * (1.0/Dv + 1.0/Du))
 
             # Pool only over valid, finite entries; ignore NaNs/inf entirely
+                # Create ASMR row for this date if we have valid pooling data
             if logs and sum(wts) > 0:
                 logs_arr = np.array(logs, dtype=float)
                 wts_arr = np.array(wts, dtype=float)
@@ -3093,137 +3110,138 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         continue
                     logK = np.average(logs_arr, weights=wts_arr)
                     Kpool = float(safe_exp(logK))
+                    
+                    # Pooled CI via weighted aggregation of per-age log-variance using post-anchor ΔCH (Nelson–Aalen)
+                    var_terms = []
+                    for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
+                        if yob not in anchors:
+                            continue
+                        gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
+                        gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
+                        if gvn.empty or gdn.empty:
+                            continue
+                        gvn_upto = gvn[gvn["DateDied"] <= dt]
+                        gdn_upto = gdn[gdn["DateDied"] <= dt]
+                        if len(gvn_upto) == 0 or len(gdn_upto) == 0 or "CH" not in gvn_upto.columns or "CH" not in gdn_upto.columns:
+                            continue
+                        t0_idx_age = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                        # ΔCH at dt (CH is already the theta-adjusted cumulative hazard)
+                        dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
+                        dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
+                        # NA variance increments using raw hazard
+                        var_inc_num_age = (gvn_upto["Dead"].astype(float) / (gvn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
+                        var_inc_den_age = (gdn_upto["Dead"].astype(float) / (gdn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
+                        # Cumulative from anchor forward
+                        csum_num = np.cumsum(var_inc_num_age)
+                        csum_den = np.cumsum(var_inc_den_age)
+                        var_cum_num_age = float(csum_num[-1] - csum_num[t0_idx_age]) if csum_num.size > 0 else 0.0
+                        var_cum_den_age = float(csum_den[-1] - csum_den[t0_idx_age]) if csum_den.size > 0 else 0.0
+                        # Per-age log-variance contribution
+                        denom_num_age = max(abs(dCH_num_age), EPS)
+                        denom_den_age = max(abs(dCH_den_age), EPS)
+                        var_log_age = (var_cum_num_age / (denom_num_age**2)) + (var_cum_den_age / (denom_den_age**2))
+                        w = weights.get(yob, 0.0)
+                        var_terms.append((w**2) * var_log_age)
+                    # Final pooled SE on log scale
+                    total_uncertainty = sum(var_terms)
+                    SE_total = safe_sqrt(total_uncertainty) / sum(wts)
+                    
+                    # Clip SE to prevent overflow (using reasonable bound)
+                    SE_total = min(SE_total, 10.0)
+                    
+                    # Calculate 95% CI bounds on log scale, then exponentiate
+                    CI_lower = Kpool * safe_exp(-1.96 * SE_total)
+                    CI_upper = Kpool * safe_exp(1.96 * SE_total)
+
+                    # Clip CI bounds to reasonable values
+                    CI_lower = max(0, min(CI_lower, Kpool * 10))
+                    CI_upper = max(Kpool * 0.1, min(CI_upper, Kpool * 10))
+
+                    # After clipping: blank CI at baseline and earlier dates (t <= t0)
+                    if dt <= all_dates[min(KCOR_NORMALIZATION_WEEKS_EFFECTIVE, len(all_dates)-1)]:
+                        CI_lower = np.nan
+                        CI_upper = np.nan
+                    
+                    # Check if any contributing age group had abnormal fit
+                    abnormal_fit_pooled = False
+                    if slope6_params_map is not None:
+                        for yob_check in df_sorted["YearOfBirth"].unique():
+                            if yob_check not in anchors:
+                                continue
+                            params_num_check = slope6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                            params_den_check = slope6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                            if isinstance(params_num_check, dict) and params_num_check.get("abnormal_fit", False):
+                                abnormal_fit_pooled = True
+                                break
+                            if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
+                                abnormal_fit_pooled = True
+                                break
+                    # Set abnormal_fit: blank if normal fit, True if abnormal
+                    abnormal_fit_pooled_value = True if abnormal_fit_pooled else ""
+                    
+                    # Debug: Check for suspiciously large pooled KCOR values
+                    if Kpool > 10:
+                        print(f"\n[DEBUG] Large pooled KCOR detected: {Kpool:.6f}")
+                        print(f"  Dose combination: {num} vs {den}, Date: {dt}")
+                        print(f"  Number of age groups: {len(logs)}")
+                        print(f"  Log K values: {[f'{x:.6f}' for x in logs[:5]]}...")
+                        print(f"  Weights: {[f'{w:.6f}' for w in wts[:5]]}...")
+                        print(f"  Final logK: {logK:.6f}")
+                        print()
+                    # Extract theta_num and theta_den from KCOR6 params map for pooled rows
+                    theta_num_pooled = np.nan
+                    theta_den_pooled = np.nan
+                    if kcor6_params_map is not None:
+                        # For pooled rows, we need to aggregate theta across age groups
+                        # Use weighted average or take from highest-weight age group
+                        # For simplicity, use theta from first contributing age group
+                        for yob_check in df_sorted["YearOfBirth"].unique():
+                            if yob_check not in anchors:
+                                continue
+                            params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                            params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                            if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled):
+                                theta_num_val = params_num_check.get("theta_hat", np.nan)
+                                if np.isfinite(theta_num_val):
+                                    theta_num_pooled = float(theta_num_val)
+                            if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled):
+                                theta_den_val = params_den_check.get("theta_hat", np.nan)
+                                if np.isfinite(theta_den_val):
+                                    theta_den_pooled = float(theta_den_val)
+                            if not (np.isnan(theta_num_pooled) or np.isnan(theta_den_pooled)):
+                                break
+                    
+                    # mc_id_val is already set from the outer loop
+                    # Extract Date from dt (which is a pandas Timestamp)
+                    # Keep as Timestamp for consistency with other rows (will be converted to datetime later)
+                    date_val = pd.to_datetime(dt) if isinstance(dt, pd.Timestamp) else pd.to_datetime(dt)
+                    asmr_row = {
+                        "mc_id": mc_id_val,
+                        "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                        "Date": date_val,  # Add Date column for filtering at reporting date
+                        "KCOR": Kpool,
+                        "CI_lower": CI_lower,
+                        "CI_upper": CI_upper,
+                        "EnrollmentDate": sheet_name,
+                        "YearOfBirth": 0,      # ASMR pooled row
+                        "Dose_num": num,
+                        "Dose_den": den,
+                        "theta_num": theta_num_pooled,
+                        "theta_den": theta_den_pooled,
+                        "hazard_num": np.nan,  # Pooled ASMR has no per-dose hazards
+                        "cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose cumulative hazards
+                        "adj_cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose adjusted cumulative hazards
+                        "hazard_den": np.nan,
+                        "cum_hazard_den": np.nan,
+                        "adj_cum_hazard_den": np.nan,
+                        "t": np.nan,  # Use t_num (same as t_den)
+                        "abnormal_fit": abnormal_fit_pooled_value
+                    }
+                    pooled_rows.append(asmr_row)
                 else:
                     continue
-                
-                # Pooled CI via weighted aggregation of per-age log-variance using post-anchor ΔCH (Nelson–Aalen)
-                var_terms = []
-                for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
-                    if yob not in anchors:
-                        continue
-                    gvn = g_age[g_age["Dose"] == num].sort_values("DateDied")
-                    gdn = g_age[g_age["Dose"] == den].sort_values("DateDied")
-                    if gvn.empty or gdn.empty:
-                        continue
-                    gvn_upto = gvn[gvn["DateDied"] <= dt]
-                    gdn_upto = gdn[gdn["DateDied"] <= dt]
-                    if len(gvn_upto) == 0 or len(gdn_upto) == 0:
-                        continue
-                    t0_idx_age = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn_upto) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
-                    # ΔCH at dt
-                    dCH_num_age = float(gvn_upto["CH"].iloc[-1]) - float(gvn_upto["CH"].iloc[t0_idx_age])
-                    dCH_den_age = float(gdn_upto["CH"].iloc[-1]) - float(gdn_upto["CH"].iloc[t0_idx_age])
-                    # NA variance increments using raw hazard
-                    var_inc_num_age = (gvn_upto["Dead"].astype(float) / (gvn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
-                    var_inc_den_age = (gdn_upto["Dead"].astype(float) / (gdn_upto["Alive"].astype(float) + EPS)**2).to_numpy()
-                    # Cumulative from anchor forward
-                    csum_num = np.cumsum(var_inc_num_age)
-                    csum_den = np.cumsum(var_inc_den_age)
-                    var_cum_num_age = float(csum_num[-1] - csum_num[t0_idx_age]) if csum_num.size > 0 else 0.0
-                    var_cum_den_age = float(csum_den[-1] - csum_den[t0_idx_age]) if csum_den.size > 0 else 0.0
-                    # Per-age log-variance contribution
-                    denom_num_age = max(abs(dCH_num_age), EPS)
-                    denom_den_age = max(abs(dCH_den_age), EPS)
-                    var_log_age = (var_cum_num_age / (denom_num_age**2)) + (var_cum_den_age / (denom_den_age**2))
-                    w = weights.get(yob, 0.0)
-                    var_terms.append((w**2) * var_log_age)
-                # Final pooled SE on log scale
-                total_uncertainty = sum(var_terms)
-                SE_total = safe_sqrt(total_uncertainty) / sum(wts)
-                
-                # Clip SE to prevent overflow (using reasonable bound)
-                SE_total = min(SE_total, 10.0)
-                
-                # Calculate 95% CI bounds on log scale, then exponentiate
-                CI_lower = Kpool * safe_exp(-1.96 * SE_total)
-                CI_upper = Kpool * safe_exp(1.96 * SE_total)
-
-                # Clip CI bounds to reasonable values
-                CI_lower = max(0, min(CI_lower, Kpool * 10))
-                CI_upper = max(Kpool * 0.1, min(CI_upper, Kpool * 10))
-
-                # After clipping: blank CI at baseline and earlier dates (t <= t0)
-                if dt <= all_dates[min(KCOR_NORMALIZATION_WEEKS_EFFECTIVE, len(all_dates)-1)]:
-                    CI_lower = np.nan
-                    CI_upper = np.nan
-                
-
-                
-                # Check if any contributing age group had abnormal fit
-                abnormal_fit_pooled = False
-                if slope6_params_map is not None:
-                    for yob_check in df_sorted["YearOfBirth"].unique():
-                        if yob_check not in anchors:
-                            continue
-                        params_num_check = slope6_params_map.get((sheet_name, int(yob_check), int(num)), {})
-                        params_den_check = slope6_params_map.get((sheet_name, int(yob_check), int(den)), {})
-                        if isinstance(params_num_check, dict) and params_num_check.get("abnormal_fit", False):
-                            abnormal_fit_pooled = True
-                            break
-                        if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
-                            abnormal_fit_pooled = True
-                            break
-                # Set abnormal_fit: blank if normal fit, True if abnormal
-                abnormal_fit_pooled_value = True if abnormal_fit_pooled else ""
-                
-                # Debug: Check for suspiciously large pooled KCOR values
-                if Kpool > 10:
-                    print(f"\n[DEBUG] Large pooled KCOR detected: {Kpool:.6f}")
-                    print(f"  Dose combination: {num} vs {den}, Date: {dt}")
-                    print(f"  Number of age groups: {len(logs)}")
-                    print(f"  Log K values: {[f'{x:.6f}' for x in logs[:5]]}...")
-                    print(f"  Weights: {[f'{w:.6f}' for w in wts[:5]]}...")
-                    print(f"  Final logK: {logK:.6f}")
-                    print()
-                # Extract theta_num and theta_den from KCOR6 params map for pooled rows
-                theta_num_pooled = np.nan
-                theta_den_pooled = np.nan
-                if kcor6_params_map is not None:
-                    # For pooled rows, we need to aggregate theta across age groups
-                    # Use weighted average or take from highest-weight age group
-                    # For simplicity, use theta from first contributing age group
-                    for yob_check in df_sorted["YearOfBirth"].unique():
-                        if yob_check not in anchors:
-                            continue
-                        params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
-                        params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
-                        if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled):
-                            theta_num_val = params_num_check.get("theta_hat", np.nan)
-                            if np.isfinite(theta_num_val):
-                                theta_num_pooled = float(theta_num_val)
-                        if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled):
-                            theta_den_val = params_den_check.get("theta_hat", np.nan)
-                            if np.isfinite(theta_den_val):
-                                theta_den_pooled = float(theta_den_val)
-                        if not (np.isnan(theta_num_pooled) or np.isnan(theta_den_pooled)):
-                            break
-                
-                # mc_id_val is already set from the outer loop
-                # Extract Date from dt (which is a pandas Timestamp)
-                # Keep as Timestamp for consistency with other rows (will be converted to datetime later)
-                date_val = pd.to_datetime(dt) if isinstance(dt, pd.Timestamp) else pd.to_datetime(dt)
-                pooled_rows.append({
-                    "mc_id": mc_id_val,
-                    "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
-                    "Date": date_val,  # Add Date column for filtering at reporting date
-                    "KCOR": Kpool,
-                    "CI_lower": CI_lower,
-                    "CI_upper": CI_upper,
-                    "EnrollmentDate": sheet_name,
-                    "YearOfBirth": 0,      # ASMR pooled row
-                    "Dose_num": num,
-                    "Dose_den": den,
-                    "theta_num": theta_num_pooled,
-                    "theta_den": theta_den_pooled,
-                    "hazard_num": np.nan,  # Pooled ASMR has no per-dose hazards
-                    "cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose cumulative hazards
-                    "adj_cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose adjusted cumulative hazards
-                    "hazard_den": np.nan,
-                    "cum_hazard_den": np.nan,
-                    "adj_cum_hazard_den": np.nan,
-                    "t": np.nan,  # Use t_num (same as t_den)
-                    "abnormal_fit": abnormal_fit_pooled_value
-                })
+            else:
+                continue
 
     # -------- All Ages ASMR rows (YearOfBirth = -3) --------
     # Pool KCOR values from individual birth years using ASMR (expected-deaths) weights
@@ -3880,14 +3898,14 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         if "Date_den" in combined.columns:
             combined.drop(columns=["Date_den"], inplace=True)
         
-        # STANDARD COLUMN ORDER (Czech format)
+        # STANDARD COLUMN ORDER: Date first, mc_id last
         standard_columns = [
-            "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+            "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
             "theta_num", "theta_den",
             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
             "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
-            "abnormal_fit", "Date"
+            "abnormal_fit", "mc_id"
         ]
         
         # Only include standard columns that exist in the data
@@ -3897,12 +3915,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         
         return combined
     return pd.DataFrame(columns=[
-        "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+        "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
         "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
         "theta_num", "theta_den",
         "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
         "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
-        "abnormal_fit", "Date"
+        "abnormal_fit", "mc_id"
     ])
 
 def build_kcor_o_rows(df, sheet_name):
@@ -6300,6 +6318,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             # Filter to reporting date - now report_date is guaranteed to be a valid date in the data
             end_data = sheet_data_all[sheet_data_all["Date"] == report_date]
             
+            # If no ASMR rows at exact report_date, find closest ASMR date and include those rows
+            asmr_rows_all = sheet_data_all[sheet_data_all["YearOfBirth"] == 0]
+            asmr_at_report = end_data[end_data["YearOfBirth"] == 0]
+            if not asmr_rows_all.empty and len(asmr_at_report) == 0:
+                # Find closest ASMR date to report_date
+                asmr_diffs = (asmr_rows_all["Date"] - report_date).abs()
+                closest_asmr_idx = asmr_diffs.idxmin()
+                closest_asmr_date = asmr_rows_all.loc[closest_asmr_idx, "Date"]
+                # Add ASMR rows at closest date to end_data
+                asmr_at_closest = asmr_rows_all[asmr_rows_all["Date"] == closest_asmr_date]
+                end_data = pd.concat([end_data, asmr_at_closest], ignore_index=True)
+            
             # Get dose pairs for this specific sheet
             dose_pairs = get_dose_pairs(sheet_name)
             
@@ -6338,6 +6368,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         return (1, age)  # Regular ages after
                 
                 ages_sorted = sorted(dose_data["YearOfBirth"].unique(), key=age_sort_key)
+                
                 for age in ages_sorted:
                     # Skip -3 (All Ages ASMR) from display
                     if age == -3:
@@ -6949,12 +6980,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         
                         # Enforce standard column order (Czech format) for consistency across all datasets
                         standard_col_order = [
-                            "mc_id", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+                            "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
                             "theta_num", "theta_den",
                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
                             "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
-                            "abnormal_fit", "Date"
+                            "abnormal_fit", "mc_id"
                         ]
                         # Only include columns that exist, in the standard order
                         existing_cols_ordered = [c for c in standard_col_order if c in all_data.columns]
