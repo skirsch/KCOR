@@ -136,11 +136,15 @@ def compute_coverage_for_scenario_simple(
             result = compute_kcor_for_scenario(scenario_data, config)
             kcor_trajectory = result.get("kcor_trajectory")
             
-            if kcor_trajectory is not None and len(kcor_trajectory) > target_week:
-                kcor_value = kcor_trajectory[target_week]
-                if np.isfinite(kcor_value):
-                    kcor_values.append(kcor_value)
-                    valid_replicates += 1
+            if kcor_trajectory is not None:
+                traj_len = len(kcor_trajectory)
+                # Use the last available week if target_week is beyond trajectory
+                eval_week = min(target_week, traj_len - 1)
+                if eval_week >= 0:
+                    kcor_value = kcor_trajectory[eval_week]
+                    if np.isfinite(kcor_value):
+                        kcor_values.append(kcor_value)
+                        valid_replicates += 1
         except Exception as e:
             # Skip failed replicates
             continue

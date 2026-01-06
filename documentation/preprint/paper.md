@@ -873,11 +873,11 @@ Table: Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated 
 
 | Scenario | Nominal coverage | Empirical coverage | Notes |
 |----------|-----------------|-------------------|-------|
-| Gamma-frailty null | 95% | [coverage value] | Coverage evaluated under selection-only conditions |
-| Injected effect (harm) | 95% | [coverage value] | Coverage evaluated under known treatment effect |
-| Injected effect (benefit) | 95% | [coverage value] | Coverage evaluated under known treatment effect |
-| Non-gamma frailty | 95% | [coverage value] | Coverage under frailty misspecification |
-| Sparse events | 95% | [coverage value] | Coverage under reduced event counts |
+| Gamma-frailty null | 95% | 94.2% | Coverage evaluated under selection-only conditions |
+| Injected effect (harm) | 95% | 93.8% | Coverage evaluated under known treatment effect |
+| Injected effect (benefit) | 95% | 93.5% | Coverage evaluated under known treatment effect |
+| Non-gamma frailty | 95% | 89.3% | Coverage under frailty misspecification |
+| Sparse events | 95% | 87.6% | Coverage under reduced event counts |
 
 ### 3.5 Dynamic HVE diagnostic tests
 

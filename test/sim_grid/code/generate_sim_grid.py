@@ -642,7 +642,8 @@ def compute_rmst_from_cohort(
     # Compute RMST via numerical integration: ∫₀^τ S(t) dt
     # Using trapezoidal rule
     dt = 1.0  # Weekly resolution
-    rmst = np.trapezoid(S_t, dx=dt)
+    # Use trapz for compatibility with older numpy versions
+    rmst = np.trapz(S_t, dx=dt)
     
     return float(rmst)
 
