@@ -12,7 +12,7 @@ Why: Lets us use the existing KCOR_CMR pipeline unchanged. The adapter maps:
 - YearOfBirth → YearOfBirth (as 4-digit year string)
 - Sex (M/F/O) → numeric codes expected by KCOR_CMR input (1=Male, 2=Female, else empty)
 - DeathDate (YYYY-MM-DD) → ISO week string YYYY-WW in DateOfDeath
-- VnDate → first 4 doses mapped to Date_FirstDose..Date_FourthDose as ISO week strings
+- VnDate → first 6 doses mapped to Date_FirstDose..Date_SixthDose as ISO week strings
 - Fills the rest of the 53 columns with blanks
 
 Usage:
@@ -91,7 +91,7 @@ def main() -> None:
     # DeathDate to ISO week string (YYYY-WW)
     out['DateOfDeath'] = to_iso_week_str(krf['DeathDate'])
 
-    # Gather vaccination dates; pick first 4 by chronological order
+    # Gather vaccination dates; pick first 6 by chronological order (to match Date_FifthDose and Date_SixthDose)
     vdate_cols = [c for c in krf.columns if c.startswith('V') and c.endswith('Date')]
     if vdate_cols:
         # Melt to long with a stable row id
@@ -100,12 +100,12 @@ def main() -> None:
         long['date'] = pd.to_datetime(long['date'], errors='coerce')
         long = long.dropna(subset=['date']).sort_values(['row_id', 'date'])
         long['rank'] = long.groupby('row_id').cumcount() + 1
-        first4 = long[long['rank'] <= 4].copy()
-        if not first4.empty:
-            first4['week'] = to_iso_week_str(first4['date'])
-            week_wide = first4.pivot(index='row_id', columns='rank', values='week')
+        first6 = long[long['rank'] <= 6].copy()
+        if not first6.empty:
+            first6['week'] = to_iso_week_str(first6['date'])
+            week_wide = first6.pivot(index='row_id', columns='rank', values='week')
             week_wide.columns = [
-                f'Date_{name}' for name in ['FirstDose', 'SecondDose', 'ThirdDose', 'FourthDose'][: len(week_wide.columns)]
+                f'Date_{name}' for name in ['FirstDose', 'SecondDose', 'ThirdDose', 'FourthDose', 'FifthDose', 'SixthDose'][: len(week_wide.columns)]
             ]
             # Map back by row_id to original index
             for c in week_wide.columns:

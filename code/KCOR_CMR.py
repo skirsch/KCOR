@@ -233,19 +233,9 @@ if MONTE_CARLO_MODE and len(sys.argv) < 3:
 excel_writer = pd.ExcelWriter(excel_out_path, engine='xlsxwriter')
 
 
-# Define enrollment dates for dose groups
-# These dates are used to determine the dose group for each individual based on their vaccination dates.
-# These are ISO week format: YYYY-WW
-# The enrollment date is the date when the individual is considered to be part of the study cohort.
-# 2021-W13 is 03-29-2021, near the start of the vaccination campaign so we can capture impact on older people.
-# 2021-W24 is 06-14-2021, when everyone 40+ was eligible for first dose.
-# 2021-W41 is 10-11-2021, which is a late enrollment date before the winter wave; not super useful.
-# 2022-W06 is 02-07-2022, which is the best booster #1 enrollment since it is just after everyone got 1st booster.
-# 2022-W26 is 06-27-2022, which is the "5 months after booster" cohort. Purpose: to show all 3 dose groups will track each other at that point because all groups are now >15 weeks from a vaccine dose.
-# 2022-W47 is 11-21-2022, which is the best booster #2 enrollment since it is just after everyone got 2nd booster.
-# 2024-W01 is 12-30-2023, which is the best booster #3 enrollment since it is just after everyone got 3rd booster, but too late to be useful
-# because the deaths start declining in Q2 of 2024
-enrollment_dates = ['2021-13', '2021-20', '2021-24', '2021-30', '2022-06', '2022-26', '2022-47']  # Full set of enrollment dates
+# Enrollment dates are now REQUIRED to be specified in the dataset YAML file
+# Default fallback (will be overridden by YAML config below)
+enrollment_dates = None  # Must be loaded from YAML config
 
 # In Monte Carlo mode, only process a single enrollment cohort (default 2021-24; override via MC_ENROLLMENT_DATE)
 MC_ENROLL_DATE_STR = None
@@ -276,7 +266,7 @@ if MONTE_CARLO_MODE:
     print(f"  Using {MC_THREADS} parallel processes", flush=True)
     print(f"  Max dose group: {MC_MAX_DOSE_EFFECTIVE}", flush=True)
 
-# Try to load enrollment dates from dataset YAML config
+# REQUIRED: Load enrollment dates from dataset YAML config
 # Look for data/{DATASET}/{DATASET}.yaml
 # Resolve path relative to script location to handle different execution contexts
 _dataset_name = os.environ.get('DATASET', 'Czech')
@@ -292,30 +282,61 @@ for _path in _dataset_yaml_paths:
         _dataset_yaml_path = _abs_path
         break
 
-if _dataset_yaml_path:
-    try:
-        # Try to import yaml module
-        try:
-            import yaml as _yaml_module
-        except ImportError:
-            # yaml module not available - skip config loading silently
-            _yaml_module = None
-        
-        if _yaml_module is not None:
-            with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
-                _dataset_config = _yaml_module.safe_load(_f) or {}
-            _config_enrollment_dates = _dataset_config.get('enrollmentDates')
-            if _config_enrollment_dates and isinstance(_config_enrollment_dates, list):
-                # Convert to list of strings, normalize format
-                _parsed_config_dates = [str(d).strip().replace('_', '-') for d in _config_enrollment_dates if d]
-                if _parsed_config_dates:
-                    enrollment_dates = _parsed_config_dates
-                    print(f"Loaded enrollment dates from dataset config: {', '.join(enrollment_dates)}", flush=True)
-    except Exception as _e_config:
-        # Only print warning for non-ImportError exceptions (file read errors, etc.)
-        # Skip warnings about missing yaml module
-        if 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower() and 'no module' not in str(_e_config).lower():
-            print(f"Warning: Could not load enrollment dates from {_dataset_yaml_path}: {_e_config}", flush=True)
+# REQUIRE YAML file to exist
+if not _dataset_yaml_path:
+    print(f"ERROR: Dataset YAML config file not found for DATASET={_dataset_name}", flush=True)
+    print(f"  Expected one of:", flush=True)
+    for _path in _dataset_yaml_paths:
+        print(f"    {os.path.abspath(_path)}", flush=True)
+    print(f"  All datasets must have a YAML config file at data/{_dataset_name}/{_dataset_name}.yaml", flush=True)
+    sys.exit(1)
+
+print(f"Loading dataset YAML config: {_dataset_yaml_path}", flush=True)
+
+# REQUIRE yaml module
+try:
+    import yaml as _yaml_module
+except ImportError as _e_yaml_import:
+    print(f"ERROR: yaml module not available ({_e_yaml_import})", flush=True)
+    print(f"  Install with: pip install pyyaml", flush=True)
+    sys.exit(1)
+
+# REQUIRE YAML file to parse correctly
+try:
+    with open(_dataset_yaml_path, 'r', encoding='utf-8') as _f:
+        _dataset_config = _yaml_module.safe_load(_f) or {}
+except _yaml_module.YAMLError as _e_yaml_parse:
+    print(f"ERROR: YAML parse error in {_dataset_yaml_path}: {_e_yaml_parse}", flush=True)
+    import traceback
+    print(f"Traceback: {traceback.format_exc()}", flush=True)
+    sys.exit(1)
+except Exception as _e_config:
+    print(f"ERROR: Could not read YAML config file {_dataset_yaml_path}: {_e_config}", flush=True)
+    import traceback
+    print(f"Traceback: {traceback.format_exc()}", flush=True)
+    sys.exit(1)
+
+# REQUIRE enrollmentDates to be present and valid
+_config_enrollment_dates = _dataset_config.get('enrollmentDates')
+if not _config_enrollment_dates:
+    print(f"ERROR: 'enrollmentDates' not found in YAML config file {_dataset_yaml_path}", flush=True)
+    print(f"  Config keys found: {list(_dataset_config.keys())}", flush=True)
+    sys.exit(1)
+
+if not isinstance(_config_enrollment_dates, list):
+    print(f"ERROR: 'enrollmentDates' must be a list in YAML config file {_dataset_yaml_path}", flush=True)
+    print(f"  Found type: {type(_config_enrollment_dates)}, value: {_config_enrollment_dates}", flush=True)
+    sys.exit(1)
+
+# Convert to list of strings, normalize format
+_parsed_config_dates = [str(d).strip().replace('_', '-') for d in _config_enrollment_dates if d]
+if not _parsed_config_dates:
+    print(f"ERROR: 'enrollmentDates' list is empty or contains no valid dates in YAML config file {_dataset_yaml_path}", flush=True)
+    print(f"  Original value: {_config_enrollment_dates}", flush=True)
+    sys.exit(1)
+
+enrollment_dates = _parsed_config_dates
+print(f"✓ Loaded enrollment dates from dataset config: {', '.join(enrollment_dates)}", flush=True)
 
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
 # (Only applies if not in Monte Carlo mode, and takes precedence over config file)
@@ -429,9 +450,8 @@ a = a.loc[:, needed_cols].copy()
 
 # Remove records where Infection > 1
 # Filter to single-infection rows as a fresh copy
-# Fix pandas FutureWarning: use infer_objects instead of fillna().astype()
-# Fix pandas FutureWarning: avoid fillna() downcasting by using fillna with downcast=None
-_infection_series = a['Infection'].fillna(0, downcast=None)
+# Fix pandas FutureWarning: use fillna() without downcast, then convert explicitly
+_infection_series = a['Infection'].fillna(0)
 a = a[(_infection_series.astype(int) <= 1)].copy()
 
 # Filter out records where person got a non-mRNA vaccine for any dose

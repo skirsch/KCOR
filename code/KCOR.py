@@ -3192,9 +3192,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                             break
                 
                 # mc_id_val is already set from the outer loop
+                # Extract Date from dt (which is a pandas Timestamp)
+                date_val = dt.date() if hasattr(dt, 'date') else pd.to_datetime(dt).date()
                 pooled_rows.append({
                     "mc_id": mc_id_val,
                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                    "Date": date_val,  # Add Date column for filtering at reporting date
                     "KCOR": Kpool,
                     "CI_lower": CI_lower,
                     "CI_upper": CI_upper,
@@ -3594,9 +3597,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                             mc_id_val = None
                     elif sheet_name.isdigit():
                         mc_id_val = int(sheet_name)
+                # Extract Date from DateDied (which should be in merged_all)
+                date_val = row["DateDied"].date() if hasattr(row["DateDied"], 'date') else pd.to_datetime(row["DateDied"]).date()
                 all_ages_rows.append({
                 "mc_id": mc_id_val,
                 "ISOweekDied": row["ISOweekDied_num"],
+                "Date": date_val,  # Add Date column for filtering at reporting date
                 "KCOR": row["KCOR"],
                 "CI_lower": row["CI_lower"],
                 "CI_upper": row["CI_upper"],
@@ -5876,6 +5882,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
     # Combine all results
     combined = pd.concat(all_out, ignore_index=True).sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
+    
+    # Ensure Date column exists and is datetime type (for filtering at reporting date)
+    # Some rows (pooled_rows, all_ages_rows) may have Date as date objects, convert to datetime
+    if "Date" in combined.columns:
+        combined["Date"] = pd.to_datetime(combined["Date"], errors='coerce')
+    elif "DateDied" in combined.columns:
+        # Fallback: if Date doesn't exist but DateDied does, use DateDied
+        combined["Date"] = pd.to_datetime(combined["DateDied"], errors='coerce')
 
     # Negative control mode: output summarized KCOR by (EnrollmentDate, YoB1, YoB2=YoB1+10, Dose)
     if int(NEGATIVE_CONTROL_MODE) == 1:

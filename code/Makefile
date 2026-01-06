@@ -49,14 +49,22 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 	@ls -lh $(CMR_OUTPUT)
 	@echo "CMR aggregation complete!"
 
-# If krf.csv is missing, build it via the dataset converter
+# If krf.csv is missing, try to build it via the dataset converter (only if convert target exists)
+# This is optional - datasets like Czech don't use KRF format
 $(RECORDS_KRF):
-	@echo "Building KRF via dataset converter in data/$(DATASET)..."
-	@$(MAKE) -C ../data/$(DATASET) convert
+	@if [ -f "$(RECORDS_KRF)" ]; then \
+		echo "KRF file already exists: $(RECORDS_KRF)"; \
+	elif [ -f "../data/$(DATASET)/Makefile" ] && $(MAKE) -C ../data/$(DATASET) -n convert >/dev/null 2>&1; then \
+		echo "Building KRF via dataset converter in data/$(DATASET)..."; \
+		$(MAKE) -C ../data/$(DATASET) convert || exit 1; \
+	else \
+		echo "No KRF converter found for $(DATASET) (skipping KRF build - will use raw CSV if available)"; \
+	fi
 
 # Build standardized records.csv from available inputs (prefer krf.csv)
-# Note: $(RECORDS_KRF) is listed as dependency so it gets built first if needed
-$(RECORDS_CSV): $(RECORDS_KRF) | ../data/$(DATASET)
+# Note: $(RECORDS_KRF) is listed as dependency but is optional - it will only be built if converter exists
+# Also depends on krf_adapter.py so changes to the adapter trigger a rebuild
+$(RECORDS_CSV): $(RECORDS_KRF) krf_adapter.py | ../data/$(DATASET)
 	@set -e; \
 	if [ -f "$(RECORDS_KRF)" ]; then \
 	  echo "Adapting KRF CSV to Czech-like input..."; \
