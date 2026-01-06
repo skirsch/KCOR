@@ -11,3 +11,16 @@ Computing coverage for Gamma-frailty null...
   Simulation replicates: 200
   Target week: 80
   Simulation 100/200
+  Simulation 200/200
+  Valid replicates: 200/200
+  Median KCOR: 1.0094
+  95% CI: [1.0094, 1.0094]
+  True KCOR in CI: False (coverage: 0.0%)
+
+Gamma-frailty null:
+  Coverage: 0.0%
+
+Computing coverage for Injected effect (harm)...
+  True KCOR: 1.2
+  Simulation replicates: 200
+  Target week: 80

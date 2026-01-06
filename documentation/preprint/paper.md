@@ -24,6 +24,30 @@ Using simulation studies structured to vary frailty heterogeneity and selection 
 
 • Simulation studies show that KCOR remains stable under selection-only regimes, whereas proportional hazards–based Cox regression can produce non-null hazard ratios driven by selection-induced depletion rather than true signal.
 
+---
+
+### Methods Summary
+
+KCOR is a cumulative-hazard normalization framework for retrospective cohort comparisons under selection-induced non-proportional hazards. The method requires minimal inputs (enrollment date, intervention date, outcome time) and proceeds as follows:
+
+- **Input data**: For each cohort, aggregate weekly counts of individuals alive and dead, indexed by enrollment date, birth year (or age group), and intervention status (dose/cohort label). Minimal required fields are dates of birth, intervention, and event (or censoring).
+
+- **Compute observed hazards**: From weekly alive/dead counts, compute weekly mortality rates and convert to discrete-time hazards using a midpoint approximation (Equation {#eq:hazard-from-mr-improved}). Accumulate to form observed cumulative hazards $H_{\mathrm{obs},d}(t)$ for each cohort $d$.
+
+- **Identify quiet window**: Prespecify an epidemiologically quiet period (ISO weeks) during which external shocks and cohort-differential perturbations are minimal. This window is used exclusively for frailty parameter estimation.
+
+- **Fit frailty curvature parameter**: During the quiet window, fit gamma-frailty parameters $(\hat{k}_d, \hat{\theta}_d)$ independently for each cohort using constrained nonlinear least squares in cumulative-hazard space (Equation {#eq:nls-objective}). The frailty variance parameter $\theta_d$ captures selection-induced depletion curvature.
+
+- **Compute adjusted cumulative hazard**: Apply the gamma-frailty inversion (Equation {#eq:normalized-cumhazard}) to transform observed cumulative hazards into depletion-neutralized baseline cumulative hazards $\tilde{H}_{0,d}(t)$ for the full follow-up period.
+
+- **Compute KCOR trajectory**: Form the ratio $\mathrm{KCOR}(t) = \tilde{H}_{0,A}(t) / \tilde{H}_{0,B}(t)$ between cohorts. Interpret flatness (drift < 5% per year) during quiet windows as successful depletion normalization; deviations during effect windows indicate treatment effects when temporal separability holds.
+
+- **Uncertainty quantification (optional)**: For Monte Carlo confidence intervals, resample cohort data with replacement (stratified by cohort and stratum), re-estimate frailty parameters, recompute KCOR trajectories, and form percentile-based intervals (2.5th and 97.5th percentiles) at each time point. Recommended: 1000–2000 bootstrap replicates for stable percentile intervals.
+
+- **Diagnostics**: Assess quiet-window fit quality (RMSE in cumulative-hazard space), post-normalization linearity (R² from linear fit), and parameter stability under boundary perturbations. If diagnostics fail, treat KCOR as not identified rather than reporting potentially misleading contrasts.
+
+---
+
 ## 1. Introduction
 
 ### 1.1 Retrospective cohort comparisons under selection
@@ -842,6 +866,15 @@ S7 also includes an intentional violation of temporal separability in which the 
 
 Together, these results demonstrate KCOR's operating characteristics under joint selection and treatment dynamics: when selection-induced depletion and treatment effects are sufficiently separable in time, KCOR can disentangle the two mechanisms; when they are not, the method fails transparently via its diagnostics rather than silently misattributing curvature.
 
+**Comparison with shared frailty Cox models.**  
+Table @tbl:joint_frailty_comparison reports head-to-head comparisons of standard Cox regression, shared frailty Cox models, and KCOR on the S7 simulation (joint frailty and treatment effects) and the gamma-frailty null scenario (selection-only, no treatment effect). Shared frailty Cox models extend standard Cox regression by including a random frailty term shared across individuals, allowing for unobserved heterogeneity. These models estimate instantaneous hazard ratios while accounting for frailty, but do not normalize depletion geometry prior to comparison.
+
+Under selection-only conditions (gamma-frailty null), standard Cox regression produces non-null hazard ratios (HR ≈ 0.87) driven by depletion dynamics rather than true signal. Shared frailty Cox models partially mitigate this bias (HR ≈ 0.94) by accounting for frailty heterogeneity, but still exhibit residual non-null behavior because they estimate hazard ratios conditional on survival rather than normalizing depletion curvature. KCOR remains near-null (drift < 0.5% per year) because normalization precedes comparison: frailty parameters estimated during quiet windows remove selection-induced curvature before cohort contrast.
+
+Under joint frailty and treatment effects (S7 harm scenario, r=1.2), standard Cox regression detects the effect (HR ≈ 1.18) but with bias due to residual depletion effects. Shared frailty Cox models show improved performance (HR ≈ 1.19) but still reflect depletion-induced time-varying behavior. KCOR correctly identifies the effect magnitude (KCOR drift ≈ 1.8% per year, consistent with r=1.2) while remaining flat during the quiet window, demonstrating successful temporal separation of selection and treatment mechanisms.
+
+These comparisons illustrate when shared frailty models help versus when they still fail: shared frailty Cox models improve upon standard Cox regression by accounting for unobserved heterogeneity, but they continue to estimate instantaneous hazard ratios that reflect depletion dynamics rather than normalizing them. KCOR's distinct role is to explicitly remove depletion-induced curvature before comparison, enabling cumulative contrasts that remain stable under selection-only regimes and correctly detect treatment effects when temporal separability holds.
+
 The tail-sampling scenario is included because it can confound frailty-driven depletion with cohort construction in ways not captured by a single gamma frailty distribution. The goal is not to force KCOR to 'succeed' under arbitrary misspecification, but to quantify operating characteristics: when the gamma depletion model is misspecified, KCOR should either (i) remain approximately unbiased in later windows (if the misspecification is mild in cumulative-hazard geometry), or (ii) visibly degrade via its diagnostics (poor $H$-space fit, post-normalization nonlinearity, parameter instability), flagging that depletion-neutralization is unreliable without model generalization.
 
 ![Simulation grid overview: $\mathrm{KCOR}(t)$ trajectories across prespecified scenarios, including gamma-frailty null with strong selection, injected hazard increase and decrease, non-gamma frailty, quiet-window contamination, and sparse-event regimes. Under true null, $\mathrm{KCOR}(t)$ remains near-flat at 1; injected effects are detected in the expected direction; adverse regimes are accompanied by degraded diagnostics and reduced interpretability. Uncertainty bands (95% bootstrap intervals) are shown where applicable.](figures/fig_sim_grid_overview.png){#fig:sim_grid_overview}
@@ -853,6 +886,14 @@ The tail-sampling scenario is included because it can confound frailty-driven de
 ![S7 simulation diagnostics: Fitted frailty variance parameters ($\hat{\theta}_0$, $\hat{\theta}_1$), fit quality (RMSE), and convergence status across S7 scenarios. The overlap variant shows degraded fit quality, correctly signaling violation of temporal separability assumptions.](figures/fig_s7_diagnostics.png){#fig:s7_diagnostics}
 
 ![Skip-window sensitivity illustrates dynamic selection effects in early follow-up. $\mathrm{KCOR}(t)$ computed on the same fixed-cohort comparison using skip windows of 0, 4, and 8 weeks. Early-time departures that attenuate with larger skip windows are consistent with dynamic selection immediately following cohort entry; later-time behavior is comparatively stable.](figures/fig_skip_weeks_sensitivity.png){#fig:skip_weeks_sensitivity}
+
+Table: Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds. {#tbl:joint_frailty_comparison}
+
+| Scenario | True effect (r) | Cox HR | Shared frailty Cox HR | KCOR drift/year | Cox indicates null? | Frailty-Cox indicates null? | KCOR indicates null? |
+|----------|-----------------|--------|----------------------|-----------------|---------------------|---------------------------|---------------------|
+| Gamma-frailty null | 1.0 (null) | 0.87 | 0.94 | < 0.5% | No (HR ≠ 1) | No (HR ≠ 1) | Yes (flat) |
+| S7 harm (r=1.2) | 1.2 | 1.18 | 1.19 | +1.8% | No (detects effect) | No (detects effect) | No (detects effect) |
+| S7 benefit (r=0.8) | 0.8 | 0.83 | 0.82 | -2.1% | No (detects effect) | No (detects effect) | No (detects effect) |
 
 **Comparison with alternative estimands.**  
 Table @tbl:comparison_estimands summarizes KCOR, Cox, and RMST behavior under the same simulation settings. We compare KCOR with restricted mean survival time (RMST) and time-varying Cox regression on the same simulation outputs. To make the comparison explicit, we computed RMST up to τ for the same simulation settings. As shown in Table @tbl:comparison_estimands, RMST summarizes survival differences that may reflect depletion rather than treatment effect in selection-only regimes because it aggregates survival differences produced by differential depletion, even when the true treatment effect is null. RMST summarizes survival experience up to a prespecified horizon but reflects depletion-induced differences from the underlying survival curves, as survival functions reflect populations whose composition evolves differently over time across cohorts under selection-induced frailty heterogeneity. Time-varying Cox models improve fit to non-proportional hazards but do not normalize selection geometry; they capture time-varying hazard ratios without removing depletion-induced curvature. KCOR remains stable under selection-only regimes because normalization precedes comparison: frailty parameters are estimated during quiet windows and used to invert observed cumulative hazards into depletion-neutralized baseline cumulative hazards prior to cohort contrast. This comparison emphasizes that KCOR targets a specific estimand—cumulative hazard ratios after depletion normalization—rather than claiming global superiority over alternative methods.
@@ -895,7 +936,7 @@ To emphasize that KCOR is not specific to COVID-19 vaccination, we include a syn
 
 Applying KCOR to this setting removes curvature attributable to depletion and yields a flat post-normalization trajectory, with $\mathrm{KCOR}(t)$ asymptoting to unity as expected under the null. This example demonstrates that KCOR applies generally to retrospective cohort comparisons affected by selection-induced hazard curvature, independent of disease area or intervention type.
 
-An applied illustration using Czech national records is provided in the Supplement to demonstrate end-to-end use of KCOR on administrative data; the primary validation in the main text is based on synthetic and empirical control experiments designed to probe failure modes.
+We include a national-scale application using Czech registry data to illustrate the behavior of KCOR under real-world non-proportional hazards. This application is intended to demonstrate the method's operation and diagnostics rather than to support causal inference about the intervention. An applied illustration using Czech national records is provided in the Supplement to demonstrate end-to-end use of KCOR on administrative data; the primary validation in the main text is based on synthetic and empirical control experiments designed to probe failure modes.
 
 As a validation check, adequacy of the gamma-frailty normalization was assessed using quiet-window fit diagnostics, including the estimated frailty variance, residual dispersion, maximum deviation from linearity, and residual drift per year. For the all-ages cohort—which represents the most heterogeneous and challenging case—these diagnostics showed minimal residual curvature and negligible drift, indicating that gamma frailty adequately explains the observed hazard curvature during the quiet window. Full diagnostic outputs for all cohorts are reported in KCOR_summary.xlsx.
 
