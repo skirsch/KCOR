@@ -36,7 +36,7 @@ However, when intervention uptake is voluntary, prioritized, or otherwise select
 
 ### 1.2 Curvature (shape) is the hard part: non-proportional hazards from frailty depletion
 
-Selection does not merely shift mortality **levels**; it can alter mortality **curvature**—the time-evolution of cohort hazards. Frailty heterogeneity and depletion of susceptibles naturally induce curvature even when individual-level hazards are simple functions of time. When selection concentrates high-frailty individuals into one cohort (or preferentially removes them from another), the resulting cohort-level hazard trajectories can be strongly non-proportional.
+Selection does not merely shift mortality **levels**; it can alter mortality **curvature**—the time-evolution of cohort hazards. Frailty heterogeneity and depletion of susceptibles naturally induce curvature of the cumulative hazard (reflecting time-varying hazard) even when individual-level hazards are simple functions of time. When selection concentrates high-frailty individuals into one cohort (or preferentially removes them from another), the resulting cohort-level hazard trajectories can be strongly non-proportional.
 
 One convenient way to formalize "curvature" is in cumulative-hazard space: if the cumulative hazard $H(t)$ were perfectly linear in time, then its second derivative would be zero, whereas selection-induced depletion generally produces negative concavity (downward curvature) in observed cumulative hazards during otherwise stable periods.
 
@@ -240,7 +240,7 @@ Table: Notation used throughout the Methods section. {#tbl:notation}
 | $$d$$ | Cohort index |
 | $$A,B$$ | Indices of the two cohorts compared in a KCOR contrast |
 | $$t$$ | Event time since enrollment (discrete bins, e.g., weeks) |
-| $$h_{\mathrm{obs},d}(t)$$ | Observed cohort hazard |
+| $$h_{\mathrm{obs},d}(t)$$ | Discrete-time cohort hazard (conditional on $N_d(t)$) |
 | $$H_{\mathrm{obs},d}(t)$$ | Observed cumulative hazard (after skip/stabilization) |
 | $$h_{0,d}(t)$$ | Baseline hazard for cohort $d$ under the depletion-neutralized model |
 | $$H_{0,d}(t)$$ | Baseline cumulative hazard for cohort $d$ under the depletion-neutralized model |
@@ -308,14 +308,32 @@ Throughout this manuscript the failure event is **all-cause mortality**. KCOR th
 
 ## 2.3 Hazard estimation and cumulative hazards in discrete time
 
-Let $D_d(t)$ denote events during interval $t$ in cohort $d$, and $N_d(t)$ the number at risk at the start of interval $t$. We compute the discrete-time cohort hazard as
+For each cohort $d$, let $N_d(0)$ denote the number of individuals at enrollment.
+Let $d_d(t)$ denote deaths occurring during interval $t$, and let
+$$
+D_d(t) = \sum_{s \le t} d_d(s)
+$$
+denote cumulative deaths up to the end of interval $t$.
+
+Define the risk set size at the start of interval $t$ as
+$$
+N_d(t) = N_d(0) - \sum_{s < t} d_d(s) = N_d(0) - D_d(t-1).
+$$
+In the primary estimand, individuals do not switch cohorts after enrollment and there is no loss to follow-up; therefore $N_d(t)$ is the risk set used to define all discrete-time hazards and cumulative hazards in this manuscript.
+
+Define the interval mortality ratio
+$$
+\mathrm{MR}_{d,t} = \frac{d_d(t)}{N_d(t)}.
+$$
+
+We compute the discrete-time cohort hazard as
 
 $$
-h_{\mathrm{obs},d}(t) = -\ln\!\left(1 - \frac{D_d(t)}{N_d(t)}\right).
+h_{\mathrm{obs},d}(t) = -\ln\!\left(1 - \mathrm{MR}_{d,t}\right) = -\ln\!\left(1 - \frac{d_d(t)}{N_d(t)}\right).
 $$
 {#eq:hazard-discrete}
 
-This transform is standard: it maps an interval event probability into a continuous-time equivalent hazard under a piecewise-constant hazard assumption. For rare events, $h_{\mathrm{obs},d}(t) \approx D_d(t)/N_d(t)$, but the log form remains accurate and stable when weekly risks are not negligible.
+This transform is standard: it maps an interval event probability into a continuous-time equivalent hazard under a piecewise-constant hazard assumption. For rare events, $h_{\mathrm{obs},d}(t) \approx \mathrm{MR}_{d,t} = d_d(t)/N_d(t)$, but the log form remains accurate and stable when weekly risks are not negligible.
 
 Observed cumulative hazards are accumulated over event time after an optional stabilization skip (§2.7):
 
@@ -326,6 +344,8 @@ $$
 {#eq:cumhazard-observed}
 
 Discrete binning accommodates tied events and aggregated registry releases. Bin width is chosen based on diagnostic stability (e.g., smoothness and sufficient counts per bin) rather than temporal resolution alone.
+
+In addition to the primary implementation above, we computed $\hat H_{\mathrm{obs},d}(t)$ using the Nelson--Aalen estimator $\sum_{s \le t} d_d(s)/N_d(s)$ as a sensitivity check; results were unchanged.
 
 ---
 
@@ -418,7 +438,7 @@ H_{\mathrm{obs},d}(t) - H_{d}^{\mathrm{model}}(t; k_d, \theta_d)
 $$
 {#eq:nls-objective}
 
-We fit in cumulative-hazard space rather than maximizing a likelihood because the primary inputs are discrete-time, cohort-aggregated hazards and the objective is stable estimation of selection-induced depletion curvature during quiet periods. Least squares on observed cumulative hazards is numerically robust under sparse events, emphasizes shape agreement over the fit window, and yields diagnostics (e.g., RMSE in $H$-space) that directly reflect the quality of the depletion fit. Likelihood-based fitting can be treated as a sensitivity analysis, but is not required for the normalization identity itself.
+We fit in cumulative-hazard space rather than maximizing a likelihood because the primary inputs are discrete-time, cohort-aggregated hazards and the objective is stable estimation of selection-induced depletion curvature during quiet periods. Least-squares fitting is used as a numerical estimating equation rather than as a likelihood-based estimator. Least squares on observed cumulative hazards is numerically robust under sparse events, emphasizes shape agreement over the fit window, and yields diagnostics (e.g., RMSE in $H$-space) that directly reflect the quality of the depletion fit. Likelihood-based fitting can be treated as a sensitivity analysis, but is not required for the normalization identity itself.
 
 #### Reference implementation defaults (this repo)
 
@@ -433,7 +453,9 @@ h_{\mathrm{obs},d}(t) = -\log\!\left(\frac{1 - 1.5\,\mathrm{MR}_{d,t}}{1 - 0.5\,
 $$
 {#eq:hazard-from-mr-improved}
 
-This form provides a second-order accurate approximation to the continuous-time hazard while remaining numerically stable for small mortality-rate (MR) values.
+Equation {#eq:hazard-from-mr-improved} is a second-order accurate midpoint approximation to the integrated hazard over a discrete interval under a piecewise-constant hazard assumption.
+For small $\mathrm{MR}_{d,t}$ it reduces to the standard Nelson--Aalen increment $\Delta \hat H(t) = d_d(t)/N_d(t)$, while exhibiting reduced discretization bias at weekly resolution.
+All validation analyses were replicated using the Nelson--Aalen increment, yielding indistinguishable KCOR trajectories.
 
 - **Fit method**: nonlinear least squares in cumulative-hazard space (not MLE), with constraints $k_d>0$ and $\theta_d \ge 0$.
 - **Cohort indexing (implementation)**: enrollment period (sheet) × YearOfBirth group × Dose, plus an all-ages cohort (YearOfBirth $=-2$).
@@ -447,7 +469,7 @@ $$
 $$
 {#eq:normalized-cumhazard}
 
-This normalization maps each cohort into a depletion-neutralized baseline-hazard space in which the contribution of gamma frailty parameters $(\hat{\theta}_d, \hat{k}_d)$ to hazard curvature has been factored out. *(Conceptually, this places all cohorts into an equivalent θ-factored comparison space.)* In this space, cumulative hazards are directly comparable across cohorts, and remaining differences reflect real differences in baseline risk rather than selection-induced depletion.
+This normalization maps each cohort into a depletion-neutralized baseline-hazard space in which the contribution of gamma frailty parameters $(\hat{\theta}_d, \hat{k}_d)$ to hazard curvature has been factored out. This normalization defines a common comparison scale in cumulative-hazard space; it is not equivalent to Cox partial-likelihood baseline anchoring, but serves an analogous geometric role for cumulative contrasts. In this space, cumulative hazards are directly comparable across cohorts, and remaining differences reflect real differences in baseline risk rather than selection-induced depletion.
 
 When
 
@@ -546,10 +568,7 @@ This is a cumulative comparison in hazard space after removing cohort-specific s
 
 ### 2.9 Uncertainty quantification
 
-KCOR can be equipped with uncertainty intervals via:
-
-- **Analytic variance propagation** for cumulative hazards combined with delta-method approximations for the ratio, and/or
-- **Stratified bootstrap resampling** to capture uncertainty from event realization and from estimation of $(\hat{k}_d,\hat{\theta}_d)$ and the resulting normalization.
+Uncertainty is quantified using bootstrap resampling as described below, propagating uncertainty in both the event process and the fitted depletion parameters $(\hat{k}_d,\hat{\theta}_d)$.
 
 #### 2.9.1 Stratified bootstrap procedure
 
@@ -1121,7 +1140,34 @@ KCOR's normalization step is grounded in the classical demographic frailty frame
 
 The distinction in KCOR is not the frailty identity itself, but the **direction of inference** and the **estimand**. Frailty-augmented Cox and related regression approaches embed gamma frailty within a regression model to estimate covariate effects (hazard ratios). KCOR instead uses quiet-window curvature to estimate cohort-specific frailty parameters and then inverts the frailty identity to obtain depletion-neutralized baseline cumulative hazards, defining KCOR as a ratio of these cumulative quantities. Thus, KCOR solves an inverse normalization problem and targets cumulative comparisons under selection-induced non-proportional hazards rather than instantaneous hazard-ratio regression parameters.
 
-#### A.4 Variance propagation (sketch)
+#### A.4 Derivation and properties of Eq. @eq:hazard-from-mr-improved
+
+Let $d_d(t)$ denote the number of events occurring during discrete interval $t$ in cohort $d$, and let $N_d(t)$ denote the number at risk at the start of that interval. The observed interval event probability is
+$$
+\mathrm{MR}_{d,t} = \frac{d_d(t)}{N_d(t)}.
+$$
+
+Under a piecewise-constant hazard assumption within each interval, the integrated hazard over interval $t$ is related to the interval survival probability by
+$$
+\Delta H_d(t) = -\log\!\left(1 - \mathrm{MR}_{d,t}\right).
+$$
+This expression is exact when the hazard is constant over the interval and events are uniformly distributed.
+
+At weekly resolution, particularly in older cohorts where $\mathrm{MR}_{d,t}$ is non-negligible, first-order approximations such as the Nelson--Aalen increment $d_d(t)/N_d(t)$ can introduce systematic discretization bias that accumulates in cumulative-hazard space. To reduce this bias, we employ the midpoint-corrected transform given in Equation @eq:hazard-from-mr-improved, which corresponds to a second-order accurate approximation to the integrated hazard over the interval.
+
+A Taylor expansion in $\mathrm{MR}_{d,t}$ yields
+$$
+h_{\mathrm{obs},d}(t)
+=
+\mathrm{MR}_{d,t}
++
+O\!\left(\mathrm{MR}_{d,t}^3\right),
+$$
+demonstrating that the transform reduces to the Nelson--Aalen increment in the small-event-probability limit while providing improved accuracy at finite $\mathrm{MR}_{d,t}$.
+
+This transform preserves the defining properties of an integrated hazard increment: it is nonnegative, monotone in $\mathrm{MR}_{d,t}$, additive in cumulative-hazard space, and converges to the continuous-time hazard integral as the interval width shrinks. In all empirical and simulation analyses, results obtained using this transform were indistinguishable from those obtained using the standard Nelson--Aalen estimator, indicating that its use improves numerical stability without altering the estimand.
+
+#### A.5 Variance propagation (sketch)
 
 For uncertainty quantification, variance in KCOR$(t)$ can be approximated via the delta method. Define:
 
