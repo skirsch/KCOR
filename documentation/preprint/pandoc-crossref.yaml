@@ -18,4 +18,10 @@ numberSections: false
 chapDelim: "."
 rangeDelim: "–"
 titleDelim: ""
+
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{tabularx}
+  - \usepackage{array}
+  - \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 ...
