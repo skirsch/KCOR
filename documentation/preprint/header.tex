@@ -21,12 +21,11 @@
 \tolerance=2000
 \emergencystretch=3em
 
-% Suppress harmless Unicode math character warnings (e.g., U+1D703 = mathematical italic theta).
-% This warning occurs specifically for theta in table cells when XeLaTeX processes math.
-% The character is correctly rendered via \theta in math mode using the math font;
-% the warning is a false positive from XeLaTeX checking the main font for Unicode math characters.
-% This appears to be specific to how Pandoc 3.x + XeLaTeX handles math in table cells.
-\RequirePackage{fontspec}
-\defaultfontfeatures[\rmfamily,\sffamily,\ttfamily]{}
-\newfontfamily\mathfallback{TeX Gyre Termes Math}
+% Suppress XeLaTeX "Missing character" warnings for Unicode math symbols.
+% When math like $\theta$ appears in table cells, XeLaTeX checks if the text font
+% has the Unicode math character (U+1D703 = mathematical italic theta), generating
+% a warning even though the math font handles rendering correctly.
+% \tracinglostchars=0 is the TeX primitive that controls this warning level:
+%   0 = no warnings, 1 = warnings in log only, 2 = warnings + terminal (default)
+\tracinglostchars=0
 

@@ -1195,46 +1195,16 @@ Consider a cohort $d$ where individual $i$ has hazard $h_{i,d}(t) = z_{i,d} \cdo
 The cohort survival function is the expectation over frailty:
 
 $$
-S^{\mathrm{cohort}}_{d}(t) = E_z[S_{i,d}(t)] = E_z\!\left[\exp\!\left(-z H_{0,d}(t)\right)\right] = \mathcal{L}_z\!\left(H_{0,d}(t)\right),
+S_{d}(t) = E_z[S_{i,d}(t)] = E_z\!\left[\exp\!\left(-z H_{0,d}(t)\right)\right] = \mathcal{L}_z\!\left(H_{0,d}(t)\right),
 $$
 
 where $\mathcal{L}_z(\cdot)$ is the Laplace transform of the frailty distribution. The cohort hazard is then:
 
 $$
-h^{\mathrm{cohort}}_{d}(t) = -\frac{d}{dt}\log S^{\mathrm{cohort}}_{d}(t).
+h_{d}(t) = -\frac{d}{dt}\log S_{d}(t).
 $$
 
-Even when $h_{0,d}(t) = k_d$ is constant (so $H_{0,d}(t) = k_d t$), the cohort hazard $h^{\mathrm{cohort}}_{d}(t)$ is generally time-varying because high-frailty individuals die earlier, shifting the surviving population toward lower frailty over time. This is the mechanism by which frailty heterogeneity induces **curvature** in cohort-level hazards.
-
-
-#### A.1 Frailty mixing induces hazard curvature
-
-Consider a cohort (d) in which individual (i) has hazard
-$$
-h_{i,d}(t) = z_{i,d}, h_{0,d}(t),
-$$
-where the frailty (z_{i,d}) is drawn from a distribution with mean 1 and variance (\theta_d > 0). Let
-$$
-S_{i,d}(t) = \exp!\left(-z_{i,d} H_{0,d}(t)\right)
-$$
-denote the individual survival function, where
-$$
-H_{0,d}(t) = \int_0^t h_{0,d}(s), ds
-$$
-is the baseline cumulative hazard.
-
-The cohort survival function, obtained by integrating over the frailty distribution, is
-$$
-S_d(t) = E_z\left[S_{i,d}(t)\right]
-= E_z\left[\exp\left(-z H_{0,d}(t)\right)\right]
-= \mathcal{L}_z\left(H_{0,d}(t)\right),
-$$
-where $\mathcal{L}_z(\cdot)$ denotes the Laplace transform of the frailty distribution. The corresponding cohort-level hazard is
-$$
-h_d(t) = -\frac{d}{dt}\log S_d(t).
-$$
-
-Even when $h_{0,d}(t) = k_d$ is constant (so that $H_{0,d}(t) = k_d t$), the cohort hazard $h_d(t)$ is generally time-varying. High-frailty individuals experience events earlier, progressively depleting the higher-risk portion of the cohort and shifting the surviving population toward lower frailty over time. This selection-induced depletion is the mechanism by which frailty heterogeneity induces **curvature** in cohort-level hazards.
+Even when $h_{0,d}(t) = k_d$ is constant (so $H_{0,d}(t) = k_d t$), the cohort hazard $h_{d}(t)$ is generally time-varying because high-frailty individuals die earlier, shifting the surviving population toward lower frailty over time. This is the mechanism by which frailty heterogeneity induces **curvature** in cohort-level hazards.
 
 #### A.2 Gamma-frailty identity derivation
 
