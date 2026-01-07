@@ -14,7 +14,10 @@ VALIDATION_ASMR_DIR := validation/ASMR_analysis
 PAPER_DIR ?= documentation/preprint
 PAPER_MD ?= paper.md
 PAPER_DOCX ?= paper.docx
+PAPER_SUPPLEMENT_DOCX ?= paper_supplement.docx
 PAPER_PDF ?= paper.pdf
+PAPER_PDF_MAIN ?= paper_main.pdf
+PAPER_PDF_SUPPLEMENT ?= paper_supplement.pdf
 PAPER_BIB ?= refs.bib
 PAPER_CSL ?= american-medical-association.csl
 PAPER_REFERENCE_DOC ?= reference.docx
@@ -24,7 +27,7 @@ PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf paper-pdf-main paper-pdf-supplement paper-supplement-docx sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -178,29 +181,40 @@ sensitivity:
 # Build methods paper (Pandoc → Word)
 #
 # Default inputs live in documentation/preprint/:
-# - paper.md (Pandoc-crossref markup)
+# - paper.md (combined main paper + supplement, Pandoc-crossref markup)
 # - refs.bib
 # - american-medical-association.csl
+#
+# Outputs:
+# - paper.docx (main paper Word document, filtered from combined)
+# - paper_supplement.docx (supplement Word document, filtered from combined)
+# - paper.pdf (combined PDF with all content)
 #
 # Usage:
 #   make paper
 #   make paper PAPER_MD=paper_v7.md PAPER_DOCX=paper_v7.docx
-paper: $(PAPER_DIR)/$(PAPER_DOCX) $(PAPER_DIR)/$(PAPER_PDF)
+paper: $(PAPER_DIR)/$(PAPER_DOCX) $(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX) $(PAPER_DIR)/$(PAPER_PDF)
 	@echo "Copying paper files to website..."
 	@scp $(PAPER_DIR)/$(PAPER_DOCX) truenas:/mnt/main/www/skirsch.com/covid/KCOR
 	@scp $(PAPER_DIR)/$(PAPER_PDF) truenas:/mnt/main/www/skirsch.com/covid/KCOR/KCOR.pdf
 	@echo "Paper files copied to website."
 
-paper-docx: $(PAPER_DIR)/$(PAPER_DOCX)
+paper-docx: $(PAPER_DIR)/$(PAPER_DOCX) $(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX)
 paper-pdf: $(PAPER_DIR)/$(PAPER_PDF)
+paper-pdf-main: $(PAPER_DIR)/$(PAPER_PDF_MAIN)
+paper-pdf-supplement: $(PAPER_DIR)/$(PAPER_PDF_SUPPLEMENT)
+paper-supplement-docx: $(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX)
 
+# Build main paper Word file: filter combined paper.md to main only
 $(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/$(PAPER_REFERENCE_DOC) $(wildcard $(PAPER_DIR)/figures/*)
-	@echo "Building paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_DOCX)"
+	@echo "Building main paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_DOCX)"
 	@cd $(PAPER_DIR) && \
 		pandoc $(PAPER_MD) \
 			--to=docx \
 			--filter pandoc-crossref \
-			--metadata-file pandoc-crossref-docx.yaml \
+			--lua-filter drop-div.lua \
+			--metadata-file pandoc-crossref-docx-main.yaml \
+			-M drop_div=supp \
 			--citeproc \
 			--bibliography=$(PAPER_BIB) \
 			--csl=$(PAPER_CSL) \
@@ -212,8 +226,30 @@ $(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $
 			exit 1; \
 		)
 
+# Build supplement Word file: filter combined paper.md to supplement only
+$(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/$(PAPER_REFERENCE_DOC) $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building supplement: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX)"
+	@cd $(PAPER_DIR) && \
+		pandoc $(PAPER_MD) \
+			--to=docx \
+			--filter pandoc-crossref \
+			--lua-filter drop-div.lua \
+			--metadata-file pandoc-crossref-docx-supplement.yaml \
+			-M drop_div=main,frontmatter \
+			--citeproc \
+			--bibliography=$(PAPER_BIB) \
+			--csl=$(PAPER_CSL) \
+			-o $(PAPER_SUPPLEMENT_DOCX).new
+	@cd $(PAPER_DIR) && \
+		mv -f $(PAPER_SUPPLEMENT_DOCX).new $(PAPER_SUPPLEMENT_DOCX) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX) (is it open in Word?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(PAPER_SUPPLEMENT_DOCX).new"; \
+			exit 1; \
+		)
+
+# Build combined PDF (main + supplement)
 $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
-	@echo "Building paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
+	@echo "Building combined PDF: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
 	@cd $(PAPER_DIR) && \
 		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
@@ -236,6 +272,66 @@ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(
 		mv -f $(PAPER_PDF).new $(PAPER_PDF) 2>/dev/null || ( \
 			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_PDF) (is it open?)."; \
 			echo "Leaving: $(PAPER_DIR)/$(PAPER_PDF).new"; \
+			exit 1; \
+		)
+
+# Build main-only PDF (drops supplement div)
+$(PAPER_DIR)/$(PAPER_PDF_MAIN): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building main-only PDF: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF_MAIN)"
+	@cd $(PAPER_DIR) && \
+		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+			exit 1; \
+		fi; \
+		pandoc $(PAPER_MD) \
+			--to=pdf \
+			--pdf-engine="$(PAPER_PDF_ENGINE)" \
+			--filter pandoc-crossref \
+			--lua-filter drop-div.lua \
+			--metadata-file pandoc-crossref.yaml \
+			-M drop_div=supp \
+			--citeproc \
+			-V geometry:$(PAPER_PDF_GEOMETRY) \
+			-V mainfont="$(PAPER_PDF_MAINFONT)" \
+			-V mathfont="$(PAPER_PDF_MATHFONT)" \
+			-H header.tex \
+			--bibliography=$(PAPER_BIB) \
+			--csl=$(PAPER_CSL) \
+			-o $(PAPER_PDF_MAIN).new
+	@cd $(PAPER_DIR) && \
+		mv -f $(PAPER_PDF_MAIN).new $(PAPER_PDF_MAIN) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_PDF_MAIN) (is it open?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(PAPER_PDF_MAIN).new"; \
+			exit 1; \
+		)
+
+# Build supplement-only PDF (drops main div and frontmatter)
+$(PAPER_DIR)/$(PAPER_PDF_SUPPLEMENT): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building supplement-only PDF: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF_SUPPLEMENT)"
+	@cd $(PAPER_DIR) && \
+		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+			exit 1; \
+		fi; \
+		pandoc $(PAPER_MD) \
+			--to=pdf \
+			--pdf-engine="$(PAPER_PDF_ENGINE)" \
+			--filter pandoc-crossref \
+			--lua-filter drop-div.lua \
+			--metadata-file pandoc-crossref.yaml \
+			-M drop_div=main,frontmatter \
+			--citeproc \
+			-V geometry:$(PAPER_PDF_GEOMETRY) \
+			-V mainfont="$(PAPER_PDF_MAINFONT)" \
+			-V mathfont="$(PAPER_PDF_MATHFONT)" \
+			-H header.tex \
+			--bibliography=$(PAPER_BIB) \
+			--csl=$(PAPER_CSL) \
+			-o $(PAPER_PDF_SUPPLEMENT).new
+	@cd $(PAPER_DIR) && \
+		mv -f $(PAPER_PDF_SUPPLEMENT).new $(PAPER_PDF_SUPPLEMENT) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_PDF_SUPPLEMENT) (is it open?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(PAPER_PDF_SUPPLEMENT).new"; \
 			exit 1; \
 		)
 
@@ -319,9 +415,10 @@ help:
 	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
 	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
 	@echo "  icd_population_shift - Run ICD-10 population structural shift analysis (data/Czech2/)"
-	@echo "  paper           - Build documentation/preprint/paper.md -> paper.docx + paper.pdf (Pandoc + crossref + citeproc)"
-	@echo "  paper-docx      - Build only documentation/preprint/paper.docx"
-	@echo "  paper-pdf       - Build only documentation/preprint/paper.pdf"
+	@echo "  paper           - Build documentation/preprint/paper.md -> paper.docx + paper_supplement.docx + paper.pdf (Pandoc + crossref + citeproc)"
+	@echo "  paper-docx      - Build only documentation/preprint/paper.docx + paper_supplement.docx"
+	@echo "  paper-pdf       - Build only documentation/preprint/paper.pdf (combined main + supplement)"
+	@echo "  paper-supplement-docx - Build only documentation/preprint/paper_supplement.docx"
 	@echo ""
 	@echo "KCOR Mortality Analysis (Czech2 dataset):"
 	@echo "  mortality       - Run basic KCOR mortality analysis pipeline"

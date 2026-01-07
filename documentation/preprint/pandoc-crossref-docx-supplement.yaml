@@ -1,0 +1,38 @@
+---
+figureTitle: "Figure"
+tableTitle: "Table"
+
+# References: keep numbers only (no fig./tbl. prefixes) and avoid NBSP insertion.
+figPrefix: ""
+tblPrefix: ""
+figPrefixTemplate: "$$i$$"
+tblPrefixTemplate: "$$i$$"
+
+# Captions: number-only caption labels (the surrounding prose already says "Figure"/"Table").
+figureTemplate: "$$figureTitle$$ $$i$$. $$t$$"
+tableTemplate: "$$tableTitle$$ $$i$$. $$t$$"
+
+# Equations: DOCX-only layout with a right-aligned equation number.
+# This uses pandoc-crossref's tableEqns mode with Word tab stops via OOXML.
+eqnPrefix: ""
+eqnTemplate: "($$i$$)"
+eqnPrefixTemplate: "($$i$$)"
+
+tableEqns: true
+eqnBlockInlineMath: true
+eqnBlockTemplate: |
+  `<w:pPr><w:tabs><w:tab w:val="center" w:leader="none" w:pos="4680" /><w:tab w:val="right" w:leader="none" w:pos="9360" /></w:tabs></w:pPr><w:r><w:tab /></w:r>`{=openxml} $$t$$ `<w:r><w:tab /></w:r>`{=openxml} $$i$$
+
+lofTitle: "List of Figures"
+lotTitle: "List of Tables"
+lolTitle: "List of Listings"
+
+chapters: false
+numberSections: false
+chapDelim: "."
+rangeDelim: "–"
+titleDelim: ""
+
+drop_div: "main,frontmatter"
+...
+
