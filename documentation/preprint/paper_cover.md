@@ -2,11 +2,13 @@ Dear Editor,
 
 Please consider this manuscript, *KCOR: A Depletion-Neutralized Cohort Comparison Framework Using Gamma-Frailty Normalization Under Selection-Induced Cumulative Hazard Curvature*, for publication in *Statistics in Medicine*.
 
-This paper introduces KCOR, a statistical framework for retrospective cohort comparison designed to address selection-induced depletion under latent heterogeneity, a failure mode that limits the interpretability of proportional hazards–based methods in many observational settings, particularly when randomized trials are infeasible and analyses must rely on population registry or administrative data.
+This work introduces a normalization principle that addresses a long-standing and largely unrecognized limitation in retrospective survival analysis: real-world cohorts are typically heterogeneous, and selection-induced depletion under latent frailty produces non-proportional hazards that invalidate standard survival estimands when applied directly to observed data. KCOR provides a practical solution to this problem by separating normalization from comparison, thereby enabling meaningful analysis of heterogeneous cohorts commonly encountered in registry and administrative data.
 
-The method operates in discrete-time cumulative hazard space, applies a gamma-frailty–based normalization to remove depletion-induced curvature, and yields stable cumulative comparisons without requiring proportional hazards, covariate completeness, or likelihood-based estimation. Simulation studies and an illustrative empirical application are used to demonstrate estimator behavior, diagnostics, and failure modes. The method is non-causal by design and is intended as a descriptive and diagnostic tool for cumulative outcome comparison under selection.
+The framework estimates cohort-specific depletion geometry during prespecified epidemiologically quiet periods and applies a gamma-frailty inversion to map observed cumulative hazards into a depletion-neutralized space. Once normalized, cohorts may be compared using standard post-adjustment estimands. In this manuscript, ratios of adjusted cumulative hazards are reported for concreteness and visualization, but the contribution of KCOR lies in restoring a common comparison scale prior to model fitting, rather than in privileging any single estimand.
 
-Supplementary material containing additional derivations and supporting analyses is provided as a separate file.
+Through simulation studies spanning a wide range of frailty heterogeneity and selection strength, as well as empirical negative controls, we show that commonly used methods—including Cox proportional hazards regression—can exhibit systematic non-null behavior under selection-only regimes. In contrast, KCOR-normalized trajectories remain stable and centered near the null. The method is intentionally non-causal and is presented as a diagnostic and descriptive framework designed to address bias arising before modeling assumptions are imposed.
+
+We believe this work is well aligned with *Statistics in Medicine*’s focus on foundational methodological contributions that improve the reliability and interpretability of analyses conducted using real-world observational data.
 
 Thank you for your consideration.
 
