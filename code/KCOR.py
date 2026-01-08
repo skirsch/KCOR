@@ -161,7 +161,7 @@ VERSION = "v6.0"                # KCOR version number
 # v6.0 - Gamma-frailty normalization (fits in cumulative-hazard space)
 #        - Fit (k, theta) per (EnrollmentDate, YearOfBirth, Dose) on quiet-window data (calendar ISO weeks)
 #        - Normalize via H0(t) = (exp(theta * H_obs(t)) - 1) / theta, with theta -> 0 limit
-#        - Uses hazard_from_mr_improved(MR) to build H_obs with skip-week rule
+#        - Uses exact discrete-time integrated hazard increments: ΔH = -log(1 - MR) (see hazard_from_mr)
 #        - 560 KCOR commits since Jul 6, 2025
 #        - 12/21/2025: v6.0 implementation started and completed.
 
@@ -799,17 +799,21 @@ def safe_exp(x, max_val=1e6):
     clipped_x = np.clip(x, -np.log(max_val), np.log(max_val))
     return np.exp(clipped_x)
 
-def hazard_from_mr_improved(mr: np.ndarray) -> np.ndarray:
-    """Improved discrete-time hazard transform for MR measured as D / N_start.
+def hazard_from_mr(mr: np.ndarray) -> np.ndarray:
+    """Exact discrete-time integrated hazard increment from weekly mortality risk.
 
-    h = -ln((1 - 1.5 MR) / (1 - 0.5 MR))
+    Inputs:
+        mr = D_t / Y_t
+        where D_t is deaths during week t and Y_t is at-risk at the START of week t.
+
+    Under piecewise-constant within-week hazard, the integrated hazard increment is:
+        ΔH_t = -log(1 - mr)
+
+    We use log1p for numerical stability when mr is small.
     """
-    mr_clipped = np.clip(mr, 0.0, 0.999)
-    num = 1.0 - 1.5 * mr_clipped
-    den = 1.0 - 0.5 * mr_clipped
-    num = np.clip(num, EPS, None)
-    den = np.clip(den, EPS, None)
-    return -np.log(num / den)
+    mr_arr = np.asarray(mr, dtype=float)
+    mr_arr = np.clip(mr_arr, 0.0, 1.0 - EPS)
+    return -np.log1p(-mr_arr)
 
 
 # ---------------------------------------------------------------------------
@@ -818,15 +822,10 @@ def hazard_from_mr_improved(mr: np.ndarray) -> np.ndarray:
 # These utilities are introduced for KCOR 6.0 per:
 #   documentation/specs/KCORv6/kcor_6_0_spec.md
 #
-# Step 1 (Phase A) only: helpers are defined but NOT yet wired into the pipeline.
-# This means current v5.4 behavior remains unchanged until later steps.
+# These helpers are used by the KCOR 6.0 pipeline (fits in quiet-window ISO-week space).
 
 # Quiet window in calendar ISO week space (inclusive): YYYY-WW
-KCOR6_QUIET_START_ISO = "2022-24"
-KCOR6_QUIET_END_ISO = "2024-16"
-
-# changed on 1/3/2026 to use a 1 year quiet window so it doesn't
-# look cherry picked
+# Use a full 1-year quiet window (calendar year 2023).
 KCOR6_QUIET_START_ISO = "2023-01"
 KCOR6_QUIET_END_ISO = "2023-52"
 
@@ -1923,7 +1922,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     
     # Compute hazards
     df = df.copy()
-    df["hazard"] = hazard_from_mr_improved(df["MR"].clip(lower=0.0, upper=0.999))
+    df["hazard"] = hazard_from_mr(df["MR"])
     
     # Create all-ages cohort (YearOfBirth=-2) by aggregating across all YearOfBirth values
     # This is done before processing so it's treated like any other cohort
@@ -1942,7 +1941,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
             all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
                                           all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
                                           np.nan)
-            all_ages_agg["hazard"] = hazard_from_mr_improved(all_ages_agg["MR"].clip(lower=0.0, upper=0.999))
+            all_ages_agg["hazard"] = hazard_from_mr(all_ages_agg["MR"])
             all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
             all_ages_agg["t"] = all_ages_agg.groupby("Dose").cumcount().astype(float)
             all_ages_agg["YearOfBirth"] = -2  # Mark as all-ages cohort
@@ -3494,7 +3493,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     # In KCOR 6.0, this uses gamma-frailty inversion; however, for compatibility (SA mode / rollback),
     # we fall back to the legacy slope-based normalization when kcor6_params_map is not provided.
     all_ages_agg["MR_smooth"] = all_ages_agg["MR"]  # Use raw MR for smoothing
-    all_ages_agg["hazard_raw"] = hazard_from_mr_improved(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
+    all_ages_agg["hazard_raw"] = hazard_from_mr(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
     all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard/cumhaz level)
 
     if kcor6_params_map is not None:
@@ -4128,7 +4127,7 @@ def build_kcor_ns_rows(df, sheet_name):
     all_ages_agg_ns["t"] = all_ages_agg_ns.groupby("Dose").cumcount().astype(float)
     
     # Compute hazard_raw from aggregated MR (no slope adjustment for KCOR_ns)
-    all_ages_agg_ns["hazard_raw"] = hazard_from_mr_improved(all_ages_agg_ns["MR"])
+    all_ages_agg_ns["hazard_raw"] = hazard_from_mr(all_ages_agg_ns["MR"])
     
     # Apply accumulation start rule (DYNAMIC_HVE_SKIP_WEEKS)
     all_ages_agg_ns["hazard_eff_ns"] = np.where(all_ages_agg_ns["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), all_ages_agg_ns["hazard_raw"], 0.0)
@@ -4631,7 +4630,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         g_sorted = g.sort_values("DateDied").reset_index(drop=True)
                         t_vals = g_sorted["t"].to_numpy(dtype=float)
                         mr_vals = g_sorted["MR"].to_numpy(dtype=float)
-                        h_raw = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                        h_raw = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
                         h_eff_obs = np.where(t_vals >= float(skip_weeks), h_raw, 0.0)
                         H_obs = np.cumsum(h_eff_obs)
                         iso_parts = g_sorted["DateDied"].dt.isocalendar()
@@ -4893,11 +4892,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["t"]    = df.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
 
         # -------------------------------------------------------------------
-        # KCOR 6.0 (gamma-frailty) fits in quiet window (logging only; not applied yet)
+        # KCOR 6.0 (gamma-frailty) fits in quiet window
         # -------------------------------------------------------------------
         # Spec: documentation/specs/KCORv6/kcor_6_0_spec.md
         # Fit method: nonlinear least squares in cumulative-hazard space on quiet-window points.
-        # Observed hazard: hazard_from_mr_improved(MR)
+        # Observed hazard increments: hazard_from_mr(MR)  (ΔH = -log(1 - MR))
         # Time axis: t = weeks since enrollment
         # Skip weeks: hazard_eff = 0 for t < DYNAMIC_HVE_SKIP_WEEKS
         #
@@ -5013,7 +5012,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 g_sorted = g.sort_values("DateDied")
                 t_vals = g_sorted["t"].to_numpy(dtype=float)
                 mr_vals = g_sorted["MR"].to_numpy(dtype=float)
-                hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                hazard_obs = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
                 hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
                 H_obs = np.cumsum(hazard_eff)
                 
@@ -5228,7 +5227,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         g_sorted = g.sort_values("DateDied")
                         t_vals = g_sorted["t"].to_numpy(dtype=float)
                         mr_vals = g_sorted["MR"].to_numpy(dtype=float)
-                        hazard_obs = hazard_from_mr_improved(np.clip(mr_vals, 0.0, 0.999))
+                        hazard_obs = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
                         hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
                         H_obs = np.cumsum(hazard_eff)
 
@@ -5406,7 +5405,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     df2["slope"] = df2.apply(lambda row: slopes.get((row["YearOfBirth"], row["Dose"]), 0.0), axis=1)
                     df2["slope"] = np.clip(df2["slope"], -10.0, 10.0)
                     df2["scale_factor"] = df2.apply(lambda row: safe_exp(-df2["slope"].iloc[row.name] * (row["t"] - float(KCOR_NORMALIZATION_WEEKS_EFFECTIVE))), axis=1)
-                    df2["hazard"] = hazard_from_mr_improved(df2["MR_adj"]) 
+                    df2["hazard"] = hazard_from_mr(df2["MR_adj"]) 
                     # Apply DYNAMIC_HVE_SKIP_WEEKS: start accumulation at this week index
                     df2["hazard_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["hazard"], 0.0)
                     df2["MR_eff"] = np.where(df2["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), df2["MR"], 0.0)
@@ -5580,7 +5579,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         mr_used = df["MR"]
 
         # Clip to avoid log(0) and ensure numerical stability
-        df["hazard_raw"] = hazard_from_mr_improved(np.clip(mr_used, 0.0, 0.999))
+        df["hazard_raw"] = hazard_from_mr(np.clip(mr_used, 0.0, 0.999))
         # Initialize adjusted hazard equal to raw
         df["hazard_adj"] = df["hazard_raw"]
         
@@ -5814,7 +5813,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # KCOR 6.0 gamma-frailty normalization (core swap)
         #
         # Replace slope-based hazard_adj with baseline-hazard increments derived from:
-        #   H_obs(t) = sum_{s<=t} h_obs^eff(s),   h_obs = hazard_from_mr_improved(MR) == hazard_raw
+        #   H_obs(t) = sum_{s<=t} h_obs^eff(s),   h_obs = hazard_from_mr(MR) == hazard_raw
         #   H0(t)    = (exp(theta * H_obs(t)) - 1) / theta
         #   hazard_adj(t) := H0(t) - H0(t-1)
         #
@@ -6730,7 +6729,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         agg["PT"] = agg["Alive"].astype(float).clip(lower=0.0)
                         agg["MR"] = np.where(agg["PT"] > 0, agg["Dead"]/(agg["PT"] + EPS), np.nan)
                         agg["t"] = agg.groupby(["Decade","MFG"]).cumcount().astype(float)
-                        agg["hazard_raw"] = hazard_from_mr_improved(agg["MR"].to_numpy())
+                        agg["hazard_raw"] = hazard_from_mr(agg["MR"].to_numpy())
                         agg["hazard_eff"] = np.where(agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), agg["hazard_raw"], 0.0)
                         agg["CH"] = agg.groupby(["Decade","MFG"]) ['hazard_eff'].cumsum()
                         dual_print(f"\nM/P by decades (Dose {mp_dose_num})")
@@ -7079,7 +7078,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 grouped["Dead"] = grouped["Dead"].astype(float).clip(lower=0.0)
                                 grouped["MR"] = np.where(grouped["PT"] > 0, grouped["Dead"]/(grouped["PT"] + EPS), np.nan)
                                 grouped["t"] = grouped.groupby(["YearOfBirth","MFG"]).cumcount().astype(float)
-                                grouped["hazard_raw"] = hazard_from_mr_improved(grouped["MR"].to_numpy())
+                                grouped["hazard_raw"] = hazard_from_mr(grouped["MR"].to_numpy())
                                 grouped["hazard_eff"] = np.where(grouped["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), grouped["hazard_raw"], 0.0)
                                 grouped["CH"] = grouped.groupby(["YearOfBirth","MFG"]) ['hazard_eff'].cumsum()
                                 # Build M/P KCOR per age bucket
