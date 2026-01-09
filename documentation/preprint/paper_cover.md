@@ -1,17 +1,8 @@
-Dear Editor,
+DDear Editor,
 
-Please consider this manuscript, *KCOR: A Depletion-Neutralized Cohort Comparison Framework Using Gamma-Frailty Normalization Under Selection-Induced Cumulative Hazard Curvature*, for publication in *Statistics in Medicine*.
+We submit for your consideration the manuscript “KCOR: Depletion-Neutralized Cohort Comparison via Gamma-Frailty Normalization,” which introduces a statistical framework for retrospective cohort comparisons affected by selection-induced non-proportional hazards. The paper addresses a recurring failure mode in registry and administrative survival data—latent frailty heterogeneity combined with selective uptake—which induces curvature in cumulative hazards and systematic non-null behavior in commonly used estimands, including Cox proportional hazards regression. KCOR is a methods-focused contribution that separates depletion normalization from outcome comparison, using gamma-frailty geometry estimated during prespecified epidemiologically quiet periods to place cohorts on a common cumulative-hazard scale prior to comparison. The manuscript is methodological in scope; empirical examples and simulations are used solely to demonstrate estimator behavior, diagnostics, and failure modes, with causal interpretation explicitly disclaimed.
 
-This work introduces a normalization principle that addresses a long-standing and largely unrecognized limitation in retrospective survival analysis: real-world cohorts are typically heterogeneous, and selection-induced depletion under latent frailty produces non-proportional hazards that invalidate standard survival estimands when applied directly to observed data. KCOR provides a practical solution to this problem by separating normalization from comparison, thereby enabling meaningful analysis of heterogeneous cohorts commonly encountered in registry and administrative data.
-
-The framework estimates cohort-specific depletion geometry during prespecified epidemiologically quiet periods and applies a gamma-frailty inversion to map observed cumulative hazards into a depletion-neutralized space. Once normalized, cohorts may be compared using standard post-adjustment estimands. In this manuscript, ratios of adjusted cumulative hazards are reported for concreteness and visualization, but the contribution of KCOR lies in restoring a common comparison scale prior to model fitting, rather than in privileging any single estimand.
-
-Through simulation studies spanning a wide range of frailty heterogeneity and selection strength, as well as empirical negative controls, we show that commonly used methods—including Cox proportional hazards regression—can exhibit systematic non-null behavior under selection-only regimes. In contrast, KCOR-normalized trajectories remain stable and centered near the null. The method is intentionally non-causal and is presented as a diagnostic and descriptive framework designed to address bias arising before modeling assumptions are imposed.
-
-We believe this work is well aligned with *Statistics in Medicine*’s focus on foundational methodological contributions that improve the reliability and interpretability of analyses conducted using real-world observational data.
-
-Thank you for your consideration.
+The contribution of this work is to provide a diagnostic-first normalization framework for settings in which proportional hazards assumptions fail endogenously due to selection and depletion, and where rich covariate histories are unavailable or unreliable. Existing approaches—flexible hazard models, time-varying coefficients, weighting, or matching—can improve descriptive fit but do not, in general, remove selection-induced depletion geometry prior to defining cohort contrasts. KCOR targets this specific identifiability problem by operating in cumulative-hazard space, enforcing observable diagnostics, and signaling loss of interpretability when assumptions are violated rather than producing silently biased estimates. We believe this framework and its emphasis on diagnostics, estimand clarity, and minimal data requirements will be of interest to Statistics in Medicine readers concerned with the robustness and interpretability of retrospective cohort analyses.
 
 Sincerely,
-
-Steve Kirsch
+Steven T. Kirsch
