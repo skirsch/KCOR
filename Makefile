@@ -13,18 +13,17 @@ VALIDATION_ASMR_DIR := validation/ASMR_analysis
 # Paper build (Pandoc)
 PAPER_DIR ?= documentation/preprint
 PAPER_MD ?= paper.md
-PAPER_DOCX ?= paper.docx
 PAPER_PDF ?= paper.pdf
+PAPER_TEX ?= paper.tex
 PAPER_BIB ?= refs.bib
 PAPER_CSL ?= american-medical-association.csl
-PAPER_REFERENCE_DOC ?= reference.docx
 # PDF engine (override on CLI if needed). Default: xelatex.
 PAPER_PDF_ENGINE ?= xelatex
 PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-docx paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -175,7 +174,7 @@ clean:
 sensitivity:
 	$(MAKE) -C test/sensitivity all DATASET=$(DATASET)
 
-# Build methods paper (Pandoc → Word)
+# Build methods paper (Pandoc → LaTeX/PDF)
 #
 # Default inputs live in documentation/preprint/:
 # - paper.md (combined main paper + supplement, Pandoc-crossref markup)
@@ -183,44 +182,46 @@ sensitivity:
 # - american-medical-association.csl
 #
 # Outputs:
-# - paper.docx (single Word document)
 # - paper.pdf (PDF)
+# - paper.tex (LaTeX)
 #
 # Usage:
 #   make paper
-#   make paper PAPER_MD=paper_v7.md PAPER_DOCX=paper_v7.docx
-paper: $(PAPER_DIR)/$(PAPER_DOCX) $(PAPER_DIR)/$(PAPER_PDF)
+#   make paper PAPER_MD=paper_v7.md PAPER_PDF=paper_v7.pdf PAPER_TEX=paper_v7.tex
+paper: $(PAPER_DIR)/$(PAPER_PDF) $(PAPER_DIR)/$(PAPER_TEX)
 	@echo "Copying paper files to website..."
-	@scp $(PAPER_DIR)/$(PAPER_DOCX) truenas:/mnt/main/www/skirsch.com/covid/KCOR
 	@scp $(PAPER_DIR)/$(PAPER_PDF) truenas:/mnt/main/www/skirsch.com/covid/KCOR/KCOR.pdf
 	@echo "Paper files copied to website."
 
-paper-docx: $(PAPER_DIR)/$(PAPER_DOCX)
 paper-pdf: $(PAPER_DIR)/$(PAPER_PDF)
+paper-tex: $(PAPER_DIR)/$(PAPER_TEX)
 
-# Build paper Word file (single document)
-$(PAPER_DIR)/$(PAPER_DOCX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/$(PAPER_REFERENCE_DOC) $(wildcard $(PAPER_DIR)/figures/*)
-	@echo "Building paper: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_DOCX)"
+$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building LaTeX: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_TEX)"
 	@cd $(PAPER_DIR) && \
 		pandoc $(PAPER_MD) \
-			--to=docx \
+			--to=latex \
 			--filter pandoc-crossref \
 			--lua-filter pagebreak-tables.lua \
-			--metadata-file pandoc-crossref-docx.yaml \
+			--metadata-file pandoc-crossref.yaml \
 			--citeproc \
+			-V geometry:$(PAPER_PDF_GEOMETRY) \
+			-V mainfont="$(PAPER_PDF_MAINFONT)" \
+			-V mathfont="$(PAPER_PDF_MATHFONT)" \
+			-H header.tex \
 			--bibliography=$(PAPER_BIB) \
 			--csl=$(PAPER_CSL) \
-			-o $(PAPER_DOCX).new
+			-o $(PAPER_TEX).new
 	@cd $(PAPER_DIR) && \
-		mv -f $(PAPER_DOCX).new $(PAPER_DOCX) 2>/dev/null || ( \
-			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_DOCX) (is it open in Word?)."; \
-			echo "Leaving: $(PAPER_DIR)/$(PAPER_DOCX).new"; \
+		mv -f $(PAPER_TEX).new $(PAPER_TEX) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_TEX) (is it open?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(PAPER_TEX).new"; \
 			exit 1; \
 		)
 
 # Build PDF
 $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
-	@echo "Building combined PDF: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
+	@echo "Building PDF: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
 	@cd $(PAPER_DIR) && \
 		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
@@ -246,13 +247,6 @@ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(
 			echo "Leaving: $(PAPER_DIR)/$(PAPER_PDF).new"; \
 			exit 1; \
 		)
-
-# Create a default Pandoc reference.docx if missing (customize in Word as needed)
-$(PAPER_DIR)/$(PAPER_REFERENCE_DOC):
-	@echo "Creating default Pandoc reference doc: $(PAPER_DIR)/$(PAPER_REFERENCE_DOC)"
-	@cd $(PAPER_DIR) && \
-		pandoc --print-default-data-file reference.docx > $(PAPER_REFERENCE_DOC).new && \
-		mv -f $(PAPER_REFERENCE_DOC).new $(PAPER_REFERENCE_DOC)
 
 # HVE simulator (not part of default all)
 HVE:

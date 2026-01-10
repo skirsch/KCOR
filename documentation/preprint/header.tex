@@ -11,12 +11,40 @@
 \usepackage{array}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
+% Appendix lettered numbering for figures and equations.
+%
+% In this repo, the manuscript uses "##" headings, which Pandoc maps to \subsection.
+% There are no \section-level headings, so relying on subsection/section counters
+% yields 0.x-style numbering. Instead, we define an appendix-letter counter that
+% advances once per appendix (\subsection after \appendix) and resets figure/equation
+% numbering within each appendix.
+\usepackage{etoolbox}
+\newif\ifkcorappendix
+\newcounter{kcorappendix}
+\pretocmd{\appendix}{%
+  \kcorappendixtrue%
+  \setcounter{kcorappendix}{0}%
+  \renewcommand{\thefigure}{\Alph{kcorappendix}.\arabic{figure}}%
+  \renewcommand{\theequation}{\Alph{kcorappendix}.\arabic{equation}}%
+  \renewcommand{\thetable}{\Alph{kcorappendix}.\arabic{table}}%
+}{}{}
+\pretocmd{\subsection}{%
+  \ifkcorappendix%
+    \stepcounter{kcorappendix}%
+    \setcounter{figure}{0}%
+    \setcounter{equation}{0}%
+    \setcounter{table}{0}%
+  \fi%
+}{}{}
+
 % Disable TeX hyphenation (reviewer-friendly) and avoid PDF soft-hyphen artifacts.
 % Note: this does not prevent manual hyphens, only automatic word-breaking.
 \usepackage{ragged2e}
 \RaggedRight
 \hyphenpenalty=10000
-\exhyphenpenalty=10000
+% Allow line breaks at *explicit* hyphens that already exist in the text.
+% (Keep automatic hyphenation disabled via \hyphenpenalty above.)
+\exhyphenpenalty=50
 \pretolerance=10000
 \tolerance=2000
 \emergencystretch=3em

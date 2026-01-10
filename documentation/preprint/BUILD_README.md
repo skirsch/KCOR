@@ -1,6 +1,6 @@
 # Paper Build System
 
-This directory uses a **single source file** (`paper.md`) to generate a **single** Word document (`paper.docx`) and a **single** PDF (`paper.pdf`).
+This directory uses a **single source file** (`paper.md`) to generate a **single** LaTeX file (`paper.tex`) and a **single** PDF (`paper.pdf`).
 
 ## Architecture
 
@@ -12,15 +12,14 @@ This directory uses a **single source file** (`paper.md`) to generate a **single
 
 ### Build Targets
 
-#### Word Documents (DOCX)
-- **`make paper-docx`**: Builds `paper.docx`
-- Uses `pandoc-crossref-docx.yaml`
+#### LaTeX
+- **`make paper-tex`**: Builds `paper.tex`
 
-#### PDF Documents
+#### PDF
 - **`make paper-pdf`**: Builds `paper.pdf`
 
 #### Combined Build
-- **`make paper`**: Builds `paper.docx` and `paper.pdf`, then copies to website
+- **`make paper`**: Builds `paper.tex` and `paper.pdf`, then copies **only the PDF** to the website
 
 ## Example Commands
 
@@ -28,14 +27,14 @@ This directory uses a **single source file** (`paper.md`) to generate a **single
 # Build PDF
 make paper-pdf
 
-# Build Word document
-make paper-docx
+# Build LaTeX
+make paper-tex
 
-# Build both + copy to website
+# Build both + copy PDF to website
 make paper
 ```
 
 ## Migration Notes
 
-Legacy split-document tooling (`drop-div.lua`, `pandoc-crossref-docx-main.yaml`, `pandoc-crossref-docx-supplement.yaml`, `split_docx.py`) is kept for reference but is no longer used by the root `Makefile` paper targets.
+Legacy DOCX tooling (`pandoc-crossref-docx.yaml`, `drop-div.lua`, `pandoc-crossref-docx-main.yaml`, `pandoc-crossref-docx-supplement.yaml`, `split_docx.py`) is kept for reference but is no longer used by the root `Makefile` paper targets.
 
