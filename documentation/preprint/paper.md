@@ -64,8 +64,6 @@ KCOR is a cumulative-hazard normalization framework for retrospective cohort com
 
 Observed cumulative hazards are computed by summing weekly integrated hazard increments $\Delta H_d(t) = -\log\!\left(1 - D_{d,t}/Y_{d,t}\right)$, where $D_{d,t}$ is the number of deaths during week $t$ and $Y_{d,t}$ is the number at risk at the start of that week.
 
----
-
 ## 1. Introduction
 
 ### 1.1 Retrospective cohort comparisons under selection
@@ -321,28 +319,28 @@ Operationally, interpretability of a KCOR trajectory is assessed via prespecifie
 
 Diagnostics corresponding to each assumption are summarized in Table @tbl:appendixD_assumptions_diagnostics and discussed in detail in Appendix D.
 
----
+#### 2.1.3 KCOR assumptions and diagnostics
 
-### Assumptions
+These assumptions define when KCOR normalization is interpretable.
 
-> The KCOR framework relies on the following assumptions, which are diagnostic rather than causal in nature:
->
-> 1. **Fixed cohort enrollment.**
->    Cohorts are defined at a common enrollment time and followed forward without dynamic entry or rebalancing.
->
-> 2. **Multiplicative latent frailty.**
->    Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
->
-> 3. **Quiet-window stability.**
->    A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards.
->
-> 4. **Independence across strata.**
->    Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
->
-> 5. **Sufficient event-time resolution.**
->    Event timing is observed at a temporal resolution adequate to estimate cumulative hazards over the quiet window.
->
-> These assumptions are evaluated empirically using post-normalization diagnostics. Violations are expected to manifest as residual curvature, drift, or instability in adjusted cumulative hazard trajectories.
+The KCOR framework relies on the following assumptions, which are diagnostic rather than causal in nature:
+
+1. **Fixed cohort enrollment.**
+   Cohorts are defined at a common enrollment time and followed forward without dynamic entry or rebalancing.
+
+2. **Multiplicative latent frailty.**
+   Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
+
+3. **Quiet-window stability.**
+   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards.
+
+4. **Independence across strata.**
+   Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
+
+5. **Sufficient event-time resolution.**
+   Event timing is observed at a temporal resolution adequate to estimate cumulative hazards over the quiet window.
+
+These assumptions are evaluated empirically using post-normalization diagnostics. Violations are expected to manifest as residual curvature, drift, or instability in adjusted cumulative hazard trajectories.
 
 ### 2.2 Cohort construction
 
@@ -361,8 +359,6 @@ This fixed-cohort design is intentional. It avoids immortal-time artifacts and p
 Conceptual requirements of the KCOR framework are distinguished from operational defaults, which are reported separately for reproducibility (Appendix E).
 
 Throughout this manuscript the failure event is **all-cause mortality**. KCOR therefore targets cumulative mortality hazards and is not framed as a cause-specific competing-risks analysis.
-
----
 
 ### 2.3 Hazard estimation and cumulative hazards in discrete time
 
@@ -406,8 +402,6 @@ $$
 Discrete binning accommodates tied events and aggregated registry releases. Bin width is chosen based on diagnostic stability (e.g., smoothness and sufficient counts per bin) rather than temporal resolution alone.
 
 In addition to the primary implementation above, we computed $\hat H_{\mathrm{obs},d}(t)$ using the Nelson--Aalen estimator $\sum_{s \le t} d_d(s)/N_d(s)$ as a sensitivity check; results were unchanged.
-
----
 
 ### 2.4 Selection model: gamma frailty and depletion normalization
 
@@ -480,8 +474,6 @@ The quiet window is selected prior to KCOR estimation using the following operat
 
 *Practical example.*
 In COVID-19 mortality analyses, a quiet window may be defined as an inter-wave period between major variant surges, verified by approximately linear all-cause cumulative hazards in the general population and the absence of cohort-differential policy or reporting shocks. The specific calendar bounds are not assumed to be unique or correct a priori; instead, robustness to small perturbations of the window boundaries (e.g., ± several weeks) is treated as a core diagnostic. If fitted depletion parameters or post-normalization linearity are unstable under such perturbations, the quiet-window assumption is deemed violated and KCOR is treated as not identified for that analysis.
-
----
 
 ### 2.5 Estimation during quiet periods (cumulative-hazard least squares)
 
@@ -1379,7 +1371,7 @@ Table: Reference implementation and default operational settings. {#tbl:appendix
 |---|---|---|---|
 | Cohort construction | Cohort indexing | Enrollment period × YearOfBirth group × Dose; plus all-ages cohort (YearOfBirth = −2) | Implementation detail |
 | Quiet-period selection | Quiet window | ISO weeks 2023-01 through 2023-52 | Calendar year 2023 |
-| Frailty estimation | Skip weeks | `SKIP_WEEKS = DYNAMIC_HVE_SKIP_WEEKS` | Applied by setting $h_d^{\mathrm{eff}}(t)=0$ for $t < \mathrm{SKIP\_WEEKS}$ |
+| Early-period stabilization (dynamic HVE) | `SKIP_WEEKS` | 2 | Weeks $t < \mathrm{SKIP\_WEEKS}$ are excluded from hazard accumulation (set $\Delta H_d(t)=0$ for those weeks). |
 | Frailty estimation | Fit method | Nonlinear least squares in cumulative-hazard space | Constraints: $k_d>0$, $\theta_d \ge 0$ |
 
 
@@ -1508,6 +1500,10 @@ $$
 {#eq:appendixA_kcor_var_delta}
 
 In practice, Monte Carlo resampling provides a more robust approach that captures uncertainty from both event realization and parameter estimation.
+
+```{=latex}
+\newpage
+```
 
 ## Appendix B: Control-test specifications
 
@@ -1763,6 +1759,10 @@ Figure @fig:appendixC_allages shows $\mathrm{KCOR}(t)$ trajectories for dose 2 a
 
 ![All-ages stress test: $\mathrm{KCOR}(t)$ trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference.](figures/kcor_realdata_allages_enroll2022w26_eval2023.png){#fig:appendixC_allages}
 
+```{=latex}
+\newpage
+```
+
 ## Appendix D: Diagnostics and Failure Modes for KCOR Assumptions
 
 This appendix describes the **observable diagnostics and failure modes** associated with each of the five KCOR assumptions (A1–A5). No additional assumptions are introduced here. KCOR is designed to **fail transparently rather than silently**: when an assumption is violated, the resulting lack of identifiability or model stress manifests through explicit diagnostic signals rather than spurious estimates.
@@ -1855,6 +1855,10 @@ Such failures are diagnosable: sparse-data regimes are characterized by instabil
 ### D.8 Summary: Diagnostic enforcement rather than assumption inflation
 
 KCOR relies on exactly five assumptions (A1–A5), stated exhaustively in §2.1.1. This appendix demonstrates that each assumption has **explicit, observable diagnostics** and **well-defined failure modes**. When assumptions are violated, KCOR signals reduced interpretability through instability, poor fit, or residual structure rather than producing misleading cumulative contrasts. This diagnostic enforcement is a core design feature of the KCOR framework.
+
+```{=latex}
+\newpage
+```
 
 ## Appendix E: Reference Implementation and Default Settings
 

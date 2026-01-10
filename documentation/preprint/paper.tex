@@ -114,16 +114,30 @@
 \usepackage{array}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
-% Appendix lettered numbering for figures and equations (Pandoc maps ## headers to \subsection).
-\usepackage{chngcntr}
+% Appendix lettered numbering for figures and equations.
+%
+% In this repo, the manuscript uses "##" headings, which Pandoc maps to \subsection.
+% There are no \section-level headings, so relying on subsection/section counters
+% yields 0.x-style numbering. Instead, we define an appendix-letter counter that
+% advances once per appendix (\subsection after \appendix) and resets figure/equation
+% numbering within each appendix.
 \usepackage{etoolbox}
+\newif\ifkcorappendix
+\newcounter{kcorappendix}
 \pretocmd{\appendix}{%
-  \setcounter{subsection}{0}%
-  \renewcommand{\thesubsection}{\Alph{subsection}}%
-  \counterwithin{figure}{subsection}%
-  \counterwithin{equation}{subsection}%
-  \renewcommand{\thefigure}{\thesubsection.\arabic{figure}}%
-  \renewcommand{\theequation}{\thesubsection.\arabic{equation}}%
+  \kcorappendixtrue%
+  \setcounter{kcorappendix}{0}%
+  \renewcommand{\thefigure}{\Alph{kcorappendix}.\arabic{figure}}%
+  \renewcommand{\theequation}{\Alph{kcorappendix}.\arabic{equation}}%
+  \renewcommand{\thetable}{\Alph{kcorappendix}.\arabic{table}}%
+}{}{}
+\pretocmd{\subsection}{%
+  \ifkcorappendix%
+    \stepcounter{kcorappendix}%
+    \setcounter{figure}{0}%
+    \setcounter{equation}{0}%
+    \setcounter{table}{0}%
+  \fi%
 }{}{}
 
 % Disable TeX hyphenation (reviewer-friendly) and avoid PDF soft-hyphen artifacts.
@@ -131,7 +145,9 @@
 \usepackage{ragged2e}
 \RaggedRight
 \hyphenpenalty=10000
-\exhyphenpenalty=10000
+% Allow line breaks at *explicit* hyphens that already exist in the text.
+% (Keep automatic hyphenation disabled via \hyphenpenalty above.)
+\exhyphenpenalty=50
 \pretolerance=10000
 \tolerance=2000
 \emergencystretch=3em
@@ -328,8 +344,6 @@ hazard increments
 \(\Delta H_d(t) = -\log\!\left(1 - D_{d,t}/Y_{d,t}\right)\), where
 \(D_{d,t}\) is the number of deaths during week \(t\) and \(Y_{d,t}\) is
 the number at risk at the start of that week.
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \subsection{1. Introduction}\label{introduction}
 
@@ -1050,11 +1064,11 @@ Diagnostics corresponding to each assumption are summarized in Table
 \ref{tbl:appendixD_assumptions_diagnostics} and discussed in detail in
 Appendix D.
 
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+\paragraph{2.1.3 KCOR assumptions and
+diagnostics}\label{kcor-assumptions-and-diagnostics}
 
-\subsubsection{Assumptions}\label{assumptions}
+These assumptions define when KCOR normalization is interpretable.
 
-\begin{quote}
 The KCOR framework relies on the following assumptions, which are
 diagnostic rather than causal in nature:
 
@@ -1086,7 +1100,6 @@ diagnostic rather than causal in nature:
 These assumptions are evaluated empirically using post-normalization
 diagnostics. Violations are expected to manifest as residual curvature,
 drift, or instability in adjusted cumulative hazard trajectories.
-\end{quote}
 
 \subsubsection{2.2 Cohort construction}\label{cohort-construction}
 
@@ -1133,8 +1146,6 @@ operational defaults, which are reported separately for reproducibility
 Throughout this manuscript the failure event is \textbf{all-cause
 mortality}. KCOR therefore targets cumulative mortality hazards and is
 not framed as a cause-specific competing-risks analysis.
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \subsubsection{2.3 Hazard estimation and cumulative hazards in discrete
 time}\label{hazard-estimation-and-cumulative-hazards-in-discrete-time}
@@ -1192,8 +1203,6 @@ In addition to the primary implementation above, we computed
 \(\hat H_{\mathrm{obs},d}(t)\) using the Nelson--Aalen estimator
 \(\sum_{s \le t} d_d(s)/N_d(s)\) as a sensitivity check; results were
 unchanged.
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \subsubsection{2.4 Selection model: gamma frailty and depletion
 normalization}\label{selection-model-gamma-frailty-and-depletion-normalization}
@@ -1319,8 +1328,6 @@ diagnostic. If fitted depletion parameters or post-normalization
 linearity are unstable under such perturbations, the quiet-window
 assumption is deemed violated and KCOR is treated as not identified for
 that analysis.
-
-\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 \subsubsection{2.5 Estimation during quiet periods (cumulative-hazard
 least
@@ -1556,9 +1563,9 @@ rather than hidden.
   residuals over the fit set \(\mathcal{T}_d\):
 \end{enumerate}
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_residuals}{
 r_{d}(t)=H_{\mathrm{obs},d}(t)-H_{d}^{\mathrm{model}}(t;\hat{k}_d,\hat{\theta}_d).
-\]
+}\end{equation}
 
 KCOR expects residuals to be small and not systematically
 time-structured. Strongly patterned residuals indicate that the
@@ -3894,18 +3901,17 @@ Sparse events & 95\% & 87.6\% & Coverage under reduced event counts \\
 
 \begingroup
 % Appendix tables live in the Tables section (after References) for SIM compliance.
-% Pandoc maps ### headers to \subsubsection in LaTeX, so use subsubsection as the
-% appendix-letter driver for table numbering here.
-\setcounter{subsubsection}{0}%
-\renewcommand{\thesubsubsection}{\Alph{subsubsection}}%
-\counterwithin{table}{subsubsection}%
-\renewcommand{\thetable}{\thesubsubsection.\arabic{table}}%
+% We want appendix-lettered table numbers (C.1, D.1, ...) even though section
+% numbering is disabled. Avoid redefining \subsubsection (it can recurse and
+% overflow TeX's input stack). Instead, we set the table prefix explicitly at
+% the start of each appendix-table block.
 
-\subsubsection{Appendix A tables}\label{appendix-a-tables}
-
-\subsubsection{Appendix B tables}\label{appendix-b-tables}
+\newpage
 
 \subsubsection{Appendix C tables}\label{appendix-c-tables}
+
+\renewcommand{\thetable}{C.\arabic{table}}%
+\setcounter{table}{0}%
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3077}}
@@ -4076,7 +4082,12 @@ enrollment through the end of available follow-up for the 2021\_24
 enrollment window (through week 2024-16), identically for Dose 0 and
 Dose 2 cohorts.
 
+\newpage
+
 \subsubsection{Appendix D tables}\label{appendix-d-tables}
+
+\renewcommand{\thetable}{D.\arabic{table}}%
+\setcounter{table}{0}%
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
@@ -4139,7 +4150,57 @@ quiet window & Contaminated quiet window & Redefine quiet window; rerun
 diagnostics \\
 \end{longtable}
 
+\newpage
+
 \subsubsection{Appendix E tables}\label{appendix-e-tables}
+
+\renewcommand{\thetable}{E.\arabic{table}}%
+\setcounter{table}{0}%
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\caption{Reference implementation and default operational
+settings.}\label{tbl:appendixE_defaults}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Component
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Setting
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Default value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Notes
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Component
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Setting
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Default value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Notes
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Cohort construction & Cohort indexing & Enrollment period × YearOfBirth
+group × Dose; plus all-ages cohort (YearOfBirth = −2) & Implementation
+detail \\
+Quiet-period selection & Quiet window & ISO weeks 2023-01 through
+2023-52 & Calendar year 2023 \\
+Early-period stabilization (dynamic HVE) & \texttt{SKIP\_WEEKS} & 2 &
+Weeks \(t < \mathrm{SKIP\_WEEKS}\) are excluded from hazard accumulation
+(set \(\Delta H_d(t)=0\) for those weeks). \\
+Frailty estimation & Fit method & Nonlinear least squares in
+cumulative-hazard space & Constraints: \(k_d>0\), \(\theta_d \ge 0\) \\
+\end{longtable}
 
 \endgroup
 
@@ -4155,38 +4216,38 @@ curvature}\label{a.1-frailty-mixing-induces-hazard-curvature}
 
 Consider a cohort \(d\) in which individual \(i\) has hazard
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_individual_hazard}{
 h_{i,d}(t) = z_{i,d} \, h_{0,d}(t).
-\]
+}\end{equation}
 
 where the frailty \(z_{i,d}\) is drawn from a distribution with mean 1
 and variance \(\theta_d > 0\). Let
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_individual_survival}{
 S_{i,d}(t) = \exp\!\left(-z_{i,d} H_{0,d}(t)\right).
-\]
+}\end{equation}
 
 denote the individual survival function, where
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_baseline_cumhazard}{
 H_{0,d}(t) = \int_0^t h_{0,d}(s) \, ds.
-\]
+}\end{equation}
 
 is the baseline cumulative hazard.
 
 The cohort survival function, obtained by integrating over the frailty
 distribution, is
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_cohort_survival}{
 S_d(t) = \mathbb{E}[S_{i,d}(t)] = \mathbb{E}[\exp(-z \, H_{0,d}(t))] = \mathcal{L}_z(H_{0,d}(t)).
-\]
+}\end{equation}
 
 where \(\mathcal{L}_z(\cdot)\) denotes the Laplace transform of the
 frailty distribution. The corresponding cohort-level hazard is
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_cohort_hazard}{
 h_d(t) = -\frac{d}{dt} \log S_d(t).
-\]
+}\end{equation}
 
 Even when \(h_{0,d}(t) = k_d\) is constant (so that
 \(H_{0,d}(t) = k_d t\)), the cohort hazard \(h_d(t)\) is generally
@@ -4204,31 +4265,31 @@ For gamma-distributed frailty
 \(z \sim \mathrm{Gamma}(\alpha = 1/\theta_d, \beta = 1/\theta_d)\) with
 mean 1 and variance \(\theta_d\), the Laplace transform is:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_gamma_laplace}{
 \mathcal{L}_z(s) = \left(1 + \theta_d s\right)^{-1/\theta_d}.
-\]
+}\end{equation}
 
 The cohort survival function becomes:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_gamma_cohort_survival}{
 S^{\mathrm{cohort}}_{d}(t) = \left(1 + \theta_d H_{0,d}(t)\right)^{-1/\theta_d}.
-\]
+}\end{equation}
 
 The observed cumulative hazard is defined as:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_hobs_def}{
 H_{\mathrm{obs},d}(t) = -\log S^{\mathrm{cohort}}_{d}(t).
-\]
+}\end{equation}
 
 Substituting the gamma Laplace transform yields the canonical
 gamma-frailty identity:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_gamma_identity}{
 H_{\mathrm{obs},d}(t)
 =
 \frac{1}{\theta_d}
 \log\!\left(1+\theta_d\,H_{0,d}(t)\right).
-\]
+}\end{equation}
 
 This is the gamma-frailty identity (see Equation
 (\ref{eq:gamma-frailty-identity}) in the main text).
@@ -4238,18 +4299,18 @@ This is the gamma-frailty identity (see Equation
 Solving for \(H_{0,d}(t)\) from the gamma-frailty identity gives the
 canonical inversion:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_gamma_inversion}{
 H_{0,d}(t)
 =
 \frac{\exp\!\left(\theta_d\,H_{\mathrm{obs},d}(t)\right)-1}{\theta_d}.
-\]
+}\end{equation}
 
 This inversion recovers the baseline cumulative hazard from the observed
 cumulative hazard, conditional on the frailty variance \(\theta_d\).
 
-\subsubsection{A.3a Relationship to the Vaupel--Manton--Stallard gamma
+\subsubsection{A.3.1 Relationship to the Vaupel--Manton--Stallard gamma
 frailty
-framework}\label{a.3a-relationship-to-the-vaupelmantonstallard-gamma-frailty-framework}
+framework}\label{a.3.1-relationship-to-the-vaupelmantonstallard-gamma-frailty-framework}
 
 KCOR's normalization step is grounded in the classical demographic
 frailty framework (e.g., Vaupel--Manton--Stallard), in which individual
@@ -4278,21 +4339,23 @@ hazard-ratio regression parameters.
 For uncertainty quantification, variance in KCOR\((t)\) can be
 approximated via the delta method. Define:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_kcor_def}{
 KCOR(t)=\frac{\tilde{H}_{0,A}(t)}{\tilde{H}_{0,B}(t)}.
-\]
+}\end{equation}
 
 If the variance of the depletion-neutralized cumulative hazard is
 available (e.g., from bootstrap or analytic propagation through the
 inversion), then:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixA_kcor_var_delta}{
 \mathrm{Var}\!\left(KCOR(t)\right) \approx KCOR(t)^2 \left[ \frac{\mathrm{Var}(\tilde{H}_{0,A}(t))}{\tilde{H}_{0,A}(t)^2} + \frac{\mathrm{Var}(\tilde{H}_{0,B}(t))}{\tilde{H}_{0,B}(t)^2} - 2\frac{\mathrm{Cov}(\tilde{H}_{0,A}(t), \tilde{H}_{0,B}(t))}{\tilde{H}_{0,A}(t)\tilde{H}_{0,B}(t)} \right].
-\]
+}\end{equation}
 
 In practice, Monte Carlo resampling provides a more robust approach that
 captures uncertainty from both event realization and parameter
 estimation.
+
+\newpage
 
 \subsection{Appendix B: Control-test
 specifications}\label{appendix-b-control-test-specifications}
@@ -4509,9 +4572,9 @@ period used for frailty estimation.
 
 Formally, individual hazards are generated as
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixB_individual_hazard_with_effect}{
 h_i(t) = z_i \cdot h_0(t) \cdot r(t).
-\]
+}\end{equation}
 
 where \(z_i\) is individual frailty, \(h_0(t)\) is a shared baseline
 hazard, and \(r(t)\) is a time-localized multiplicative treatment effect
@@ -4703,6 +4766,15 @@ dynamics is an essential diagnostic step.
 \subsubsection{C.5 Robustness to age
 stratification}\label{c.5-robustness-to-age-stratification}
 
+This subsection illustrates robustness of \(\mathrm{KCOR}(t)\) to narrow
+age stratification by repeating the same fixed-cohort comparison in
+three single birth-year cohorts spanning advanced ages (1930, 1940,
+1950). Across these strata, the trajectories remain qualitatively stable
+after depletion normalization, supporting the claim that the observed
+behavior is not an artifact of age aggregation. See Figures
+\ref{fig:appendixC_yob1930}, \ref{fig:appendixC_yob1940}, and
+\ref{fig:appendixC_yob1950} for representative examples.
+
 \begin{figure}
 \centering
 \pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.}]{figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png}}
@@ -4771,7 +4843,9 @@ treatment. KCOR normalization removes this selection-induced curvature,
 enabling interpretable cumulative comparisons. While these examples
 illustrate KCOR's application, the method is general and applies to any
 retrospective cohort comparison where selection induces differential
-depletion dynamics.
+depletion dynamics. This appendix uses the same Czech administrative
+mortality and vaccination dataset referenced in the empirical negative
+control (§3.1.2) and ethics statement.\textsuperscript{12}
 
 \subsubsection{C.6.2 Frailty normalization behavior under empirical
 validation}\label{c.6.2-frailty-normalization-behavior-under-empirical-validation}
@@ -4780,9 +4854,9 @@ Across examined age strata in the Czech Republic mortality dataset,
 fitted frailty parameters exhibit a pronounced asymmetry across cohorts.
 Some cohorts show negligible estimated frailty variance:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_theta_near_zero}{
 \hat{\theta}_d \approx 0.
-\]
+}\end{equation}
 
 while others exhibit substantial frailty-driven depletion. This pattern
 reflects differences in selection-induced hazard curvature at cohort
@@ -4819,15 +4893,15 @@ heterogeneity, while Dose 2 cohorts show near-zero estimated frailty
 across all age bands, consistent with selective uptake prior to
 follow-up:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_theta_positive}{
 \hat{\theta}_d > 0.
-\]
+}\end{equation}
 
 for Dose 0 cohorts and
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_theta_near_zero_dose2}{
 \hat{\theta}_d \approx 0.
-\]
+}\end{equation}
 
 for Dose 2 cohorts. Estimated frailty heterogeneity can appear larger at
 younger ages because baseline hazards are low, so proportional
@@ -4894,6 +4968,8 @@ figure is presented as an illustrative application demonstrating
 estimator behavior under extreme heterogeneity and does not support
 causal inference.}\label{fig:appendixC_allages}
 \end{figure}
+
+\newpage
 
 \subsection{Appendix D: Diagnostics and Failure Modes for KCOR
 Assumptions}\label{appendix-d-diagnostics-and-failure-modes-for-kcor-assumptions}
@@ -5127,6 +5203,8 @@ interpretability through instability, poor fit, or residual structure
 rather than producing misleading cumulative contrasts. This diagnostic
 enforcement is a core design feature of the KCOR framework.
 
+\newpage
+
 \subsection{Appendix E: Reference Implementation and Default
 Settings}\label{appendix-e-reference-implementation-and-default-settings}
 
@@ -5138,43 +5216,8 @@ internal consistency. Alternative reasonable choices yield qualitatively
 similar conclusions when applied to depletion-neutralized hazards.
 
 The manuscript describes KCOR generically; for reproducibility, this
-repository's KCOR defaults are:
-
-\subsubsection{E.1 Cohort construction
-defaults}\label{e.1-cohort-construction-defaults}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Cohort indexing (implementation)}: enrollment period (sheet) ×
-  YearOfBirth group × Dose, plus an all-ages cohort (YearOfBirth
-  \(=-2\)).
-\end{itemize}
-
-\subsubsection{E.2 Quiet-period selection
-defaults}\label{e.2-quiet-period-selection-defaults}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Quiet window}: ISO weeks \texttt{2023-01} through
-  \texttt{2023-52} (inclusive; calendar year 2023).
-\end{itemize}
-
-\subsubsection{E.4 Frailty estimation and inversion
-defaults}\label{e.4-frailty-estimation-and-inversion-defaults}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Skip weeks}: a fixed prespecified skip,
-  \texttt{SKIP\_WEEKS\ =\ DYNAMIC\_HVE\_SKIP\_WEEKS} (see code), applied
-  by setting \(h_d^{\mathrm{eff}}(t)=0\) for
-  \(t < \mathrm{SKIP\_WEEKS}\).
-\item
-  \textbf{Fit method}: nonlinear least squares in cumulative-hazard
-  space (not MLE), with constraints \(k_d>0\) and \(\theta_d \ge 0\).
-\end{itemize}
+repository's KCOR defaults are summarized in Table
+\ref{tbl:appendixE_defaults}.
 
 :::
 
