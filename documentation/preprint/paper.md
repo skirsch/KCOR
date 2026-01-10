@@ -1366,6 +1366,22 @@ Table: KCOR assumptions and corresponding diagnostics. {#tbl:appendixD_assumptio
 | A4. Adequacy of gamma frailty | Gamma family adequately approximates frailty mixing | Residual curvature or poor fit diagnostics after inversion | Frailty distribution misspecification | Treat as diagnostic; avoid over-interpretation |
 | A5. Quiet-window validity | No intervention effect during frailty-estimation window | Slope breaks or non-parallel trends within quiet window | Contaminated quiet window | Redefine quiet window; rerun diagnostics |
 
+### Appendix E tables
+
+```{=latex}
+\renewcommand{\thetable}{E.\arabic{table}}%
+\setcounter{table}{0}%
+```
+
+Table: Reference implementation and default operational settings. {#tbl:appendixE_defaults}
+
+| Component | Setting | Default value | Notes |
+|---|---|---|---|
+| Cohort construction | Cohort indexing | Enrollment period × YearOfBirth group × Dose; plus all-ages cohort (YearOfBirth = −2) | Implementation detail |
+| Quiet-period selection | Quiet window | ISO weeks 2023-01 through 2023-52 | Calendar year 2023 |
+| Frailty estimation | Skip weeks | `SKIP_WEEKS = DYNAMIC_HVE_SKIP_WEEKS` | Applied by setting $h_d^{\mathrm{eff}}(t)=0$ for $t < \mathrm{SKIP\_WEEKS}$ |
+| Frailty estimation | Fit method | Nonlinear least squares in cumulative-hazard space | Constraints: $k_d>0$, $\theta_d \ge 0$ |
+
 
 ```{=latex}
 \endgroup
@@ -1844,19 +1860,8 @@ KCOR relies on exactly five assumptions (A1–A5), stated exhaustively in §2.1.
 
 This appendix documents the reference implementation and default operational settings used for all analyses in this manuscript. These defaults are not intrinsic to the KCOR framework; they represent one prespecified operationalization chosen to ensure reproducibility and internal consistency. Alternative reasonable choices yield qualitatively similar conclusions when applied to depletion-neutralized hazards.
 
-The manuscript describes KCOR generically; for reproducibility, this repository's KCOR defaults are:
+The manuscript describes KCOR generically; for reproducibility, this repository's KCOR defaults are summarized in Table @tbl:appendixE_defaults.
 
-### E.1 Cohort construction defaults
 
-- **Cohort indexing (implementation)**: enrollment period (sheet) × YearOfBirth group × Dose, plus an all-ages cohort (YearOfBirth $=-2$).
-
-### E.2 Quiet-period selection defaults
-
-- **Quiet window**: ISO weeks `2023-01` through `2023-52` (inclusive; calendar year 2023).
-
-### E.4 Frailty estimation and inversion defaults
-
-- **Skip weeks**: a fixed prespecified skip, `SKIP_WEEKS = DYNAMIC_HVE_SKIP_WEEKS` (see code), applied by setting $h_d^{\mathrm{eff}}(t)=0$ for $t < \mathrm{SKIP\_WEEKS}$.
-- **Fit method**: nonlinear least squares in cumulative-hazard space (not MLE), with constraints $k_d>0$ and $\theta_d \ge 0$.
 
 :::
