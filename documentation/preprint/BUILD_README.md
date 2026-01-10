@@ -1,69 +1,41 @@
 # Paper Build System
 
-This directory uses a **single source file** (`paper.md`) with conditional section hiding to generate separate outputs while preserving cross-reference numbering.
+This directory uses a **single source file** (`paper.md`) to generate a **single** Word document (`paper.docx`) and a **single** PDF (`paper.pdf`).
 
 ## Architecture
 
 ### Single Source File
-- **`paper.md`**: Contains both main text and supplementary material
-- Main text is wrapped in `::: {#main}` div
-- Supplementary material is wrapped in `::: {#supp}` div
+- **`paper.md`**: The full manuscript (including appendices), built as a single continuous document (no split/separators).
 
-### Filter System
-- **`drop-div.lua`**: Lua filter that conditionally drops divs by ID based on metadata
-- Runs **after** `pandoc-crossref`, so all cross-references are resolved before sections are hidden
-- Uses `drop_div` metadata variable (comma-separated list of div IDs to drop)
+### Formatting Filters
+- **`pagebreak-tables.lua`**: Inserts page breaks before and after each table so every table appears on its own page in DOCX and PDF builds.
 
 ### Build Targets
 
 #### Word Documents (DOCX)
-- **`make paper-docx`**: Builds both `paper.docx` (main) and `paper_supplement.docx`
-- Uses metadata files:
-  - `pandoc-crossref-docx-main.yaml` (sets `drop_div: "supp"`)
-  - `pandoc-crossref-docx-supplement.yaml` (sets `drop_div: "main"`)
+- **`make paper-docx`**: Builds `paper.docx`
+- Uses `pandoc-crossref-docx.yaml`
 
 #### PDF Documents
-- **`make paper-pdf`**: Builds `paper.pdf` (combined: main + supplement)
-- **`make paper-pdf-main`**: Builds `paper_main.pdf` (main only, drops supplement)
-- **`make paper-pdf-supplement`**: Builds `paper_supplement.pdf` (supplement only, drops main)
+- **`make paper-pdf`**: Builds `paper.pdf`
 
 #### Combined Build
-- **`make paper`**: Builds all DOCX and combined PDF, then copies to website
-
-## How It Works
-
-1. **Single build context**: All content exists when `pandoc-crossref` runs, so all labels/counters resolve correctly
-2. **Conditional hiding**: The `drop-div.lua` filter removes divs by ID **after** cross-references are resolved
-3. **Separate outputs**: Different builds drop different divs, producing separate PDFs/DOCX files
+- **`make paper`**: Builds `paper.docx` and `paper.pdf`, then copies to website
 
 ## Example Commands
 
 ```bash
-# Build combined PDF (for preprints/sharing)
+# Build PDF
 make paper-pdf
 
-# Build main-only PDF (for journal submission)
-make paper-pdf-main
-
-# Build supplement-only PDF (for journal submission)
-make paper-pdf-supplement
-
-# Build all Word documents
+# Build Word document
 make paper-docx
 
-# Build everything
+# Build both + copy to website
 make paper
 ```
 
-## Cross-Reference Preservation
-
-Because the filter runs **after** `pandoc-crossref`, all cross-references are resolved in the same numbering context:
-- Figure numbers are consistent across builds
-- Equation numbers are sequential
-- Table numbers match across outputs
-- References to figures/equations/tables in the main text resolve correctly even when the supplement is dropped
-
 ## Migration Notes
 
-The old `filter_sections.lua` (header-based detection) has been replaced with `drop-div.lua` (div-based). The old filter is kept for reference but is no longer used in the build system.
+Legacy split-document tooling (`drop-div.lua`, `pandoc-crossref-docx-main.yaml`, `pandoc-crossref-docx-supplement.yaml`, `split_docx.py`) is kept for reference but is no longer used by the root `Makefile` paper targets.
 

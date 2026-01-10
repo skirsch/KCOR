@@ -1,0 +1,1345 @@
+xelatex: unrecognized option '-draftmode'
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022/Debian) (preloaded format=xelatex)
+ restricted \write18 enabled.
+entering extended mode
+(./paper_debug.tex
+LaTeX2e <2022-11-01> patch level 1
+L3 programming layer <2023-01-16>
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2022/07/02 v1.4n Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size10.clo))
+(/usr/share/texlive/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-def/xetex.def)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/unicode-math/unicode-math.sty
+(/usr/share/texlive/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-xetex.def))
+(/usr/share/texlive/texmf-dist/tex/latex/unicode-math/unicode-math-xetex.sty
+(/usr/share/texlive/texmf-dist/tex/latex/l3packages/xparse/xparse.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/l3packages/l3keys2e/l3keys2e.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/fontspec/fontspec.sty
+(/usr/share/texlive/texmf-dist/tex/latex/fontspec/fontspec-xetex.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/fontspec/fontspec.cfg)))
+(/usr/share/texlive/texmf-dist/tex/latex/base/fix-cm.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/ts1enc.def))
+(/usr/share/texlive/texmf-dist/tex/latex/unicode-math/unicode-math-table.tex)))
+(/usr/share/texmf/tex/latex/lm/lmodern.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/upquote/upquote.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/textcomp.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype-xetex.def)
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.cfg))
+(/usr/share/texlive/texmf-dist/tex/latex/parskip/parskip.sty
+(/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+(/usr/share/texlive/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)))
+(/usr/share/texlive/texmf-dist/tex/latex/tools/longtable.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/array.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/calc.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/footnotehyper/footnotehyper.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+(/usr/share/texlive/texmf-dist/tex/latex/titlesec/titlesec.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/tabularx.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/ragged2e/ragged2e.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/bookmark/bookmark.sty
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/share/texlive/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/share/texlive/texmf-dist/tex/generic/infwarerr/infwarerr.sty))
+(/usr/share/texlive/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/share/texlive/texmf-dist/tex/generic/pdfescape/pdfescape.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/auxhook/auxhook.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/share/texlive/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/share/texlive/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/share/texlive/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/share/texlive/texmf-dist/tex/generic/etexcmds/etexcmds.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/share/texlive/texmf-dist/tex/latex/url/url.sty)
+(/usr/share/texlive/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/share/texlive/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hxetex.def
+(/usr/share/texlive/texmf-dist/tex/generic/stringenc/stringenc.sty)
+(/usr/share/texlive/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+(/usr/share/texlive/texmf-dist/tex/latex/base/atveryend-ltx.sty)
+(/usr/share/texlive/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+(/usr/share/texlive/texmf-dist/tex/latex/bookmark/bkm-dvipdfm.def))
+(/usr/share/texlive/texmf-dist/tex/latex/xurl/xurl.sty)
+No file paper_debug.aux.
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-LatinModernRoman.cfg)
+
+Package hyperref Warning: Rerun to get /PageLabels entry.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 145--145
+|\TU/lmr/bx/n/14.4 KCOR: Depletion-Neutralized Cohort
+
+Underfull \hbox (badness 1048) in paragraph at lines 165--170
+\TU/lmr/m/n/10 frailty inversion; frailty heterogeneity; depletion of susceptib
+les; 
+
+Underfull \hbox (badness 1057) in paragraph at lines 182--189
+\TU/lmr/m/n/10 into a common, depletion-neutralized scale prior to comparison. 
+The 
+[1]
+Underfull \hbox (badness 2134) in paragraph at lines 212--215
+[]\TU/lmr/m/n/10 Introduces a principled depletion-neutralization mapping for 
+
+Underfull \hbox (badness 2538) in paragraph at lines 234--239
+[]\TU/lmr/m/n/10 • KCOR separates normalization from comparison: once hazards 
+
+Underfull \hbox (badness 1552) in paragraph at lines 234--239
+\TU/lmr/m/n/10 are depletion-neutralized, cohorts may be compared using standar
+d 
+(/usr/share/texmf/tex/latex/lm/omllmm.fd)
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msa.cfg)
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd)
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg) [2]
+
+LaTeX Warning: Reference `eq:nls-objective' on page 3 undefined on input line 2
+73.
+
+
+Underfull \hbox (badness 1189) in paragraph at lines 270--277
+\TU/lmr/m/n/10 using constrained nonlinear least squares in cumulative-hazard 
+
+LaTeX Warning: Reference `eq:normalized-cumhazard' on page 3 undefined on input
+ line 278.
+
+
+Underfull \hbox (badness 5119) in paragraph at lines 286--287
+[]\TU/lmr/m/it/10 After normalization, cohort comparisons are performed on the 
+
+
+Underfull \hbox (badness 1412) in paragraph at lines 290--297
+[]\TU/lmr/bx/n/10 Compute KCOR trajectory\TU/lmr/m/n/10 : Form the ratio $[][][
+][] [] 
+
+Underfull \hbox (badness 4634) in paragraph at lines 304--309
+[]\TU/lmr/bx/n/10 Diagnostics\TU/lmr/m/n/10 : Assess quiet-window fit quality (
+RMSE in 
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 352--352
+|\TU/lmr/bx/n/10 1.2 Curvature (shape) is the hard part: non-proportional hazar
+ds
+[4]
+Underfull \hbox (badness 1152) in paragraph at lines 413--421
+\TU/lmr/m/n/10 administrative timing, or short-term behavioral/health-seeking 
+
+Underfull \hbox (badness 10000) in paragraph at lines 425--425
+|\TU/lmr/bx/n/10 1.3 Related work: frailty, depletion of susceptibles, and
+[5]
+Underfull \hbox (badness 10000) in paragraph at lines 465--465
+|\TU/lmr/bx/n/10 1.3.1 Related work beyond proportional hazards: time-varying
+[6]
+Underfull \hbox (badness 1077) in paragraph at lines 510--511
+\TU/lmr/m/it/10 non-proportional hazards exhaustively; instead, it positions KC
+OR as 
+
+Underfull \hbox (badness 1540) in paragraph at lines 526--541
+\TU/lmr/m/n/10 Flexible hazard models—including spline-based parametric surviva
+l 
+[7]
+Underfull \hbox (badness 1681) in paragraph at lines 584--592
+[]\TU/lmr/m/n/10 However, RMST does not by itself address selection-induced fra
+ilty 
+
+Underfull \hbox (badness 1831) in paragraph at lines 593--600
+\TU/lmr/m/n/10 comparison. RMST could in principle be computed after depletion 
+
+
+Underfull \hbox (badness 1448) in paragraph at lines 593--600
+\TU/lmr/m/n/10 normalization as a secondary descriptive summary, but it is not 
+the 
+[8]
+Underfull \hbox (badness 10000) in paragraph at lines 603--603
+|\TU/lmr/bx/n/10 1.4 Evidence from the literature: residual confounding despite
+
+
+Underfull \hbox (badness 2753) in paragraph at lines 619--629
+[]\TU/lmr/m/n/10 Meaning: The negative control methods indicate that 
+
+LaTeX Warning: Reference `tbl:HVE_motivation' on page 9 undefined on input line
+ 649.
+
+[9]
+Underfull \hbox (badness 4024) in paragraph at lines 663--669
+[]\TU/lmr/m/n/10 Second, we introduce KCOR as a diagnostic and normalization 
+
+Underfull \hbox (badness 1454) in paragraph at lines 663--669
+\TU/lmr/m/n/10 framework that estimates cohort-specific depletion geometry duri
+ng 
+
+Underfull \hbox (badness 1072) in paragraph at lines 670--675
+\TU/lmr/m/n/10 that commonly used estimands—including Cox proportional hazards 
+
+
+Underfull \hbox (badness 1769) in paragraph at lines 693--701
+\TU/lmr/m/n/10 KCOR is proposed as a diagnostic and normalization estimator for
+ 
+
+LaTeX Warning: Reference `fig:kcor_workflow' on page 10 undefined on input line
+ 714.
+
+[10]
+Underfull \hbox (badness 2158) in paragraph at lines 716--724
+[]\TU/lmr/bx/n/10 Scope and role of the method. \TU/lmr/m/n/10 This work does n
+ot claim that 
+
+Underfull \hbox (badness 1622) in paragraph at lines 728--734
+\TU/lmr/m/n/10 problems and typically require either exogenous instruments, sha
+rp 
+
+Underfull \hbox (badness 3657) in paragraph at lines 751--761
+[]\TU/lmr/bx/n/10 Clarifications. \TU/lmr/m/n/10 KCOR is a depletion-neutraliza
+tion framework 
+
+Underfull \hbox (badness 5490) in paragraph at lines 751--761
+\TU/lmr/m/n/10 for \TU/lmr/bx/n/10 cumulative \TU/lmr/m/n/10 outcome contrasts 
+over follow-up time, not a 
+[11]
+Underfull \hbox (badness 1226) in paragraph at lines 784--788
+[]\TU/lmr/m/n/10 KCOR (Kirsch Cumulative Outcomes Ratio) is a cumulative-hazard
+ 
+[12]
+Underfull \hbox (badness 7722) in paragraph at lines 853--855
+[]\TU/lmr/bx/n/10 KCOR ratio\TU/lmr/m/n/10 : Cohorts are compared via the ratio
+ of 
+
+Underfull \hbox (badness 1102) in paragraph at lines 876--881
+\TU/lmr/m/n/10 KCOR applies to any irreversible event process. The methodologic
+al 
+
+LaTeX Warning: Reference `tbl:notation' on page 13 undefined on input line 882.
+
+
+
+Underfull \hbox (badness 1210) in paragraph at lines 898--902
+[]\TU/lmr/bx/n/10 Level differences\TU/lmr/m/n/10 : cohort hazards differ by an
+ approximately 
+
+Underfull \hbox (badness 2547) in paragraph at lines 907--917
+\TU/lmr/m/n/10 high-risk individuals die earlier, so the surviving risk set bec
+omes 
+
+Underfull \hbox (badness 1137) in paragraph at lines 907--917
+\TU/lmr/m/n/10 even when individual-level hazards are simple and even under a t
+rue 
+[13]
+Underfull \hbox (badness 5008) in paragraph at lines 930--933
+\TU/lmr/m/n/10 post-adjustment estimand; in this work, we use ratios of 
+
+LaTeX Warning: Reference `tbl:notation' on page 14 undefined on input line 946.
+
+
+
+Underfull \hbox (badness 1990) in paragraph at lines 957--968
+[]\TU/lmr/bx/n/10 Interpretation (unanchored KCOR). \TU/lmr/m/n/10 KCOR(t) is t
+he ratio of 
+[14]
+Underfull \hbox (badness 10000) in paragraph at lines 969--972
+[]\TU/lmr/m/n/10 In some applications 
+
+Underfull \hbox (badness 1509) in paragraph at lines 1019--1021
+[]\TU/lmr/m/n/10 Operationally, interpretability of a KCOR trajectory is assess
+ed via 
+[15]
+Underfull \hbox (badness 5036) in paragraph at lines 1070--1073
+[]\TU/lmr/m/n/10 These assumptions are evaluated empirically using 
+[16]
+Underfull \hbox (badness 10000) in paragraph at lines 1124--1124
+|\TU/lmr/bx/n/12 2.3 Hazard estimation and cumulative hazards in discrete
+[17]
+Underfull \hbox (badness 10000) in paragraph at lines 1183--1183
+|\TU/lmr/bx/n/12 2.4 Selection model: gamma frailty and depletion
+[18] [19]
+Underfull \hbox (badness 10000) in paragraph at lines 1311--1311
+|\TU/lmr/bx/n/10 2.5 Estimation during quiet periods (cumulative-hazard least
+[20]
+Underfull \hbox (badness 1043) in paragraph at lines 1335--1349
+[]$\TU/lmr/m/n/10 . When depletion is weak (or the quiet window is too short to
+ show 
+[21]
+Underfull \hbox (badness 2564) in paragraph at lines 1398--1407
+[]\TU/lmr/m/n/10 This normalization maps each cohort into a depletion-neutraliz
+ed 
+
+Overfull \hbox (77.44351pt too wide) detected at line 1430
+[][][] [][] [] [] [] [] [][]  []
+
+Overfull \hbox (3.07066pt too wide) detected at line 1435
+[][][][] [] [] []
+[22]
+Underfull \hbox (badness 1796) in paragraph at lines 1484--1498
+\TU/lmr/m/n/10 comparison—and therefore the inferential signal—arises only when
+ 
+[23]
+Underfull \hbox (badness 2050) in paragraph at lines 1499--1506
+\TU/lmr/m/n/10 selection-induced curvature in cumulative-hazard space; treatmen
+t 
+
+Underfull \hbox (badness 3029) in paragraph at lines 1510--1519
+\TU/lmr/m/n/10 KCOR operates on aggregated event counts in discrete time and 
+
+Underfull \hbox (badness 1515) in paragraph at lines 1529--1539
+[]\TU/lmr/bx/n/10 Post-normalization linearity in quiet periods. \TU/lmr/m/n/10
+ During a 
+
+Underfull \hbox (badness 1158) in paragraph at lines 1529--1539
+\TU/lmr/m/n/10 in observed cumulative hazard is primarily driven by depletion 
+
+Underfull \hbox (badness 1292) in paragraph at lines 1529--1539
+\TU/lmr/m/n/10 under heterogeneity. After inversion, the depletion-neutralized 
+
+[24] [25]
+Underfull \hbox (badness 3525) in paragraph at lines 1632--1635
+[]\TU/lmr/m/n/10 This is a cumulative comparison in hazard space after removing
+ 
+
+Underfull \hbox (badness 1946) in paragraph at lines 1678--1683
+[]\TU/lmr/bx/n/10 Recompute normalized cumulative hazards. \TU/lmr/m/n/10 Using
+ the 
+[26]
+
+LaTeX Warning: Reference `tbl:KCOR_algorithm' on page 27 undefined on input lin
+e 1701.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+[]\TU/lmr/m/n/10 Figure 1: []\TU/lmr/bx/n/10 KCOR as a two-stage framework. (A)
+ \TU/lmr/m/n/10 Fixed-cohort cumulative
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+\TU/lmr/m/n/10 hazards exhibit curvature due to selection-induced depletion; la
+te-time
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+\TU/lmr/m/n/10 curvature is used to estimate frailty parameters for normalizati
+on. \TU/lmr/bx/n/10 (B)
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+\TU/lmr/m/n/10 Gamma-frailty normalization yields approximately linearized cumu
+lative
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+\TU/lmr/m/n/10 hazards that are directly comparable across cohorts; $[][][][]$,
+ defined as the
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+\TU/lmr/m/n/10 ratio of depletion-neutralized baseline cumulative hazards, is n
+ear-flat under
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1716
+\TU/lmr/m/n/10 the null and deviates only under net hazard differences. \TU/lmr
+/m/it/10 In the schematic,
+
+Underfull \hbox (badness 1460) in paragraph at lines 1722--1733
+\TU/lmr/m/n/10 factor. Under selective uptake with latent frailty heterogeneity
+, this 
+
+Underfull \hbox (badness 3713) in paragraph at lines 1734--1740
+[]\TU/lmr/m/n/10 Cox regression estimates a weighted average hazard ratio under
+ 
+
+Underfull \hbox (badness 1221) in paragraph at lines 1734--1740
+\TU/lmr/m/n/10 heterogeneity, they continue to estimate instantaneous hazard ra
+tios 
+
+Underfull \hbox (badness 10000) in paragraph at lines 1750--1750
+|\TU/lmr/bx/n/10 2.11.1 Demonstration: Cox bias under frailty heterogeneity wit
+h no
+[27] [28]
+Underfull \hbox (badness 4001) in paragraph at lines 1772--1774
+[]\TU/lmr/m/n/10 Simulations were repeated over a grid of frailty variances $[]
+ [] 
+
+Underfull \hbox (badness 1005) in paragraph at lines 1786--1799
+\TU/lmr/m/n/10 datasets, cohort-specific observed cumulative hazards were estim
+ated 
+
+Underfull \hbox (badness 2409) in paragraph at lines 1786--1799
+\TU/lmr/m/n/10 from simulated event-time data using Nelson–Aalen to mirror the 
+
+[29]
+
+LaTeX Warning: Reference `tbl:cox_bias_demo' on page 30 undefined on input line
+ 1833.
+
+
+LaTeX Warning: Reference `fig:cox_bias_hr' on page 30 undefined on input line 1
+837.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1849--1849
+[]\TU/lmr/m/n/10 Figure 2: []Cox regression produces spurious non-null hazard r
+atios under a
+
+Underfull \hbox (badness 10000) in paragraph at lines 1849--1849
+\TU/lmr/m/it/10 synthetic null \TU/lmr/m/n/10 as frailty heterogeneity increase
+s. Hazard ratios (with 95%
+
+Underfull \hbox (badness 10000) in paragraph at lines 1849--1849
+\TU/lmr/m/n/10 confidence intervals) from Cox proportional hazards regression c
+omparing
+
+Underfull \hbox (badness 10000) in paragraph at lines 1849--1849
+\TU/lmr/m/n/10 cohort B to cohort A in simulations where the true treatment eff
+ect is
+
+Underfull \hbox (badness 10000) in paragraph at lines 1849--1849
+\TU/lmr/m/n/10 identically zero and cohorts differ only in frailty variance ($[
+]$). Deviations from
+
+Underfull \hbox (badness 10000) in paragraph at lines 1849--1849
+\TU/lmr/m/n/10 HR=1 arise solely from frailty-driven depletion and associated
+
+Underfull \hbox (badness 10000) in paragraph at lines 1860--1860
+[]\TU/lmr/m/n/10 Figure 3: []$[][][][]$ remains null under a synthetic null acr
+oss increasing
+
+Underfull \hbox (badness 10000) in paragraph at lines 1860--1860
+\TU/lmr/m/n/10 frailty heterogeneity. $[][][][]$ asymptotes remain near 1 acros
+s $[]$ in the same
+
+Underfull \hbox (badness 10000) in paragraph at lines 1860--1860
+\TU/lmr/m/n/10 simulations, consistent with correct null behavior after depleti
+on
+
+Underfull \hbox (badness 10000) in paragraph at lines 1860--1860
+\TU/lmr/m/n/10 normalization. Uncertainty bands (95% bootstrap intervals) are s
+hown but
+[30] [31] [32]
+Underfull \hbox (badness 1199) in paragraph at lines 1913--1918
+\TU/lmr/m/n/10 We include a brief worked example to illustrate the KCOR workflo
+w 
+
+Underfull \hbox (badness 4940) in paragraph at lines 1919--1924
+[]\TU/lmr/m/n/10 The example proceeds from aggregated cohort counts through 
+[33]
+Underfull \hbox (badness 2158) in paragraph at lines 1947--1950
+[]\TU/lmr/bx/n/10 Compute requirements. \TU/lmr/m/n/10 The full simulation grid
+ reproduces in 
+
+Underfull \hbox (badness 1789) in paragraph at lines 1970--1973
+[]\TU/lmr/bx/n/10 Positive controls (detect injected effects): \TU/lmr/m/n/10 w
+hen known 
+[34]
+
+LaTeX Warning: Reference `fig:neg_control_synthetic' on page 35 undefined on in
+put line 2037.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2048--2048
+[]\TU/lmr/m/n/10 Figure 4: []Synthetic negative control under strong selection 
+(different
+
+Underfull \hbox (badness 10000) in paragraph at lines 2048--2048
+\TU/lmr/m/n/10 curvature) but no effect: $[][][][]$ remains flat at 1. Top pane
+l shows cohort
+
+Underfull \hbox (badness 10000) in paragraph at lines 2048--2048
+\TU/lmr/m/n/10 hazards with different frailty-mixture weights inducing differen
+t curvature.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2048--2048
+\TU/lmr/m/n/10 Bottom panel shows $[][][][]$ remaining near 1.0 after normaliza
+tion,
+
+Underfull \hbox (badness 10000) in paragraph at lines 2048--2048
+\TU/lmr/m/n/10 demonstrating successful depletion-neutralization under the null
+. Uncertainty
+
+Underfull \hbox (badness 10000) in paragraph at lines 2053--2053
+|\TU/lmr/bx/n/10 3.1.2 Empirical negative control using national registry data 
+(Czech
+[35]
+
+LaTeX Warning: Reference `fig:neg_control_10yr' on page 36 undefined on input l
+ine 2074.
+
+
+LaTeX Warning: Reference `fig:neg_control_20yr' on page 36 undefined on input l
+ine 2074.
+
+
+Underfull \hbox (badness 2486) in paragraph at lines 2073--2078
+\TU/lmr/m/n/10 administrative mortality and vaccination dataset and exported in
+ 
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+[]\TU/lmr/m/n/10 Figure 5: []Empirical negative control with approximately 10-y
+ear age
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+\TU/lmr/m/n/10 difference between cohorts. Despite large baseline mortality dif
+ferences,
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+[][][][]$ \TU/lmr/m/n/10 remains near-flat at 1 over follow-up, consistent with
+ a true null
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+\TU/lmr/m/n/10 effect. Curves are shown as anchored $[][][][] [][][]$, i.e., $[
+][][][][][][][][][]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+\TU/lmr/m/n/10 which removes pre-existing cumulative differences and displays
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+\TU/lmr/m/n/10 plotted as $[][][][] [][][]$). Uncertainty bands (95% bootstrap 
+intervals) are
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+\TU/lmr/m/n/10 shown. Data source: Czech Republic mortality and vaccination dat
+aset
+
+Underfull \hbox (badness 10000) in paragraph at lines 2101--2101
+\TU/lmr/m/n/10 processed into KCOR_CMR aggregated format (negative-control
+
+LaTeX Warning: Reference `fig:neg_control_20yr' on page 36 undefined on input l
+ine 2105.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2118--2118
+[]\TU/lmr/m/n/10 Figure 6: []Empirical negative control with approximately 20-y
+ear age
+
+Underfull \hbox (badness 10000) in paragraph at lines 2118--2118
+\TU/lmr/m/n/10 difference between cohorts. Even under extreme composition diffe
+rences,
+
+Underfull \hbox (badness 10000) in paragraph at lines 2118--2118
+[][][][]$ \TU/lmr/m/n/10 exhibits no systematic drift, demonstrating robustness
+ to
+
+Underfull \hbox (badness 10000) in paragraph at lines 2118--2118
+\TU/lmr/m/n/10 selection-induced curvature. KCOR curves are anchored at
+
+Underfull \hbox (badness 10000) in paragraph at lines 2118--2118
+\TU/lmr/m/n/10 intervals) are shown. Data source: Czech Republic mortality and 
+vaccination
+
+Underfull \hbox (badness 10000) in paragraph at lines 2118--2118
+\TU/lmr/m/n/10 dataset processed into KCOR_CMR aggregated format (negative-cont
+rol
+
+LaTeX Warning: Reference `tbl:neg_control_summary' on page 36 undefined on inpu
+t line 2121.
+
+[36] [37] [38]
+
+LaTeX Warning: Reference `fig:pos_control_injected' on page 39 undefined on inp
+ut line 2144.
+
+
+LaTeX Warning: Reference `tbl:pos_control_summary' on page 39 undefined on inpu
+t line 2144.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2156--2156
+[]\TU/lmr/m/n/10 Figure 7: []Positive control validation: KCOR correctly detect
+s injected effects.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2156--2156
+\TU/lmr/m/n/10 Left panels show harm scenario (r=1.2), right panels show benefi
+t scenario
+
+Underfull \hbox (badness 10000) in paragraph at lines 2156--2156
+\TU/lmr/m/n/10 (r=0.8). Top row displays cohort hazard curves with effect windo
+w shaded.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2156--2156
+\TU/lmr/m/n/10 Bottom row shows $[][][][]$ deviating from 1.0 in the expected d
+irection
+
+Underfull \hbox (badness 10000) in paragraph at lines 2156--2156
+\TU/lmr/m/n/10 during the effect window. Uncertainty bands (95% bootstrap inter
+vals) are
+[39]
+
+LaTeX Warning: Reference `fig:sensitivity_overview' on page 40 undefined on inp
+ut line 2185.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+[]\TU/lmr/m/n/10 Figure 8: []Sensitivity analysis summary showing $[][][][]$ va
+lues across
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+\TU/lmr/m/n/10 parameter grid. Heatmaps display $[][][][]$ estimates for differ
+ent
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+\TU/lmr/m/n/10 combinations of baseline weeks (rows) and quiet-window start off
+sets
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+\TU/lmr/m/n/10 (columns). Across all comparisons, $[][][][]$ varies smoothly an
+d modestly
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+\TU/lmr/m/n/10 across a wide range of quiet-start offsets and baseline window l
+engths, with no
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+\TU/lmr/m/n/10 qualitative changes in sign or magnitude, indicating robustness 
+to reasonable
+
+Underfull \hbox (badness 10000) in paragraph at lines 2199--2199
+\TU/lmr/m/n/10 parameter choices. All panels use a unified color scale centered
+ at 1.0 to
+
+Underfull \hbox (badness 1092) in paragraph at lines 2228--2233
+\TU/lmr/m/n/10 hazard ratio), variance (trajectory stability), coverage (propor
+tion of 
+[40]
+Underfull \hbox (badness 1509) in paragraph at lines 2234--2246
+\TU/lmr/m/n/10 substantially different depletion geometry, KCOR diagnostics (po
+or 
+
+Underfull \hbox (badness 10000) in paragraph at lines 2249--2249
+|\TU/lmr/bx/n/10 3.4 Simulation grid: operating characteristics and failure-mod
+e
+
+LaTeX Warning: Reference `fig:sim_grid_overview' on page 41 undefined on input 
+line 2280.
+
+
+LaTeX Warning: Reference `fig:sim_grid_diagnostics' on page 41 undefined on inp
+ut line 2281.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
+[]\TU/lmr/m/n/10 Figure 9: []Simulation grid overview: $[][][][]$ trajectories 
+across prespecified
+
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
+\TU/lmr/m/n/10 scenarios, including gamma-frailty null with strong selection, i
+njected hazard
+
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
+\TU/lmr/m/n/10 increase and decrease, non-gamma frailty, quiet-window contamina
+tion, and
+
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
+\TU/lmr/m/n/10 sparse-event regimes. Under true null, $[][][][]$ remains near-f
+lat at 1;
+
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
+\TU/lmr/m/n/10 injected effects are detected in the expected direction; adverse
+ regimes are
+
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
+\TU/lmr/m/n/10 accompanied by degraded diagnostics and reduced interpretability
+.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2305--2305
+[]\TU/lmr/m/n/10 Figure 10: []Simulation diagnostics across scenarios: (i) cumu
+lative-hazard fit
+
+Underfull \hbox (badness 10000) in paragraph at lines 2305--2305
+\TU/lmr/m/n/10 RMSE over the quiet window, (ii) fitted frailty variance estimat
+es, and (iii) a
+
+Underfull \hbox (badness 10000) in paragraph at lines 2305--2305
+\TU/lmr/m/n/10 post-normalization linearity metric for depletion-neutralized ba
+seline
+
+Underfull \hbox (badness 10000) in paragraph at lines 2305--2305
+\TU/lmr/m/n/10 cumulative hazards. Diagnostics identify regimes in which frailt
+y
+[41] [42]
+
+LaTeX Warning: Reference `fig:s7_overview' on page 43 undefined on input line 2
+309.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+[]\TU/lmr/m/n/10 Figure 11: []S7 simulation results: $[][][][]$ trajectories de
+monstrating
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 temporal separability. Left panel shows harm scenario (r=1.2) wi
+th effect
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 window (weeks 10-25) and quiet window (weeks 80-140) non-overlap
+ping.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 Middle panel shows benefit scenario (r=0.8). Right panel shows o
+verlap
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 variant where effect window intersects quiet window, demonstrati
+ng diagnostic
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 degradation. $[][][][]$ remains approximately flat during the qu
+iet window
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 and deviates only during the effect window when temporal separab
+ility holds.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 Uncertainty bands (95% bootstrap intervals) are shown. The overl
+ap variant
+
+Underfull \hbox (badness 10000) in paragraph at lines 2328--2328
+\TU/lmr/m/n/10 is included to demonstrate failure-mode behavior and should not 
+be
+
+LaTeX Warning: Reference `fig:s7_diagnostics' on page 43 undefined on input lin
+e 2345.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2358--2358
+[]\TU/lmr/m/n/10 Figure 12: []S7 simulation diagnostics: Fitted frailty varianc
+e parameters ($[]$,
+
+Underfull \hbox (badness 10000) in paragraph at lines 2358--2358
+[]$\TU/lmr/m/n/10 ), fit quality (RMSE), and convergence status across S7 scena
+rios. The
+
+Underfull \hbox (badness 10000) in paragraph at lines 2358--2358
+\TU/lmr/m/n/10 overlap variant shows degraded fit quality, correctly signaling 
+violation of
+[43]
+
+LaTeX Warning: Reference `tbl:joint_frailty_comparison' on page 44 undefined on
+ input line 2369.
+
+
+Underfull \hbox (badness 1117) in paragraph at lines 2390--2398
+\TU/lmr/m/n/10 consistent with r=1.2) while remaining flat during the quiet win
+dow, 
+[44] [45]
+Underfull \hbox (badness 1087) in paragraph at lines 2399--2407
+\TU/lmr/m/n/10 they still fail: shared frailty Cox models improve upon standard
+ Cox 
+
+LaTeX Warning: Reference `tbl:comparison_estimands' on page 46 undefined on inp
+ut line 2420.
+
+
+LaTeX Warning: Reference `tbl:comparison_estimands' on page 46 undefined on inp
+ut line 2425.
+
+[46]
+
+LaTeX Warning: Reference `tbl:comparison_estimands' on page 47 undefined on inp
+ut line 2457.
+
+
+LaTeX Warning: Reference `tbl:comparison_estimands' on page 47 undefined on inp
+ut line 2464.
+
+
+LaTeX Warning: Reference `tbl:comparison_estimands' on page 47 undefined on inp
+ut line 2468.
+
+
+Underfull \hbox (badness 1137) in paragraph at lines 2459--2469
+\TU/lmr/m/n/10 rather than causal signal (Table []). Across selection-only scen
+arios, 
+
+LaTeX Warning: Reference `tbl:bootstrap_coverage' on page 47 undefined on input
+ line 2471.
+
+
+Underfull \hbox (badness 1067) in paragraph at lines 2483--2494
+\TU/lmr/m/n/10 curvature is dominated by dynamic HVE, then early-time deviation
+s 
+[47]
+
+LaTeX Warning: Reference `fig:skip_weeks_sensitivity' on page 48 undefined on i
+nput line 2504.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2520--2520
+[]\TU/lmr/m/n/10 Figure 13: []Skip-window sensitivity illustrates dynamic selec
+tion effects in
+
+Underfull \hbox (badness 10000) in paragraph at lines 2520--2520
+\TU/lmr/m/n/10 early follow-up. $[][][][]$ computed on the same fixed-cohort co
+mparison
+
+Underfull \hbox (badness 10000) in paragraph at lines 2520--2520
+\TU/lmr/m/n/10 using skip windows of 0, 4, and 8 weeks. Early-time departures t
+hat attenuate
+
+Underfull \hbox (badness 10000) in paragraph at lines 2520--2520
+\TU/lmr/m/n/10 with larger skip windows are consistent with dynamic selection i
+mmediately
+[48]
+Underfull \hbox (badness 1052) in paragraph at lines 2560--2565
+\TU/lmr/m/n/10 spanning a wide range of frailty heterogeneity and selection str
+ength. 
+
+Underfull \hbox (badness 2119) in paragraph at lines 2560--2565
+\TU/lmr/m/n/10 Diagnostics are intended to identify departures from the modelin
+g 
+
+Underfull \hbox (badness 1509) in paragraph at lines 2568--2580
+\TU/lmr/m/n/10 cumulative contrast whose interpretability is conditional on exp
+licit 
+[49]
+Underfull \hbox (badness 1014) in paragraph at lines 2600--2611
+\TU/lmr/m/n/10 KCOR’s estimand is whether a cumulative outcome contrast persist
+s 
+
+LaTeX Warning: Reference `tbl:positioning' on page 50 undefined on input line 2
+616.
+
+[50]
+Underfull \hbox (badness 1584) in paragraph at lines 2693--2696
+[]\TU/lmr/m/n/10 the fitted selection parameters can be used to invert observed
+ 
+
+Underfull \hbox (badness 1348) in paragraph at lines 2698--2702
+\TU/lmr/bx/n/10 on the stated selection model and quiet-window validity\TU/lmr/
+m/n/10 , as 
+[51]
+Underfull \hbox (badness 1199) in paragraph at lines 2727--2741
+\TU/lmr/m/n/10 by a particular intervention. Such claims require (i) clearly sp
+ecified 
+
+Underfull \hbox (badness 1147) in paragraph at lines 2727--2741
+\TU/lmr/m/n/10 and (iv) preferably replication across settings and outcomes. Ha
+ving 
+
+Underfull \hbox (badness 1107) in paragraph at lines 2727--2741
+\TU/lmr/m/n/10 estimators under controlled conditions, we apply KCOR to complet
+e 
+
+Underfull \hbox (badness 1043) in paragraph at lines 2742--2749
+\TU/lmr/m/n/10 correspondence, KCOR operates in cumulative-hazard space because
+ 
+[52] [53]
+Underfull \hbox (badness 1092) in paragraph at lines 2854--2859
+[]\TU/lmr/bx/n/10 Causal interpretation\TU/lmr/m/n/10 : KCOR supports interpret
+able cohort 
+
+Underfull \hbox (badness 2293) in paragraph at lines 2870--2887
+\TU/lmr/m/n/10 dynamics are driven by more complex mechanisms—such as 
+[54]
+Underfull \hbox (badness 1189) in paragraph at lines 2906--2916
+[]\TU/lmr/bx/n/10 External time-varying hazards masquerading as frailty 
+
+Underfull \hbox (badness 1939) in paragraph at lines 2906--2916
+\TU/lmr/m/n/10 changes can introduce curvature that is not well captured by 
+
+Underfull \hbox (badness 1281) in paragraph at lines 2906--2916
+\TU/lmr/m/n/10 gamma-frailty depletion alone. For example, COVID-19 waves 
+
+Underfull \hbox (badness 1348) in paragraph at lines 2916--2921
+[]\TU/lmr/bx/n/10 Extremely sparse cohorts\TU/lmr/m/n/10 : When events are rare
+, observed 
+
+Underfull \hbox (badness 2617) in paragraph at lines 2921--2924
+[]\TU/lmr/bx/n/10 Non-frailty-driven curvature\TU/lmr/m/n/10 : Administrative c
+ensoring, 
+[55]
+Underfull \hbox (badness 2073) in paragraph at lines 2941--2944
+\TU/lmr/m/n/10 near-flat at 1 under control constructions designed to induce 
+[56]
+Underfull \hbox (badness 1215) in paragraph at lines 2998--3006
+\TU/lmr/m/n/10 limited ability to distinguish such effects from residual baseli
+ne level 
+
+Underfull \hbox (badness 1748) in paragraph at lines 3007--3015
+[]\TU/lmr/m/n/10 Simulation results in §3.4 illustrate that when key assumption
+s are 
+
+Underfull \hbox (badness 1043) in paragraph at lines 3007--3015
+\TU/lmr/m/n/10 may become weakly identified. In such regimes, KCOR’s diagnostic
+s, 
+
+Underfull \hbox (badness 1127) in paragraph at lines 3016--3025
+\TU/lmr/m/n/10 random effects, cohort-specific frailty, or information-criterio
+n–based 
+
+Underfull \hbox (badness 1019) in paragraph at lines 3037--3049
+\TU/lmr/m/n/10 mortality and typically do not provide record-level timing neede
+d for 
+[57]
+Underfull \hbox (badness 1210) in paragraph at lines 3052--3069
+\TU/lmr/m/n/10 hazards and selection-induced depletion, KCOR provides a practic
+al 
+
+LaTeX Warning: Reference `fig:neg_control_10yr' on page 58 undefined on input l
+ine 3085.
+
+
+LaTeX Warning: Reference `fig:neg_control_20yr' on page 58 undefined on input l
+ine 3085.
+
+[58]
+Underfull \hbox (badness 10000) in paragraph at lines 3105--3108
+[]\TU/lmr/m/n/10 Sensitivity analysis outputs are available under 
+
+Underfull \hbox (badness 2913) in paragraph at lines 3108--3111
+[]\TU/lmr/m/n/10 The reference implementation includes example datasets in 
+
+Underfull \hbox (badness 10000) in paragraph at lines 3129--3136
+\TU/lmr/m/n/10 via functions 
+[59] [60] [61]
+Underfull \hbox (badness 10000) in paragraph at lines 3198--3198
+[]\TU/lmr/m/n/10 Table 1: Summary of two large matched observational studies
+
+Underfull \hbox (badness 10000) in paragraph at lines 3198--3198
+\TU/lmr/m/n/10 showing residual confounding / HVE despite meticulous
+
+Overfull \hbox (35.40091pt too wide) in paragraph at lines 3205--3206
+[]\TU/lmr/m/n/10 Matching/adjustment  
+
+Overfull \hbox (35.40091pt too wide) in paragraph at lines 3219--3220
+[]\TU/lmr/m/n/10 Matching/adjustment  
+
+Overfull \hbox (6.9239pt too wide) in paragraph at lines 3229--3229
+\TU/lmr/m/n/10 al. (Denmark)$[]$|  
+
+Overfull \hbox (8.93091pt too wide) in paragraph at lines 3240--3242
+\TU/lmr/m/n/10 selection/frailty 
+
+Underfull \hbox (badness 10000) in paragraph at lines 3251--3251
+[]\TU/lmr/m/n/10 Table 2: Comparison of Cox proportional hazards, Cox with
+[62]
+Underfull \hbox (badness 10000) in paragraph at lines 3300--3300
+[]\TU/lmr/m/n/10 Table 3: Positioning KCOR relative to non-proportional hazards
+
+
+Overfull \hbox (2.30446pt too wide) in paragraph at lines 3307--3308
+\TU/lmr/m/n/10 modeled  
+
+Overfull \hbox (18.72722pt too wide) in paragraph at lines 3309--3310
+\TU/lmr/m/n/10 selection-induced 
+
+Overfull \hbox (2.30446pt too wide) in paragraph at lines 3323--3324
+\TU/lmr/m/n/10 modeled  
+
+Overfull \hbox (18.72722pt too wide) in paragraph at lines 3325--3326
+\TU/lmr/m/n/10 selection-induced 
+
+Overfull \hbox (12.6467pt too wide) in paragraph at lines 3335--3335
+[]|\TU/lmr/m/n/10 Instantaneous 
+
+Overfull \hbox (5.42445pt too wide) in paragraph at lines 3335--3335
+\TU/lmr/m/n/10 predictor|  
+
+Overfull \hbox (12.6467pt too wide) in paragraph at lines 3337--3337
+[]|\TU/lmr/m/n/10 Instantaneous 
+
+Overfull \hbox (24.27446pt too wide) in paragraph at lines 3337--3337
+[]|\TU/lmr/m/n/10 Time-varying 
+
+Overfull \hbox (1.93446pt too wide) in paragraph at lines 3340--3340
+[]|\TU/lmr/m/n/10 Baseline 
+
+Overfull \hbox (3.14445pt too wide) in paragraph at lines 3342--3342
+[]|\TU/lmr/m/n/10 Additive 
+
+Overfull \hbox (1.51447pt too wide) in paragraph at lines 3344--3344
+[]|\TU/lmr/m/n/10 Survival 
+
+Overfull \hbox (13.9367pt too wide) in paragraph at lines 3346--3346
+[]|\TU/lmr/m/n/10 Heterogeneity- 
+
+Overfull \hbox (2.72446pt too wide) in paragraph at lines 3346--3346
+[]|\TU/lmr/m/n/10 Random 
+
+Overfull \hbox (9.7867pt too wide) in paragraph at lines 3348--3348
+[]|\TU/lmr/bx/n/10 Cumulative 
+
+Overfull \hbox (14.65446pt too wide) in paragraph at lines 3349--3349
+[]|\TU/lmr/bx/n/10 Depletion 
+
+Overfull \hbox (12.81447pt too wide) in paragraph at lines 3349--3349
+\TU/lmr/bx/n/10 geometry|  
+
+Overfull \hbox (4.36554pt too wide) in paragraph at lines 3350--3350
+[]|$[][][][]$|  
+[63]
+Underfull \hbox (badness 10000) in paragraph at lines 3410--3410
+[]\TU/lmr/m/n/10 Table 5: Step-by-step KCOR algorithm (high-level), with
+
+Overfull \hbox (27.6309pt too wide) in paragraph at lines 3444--3444
+\TU/lmr/m/n/10 (binning/transform)|  
+
+Overfull \hbox (1.37091pt too wide) in paragraph at lines 3444--3445
+\TU/lmr/m/n/10 zeros/sparsity|  
+
+Overfull \hbox (20.9109pt too wide) in paragraph at lines 3450--3451
+\TU/lmr/m/n/10 cumulative-hazard 
+
+Overfull \hbox (1.65091pt too wide) in paragraph at lines 3452--3453
+\TU/lmr/m/n/10 gamma-frailty 
+
+Overfull \hbox (32.31091pt too wide) in paragraph at lines 3452--3453
+\TU/lmr/m/n/10 depletion-neutralized 
+
+Overfull \hbox (34.39091pt too wide) in paragraph at lines 3453--3453
+[]|\TU/lmr/m/n/10 Depletion-neutralized 
+[64]
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+[]\TU/lmr/m/n/10 Table 6: Cox vs KCOR under a synthetic null with increasing
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 frailty heterogeneity. Two cohorts are simulated with identical
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 baseline hazards and no treatment effect \TU/lmr/m/it/10 (null b
+y construction)\TU/lmr/m/n/10 ;
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 cohorts differ only in gamma frailty variance ($[]$). Despite th
+e
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 true hazard ratio being 1 by construction, Cox regression
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 produces increasingly non-null hazard ratios as $[]$ increases,
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 reflecting depletion-induced non-proportional hazards. $[][][][]
+$
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 remains centered near unity with negligible post-normalization
+
+Underfull \hbox (badness 10000) in paragraph at lines 3478--3478
+\TU/lmr/m/n/10 slope across $[]$ values. (Exact values depend on simulation see
+d
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3513--3513
+ []|\TU/lmr/m/n/10 [0.969,
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3515--3515
+ []|\TU/lmr/m/n/10 [0.946,
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3517--3517
+ []|\TU/lmr/m/n/10 [0.926,
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3519--3519
+ []|\TU/lmr/m/n/10 [0.884,
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3521--3521
+ []|\TU/lmr/m/n/10 [0.787,
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3523--3523
+ []|\TU/lmr/m/n/10 [0.686,
+
+Overfull \hbox (1.04446pt too wide) in paragraph at lines 3525--3525
+ []|\TU/lmr/m/n/10 [0.539,
+[65]
+Underfull \hbox (badness 10000) in paragraph at lines 3533--3533
+[]\TU/lmr/m/n/10 Table 7: Example end-of-window $[][][][]$ values from the
+
+Underfull \hbox (badness 10000) in paragraph at lines 3533--3533
+\TU/lmr/m/n/10 empirical negative control (pooled/ASMR summaries), showing
+
+Underfull \hbox (badness 10000) in paragraph at lines 3533--3533
+\TU/lmr/m/n/10 near-null behavior under large composition differences. (Source:
+
+
+Package longtable Warning: Column widths have changed
+(longtable)                in table 7 on input line 3550.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3561--3561
+[]\TU/lmr/m/n/10 Table 8: Positive control results comparing injected hazard
+
+Underfull \hbox (badness 10000) in paragraph at lines 3561--3561
+\TU/lmr/m/n/10 multipliers to detected KCOR deviations. Both scenarios show
+
+Underfull \hbox (badness 10000) in paragraph at lines 3561--3561
+\TU/lmr/m/n/10 KCOR deviating from 1.0 in the expected direction, validating
+[66]
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+[]\TU/lmr/m/n/10 Table 9: Comparison of Cox regression, shared frailty Cox
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 models, and KCOR under selection-only and joint frailty +
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 treatment effect scenarios. Results are from S7 simulation (join
+t
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 frailty + treatment) and gamma-frailty null scenario
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 (selection-only). Standard Cox regression produces non-null
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 hazard ratios under selection-only conditions due to depletion
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 dynamics. Shared frailty Cox models partially mitigate this bias
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 but still exhibit residual non-null behavior. KCOR remains
+
+Underfull \hbox (badness 10000) in paragraph at lines 3614--3614
+\TU/lmr/m/n/10 near-null under selection-only conditions and correctly detects
+
+Overfull \hbox (18.45596pt too wide) in paragraph at lines 3617--3618
+[]\TU/lmr/m/n/10 Scenario  
+
+Overfull \hbox (2.37195pt too wide) in paragraph at lines 3621--3622
+[]\TU/lmr/m/n/10 Cox 
+
+Overfull \hbox (11.33803pt too wide) in paragraph at lines 3625--3626
+\TU/lmr/m/n/10 drift/year  
+
+Overfull \hbox (18.45596pt too wide) in paragraph at lines 3637--3638
+[]\TU/lmr/m/n/10 Scenario  
+
+Overfull \hbox (2.37195pt too wide) in paragraph at lines 3641--3642
+[]\TU/lmr/m/n/10 Cox 
+
+Overfull \hbox (11.33803pt too wide) in paragraph at lines 3645--3646
+\TU/lmr/m/n/10 drift/year  
+
+Overfull \hbox (45.65598pt too wide) in paragraph at lines 3657--3657
+[]|\TU/lmr/m/n/10 Gamma-frailty 
+
+Overfull \hbox (3.19194pt too wide) in paragraph at lines 3657--3657
+[]|\TU/lmr/m/n/10 0.87|  
+
+Overfull \hbox (4.56596pt too wide) in paragraph at lines 3659--3659
+\TU/lmr/m/n/10 harm 
+
+Overfull \hbox (12.84596pt too wide) in paragraph at lines 3659--3659
+\TU/lmr/m/n/10 (r=1.2)|  
+
+Overfull \hbox (3.19194pt too wide) in paragraph at lines 3659--3659
+[]|\TU/lmr/m/n/10 1.18|  
+
+Overfull \hbox (11.21596pt too wide) in paragraph at lines 3661--3661
+\TU/lmr/m/n/10 benefit 
+
+Overfull \hbox (12.84596pt too wide) in paragraph at lines 3661--3661
+\TU/lmr/m/n/10 (r=0.8)|  
+
+Overfull \hbox (3.19194pt too wide) in paragraph at lines 3661--3661
+[]|\TU/lmr/m/n/10 0.83|  
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+[]\TU/lmr/m/n/10 Table 10: Simulation comparison of KCOR and alternative
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 estimands under selection-induced non-proportional hazards.
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 Results are summarized across simulation scenarios (null
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 scenarios: gamma-frailty null, non-gamma frailty, contamination,
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 sparse events; effect scenarios: injected hazard increase/decrea
+se).
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 KCOR remains stable under selection-only regimes, while RMST
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 inherits depletion bias and time-varying Cox captures
+
+Underfull \hbox (badness 10000) in paragraph at lines 3679--3679
+\TU/lmr/m/n/10 non-proportional hazards without normalizing selection geometry.
+
+
+Overfull \hbox (10.37965pt too wide) in paragraph at lines 3682--3683
+[]\TU/lmr/m/n/10 Method  
+
+Overfull \hbox (24.2734pt too wide) in paragraph at lines 3688--3689
+[]\TU/lmr/m/n/10 Variance/instability  
+
+Overfull \hbox (10.37965pt too wide) in paragraph at lines 3696--3697
+[]\TU/lmr/m/n/10 Method  
+
+Overfull \hbox (24.2734pt too wide) in paragraph at lines 3702--3703
+[]\TU/lmr/m/n/10 Variance/instability  
+
+Overfull \hbox (10.74965pt too wide) in paragraph at lines 3710--3710
+[]|\TU/lmr/bx/n/10 KCOR|  
+
+Overfull \hbox (3.23476pt too wide) in paragraph at lines 3710--3710
+[]|\TU/lmr/m/n/10 Cumulative 
+
+Overfull \hbox (50.71477pt too wide) in paragraph at lines 3710--3710
+\TU/lmr/m/n/10 (depletion-normalized)|  
+
+Overfull \hbox (3.9344pt too wide) in paragraph at lines 3711--3713
+\TU/lmr/m/n/10 selection-induced 
+
+Overfull \hbox (10.41965pt too wide) in paragraph at lines 3713--3713
+[]|\TU/lmr/bx/n/10 RMST|  
+
+Overfull \hbox (11.31476pt too wide) in paragraph at lines 3717--3717
+[]|\TU/lmr/m/n/10 Time-varying 
+
+Overfull \hbox (3.1344pt too wide) in paragraph at lines 3718--3721
+\TU/lmr/m/n/10 non-proportional 
+[67]
+Underfull \hbox (badness 10000) in paragraph at lines 3732--3732
+[]\TU/lmr/m/n/10 Table 11: Bootstrap coverage for KCOR uncertainty intervals.
+
+Underfull \hbox (badness 10000) in paragraph at lines 3732--3732
+\TU/lmr/m/n/10 Coverage is evaluated across simulation scenarios using stratifi
+ed
+
+Underfull \hbox (badness 10000) in paragraph at lines 3732--3732
+\TU/lmr/m/n/10 bootstrap resampling. Nominal 95% confidence intervals are
+
+Underfull \hbox (badness 10000) in paragraph at lines 3732--3732
+\TU/lmr/m/n/10 compared to empirical coverage (proportion of simulations where
+
+Overfull \hbox (5.59003pt too wide) in paragraph at lines 3759--3759
+[]|\TU/lmr/m/n/10 Gamma-frailty 
+
+Overfull \hbox (0.57254pt too wide) in paragraph at lines 3759--3761
+\TU/lmr/m/n/10 evaluated 
+
+Overfull \hbox (18.03255pt too wide) in paragraph at lines 3759--3761
+\TU/lmr/m/n/10 selection-only 
+
+Overfull \hbox (3.69254pt too wide) in paragraph at lines 3759--3761
+\TU/lmr/m/n/10 conditions|  
+
+Overfull \hbox (0.57254pt too wide) in paragraph at lines 3761--3763
+\TU/lmr/m/n/10 evaluated 
+
+Overfull \hbox (1.99254pt too wide) in paragraph at lines 3761--3763
+\TU/lmr/m/n/10 treatment 
+
+Overfull \hbox (0.57254pt too wide) in paragraph at lines 3763--3765
+\TU/lmr/m/n/10 evaluated 
+
+Overfull \hbox (1.99254pt too wide) in paragraph at lines 3763--3765
+\TU/lmr/m/n/10 treatment 
+
+Overfull \hbox (27.90254pt too wide) in paragraph at lines 3765--3767
+\TU/lmr/m/n/10 misspecification|  
+[68]
+Underfull \hbox (badness 10000) in paragraph at lines 3776--3776
+[]\TU/lmr/m/n/10 Table 12: Table C.1. Estimated gamma-frailty variance (fitted
+
+Underfull \hbox (badness 10000) in paragraph at lines 3776--3776
+\TU/lmr/m/n/10 frailty variance) by age band and vaccination status for Czech
+[69]
+Underfull \hbox (badness 10000) in paragraph at lines 3839--3839
+[]\TU/lmr/m/n/10 Table 13: Table C.2. Diagnostic gate for Czech application:
+
+Underfull \hbox (badness 1546) in paragraph at lines 3808--3877
+\TU/lmr/m/n/10 effectively linear cumulative hazards over the quiet window and 
+are 
+
+Underfull \hbox (badness 10000) in paragraph at lines 3886--3886
+[]\TU/lmr/m/n/10 Table 14: Table C.3. Ratio of observed cumulative mortality
+
+Underfull \hbox (badness 10000) in paragraph at lines 3886--3886
+\TU/lmr/m/n/10 hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose
+
+Overfull \hbox (1.31801pt too wide) in paragraph at lines 3895--3896
+ []\TU/lmr/m/n/10 Ratio
+
+Overfull \hbox (1.31801pt too wide) in paragraph at lines 3907--3908
+ []\TU/lmr/m/n/10 Ratio
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3913--3914
+ []|\TU/lmr/m/n/10 1.2776|
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3914--3915
+ []|\TU/lmr/m/n/10 1.5622|
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3915--3916
+ []|\TU/lmr/m/n/10 1.9655|
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3916--3917
+ []|\TU/lmr/m/n/10 2.1343|
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3917--3918
+ []|\TU/lmr/m/n/10 1.8355|
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3918--3919
+ []|\TU/lmr/m/n/10 1.5008|
+
+Overfull \hbox (5.06801pt too wide) in paragraph at lines 3919--3920
+ []|\TU/lmr/m/n/10 0.3159|
+[70]
+Overfull \hbox (1.78091pt too wide) in paragraph at lines 3951--3952
+[]\TU/lmr/m/n/10 Interpretation  
+
+Overfull \hbox (2.9409pt too wide) in paragraph at lines 3960--3961
+\TU/lmr/m/n/10 discontinuities 
+
+Overfull \hbox (4.0709pt too wide) in paragraph at lines 3961--3961
+\TU/lmr/m/n/10 reclassification|  
+
+Overfull \hbox (29.0209pt too wide) in paragraph at lines 3965--3966
+\TU/lmr/m/n/10 policy/measurement 
+
+Overfull \hbox (4.7209pt too wide) in paragraph at lines 3968--3968
+\TU/lmr/m/n/10 Time-invariant 
+
+Overfull \hbox (1.7509pt too wide) in paragraph at lines 3968--3969
+\TU/lmr/m/n/10 time-invariant 
+
+Overfull \hbox (0.64091pt too wide) in paragraph at lines 3969--3969
+\TU/lmr/m/n/10 normalization|  
+
+Overfull \hbox (9.3209pt too wide) in paragraph at lines 3974--3974
+\TU/lmr/m/n/10 misspecification|  
+
+Overfull \hbox (22.36092pt too wide) in paragraph at lines 3974--3976
+\TU/lmr/m/n/10 over-interpretation|  
+
+Overfull \hbox (1.0809pt too wide) in paragraph at lines 3976--3976
+\TU/lmr/m/n/10 Quiet-window 
+
+Overfull \hbox (15.97092pt too wide) in paragraph at lines 3976--3977
+\TU/lmr/m/n/10 frailty-estimation 
+
+Overfull \hbox (2.5509pt too wide) in paragraph at lines 3978--3978
+[]|\TU/lmr/m/n/10 Contaminated 
+[71] [72]
+
+./paper_debug.tex:4041: LaTeX Error: Something's wrong--perhaps a missing \item
+.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.4041 derivation}
+                  \label{a.2-gamma-frailty-identity-derivation}
+Output written on paper_debug.pdf (72 pages).
+Transcript written on paper_debug.log.
