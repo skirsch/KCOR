@@ -3,7 +3,8 @@
 -- when needed (i.e., avoid pushing the first table away from a "Tables" header).
 --
 -- Rules:
--- - Always insert a page break AFTER every table (so following text starts fresh).
+-- - Do NOT insert a page break AFTER tables (so any notes/text immediately
+--   following a table can remain on the same page).
 -- - Insert a page break BEFORE a table only if the previous meaningful block is:
 --     - not a page break, AND
 --     - not a Header (so "Tables" heading can stay with the first table).
@@ -72,8 +73,7 @@ function Pandoc(doc)
         table.insert(out, caption)
       end
       table.insert(out, block)
-      table.insert(out, pb)
-      prev = pb
+      prev = block
     else
       table.insert(out, block)
       -- track the last non-Null block we emitted
