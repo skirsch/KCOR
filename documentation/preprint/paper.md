@@ -1366,6 +1366,7 @@ Table: KCOR assumptions and corresponding diagnostics. {#tbl:appendixD_assumptio
 | A4. Adequacy of gamma frailty | Gamma family adequately approximates frailty mixing | Residual curvature or poor fit diagnostics after inversion | Frailty distribution misspecification | Treat as diagnostic; avoid over-interpretation |
 | A5. Quiet-window validity | No intervention effect during frailty-estimation window | Slope breaks or non-parallel trends within quiet window | Contaminated quiet window | Redefine quiet window; rerun diagnostics |
 
+
 ```{=latex}
 \endgroup
 ```
