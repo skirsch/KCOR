@@ -23,7 +23,7 @@ PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -108,6 +108,60 @@ KCOR_variable:
 # Time series aggregation (delegates to code/Makefile target ts)
 ts:
 	$(MAKE) -C $(CODE_DIR) ts DATASET=$(DATASET)
+
+# Identifiability analysis: weekly incident booster (Czech 2021)
+#
+# Usage:
+#   make identifiability
+#   make identifiability IDENT_MAX_ROWS=1000000 IDENT_OUTDIR=/tmp/kcor_ident_1m
+#
+IDENT_DIR := identifiability/Czech/code
+IDENT_SCRIPT := $(IDENT_DIR)/build_weekly_emulation.py
+IDENT_INPUT ?= data/$(DATASET)/records.csv
+# Default to a repo-local output directory (permanent, Windows-backed in WSL).
+# Put outputs under identifiability/<DATASET>/booster/ to avoid redundant naming.
+IDENT_OUTDIR ?= identifiability/$(DATASET)/booster
+IDENT_ENROLLMENT_START ?= 2021-10-18
+IDENT_N_ENROLLMENTS ?= 10
+IDENT_LOOKBACK_DAYS ?= 7
+# Dose3 incident window length (weeks before enrollment)
+IDENT_DOSE3_INCIDENT_LOOKBACK_WEEKS ?= 4
+IDENT_FOLLOWUP_WEEKS ?= 26
+# Birth-year filter (optional). Leave blank for all ages.
+IDENT_BIRTH_YEAR_MIN ?=
+IDENT_BIRTH_YEAR_MAX ?=
+IDENT_MAX_ROWS ?=
+IDENT_FILTER_NON_MRNA ?= 1
+
+IDENT_ARGS := \
+	--input $(IDENT_INPUT) \
+	--outdir $(IDENT_OUTDIR) \
+	--enrollment-start $(IDENT_ENROLLMENT_START) \
+	--n-enrollments $(IDENT_N_ENROLLMENTS) \
+	--lookback-days $(IDENT_LOOKBACK_DAYS) \
+	--dose3-incident-lookback-weeks $(IDENT_DOSE3_INCIDENT_LOOKBACK_WEEKS) \
+	--followup-weeks $(IDENT_FOLLOWUP_WEEKS)
+
+ifneq ($(strip $(IDENT_BIRTH_YEAR_MIN)),)
+ifneq ($(strip $(IDENT_BIRTH_YEAR_MAX)),)
+IDENT_ARGS += --birth-year-min $(IDENT_BIRTH_YEAR_MIN) --birth-year-max $(IDENT_BIRTH_YEAR_MAX)
+endif
+endif
+
+ifneq ($(strip $(IDENT_MAX_ROWS)),)
+IDENT_ARGS += --max-rows $(IDENT_MAX_ROWS)
+endif
+
+ifeq ($(IDENT_FILTER_NON_MRNA),0)
+IDENT_ARGS += --no-filter-non-mrna
+endif
+
+identifiability: $(VENV_PYTHON)
+	@echo "Running identifiability emulation..."
+	@echo "  Script: $(IDENT_SCRIPT)"
+	@echo "  Input:  $(IDENT_INPUT)"
+	@echo "  Outdir: $(IDENT_OUTDIR)"
+	@$(abspath $(VENV_PYTHON)) $(IDENT_SCRIPT) $(IDENT_ARGS)
 
 # Validation suite (DS-CMRR, Kaplan–Meier, GLM)
 validation:
