@@ -117,21 +117,24 @@ ts:
 #
 IDENT_DIR := identifiability/Czech/code
 IDENT_SCRIPT := $(IDENT_DIR)/build_weekly_emulation.py
+IDENT_ANALYZE_SCRIPT := $(IDENT_DIR)/analyze_identifiability.py
 IDENT_INPUT ?= data/$(DATASET)/records.csv
 # Default to a repo-local output directory (permanent, Windows-backed in WSL).
 # Put outputs under identifiability/<DATASET>/booster/ to avoid redundant naming.
 IDENT_OUTDIR ?= identifiability/$(DATASET)/booster
 IDENT_ENROLLMENT_START ?= 2021-10-18
-IDENT_N_ENROLLMENTS ?= 10
+IDENT_N_ENROLLMENTS ?= 16
 IDENT_LOOKBACK_DAYS ?= 7
 # Dose3 incident window length (weeks before enrollment)
 IDENT_DOSE3_INCIDENT_LOOKBACK_WEEKS ?= 4
+IDENT_DOSE3_BIN_WEEKS ?= 4
 IDENT_FOLLOWUP_WEEKS ?= 26
 # Birth-year filter (optional). Leave blank for all ages.
 IDENT_BIRTH_YEAR_MIN ?=
 IDENT_BIRTH_YEAR_MAX ?=
 IDENT_MAX_ROWS ?=
 IDENT_FILTER_NON_MRNA ?= 1
+IDENT_ANALYZE ?= 1
 
 IDENT_ARGS := \
 	--input $(IDENT_INPUT) \
@@ -140,28 +143,137 @@ IDENT_ARGS := \
 	--n-enrollments $(IDENT_N_ENROLLMENTS) \
 	--lookback-days $(IDENT_LOOKBACK_DAYS) \
 	--dose3-incident-lookback-weeks $(IDENT_DOSE3_INCIDENT_LOOKBACK_WEEKS) \
+	--dose3-bin-weeks $(IDENT_DOSE3_BIN_WEEKS) \
+	--followup-weeks $(IDENT_FOLLOWUP_WEEKS)
+
+# Common args for multi-variant runs (outdir set per variant)
+IDENT_COMMON_ARGS := \
+	--input $(IDENT_INPUT) \
+	--enrollment-start $(IDENT_ENROLLMENT_START) \
+	--n-enrollments $(IDENT_N_ENROLLMENTS) \
+	--lookback-days $(IDENT_LOOKBACK_DAYS) \
+	--dose3-incident-lookback-weeks $(IDENT_DOSE3_INCIDENT_LOOKBACK_WEEKS) \
+	--dose3-bin-weeks $(IDENT_DOSE3_BIN_WEEKS) \
 	--followup-weeks $(IDENT_FOLLOWUP_WEEKS)
 
 ifneq ($(strip $(IDENT_BIRTH_YEAR_MIN)),)
 ifneq ($(strip $(IDENT_BIRTH_YEAR_MAX)),)
 IDENT_ARGS += --birth-year-min $(IDENT_BIRTH_YEAR_MIN) --birth-year-max $(IDENT_BIRTH_YEAR_MAX)
+IDENT_COMMON_ARGS += --birth-year-min $(IDENT_BIRTH_YEAR_MIN) --birth-year-max $(IDENT_BIRTH_YEAR_MAX)
 endif
 endif
 
 ifneq ($(strip $(IDENT_MAX_ROWS)),)
 IDENT_ARGS += --max-rows $(IDENT_MAX_ROWS)
+IDENT_COMMON_ARGS += --max-rows $(IDENT_MAX_ROWS)
 endif
 
 ifeq ($(IDENT_FILTER_NON_MRNA),0)
 IDENT_ARGS += --no-filter-non-mrna
+IDENT_COMMON_ARGS += --no-filter-non-mrna
 endif
 
 identifiability: $(VENV_PYTHON)
-	@echo "Running identifiability emulation..."
+	@echo "Running identifiability emulation (age-stratified outputs; single read of records.csv)..."
 	@echo "  Script: $(IDENT_SCRIPT)"
 	@echo "  Input:  $(IDENT_INPUT)"
-	@echo "  Outdir: $(IDENT_OUTDIR)"
-	@$(abspath $(VENV_PYTHON)) $(IDENT_SCRIPT) $(IDENT_ARGS)
+	@echo "  Base:   $(IDENT_OUTDIR)"
+	@set -e; \
+	common_args="--input $(IDENT_INPUT) --enrollment-start $(IDENT_ENROLLMENT_START) --n-enrollments $(IDENT_N_ENROLLMENTS) --lookback-days $(IDENT_LOOKBACK_DAYS) --dose3-incident-lookback-weeks $(IDENT_DOSE3_INCIDENT_LOOKBACK_WEEKS) --dose3-bin-weeks $(IDENT_DOSE3_BIN_WEEKS) --followup-weeks $(IDENT_FOLLOWUP_WEEKS)"; \
+	if [ -n "$(strip $(IDENT_MAX_ROWS))" ]; then common_args="$$common_args --max-rows $(IDENT_MAX_ROWS)"; fi; \
+	if [ "$(IDENT_FILTER_NON_MRNA)" = "0" ]; then common_args="$$common_args --no-filter-non-mrna"; fi; \
+	$(abspath $(VENV_PYTHON)) $(IDENT_SCRIPT) --outdir "$(IDENT_OUTDIR)" $$common_args \
+		--strata all_ages \
+		--strata born_193x:1930:1939 \
+		--strata born_194x:1940:1949 \
+		--strata born_195x:1950:1959; \
+	if [ "$(IDENT_ANALYZE)" = "1" ]; then \
+		for name in all_ages born_193x born_194x born_195x; do \
+			echo ""; \
+			echo "Post-run analysis (peak locking): $$name"; \
+			$(abspath $(VENV_PYTHON)) $(IDENT_ANALYZE_SCRIPT) --outdir "$(IDENT_OUTDIR)/$$name" > "$(IDENT_OUTDIR)/$$name/analysis_report.txt"; \
+			echo "  Wrote: $(IDENT_OUTDIR)/$$name/analysis_report.txt"; \
+		done; \
+	fi
+
+.PHONY: identifiability-locking
+IDENT_LOCKING_OUTDIR ?= $(IDENT_OUTDIR)/all_ages
+identifiability-locking: $(VENV_PYTHON)
+	@echo "Identifiability locking summary (from series.csv in $(IDENT_LOCKING_OUTDIR))"
+	@tmp="/tmp/kcor_ident_locking_$$RANDOM.txt"; \
+	$(abspath $(VENV_PYTHON)) $(IDENT_ANALYZE_SCRIPT) --outdir $(IDENT_LOCKING_OUTDIR) > $$tmp; \
+	awk 'BEGIN{f=0} /^=== Locking summary ===/{f=1} f{print}' $$tmp; \
+	rm -f $$tmp
+
+.PHONY: identifiability-falsify
+IDENT_FALSIFY_DIR ?= $(IDENT_OUTDIR)/falsification
+IDENT_PLACEBO_START_WEEKS ?= 4
+IDENT_PLACEBO_END_WEEKS ?= 8
+IDENT_EVENTUAL_HORIZON_WEEKS ?= 12
+IDENT_EXCLUDE_RECENT_INFECTION_WEEKS ?= 8
+# Time-since-dose2 bins in DAYS. Format: "min-max min-max ..." where max is exclusive.
+IDENT_TSD2_BINS ?= 0-90 90-180 180-270 270-360 360-100000
+
+# Selection/eligibility falsification knobs
+IDENT_TT_TSD2_MIN_DAYS ?= 180
+IDENT_TT_TSD2_MAX_DAYS ?= 360
+IDENT_TT_TREATED_WINDOW_WEEKS ?= 1
+IDENT_LEAD_MAX_WEEKS ?= 8
+IDENT_PERM_REPS ?= 200
+IDENT_PERM_SEED ?= 1
+
+identifiability-falsify: $(VENV_PYTHON)
+	@echo "Running identifiability falsification suite..."
+	@echo "  Base outdir: $(IDENT_FALSIFY_DIR)"
+	@mkdir -p $(IDENT_FALSIFY_DIR)
+	@set -e; \
+	run_variant() { \
+		name="$$1"; shift; \
+		vdir="$(IDENT_FALSIFY_DIR)/$$name"; \
+		mkdir -p "$$vdir"; \
+		echo ""; \
+		echo "=== Variant: $$name ==="; \
+		$(abspath $(VENV_PYTHON)) $(IDENT_SCRIPT) --outdir "$$vdir" $(IDENT_COMMON_ARGS) "$$@"; \
+		$(abspath $(VENV_PYTHON)) $(IDENT_ANALYZE_SCRIPT) --outdir "$$vdir" --auc-weeks 8 --label "$$name" --metrics-csv "$$vdir/analysis_metrics.csv" > "$$vdir/analysis_report.txt"; \
+	}; \
+	run_variant baseline; \
+	run_variant placebo_future$(IDENT_PLACEBO_START_WEEKS)_$(IDENT_PLACEBO_END_WEEKS) --dose3-future-start-weeks $(IDENT_PLACEBO_START_WEEKS) --dose3-future-end-weeks $(IDENT_PLACEBO_END_WEEKS); \
+	run_variant eventual_booster$(IDENT_EVENTUAL_HORIZON_WEEKS) --restrict-dose2-eventual-dose3-weeks $(IDENT_EVENTUAL_HORIZON_WEEKS); \
+	run_variant exclude_recent_infection$(IDENT_EXCLUDE_RECENT_INFECTION_WEEKS) --exclude-recent-infection-weeks $(IDENT_EXCLUDE_RECENT_INFECTION_WEEKS); \
+	run_variant selection_suite_tsd2$(IDENT_TT_TSD2_MIN_DAYS)_$(IDENT_TT_TSD2_MAX_DAYS) \
+		--selection-suite \
+		--tt-tsd2-min-days $(IDENT_TT_TSD2_MIN_DAYS) \
+		--tt-tsd2-max-days $(IDENT_TT_TSD2_MAX_DAYS) \
+		--tt-treated-window-weeks $(IDENT_TT_TREATED_WINDOW_WEEKS) \
+		--lead-max-weeks $(IDENT_LEAD_MAX_WEEKS) \
+		--perm-reps $(IDENT_PERM_REPS) \
+		--perm-seed $(IDENT_PERM_SEED); \
+	for bin in $(IDENT_TSD2_BINS); do \
+		min="$${bin%-*}"; max="$${bin#*-}"; \
+		run_variant "tsd2_$${min}_$${max}" --restrict-tsd2-min-days "$$min" --restrict-tsd2-max-days "$$max"; \
+	done; \
+	$(abspath $(VENV_PYTHON)) identifiability/Czech/code/aggregate_falsification.py --base "$(IDENT_FALSIFY_DIR)" --out "$(IDENT_FALSIFY_DIR)/falsification_summary.csv"
+
+.PHONY: identifiability-falsify-selection
+identifiability-falsify-selection: $(VENV_PYTHON)
+	@echo "Running identifiability selection/eligibility falsification suite..."
+	@echo "  Base outdir: $(IDENT_FALSIFY_DIR)"
+	@mkdir -p $(IDENT_FALSIFY_DIR)
+	@set -e; \
+	name="selection_suite_tsd2$(IDENT_TT_TSD2_MIN_DAYS)_$(IDENT_TT_TSD2_MAX_DAYS)"; \
+	vdir="$(IDENT_FALSIFY_DIR)/$$name"; \
+	mkdir -p "$$vdir"; \
+	echo ""; \
+	echo "=== Variant: $$name ==="; \
+	$(abspath $(VENV_PYTHON)) $(IDENT_SCRIPT) --outdir "$$vdir" $(IDENT_COMMON_ARGS) \
+		--selection-suite \
+		--tt-tsd2-min-days $(IDENT_TT_TSD2_MIN_DAYS) \
+		--tt-tsd2-max-days $(IDENT_TT_TSD2_MAX_DAYS) \
+		--tt-treated-window-weeks $(IDENT_TT_TREATED_WINDOW_WEEKS) \
+		--lead-max-weeks $(IDENT_LEAD_MAX_WEEKS) \
+		--perm-reps $(IDENT_PERM_REPS) \
+		--perm-seed $(IDENT_PERM_SEED); \
+	$(abspath $(VENV_PYTHON)) $(IDENT_ANALYZE_SCRIPT) --outdir "$$vdir" --auc-weeks 8 --label "$$name" --metrics-csv "$$vdir/analysis_metrics.csv" > "$$vdir/analysis_report.txt"
 
 # Validation suite (DS-CMRR, Kaplan–Meier, GLM)
 validation:
@@ -353,6 +465,9 @@ help:
 	@echo "  CMR_from_krf    - Adapt KRF CSV to Czech-like and run CMR (code/)"
 	@echo "  monte_carlo     - Run Monte Carlo bootstrap sampling (4 iterations by default, override with MC_ITERATIONS=N)"
 	@echo "  convert         - Run dataset converter (data/$(DATASET)/)"
+	@echo "  identifiability - Weekly incident booster identifiability emulation (writes $(IDENT_OUTDIR)/all_ages plus born_193x/ born_194x/ born_195x/)"
+	@echo "  identifiability-falsify - Run multi-variant falsification suite (writes $(IDENT_FALSIFY_DIR))"
+	@echo "  identifiability-falsify-selection - Run only the selection/eligibility suite variant"
 	@echo "  validation      - Run DS-CMRR, Kaplan–Meier, and GLM validation"
 	@echo "  km              - Run only Kaplan–Meier validation"
 	@echo "  glm             - Run only GLM validation"
@@ -406,6 +521,21 @@ help:
 	@echo "Setup:"
 	@echo "  make install        - Create .venv virtual environment and install dependencies from requirements.txt"
 	@echo "  make install-debian - Install dependencies using Debian packages (requires sudo)"
+	@echo ""
+	@echo "Identifiability falsification knobs (optional overrides):"
+	@echo "  IDENT_OUTDIR=<path>                    - Base identifiability outdir (default: identifiability/$(DATASET)/booster)"
+	@echo "  IDENT_FALSIFY_DIR=<path>               - Base falsification outdir (default: $(IDENT_OUTDIR)/falsification)"
+	@echo "  IDENT_PLACEBO_START_WEEKS=<int>        - Future-booster placebo start (default: $(IDENT_PLACEBO_START_WEEKS))"
+	@echo "  IDENT_PLACEBO_END_WEEKS=<int>          - Future-booster placebo end (default: $(IDENT_PLACEBO_END_WEEKS))"
+	@echo "  IDENT_EVENTUAL_HORIZON_WEEKS=<int>     - Eventual-booster restriction horizon (default: $(IDENT_EVENTUAL_HORIZON_WEEKS))"
+	@echo "  IDENT_EXCLUDE_RECENT_INFECTION_WEEKS=<int> - Recent infection exclusion lookback (default: $(IDENT_EXCLUDE_RECENT_INFECTION_WEEKS))"
+	@echo "  IDENT_TSD2_BINS=\"min-max ...\"          - tsd2 bin sweep for falsify target (default: $(IDENT_TSD2_BINS))"
+	@echo "  IDENT_TT_TSD2_MIN_DAYS=<int>           - Selection suite tsd2 min days (default: $(IDENT_TT_TSD2_MIN_DAYS))"
+	@echo "  IDENT_TT_TSD2_MAX_DAYS=<int>           - Selection suite tsd2 max days (default: $(IDENT_TT_TSD2_MAX_DAYS))"
+	@echo "  IDENT_TT_TREATED_WINDOW_WEEKS=<int>    - Selection suite incident treated window weeks (default: $(IDENT_TT_TREATED_WINDOW_WEEKS))"
+	@echo "  IDENT_LEAD_MAX_WEEKS=<int>             - Selection suite lead max k (default: $(IDENT_LEAD_MAX_WEEKS))"
+	@echo "  IDENT_PERM_REPS=<int>                  - Selection suite permutation reps (default: $(IDENT_PERM_REPS))"
+	@echo "  IDENT_PERM_SEED=<int>                  - Selection suite permutation RNG seed (default: $(IDENT_PERM_SEED))"
 	@echo ""
 	@echo "Note: KCOR v5.1+ uses slope7 mode and no longer requires cvxpy (it was only needed for legacy quadratic mode)."
 	@echo "      The 'make install' target automatically creates and uses .venv."
