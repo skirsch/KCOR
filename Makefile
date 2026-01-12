@@ -343,7 +343,8 @@ sensitivity:
 # Build methods paper (Pandoc → LaTeX/PDF)
 #
 # Default inputs live in documentation/preprint/:
-# - paper.md (combined main paper + supplement, Pandoc-crossref markup)
+# - paper.md (main manuscript)
+# - supplement.md (Supplementary Information)
 # - refs.bib
 # - american-medical-association.csl
 #
@@ -362,10 +363,13 @@ paper: $(PAPER_DIR)/$(PAPER_PDF) $(PAPER_DIR)/$(PAPER_TEX)
 paper-pdf: $(PAPER_DIR)/$(PAPER_PDF)
 paper-tex: $(PAPER_DIR)/$(PAPER_TEX)
 
-$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+# Optional: include Supplementary Information when building the combined paper outputs.
+PAPER_SUPP_MD ?= supplement.md
+
+$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_TEX)"
 	@cd $(PAPER_DIR) && \
-		pandoc $(PAPER_MD) \
+		pandoc $(PAPER_MD) $(PAPER_SUPP_MD) \
 			--to=latex \
 			--filter pandoc-crossref \
 			--lua-filter pagebreak-tables.lua \
@@ -385,17 +389,29 @@ $(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(
 			exit 1; \
 		)
 
-# Build PDF
-$(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
-	@echo "Building PDF: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_PDF)"
+# Split outputs (main manuscript only, SI only)
+MAIN_MD ?= paper.md
+MAIN_TEX ?= main.tex
+MAIN_PDF ?= main.pdf
+SUPP_MD ?= supplement.md
+SUPP_TEX ?= supplement.tex
+SUPP_PDF ?= supplement.pdf
+
+.PHONY: paper-all main-pdf main-tex supplement-pdf supplement-tex
+
+paper-all: $(PAPER_DIR)/$(PAPER_PDF) $(PAPER_DIR)/$(PAPER_TEX) $(PAPER_DIR)/$(MAIN_PDF) $(PAPER_DIR)/$(MAIN_TEX) $(PAPER_DIR)/$(SUPP_PDF) $(PAPER_DIR)/$(SUPP_TEX)
+	@echo "Built: $(PAPER_DIR)/$(PAPER_PDF), $(PAPER_DIR)/$(MAIN_PDF), $(PAPER_DIR)/$(SUPP_PDF)"
+
+main-pdf: $(PAPER_DIR)/$(MAIN_PDF)
+main-tex: $(PAPER_DIR)/$(MAIN_TEX)
+supplement-pdf: $(PAPER_DIR)/$(SUPP_PDF)
+supplement-tex: $(PAPER_DIR)/$(SUPP_TEX)
+
+$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building LaTeX: $(PAPER_DIR)/$(MAIN_MD) -> $(PAPER_DIR)/$(MAIN_TEX)"
 	@cd $(PAPER_DIR) && \
-		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
-			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
-			exit 1; \
-		fi; \
-		pandoc $(PAPER_MD) \
-			--to=pdf \
-			--pdf-engine="$(PAPER_PDF_ENGINE)" \
+		pandoc $(MAIN_MD) \
+			--to=latex \
 			--filter pandoc-crossref \
 			--lua-filter pagebreak-tables.lua \
 			--metadata-file pandoc-crossref.yaml \
@@ -406,13 +422,73 @@ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_BIB) $(
 			-H header.tex \
 			--bibliography=$(PAPER_BIB) \
 			--csl=$(PAPER_CSL) \
-			-o $(PAPER_PDF).new
+			-o $(MAIN_TEX).new
 	@cd $(PAPER_DIR) && \
-		mv -f $(PAPER_PDF).new $(PAPER_PDF) 2>/dev/null || ( \
-			echo "ERROR: could not overwrite $(PAPER_DIR)/$(PAPER_PDF) (is it open?)."; \
-			echo "Leaving: $(PAPER_DIR)/$(PAPER_PDF).new"; \
+		mv -f $(MAIN_TEX).new $(MAIN_TEX) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(MAIN_TEX) (is it open?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(MAIN_TEX).new"; \
 			exit 1; \
 		)
+
+$(PAPER_DIR)/$(SUPP_TEX): $(PAPER_DIR)/$(SUPP_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+	@echo "Building LaTeX: $(PAPER_DIR)/$(SUPP_MD) -> $(PAPER_DIR)/$(SUPP_TEX)"
+	@cd $(PAPER_DIR) && \
+		pandoc $(SUPP_MD) \
+			--to=latex \
+			--filter pandoc-crossref \
+			--lua-filter pagebreak-tables.lua \
+			--metadata-file pandoc-crossref.yaml \
+			--citeproc \
+			-V geometry:$(PAPER_PDF_GEOMETRY) \
+			-V mainfont="$(PAPER_PDF_MAINFONT)" \
+			-V mathfont="$(PAPER_PDF_MATHFONT)" \
+			-H header.tex \
+			--bibliography=$(PAPER_BIB) \
+			--csl=$(PAPER_CSL) \
+			-o $(SUPP_TEX).new
+	@cd $(PAPER_DIR) && \
+		mv -f $(SUPP_TEX).new $(SUPP_TEX) 2>/dev/null || ( \
+			echo "ERROR: could not overwrite $(PAPER_DIR)/$(SUPP_TEX) (is it open?)."; \
+			echo "Leaving: $(PAPER_DIR)/$(SUPP_TEX).new"; \
+			exit 1; \
+		)
+
+$(PAPER_DIR)/$(MAIN_PDF): $(PAPER_DIR)/$(MAIN_TEX)
+	@echo "Building PDF: $(PAPER_DIR)/$(MAIN_TEX) -> $(PAPER_DIR)/$(MAIN_PDF)"
+	@cd $(PAPER_DIR) && \
+		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+			exit 1; \
+		fi; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(MAIN_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(MAIN_TEX)" >/dev/null
+
+$(PAPER_DIR)/$(SUPP_PDF): $(PAPER_DIR)/$(SUPP_TEX)
+	@echo "Building PDF: $(PAPER_DIR)/$(SUPP_TEX) -> $(PAPER_DIR)/$(SUPP_PDF)"
+	@cd $(PAPER_DIR) && \
+		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+			exit 1; \
+		fi; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(SUPP_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(SUPP_TEX)" >/dev/null
+
+# Build PDF
+#
+# Important: LaTeX cross-references (e.g., Figure/Table refs) require at least
+# two LaTeX passes to resolve. Pandoc's direct --to=pdf path can emit warnings
+# about undefined references because it runs a single pass. We therefore build
+# the PDF from the generated .tex and run the engine twice.
+$(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_TEX)
+	@echo "Building PDF: $(PAPER_DIR)/$(PAPER_TEX) -> $(PAPER_DIR)/$(PAPER_PDF)"
+	@cd $(PAPER_DIR) && \
+		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+			exit 1; \
+		fi; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(PAPER_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(PAPER_TEX)" >/dev/null; \
+		if [ "$(PAPER_PDF)" != "paper.pdf" ]; then mv -f "paper.pdf" "$(PAPER_PDF)"; fi
 
 # HVE simulator (not part of default all)
 HVE:
@@ -491,8 +567,11 @@ help:
 	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
 	@echo "  icd_population_shift - Run ICD-10 population structural shift analysis (data/Czech2/)"
 	@echo "  paper           - Build documentation/preprint/paper.md -> paper.docx + paper.pdf (Pandoc + crossref + citeproc)"
+	@echo "  paper-all       - Build documentation/preprint/{paper,main,supplement}.{pdf,tex}"
 	@echo "  paper-docx      - Build only documentation/preprint/paper.docx"
 	@echo "  paper-pdf       - Build only documentation/preprint/paper.pdf"
+	@echo "  main-pdf        - Build only documentation/preprint/main.pdf"
+	@echo "  supplement-pdf  - Build only documentation/preprint/supplement.pdf"
 	@echo ""
 	@echo "KCOR Mortality Analysis (Czech2 dataset):"
 	@echo "  mortality       - Run basic KCOR mortality analysis pipeline"

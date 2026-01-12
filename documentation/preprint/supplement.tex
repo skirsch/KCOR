@@ -4,6 +4,7 @@
 \documentclass[
 ]{article}
 \usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 \usepackage{iftex}
@@ -19,6 +20,8 @@
 \usepackage{lmodern}
 \ifPDFTeX\else
   % xetex/luatex font selection
+  \setmainfont[]{TeX Gyre Termes}
+  \setmathfont[]{TeX Gyre Termes Math}
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -65,6 +68,65 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+% Fix run-in paragraph style for ##### headers
+\usepackage{titlesec}
+\titleformat{\paragraph}[block]{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{0.5em}
+\titleformat{\subparagraph}[block]{\normalfont\normalsize\bfseries}{\thesubparagraph}{1em}{}
+\titlespacing*{\subparagraph}{0pt}{3.25ex plus 1ex minus .2ex}{0.5em}
+
+% Table packages for tabularx with custom column types
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Appendix lettered numbering for figures and equations.
+%
+% In this repo, the manuscript uses "##" headings, which Pandoc maps to \subsection.
+% There are no \section-level headings, so relying on subsection/section counters
+% yields 0.x-style numbering. Instead, we define an appendix-letter counter that
+% advances once per appendix (\subsection after \appendix) and resets figure/equation
+% numbering within each appendix.
+\usepackage{etoolbox}
+\newif\ifkcorappendix
+\newcounter{kcorappendix}
+\pretocmd{\appendix}{%
+  \kcorappendixtrue%
+  \setcounter{kcorappendix}{0}%
+  \renewcommand{\thefigure}{\Alph{kcorappendix}.\arabic{figure}}%
+  \renewcommand{\theequation}{\Alph{kcorappendix}.\arabic{equation}}%
+  \renewcommand{\thetable}{\Alph{kcorappendix}.\arabic{table}}%
+}{}{}
+\pretocmd{\subsection}{%
+  \ifkcorappendix%
+    \stepcounter{kcorappendix}%
+    \setcounter{figure}{0}%
+    \setcounter{equation}{0}%
+    \setcounter{table}{0}%
+  \fi%
+}{}{}
+
+% Disable TeX hyphenation (reviewer-friendly) and avoid PDF soft-hyphen artifacts.
+% Note: this does not prevent manual hyphens, only automatic word-breaking.
+\usepackage{ragged2e}
+\RaggedRight
+\hyphenpenalty=10000
+% Allow line breaks at *explicit* hyphens that already exist in the text.
+% (Keep automatic hyphenation disabled via \hyphenpenalty above.)
+\exhyphenpenalty=50
+\pretolerance=10000
+\tolerance=2000
+\emergencystretch=3em
+
+% Suppress XeLaTeX "Missing character" warnings for Unicode math symbols.
+% When math like $\theta$ appears in table cells, XeLaTeX checks if the text font
+% has the Unicode math character (U+1D703 = mathematical italic theta), generating
+% a warning even though the math font handles rendering correctly.
+% \tracinglostchars=0 is the TeX primitive that controls this warning level:
+%   0 = no warnings, 1 = warnings in log only, 2 = warnings + terminal (default)
+\tracinglostchars=0
+
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
@@ -77,8 +139,8 @@
 
 \begin{document}
 
-\section{KCOR Supporting Information
-(SI)}\label{kcor-supporting-information-si}
+\section{KCOR Supplementary Information
+(SI)}\label{kcor-supplementary-information-si}
 
 % Enforce Supplementary (S) numbering for figures and tables in the SI PDF.
 \renewcommand{\thefigure}{S\arabic{figure}}%
@@ -116,7 +178,7 @@ modes}\label{s2.-extended-diagnostics-and-failure-modes}
 \subsubsection{Diagnostics and failure modes for KCOR
 assumptions}\label{diagnostics-and-failure-modes-for-kcor-assumptions}
 
-This appendix describes the \textbf{observable diagnostics and failure
+This section describes the \textbf{observable diagnostics and failure
 modes} associated with each of the five KCOR assumptions (A1--A5). No
 additional assumptions are introduced here. KCOR is designed to
 \textbf{fail transparently rather than silently}: when an assumption is
@@ -126,7 +188,9 @@ estimates.
 
 A compact summary mapping each assumption to its corresponding
 diagnostic signals and recommended actions is provided in Table
-@tbl:appendixD\_assumptions\_diagnostics.
+\ref{tbl:appendixD_assumptions_diagnostics}.
+
+\newpage
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
@@ -189,8 +253,8 @@ quiet window & Contaminated quiet window & Redefine quiet window; rerun
 diagnostics \\
 \end{longtable}
 
-\subsubsection{D.1 Diagnostics for Assumption A1 (Fixed cohorts at
-enrollment)}\label{d.1-diagnostics-for-assumption-a1-fixed-cohorts-at-enrollment}
+\subsubsection{S2.1 Diagnostics for Assumption A1 (Fixed cohorts at
+enrollment)}\label{s2.1-diagnostics-for-assumption-a1-fixed-cohorts-at-enrollment}
 
 \textbf{Assumption A1} requires that cohorts be fixed at enrollment,
 with no post-enrollment switching or censoring in the primary estimand.
@@ -216,8 +280,9 @@ estimand. Such violations are design-level failures rather than modeling
 failures and indicate that KCOR should not be applied without redefining
 cohorts.
 
-\subsubsection{D.2 Diagnostics for Assumption A2 (Shared external hazard
-environment)}\label{d.2-diagnostics-for-assumption-a2-shared-external-hazard-environment}
+\subsubsection{S2.2 Diagnostics for Assumption A2 (Shared external
+hazard
+environment)}\label{s2.2-diagnostics-for-assumption-a2-shared-external-hazard-environment}
 
 \textbf{Assumption A2} requires that all cohorts experience the same
 calendar-time external mortality environment.
@@ -241,9 +306,9 @@ violate comparability and are visible directly in calendar-time hazard
 overlays. When detected, such violations limit interpretation of KCOR
 contrasts over affected periods.
 
-\subsubsection{D.3 Diagnostics for Assumption A3 (Selection via
+\subsubsection{S2.3 Diagnostics for Assumption A3 (Selection via
 time-invariant latent
-frailty)}\label{d.3-diagnostics-for-assumption-a3-selection-via-time-invariant-latent-frailty}
+frailty)}\label{s2.3-diagnostics-for-assumption-a3-selection-via-time-invariant-latent-frailty}
 
 \textbf{Assumption A3} posits that selection at enrollment operates
 primarily through differences in a time-invariant latent frailty
@@ -271,9 +336,9 @@ curvature attributed to frailty becomes unstable. Such cases are
 revealed by residual structure and parameter instability rather than
 masked by the model.
 
-\subsubsection{D.4 Diagnostics for Assumption A4 (Adequacy of gamma
+\subsubsection{S2.4 Diagnostics for Assumption A4 (Adequacy of gamma
 frailty
-approximation)}\label{d.4-diagnostics-for-assumption-a4-adequacy-of-gamma-frailty-approximation}
+approximation)}\label{s2.4-diagnostics-for-assumption-a4-adequacy-of-gamma-frailty-approximation}
 
 \textbf{Assumption A4} requires that gamma frailty provides an adequate
 approximation to the depletion geometry observed in cumulative-hazard
@@ -309,8 +374,8 @@ normalization can degrade visibly through poor fit and residual
 curvature. Such behavior indicates model inadequacy rather than
 supporting alternative interpretation.
 
-\subsubsection{D.5 Diagnostics for Assumption A5 (Quiet-window
-validity)}\label{d.5-diagnostics-for-assumption-a5-quiet-window-validity}
+\subsubsection{S2.5 Diagnostics for Assumption A5 (Quiet-window
+validity)}\label{s2.5-diagnostics-for-assumption-a5-quiet-window-validity}
 
 \textbf{Assumption A5} requires the existence of a prespecified quiet
 window in which selection-induced depletion dominates other sources of
@@ -405,8 +470,8 @@ post-normalization linearity are assessed for consistency across
 sub-windows. Failure of such stability checks is treated as evidence
 against Assumption A5.
 
-\subsubsection{D.6 Diagnostic coherence across
-assumptions}\label{d.6-diagnostic-coherence-across-assumptions}
+\subsubsection{S2.6 Diagnostic coherence across
+assumptions}\label{s2.6-diagnostic-coherence-across-assumptions}
 
 Several diagnostics operate across assumptions A4 and A5, including
 stabilization of KCOR(t) trajectories and coherence of fitted \(\theta\)
@@ -416,8 +481,8 @@ consequences of successful frailty normalization. When these behaviors
 fail to emerge, KCOR explicitly signals reduced interpretability through
 residual curvature, parameter instability, or attenuation toward unity.
 
-\subsubsection{D.7 Identifiability under sparse
-data}\label{d.7-identifiability-under-sparse-data}
+\subsubsection{S2.7 Identifiability under sparse
+data}\label{s2.7-identifiability-under-sparse-data}
 
 KCOR does not require large sample sizes by assumption; however,
 reliable estimation of frailty parameters and depletion-neutralized
@@ -435,12 +500,12 @@ identifiability rather than producing spurious effects. Applicability
 should therefore be assessed via diagnostic stability rather than
 nominal sample size thresholds.
 
-\subsubsection{D.8 Summary: Diagnostic enforcement rather than
+\subsubsection{S2.8 Summary: Diagnostic enforcement rather than
 assumption
-inflation}\label{d.8-summary-diagnostic-enforcement-rather-than-assumption-inflation}
+inflation}\label{s2.8-summary-diagnostic-enforcement-rather-than-assumption-inflation}
 
 KCOR relies on exactly five assumptions (A1--A5), stated exhaustively in
-§2.1.1. This appendix demonstrates that each assumption has
+the main manuscript. This section demonstrates that each assumption has
 \textbf{explicit, observable diagnostics} and \textbf{well-defined
 failure modes}. When assumptions are violated, KCOR signals reduced
 interpretability through instability, poor fit, or residual structure
@@ -462,17 +527,17 @@ dataset and injecting a known effect into the data-generating process
 for one cohort, for example by multiplying the \emph{baseline} hazard by
 a constant factor \(r\) over a prespecified interval:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:pos-control-injection}{
 h_{0,\mathrm{treated}}(t) = r \cdot h_{0,\mathrm{control}}(t) \quad \text{for } t \in [t_1, t_2],
-\] \{\#eq:pos-control-injection\}
+}\end{equation}
 
 with \(r>1\) for harm and \(0<r<1\) for benefit.
 
 After gamma-frailty normalization (inversion), KCOR should deviate from
 1 in the correct direction and with magnitude consistent with the
 injected effect (up to discretization and sampling noise). Figure
-@fig:pos\_control\_injected and Table @tbl:pos\_control\_summary confirm
-this behavior.
+\ref{fig:pos_control_injected} and Table \ref{tbl:pos_control_summary}
+confirm this behavior.
 
 \begin{figure}
 \centering
@@ -540,11 +605,11 @@ Frailty estimation & Fit method & Nonlinear least squares in
 cumulative-hazard space & Constraints: \(k_d>0\), \(\theta_d \ge 0\) \\
 \end{longtable}
 
-\subsubsection{B.1 Negative control: synthetic gamma-frailty
-null}\label{b.1-negative-control-synthetic-gamma-frailty-null}
+\subsubsection{S4.2 Negative control: synthetic gamma-frailty
+null}\label{s4.2-negative-control-synthetic-gamma-frailty-null}
 
-The synthetic negative control (Figure @fig:neg\_control\_synthetic) is
-generated using:
+The synthetic negative control (Figure \ref{fig:neg_control_synthetic})
+is generated using:
 
 \begin{itemize}
 \tightlist
@@ -580,11 +645,11 @@ Both cohorts share identical per-frailty-group death probabilities; only
 the mixture weights differ. This induces different cohort-level
 curvature under the null.
 
-\subsubsection{B.2 Negative control: empirical age-shift
-construction}\label{b.2-negative-control-empirical-age-shift-construction}
+\subsubsection{S4.3 Negative control: empirical age-shift
+construction}\label{s4.3-negative-control-empirical-age-shift-construction}
 
-The empirical negative control (Figures @fig:neg\_control\_10yr and
-@fig:neg\_control\_20yr) is generated using:
+The empirical negative control (Figures \ref{fig:neg_control_10yr} and
+\ref{fig:neg_control_20yr}) is generated using:
 
 \begin{itemize}
 \tightlist
@@ -619,11 +684,11 @@ This construction ensures that dose comparisons are within the same
 underlying vaccination category, preserving a true null while inducing
 10--20 year age differences.
 
-\subsubsection{B.3 Positive control: injected
-effect}\label{b.3-positive-control-injected-effect}
+\subsubsection{S4.4 Positive control: injected
+effect}\label{s4.4-positive-control-injected-effect}
 
-The positive control (Figure @fig:pos\_control\_injected and Table
-@tbl:pos\_control\_summary) is generated using:
+The positive control (Figure \ref{fig:pos_control_injected} and Table
+\ref{tbl:pos_control_summary}) is generated using:
 
 \begin{itemize}
 \tightlist
@@ -659,10 +724,10 @@ The injection multiplies the treatment cohort's baseline hazard by
 factor \(r\) during the effect window, while leaving the control cohort
 unchanged.
 
-\subsubsection{B.4 Sensitivity analysis
-parameters}\label{b.4-sensitivity-analysis-parameters}
+\subsubsection{S4.5 Sensitivity analysis
+parameters}\label{s4.5-sensitivity-analysis-parameters}
 
-The sensitivity analysis (Figure @fig:sensitivity\_overview) varies:
+The sensitivity analysis (Figure \ref{fig:sensitivity_overview}) varies:
 
 \begin{itemize}
 \tightlist
@@ -681,9 +746,9 @@ The sensitivity analysis (Figure @fig:sensitivity\_overview) varies:
 
 Output grids show KCOR(t) values for each parameter combination.
 
-\subsubsection{B.5 Tail-sampling / bimodal selection (adversarial
+\subsubsection{S4.6 Tail-sampling / bimodal selection (adversarial
 selection
-geometry)}\label{b.5-tail-sampling-bimodal-selection-adversarial-selection-geometry}
+geometry)}\label{s4.6-tail-sampling-bimodal-selection-adversarial-selection-geometry}
 
 We generate a base frailty population distribution with mean 1. Cohort
 construction differs by selection rule:
@@ -730,8 +795,8 @@ perturbation.
   \textbf{Random seed}: 42
 \end{itemize}
 
-\subsubsection{B.6 Joint frailty and treatment-effect simulation
-(S7)}\label{b.6-joint-frailty-and-treatment-effect-simulation-s7}
+\subsubsection{S4.7 Joint frailty and treatment-effect simulation
+(S7)}\label{s4.7-joint-frailty-and-treatment-effect-simulation-s7}
 
 This simulation evaluates KCOR under conditions in which \textbf{both
 selection-induced depletion (frailty heterogeneity)} and a \textbf{true
@@ -752,9 +817,9 @@ period used for frailty estimation.
 
 Formally, individual hazards are generated as
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixB_individual_hazard_with_effect}{
 h_i(t) = z_i \cdot h_0(t) \cdot r(t).
-\] \{\#eq:appendixB\_individual\_hazard\_with\_effect\}
+}\end{equation}
 
 where \(z_i\) is individual frailty, \(h_0(t)\) is a shared baseline
 hazard, and \(r(t)\) is a time-localized multiplicative treatment effect
@@ -908,7 +973,7 @@ control referenced in the main text:
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \textbackslash mathrm\{KCOR\}(t) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supporting Information, SI).}]{figures/fig3_neg_control_20yr_age_diff.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \textbackslash mathrm\{KCOR\}(t) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI).}]{figures/fig3_neg_control_20yr_age_diff.png}}
 \caption{Empirical negative control with approximately 20-year age
 difference between cohorts. Even under extreme composition differences,
 \(\mathrm{KCOR}(t)\) exhibits no systematic drift, consistent with
@@ -917,7 +982,7 @@ robustness to selection-induced curvature. KCOR curves are anchored at
 Uncertainty bands (95\% bootstrap intervals) are shown. Data source:
 Czech Republic mortality and vaccination dataset processed into
 KCOR\_CMR aggregated format (negative-control construction; see
-Supporting Information, SI).}\label{fig:neg_control_20yr}
+Supplementary Information, SI).}\label{fig:neg_control_20yr}
 \end{figure}
 
 \subsection{S6. Extended Czech empirical
@@ -964,9 +1029,9 @@ Across examined age strata in the Czech Republic mortality dataset,
 fitted frailty parameters exhibit a pronounced asymmetry across cohorts.
 Some cohorts show negligible estimated frailty variance:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_theta_near_zero}{
 \hat{\theta}_d \approx 0.
-\] \{\#eq:appendixC\_theta\_near\_zero\}
+}\end{equation}
 
 while others exhibit substantial frailty-driven depletion. This pattern
 reflects differences in selection-induced hazard curvature at cohort
@@ -990,8 +1055,10 @@ depletion-driven curvature under the working model; persistent
 nonlinearity or parameter instability indicates model stress or
 quiet-window contamination.
 
-Table @tbl:appendixC\_diagnostic\_gate summarizes these diagnostic
+Table \ref{tbl:appendixC_diagnostic_gate} summarizes these diagnostic
 checks across age strata.
+
+\newpage
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.1702}}
@@ -1051,15 +1118,15 @@ heterogeneity, while Dose 2 cohorts show near-zero estimated frailty
 across all age bands, consistent with selective uptake prior to
 follow-up:
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_theta_positive}{
 \hat{\theta}_d > 0.
-\] \{\#eq:appendixC\_theta\_positive\}
+}\end{equation}
 
 for Dose 0 cohorts and
 
-\[
+\begin{equation}\protect\phantomsection\label{eq:appendixC_theta_near_zero_dose2}{
 \hat{\theta}_d \approx 0.
-\] \{\#eq:appendixC\_theta\_near\_zero\_dose2\}
+}\end{equation}
 
 for Dose 2 cohorts. Estimated frailty heterogeneity can appear larger at
 younger ages because baseline hazards are low, so proportional
@@ -1072,16 +1139,18 @@ Frailty variance is largest at younger ages, where low baseline
 mortality amplifies the impact of heterogeneity on cumulative hazard
 curvature, and declines at older ages where mortality is compressed and
 survivors are more homogeneous. Because Table
-@tbl:appendixC\_frailty\_variance demonstrates selection-induced
+\ref{tbl:appendixC_frailty_variance} demonstrates selection-induced
 heterogeneity, unadjusted cumulative outcome contrasts are expected to
 conflate depletion effects with any true treatment differences; see
-Table @tbl:appendixC\_raw\_hazards for raw cumulative hazards reported
-as a pre-normalization diagnostic. KCOR normalization removes the
-depletion component, enabling interpretable comparison of the remaining
-differences.
+Table \ref{tbl:appendixC_raw_hazards} for raw cumulative hazards
+reported as a pre-normalization diagnostic. KCOR normalization removes
+the depletion component, enabling interpretable comparison of the
+remaining differences.
 
 These raw contrasts reflect both selection and depletion effects and are
 not interpreted causally.
+
+\newpage
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3077}}
@@ -1129,8 +1198,8 @@ entry reports a single fitted gamma-frailty variance for the specified
 age band and vaccination status within the 2021\_24 enrollment cohort. -
 The ``All ages (full population)'' row corresponds to an independent fit
 over the full pooled age range, included as a global diagnostic. - Table
-@tbl:appendixC\_raw\_hazards reports raw outcome contrasts for ages 40+
-(YOB \(\le 1980\)) where event counts are stable.
+\ref{tbl:appendixC_raw_hazards} reports raw outcome contrasts for ages
+40+ (YOB \(\le 1980\)) where event counts are stable.
 
 \textbf{Diagnostic checks:} - \textbf{Dose ordering:} the fitted frailty
 variance is positive for Dose 0 and collapses toward zero for Dose 2
@@ -1144,6 +1213,8 @@ imposed. - \textbf{Stability:} No sign reversals, boundary pathologies,
 or numerical instabilities are observed. - \textbf{Falsifiability:}
 Failure of any one of these checks would constitute evidence against
 model adequacy.
+
+\newpage
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2353}}
@@ -1216,11 +1287,11 @@ variation. This example is intended to illustrate estimator behavior
 under real-world selection and heterogeneity and does not support causal
 inference.
 
-Figure @fig:appendixC\_allages shows \(\mathrm{KCOR}(t)\) trajectories
-for dose 2 and dose 3 relative to dose 0 for an all-ages analysis. We
-deliberately present an all-ages analysis as a high-heterogeneity stress
-test, since aggregation across age induces substantial baseline hazard
-and frailty variation.
+Figure \ref{fig:appendixC_allages} shows \(\mathrm{KCOR}(t)\)
+trajectories for dose 2 and dose 3 relative to dose 0 for an all-ages
+analysis. We deliberately present an all-ages analysis as a
+high-heterogeneity stress test, since aggregation across age induces
+substantial baseline hazard and frailty variation.
 
 \begin{figure}
 \centering
