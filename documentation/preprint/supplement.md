@@ -23,121 +23,41 @@ This SI is organized as follows:
 
 ## S2. Extended diagnostics and failure modes
 
-This section describes the **observable diagnostics and failure modes** associated with each of the five KCOR assumptions (A1–A5). No additional assumptions are introduced here. KCOR is designed to **fail transparently rather than silently**: when an assumption is violated, the resulting lack of identifiability or model stress manifests through explicit diagnostic signals rather than spurious estimates.
+This section describes the **observable diagnostics and failure modes** associated with the KCOR working assumptions and the corresponding diagnostics and identifiability criteria. No additional assumptions are introduced here. KCOR is designed to **fail transparently rather than silently**: when an assumption is violated, the resulting lack of identifiability or model stress manifests through explicit diagnostic signals rather than spurious estimates.
 
-A compact summary mapping each assumption to its corresponding diagnostic signals and recommended actions is provided in Table @tbl:si_assumptions_diagnostics.
+The KCOR framework separates **working assumptions**, **empirical diagnostics**, and **identifiability criteria**; these are summarized below in Tables @tbl:si_assumptions–@tbl:si_identifiability.
 
-Table: KCOR assumptions and corresponding diagnostics. {#tbl:si_assumptions_diagnostics}
+Table: KCOR working assumptions. {#tbl:si_assumptions}
 
-| Assumption | What must hold | Diagnostic signal | Interpretation | Action if violated |
-|---|---|---|---|---|
-| A1. Fixed cohort at enrollment | Cohort membership does not change over follow-up | Step changes or discontinuities inconsistent with depletion | Endogenous selection or reclassification | Redefine cohort at enrollment; disallow transitions |
-| A2. Shared external hazard environment | Cohorts experience the same background hazard within the comparison window | Divergent slopes during prespecified quiet periods | Unshared exogenous shocks or policy/measurement effects | Restrict calendar window, stratify, or use alternative controls |
-| A3. Time-invariant latent frailty | Individual frailty is time-invariant over follow-up | Systematic residual curvature after normalization | Time-varying susceptibility or competing selection processes | Shorten follow-up window; reinterpret as time-varying selection |
-| A4. Adequacy of gamma frailty | Gamma family adequately approximates frailty mixing | Residual curvature or poor fit diagnostics after inversion | Frailty distribution misspecification | Treat as diagnostic; avoid over-interpretation |
-| A5. Quiet-window validity | No intervention effect during frailty-estimation window | Slope breaks or non-parallel trends within quiet window | Contaminated quiet window | Redefine quiet window; rerun diagnostics |
+| Assumption | Description | Role in KCOR |
+|---|---|---|
+| A1 Cohort stability | Cohorts are fixed at enrollment with no post-enrollment switching or informative censoring. | Ensures cumulative hazards are comparable over follow-up |
+| A2 Shared external hazard environment | Cohorts experience the same background hazard over the comparison window. | Prevents confounding by cohort-specific shocks |
+| A3 Time-invariant latent frailty | Selection operates through time-invariant unobserved heterogeneity inducing depletion. | Enables geometric normalization of curvature |
+| A4 Adequacy of gamma frailty | Gamma frailty provides a reasonable approximation to observed depletion geometry. | Allows tractable inversion and normalization |
+| A5 Quiet-window validity | A prespecified window exists in which depletion dominates other curvature sources. | Permits identification of frailty parameters |
 
-### S2.1 Diagnostics for Assumption A1 (Fixed cohorts at enrollment)
+Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnostics}
 
-**Assumption A1** requires that cohorts be fixed at enrollment, with no post-enrollment switching or censoring in the primary estimand.
+| Diagnostic | Description | Observable signal |
+|---|---|---|
+| Skip-week sensitivity | Exclude early post-enrollment weeks subject to dynamic selection. | Stable fitted frailty under varying skip weeks |
+| Post-normalization linearity | Assess curvature removal in cumulative-hazard space. | Approximate linearity after normalization |
+| KCOR(t) stability | Inspect KCOR trajectories following anchoring. | Stabilization rather than drift |
+| Quiet-window perturbation | Shift quiet-window boundaries by ± several weeks. | Parameter and trajectory stability |
+| Residual structure | Examine residuals in cumulative-hazard space. | No systematic curvature or autocorrelation |
 
-**Diagnostic signals of violation.**
+Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifiability}
 
-* Inconsistencies in cohort risk sets (e.g., unexplained increases in at-risk counts).
-* Early-time hazard suppression or inflation inconsistent with selection or depletion geometry.
-* Dependence of results on as-treated reclassification or censoring rules.
+| Criterion | Condition | Consequence if violated |
+|---|---|---|
+| I1 Diagnostic sufficiency | All required diagnostics pass. | KCOR interpretable |
+| I2 Window alignment | Follow-up overlaps the hypothesized effect window. | Out-of-window effects not recoverable |
+| I3 Stability under perturbation | Estimates robust to tuning of windows and skips. | Interpretation limited |
+| I4 Anchoring validity | Quiet window exhibits post-normalization linearity. | Anchoring invalid |
+| I5 Conservative failure rule | Any failure → not identified. | Estimator remains valid, but results not reported |
 
-**Interpretation.**
-KCOR is not defined for datasets with post-enrollment switching or informative censoring in the primary estimand. Such violations are design-level failures rather than modeling failures and indicate that KCOR should not be applied without redefining cohorts.
-
-### S2.2 Diagnostics for Assumption A2 (Shared external hazard environment)
-
-**Assumption A2** requires that all cohorts experience the same calendar-time external mortality environment.
-
-**Diagnostic signals of violation.**
-
-* Calendar-time hazard spikes or drops that appear in only one cohort.
-* Misalignment of major mortality shocks (e.g., epidemic waves) across cohorts.
-* Cohort-specific reporting artifacts or administrative discontinuities.
-
-**Interpretation.**
-External shocks are permitted under KCOR provided they act symmetrically across cohorts. Cohort-specific shocks violate comparability and are visible directly in calendar-time hazard overlays. When detected, such violations limit interpretation of KCOR contrasts over affected periods.
-
-### S2.3 Diagnostics for Assumption A3 (Selection via time-invariant latent frailty)
-
-**Assumption A3** posits that selection at enrollment operates primarily through differences in a time-invariant latent frailty distribution that induces depletion of susceptibles.
-
-**Diagnostic signals of violation.**
-
-* Strongly structured residuals in cumulative-hazard space inconsistent with depletion.
-* Instability of fitted frailty parameters not attributable to window placement.
-* Early-time transients that do not decay and are inconsistent across related cohorts.
-
-**Interpretation.**
-Frailty in KCOR is a geometric construct capturing unobserved heterogeneity, not a causal mechanism. If dominant time-varying individual risk unrelated to depletion is present, curvature attributed to frailty becomes unstable. Such cases are revealed by residual structure and parameter instability rather than masked by the model.
-
-### S2.4 Diagnostics for Assumption A4 (Adequacy of gamma frailty approximation)
-
-**Assumption A4** requires that gamma frailty provides an adequate approximation to the depletion geometry observed in cumulative-hazard space over the estimation window.
-
-**Diagnostic signals of violation.**
-
-* Poor fit of the gamma-frailty cumulative-hazard model during the quiet window.
-* Systematic residual curvature after frailty normalization.
-* Strong sensitivity of results to minor model or window perturbations.
-
-Additional internal diagnostics for Assumption A4 include the magnitude, coherence, and stability of the fitted frailty variance parameter ($\theta$). Values of $\theta$ approaching zero are expected when cumulative hazards are approximately linear, while larger values correspond to visible depletion-induced curvature. Implausible $\theta$ estimates—such as large values in the absence of curvature, sign instability, or extreme sensitivity to small changes in the estimation window—indicate model stress or misspecification rather than substantive cohort effects.
-
-**Interpretation.**
-Gamma frailty is used as a mathematically tractable approximation, not as a claim of biological truth. When depletion geometry deviates substantially from the gamma form, KCOR normalization can degrade visibly through poor fit and residual curvature. Such behavior indicates model inadequacy rather than supporting alternative interpretation.
-
-### S2.5 Diagnostics for Assumption A5 (Quiet-window validity)
-
-**Assumption A5** requires the existence of a prespecified quiet window in which selection-induced depletion dominates other sources of curvature, permitting identification of frailty parameters.
-
-**Diagnostic signals of violation.**
-
-* Failure of KCOR(t) trajectories to stabilize or asymptote following frailty normalization.
-* Persistent nonzero slope in KCOR(t), indicating residual curvature after normalization.
-* Instability of fitted frailty parameters ($\theta$) under small perturbations of quiet-window boundaries.
-* Failure of depletion-neutralized cumulative hazards to become approximately linear during the quiet window.
-* Degraded cumulative-hazard fit error concentrated within the nominal quiet period.
-
-**Interpretation.**
-Quiet-window validity is the primary dataset-specific requirement for KCOR applicability. When this assumption is violated—e.g., due to overlap with strong treatment effects or external shocks—KCOR does not amplify spurious signals. Instead, normalization becomes unstable and KCOR(t) trajectories attenuate toward unity or may fail to stabilize, explicitly signaling loss of identifiability.
-
-Under a valid quiet window, depletion-neutralized baseline cumulative hazards are expected to be approximately linear and $\mathrm{KCOR}(t)$ trajectories to stabilize rather than drift. Persistent $\mathrm{KCOR}(t)$ slope or $\hat{\theta}_d$ instability indicates contamination of the quiet window by external shocks or time-varying effects and signals loss of identifiability rather than evidence of cohort differences.
-
-#### Quiet-window selection protocol (operational detail)
-
-The quiet window is selected prior to estimation using operational criteria such as:
-
-1. Calendar-time hazard curves exhibit approximate linearity with no sustained trend breaks.
-2. Periods containing epidemic waves, reporting artifacts, or policy shocks are excluded.
-3. The window spans a minimum duration sufficient for stable slope estimation.
-4. Sensitivity is assessed by perturbing the window boundaries (± several weeks).
-
-**Failure signals (do not report KCOR as identified).**  
-Treat the analysis as not identified if any cohort shows: (i) poor fit in cumulative-hazard space over the quiet window; (ii) persistent post-normalization nonlinearity within the quiet window; or (iii) instability of fitted parameters under small boundary perturbations (e.g., ±4 weeks).
-
-*Practical example.*  
-In COVID-19 mortality analyses, a quiet window may be defined as an inter-wave period between major variant surges, verified by approximately linear all-cause cumulative hazards in the general population and the absence of cohort-differential policy or reporting shocks. Robustness to small boundary perturbations (e.g., ± several weeks) is treated as a diagnostic; if fitted depletion parameters or post-normalization linearity are unstable under such perturbations, the quiet-window assumption is treated as violated and the analysis as not identified.
-
-The diagnostics above are designed to detect quiet-window violations that induce residual curvature or parameter instability. They do not, by themselves, exclude the possibility of smooth, approximately stationary cohort-differential hazards within the quiet window that may be absorbed into fitted frailty parameters without producing obvious drift. For this reason, when feasible, we additionally recommend split-window and multi-window stability checks, in which frailty parameters and post-normalization linearity are assessed for consistency across sub-windows. Failure of such stability checks is treated as evidence against Assumption A5.
-
-### S2.6 Diagnostic coherence across assumptions
-
-Several diagnostics operate across assumptions A4 and A5, including stabilization of KCOR(t) trajectories and coherence of fitted $\theta$ parameters with observed cumulative-hazard curvature. These diagnostics are not assumptions of the KCOR framework; rather, they are observable consequences of successful frailty normalization. When these behaviors fail to emerge, KCOR explicitly signals reduced interpretability through residual curvature, parameter instability, or attenuation toward unity.
-
-### S2.7 Identifiability under sparse data
-
-KCOR does not require large sample sizes by assumption; however, reliable estimation of frailty parameters and depletion-neutralized cumulative hazards requires sufficient event information within the identification window. When event counts are very small, frailty estimates may become unstable, resulting in noisy normalization, non-linear baseline cumulative hazards, or drifting KCOR(t) trajectories.
-
-Such failures are diagnosable: sparse-data regimes are characterized by instability of estimated frailty parameters under small perturbations of the quiet window, loss of post-normalization linearity, and non-stabilizing KCOR(t). In these cases, KCOR signals loss of identifiability rather than producing spurious effects. Applicability should therefore be assessed via diagnostic stability rather than nominal sample size thresholds.
-
-### S2.8 Summary: Diagnostic enforcement rather than assumption inflation
-
-KCOR relies on exactly five assumptions (A1–A5), stated exhaustively in the main manuscript. This section demonstrates that each assumption has **explicit, observable diagnostics** and **well-defined failure modes**. When assumptions are violated, KCOR signals reduced interpretability through instability, poor fit, or residual structure rather than producing misleading cumulative contrasts. This diagnostic enforcement is a core design feature of the KCOR framework.
+Failure of any interpretability or identifiability check limits the scope of inference but does not invalidate the KCOR estimator itself.
 
 ## S3. Positive controls (injected harm/benefit)
 
@@ -160,9 +80,7 @@ After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the
 
 ## S4. Control-test specifications and simulation parameters
 
-### S4.1 Control-test specifications
-
-### Reference implementation and default operational settings
+### S4.1 Reference implementation and default operational settings
 
 Table: Reference implementation and default operational settings. {#tbl:si_defaults}
 

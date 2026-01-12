@@ -40,7 +40,7 @@ KCOR provides a diagnostic and descriptive framework for comparing fixed cohorts
 
 • Simulation studies and empirical controls show that under selection-only regimes, KCOR-normalized trajectories remain stable and centered near the null, while commonly used estimands such as Cox regression can exhibit systematic non-null behavior when applied to unadjusted data.
 
-### Methods Summary
+## Methods Summary
 
 KCOR is a cumulative-hazard normalization framework for retrospective cohort comparisons under selection-induced non-proportional hazards. The method requires minimal inputs (enrollment date, intervention date, outcome time) and proceeds as follows:
 
@@ -136,7 +136,7 @@ Together, these contributions position KCOR not as a replacement for existing su
 
 ### 1.7 Paper organization and supporting information (SI)
 
-The main text presents the KCOR estimator, a single canonical demonstration of Cox bias under frailty-driven depletion, and two main validation examples (negative control and stress test). Additional validations (including positive controls), extended diagnostics, and detailed simulation/control specifications are provided in the Supplementary Information (SI) document.
+The main text presents the KCOR estimator, a single canonical demonstration of Cox bias under frailty-driven depletion, and two main validation examples (negative control and stress test). Additional validations (including positive controls), extended diagnostics (Supplementary Information §S2; Tables S2.1–S2.3), and detailed simulation/control specifications are provided in the Supplementary Information (SI) document.
 
 ## 2. Methods
 
@@ -192,15 +192,15 @@ $\mathrm{KCOR}(t)$ is a **cumulative outcome contrast** after removal of curvatu
 
 #### 2.1.2 Identification versus diagnostics
 
-Scope and interpretation are summarized in Box 1 (§1.6). Operationally, interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information, SI), and analyses are treated as not identified when those diagnostics fail.
+Scope and interpretation are summarized in Box 1 (§1.6). 
 
-Operationally, interpretability of a KCOR trajectory is assessed via prespecified checks (Supplementary Information, SI), including:
+Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables S2.1–S2.3), and analyses are treated as not identified when those diagnostics fail. Checks include:
 
 * stability of $(\hat{k}_d,\hat{\theta}_d)$ to small quiet-window perturbations,
 * approximate linearity of $\tilde{H}_{0,d}(t)$ within the quiet window,
 * absence of systematic residual structure in cumulative-hazard space.
 
-Diagnostics corresponding to each assumption are summarized in Supplementary Table S1 and discussed in detail in the Supplementary Information (SI).
+Diagnostics corresponding to each assumption are summarized in Supplementary Table S1 and discussed in detail in Supplementary Information §S2.
 
 #### 2.1.3 KCOR assumptions and diagnostics
 
@@ -347,7 +347,7 @@ Frailty parameters are estimated using only bins whose corresponding calendar we
 
 #### Quiet-window selection protocol (operational)
 
-Quiet-window selection is prespecified and evaluated using diagnostic criteria; implementation details and robustness checks are provided in the Supplementary Information.
+Quiet-window selection is prespecified and evaluated using diagnostic criteria summarized in Supplementary Information §S2 (Tables S2.1–S2.3).
 
 ### 2.5 Estimation during quiet periods (cumulative-hazard least squares)
 
@@ -627,11 +627,11 @@ Additional derivations, simulation studies, robustness analyses, and implementat
 
 ## 4. Discussion
 
-### Limits of attribution and non-identifiability
+### 4.1 Limits of attribution and non-identifiability
 
 KCOR does not uniquely identify the biological, behavioral, or clinical mechanisms responsible for observed hazard heterogeneity. In particular, curvature in the cumulative hazard may arise from multiple sources, including selection on latent frailty, behavior change, seasonality, treatment effects, reporting artifacts, or their combination. Depletion of susceptibles is therefore used as a parsimonious working model whose adequacy is evaluated through diagnostics and negative controls, rather than assumed as a substantive truth. KCOR's estimand is whether a cumulative outcome contrast persists after removal of curvature consistent with selection-induced depletion, not attribution of that curvature to a specific mechanism.
 
-### 4.1 What KCOR estimates
+### 4.2 What KCOR estimates
 
 *Table @tbl:positioning clarifies that KCOR differs from non-proportional hazards methods not in flexibility, but in estimand and direction of inference.* KCOR operates at a specific but critical layer of the retrospective inference stack: it both neutralizes selection-induced depletion dynamics and defines how the resulting depletion-neutralized baseline cumulative hazards must be compared. Once cohorts are mapped into depletion-neutralized baseline cumulative hazard space, $\mathrm{KCOR}(t)$ answers whether one cohort accumulated higher or lower cumulative event risk than another by time $t$, conditional on the stated assumptions and diagnostics (Box 1). For intuition, $\mathrm{KCOR}(t)=1.2$ indicates that, after depletion normalization, cohort $A$ has accumulated approximately 20% greater cumulative hazard than cohort $B$ by time $t$. Stabilization of $\mathrm{KCOR}(t)$ in quiet windows is a falsification check: failure to flatten indicates residual curvature or loss of identifiability, not a substantive cumulative effect.
 
@@ -656,13 +656,13 @@ Because the normalization targets selection-induced depletion curvature, KCOR re
 
 Although cumulative hazards and survival functions are in one-to-one correspondence, KCOR operates in cumulative-hazard space because curvature induced by frailty depletion is additive and more readily diagnosed there. While survival-based summaries such as restricted mean survival time may be derived from depletion-neutralized baseline cumulative hazards, KCOR's primary estimand remains cumulative by construction.
 
-### 4.2 Relationship to negative control methods
+### 4.3 Relationship to negative control methods
 
 Negative control outcomes/tests are widely used to *detect* confounding. KCOR's objective is different: it is an estimator intended to *normalize away a specific confounding structure*—selection-induced depletion dynamics—prior to comparison. Negative and positive controls are nevertheless central to validating the estimator's behavior.
 
 This asymmetry helps explain why standard observational analyses often report large apparent mortality benefits during periods lacking a plausible mechanism: vaccinated cohorts are already selection-filtered, while unvaccinated hazards are suppressed by ongoing frailty depletion. Unadjusted comparisons therefore systematically understate unvaccinated baseline risk and exaggerate apparent benefit.
 
-### 4.3 Practical Guidelines for Implementation
+### 4.4 Practical guidelines for implementation
 
 This subsection summarizes recommended operational practices for applying KCOR in retrospective cohort studies and for assessing when resulting contrasts are interpretable.
 
@@ -797,8 +797,6 @@ The author thanks James Lyons-Weiler. Dr. Clare Craig, and Paul Fischer for help
 \newpage
 
 ## Tables
-
-### Main text tables
 
 Table: Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching. {#tbl:HVE_motivation}
 
