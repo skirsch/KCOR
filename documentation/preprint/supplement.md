@@ -220,7 +220,7 @@ $$
 
 ### S5.3 Parameter stability checks
 
-Robustness of fitted parameters should be assessed by:
+Robustness of fitted parameters is assessed by:
 
 - **Quiet-window perturbation**: Shift the quiet-window start/end by ±4 weeks and re-fit. Stable parameters should vary by < 10%.
 - **Skip-weeks sensitivity**: Vary SKIP_WEEKS from 0 to 8 and verify KCOR(t) trajectories remain qualitatively similar.
@@ -228,7 +228,7 @@ Robustness of fitted parameters should be assessed by:
 
 ### S5.4 Quiet-window overlay plots
 
-Recommended diagnostic: overlay the prespecified quiet window on hazard and cumulative-hazard time series plots. The fit window should:
+Quiet-window overlay plots: overlay the prespecified quiet window on hazard and cumulative-hazard time series plots. The fit window should:
 
 - Avoid major epidemic waves or external mortality shocks
 - Contain sufficient event counts for stable estimation
