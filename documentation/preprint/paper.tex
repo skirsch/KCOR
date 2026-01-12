@@ -202,11 +202,12 @@ Normalization}\label{kcor-depletion-neutralized-cohort-comparison-via-gamma-frai
 \subsection{Abstract}\label{abstract}
 
 \textbf{Background}\\
-Retrospective cohort analyses frequently involve heterogeneous
-populations subject to selection-induced depletion under latent frailty.
-This process produces non-proportional hazards and curvature in observed
-cumulative hazards that can bias standard survival estimands when
-applied directly to registry and administrative data.
+KCOR is a non-causal diagnostic framework for retrospective cohort
+analyses in heterogeneous populations subject to selection-induced
+depletion under latent frailty. This process produces non-proportional
+hazards and curvature in observed cumulative hazards that can bias
+standard survival estimands when applied directly to registry and
+administrative data.
 
 \textbf{Methods}\\
 We introduce KCOR, a depletion-neutralized cohort comparison framework
@@ -230,7 +231,7 @@ settings.
 KCOR provides a diagnostic and descriptive framework for comparing fixed
 cohorts under selection-induced hazard curvature. By separating
 depletion normalization from outcome comparison, the method restores a
-common comparison scale prior to model fitting and improves the
+common comparison scale prior to model fitting and improves
 interpretability of cumulative outcome analyses in heterogeneous
 real-world data.
 
@@ -256,10 +257,10 @@ produces non-proportional hazards and curvature in cumulative hazard
 trajectories that can bias direct application of standard survival
 estimands in many retrospective cohort studies.
 
-• KCOR provides a diagnostic and normalization framework that removes
-selection-induced depletion curvature from cumulative hazards using
-minimal registry data, restoring a common comparison scale across
-cohorts.
+• KCOR is best understood as a normalization framework that removes
+selection-induced depletion curvature to restore comparability of
+cumulative hazards across cohorts, after which standard descriptive
+contrasts may be applied.
 
 • KCOR separates normalization from comparison: once hazards are
 depletion-neutralized, cohorts may be compared using standard
@@ -420,12 +421,9 @@ The methodological problem addressed here is general. The COVID-19
 period provides a natural empirical regime characterized by strong
 selection heterogeneity and non-proportional hazards, serving as a
 useful illustration for the proposed framework. However, KCOR is not
-specific to COVID, vaccination, or infectious disease. The estimator
-applies to any retrospective cohort comparison in which selection
-induces differential depletion dynamics that violate proportional
-hazards assumptions. KCOR refers to the method as presented here;
-earlier internal iterations are not material to the estimand or results
-and are omitted for clarity.
+specific to COVID, vaccination, or infectious disease. KCOR refers to
+the method as presented here; earlier internal iterations are not
+material to the estimand or results and are omitted for clarity.
 
 In this paper we distinguish two mechanisms often lumped as the `healthy
 vaccinee effect' (HVE):
@@ -624,6 +622,9 @@ KCOR's strategy is therefore:
   post-adjustment estimand; in this work, we use ratios of
   depletion-neutralized cumulative hazards (KCOR).
 \end{enumerate}
+
+All analyses are performed using discrete weekly time bins;
+continuous-time notation is used solely for expositional convenience.
 
 \paragraph{2.1.1 Target estimand}\label{target-estimand}
 
@@ -3188,14 +3189,14 @@ confirm this behavior.
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows \textbackslash mathrm\{KCOR\}(t) deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95\% bootstrap intervals) are shown.}]{figures/fig_pos_control_injected.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows \textbackslash mathrm\{KCOR\}(t) deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95\% bootstrap intervals) are shown. X-axis units are weeks since enrollment.}]{figures/fig_pos_control_injected.png}}
 \caption{Positive control validation: KCOR correctly detects injected
 effects. Left panels show harm scenario (r=1.2), right panels show
 benefit scenario (r=0.8). Top row displays cohort hazard curves with
 effect window shaded. Bottom row shows \(\mathrm{KCOR}(t)\) deviating
 from 1.0 in the expected direction during the effect window. Uncertainty
-bands (95\% bootstrap intervals) are
-shown.}\label{fig:pos_control_injected}
+bands (95\% bootstrap intervals) are shown. X-axis units are weeks since
+enrollment.}\label{fig:pos_control_injected}
 \end{figure}
 
 \subsection{S4. Control-test specifications and simulation
@@ -3579,38 +3580,41 @@ behavior is not an artifact of age aggregation.
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.}]{figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}]{figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png}}
 \caption{Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2
 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and
 evaluated over calendar year 2023. KCOR curves are anchored at
 \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm{KCOR}(t; t_0)\)). This
 figure is presented as an illustrative application demonstrating
 estimator behavior on registry data and does not support causal
-inference.}\label{fig:si_yob1930}
+inference. X-axis units are weeks since
+enrollment.}\label{fig:si_yob1930}
 \end{figure}
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.}]{figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}]{figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png}}
 \caption{Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2
 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and
 evaluated over calendar year 2023. KCOR curves are anchored at
 \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm{KCOR}(t; t_0)\)). This
 figure is presented as an illustrative application demonstrating
 estimator behavior on registry data and does not support causal
-inference.}\label{fig:si_yob1940}
+inference. X-axis units are weeks since
+enrollment.}\label{fig:si_yob1940}
 \end{figure}
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference.}]{figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}]{figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png}}
 \caption{Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2
 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and
 evaluated over calendar year 2023. KCOR curves are anchored at
 \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm{KCOR}(t; t_0)\)). This
 figure is presented as an illustrative application demonstrating
 estimator behavior on registry data and does not support causal
-inference.}\label{fig:si_yob1950}
+inference. X-axis units are weeks since
+enrollment.}\label{fig:si_yob1950}
 \end{figure}
 
 \textbf{Additional empirical negative-control variant (20-year age
@@ -3620,7 +3624,7 @@ control referenced in the main text:
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \textbackslash mathrm\{KCOR\}(t) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI).}]{figures/fig3_neg_control_20yr_age_diff.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \textbackslash mathrm\{KCOR\}(t) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.}]{figures/fig3_neg_control_20yr_age_diff.png}}
 \caption{Empirical negative control with approximately 20-year age
 difference between cohorts. Even under extreme composition differences,
 \(\mathrm{KCOR}(t)\) exhibits no systematic drift, consistent with
@@ -3629,7 +3633,8 @@ robustness to selection-induced curvature. KCOR curves are anchored at
 Uncertainty bands (95\% bootstrap intervals) are shown. Data source:
 Czech Republic mortality and vaccination dataset processed into
 KCOR\_CMR aggregated format (negative-control construction; see
-Supplementary Information, SI).}\label{fig:neg_control_20yr}
+Supplementary Information, SI). X-axis units are weeks since
+enrollment.}\label{fig:neg_control_20yr}
 \end{figure}
 
 \subsection{S6. Extended Czech empirical
@@ -3944,14 +3949,15 @@ and frailty variation.
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={All-ages stress test: \textbackslash mathrm\{KCOR\}(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference.}]{figures/kcor_realdata_allages_enroll2022w26_eval2023.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={All-ages stress test: \textbackslash mathrm\{KCOR\}(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment.}]{figures/kcor_realdata_allages_enroll2022w26_eval2023.png}}
 \caption{All-ages stress test: \(\mathrm{KCOR}(t)\) trajectories
 comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week
 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored
 at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm{KCOR}(t; t_0)\)). This
 figure is presented as an illustrative application demonstrating
 estimator behavior under extreme heterogeneity and does not support
-causal inference.}\label{fig:si_allages}
+causal inference. X-axis units are weeks since
+enrollment.}\label{fig:si_allages}
 \end{figure}
 
 \subsection{S7. Computational environment and runtime

@@ -13,7 +13,7 @@
 ## Abstract
 
 **Background**  
-Retrospective cohort analyses frequently involve heterogeneous populations subject to selection-induced depletion under latent frailty. This process produces non-proportional hazards and curvature in observed cumulative hazards that can bias standard survival estimands when applied directly to registry and administrative data.
+KCOR is a non-causal diagnostic framework for retrospective cohort analyses in heterogeneous populations subject to selection-induced depletion under latent frailty. This process produces non-proportional hazards and curvature in observed cumulative hazards that can bias standard survival estimands when applied directly to registry and administrative data.
 
 **Methods**  
 We introduce KCOR, a depletion-neutralized cohort comparison framework based on gamma-frailty normalization. KCOR estimates cohort-specific depletion geometry during prespecified epidemiologically quiet periods and applies an analytic inversion to map observed cumulative hazards into a common, depletion-neutralized scale prior to comparison. The method requires only minimal event-time information and does not rely on proportional hazards assumptions or rich covariate adjustment.
@@ -22,7 +22,7 @@ We introduce KCOR, a depletion-neutralized cohort comparison framework based on 
 Through extensive simulation studies spanning a wide range of frailty heterogeneity and selection strength, as well as empirical negative and positive controls, we show that commonly used methods—including Cox proportional hazards regression—can exhibit systematic non-null behavior under selection-only regimes. In contrast, KCOR-normalized trajectories remain stable and centered near the null across these settings.
 
 **Conclusions**  
-KCOR provides a diagnostic and descriptive framework for comparing fixed cohorts under selection-induced hazard curvature. By separating depletion normalization from outcome comparison, the method restores a common comparison scale prior to model fitting and improves the interpretability of cumulative outcome analyses in heterogeneous real-world data.
+KCOR provides a diagnostic and descriptive framework for comparing fixed cohorts under selection-induced hazard curvature. By separating depletion normalization from outcome comparison, the method restores a common comparison scale prior to model fitting and improves interpretability of cumulative outcome analyses in heterogeneous real-world data.
 
 **Key contributions**
 
@@ -34,7 +34,7 @@ KCOR provides a diagnostic and descriptive framework for comparing fixed cohorts
 
 • Selection-induced depletion under latent frailty heterogeneity produces non-proportional hazards and curvature in cumulative hazard trajectories that can bias direct application of standard survival estimands in many retrospective cohort studies.
 
-• KCOR provides a diagnostic and normalization framework that removes selection-induced depletion curvature from cumulative hazards using minimal registry data, restoring a common comparison scale across cohorts.
+• KCOR is best understood as a normalization framework that removes selection-induced depletion curvature to restore comparability of cumulative hazards across cohorts, after which standard descriptive contrasts may be applied.
 
 • KCOR separates normalization from comparison: once hazards are depletion-neutralized, cohorts may be compared using standard post-adjustment estimands (e.g., ratios, differences, slopes, or restricted mean survival time), with the choice driven by interpretability rather than identifiability constraints.
 
@@ -90,7 +90,7 @@ This violates core assumptions of many standard tools:
 
 KCOR is designed for this failure mode: **cohorts whose hazards are not proportional because selection induces different depletion dynamics (curvature).** Approximate linearity of cumulative hazard after adjustment is therefore not assumed, but serves as an internal diagnostic indicating that selection-induced depletion has been successfully removed.
 
-The methodological problem addressed here is general. The COVID-19 period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, serving as a useful illustration for the proposed framework. However, KCOR is not specific to COVID, vaccination, or infectious disease. The estimator applies to any retrospective cohort comparison in which selection induces differential depletion dynamics that violate proportional hazards assumptions. KCOR refers to the method as presented here; earlier internal iterations are not material to the estimand or results and are omitted for clarity.
+The methodological problem addressed here is general. The COVID-19 period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, serving as a useful illustration for the proposed framework. However, KCOR is not specific to COVID, vaccination, or infectious disease. KCOR refers to the method as presented here; earlier internal iterations are not material to the estimand or results and are omitted for clarity.
 
 In this paper we distinguish two mechanisms often lumped as the 'healthy vaccinee effect' (HVE):
 
@@ -160,6 +160,8 @@ KCOR's strategy is therefore:
 1. **Estimate the cohort-specific depletion geometry** (via curvature) during prespecified epidemiologically quiet periods.
 2. **Map observed cumulative hazards into a depletion-neutralized space** by inverting that geometry.
 3. **Compare cohorts only after normalization** using a prespecified post-adjustment estimand; in this work, we use ratios of depletion-neutralized cumulative hazards (KCOR).
+
+All analyses are performed using discrete weekly time bins; continuous-time notation is used solely for expositional convenience.
 
 #### 2.1.1 Target estimand
 
