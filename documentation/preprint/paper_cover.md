@@ -1,14 +1,14 @@
-Dear Editor,
+**Dear Editor,**
 
-We submit for your consideration the manuscript “KCOR: Depletion-Neutralized Cohort Comparison via Gamma-Frailty Normalization.” 
+Please find enclosed our manuscript entitled **“KCOR: A Depletion‑Neutralized Framework for Retrospective Cohort Comparison under Latent Frailty.”**
 
-The paper introduces a statistical framework for retrospective cohort comparisons in which selection-induced non-proportional hazards arise endogenously from latent frailty heterogeneity and depletion of susceptibles—an issue common in registry and administrative survival data.
+The paper introduces a new statistical framework for retrospective cohort analyses in which selection‑induced non‑proportional hazards arise endogenously from latent frailty heterogeneity and depletion of susceptibles—a pervasive issue in registry and administrative survival data.
 
-The core contribution is a diagnostic-first normalization approach that separates depletion adjustment from outcome comparison. KCOR operates in cumulative-hazard space, using a parsimonious frailty geometry estimated during prespecified epidemiologically quiet periods to place cohorts on a common scale prior to comparison. Rather than improving descriptive fit alone, the framework targets a specific identifiability problem: curvature induced by selection and depletion that persists across flexible hazard models and can generate systematic non-null behavior in conventional estimands. The method enforces observable diagnostics and explicitly signals loss of interpretability when its assumptions are violated.
+**KCOR** provides a _diagnostic‑first normalization_ in cumulative‑hazard space that separates depletion adjustment from outcome comparison. Using a parsimonious gamma‑frailty geometry fitted during pre‑specified epidemiologically quiet periods, the framework places cohorts on a common hazard scale before computing cumulative contrasts. Unlike flexible hazard modeling, KCOR directly targets the identifiability problem created by selection‑induced curvature that can yield systematic non‑null behavior in standard estimands. The method enforces explicit diagnostics and flags loss of interpretability when assumptions are not met.
 
-The manuscript is methodological in scope. Simulations and empirical examples are used to characterize estimator behavior, diagnostics, and failure modes, and to benchmark performance relative to commonly used approaches. The framework is designed for settings with minimal covariate information, where weighting or matching strategies are infeasible or unreliable, and where robustness and interpretability of cohort contrasts are primary concerns rather than causal attribution.
+This is a **methods‑focused manuscript**: simulations and empirical applications characterize estimator performance, diagnostics, and failure modes, and benchmark KCOR against commonly used approaches. It is designed for data environments with minimal covariates—where weighting or matching are infeasible—and where robustness and transparency of cohort comparisons are of primary interest rather than causal attribution.
 
-We believe this work will be of interest to Statistics in Medicine readers concerned with non-proportional hazards, selection effects, and the principled interpretation of retrospective cohort analyses.
+We believe this work will be of interest to _Statistics in Medicine_ readers concerned with non‑proportional hazards, selection bias, and principled interpretation of real‑world survival analyses.
 
-Sincerely,
+**Sincerely,**  
 Steven T. Kirsch
