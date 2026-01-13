@@ -325,12 +325,13 @@ manuscript, we report cumulative hazard ratios for concreteness.}
   effect windows indicate treatment-related cohort differences when
   temporal separability holds.
 \item
-  \textbf{Uncertainty quantification (optional)}: For Monte Carlo
-  confidence intervals, resample cohort data with replacement
-  (stratified by cohort and stratum), re-estimate frailty parameters,
-  recompute KCOR trajectories, and form percentile-based intervals
-  (2.5th and 97.5th percentiles) at each time point. Recommended:
-  1000--2000 bootstrap replicates for stable percentile intervals.
+  \textbf{Uncertainty quantification}: Monte Carlo confidence intervals
+  are obtained by resampling cohort data with replacement (stratified by
+  cohort and stratum), re-estimating frailty parameters, recomputing
+  KCOR trajectories, and forming percentile-based intervals (2.5th and
+  97.5th percentiles) at each time point. In our implementation,
+  1000--2000 bootstrap replicates were sufficient to yield stable
+  percentile intervals.
 \item
   \textbf{Diagnostics}: Assess quiet-window fit quality (RMSE in
   cumulative-hazard space), post-normalization linearity (R² from linear
@@ -1734,6 +1735,17 @@ adjustment step. Scope and interpretation are summarized once in Box 1
 
 \subsection{5. Limitations}\label{limitations}
 
+This section summarizes the principal limitations of the KCOR framework,
+emphasizing conditions under which interpretation is restricted rather
+than situations in which the estimator fails. These limitations are
+diagnostic and design-related, reflecting the framework's intentionally
+conservative, non-causal scope.
+
+KCOR is intentionally diagnostic rather than test-based: it does not
+attempt to formally test properties such as quiet-window validity or
+frailty distributional form, but instead enforces conservative
+interpretability gates when prespecified empirical diagnostics fail.
+
 \begin{itemize}
 \tightlist
 \item
@@ -1795,8 +1807,8 @@ adjustment step. Scope and interpretation are summarized once in Box 1
   normalization.
 \end{itemize}
 
-\subsubsection{5.1 Failure modes and diagnostics
-(recommended)}\label{failure-modes-and-diagnostics-recommended}
+\subsubsection{5.1 Failure modes and
+diagnostics}\label{failure-modes-and-diagnostics}
 
 KCOR is designed to normalize selection-induced depletion curvature
 under its stated model and windowing assumptions. Reviewers and readers
@@ -1832,7 +1844,7 @@ Common failure modes include:
   differential loss can induce curvature unrelated to latent frailty.
 \end{itemize}
 
-Practical diagnostics to increase trustworthiness include:
+Practical diagnostics include:
 
 \begin{itemize}
 \tightlist
@@ -2968,11 +2980,10 @@ remains valid, but results not reported \\
 Failure of any interpretability or identifiability check limits the
 scope of inference but does not invalidate the KCOR estimator itself.
 
-\subsection{S3. Positive controls (injected
-harm/benefit)}\label{s3.-positive-controls-injected-harmbenefit}
+\subsection{S3. Positive controls}\label{s3.-positive-controls}
 
-\subsubsection{S3.1 Positive controls: detect injected
-harm/benefit}\label{s3.1-positive-controls-detect-injected-harmbenefit}
+\subsubsection{S3.1 Construction of injected
+effects}\label{s3.1-construction-of-injected-effects}
 
 The effect window is a simulation construct used solely for
 positive-control validation and does not represent a real-world
@@ -3337,7 +3348,7 @@ r_{d}(t)=H_{\mathrm{obs},d}(t)-H_{d}^{\mathrm{model}}(t;\hat{k}_d,\hat{\theta}_d
 \subsubsection{S5.3 Parameter stability
 checks}\label{s5.3-parameter-stability-checks}
 
-Robustness of fitted parameters should be assessed by:
+Robustness of fitted parameters is assessed by:
 
 \begin{itemize}
 \tightlist
@@ -3357,8 +3368,9 @@ Robustness of fitted parameters should be assessed by:
 \subsubsection{S5.4 Quiet-window overlay
 plots}\label{s5.4-quiet-window-overlay-plots}
 
-Recommended diagnostic: overlay the prespecified quiet window on hazard
-and cumulative-hazard time series plots. The fit window should:
+Overlaying the prespecified quiet window on hazard and cumulative-hazard
+time series plots provides a visual diagnostic of window placement
+relative to mortality dynamics. The fit window should:
 
 \begin{itemize}
 \tightlist

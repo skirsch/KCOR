@@ -702,7 +702,7 @@ KCOR is designed to normalize selection-induced depletion curvature under its st
 - **Extremely sparse cohorts**: When events are rare, observed cumulative hazards become noisy and $(\hat{k}_d,\hat{\theta}_d)$ can be weakly identified, often manifesting as unstable fitted frailty variance estimates or wide uncertainty.
 - **Non-frailty-driven curvature**: Administrative censoring, cohort-definition drift, changes in risk-set construction, or differential loss can induce curvature unrelated to latent frailty.
 
-Practical diagnostics to increase trustworthiness include:
+Practical diagnostics include:
 
 - **Quiet-window overlays** on hazard/cumulative-hazard plots to confirm the fit window is epidemiologically stable.
 - **Fit residuals in $H$-space** (RMSE, residual plots) and stability of fitted parameters under small perturbations of the quiet-window bounds.

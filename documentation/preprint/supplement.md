@@ -59,9 +59,9 @@ Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifi
 
 Failure of any interpretability or identifiability check limits the scope of inference but does not invalidate the KCOR estimator itself.
 
-## S3. Positive controls (injected harm/benefit)
+## S3. Positive controls
 
-### S3.1 Positive controls: detect injected harm/benefit
+### S3.1 Construction of injected effects
 
 The effect window is a simulation construct used solely for positive-control validation and does not represent a real-world intervention period or biological effect window.
 
@@ -228,7 +228,7 @@ Robustness of fitted parameters is assessed by:
 
 ### S5.4 Quiet-window overlay plots
 
-Quiet-window overlay plots: overlay the prespecified quiet window on hazard and cumulative-hazard time series plots. The fit window should:
+Overlaying the prespecified quiet window on hazard and cumulative-hazard time series plots provides a visual diagnostic of window placement relative to mortality dynamics. The fit window should:
 
 - Avoid major epidemic waves or external mortality shocks
 - Contain sufficient event counts for stable estimation
