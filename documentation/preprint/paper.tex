@@ -426,11 +426,9 @@ Information (SI) document.
 
 \subsection{2. Methods}\label{methods}
 
-While mortality is used as the primary example throughout this section,
-KCOR applies to any irreversible event process. The methodological
-framework is event-agnostic; mortality serves as a concrete illustration
-because it is objectively defined and reliably recorded in many
-administrative datasets.
+Mortality is used as the primary example throughout this section because
+it is objectively defined and reliably recorded in many administrative
+datasets.
 
 Table \ref{tbl:notation} defines the notation used throughout the
 Methods section.
@@ -1314,7 +1312,24 @@ Figure \ref{fig:neg_control_10yr} provides a representative
 illustration; additional age-shift variants are provided in the
 Supplementary Information (SI).
 
+\begin{figure}
+\centering
 \pandocbounded{\includegraphics[keepaspectratio,alt={Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \textbackslash mathrm\{KCOR\}(t) remains near-flat at 1 over follow-up, consistent with a true null effect. Curves are shown as anchored \textbackslash mathrm\{KCOR\}(t; t\_0), i.e., \textbackslash mathrm\{KCOR\}(t)/\textbackslash mathrm\{KCOR\}(t\_0), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI).}]{figures/fig2_neg_control_10yr_age_diff.png}}
+\caption{Empirical negative control with approximately 10-year age
+difference between cohorts. Despite large baseline mortality
+differences, \(\mathrm{KCOR}(t)\) remains near-flat at 1 over follow-up,
+consistent with a true null effect. Curves are shown as anchored
+\(\mathrm{KCOR}(t; t_0)\), i.e.,
+\(\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)\), which removes pre-existing
+cumulative differences and displays post-anchor divergence only. KCOR
+curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as
+\(\mathrm{KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals)
+are shown. Data source: Czech Republic mortality and vaccination dataset
+processed into KCOR\_CMR aggregated format (negative-control
+construction; see Supplementary Information,
+SI).}\label{fig:neg_control_10yr}
+\end{figure}
+
 Table \ref{tbl:neg_control_summary} provides numeric summaries.
 
 \subsubsection{3.2 Positive controls: detect injected
@@ -1803,13 +1818,12 @@ participate}\label{ethics-approval-and-consent-to-participate}
 This study used only simulated data and publicly available, aggregated
 registry summaries that contain no individual-level or identifiable
 information; as such, it did not constitute human subjects research and
-was exempt from institutional review board oversight. This is a
-methods-only manuscript. The primary validation results use synthetic
-data. Empirical negative-control figures (Figures
-\ref{fig:neg_control_10yr} and \ref{fig:neg_control_20yr}) use
-aggregated cohort summaries derived from Czech Republic administrative
-data; no record-level data are shared in this
-manuscript.\textsuperscript{12}
+was exempt from institutional review board oversight. The primary
+validation results use synthetic data. Empirical negative-control
+figures (Figures \ref{fig:neg_control_10yr} and
+\ref{fig:neg_control_20yr}) use aggregated cohort summaries derived from
+Czech Republic administrative data; no record-level data are shared in
+this manuscript.\textsuperscript{12}
 
 \subsubsection{Consent for publication}\label{consent-for-publication}
 

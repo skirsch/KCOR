@@ -84,7 +84,7 @@ The main text presents the KCOR estimator, a single canonical demonstration of C
 
 ## 2. Methods
 
-While mortality is used as the primary example throughout this section, KCOR applies to any irreversible event process. The methodological framework is event-agnostic; mortality serves as a concrete illustration because it is objectively defined and reliably recorded in many administrative datasets.
+Mortality is used as the primary example throughout this section because it is objectively defined and reliably recorded in many administrative datasets.
 
 Table @tbl:notation defines the notation used throughout the Methods section.
 
@@ -527,6 +527,7 @@ Notably, KCOR estimates frailty parameters independently for each cohort without
 Figure @fig:neg_control_10yr provides a representative illustration; additional age-shift variants are provided in the Supplementary Information (SI).
 
 ![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ remains near-flat at 1 over follow-up, consistent with a true null effect. Curves are shown as anchored $\mathrm{KCOR}(t; t_0)$, i.e., $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$, which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information, SI).](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+
 Table @tbl:neg_control_summary provides numeric summaries.
 
 <!--
@@ -679,7 +680,7 @@ KCOR provides a principled approach to retrospective cohort comparison under sel
 
 ### Ethics approval and consent to participate
 
-This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. This is a methods-only manuscript. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript.[@sanca2024]
+This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript.[@sanca2024]
 
 ### Consent for publication
 

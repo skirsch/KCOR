@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022/Debian) (preloaded format=xelatex 2025.12.23)  12 JAN 2026 22:59
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022/Debian) (preloaded format=xelatex 2025.12.23)  12 JAN 2026 23:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1101,25 +1101,25 @@ tary Information §S2; Tables S2.1–S2.3), and detailed
  []
 
 [3] [4]
-Underfull \hbox (badness 1062) in paragraph at lines 595--602
+Underfull \hbox (badness 1062) in paragraph at lines 593--600
 []\TU/TeXGyreTermes(0)/m/n/10 Censoring or reclassification due to cohort trans
 itions (e.g., moving between exposure groups over time) is 
  []
 
 [5]
 LaTeX Font Info:    Font shape `TU/TeXGyreTermes(0)/m/it' will be
-(Font)              scaled to size 10.0pt on input line 654.
+(Font)              scaled to size 10.0pt on input line 652.
 
-Underfull \hbox (badness 1019) in paragraph at lines 664--668
+Underfull \hbox (badness 1019) in paragraph at lines 662--666
 []\TU/TeXGyreTermes(0)/m/n/10 Discrete binning accommodates tied events and agg
 regated registry releases. Bin width is chosen based on 
  []
 
 [6]
 LaTeX Font Info:    Font shape `TU/TeXGyreTermes(0)/m/n' will be
-(Font)              scaled to size 5.5pt on input line 784.
+(Font)              scaled to size 5.5pt on input line 782.
  [7]
-Underfull \hbox (badness 1005) in paragraph at lines 894--901
+Underfull \hbox (badness 1005) in paragraph at lines 892--899
 \TU/TeXGyreTermes(0)/m/n/10 depletion-neutralized cumulative hazard should be a
 pproximately linear in event time after inversion. 
  []
@@ -1128,46 +1128,46 @@ pproximately linear in event time after inversion.
 File: figures/fig_kcor_workflow.png Graphic file (type bmp)
 <figures/fig_kcor_workflow.png>
 
-Underfull \hbox (badness 10000) in paragraph at lines 1066--1066
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1064
 []\TU/TeXGyreTermes(0)/m/n/10 Figure 1: []\TU/TeXGyreTermes(0)/b/n/10 KCOR as a
  two-stage framework. (A) \TU/TeXGyreTermes(0)/m/n/10 Fixed-cohort cumulative h
 azards exhibit curvature due to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1066--1066
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1064
 \TU/TeXGyreTermes(0)/m/n/10 selection-induced depletion; late-time curvature is
  used to estimate frailty parameters for normalization. \TU/TeXGyreTermes(0)/b/
 n/10 (B)
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1066--1066
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1064
 \TU/TeXGyreTermes(0)/m/n/10 Gamma-frailty normalization yields approximately li
 nearized cumulative hazards that are directly comparable across
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1066--1066
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1064
 \TU/TeXGyreTermes(0)/m/n/10 cohorts; $[][][][]$, defined as the ratio of deplet
 ion-neutralized baseline cumulative hazards, is near-flat under the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1066--1066
+Underfull \hbox (badness 10000) in paragraph at lines 1064--1064
 \TU/TeXGyreTermes(0)/m/n/10 null and deviates only under net hazard differences
 . \TU/TeXGyreTermes(0)/m/it/10 In the schematic, $[][][][]$ denotes the depleti
 on-neutralized
  []
 
 
-Underfull \hbox (badness 1112) in paragraph at lines 1085--1091
+Underfull \hbox (badness 1112) in paragraph at lines 1083--1089
 []\TU/TeXGyreTermes(0)/m/n/10 Cox regression estimates a weighted average hazar
 d ratio under non-proportional hazards; KCOR targets a 
  []
 
 [10] [11]
-Underfull \hbox (badness 2368) in paragraph at lines 1135--1145
+Underfull \hbox (badness 2368) in paragraph at lines 1133--1143
 []\TU/TeXGyreTermes(0)/m/n/10 The same simulated datasets were analyzed using K
 COR. Observed cumulative hazards were estimated 
  []
@@ -1175,26 +1175,26 @@ COR. Observed cumulative hazards were estimated
 File: figures/fig_cox_bias_hr_vs_theta.png Graphic file (type bmp)
 <figures/fig_cox_bias_hr_vs_theta.png>
 
-Underfull \hbox (badness 10000) in paragraph at lines 1195--1195
+Underfull \hbox (badness 10000) in paragraph at lines 1193--1193
 []\TU/TeXGyreTermes(0)/m/n/10 Figure 2: []Cox regression produces spurious non-
 null hazard ratios under a \TU/TeXGyreTermes(0)/m/it/10 synthetic null \TU/TeXG
 yreTermes(0)/m/n/10 as frailty heterogeneity
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1195--1195
+Underfull \hbox (badness 10000) in paragraph at lines 1193--1193
 \TU/TeXGyreTermes(0)/m/n/10 increases. Hazard ratios (with 95% confidence inter
 vals) from Cox proportional hazards regression comparing
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1195--1195
+Underfull \hbox (badness 10000) in paragraph at lines 1193--1193
 \TU/TeXGyreTermes(0)/m/n/10 cohort B to cohort A in simulations where the true 
 treatment effect is identically zero and cohorts differ only in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1195--1195
+Underfull \hbox (badness 10000) in paragraph at lines 1193--1193
 \TU/TeXGyreTermes(0)/m/n/10 frailty variance ($[]$). Deviations from HR=1 arise
  solely from frailty-driven depletion and associated non-proportional
  []
@@ -1202,449 +1202,456 @@ Underfull \hbox (badness 10000) in paragraph at lines 1195--1195
 File: figures/fig_cox_bias_kcor_vs_theta.png Graphic file (type bmp)
 <figures/fig_cox_bias_kcor_vs_theta.png>
 
-Underfull \hbox (badness 10000) in paragraph at lines 1206--1206
+Underfull \hbox (badness 10000) in paragraph at lines 1204--1204
 []\TU/TeXGyreTermes(0)/m/n/10 Figure 3: []$[][][][]$ remains null under a synth
 etic null across increasing frailty heterogeneity. $[][][][]$ asymptotes
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1206--1206
+Underfull \hbox (badness 10000) in paragraph at lines 1204--1204
 \TU/TeXGyreTermes(0)/m/n/10 remain near 1 across $[]$ in the same simulations, 
 consistent with correct null behavior after depletion normalization.
  []
 
 [12] [13] [14]
-Underfull \hbox (badness 1072) in paragraph at lines 1266--1269
+Underfull \hbox (badness 1072) in paragraph at lines 1264--1267
 []\TU/TeXGyreTermes(0)/m/n/10 Throughout, curvature in cumulative hazard plots 
 reflects selection-induced depletion, while linearity after 
  []
 
-
-LaTeX Warning: Reference `fig:neg_control_10yr' on page 15 undefined on input l
-ine 1304.
-
 [15]
-
-LaTeX Warning: Reference `fig:neg_control_10yr' on page 16 undefined on input l
-ine 1313.
-
 File: figures/fig2_neg_control_10yr_age_diff.png Graphic file (type bmp)
 <figures/fig2_neg_control_10yr_age_diff.png>
 
-Underfull \hbox (badness 1194) in paragraph at lines 1364--1379
+Underfull \hbox (badness 10000) in paragraph at lines 1330--1330
+[]\TU/TeXGyreTermes(0)/m/n/10 Figure 4: []Empirical negative control with appro
+ximately 10-year age difference between cohorts. Despite large
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1330--1330
+\TU/TeXGyreTermes(0)/m/n/10 baseline mortality differences, $[][][][]$ remains 
+near-flat at 1 over follow-up, consistent with a true null effect.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1330--1330
+\TU/TeXGyreTermes(0)/m/n/10 Curves are shown as anchored $[][][][] [][][]$, i.e
+., $[][][][][][][][][][]$, which removes pre-existing cumulative
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1330--1330
+\TU/TeXGyreTermes(0)/m/n/10 differences and displays post-anchor divergence onl
+y. KCOR curves are
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1330--1330
+\TU/TeXGyreTermes(0)/m/n/10 source: Czech Republic mortality and vaccination da
+taset processed into KCOR_CMR aggregated format
+ []
+
+[16]
+Underfull \hbox (badness 1194) in paragraph at lines 1379--1394
 \TU/TeXGyreTermes(0)/m/n/10 similar depletion geometry to gamma frailty, KCOR n
 ormalization remains approximately valid, with bias 
  []
 
-[16]
-Underfull \hbox (badness 1173) in paragraph at lines 1430--1432
+
+Underfull \hbox (badness 1173) in paragraph at lines 1445--1447
 []\TU/TeXGyreTermes(0)/m/n/10 The frailty term is used as a geometric working m
 odel for selection-induced depletion; it is not interpreted 
  []
 
 [17]
-Underfull \hbox (badness 1275) in paragraph at lines 1493--1500
+Underfull \hbox (badness 1275) in paragraph at lines 1508--1515
 []\TU/TeXGyreTermes(0)/m/n/10 Although cumulative hazards and survival function
 s are in one-to-one correspondence, KCOR operates in 
  []
 
 [18] [19]
-Underfull \hbox (badness 1097) in paragraph at lines 1655--1658
+Underfull \hbox (badness 1097) in paragraph at lines 1670--1673
 []\TU/TeXGyreTermes(0)/b/n/10 Non-frailty-driven curvature\TU/TeXGyreTermes(0)/
 m/n/10 : Administrative censoring, cohort-definition drift, changes in risk-set
  
  []
 
 [20]
-Underfull \hbox (badness 1057) in paragraph at lines 1763--1770
+Underfull \hbox (badness 1057) in paragraph at lines 1778--1785
 \TU/TeXGyreTermes(0)/m/n/10 In finite samples, KCOR precision is driven primari
 ly by the number of events observed over follow-up. In 
  []
 
 [21]
 
-LaTeX Warning: Reference `fig:neg_control_10yr' on page 22 undefined on input l
-ine 1813.
-
-
 LaTeX Warning: Reference `fig:neg_control_20yr' on page 22 undefined on input l
-ine 1813.
+ine 1824.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1839--1842
-[]\TU/TeXGyreTermes(0)/m/n/10 A formal specification of the KCOR 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1857--1864
-[]\TU/TeXGyreTermes(0)/m/n/10 RMST computation and comparison table generation 
-
- []
-
-
-Underfull \hbox (badness 1297) in paragraph at lines 1884--1888
+Underfull \hbox (badness 1297) in paragraph at lines 1875--1879
 []\TU/TeXGyreTermes(0)/m/n/10 All scientific decisions, methodological choices,
  analyses, interpretations, and judgments regarding which 
  []
 
 [22] [23]
-Underfull \hbox (badness 10000) in paragraph at lines 1919--1919
+Underfull \hbox (badness 10000) in paragraph at lines 1910--1910
 []|\TU/TeXGyreTermes(0)/m/n/10 Vaupel JW, Manton KG, Stallard E. The impact of 
 heterogeneity in individual frailty on the dynamics of
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1926--1926
+Underfull \hbox (badness 10000) in paragraph at lines 1917--1917
 []|\TU/TeXGyreTermes(0)/m/n/10 Grambsch PM, Therneau TM. Proportional hazards t
 ests and diagnostics based on weighted residuals.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1933--1933
+Underfull \hbox (badness 10000) in paragraph at lines 1924--1924
 []|\TU/TeXGyreTermes(0)/m/n/10 Andersen PK, Gill RD. Cox’s Regression Model for
  Counting Processes: A Large Sample Study. \TU/TeXGyreTermes(0)/m/it/10 The Ann
 als
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1941--1941
+Underfull \hbox (badness 10000) in paragraph at lines 1932--1932
 []|\TU/TeXGyreTermes(0)/m/n/10 Royston P, Parmar MKB. Flexible parametric propo
 rtional-hazards and proportional-odds models for
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1941--1941
+Underfull \hbox (badness 10000) in paragraph at lines 1932--1932
 \TU/TeXGyreTermes(0)/m/n/10 censored survival data, with application to prognos
 tic modelling and estimation of treatment effects. \TU/TeXGyreTermes(0)/m/it/10
  Statistics
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1947--1947
+Underfull \hbox (badness 10000) in paragraph at lines 1938--1938
 []|\TU/TeXGyreTermes(0)/m/n/10 Aalen OO. A linear regression model for the anal
 ysis of life times. \TU/TeXGyreTermes(0)/m/it/10 Statistics in Medicine\TU/TeXG
 yreTermes(0)/m/n/10 . 1989;8(8):907-925.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1953--1953
+Underfull \hbox (badness 10000) in paragraph at lines 1944--1944
 []|\TU/TeXGyreTermes(0)/m/n/10 Lin DY, Ying Z. Semiparametric analysis of the a
 dditive risk model. \TU/TeXGyreTermes(0)/m/it/10 Biometrika\TU/TeXGyreTermes(0)
 /m/n/10 . 1994;81(1):61-71.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1960--1960
+Underfull \hbox (badness 10000) in paragraph at lines 1951--1951
 []|\TU/TeXGyreTermes(0)/m/n/10 Van Houwelingen HC. Dynamic Prediction by Landma
 rking in Event History Analysis. \TU/TeXGyreTermes(0)/m/it/10 Scandinavian
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1967--1967
+Underfull \hbox (badness 10000) in paragraph at lines 1958--1958
 []|\TU/TeXGyreTermes(0)/m/n/10 Robins JM, Hernán MÁ, Brumback B. Marginal Struc
 tural Models and Causal Inference in Epidemiology:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1974--1974
+Underfull \hbox (badness 10000) in paragraph at lines 1965--1965
 []|\TU/TeXGyreTermes(0)/m/n/10 Cole SR, Hernan MA. Constructing Inverse Probabi
 lity Weights for Marginal Structural Models. \TU/TeXGyreTermes(0)/m/it/10 Ameri
 can
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1982--1982
+Underfull \hbox (badness 10000) in paragraph at lines 1973--1973
 []|\TU/TeXGyreTermes(0)/m/n/10 Obel N, Fox M, Tetens M, et al. Confounding and 
 Negative Control Methods in Observational Study of
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1982--1982
+Underfull \hbox (badness 10000) in paragraph at lines 1973--1973
 \TU/TeXGyreTermes(0)/m/n/10 SARS-CoV-2 Vaccine Effectiveness: A Nationwide, Pop
 ulation-Based Danish Health Registry Study.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1990--1990
+Underfull \hbox (badness 10000) in paragraph at lines 1981--1981
 []|\TU/TeXGyreTermes(0)/m/n/10 Chemaitelly H, Ayoub HH, Coyle P, et al. Assessi
 ng healthy vaccinee effect in COVID-19 vaccine
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1990--1990
+Underfull \hbox (badness 10000) in paragraph at lines 1981--1981
 \TU/TeXGyreTermes(0)/m/n/10 effectiveness studies: A national cohort study in Q
 atar. Schiffer JT, Henry D, eds. \TU/TeXGyreTermes(0)/m/it/10 eLife\TU/TeXGyreT
 ermes(0)/m/n/10 . 2025;14:e103690.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1997--1997
+Underfull \hbox (badness 10000) in paragraph at lines 1988--1988
 []|\TU/TeXGyreTermes(0)/m/n/10 Šanca O, Jarkovský J, Klimeš D, et al. \TU/TeXGy
 reTermes(0)/m/it/10 Vaccination, Positivity, Hospitalization for COVID-19, Deat
 hs, Long
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1997--1997
+Underfull \hbox (badness 10000) in paragraph at lines 1988--1988
 \TU/TeXGyreTermes(0)/m/it/10 Covid and Comorbidities in People in the Czech Rep
 ublic. \TU/TeXGyreTermes(0)/m/n/10 National Health Information Portal, Czech
  []
 
 [24]
-Underfull \hbox (badness 10000) in paragraph at lines 2013--2013
+Underfull \hbox (badness 10000) in paragraph at lines 2004--2004
 []\TU/TeXGyreTermes(0)/m/n/10 Table 1: Summary of two large matched observation
 al studies showing
  []
 
 [25]
-Underfull \hbox (badness 10000) in paragraph at lines 2068--2068
+Underfull \hbox (badness 10000) in paragraph at lines 2059--2059
 []\TU/TeXGyreTermes(0)/m/n/10 Table 2: Comparison of Cox proportional hazards, 
 Cox with frailty, and
  []
 
 [26]
-Underfull \hbox (badness 10000) in paragraph at lines 2119--2119
+Underfull \hbox (badness 10000) in paragraph at lines 2110--2110
 []\TU/TeXGyreTermes(0)/m/n/10 Table 3: Positioning KCOR relative to non-proport
 ional hazards
  []
 
 [27] [28]
-Underfull \hbox (badness 10000) in paragraph at lines 2233--2233
+Underfull \hbox (badness 10000) in paragraph at lines 2224--2224
 []\TU/TeXGyreTermes(0)/m/n/10 Table 5: Step-by-step KCOR algorithm (high-level)
 , with recommended
  []
 
 [29]
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 []\TU/TeXGyreTermes(0)/m/n/10 Table 6: Cox vs KCOR under a synthetic null with 
 increasing frailty
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 heterogeneity. Two cohorts are simulated with ident
 ical baseline
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 hazards and no treatment effect \TU/TeXGyreTermes(0
 )/m/it/10 (null by construction)\TU/TeXGyreTermes(0)/m/n/10 ; cohorts differ
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 only in gamma frailty variance ($[]$). Despite the 
 true hazard ratio being 1
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 by construction, Cox regression produces increasing
 ly non-null hazard
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 ratios as $[]$ increases, reflecting depletion-indu
 ced non-proportional
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 hazards. $[][][][]$ remains centered near unity wit
 h negligible
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2303--2303
+Underfull \hbox (badness 10000) in paragraph at lines 2294--2294
 \TU/TeXGyreTermes(0)/m/n/10 post-normalization slope across $[]$ values. (Exact
  values depend on
  []
 
 [30]
-Underfull \hbox (badness 10000) in paragraph at lines 2360--2360
+Underfull \hbox (badness 10000) in paragraph at lines 2351--2351
 []\TU/TeXGyreTermes(0)/m/n/10 Table 7: Example end-of-window $[][][][]$ values 
 from the empirical
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2360--2360
+Underfull \hbox (badness 10000) in paragraph at lines 2351--2351
 \TU/TeXGyreTermes(0)/m/n/10 negative control (pooled/ASMR summaries), showing n
 ear-null
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2360--2360
+Underfull \hbox (badness 10000) in paragraph at lines 2351--2351
 \TU/TeXGyreTermes(0)/m/n/10 behavior under large composition differences. (Sour
 ce:
  []
 
 [31]
-Underfull \hbox (badness 10000) in paragraph at lines 2390--2390
+Underfull \hbox (badness 10000) in paragraph at lines 2381--2381
 []\TU/TeXGyreTermes(0)/m/n/10 Table 8: Positive control results comparing injec
 ted hazard multipliers
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2390--2390
+Underfull \hbox (badness 10000) in paragraph at lines 2381--2381
 \TU/TeXGyreTermes(0)/m/n/10 to detected KCOR deviations. Both scenarios show KC
 OR deviating
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2390--2390
+Underfull \hbox (badness 10000) in paragraph at lines 2381--2381
 \TU/TeXGyreTermes(0)/m/n/10 from 1.0 in the expected direction, validating that
  the estimator can
  []
 
 [32]
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 []\TU/TeXGyreTermes(0)/m/n/10 Table 9: Comparison of Cox regression, shared fra
 ilty Cox models, and
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 KCOR under selection-only and joint frailty + treat
 ment effect
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 scenarios. Results are from S7 simulation (joint fr
 ailty + treatment) and
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 gamma-frailty null scenario (selection-only). Stand
 ard Cox regression
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 produces non-null hazard ratios under selection-onl
 y conditions due to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 depletion dynamics. Shared frailty Cox models parti
 ally mitigate this
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 bias but still exhibit residual non-null behavior. 
 KCOR remains
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2445--2445
+Underfull \hbox (badness 10000) in paragraph at lines 2436--2436
 \TU/TeXGyreTermes(0)/m/n/10 near-null under selection-only conditions and corre
 ctly detects
  []
 
 
-Overfull \hbox (8.22554pt too wide) in paragraph at lines 2448--2449
+Overfull \hbox (8.22554pt too wide) in paragraph at lines 2439--2440
 []\TU/TeXGyreTermes(0)/m/n/10 Scenario  
  []
 
 
-Overfull \hbox (8.22554pt too wide) in paragraph at lines 2468--2469
+Overfull \hbox (8.22554pt too wide) in paragraph at lines 2459--2460
 []\TU/TeXGyreTermes(0)/m/n/10 Scenario  
  []
 
 
-Overfull \hbox (6.35555pt too wide) in paragraph at lines 2488--2488
+Overfull \hbox (6.35555pt too wide) in paragraph at lines 2479--2479
 []|\TU/TeXGyreTermes(0)/m/n/10 Gamma- 
  []
 
 
-Overfull \hbox (0.83554pt too wide) in paragraph at lines 2490--2490
+Overfull \hbox (0.83554pt too wide) in paragraph at lines 2481--2481
 \TU/TeXGyreTermes(0)/m/n/10 (r=1.2)|  
  []
 
 
-Overfull \hbox (0.83554pt too wide) in paragraph at lines 2492--2492
+Overfull \hbox (0.83554pt too wide) in paragraph at lines 2483--2483
 \TU/TeXGyreTermes(0)/m/n/10 (r=0.8)|  
  []
 
 [33]
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 []\TU/TeXGyreTermes(0)/m/n/10 Table 10: Simulation comparison of KCOR and alter
 native estimands
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 under selection-induced non-proportional hazards. R
 esults are
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 summarized across simulation scenarios (null scenar
 ios: gamma-frailty
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 null, non-gamma frailty, contamination, sparse even
 ts; effect scenarios:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 injected hazard increase/decrease). KCOR remains st
 able under
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 selection-only regimes, while RMST inherits depleti
 on bias and
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 time-varying Cox captures non-proportional hazards 
 without
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2512--2512
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
 \TU/TeXGyreTermes(0)/m/n/10 normalizing selection geometry. All methods were ap
 plied to identical
  []
 
 [34]
-Underfull \hbox (badness 10000) in paragraph at lines 2567--2567
+Underfull \hbox (badness 10000) in paragraph at lines 2558--2558
 []\TU/TeXGyreTermes(0)/m/n/10 Table 11: Bootstrap coverage for KCOR uncertainty
  intervals. Coverage
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2567--2567
+Underfull \hbox (badness 10000) in paragraph at lines 2558--2558
 \TU/TeXGyreTermes(0)/m/n/10 is evaluated across simulation scenarios using stra
 tified bootstrap
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2567--2567
+Underfull \hbox (badness 10000) in paragraph at lines 2558--2558
 \TU/TeXGyreTermes(0)/m/n/10 resampling. Nominal 95% confidence intervals are co
 mpared to
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2567--2567
+Underfull \hbox (badness 10000) in paragraph at lines 2558--2558
 \TU/TeXGyreTermes(0)/m/n/10 empirical coverage (proportion of simulations where
  the true value lies
  []
 
 
-Overfull \hbox (7.70299pt too wide) in paragraph at lines 2600--2602
+Overfull \hbox (7.70299pt too wide) in paragraph at lines 2591--2593
 \TU/TeXGyreTermes(0)/m/n/10 misspecification|  
  []
 
@@ -1654,10 +1661,10 @@ LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 19539 strings out of 478775
- 361127 string characters out of 5850944
+ 19536 strings out of 478775
+ 361095 string characters out of 5850944
  1864991 words of memory out of 5000000
- 39283 multiletter control sequences out of 15000+600000
+ 39280 multiletter control sequences out of 15000+600000
  516010 words of font info for 80 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  86i,11n,122p,1193b,459s stack positions out of 10000i,1000n,20000p,200000b,200000s

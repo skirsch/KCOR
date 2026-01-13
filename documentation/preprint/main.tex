@@ -426,11 +426,9 @@ Information (SI) document.
 
 \subsection{2. Methods}\label{methods}
 
-While mortality is used as the primary example throughout this section,
-KCOR applies to any irreversible event process. The methodological
-framework is event-agnostic; mortality serves as a concrete illustration
-because it is objectively defined and reliably recorded in many
-administrative datasets.
+Mortality is used as the primary example throughout this section because
+it is objectively defined and reliably recorded in many administrative
+datasets.
 
 Table \ref{tbl:notation} defines the notation used throughout the
 Methods section.
@@ -1314,7 +1312,24 @@ Figure \ref{fig:neg_control_10yr} provides a representative
 illustration; additional age-shift variants are provided in the
 Supplementary Information (SI).
 
+\begin{figure}
+\centering
 \pandocbounded{\includegraphics[keepaspectratio,alt={Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \textbackslash mathrm\{KCOR\}(t) remains near-flat at 1 over follow-up, consistent with a true null effect. Curves are shown as anchored \textbackslash mathrm\{KCOR\}(t; t\_0), i.e., \textbackslash mathrm\{KCOR\}(t)/\textbackslash mathrm\{KCOR\}(t\_0), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at t\_0 = 4 weeks (i.e., plotted as \textbackslash mathrm\{KCOR\}(t; t\_0)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI).}]{figures/fig2_neg_control_10yr_age_diff.png}}
+\caption{Empirical negative control with approximately 10-year age
+difference between cohorts. Despite large baseline mortality
+differences, \(\mathrm{KCOR}(t)\) remains near-flat at 1 over follow-up,
+consistent with a true null effect. Curves are shown as anchored
+\(\mathrm{KCOR}(t; t_0)\), i.e.,
+\(\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)\), which removes pre-existing
+cumulative differences and displays post-anchor divergence only. KCOR
+curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as
+\(\mathrm{KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals)
+are shown. Data source: Czech Republic mortality and vaccination dataset
+processed into KCOR\_CMR aggregated format (negative-control
+construction; see Supplementary Information,
+SI).}\label{fig:neg_control_10yr}
+\end{figure}
+
 Table \ref{tbl:neg_control_summary} provides numeric summaries.
 
 \subsubsection{3.2 Positive controls: detect injected
@@ -1793,10 +1808,6 @@ diagnostically rather than presuming them, surfacing violations as
 degraded fit, instability, or residual curvature rather than absorbing
 them into model-dependent estimates.
 
-Reproducibility: code, simulations, and manuscript build instructions
-are available in the project repository
-(\url{https://github.com/skirsch/KCOR}).
-
 \newpage
 
 \subsection{Declarations}\label{declarations}
@@ -1807,61 +1818,41 @@ participate}\label{ethics-approval-and-consent-to-participate}
 This study used only simulated data and publicly available, aggregated
 registry summaries that contain no individual-level or identifiable
 information; as such, it did not constitute human subjects research and
-was exempt from institutional review board oversight. This is a
-methods-only manuscript. The primary validation results use synthetic
-data. Empirical negative-control figures (Figures
-\ref{fig:neg_control_10yr} and \ref{fig:neg_control_20yr}) use
-aggregated cohort summaries derived from Czech Republic administrative
-data; no record-level data are shared in this
-manuscript.\textsuperscript{12}
+was exempt from institutional review board oversight. The primary
+validation results use synthetic data. Empirical negative-control
+figures (Figures \ref{fig:neg_control_10yr} and
+\ref{fig:neg_control_20yr}) use aggregated cohort summaries derived from
+Czech Republic administrative data; no record-level data are shared in
+this manuscript.\textsuperscript{12}
 
 \subsubsection{Consent for publication}\label{consent-for-publication}
 
 Not applicable.
 
-\subsubsection{Data availability}\label{data-availability}
+\subsection{Data Availability
+Statement}\label{data-availability-statement}
 
-No individual-level data were accessed or analyzed in this study.
+This study analyzes aggregated cohort-level summaries derived from
+administrative health records. The underlying individual-level data from
+the Czech Republic are record-level administrative data collected and
+maintained by the National Health Information Portal and were not
+accessed directly by the author. Access to the underlying record-level
+data is subject to the data provider's governance, approval, and
+disclosure-control policies.
 
-\begin{itemize}
-\tightlist
-\item
-  Synthetic validation data (negative and positive control datasets) and
-  generation scripts are available in the project repository under
-  \texttt{test/negative\_control/} and \texttt{test/positive\_control/}.
-\item
-  Sensitivity analysis outputs are available under
-  \texttt{test/sensitivity/out/}.
-\item
-  The reference implementation includes example datasets in KCOR\_CMR
-  format for reproducibility.
-\item
-  A formal specification of the KCOR data formats is provided in
-  \texttt{documentation/specs/KCOR\_file\_format.md}, including schema
-  definitions and disclosure-control semantics.
-\end{itemize}
+All synthetic validation datasets used for method development and
+evaluation (including negative and positive control simulations), along
+with their generation scripts, are publicly available in the project
+repository. Sensitivity analysis outputs and example datasets in
+KCOR\_CMR format are included to support full computational
+reproducibility. A formal specification of the KCOR data formats,
+including schema definitions and disclosure-control semantics, is
+provided in \texttt{documentation/specs/KCOR\_file\_format.md}.
 
-\subsubsection{Code availability}\label{code-availability}
-
-\begin{itemize}
-\tightlist
-\item
-  The KCOR reference implementation and complete validation suite are
-  available in the project repository.
-\item
-  Repository URL: \url{https://github.com/skirsch/KCOR}
-\item
-  Zenodo DOI:
-  \href{https://doi.org/10.5281/zenodo.18050329}{10.5281/zenodo.18050329}
-\item
-  RMST computation and comparison table generation are implemented via
-  functions \texttt{compute\_rmst\_from\_cohort()} and
-  \texttt{generate\_comparison\_table()} in
-  \texttt{test/sim\_grid/code/generate\_sim\_grid.py}. Both RMST and
-  time-varying Cox comparators run on the same simulation outputs as
-  KCOR evaluation; no additional random seeds or data generation are
-  required.
-\end{itemize}
+The complete KCOR reference implementation, simulation code, and
+manuscript build instructions are available at
+https://github.com/skirsch/KCOR. A citable archival release of the
+software is available via Zenodo (DOI: 10.5281/zenodo.18050329).
 
 \subsubsection{Use of artificial intelligence
 tools}\label{use-of-artificial-intelligence-tools}
