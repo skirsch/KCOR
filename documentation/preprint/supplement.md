@@ -108,6 +108,8 @@ The synthetic negative control (Figure @fig:neg_control_synthetic) is generated 
 
 Both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
 
+![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95% bootstrap intervals) are shown.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
+
 ### S4.3 Negative control: empirical age-shift construction
 
 The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) is generated using:
@@ -152,6 +154,8 @@ The sensitivity analysis (Figure @fig:sensitivity_overview) varies:
 - **Cohorts**: 2021_24
 
 Output grids show KCOR(t) values for each parameter combination.
+
+![Sensitivity analysis summary showing $\mathrm{KCOR}(t)$ values across parameter grid. Heatmaps display $\mathrm{KCOR}(t)$ estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, $\mathrm{KCOR}(t)$ varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons.](figures/fig_sensitivity_overview.png){#fig:sensitivity_overview}
 
 ### S4.6 Tail-sampling / bimodal selection (adversarial selection geometry)
 

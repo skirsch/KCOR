@@ -369,6 +369,13 @@ PAPER_SUPP_MD ?= supplement.md
 $(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_TEX)"
 	@cd $(PAPER_DIR) && \
+		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(PAPER_MD)" "$(PAPER_SUPP_MD)"; then \
+			echo ""; \
+			echo "ERROR: Found suspicious merge/diff artifacts in paper sources (e.g., literal '\\n+' or conflict markers)."; \
+			echo "Fix the indicated lines in $(PAPER_MD) / $(PAPER_SUPP_MD) before building."; \
+			exit 1; \
+		fi
+	@cd $(PAPER_DIR) && \
 		pandoc $(PAPER_MD) $(PAPER_SUPP_MD) \
 			--to=latex \
 			--filter pandoc-crossref \
@@ -410,6 +417,12 @@ supplement-tex: $(PAPER_DIR)/$(SUPP_TEX)
 $(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(MAIN_MD) -> $(PAPER_DIR)/$(MAIN_TEX)"
 	@cd $(PAPER_DIR) && \
+		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(MAIN_MD)"; then \
+			echo ""; \
+			echo "ERROR: Found suspicious merge/diff artifacts in $(MAIN_MD) (e.g., literal '\\n+' or conflict markers)."; \
+			exit 1; \
+		fi
+	@cd $(PAPER_DIR) && \
 		pandoc $(MAIN_MD) \
 			--to=latex \
 			--filter pandoc-crossref \
@@ -432,6 +445,12 @@ $(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PA
 
 $(PAPER_DIR)/$(SUPP_TEX): $(PAPER_DIR)/$(SUPP_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(SUPP_MD) -> $(PAPER_DIR)/$(SUPP_TEX)"
+	@cd $(PAPER_DIR) && \
+		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(SUPP_MD)"; then \
+			echo ""; \
+			echo "ERROR: Found suspicious merge/diff artifacts in $(SUPP_MD) (e.g., literal '\\n+' or conflict markers)."; \
+			exit 1; \
+		fi
 	@cd $(PAPER_DIR) && \
 		pandoc $(SUPP_MD) \
 			--to=latex \
