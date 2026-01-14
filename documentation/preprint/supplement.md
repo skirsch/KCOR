@@ -55,9 +55,9 @@ Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifi
 | I2 Window alignment | Follow-up overlaps the hypothesized effect window. | Out-of-window effects not recoverable |
 | I3 Stability under perturbation | Estimates robust to tuning of windows and skips. | Interpretation limited |
 | I4 Anchoring validity | Quiet window exhibits post-normalization linearity. | Anchoring invalid |
-| I5 Conservative failure rule | Any failure → not identified. | Estimator remains valid, but results not reported |
+| I5 Conservative failure rule | Any failure → diagnostics indicate non-identifiability. | Analysis treated as not identified; results not reported |
 
-Failure of any interpretability or identifiability check limits the scope of inference but does not invalidate the KCOR estimator itself.
+When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself.
 
 ## S3. Positive controls
 
@@ -93,7 +93,7 @@ Table: Reference implementation and default operational settings. {#tbl:si_defau
 
 ### S4.2 Negative controls
 
-Negative controls are implemented in two complementary forms. The empirical negative control uses full-population registry cohorts and does not apply gamma-frailty normalization, as selection-induced depletion is negligible by construction. The synthetic negative control introduces extreme, known frailty heterogeneity and explicitly tests whether gamma-frailty normalization correctly removes curvature under the null.
+Negative controls are implemented in two complementary forms. The empirical negative control uses full-population registry cohorts and does not apply gamma-frailty normalization, as selection-induced depletion (depletion of susceptibles) is negligible by construction. The synthetic negative control introduces extreme, known frailty heterogeneity and explicitly tests whether gamma-frailty normalization correctly removes curvature under the null.
 
 #### S4.2.1 Synthetic negative control: gamma-frailty null
 
@@ -304,7 +304,7 @@ Table: Diagnostic gate for Czech application: KCOR results reported only where d
 | 90–99            | Yes                | Yes                          | Yes                 | Yes           |
 | All ages         | Yes                | Yes                          | Yes                 | Yes           |
 
-All age strata in the Czech application satisfied the prespecified diagnostic criteria, permitting KCOR computation and reporting. KCOR results are not reported for any age stratum where diagnostics indicated non-identifiability.
+All age strata in the Czech application satisfied the prespecified diagnostic criteria, permitting KCOR computation and reporting. KCOR results are not reported for any age stratum where diagnostics indicate non-identifiability.
 
 **Interpretation:** In this application, unvaccinated cohorts exhibit frailty heterogeneity, while Dose 2 cohorts show near-zero estimated frailty across all age bands, consistent with selective uptake prior to follow-up:
 
@@ -337,7 +337,7 @@ Table: Estimated gamma-frailty variance (fitted frailty variance) by age band an
 | All ages (full population) |                4.98 |           $1.02 \times 10^{-11}$ |
 
 **Notes:**
-- The fitted frailty variance quantifies unobserved frailty heterogeneity and depletion of susceptibles within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts.
+- The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts. Near-zero values indicate effectively linear cumulative hazards over the quiet window and are typical of strongly pre-selected cohorts.
 - Each entry reports a single fitted gamma-frailty variance for the specified age band and vaccination status within the 2021_24 enrollment cohort.
 - The "All ages (full population)" row corresponds to an independent fit over the full pooled age range, included as a global diagnostic.
 - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40+ (YOB $\le 1980$) where event counts are stable.

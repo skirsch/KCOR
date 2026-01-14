@@ -194,7 +194,7 @@ frailty}\label{kcor-a-depletion-neutralized-framework-for-retrospective-cohort-c
   \textbf{Word count}: 12,100 (excluding Abstract and References)
 \item
   \textbf{Keywords}: selection bias; frailty model; gamma mixture model;
-  frailty inversion; frailty heterogeneity; depletion of susceptibles;
+  frailty inversion; frailty heterogeneity; selection-induced depletion;
   non-proportional hazards; cumulative hazard; hazard normalization;
   cumulative hazards; estimands; gamma frailty; negative controls;
   observational studies; observational cohort studies
@@ -258,12 +258,13 @@ depletion}\label{curvature-shape-is-the-hard-part-non-proportional-hazards-from-
 
 Selection does not merely shift mortality \textbf{levels}; it can alter
 mortality \textbf{curvature}---the time-evolution of cohort hazards.
-Frailty heterogeneity and depletion of susceptibles naturally induce
-curvature of the cumulative hazard (reflecting time-varying hazard) even
-when individual-level hazards are simple functions of time. When
-selection concentrates high-frailty individuals into one cohort (or
-preferentially removes them from another), the resulting cohort-level
-hazard trajectories can be strongly non-proportional.
+Frailty heterogeneity and selection-induced depletion (depletion of
+susceptibles) naturally induce curvature of the cumulative hazard
+(reflecting time-varying hazard) even when individual-level hazards are
+simple functions of time. When selection concentrates high-frailty
+individuals into one cohort (or preferentially removes them from
+another), the resulting cohort-level hazard trajectories can be strongly
+non-proportional.
 
 One convenient way to formalize ``curvature'' is in cumulative-hazard
 space: if the cumulative hazard \(H(t)\) were perfectly linear in time,
@@ -325,7 +326,7 @@ distinguished here:
 \subsubsection{1.3 Related work (brief
 positioning)}\label{related-work-brief-positioning}
 
-KCOR builds on the frailty and depletion-of-susceptibles literature in
+KCOR builds on the frailty and selection-induced depletion literature in
 which unobserved heterogeneity induces deceleration of cohort-level
 hazards over follow-up (a standard working model is gamma
 frailty)\textsuperscript{1}. KCOR's distinct contribution is not
@@ -384,7 +385,7 @@ retrospective cohort studies.
 \tightlist
 \item
   \textbf{Primary estimand (KCOR)}: For two fixed enrollment cohorts
-  \(A\) and \(B\), we define \[
+  \(A\) and \(B\), it is defined as \[
   \mathrm{KCOR}(t)=\tilde{H}_{0,A}(t)/\tilde{H}_{0,B}(t),
   \] where \(\tilde{H}_{0,d}(t)\) is cohort \(d\)'s
   \textbf{depletion-neutralized baseline cumulative hazard} obtained by
@@ -408,21 +409,23 @@ retrospective cohort studies.
   (quiet-window fit quality; post-normalization linearity within the
   quiet window; parameter stability to small window perturbations).
 \item
-  \textbf{If diagnostics fail}: treat the analysis as not identified and
-  do not report KCOR as a ``corrected effect''.
+  \textbf{If diagnostics indicate non-identifiability}: the analysis is
+  treated as not identified and KCOR is not reported as a ``corrected
+  effect''.
 \end{itemize}
 \end{quote}
 
 \subsubsection{1.7 Paper organization and supporting information
 (SI)}\label{paper-organization-and-supporting-information-si}
 
-The main text presents the KCOR estimator, a single canonical
-demonstration of Cox bias under frailty-driven depletion, and two main
-validation examples (negative control and stress test). Additional
-validations (including positive controls), extended diagnostics
-(Supplementary Information §S2; Tables S2.1--S2.3), and detailed
-simulation/control specifications are provided in the Supplementary
-Information (SI) document.
+The main text introduces the KCOR estimator, provides a canonical
+demonstration of Cox bias under frailty-driven depletion, and presents
+two primary validation examples (a negative control and a stress test).
+Additional validations---including positive controls---along with
+extended diagnostics, empirical registry-based nulls, and detailed
+simulation specifications are provided in the Supplementary Information
+(SI; Sections S2 and S4.2--S4.3; Tables
+\ref{tbl:si_assumptions}--\ref{tbl:si_identifiability}).
 
 \subsection{2. Methods}\label{methods}
 
@@ -511,9 +514,10 @@ diagnostics}\label{identification-versus-diagnostics}
 Scope and interpretation are summarized in Box 1 (§1.6).
 
 Interpretability of a KCOR trajectory is assessed via prespecified
-diagnostics (Supplementary Information §S2; Tables S2.1--S2.3), and
-analyses are treated as not identified when those diagnostics fail.
-Checks include:
+diagnostics (Supplementary Information §S2; Tables
+\ref{tbl:si_assumptions}--\ref{tbl:si_identifiability}). When
+diagnostics indicate non-identifiability, the analysis is treated as not
+identified and results are not reported. Checks include:
 
 \begin{itemize}
 \tightlist
@@ -528,8 +532,8 @@ Checks include:
 \end{itemize}
 
 Diagnostics corresponding to each assumption are summarized in
-Supplementary Table S1 and discussed in detail in Supplementary
-Information §S2.
+Supplementary Information §S2 (Tables
+\ref{tbl:si_assumptions}--\ref{tbl:si_identifiability}).
 
 \paragraph{2.1.3 KCOR assumptions and
 diagnostics}\label{kcor-assumptions-and-diagnostics}
@@ -570,10 +574,11 @@ drift, or instability in adjusted cumulative hazard trajectories.
 
 \subsubsection{2.2 Cohort construction}\label{cohort-construction}
 
-We define KCOR for \textbf{fixed cohorts at enrollment}. Required inputs
-are minimal: enrollment date(s), event date, and optionally birth date
-(or year-of-birth) for age stratification. Analyses proceed in discrete
-event time \(t\) (e.g., weeks) measured since cohort enrollment.
+KCOR is defined for \textbf{fixed cohorts at enrollment}. Required
+inputs are minimal: enrollment date(s), event date, and optionally birth
+date (or year-of-birth) for age stratification. Analyses proceed in
+discrete event time \(t\) (e.g., weeks) measured since cohort
+enrollment.
 
 Cohorts are assigned by intervention state at the start of the
 enrollment interval. In the primary estimand:
@@ -633,7 +638,7 @@ Define the interval mortality ratio \[
 \mathrm{MR}_{d,t} = \frac{d_d(t)}{N_d(t)}.
 \]
 
-We compute the discrete-time cohort hazard as
+The discrete-time cohort hazard is computed as
 
 \begin{equation}\protect\phantomsection\label{eq:hazard-discrete}{
 h_{\mathrm{obs},d}(t) = -\ln\!\left(1 - \mathrm{MR}_{d,t}\right) = -\ln\!\left(1 - \frac{d_d(t)}{N_d(t)}\right).
@@ -756,18 +761,19 @@ shocks) that would confound depletion-geometry estimation. A window is
 acceptable only if diagnostics indicate (i) good fit in
 cumulative-hazard space, (ii) post-normalization linearity within the
 window, and (iii) stability of \((\hat{k}_d,\hat{\theta}_d)\) to small
-boundary perturbations. If no candidate window passes, KCOR is treated
-as not identified for that analysis rather than producing a potentially
-misleading normalized contrast. All diagnostics are computed over
-discrete event-time bins (weekly intervals since enrollment) whose
-corresponding calendar weeks fall within the prespecified quiet window.
+boundary perturbations. If no candidate window passes, diagnostics
+indicate non-identifiability and the analysis is treated as not
+identified rather than producing a potentially misleading normalized
+contrast. All diagnostics are computed over discrete event-time bins
+(weekly intervals since enrollment) whose corresponding calendar weeks
+fall within the prespecified quiet window.
 
 \paragraph{Quiet-window selection protocol
 (operational)}\label{quiet-window-selection-protocol-operational}
 
 Quiet-window selection is prespecified and evaluated using diagnostic
 criteria summarized in Supplementary Information §S2 (Tables
-S2.1--S2.3).
+\ref{tbl:si_assumptions}--\ref{tbl:si_identifiability}).
 
 \subsubsection{2.5 Estimation during quiet periods (cumulative-hazard
 least
@@ -806,12 +812,12 @@ non-identifiability over short or sparse follow-up.
 In applied analyses, this behavior is most commonly observed in
 vaccinated cohorts, whose cumulative hazards during quiet periods are
 often close to linear. In such cases, the gamma-frailty fit collapses
-naturally, indicating minimal detectable depletion. This outcome is
-data-driven and reflects the absence of observable selection-induced
-curvature rather than a modeling assumption. When residual time-varying
-risk contaminates a nominally quiet window, fitted frailty variance
-estimates naturally shrink toward zero, signaling limited
-identifiability rather than inducing spurious correction.
+naturally, indicating minimal detectable depletion. This outcome
+reflects the absence of observable selection-induced curvature rather
+than a modeling assumption. When residual time-varying risk contaminates
+a nominally quiet window, fitted frailty variance estimates naturally
+shrink toward zero, signaling limited identifiability rather than
+inducing spurious correction.
 
 Parameters are estimated by constrained nonlinear least squares:
 
@@ -825,17 +831,17 @@ H_{\mathrm{obs},d}(t) - H_{d}^{\mathrm{model}}(t; k_d, \theta_d)
 \right]^2.
 }\end{equation}
 
-We fit in cumulative-hazard space rather than maximizing a likelihood
-because the primary inputs are discrete-time, cohort-aggregated hazards
-and the objective is stable estimation of selection-induced depletion
-curvature during quiet periods. Least-squares fitting is used as a
-numerical estimating equation rather than as a likelihood-based
-estimator. Least squares on observed cumulative hazards is numerically
-robust under sparse events, emphasizes shape agreement over the fit
-window, and yields diagnostics (e.g., RMSE in \(H\)-space) that directly
-reflect the quality of the depletion fit. Likelihood-based fitting can
-be treated as a sensitivity analysis, but is not required for the
-normalization identity itself.
+Fitting is performed in cumulative-hazard space rather than maximizing a
+likelihood because the primary inputs are discrete-time,
+cohort-aggregated hazards and the objective is stable estimation of
+selection-induced depletion curvature during quiet periods.
+Least-squares fitting is used as a numerical estimating equation rather
+than as a likelihood-based estimator. Least squares on observed
+cumulative hazards is numerically robust under sparse events, emphasizes
+shape agreement over the fit window, and yields diagnostics (e.g., RMSE
+in \(H\)-space) that directly reflect the quality of the depletion fit.
+Likelihood-based fitting can be treated as a sensitivity analysis, but
+is not required for the normalization identity itself.
 
 All analyses use a prespecified reference implementation with fixed
 operational defaults; full details are provided in Supplementary Section
@@ -948,9 +954,9 @@ These diagnostics are reported alongside \(\mathrm{KCOR}(t)\) curves.
 The goal is not to assert that a single parametric form is always
 correct, but to ensure that when the form is incorrect or the window is
 contaminated, the method signals this explicitly rather than silently
-producing a misleading `corrected' estimate. Failure of these
-diagnostics indicates that the depletion-based normalization is
-inappropriate, in which case KCOR should not be interpreted.
+producing a misleading `corrected' estimate. When diagnostics indicate
+non-identifiability, the depletion-based normalization is inappropriate
+and KCOR should not be interpreted.
 
 \subsubsection{2.7 Stabilization (early
 weeks)}\label{stabilization-early-weeks}
@@ -1096,11 +1102,11 @@ then computes a cumulative contrast on the depletion-neutralized scale.
 with no treatment
 effect}\label{demonstration-cox-bias-under-frailty-heterogeneity-with-no-treatment-effect}
 
-We conducted a controlled synthetic experiment in which the \textbf{true
-effect is known to be zero by construction}, isolating latent frailty
-heterogeneity as the sole driver of depletion-induced non-proportional
-hazards. Cox and KCOR were applied to the same simulated datasets under
-identical information constraints.
+A controlled synthetic experiment was conducted in which the
+\textbf{true effect is known to be zero by construction}, isolating
+latent frailty heterogeneity as the sole driver of depletion-induced
+non-proportional hazards. Cox and KCOR were applied to the same
+simulated datasets under identical information constraints.
 
 \textbf{Data-generating process.}
 
@@ -1121,10 +1127,10 @@ Simulations were repeated over a grid of frailty variances
 
 \textbf{Cox analysis.}
 
-For each simulated dataset, we fitted a standard Cox proportional
-hazards model using partial likelihood (statsmodels \texttt{PHReg}),
-with cohort membership as the sole covariate (no time-varying covariates
-or interactions). The resulting hazard ratio estimates and confidence
+For each simulated dataset, a standard Cox proportional hazards model
+was fitted using partial likelihood (statsmodels \texttt{PHReg}), with
+cohort membership as the sole covariate (no time-varying covariates or
+interactions). The resulting hazard ratio estimates and confidence
 intervals therefore reflect \textbf{only differences induced by
 frailty-driven depletion}, not any treatment effect.
 
@@ -1152,7 +1158,7 @@ setting:
 \item
   \textbf{Cox regression} is expected to produce apparent non-null
   hazard ratios as \(\theta\) increases, reflecting differential
-  depletion of susceptibles and violation of proportional hazards
+  selection-induced depletion and violation of proportional hazards
   induced by frailty heterogeneity.
 \item
   \textbf{KCOR} is expected to remain centered near unity with
@@ -1216,7 +1222,7 @@ normalization precedes comparison.
 \subsubsection{2.12 Worked example
 (descriptive)}\label{worked-example-descriptive}
 
-We include a brief worked example to illustrate the KCOR workflow
+A brief worked example is included to illustrate the KCOR workflow
 end-to-end. This example is descriptive and intended solely to
 demonstrate the mechanics of cohort construction, hazard estimation,
 frailty fitting, depletion normalization, and KCOR computation.
@@ -1370,11 +1376,11 @@ were performed for:
   \textbf{Correlated frailty} (within-subgroup correlation)
 \end{itemize}
 
-For each frailty specification, we report bias (deviation from true
-cumulative hazard ratio), variance (trajectory stability), coverage
-(proportion of simulations where uncertainty intervals contain the true
-value), and diagnostic failure rate (proportion of simulations where
-quiet-window diagnostics indicated non-identifiability).
+For each frailty specification, bias (deviation from true cumulative
+hazard ratio), variance (trajectory stability), coverage (proportion of
+simulations where uncertainty intervals contain the true value), and
+non-identifiability rate (proportion of simulations where quiet-window
+diagnostics indicated non-identifiability) are reported.
 
 Under frailty misspecification, KCOR can degrade gracefully by
 attenuating toward unity or by not meeting diagnostic criteria, rather
@@ -1592,11 +1598,11 @@ counterfactual outcomes under hypothetical interventions.
   identification strategies, whereas KCOR targets depletion-geometry
   normalization under minimal-data constraints (see §1.3.1).
 \item
-  \textbf{\(\theta\) estimation is data-driven}: KCOR does not impose
+  \textbf{\(\theta\) estimation is data-derived}: KCOR does not impose
   \(\theta = 0\) for any cohort. The frequent observation that fitted
   frailty variance estimates collapse toward zero for vaccinated cohorts
-  is a data-driven result of the frailty fit and should not be
-  interpreted as an assumption of homogeneity.
+  is a result of the frailty fit and should not be interpreted as an
+  assumption of homogeneity.
 \item
   \textbf{Sparse events}: When event counts are small, hazard estimation
   and parameter fitting can be unstable.
@@ -1780,9 +1786,9 @@ In finite samples, KCOR precision is driven primarily by the number of
 events observed over follow-up. In simulation (selection-only null),
 cohorts of approximately 5,000 per arm yielded stable KCOR estimates
 with narrow uncertainty, whereas smaller cohorts exhibited appreciable
-Monte Carlo variability and occasional spurious deviations. We therefore
-recommend reporting event counts and conducting a simple cohort-size
-sensitivity check when applying KCOR to sparse outcomes.
+Monte Carlo variability and occasional spurious deviations. Reporting
+event counts and conducting a simple cohort-size sensitivity check are
+recommended when applying KCOR to sparse outcomes.
 
 \textbf{External validation across interventions.} A natural next step
 is to apply KCOR to other vaccines and interventions where large-scale
@@ -2766,12 +2772,14 @@ I3 Stability under perturbation & Estimates robust to tuning of windows
 and skips. & Interpretation limited \\
 I4 Anchoring validity & Quiet window exhibits post-normalization
 linearity. & Anchoring invalid \\
-I5 Conservative failure rule & Any failure → not identified. & Estimator
-remains valid, but results not reported \\
+I5 Conservative failure rule & Any failure → diagnostics indicate
+non-identifiability. & Analysis treated as not identified; results not
+reported \\
 \end{longtable}
 
-Failure of any interpretability or identifiability check limits the
-scope of inference but does not invalidate the KCOR estimator itself.
+When diagnostics indicate non-identifiability, the analysis is treated
+as not identified and results are not reported; this does not invalidate
+the KCOR estimator itself.
 
 \subsection{S3. Positive controls}\label{s3.-positive-controls}
 
@@ -2862,8 +2870,18 @@ Frailty estimation & Fit method & Nonlinear least squares in
 cumulative-hazard space & Constraints: \(k_d>0\), \(\theta_d \ge 0\) \\
 \end{longtable}
 
-\subsubsection{S4.2 Negative control: synthetic gamma-frailty
-null}\label{s4.2-negative-control-synthetic-gamma-frailty-null}
+\subsubsection{S4.2 Negative controls}\label{s4.2-negative-controls}
+
+Negative controls are implemented in two complementary forms. The
+empirical negative control uses full-population registry cohorts and
+does not apply gamma-frailty normalization, as selection-induced
+depletion (depletion of susceptibles) is negligible by construction. The
+synthetic negative control introduces extreme, known frailty
+heterogeneity and explicitly tests whether gamma-frailty normalization
+correctly removes curvature under the null.
+
+\paragraph{S4.2.1 Synthetic negative control: gamma-frailty
+null}\label{s4.2.1-synthetic-negative-control-gamma-frailty-null}
 
 The synthetic negative control (Figure \ref{fig:neg_control_synthetic})
 is generated using:
@@ -2914,8 +2932,8 @@ depletion-neutralization under the null. Uncertainty bands (95\%
 bootstrap intervals) are shown.}\label{fig:neg_control_synthetic}
 \end{figure}
 
-\subsubsection{S4.3 Negative control: empirical age-shift
-construction}\label{s4.3-negative-control-empirical-age-shift-construction}
+\paragraph{S4.2.2 Empirical negative control: age-shift
+construction}\label{s4.2.2-empirical-negative-control-age-shift-construction}
 
 The empirical negative control (Figures \ref{fig:neg_control_10yr} and
 \ref{fig:neg_control_20yr}) is generated using:
@@ -2953,8 +2971,18 @@ This construction ensures that dose comparisons are within the same
 underlying vaccination category, preserving a true null while inducing
 10--20 year age differences.
 
-\subsubsection{S4.4 Positive control: injected
-effect}\label{s4.4-positive-control-injected-effect}
+No gamma-frailty normalization is applied in this empirical
+negative-control construction. Because the cohorts represent
+full-population strata rather than selectively sampled subcohorts,
+frailty heterogeneity and depletion are minimal, and direct comparison
+is valid without normalization.
+
+This contrasts with the synthetic negative control (Section S4.2.1),
+where strong, deliberately induced frailty heterogeneity requires
+gamma-frailty normalization to recover the null.
+
+\subsubsection{S4.3 Positive control: injected
+effect}\label{s4.3-positive-control-injected-effect}
 
 The positive control (Figure \ref{fig:pos_control_injected} and Table
 \ref{tbl:pos_control_summary}) is generated using:
@@ -2993,8 +3021,8 @@ The injection multiplies the treatment cohort's baseline hazard by
 factor \(r\) during the effect window, while leaving the control cohort
 unchanged.
 
-\subsubsection{S4.5 Sensitivity analysis
-parameters}\label{s4.5-sensitivity-analysis-parameters}
+\subsubsection{S4.4 Sensitivity analysis
+parameters}\label{s4.4-sensitivity-analysis-parameters}
 
 The sensitivity analysis (Figure \ref{fig:sensitivity_overview}) varies:
 
@@ -3030,11 +3058,11 @@ to enable direct visual comparison across dose
 comparisons.}\label{fig:sensitivity_overview}
 \end{figure}
 
-\subsubsection{S4.6 Tail-sampling / bimodal selection (adversarial
+\subsubsection{S4.5 Tail-sampling / bimodal selection (adversarial
 selection
-geometry)}\label{s4.6-tail-sampling-bimodal-selection-adversarial-selection-geometry}
+geometry)}\label{s4.5-tail-sampling-bimodal-selection-adversarial-selection-geometry}
 
-We generate a base frailty population distribution with mean 1. Cohort
+A base frailty population distribution with mean 1 is generated. Cohort
 construction differs by selection rule:
 
 \begin{itemize}
@@ -3048,12 +3076,12 @@ construction differs by selection rule:
   yield mean 1.
 \end{itemize}
 
-Both cohorts share the same baseline hazard \(h_0(t)\) and no treatment
-effect (negative-control version). We also generate positive-control
-versions by applying a known hazard multiplier in a prespecified window.
-We evaluate (i) KCOR drift, (ii) quiet-window fit RMSE, (iii)
-post-normalization linearity, and (iv) parameter stability under window
-perturbation.
+Both cohorts share the same baseline hazard \(h_0(t)\) and have no
+treatment effect (negative-control version). Positive-control versions
+are also generated by applying a known hazard multiplier in a
+prespecified window. The evaluation includes (i) KCOR drift, (ii)
+quiet-window fit RMSE, (iii) post-normalization linearity, and (iv)
+parameter stability under window perturbation.
 
 \begin{itemize}
 \tightlist
@@ -3079,8 +3107,8 @@ perturbation.
   \textbf{Random seed}: 42
 \end{itemize}
 
-\subsubsection{S4.7 Joint frailty and treatment-effect simulation
-(S7)}\label{s4.7-joint-frailty-and-treatment-effect-simulation-s7}
+\subsubsection{S4.6 Joint frailty and treatment-effect simulation
+(S7)}\label{s4.6-joint-frailty-and-treatment-effect-simulation-s7}
 
 This simulation evaluates KCOR under conditions in which \textbf{both
 selection-induced depletion (frailty heterogeneity)} and a \textbf{true
@@ -3256,8 +3284,8 @@ enrollment.}\label{fig:si_yob1950}
 
 \textbf{Additional empirical negative-control variant (20-year age
 shift).}\\
-For completeness, we include the more extreme 20-year age-shift negative
-control referenced in the main text:
+For completeness, the more extreme 20-year age-shift negative control
+referenced in the main text is included:
 
 \begin{figure}
 \centering
@@ -3399,7 +3427,7 @@ All ages & Yes & Yes & Yes & Yes \\
 
 All age strata in the Czech application satisfied the prespecified
 diagnostic criteria, permitting KCOR computation and reporting. KCOR
-results are not reported for any age stratum where diagnostics indicated
+results are not reported for any age stratum where diagnostics indicate
 non-identifiability.
 
 \textbf{Interpretation:} In this application, unvaccinated cohorts
@@ -3480,7 +3508,7 @@ All ages (full population) & 4.98 & \(1.02 \times 10^{-11}\) \\
 \end{longtable}
 
 \textbf{Notes:} - The fitted frailty variance quantifies unobserved
-frailty heterogeneity and depletion of susceptibles within cohorts.
+frailty heterogeneity and selection-induced depletion within cohorts.
 Near-zero values indicate effectively linear cumulative hazards over the
 quiet window and are typical of strongly pre-selected cohorts. - Each
 entry reports a single fitted gamma-frailty variance for the specified
@@ -3566,7 +3594,7 @@ Dose 2 cohorts.
 mortality
 data}\label{s6.1.3-illustrative-application-to-national-registry-mortality-data}
 
-We include a brief illustrative application to demonstrate end-to-end
+A brief illustrative application is included to demonstrate end-to-end
 KCOR behavior on real registry mortality data in a setting that
 minimizes timing-driven shocks and window-tuning sensitivity. Cohorts
 were enrolled in ISO week 2022-26, and evaluation was restricted to
@@ -3579,10 +3607,10 @@ under real-world selection and heterogeneity and does not support causal
 inference.
 
 Figure \ref{fig:si_allages} shows \(\mathrm{KCOR}(t)\) trajectories for
-dose 2 and dose 3 relative to dose 0 for an all-ages analysis. We
-deliberately present an all-ages analysis as a high-heterogeneity stress
-test, since aggregation across age induces substantial baseline hazard
-and frailty variation.
+dose 2 and dose 3 relative to dose 0 for an all-ages analysis. An
+all-ages analysis is presented as a high-heterogeneity stress test,
+since aggregation across age induces substantial baseline hazard and
+frailty variation.
 
 \begin{figure}
 \centering
