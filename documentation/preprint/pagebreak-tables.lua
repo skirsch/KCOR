@@ -43,6 +43,25 @@ local function is_table_caption_para(block)
   return s:match("^Table:%s+") ~= nil
 end
 
+local function should_skip_pagebreak_for_table(caption_block, table_block)
+  -- We generally put each table on its own page. Exception: a few SI tables are
+  -- intended to read as a contiguous group and should not be forced onto separate pages.
+  local s = nil
+  if caption_block and caption_block.t == "Para" then
+    s = pandoc.utils.stringify(caption_block)
+  elseif table_block and table_block.t == "Table" then
+    -- Some Pandoc versions absorb the preceding "Table: ..." paragraph into the
+    -- table caption, so the caption paragraph may not exist as a separate block.
+    local ok, v = pcall(pandoc.utils.stringify, table_block.caption)
+    if ok then s = v end
+  end
+  if not s or s == "" then return false end
+  -- Match by caption text (tolerant to Pandoc stringification quirks).
+  return s:match("KCOR working assumptions") ~= nil
+      or s:match("Empirical diagnostics associated with KCOR assumptions") ~= nil
+      or s:match("Identifiability criteria governing KCOR interpretation") ~= nil
+end
+
 local function is_blank_para(block)
   if not block or block.t ~= "Para" then return false end
   local s = pandoc.utils.stringify(block)
@@ -122,7 +141,9 @@ function Pandoc(doc)
       end
 
       if prev_meaningful and (not prev_is_header_like) and (not prev_is_pb) then
-        table.insert(out, pb)
+        if not should_skip_pagebreak_for_table(caption, block) then
+          table.insert(out, pb)
+        end
       end
 
       if caption then
