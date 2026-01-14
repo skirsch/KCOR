@@ -686,7 +686,7 @@ This study used only simulated data and publicly available, aggregated registry 
 
 Not applicable.
 
-## Data Availability Statement
+### Data availability
 
 This study analyzes aggregated cohort-level summaries derived from administrative health records. The underlying individual-level data from the Czech Republic are record-level administrative data collected and maintained by the National Health Information Portal and were not accessed directly by the author. Access to the underlying record-level data is subject to the data provider’s governance, approval, and disclosure-control policies.
 
