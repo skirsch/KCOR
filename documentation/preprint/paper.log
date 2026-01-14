@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022/Debian) (preloaded format=xelatex 2025.12.23)  14 JAN 2026 00:32
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022/Debian) (preloaded format=xelatex 2025.12.23)  14 JAN 2026 12:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1284,98 +1284,98 @@ ly by the number of events observed over follow-up. In
  []
 
 [21]
-Underfull \hbox (badness 1297) in paragraph at lines 1876--1880
+Underfull \hbox (badness 1297) in paragraph at lines 1875--1879
 []\TU/TeXGyreTermes(0)/m/n/10 All scientific decisions, methodological choices,
  analyses, interpretations, and judgments regarding which 
  []
 
 [22] [23]
-Underfull \hbox (badness 10000) in paragraph at lines 1911--1911
+Underfull \hbox (badness 10000) in paragraph at lines 1910--1910
 []|\TU/TeXGyreTermes(0)/m/n/10 Vaupel JW, Manton KG, Stallard E. The impact of 
 heterogeneity in individual frailty on the dynamics of
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1918--1918
+Underfull \hbox (badness 10000) in paragraph at lines 1917--1917
 []|\TU/TeXGyreTermes(0)/m/n/10 Grambsch PM, Therneau TM. Proportional hazards t
 ests and diagnostics based on weighted residuals.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1925--1925
-[]|\TU/TeXGyreTermes(0)/m/n/10 Andersen PK, Gill RD. Cox’s Regression Model for
- Counting Processes: A Large Sample Study. \TU/TeXGyreTermes(0)/m/it/10 The Ann
-als
+Underfull \hbox (badness 10000) in paragraph at lines 1924--1924
+[]|\TU/TeXGyreTermes(0)/m/n/10 Andersen PK, Gill RD. Cox’s regression model for
+ counting processes: a large sample study. \TU/TeXGyreTermes(0)/m/it/10 Ann Sta
+tist\TU/TeXGyreTermes(0)/m/n/10 .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1933--1933
+Underfull \hbox (badness 10000) in paragraph at lines 1932--1932
 []|\TU/TeXGyreTermes(0)/m/n/10 Royston P, Parmar MKB. Flexible parametric propo
-rtional-hazards and proportional-odds models for
+rtional‐hazards and proportional‐odds models for
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1933--1933
+Underfull \hbox (badness 10000) in paragraph at lines 1932--1932
 \TU/TeXGyreTermes(0)/m/n/10 censored survival data, with application to prognos
 tic modelling and estimation of treatment effects. \TU/TeXGyreTermes(0)/m/it/10
  Statistics
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1939--1939
+Underfull \hbox (badness 10000) in paragraph at lines 1938--1938
 []|\TU/TeXGyreTermes(0)/m/n/10 Aalen OO. A linear regression model for the anal
 ysis of life times. \TU/TeXGyreTermes(0)/m/it/10 Statistics in Medicine\TU/TeXG
 yreTermes(0)/m/n/10 . 1989;8(8):907-925.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1945--1945
+Underfull \hbox (badness 10000) in paragraph at lines 1944--1944
 []|\TU/TeXGyreTermes(0)/m/n/10 Lin DY, Ying Z. Semiparametric analysis of the a
 dditive risk model. \TU/TeXGyreTermes(0)/m/it/10 Biometrika\TU/TeXGyreTermes(0)
 /m/n/10 . 1994;81(1):61-71.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1952--1952
-[]|\TU/TeXGyreTermes(0)/m/n/10 Van Houwelingen HC. Dynamic Prediction by Landma
-rking in Event History Analysis. \TU/TeXGyreTermes(0)/m/it/10 Scandinavian
+Underfull \hbox (badness 10000) in paragraph at lines 1951--1951
+[]|\TU/TeXGyreTermes(0)/m/n/10 Van Houwelingen HC. Dynamic prediction by landma
+rking in event history analysis. \TU/TeXGyreTermes(0)/m/it/10 Scandinavian J
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1959--1959
-[]|\TU/TeXGyreTermes(0)/m/n/10 Robins JM, Hernán MÁ, Brumback B. Marginal Struc
-tural Models and Causal Inference in Epidemiology:
+Underfull \hbox (badness 10000) in paragraph at lines 1958--1958
+[]|\TU/TeXGyreTermes(0)/m/n/10 Robins JM, Hernán MÁ, Brumback B. Marginal struc
+tural models and causal inference in epidemiology:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1966--1966
-[]|\TU/TeXGyreTermes(0)/m/n/10 Cole SR, Hernan MA. Constructing Inverse Probabi
-lity Weights for Marginal Structural Models. \TU/TeXGyreTermes(0)/m/it/10 Ameri
+Underfull \hbox (badness 10000) in paragraph at lines 1965--1965
+[]|\TU/TeXGyreTermes(0)/m/n/10 Cole SR, Hernan MA. Constructing inverse probabi
+lity weights for marginal structural models. \TU/TeXGyreTermes(0)/m/it/10 Ameri
 can
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1974--1974
+Underfull \hbox (badness 10000) in paragraph at lines 1973--1973
 []|\TU/TeXGyreTermes(0)/m/n/10 Obel N, Fox M, Tetens M, et al. Confounding and 
 negative control methods in observational study of
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1974--1974
-\TU/TeXGyreTermes(0)/m/n/10 SARS-CoV-2 vaccine effectiveness: A nationwide, pop
-ulation-based Danish health registry study. \TU/TeXGyreTermes(0)/m/it/10 Clinic
-al
+Underfull \hbox (badness 10000) in paragraph at lines 1973--1973
+\TU/TeXGyreTermes(0)/m/n/10 SARS-CoV-2 vaccine effectiveness: a nationwide, pop
+ulation-based Danish health registry study. \TU/TeXGyreTermes(0)/m/it/10 CLEP\T
+U/TeXGyreTermes(0)/m/n/10 .
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1982--1982
+Underfull \hbox (badness 10000) in paragraph at lines 1981--1981
 []|\TU/TeXGyreTermes(0)/m/n/10 Chemaitelly H, Ayoub HH, Coyle P, et al. Assessi
 ng healthy vaccinee effect in COVID-19 vaccine
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1982--1982
-\TU/TeXGyreTermes(0)/m/n/10 effectiveness studies: A national cohort study in Q
+Underfull \hbox (badness 10000) in paragraph at lines 1981--1981
+\TU/TeXGyreTermes(0)/m/n/10 effectiveness studies: a national cohort study in Q
 atar. Schiffer JT, Henry D, eds. \TU/TeXGyreTermes(0)/m/it/10 eLife\TU/TeXGyreT
 ermes(0)/m/n/10 . 2025;14:e103690.
  []
@@ -1389,8 +1389,8 @@ hs, Long
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 1989--1989
-\TU/TeXGyreTermes(0)/m/it/10 Covid and Comorbidities in People in the Czech Rep
-ublic. \TU/TeXGyreTermes(0)/m/n/10 National Health Information Portal, Czech
+\TU/TeXGyreTermes(0)/m/it/10 COVID and Comorbidities in People in the Czech Rep
+ublic\TU/TeXGyreTermes(0)/m/n/10 . National Health Information Portal, Czech
  []
 
 [24]
@@ -1889,12 +1889,12 @@ Underfull \hbox (badness 1253) in paragraph at lines 3603--3606
 
 [50] [51] (./paper.aux) ) 
 Here is how much of TeX's memory you used:
- 19675 strings out of 478775
- 366357 string characters out of 5850944
+ 19676 strings out of 478775
+ 366364 string characters out of 5850944
  1865991 words of memory out of 5000000
- 39410 multiletter control sequences out of 15000+600000
+ 39411 multiletter control sequences out of 15000+600000
  516010 words of font info for 80 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 86i,11n,122p,1194b,459s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 86i,11n,122p,1194b,506s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on paper.pdf (51 pages).

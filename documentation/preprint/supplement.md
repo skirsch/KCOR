@@ -91,7 +91,11 @@ Table: Reference implementation and default operational settings. {#tbl:si_defau
 | Early-period stabilization (dynamic HVE) | `SKIP_WEEKS` | 2 | Weeks $t < \mathrm{SKIP\_WEEKS}$ are excluded from hazard accumulation (set $\Delta H_d(t)=0$ for those weeks). |
 | Frailty estimation | Fit method | Nonlinear least squares in cumulative-hazard space | Constraints: $k_d>0$, $\theta_d \ge 0$ |
 
-### S4.2 Negative control: synthetic gamma-frailty null
+### S4.2 Negative controls
+
+Negative controls are implemented in two complementary forms. The empirical negative control uses full-population registry cohorts and does not apply gamma-frailty normalization, as selection-induced depletion is negligible by construction. The synthetic negative control introduces extreme, known frailty heterogeneity and explicitly tests whether gamma-frailty normalization correctly removes curvature under the null.
+
+#### S4.2.1 Synthetic negative control: gamma-frailty null
 
 The synthetic negative control (Figure @fig:neg_control_synthetic) is generated using:
 
@@ -110,7 +114,7 @@ Both cohorts share identical per-frailty-group death probabilities; only the mix
 
 ![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95% bootstrap intervals) are shown.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
 
-### S4.3 Negative control: empirical age-shift construction
+#### S4.2.2 Empirical negative control: age-shift construction
 
 The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) is generated using:
 
@@ -126,7 +130,11 @@ The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_contr
 
 This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a true null while inducing 10–20 year age differences.
 
-### S4.4 Positive control: injected effect
+No gamma-frailty normalization is applied in this empirical negative-control construction. Because the cohorts represent full-population strata rather than selectively sampled subcohorts, frailty heterogeneity and depletion are minimal, and direct comparison is valid without normalization.
+
+This contrasts with the synthetic negative control (Section S4.2.1), where strong, deliberately induced frailty heterogeneity requires gamma-frailty normalization to recover the null.
+
+### S4.3 Positive control: injected effect
 
 The positive control (Figure @fig:pos_control_injected and Table @tbl:pos_control_summary) is generated using:
 
@@ -143,7 +151,7 @@ The positive control (Figure @fig:pos_control_injected and Table @tbl:pos_contro
 
 The injection multiplies the treatment cohort's baseline hazard by factor $r$ during the effect window, while leaving the control cohort unchanged.
 
-### S4.5 Sensitivity analysis parameters
+### S4.4 Sensitivity analysis parameters
 
 The sensitivity analysis (Figure @fig:sensitivity_overview) varies:
 
@@ -157,7 +165,7 @@ Output grids show KCOR(t) values for each parameter combination.
 
 ![Sensitivity analysis summary showing $\mathrm{KCOR}(t)$ values across parameter grid. Heatmaps display $\mathrm{KCOR}(t)$ estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, $\mathrm{KCOR}(t)$ varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons.](figures/fig_sensitivity_overview.png){#fig:sensitivity_overview}
 
-### S4.6 Tail-sampling / bimodal selection (adversarial selection geometry)
+### S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)
 
 We generate a base frailty population distribution with mean 1. Cohort construction differs by selection rule:
 
@@ -175,7 +183,7 @@ Both cohorts share the same baseline hazard $h_0(t)$ and no treatment effect (ne
 - **Effect window**: weeks 20–80
 - **Random seed**: 42
 
-### S4.7 Joint frailty and treatment-effect simulation (S7)
+### S4.6 Joint frailty and treatment-effect simulation (S7)
 
 This simulation evaluates KCOR under conditions in which **both selection-induced depletion (frailty heterogeneity)** and a **true treatment effect (harm or benefit)** are present simultaneously. The purpose is to assess whether KCOR can (i) correctly identify and neutralize frailty-driven curvature using a quiet period and (ii) detect a true treatment effect outside that period without confounding the two mechanisms.
 

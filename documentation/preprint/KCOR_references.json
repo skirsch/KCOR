@@ -1,0 +1,751 @@
+[
+	{
+		"id": "obel2024",
+		"type": "article-journal",
+		"citation-key": "obel2024",
+		"container-title": "Clinical Epidemiology",
+		"DOI": "10.2147/CLEP.S468572",
+		"ISSN": "1179-1349",
+		"journalAbbreviation": "CLEP",
+		"language": "en",
+		"license": "https://creativecommons.org/licenses/by-nc/3.0/",
+		"page": "501-512",
+		"source": "DOI.org (Crossref)",
+		"title": "Confounding and negative control methods in observational study of SARS-CoV-2 vaccine effectiveness: a nationwide, population-based Danish health registry study",
+		"title-short": "Confounding and negative control methods in observational study of SARS-CoV-2 vaccine effectiveness",
+		"URL": "https://www.dovepress.com/confounding-and-negative-control-methods-in-observational-study-of-sar-peer-reviewed-fulltext-article-CLEP",
+		"volume": "Volume 16",
+		"author": [
+			{
+				"family": "Obel",
+				"given": "Niels"
+			},
+			{
+				"family": "Fox",
+				"given": "Matthew"
+			},
+			{
+				"family": "Tetens",
+				"given": "Malte"
+			},
+			{
+				"family": "Pedersen",
+				"given": "Lars"
+			},
+			{
+				"family": "Krause",
+				"given": "Tyra"
+			},
+			{
+				"family": "Ullum",
+				"given": "Henrik"
+			},
+			{
+				"family": "Sørensen",
+				"given": "Henrik"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					20
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2024",
+					7
+				]
+			]
+		}
+	},
+	{
+		"id": "chemaitelly2025",
+		"type": "article-journal",
+		"abstract": "Background:. This study investigated the presence of the healthy vaccinee effect—the imbalance in health status between vaccinated and unvaccinated individuals—in two rigorously conducted COVID-19 vaccine effectiveness studies involving primary series and booster vaccinations. It also examined the temporal patterns and variability of this effect across different subpopulations by analyzing the association between COVID-19 vaccination and non-COVID-19 mortality in Qatar. Methods:. Two matched, retrospective cohort studies assessed the incidence of non-COVID-19 death in national cohorts of individuals with a primary series vaccination versus no vaccination (two-dose analysis), and individuals with three-dose (booster) vaccination versus primary series vaccination (three-dose analysis), from January 5, 2021, to April 9, 2024. Results:. The adjusted hazard ratio (aHR) for non-COVID-19 death was 0.76 (95% CI: 0.64–0.90) in the two-dose analysis and 0.85 (95% CI: 0.67–1.07) in the three-dose analysis. In the first 6 months of follow-up in the two-dose analysis, the aHR was 0.35 (95% CI: 0.27–0.46); however, the combined analysis of all subsequent periods showed an aHR of 1.52 (95% CI: 1.19–1.94). In the first 6 months of follow-up in the three-dose analysis, the aHR was 0.31 (95% CI: 0.20–0.50); however, the combined analysis of all subsequent periods showed an aHR of 1.37 (95% CI: 1.02–1.85). The overall effectiveness of the primary series and third-dose vaccinations against severe, critical, or fatal COVID-19 was 95.9% (95% CI: 94.0–97.1) and 34.1% (95% CI: –46.4–76.7), respectively. Subgroup analyses showed that the healthy vaccinee effect is pronounced among those aged 50 years and older and among those more clinically vulnerable to severe COVID-19. Conclusions:. A pronounced healthy vaccinee effect was observed during the first 6 months following vaccination, despite meticulous cohort matching. This effect may have stemmed from a lower likelihood of vaccination among seriously ill, end-of-life individuals, and less mobile elderly populations. Funding:. Biomedical Research Program and the Biostatistics, Epidemiology, and Biomathematics Research Core, and Junior Faculty Transition to Independence Program, all at Weill Cornell Medicine-Qatar, Qatar University, Ministry of Public Health, Hamad Medical Corporation, Sidra Medicine, Qatar Genome Programme, Qatar University Biomedical Research Center, and L’Oréal-UNESCO For Women In Science Middle East Regional Young Talents Program.",
+		"citation-key": "chemaitelly2025",
+		"container-title": "eLife",
+		"DOI": "10.7554/eLife.103690",
+		"ISSN": "2050-084X",
+		"page": "e103690",
+		"publisher": "eLife Sciences Publications, Ltd",
+		"source": "eLife",
+		"title": "Assessing healthy vaccinee effect in COVID-19 vaccine effectiveness studies: a national cohort study in Qatar",
+		"title-short": "Assessing healthy vaccinee effect in COVID-19 vaccine effectiveness studies",
+		"URL": "https://doi.org/10.7554/eLife.103690",
+		"volume": "14",
+		"author": [
+			{
+				"family": "Chemaitelly",
+				"given": "Hiam"
+			},
+			{
+				"family": "Ayoub",
+				"given": "Houssein H"
+			},
+			{
+				"family": "Coyle",
+				"given": "Peter"
+			},
+			{
+				"family": "Tang",
+				"given": "Patrick"
+			},
+			{
+				"family": "Hasan",
+				"given": "Mohammad R"
+			},
+			{
+				"family": "Yassine",
+				"given": "Hadi M"
+			},
+			{
+				"family": "Al Thani",
+				"given": "Asmaa A"
+			},
+			{
+				"family": "Al-Kanaani",
+				"given": "Zaina"
+			},
+			{
+				"family": "Al-Kuwari",
+				"given": "Einas"
+			},
+			{
+				"family": "Jeremijenko",
+				"given": "Andrew"
+			},
+			{
+				"family": "Kaleeckal",
+				"given": "Anvar Hassan"
+			},
+			{
+				"family": "Latif",
+				"given": "Ali Nizar"
+			},
+			{
+				"family": "Shaik",
+				"given": "Riyazuddin Mohammad"
+			},
+			{
+				"family": "Abdul-Rahim",
+				"given": "Hanan F"
+			},
+			{
+				"family": "Nasrallah",
+				"given": "Gheyath K"
+			},
+			{
+				"family": "Al-Kuwari",
+				"given": "Mohamed Ghaith"
+			},
+			{
+				"family": "Al-Romaihi",
+				"given": "Hamad Eid"
+			},
+			{
+				"family": "Al-Thani",
+				"given": "Mohamed H"
+			},
+			{
+				"family": "Al-Khal",
+				"given": "Abdullatif"
+			},
+			{
+				"family": "Bertollini",
+				"given": "Roberto"
+			},
+			{
+				"family": "Butt",
+				"given": "Adeel A"
+			},
+			{
+				"family": "Abu-Raddad",
+				"given": "Laith J"
+			}
+		],
+		"editor": [
+			{
+				"family": "Schiffer",
+				"given": "Joshua T"
+			},
+			{
+				"family": "Henry",
+				"given": "David"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					20
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2025",
+					6,
+					9
+				]
+			]
+		}
+	},
+	{
+		"id": "sanca2024",
+		"type": "report",
+		"abstract": "Datová sada umožňuje hodnotit epidemiologické charakteristiky COVID-19 (incidence, prevalence, mortalita) v populaci České republiky od roku 2020. Uživateli ...",
+		"citation-key": "sanca2024",
+		"language": "en",
+		"note": "Prague, Czech Republic",
+		"publisher": "National Health Information Portal, Czech Republic",
+		"title": "Vaccination, positivity, hospitalization for COVID-19, deaths, long COVID and comorbidities in people in the Czech Republic",
+		"URL": "https://www.nzip.cz/clanek/2135-covid-19-prehled-populace",
+		"author": [
+			{
+				"family": "Šanca",
+				"given": "O."
+			},
+			{
+				"family": "Jarkovský",
+				"given": "J."
+			},
+			{
+				"family": "Klimeš",
+				"given": "D."
+			},
+			{
+				"family": "Zelinková",
+				"given": "H."
+			},
+			{
+				"family": "Klika",
+				"given": "P."
+			},
+			{
+				"literal": "K. Benešová"
+			},
+			{
+				"family": "Mužík",
+				"given": "J."
+			},
+			{
+				"family": "Komenda",
+				"given": "M."
+			},
+			{
+				"family": "Dušek",
+				"given": "L."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					20
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2024"
+				]
+			]
+		}
+	},
+	{
+		"id": "ioannidis2025",
+		"type": "article-journal",
+		"abstract": "Importance\n              Estimating global lives and life-years saved is important to put into perspective the benefits of COVID-19 vaccination. Prior studies have focused mainly on the pre-Omicron period or only on specific regions, and lack crucial life-year calculations and often depend on strong modeling assumptions with unaccounted uncertainty.\n            \n            \n              Objective\n              To calculate the lives and life-years saved by COVID-19 vaccination worldwide from the onset of the vaccination campaigns and until October 1, 2024.\n            \n            \n              Design, Setting, and Participants\n              This comparative effectiveness study considered different strata of the worldwide population according to age, community-dwelling and long-term care residence status, pre-Omicron and Omicron periods, and vaccination before and after a SARS-CoV-2 infection.\n            \n            \n              Exposures\n              Any COVID-19 vaccination in any schedule and number of doses.\n            \n            \n              Main Outcome Measure\n              Death.\n            \n            \n              Results\n              In the main analysis, more than 2.5 million deaths were averted (1 death averted per 5400 vaccine doses administered). Eighty-two percent were among people vaccinated before any infection, 57% were during the Omicron period, and 90% pertained to people 60 years or older. Sensitivity analyses suggested 1.4 to 4.0 million lives were saved. Some sensitivity analyses showed a preponderance of the benefit during the pre-Omicron period. An estimated 14.8 million life-years were saved (1 life-year saved per 900 vaccine doses administered). The sensitivity range was 7.4 to 23.6 million life-years. Most life-years saved (76%) were among people 60 years or older, but long-term care residents contributed only 2% of the total. Children and adolescents (0.01% of lives saved and 0.1% of life-years saved) and young adults aged 20 through 29 years (0.07% of lives saved and 0.3% of life-years saved) had very small contributions to the total benefit.\n            \n            \n              Conclusions and Relevance\n              Estimates in this study are substantially more conservative than previous calculations focusing mostly on the first year of vaccination, but they still clearly demonstrate a major overall benefit from COVID-19 vaccination during the years 2020-2024. Most benefits in lives and life-years saved was secured for a portion of older persons, a minority of the global population.",
+		"citation-key": "ioannidis2025",
+		"container-title": "JAMA Health Forum",
+		"DOI": "10.1001/jamahealthforum.2025.2223",
+		"ISSN": "2689-0186",
+		"issue": "7",
+		"journalAbbreviation": "JAMA Health Forum",
+		"language": "en",
+		"page": "e252223",
+		"source": "DOI.org (Crossref)",
+		"title": "Global estimates of lives and life-years saved by COVID-19 vaccination during 2020-2024",
+		"URL": "https://jamanetwork.com/journals/jama-health-forum/fullarticle/2836434",
+		"volume": "6",
+		"author": [
+			{
+				"family": "Ioannidis",
+				"given": "John P. A."
+			},
+			{
+				"family": "Pezzullo",
+				"given": "Angelo Maria"
+			},
+			{
+				"family": "Cristiano",
+				"given": "Antonio"
+			},
+			{
+				"family": "Boccia",
+				"given": "Stefania"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					22
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2025",
+					7,
+					25
+				]
+			]
+		}
+	},
+	{
+		"id": "vaupel1979",
+		"type": "article-journal",
+		"abstract": "Abstract\n            Life table methods are developed for populations whose members differ in their endowment for longevity. Unlike standard methods, which ignore such heterogeneity, these methods use different calculations to construct cohort, period, and individual life tables. The results imply that standard methods overestimate current life expectancy and potential gains in life expectancy from health and safety interventions, while underestimating rates of individual aging, past progress in reducing mortality, and mortality differentials between pairs of populations. Calculations based on Swedish mortality data suggest that these errors may be important, especially in old age.",
+		"citation-key": "vaupel1979",
+		"container-title": "Demography",
+		"DOI": "10.2307/2061224",
+		"ISSN": "0070-3370, 1533-7790",
+		"issue": "3",
+		"language": "en",
+		"page": "439-454",
+		"source": "DOI.org (Crossref)",
+		"title": "The impact of heterogeneity in individual frailty on the dynamics of mortality",
+		"URL": "https://read.dukeupress.edu/demography/article/16/3/439/171922/The-impact-of-heterogeneity-in-individual-frailty",
+		"volume": "16",
+		"author": [
+			{
+				"family": "Vaupel",
+				"given": "James W."
+			},
+			{
+				"family": "Manton",
+				"given": "Kenneth G."
+			},
+			{
+				"family": "Stallard",
+				"given": "Eric"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					23
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1979",
+					8,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "kirsch2025",
+		"type": "software",
+		"abstract": "Uses Gamma Frailty slope normalization for all cohorts.\n\nPaper is nearly ready for submission (paper.md).\n\nZenodo DOI will be generated on this release!",
+		"citation-key": "kirsch2025",
+		"DOI": "10.5281/ZENODO.18050329",
+		"license": "Creative Commons Attribution 4.0 International",
+		"publisher": "Zenodo",
+		"source": "DOI.org (Datacite)",
+		"title": "skirsch/KCOR: KCOR v6.0 — Kirsch Cumulative Outcomes Ratio (KCOR) method GitHub repository",
+		"title-short": "skirsch/KCOR",
+		"URL": "https://zenodo.org/doi/10.5281/zenodo.18050329",
+		"version": "v6.0",
+		"author": [
+			{
+				"family": "Kirsch",
+				"given": "Steve"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					24
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2025",
+					12,
+					25
+				]
+			]
+		}
+	},
+	{
+		"id": "cole2008",
+		"type": "article-journal",
+		"citation-key": "cole2008",
+		"container-title": "American Journal of Epidemiology",
+		"DOI": "10.1093/aje/kwn164",
+		"ISSN": "0002-9262, 1476-6256",
+		"issue": "6",
+		"journalAbbreviation": "American Journal of Epidemiology",
+		"language": "en",
+		"page": "656-664",
+		"source": "DOI.org (Crossref)",
+		"title": "Constructing inverse probability weights for marginal structural models",
+		"URL": "https://academic.oup.com/aje/article-lookup/doi/10.1093/aje/kwn164",
+		"volume": "168",
+		"author": [
+			{
+				"family": "Cole",
+				"given": "S. R."
+			},
+			{
+				"family": "Hernan",
+				"given": "M. A."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2008",
+					7,
+					15
+				]
+			]
+		}
+	},
+	{
+		"id": "grambsch1994",
+		"type": "article-journal",
+		"citation-key": "grambsch1994",
+		"container-title": "Biometrika",
+		"DOI": "10.1093/biomet/81.3.515",
+		"ISSN": "0006-3444, 1464-3510",
+		"issue": "3",
+		"journalAbbreviation": "Biometrika",
+		"language": "en",
+		"page": "515-526",
+		"source": "DOI.org (Crossref)",
+		"title": "Proportional hazards tests and diagnostics based on weighted residuals",
+		"URL": "https://academic.oup.com/biomet/article-lookup/doi/10.1093/biomet/81.3.515",
+		"volume": "81",
+		"author": [
+			{
+				"family": "Grambsch",
+				"given": "Patricia M."
+			},
+			{
+				"family": "Therneau",
+				"given": "Terry M."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1994"
+				]
+			]
+		}
+	},
+	{
+		"id": "andersen1982",
+		"type": "article-journal",
+		"citation-key": "andersen1982",
+		"container-title": "The Annals of Statistics",
+		"DOI": "10.1214/aos/1176345976",
+		"ISSN": "0090-5364",
+		"issue": "4",
+		"journalAbbreviation": "Ann. Statist.",
+		"source": "DOI.org (Crossref)",
+		"title": "Cox's regression model for counting processes: a large sample study",
+		"title-short": "Cox's regression model for counting processes",
+		"URL": "https://projecteuclid.org/journals/annals-of-statistics/volume-10/issue-4/Coxs-Regression-Model-for-Counting-Processes--A-Large-Sample/10.1214/aos/1176345976.full",
+		"volume": "10",
+		"author": [
+			{
+				"family": "Andersen",
+				"given": "P. K."
+			},
+			{
+				"family": "Gill",
+				"given": "R. D."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1982",
+					12,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "royston2002",
+		"type": "article-journal",
+		"abstract": "Abstract\n            Modelling of censored survival data is almost always done by Cox proportional‐hazards regression. However, use of parametric models for such data may have some advantages. For example, non‐proportional hazards, a potential difficulty with Cox models, may sometimes be handled in a simple way, and visualization of the hazard function is much easier. Extensions of the Weibull and log‐logistic models are proposed in which natural cubic splines are used to smooth the baseline log cumulative hazard and log cumulative odds of failure functions. Further extensions to allow non‐proportional effects of some or all of the covariates are introduced. A hypothesis test of the appropriateness of the scale chosen for covariate effects (such as of treatment) is proposed. The new models are applied to two data sets in cancer. The results throw interesting light on the behaviour of both the hazard function and the hazard ratio over time. The tools described here may be a step towards providing greater insight into the natural history of the disease and into possible underlying causes of clinical events. We illustrate these aspects by using the two examples in cancer. Copyright © 2002 John Wiley & Sons, Ltd.",
+		"citation-key": "royston2002",
+		"container-title": "Statistics in Medicine",
+		"DOI": "10.1002/sim.1203",
+		"ISSN": "0277-6715, 1097-0258",
+		"issue": "15",
+		"journalAbbreviation": "Statistics in Medicine",
+		"language": "en",
+		"license": "http://onlinelibrary.wiley.com/termsAndConditions#vor",
+		"page": "2175-2197",
+		"source": "DOI.org (Crossref)",
+		"title": "Flexible parametric proportional‐hazards and proportional‐odds models for censored survival data, with application to prognostic modelling and estimation of treatment effects",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1002/sim.1203",
+		"volume": "21",
+		"author": [
+			{
+				"family": "Royston",
+				"given": "Patrick"
+			},
+			{
+				"family": "Parmar",
+				"given": "Mahesh K. B."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2002",
+					8,
+					15
+				]
+			]
+		}
+	},
+	{
+		"id": "aalen1989",
+		"type": "article-journal",
+		"abstract": "Abstract\n            A linear model is suggested for the influence of covariates on the intensity function. This approach is less vulnerable than the Cox model to problems of inconsistency when covariates are deleted or the precision of covariate measurements is changed. A method of non‐parametric estimation of regression functions is presented. This results in plots that may give information on the change over time in the influence of covariates. A test method and two goodness of fit plots are also given. The approach is illustrated by simulation as well as by data from a clinical trial of treatment of carcinoma of the oropharynx.",
+		"citation-key": "aalen1989",
+		"container-title": "Statistics in Medicine",
+		"DOI": "10.1002/sim.4780080803",
+		"ISSN": "0277-6715, 1097-0258",
+		"issue": "8",
+		"journalAbbreviation": "Statistics in Medicine",
+		"language": "en",
+		"license": "http://onlinelibrary.wiley.com/termsAndConditions#vor",
+		"page": "907-925",
+		"source": "DOI.org (Crossref)",
+		"title": "A linear regression model for the analysis of life times",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1002/sim.4780080803",
+		"volume": "8",
+		"author": [
+			{
+				"family": "Aalen",
+				"given": "Odd O."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1989",
+					8
+				]
+			]
+		}
+	},
+	{
+		"id": "lin1994",
+		"type": "article-journal",
+		"citation-key": "lin1994",
+		"container-title": "Biometrika",
+		"DOI": "10.1093/biomet/81.1.61",
+		"ISSN": "0006-3444, 1464-3510",
+		"issue": "1",
+		"journalAbbreviation": "Biometrika",
+		"language": "en",
+		"page": "61-71",
+		"source": "DOI.org (Crossref)",
+		"title": "Semiparametric analysis of the additive risk model",
+		"URL": "https://academic.oup.com/biomet/article-lookup/doi/10.1093/biomet/81.1.61",
+		"volume": "81",
+		"author": [
+			{
+				"family": "Lin",
+				"given": "D. Y."
+			},
+			{
+				"family": "Ying",
+				"given": "Z."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1994",
+					3,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "vanhouwelingen2007",
+		"type": "article-journal",
+		"abstract": "Abstract. \n              This article advocates the landmarking approach that dynamically adjusts predictive models for survival data during the follow up. This updating is achieved by directly fitting models for the individuals still at risk at the landmark point. Using this approach, simple proportional hazards models are able to catch the development over time for models with time‐varying effects of covariates or data with time‐dependent covariates (biomarkers). To smooth the effect of the landmarking, sequences of models are considered with parametric effects of the landmark time point and fitted by maximizing appropriate pseudo log‐likelihoods that extend the partial log‐likelihood to cover the landmarking approach.",
+		"citation-key": "vanhouwelingen2007",
+		"container-title": "Scandinavian Journal of Statistics",
+		"DOI": "10.1111/j.1467-9469.2006.00529.x",
+		"ISSN": "0303-6898, 1467-9469",
+		"issue": "1",
+		"journalAbbreviation": "Scandinavian J Statistics",
+		"language": "en",
+		"page": "70-85",
+		"source": "DOI.org (Crossref)",
+		"title": "Dynamic prediction by landmarking in event history analysis",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1111/j.1467-9469.2006.00529.x",
+		"volume": "34",
+		"author": [
+			{
+				"family": "Van Houwelingen",
+				"given": "Hans C."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2007",
+					3
+				]
+			]
+		}
+	},
+	{
+		"id": "robins2000",
+		"type": "article-journal",
+		"citation-key": "robins2000",
+		"container-title": "Epidemiology",
+		"DOI": "10.1097/00001648-200009000-00011",
+		"ISSN": "1044-3983",
+		"issue": "5",
+		"journalAbbreviation": "Epidemiology",
+		"language": "en",
+		"page": "550-560",
+		"source": "DOI.org (Crossref)",
+		"title": "Marginal structural models and causal inference in epidemiology:",
+		"title-short": "Marginal structural models and causal inference in epidemiology",
+		"URL": "http://journals.lww.com/00001648-200009000-00011",
+		"volume": "11",
+		"author": [
+			{
+				"family": "Robins",
+				"given": "James M."
+			},
+			{
+				"family": "Hernán",
+				"given": "Miguel Ángel"
+			},
+			{
+				"family": "Brumback",
+				"given": "Babette"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					2
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2000",
+					9
+				]
+			]
+		}
+	}
+]

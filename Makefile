@@ -15,7 +15,8 @@ PAPER_DIR ?= documentation/preprint
 PAPER_MD ?= paper.md
 PAPER_PDF ?= paper.pdf
 PAPER_TEX ?= paper.tex
-PAPER_BIB ?= refs.bib
+PAPER_BIB ?= KCOR_references.json
+PAPER_BIB_PATH := $(PAPER_DIR)/$(PAPER_BIB)
 PAPER_CSL ?= american-medical-association.csl
 # PDF engine (override on CLI if needed). Default: xelatex.
 PAPER_PDF_ENGINE ?= xelatex
@@ -345,7 +346,7 @@ sensitivity:
 # Default inputs live in documentation/preprint/:
 # - paper.md (main manuscript)
 # - supplement.md (Supplementary Information)
-# - refs.bib
+# - KCOR_references.json
 # - american-medical-association.csl
 #
 # Outputs:
@@ -366,7 +367,7 @@ paper-tex: $(PAPER_DIR)/$(PAPER_TEX)
 # Optional: include Supplementary Information when building the combined paper outputs.
 PAPER_SUPP_MD ?= supplement.md
 
-$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_TEX)"
 	@cd $(PAPER_DIR) && \
 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(PAPER_MD)" "$(PAPER_SUPP_MD)"; then \
@@ -414,7 +415,7 @@ main-tex: $(PAPER_DIR)/$(MAIN_TEX)
 supplement-pdf: $(PAPER_DIR)/$(SUPP_PDF)
 supplement-tex: $(PAPER_DIR)/$(SUPP_TEX)
 
-$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(MAIN_MD) -> $(PAPER_DIR)/$(MAIN_TEX)"
 	@cd $(PAPER_DIR) && \
 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(MAIN_MD)"; then \
@@ -443,7 +444,7 @@ $(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PA
 			exit 1; \
 		)
 
-$(PAPER_DIR)/$(SUPP_TEX): $(PAPER_DIR)/$(SUPP_MD) $(PAPER_DIR)/$(PAPER_BIB) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+$(PAPER_DIR)/$(SUPP_TEX): $(PAPER_DIR)/$(SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(SUPP_MD) -> $(PAPER_DIR)/$(SUPP_TEX)"
 	@cd $(PAPER_DIR) && \
 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(SUPP_MD)"; then \

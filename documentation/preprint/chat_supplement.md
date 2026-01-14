@@ -13,7 +13,7 @@ Below is the **recommended, battle-tested setup** for Pandoc + pandoc-crossref (
 paper/
 ├── main.md          # Main paper (what reviewers read first)
 ├── supplement.md    # All Supplementary Material
-├── refs.bib
+├── KCOR_references.json
 ├── figures/
 ├── tables/
 └── Makefile

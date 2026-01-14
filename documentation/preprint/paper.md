@@ -80,7 +80,7 @@ Together, these contributions position KCOR not as a replacement for existing su
 
 ### 1.7 Paper organization and supporting information (SI)
 
-The main text presents the KCOR estimator, a single canonical demonstration of Cox bias under frailty-driven depletion, and two main validation examples (negative control and stress test). Additional validations (including positive controls), extended diagnostics (Supplementary Information §S2; Tables S2.1–S2.3), and detailed simulation/control specifications are provided in the Supplementary Information (SI) document.
+The main text introduces the KCOR estimator, provides a canonical demonstration of Cox bias under frailty-driven depletion, and presents two primary validation examples (a negative control and a stress test). Additional validations—including positive controls—along with extended diagnostics, empirical registry-based nulls, and detailed simulation specifications are provided in the Supplementary Information (SI; Sections S2 and S4.2–S4.3; Tables S2.1–S2.3).
 
 ## 2. Methods
 
