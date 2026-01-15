@@ -82,7 +82,7 @@ After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the
 
 ### S4.0 Summary tables for control-test and simulation parameters
 
-Table: Summary of control-test and simulation parameters referenced in Sections S4.2–S4.6. {#tbl:si_sim_params}
+Table: Summary of control-test and simulation parameters referenced in Sections S4.2–S4.6. Numeric values are fixed unless otherwise noted; ranges indicate sensitivity grids. {#tbl:si_sim_params}
 
 | Section | Item | Parameter | Value | Notes |
 |---|---|---|---|---|
@@ -123,6 +123,18 @@ Table: Summary of control-test and simulation parameters referenced in Sections 
 | S4.5 | Tail-sampling (adversarial) | Positive-control multiplier | r=1.2 (harm) or r=0.8 (benefit) |  |
 | S4.5 | Tail-sampling (adversarial) | Effect window | weeks 20–80 |  |
 | S4.5 | Tail-sampling (adversarial) | Random seed | 42 |  |
+| S4.6 | Joint frailty + effect | Generation script | `test/sim_grid/code/generate_s7_sim.py` |  |
+| S4.6 | Joint frailty + effect | Time horizon | 260 weeks |  |
+| S4.6 | Joint frailty + effect | Cohort size | 2,000,000 per cohort |  |
+| S4.6 | Joint frailty + effect | Frailty distribution | Gamma, mean 1 | θ0=0.3, θ1=0.8 |
+| S4.6 | Joint frailty + effect | Baseline hazard | 0.002 per week | Constant |
+| S4.6 | Joint frailty + effect | Quiet window | weeks 80–140 | Prespecified for frailty estimation |
+| S4.6 | Joint frailty + effect | Effect windows | weeks 10–25 (early), 150–190 (late) | Overlap variant: 70–95 |
+| S4.6 | Joint frailty + effect | Effect shapes | step, ramp, bump |  |
+| S4.6 | Joint frailty + effect | Effect multiplier | r=1.2 (harm); r=0.8 (benefit) | Applied to treated cohort |
+| S4.6 | Joint frailty + effect | Skip weeks | 2 |  |
+| S4.6 | Joint frailty + effect | Random seed | 42 |  |
+| S4.6 | Joint frailty + effect | Enrollment date | 2021-06-14 | ISO week 2021_24 |
 
 ### S4.1 Reference implementation and default operational settings
 
@@ -157,15 +169,11 @@ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a true null while inducing 10–20 year age differences.
 
-No gamma-frailty normalization is applied in this empirical negative-control construction. Because the cohorts represent full-population strata rather than selectively sampled subcohorts, frailty heterogeneity and depletion are minimal, and direct comparison is valid without normalization.
-
 This contrasts with the synthetic negative control (Section S4.2.1), where strong, deliberately induced frailty heterogeneity requires gamma-frailty normalization to recover the null.
 
 ### S4.3 Positive control: injected effect
 
 Positive controls are used to verify that KCOR responds appropriately when a true effect is present. Starting from a negative-control simulation with no treatment effect, a known multiplicative hazard shift is injected into one cohort over a prespecified time window. This construction allows direct assessment of whether KCOR detects both the direction and timing of the injected effect while remaining stable outside the effect window.
-
-The positive control (Figure @fig:pos_control_injected; Table @tbl:pos_control_summary) starts from a negative-control simulation and injects a known multiplicative hazard shift $r$ into one cohort over a prespecified time window. KCOR is expected to deviate from 1 in the correct direction during the injection window and remain stable outside it.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
@@ -174,8 +182,6 @@ The injection multiplies the treatment cohort's baseline hazard by factor $r$ du
 ### S4.4 Sensitivity analysis parameters
 
 Sensitivity analyses evaluate the robustness of KCOR estimates to reasonable variation in analysis choices that do not alter the underlying data-generating process. Baseline-window length and quiet-window placement are perturbed over a prespecified range while holding all other parameters fixed. These analyses assess whether KCOR behavior is stable to tuning choices that primarily affect normalization rather than cohort composition.
-
-The sensitivity analysis (Figure @fig:sensitivity_overview) evaluates robustness of $\mathrm{KCOR}(t)$ to reasonable tuning of baseline/quiet-window choices by varying the baseline window length and shifting the quiet-window start while holding the quiet-window end fixed.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
@@ -187,8 +193,6 @@ Output grids show KCOR(t) values for each parameter combination.
 
 This adversarial simulation evaluates KCOR under extreme but controlled violations of typical cohort-selection geometry. Two cohorts are constructed to share identical mean frailty while differing sharply in how risk is distributed, using mid-quantile sampling versus a low/high-tail mixture. This setting stress-tests whether depletion normalization remains effective when frailty heterogeneity is concentrated in the tails rather than smoothly distributed.
 
-This adversarial simulation constructs two cohorts with identical mean frailty but different **selection geometry** (mid-quantile sampling versus a low/high-tail mixture) to stress-test depletion normalization under extreme cohort composition.
-
 - **Mid-sampled cohort**: frailty restricted to central quantiles (e.g., 25th–75th percentile) and renormalized to mean 1.
 - **Tail-sampled cohort**: mixture of low and high tails (e.g., 0–15th and 85th–100th percentiles) with mixture weights chosen to yield mean 1.
 
@@ -196,9 +200,13 @@ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 Both cohorts share the same baseline hazard $h_0(t)$ and have no treatment effect (negative-control version). Positive-control versions are also generated by applying a known hazard multiplier in a prespecified window. The evaluation includes (i) KCOR drift, (ii) quiet-window fit RMSE, (iii) post-normalization linearity, and (iv) parameter stability under window perturbation.
 
-### S4.6 Joint frailty and treatment-effect simulation (S7)
+### S4.6 Joint frailty and treatment-effect simulation
 
 This simulation evaluates KCOR under conditions in which **both selection-induced depletion (frailty heterogeneity)** and a **true treatment effect (harm or benefit)** are present simultaneously. The purpose is to assess whether KCOR can (i) correctly identify and neutralize frailty-driven curvature using a quiet period and (ii) detect a true treatment effect outside that period without confounding the two mechanisms.
+
+This joint simulation combines the selection-induced depletion mechanisms examined in Sections S4.2 and S4.5 with the injected-effect framework of Section S4.3.
+
+Parameter values and scripts for this joint simulation are summarized in Table @tbl:si_sim_params.
 
 #### Design
 
@@ -214,6 +222,8 @@ $$
 where $z_i$ is individual frailty, $h_0(t)$ is a shared baseline hazard, and $r(t)$ is a time-localized multiplicative treatment effect applied to one cohort only.
 
 ## S5. Additional figures and diagnostics
+
+This section provides diagnostic outputs and evaluation criteria for the simulations and control-test specifications defined in Section S4.
 
 ### S5.1 Fit diagnostics
 
