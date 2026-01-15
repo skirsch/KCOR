@@ -192,7 +192,7 @@ frailty}\label{kcor-a-depletion-neutralized-framework-for-retrospective-cohort-c
 \item
   \textbf{Corresponding author}: stk@alum.mit.edu
 \item
-  \textbf{Word count}: 12,100 (excluding Abstract and References)
+  \textbf{Word count}: 10,909 (excluding Abstract and References)
 \item
   \textbf{Keywords}: selection bias; frailty model; gamma mixture model;
   frailty inversion; frailty heterogeneity; selection-induced depletion;
@@ -807,30 +807,29 @@ H^{\mathrm{model}}_{d}(t; k_d,\theta_d)
 \frac{1}{\theta_d}\log\!\left(1+\theta_d k_d t\right).
 }\end{equation}
 
-Identifiability of \((\hat{k}_d,\hat{\theta}_d)\) comes from curvature
+Identifiability of \((\hat{k}_d,\hat{\theta}_d)\) arises from curvature
 in cumulative-hazard space: observed cumulative hazards are nonlinear in
-event time when \(\theta_d>0\). When depletion is weak (or the quiet
-window is too short to show curvature), the model smoothly collapses to
+follow-up time when \(\theta_d>0\). When depletion is weak (or the quiet
+window is too short to exhibit curvature), the model smoothly approaches
 a linear cumulative hazard, since
 \(H_{d}^{\mathrm{model}}(t; k_d, \theta_d) \to k_d t\) as
 \(\theta_d \to 0\). Operationally, near-linear observed cumulative
-hazards naturally drive the fitted frailty variance toward zero; fit
-diagnostics such as \(n_{\mathrm{obs}}\) and RMSE in \(H\)-space provide
-a practical check on whether the selection parameters are being
-identified from the quiet-window data. In practice, lack of identifiable
-curvature naturally manifests as fitted frailty variance estimates
-approaching zero, providing an internal diagnostic for
-non-identifiability over short or sparse follow-up.
+hazards naturally drive fitted frailty variance estimates toward zero;
+fit diagnostics such as \(n_{\mathrm{obs}}\) and RMSE in \(H\)-space
+provide a practical check on whether the selection parameters are being
+identified from the quiet-window data. Thus, lack of identifiable
+curvature manifests as fitted frailty variance estimates approaching
+zero, serving as an internal diagnostic for non-identifiability over
+short or sparse follow-up.
 
 In applied analyses, this behavior is most commonly observed in
 vaccinated cohorts, whose cumulative hazards during quiet periods are
 often close to linear. In such cases, the gamma-frailty fit collapses
-naturally, indicating minimal detectable depletion. This outcome
-reflects the absence of observable selection-induced curvature rather
-than a modeling assumption. When residual time-varying risk contaminates
-a nominally quiet window, fitted frailty variance estimates naturally
-shrink toward zero, signaling limited identifiability rather than
-inducing spurious correction.
+naturally, indicating minimal detectable depletion rather than
+reflecting a modeling assumption. When residual time-varying risk
+contaminates a nominally quiet window, fitted frailty variance estimates
+similarly shrink toward zero, signaling limited identifiability rather
+than inducing spurious correction.
 
 Parameters are estimated by constrained nonlinear least squares:
 
@@ -846,17 +845,16 @@ H^{\mathrm{model}}_{d}(t; k_d,\theta_d)
 \bigr)^2 .
 }\end{equation}
 
-Fitting is performed in cumulative-hazard space rather than by
-maximizing a likelihood because the primary inputs are discrete-time,
+Fitting is performed in cumulative-hazard space rather than via
+likelihood maximization, as the inputs are discrete-time,
 cohort-aggregated hazards rather than individual-level event histories.
-Least-squares fitting in cumulative-hazard space serves as a stable
-estimating equation for selection-induced depletion geometry during
-quiet periods, emphasizes agreement in hazard shape rather than
-instantaneous risk, and yields diagnostics (e.g., RMSE and residual
-structure in \(H\)-space) that directly assess depletion
-identifiability. Likelihood-based fitting can be treated as a
-sensitivity analysis but is not required for the gamma-frailty
-normalization identity itself.
+Least-squares fitting serves as a stable estimating equation for
+selection-induced depletion during quiet periods, emphasizes agreement
+in hazard shape rather than instantaneous risk, and yields diagnostics
+(e.g., RMSE and residual structure in \(H\)-space) that directly assess
+identifiability. Likelihood-based fitting may be used as a sensitivity
+analysis but is not required for the gamma-frailty normalization
+identity.
 
 All analyses use a prespecified reference implementation with fixed
 operational defaults; full details are provided in Supplementary Section
@@ -1879,10 +1877,16 @@ Not applicable.
 This study analyzes aggregated cohort-level summaries derived from
 administrative health records. The underlying individual-level data from
 the Czech Republic are record-level administrative data collected and
-maintained by the National Health Information Portal and were not
-accessed directly by the author. Access to the underlying record-level
-data is subject to the data provider's governance, approval, and
-disclosure-control policies.
+maintained by the National Health Information Portal. Access to the
+underlying record-level data is subject to the data provider's
+governance, approval, and disclosure-control policies.
+
+\subsubsection{Software availability}\label{software-availability}
+
+The complete KCOR reference implementation, simulation code, and
+manuscript build instructions are available at
+https://github.com/skirsch/KCOR. A citable archival release of the
+software is available via Zenodo (DOI: 10.5281/zenodo.18050329).
 
 All synthetic validation datasets used for method development and
 evaluation (including negative and positive control simulations), along
@@ -1892,11 +1896,6 @@ KCOR\_CMR format are included to support full computational
 reproducibility. A formal specification of the KCOR data formats,
 including schema definitions and disclosure-control semantics, is
 provided in \texttt{documentation/specs/KCOR\_file\_format.md}.
-
-The complete KCOR reference implementation, simulation code, and
-manuscript build instructions are available at
-https://github.com/skirsch/KCOR. A citable archival release of the
-software is available via Zenodo (DOI: 10.5281/zenodo.18050329).
 
 \subsubsection{Use of artificial intelligence
 tools}\label{use-of-artificial-intelligence-tools}

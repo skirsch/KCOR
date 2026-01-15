@@ -7,7 +7,7 @@
 - **Author**: Steven T. Kirsch
 - **Affiliations**: Independent Researcher, United States
 - **Corresponding author**: stk@alum.mit.edu
-- **Word count**: 12,100 (excluding Abstract and References)
+- **Word count**: 10,909 (excluding Abstract and References)
 - **Keywords**: selection bias; frailty model; gamma mixture model; frailty inversion; frailty heterogeneity; selection-induced depletion; non-proportional hazards; cumulative hazard; hazard normalization; cumulative hazards; estimands; gamma frailty; negative controls; observational studies; observational cohort studies
 
 ## Abstract
@@ -702,11 +702,13 @@ Not applicable.
 
 ### Data availability
 
-This study analyzes aggregated cohort-level summaries derived from administrative health records. The underlying individual-level data from the Czech Republic are record-level administrative data collected and maintained by the National Health Information Portal and were not accessed directly by the author. Access to the underlying record-level data is subject to the data provider’s governance, approval, and disclosure-control policies.
+This study analyzes aggregated cohort-level summaries derived from administrative health records. The underlying individual-level data from the Czech Republic are record-level administrative data collected and maintained by the National Health Information Portal. Access to the underlying record-level data is subject to the data provider’s governance, approval, and disclosure-control policies.
 
-All synthetic validation datasets used for method development and evaluation (including negative and positive control simulations), along with their generation scripts, are publicly available in the project repository. Sensitivity analysis outputs and example datasets in KCOR_CMR format are included to support full computational reproducibility. A formal specification of the KCOR data formats, including schema definitions and disclosure-control semantics, is provided in `documentation/specs/KCOR_file_format.md`.
+### Software availability
 
 The complete KCOR reference implementation, simulation code, and manuscript build instructions are available at https://github.com/skirsch/KCOR. A citable archival release of the software is available via Zenodo (DOI: 10.5281/zenodo.18050329).
+
+All synthetic validation datasets used for method development and evaluation (including negative and positive control simulations), along with their generation scripts, are publicly available in the project repository. Sensitivity analysis outputs and example datasets in KCOR_CMR format are included to support full computational reproducibility. A formal specification of the KCOR data formats, including schema definitions and disclosure-control semantics, is provided in `documentation/specs/KCOR_file_format.md`.
 
 ### Use of artificial intelligence tools
 
