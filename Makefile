@@ -480,8 +480,8 @@ $(PAPER_DIR)/$(MAIN_PDF): $(PAPER_DIR)/$(MAIN_TEX)
 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
 			exit 1; \
 		fi; \
-		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(MAIN_TEX)" >/dev/null; \
-		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(MAIN_TEX)" >/dev/null
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(MAIN_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(MAIN_TEX)" >/dev/null
 
 $(PAPER_DIR)/$(SUPP_PDF): $(PAPER_DIR)/$(SUPP_TEX)
 	@echo "Building PDF: $(PAPER_DIR)/$(SUPP_TEX) -> $(PAPER_DIR)/$(SUPP_PDF)"
@@ -490,8 +490,8 @@ $(PAPER_DIR)/$(SUPP_PDF): $(PAPER_DIR)/$(SUPP_TEX)
 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
 			exit 1; \
 		fi; \
-		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(SUPP_TEX)" >/dev/null; \
-		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(SUPP_TEX)" >/dev/null
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(SUPP_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(SUPP_TEX)" >/dev/null
 
 # Build PDF
 #
@@ -506,8 +506,8 @@ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_TEX)
 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
 			exit 1; \
 		fi; \
-		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(PAPER_TEX)" >/dev/null; \
-		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error "$(PAPER_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(PAPER_TEX)" >/dev/null; \
+		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(PAPER_TEX)" >/dev/null; \
 		if [ "$(PAPER_PDF)" != "paper.pdf" ]; then mv -f "paper.pdf" "$(PAPER_PDF)"; fi
 
 # HVE simulator (not part of default all)

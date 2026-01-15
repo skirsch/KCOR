@@ -291,28 +291,32 @@ KCOR estimates $(\hat{k}_d,\hat{\theta}_d)$ independently for each cohort $d$ us
 Under the default baseline shape, the model-implied observed cumulative hazard is
 
 $$
-H_{d}^{\mathrm{model}}(t; k_d, \theta_d) = \frac{1}{\theta_d}\,\log\!\left(1+\theta_d k_d t\right).
+H^{\mathrm{model}}_{d}(t; k_d,\theta_d)
+=
+\frac{1}{\theta_d}\log\!\left(1+\theta_d k_d t\right).
 $$
 {#eq:hobs-model}
 
-Identifiability of $(\hat{k}_d,\hat{\theta}_d)$ comes from curvature in cumulative-hazard space: observed cumulative hazards are nonlinear in event time when $\theta_d>0$. When depletion is weak (or the quiet window is too short to show curvature), the model smoothly collapses to a linear cumulative hazard, since $H_{d}^{\mathrm{model}}(t; k_d, \theta_d) \to k_d t$ as $\theta_d \to 0$. Operationally, near-linear observed cumulative hazards naturally drive the fitted frailty variance toward zero; fit diagnostics such as $n_{\mathrm{obs}}$ and RMSE in $H$-space provide a practical check on whether the selection parameters are being identified from the quiet-window data. In practice, lack of identifiable curvature naturally manifests as fitted frailty variance estimates approaching zero, providing an internal diagnostic for non-identifiability over short or sparse follow-up.
+Identifiability of $(\hat{k}_d,\hat{\theta}_d)$ arises from curvature in cumulative-hazard space: observed cumulative hazards are nonlinear in follow-up time when $\theta_d>0$. When depletion is weak (or the quiet window is too short to exhibit curvature), the model smoothly approaches a linear cumulative hazard, since $H_{d}^{\mathrm{model}}(t; k_d, \theta_d) \to k_d t$ as $\theta_d \to 0$. Operationally, near-linear observed cumulative hazards naturally drive fitted frailty variance estimates toward zero; fit diagnostics such as $n_{\mathrm{obs}}$ and RMSE in $H$-space provide a practical check on whether the selection parameters are being identified from the quiet-window data. Thus, lack of identifiable curvature manifests as fitted frailty variance estimates approaching zero, serving as an internal diagnostic for non-identifiability over short or sparse follow-up.
 
-In applied analyses, this behavior is most commonly observed in vaccinated cohorts, whose cumulative hazards during quiet periods are often close to linear. In such cases, the gamma-frailty fit collapses naturally, indicating minimal detectable depletion. This outcome reflects the absence of observable selection-induced curvature rather than a modeling assumption. When residual time-varying risk contaminates a nominally quiet window, fitted frailty variance estimates naturally shrink toward zero, signaling limited identifiability rather than inducing spurious correction.
+In applied analyses, this behavior is most commonly observed in vaccinated cohorts, whose cumulative hazards during quiet periods are often close to linear. In such cases, the gamma-frailty fit collapses naturally, indicating minimal detectable depletion rather than reflecting a modeling assumption. When residual time-varying risk contaminates a nominally quiet window, fitted frailty variance estimates similarly shrink toward zero, signaling limited identifiability rather than inducing spurious correction.
 
 Parameters are estimated by constrained nonlinear least squares:
 
 $$
-(\hat{k}_d,\hat{\theta}_d)
+(\hat k_d,\hat\theta_d)
 =
 \arg\min_{k_d>0,\ \theta_d \ge 0}
 \sum_{t \in \mathcal{T}_d}
-\left[
-H_{\mathrm{obs},d}(t) - H_{d}^{\mathrm{model}}(t; k_d, \theta_d)
-\right]^2.
+\bigl(
+H_{\mathrm{obs},d}(t)
+-
+H^{\mathrm{model}}_{d}(t; k_d,\theta_d)
+\bigr)^2 .
 $$
 {#eq:nls-objective}
 
-Fitting is performed in cumulative-hazard space rather than maximizing a likelihood because the primary inputs are discrete-time, cohort-aggregated hazards and the objective is stable estimation of selection-induced depletion curvature during quiet periods. Least-squares fitting is used as a numerical estimating equation rather than as a likelihood-based estimator. Least squares on observed cumulative hazards is numerically robust under sparse events, emphasizes shape agreement over the fit window, and yields diagnostics (e.g., RMSE in $H$-space) that directly reflect the quality of the depletion fit. Likelihood-based fitting can be treated as a sensitivity analysis, but is not required for the normalization identity itself.
+Fitting is performed in cumulative-hazard space rather than via likelihood maximization, as the inputs are discrete-time, cohort-aggregated hazards rather than individual-level event histories. Least-squares fitting serves as a stable estimating equation for selection-induced depletion during quiet periods, emphasizes agreement in hazard shape rather than instantaneous risk, and yields diagnostics (e.g., RMSE and residual structure in $H$-space) that directly assess identifiability. Likelihood-based fitting may be used as a sensitivity analysis but is not required for the gamma-frailty normalization identity.
 
 All analyses use a prespecified reference implementation with fixed operational defaults; full details are provided in Supplementary Section S4.
 

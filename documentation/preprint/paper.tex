@@ -109,6 +109,7 @@
 \titlespacing*{\subparagraph}{0pt}{3.25ex plus 1ex minus .2ex}{0.5em}
 
 % Table packages for tabularx with custom column types
+\usepackage{microtype}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
@@ -391,6 +392,12 @@ retrospective cohort studies.
   \textbf{depletion-neutralized baseline cumulative hazard} obtained by
   fitting depletion geometry in a prespecified quiet window and applying
   the gamma-frailty inversion (Methods §2).
+\item
+  \textbf{Operational summary}: KCOR proceeds by (i) estimating
+  selection-induced depletion geometry during an epidemiologically quiet
+  period, (ii) inverting that geometry to obtain depletion-neutralized
+  cumulative hazards, and (iii) comparing cohorts on that normalized
+  cumulative scale.
 \item
   \textbf{Interpretation}: KCOR is a time-indexed \textbf{cumulative}
   contrast on the depletion-neutralized scale. Values above/below 1
@@ -795,7 +802,9 @@ Under the default baseline shape, the model-implied observed cumulative
 hazard is
 
 \begin{equation}\protect\phantomsection\label{eq:hobs-model}{
-H_{d}^{\mathrm{model}}(t; k_d, \theta_d) = \frac{1}{\theta_d}\,\log\!\left(1+\theta_d k_d t\right).
+H^{\mathrm{model}}_{d}(t; k_d,\theta_d)
+=
+\frac{1}{\theta_d}\log\!\left(1+\theta_d k_d t\right).
 }\end{equation}
 
 Identifiability of \((\hat{k}_d,\hat{\theta}_d)\) comes from curvature
@@ -826,26 +835,28 @@ inducing spurious correction.
 Parameters are estimated by constrained nonlinear least squares:
 
 \begin{equation}\protect\phantomsection\label{eq:nls-objective}{
-(\hat{k}_d,\hat{\theta}_d)
+(\hat k_d,\hat\theta_d)
 =
 \arg\min_{k_d>0,\ \theta_d \ge 0}
 \sum_{t \in \mathcal{T}_d}
-\left[
-H_{\mathrm{obs},d}(t) - H_{d}^{\mathrm{model}}(t; k_d, \theta_d)
-\right]^2.
+\bigl(
+H_{\mathrm{obs},d}(t)
+-
+H^{\mathrm{model}}_{d}(t; k_d,\theta_d)
+\bigr)^2 .
 }\end{equation}
 
-Fitting is performed in cumulative-hazard space rather than maximizing a
-likelihood because the primary inputs are discrete-time,
-cohort-aggregated hazards and the objective is stable estimation of
-selection-induced depletion curvature during quiet periods.
-Least-squares fitting is used as a numerical estimating equation rather
-than as a likelihood-based estimator. Least squares on observed
-cumulative hazards is numerically robust under sparse events, emphasizes
-shape agreement over the fit window, and yields diagnostics (e.g., RMSE
-in \(H\)-space) that directly reflect the quality of the depletion fit.
-Likelihood-based fitting can be treated as a sensitivity analysis, but
-is not required for the normalization identity itself.
+Fitting is performed in cumulative-hazard space rather than by
+maximizing a likelihood because the primary inputs are discrete-time,
+cohort-aggregated hazards rather than individual-level event histories.
+Least-squares fitting in cumulative-hazard space serves as a stable
+estimating equation for selection-induced depletion geometry during
+quiet periods, emphasizes agreement in hazard shape rather than
+instantaneous risk, and yields diagnostics (e.g., RMSE and residual
+structure in \(H\)-space) that directly assess depletion
+identifiability. Likelihood-based fitting can be treated as a
+sensitivity analysis but is not required for the gamma-frailty
+normalization identity itself.
 
 All analyses use a prespecified reference implementation with fixed
 operational defaults; full details are provided in Supplementary Section
@@ -1286,8 +1297,27 @@ intervention effects; in such cases, \(\mathrm{KCOR}(t; t_0)\) is
 emphasized to report deviations relative to an early post-enrollment
 reference while preserving time-varying divergence.
 
-\subsubsection{3.1 Negative controls: null under selection-induced
-curvature}\label{negative-controls-null-under-selection-induced-curvature}
+\subsubsection{3.1 Negative controls (selection-only
+null)}\label{negative-controls-selection-only-null}
+
+\paragraph{3.1.1 Fully synthetic negative control (in-model
+gamma-frailty
+null)}\label{fully-synthetic-negative-control-in-model-gamma-frailty-null}
+
+We first evaluate KCOR under a fully synthetic, selection-only null in
+which the data-generating process exactly matches the working
+gamma-frailty model. Two cohorts share the same baseline hazard
+\(h_0(t)\) but differ in frailty variance \(\theta\), inducing strong
+cohort-level hazard curvature through depletion alone, with no treatment
+effect by construction.
+
+Under correct specification, depletion normalization is exact up to
+sampling variability. After estimating frailty parameters during quiet
+periods and applying gamma-frailty inversion, \(\mathrm{KCOR}(t)\)
+remains approximately constant at 1 over follow-up, confirming correct
+null behavior under selection-induced curvature. Full design details and
+figures are provided in the Supplementary Information (Section S4.2.1;
+Figure \ref{fig:neg_control_synthetic}).
 
 \paragraph{3.1.2 Empirical negative control using national registry data
 (Czech
@@ -1347,8 +1377,8 @@ SI).}\label{fig:neg_control_10yr}
 
 Table \ref{tbl:neg_control_summary} provides numeric summaries.
 
-\subsubsection{3.2 Positive controls: detect injected
-harm/benefit}\label{positive-controls-detect-injected-harmbenefit}
+\subsubsection{3.2 Positive controls (injected
+effects)}\label{positive-controls-injected-effects}
 
 Positive controls (injected harm/benefit) are provided in Supplementary
 Section S3. They verify that under a known injected effect, KCOR
@@ -1360,8 +1390,8 @@ shifts, KCOR reliably detects both harm and benefit, with estimated
 \(\mathrm{KCOR}(t)\) trajectories tracking the imposed effects; full
 results are shown in Supplementary Figure S1.
 
-\subsubsection{3.3 Stress test: robustness to frailty
-misspecification}\label{stress-test-robustness-to-frailty-misspecification}
+\subsubsection{3.3 Stress tests (frailty
+misspecification)}\label{stress-tests-frailty-misspecification}
 
 \paragraph{3.3.1 Frailty misspecification
 robustness}\label{frailty-misspecification-robustness}
