@@ -80,6 +80,50 @@ After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the
 
 ## S4. Control-test specifications and simulation parameters
 
+### S4.0 Summary tables for control-test and simulation parameters
+
+Table: Summary of control-test and simulation parameters referenced in Sections S4.2–S4.6. {#tbl:si_sim_params}
+
+| Section | Item | Parameter | Value | Notes |
+|---|---|---|---|---|
+| S4.2.1 | Synthetic negative control | Data source | `example/Frail_cohort_mix.xlsx` | Pathological frailty mixture |
+| S4.2.1 | Synthetic negative control | Generation script | `code/generate_pathological_neg_control_figs.py` |  |
+| S4.2.1 | Synthetic negative control | Cohort A weights | [0.20, 0.20, 0.20, 0.20, 0.20] | 5 frailty groups |
+| S4.2.1 | Synthetic negative control | Cohort B weights | [0.30, 0.20, 0.20, 0.20, 0.10] | Shifted mixture |
+| S4.2.1 | Synthetic negative control | Frailty values | [1, 2, 4, 6, 10] | Relative multipliers |
+| S4.2.1 | Synthetic negative control | Base weekly probability | 0.01 |  |
+| S4.2.1 | Synthetic negative control | Weekly log-slope | 0.0 | Constant baseline during quiet periods |
+| S4.2.1 | Synthetic negative control | Skip weeks | 2 |  |
+| S4.2.1 | Synthetic negative control | Normalization weeks | 4 |  |
+| S4.2.1 | Synthetic negative control | Time horizon | 250 weeks |  |
+| S4.2.2 | Empirical negative control | Data source | Czech admin registry data (KCOR_CMR) | Aggregated cohorts |
+| S4.2.2 | Empirical negative control | Generation script | `test/negative_control/code/generate_negative_control.py` |  |
+| S4.2.2 | Empirical negative control | Construction | Age strata remapped to pseudo-doses | True null preserved |
+| S4.2.2 | Empirical negative control | Age mapping | Dose 0→YoB {1930,1935}; Dose 1→{1940,1945}; Dose 2→{1950,1955} |  |
+| S4.2.2 | Empirical negative control | Output YoB | 1950 (unvax) or 1940 (vax) |  |
+| S4.2.2 | Empirical negative control | Sheets processed | 2021_24, 2022_06 |  |
+| S4.3 | Positive control | Generation script | `test/positive_control/code/generate_positive_control.py` |  |
+| S4.3 | Positive control | Initial cohort size | 100,000 per cohort |  |
+| S4.3 | Positive control | Baseline hazard | 0.002 per week | Constant |
+| S4.3 | Positive control | Frailty variance | θ0=0.5 (control), θ1=1.0 (treatment) |  |
+| S4.3 | Positive control | Effect window | weeks 20–80 |  |
+| S4.3 | Positive control | Hazard multipliers | r=1.2 (harm); r=0.8 (benefit) |  |
+| S4.3 | Positive control | Random seed | 42 |  |
+| S4.3 | Positive control | Enrollment date | 2021-06-14 (ISO week 2021_24) |  |
+| S4.4 | Sensitivity analysis | Baseline weeks | [2,3,4,5,6,7,8] | Varied |
+| S4.4 | Sensitivity analysis | Quiet-start offsets | [-12,-8,-4,0,+4,+8,+12] | Weeks from 2023-01 |
+| S4.4 | Sensitivity analysis | Quiet-window end | 2023-52 | Fixed |
+| S4.4 | Sensitivity analysis | Dose pairs | 1 vs 0; 2 vs 0; 2 vs 1 |  |
+| S4.4 | Sensitivity analysis | Cohorts | 2021_24 |  |
+| S4.5 | Tail-sampling (adversarial) | Generation script | `test/sim_grid/code/generate_tail_sampling_sim.py` |  |
+| S4.5 | Tail-sampling (adversarial) | Base frailty distribution | Log-normal, mean 1, variance 0.5 |  |
+| S4.5 | Tail-sampling (adversarial) | Mid-quantile cohort | 25th–75th percentile | Renormalized to mean 1 |
+| S4.5 | Tail-sampling (adversarial) | Tail-mixture cohort | [0–15th] + [85th–100th], equal weights | Weights yield mean 1 |
+| S4.5 | Tail-sampling (adversarial) | Baseline hazard | 0.002 per week | Constant |
+| S4.5 | Tail-sampling (adversarial) | Positive-control multiplier | r=1.2 (harm) or r=0.8 (benefit) |  |
+| S4.5 | Tail-sampling (adversarial) | Effect window | weeks 20–80 |  |
+| S4.5 | Tail-sampling (adversarial) | Random seed | 42 |  |
+
 ### S4.1 Reference implementation and default operational settings
 
 Table: Reference implementation and default operational settings. {#tbl:si_defaults}
@@ -93,22 +137,13 @@ Table: Reference implementation and default operational settings. {#tbl:si_defau
 
 ### S4.2 Negative controls
 
-Negative controls are implemented in two complementary forms. The empirical negative control uses full-population registry cohorts and does not apply gamma-frailty normalization, as selection-induced depletion (depletion of susceptibles) is negligible by construction. The synthetic negative control introduces extreme, known frailty heterogeneity and explicitly tests whether gamma-frailty normalization correctly removes curvature under the null.
+Negative controls are used to evaluate the behavior of KCOR under settings where the true effect is known to be null, while allowing substantial heterogeneity in baseline risk and selection-induced depletion. Two complementary classes of negative controls are considered: (i) fully synthetic simulations that induce strong depletion curvature through frailty-mixture imbalance, and (ii) empirical registry-based constructions that preserve a true null by repurposing age strata as pseudo-exposures without selective sampling. Together, these controls assess whether KCOR remains stable in the presence of non-proportional hazards arising from selection rather than treatment.
 
 #### S4.2.1 Synthetic negative control: gamma-frailty null
 
-The synthetic negative control (Figure @fig:neg_control_synthetic) is generated using:
+The synthetic negative control (Figure @fig:neg_control_synthetic) is a fully specified simulation designed to induce **strong selection-induced depletion curvature under a true null effect** by altering only the cohort frailty-mixture weights. KCOR is expected to remain near 1 after depletion normalization despite large differences in cohort-level hazard curvature.
 
-- **Data source**: `example/Frail_cohort_mix.xlsx` (pathological frailty mixture)
-- **Generation script**: `code/generate_pathological_neg_control_figs.py`
-- **Cohort A weights**: Equal weights across 5 frailty groups (0.2 each)
-- **Cohort B weights**: Shifted weights [0.30, 0.20, 0.20, 0.20, 0.10]
-- **Frailty values**: [1, 2, 4, 6, 10] (relative frailty multipliers)
-- **Base weekly probability**: 0.01
-- **Weekly log-slope**: 0.0 (constant baseline during quiet periods)
-- **Skip weeks**: 2
-- **Normalization weeks**: 4
-- **Time horizon**: 250 weeks
+Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 Both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
 
@@ -116,17 +151,9 @@ Both cohorts share identical per-frailty-group death probabilities; only the mix
 
 #### S4.2.2 Empirical negative control: age-shift construction
 
-The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) is generated using:
+The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) repurposes registry cohorts to create a **true null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is minimal and no gamma-frailty normalization is applied.
 
-- **Data source**: Czech Republic administrative mortality and vaccination data, aggregated into KCOR_CMR format
-- **Generation script**: `test/negative_control/code/generate_negative_control.py`
-- **Construction**: Age strata remapped to pseudo-doses within same vaccination category
-- **Age mapping**:
-  - Dose 0 → YoB {1930, 1935}
-  - Dose 1 → YoB {1940, 1945}
-  - Dose 2 → YoB {1950, 1955}
-- **Output YoB**: Fixed at 1950 (unvax cohort) or 1940 (vax cohort)
-- **Sheets processed**: 2021_24, 2022_06
+Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a true null while inducing 10–20 year age differences.
 
@@ -136,30 +163,21 @@ This contrasts with the synthetic negative control (Section S4.2.1), where stron
 
 ### S4.3 Positive control: injected effect
 
-The positive control (Figure @fig:pos_control_injected and Table @tbl:pos_control_summary) is generated using:
+Positive controls are used to verify that KCOR responds appropriately when a true effect is present. Starting from a negative-control simulation with no treatment effect, a known multiplicative hazard shift is injected into one cohort over a prespecified time window. This construction allows direct assessment of whether KCOR detects both the direction and timing of the injected effect while remaining stable outside the effect window.
 
-- **Generation script**: `test/positive_control/code/generate_positive_control.py`
-- **Initial cohort size**: 100,000 per cohort
-- **Baseline hazard**: 0.002 per week
-- **Frailty variance**: $\theta_0 = 0.5$ (control), $\theta_1 = 1.0$ (treatment)
-- **Effect window**: weeks 20–80
-- **Hazard multipliers**:
-  - Harm scenario: $r = 1.2$
-  - Benefit scenario: $r = 0.8$
-- **Random seed**: 42
-- **Enrollment date**: 2021-06-14 (ISO week 2021_24)
+The positive control (Figure @fig:pos_control_injected; Table @tbl:pos_control_summary) starts from a negative-control simulation and injects a known multiplicative hazard shift $r$ into one cohort over a prespecified time window. KCOR is expected to deviate from 1 in the correct direction during the injection window and remain stable outside it.
+
+Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 The injection multiplies the treatment cohort's baseline hazard by factor $r$ during the effect window, while leaving the control cohort unchanged.
 
 ### S4.4 Sensitivity analysis parameters
 
-The sensitivity analysis (Figure @fig:sensitivity_overview) varies:
+Sensitivity analyses evaluate the robustness of KCOR estimates to reasonable variation in analysis choices that do not alter the underlying data-generating process. Baseline-window length and quiet-window placement are perturbed over a prespecified range while holding all other parameters fixed. These analyses assess whether KCOR behavior is stable to tuning choices that primarily affect normalization rather than cohort composition.
 
-- **Baseline weeks**: [2, 3, 4, 5, 6, 7, 8]
-- **Quiet-start offsets**: [-12, -8, -4, 0, +4, +8, +12] weeks from 2023-01
-- **Quiet-window end**: Fixed at 2023-52
-- **Dose pairs**: 1 vs 0, 2 vs 0, 2 vs 1
-- **Cohorts**: 2021_24
+The sensitivity analysis (Figure @fig:sensitivity_overview) evaluates robustness of $\mathrm{KCOR}(t)$ to reasonable tuning of baseline/quiet-window choices by varying the baseline window length and shifting the quiet-window start while holding the quiet-window end fixed.
+
+Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 Output grids show KCOR(t) values for each parameter combination.
 
@@ -167,21 +185,16 @@ Output grids show KCOR(t) values for each parameter combination.
 
 ### S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)
 
-A base frailty population distribution with mean 1 is generated. Cohort construction differs by selection rule:
+This adversarial simulation evaluates KCOR under extreme but controlled violations of typical cohort-selection geometry. Two cohorts are constructed to share identical mean frailty while differing sharply in how risk is distributed, using mid-quantile sampling versus a low/high-tail mixture. This setting stress-tests whether depletion normalization remains effective when frailty heterogeneity is concentrated in the tails rather than smoothly distributed.
+
+This adversarial simulation constructs two cohorts with identical mean frailty but different **selection geometry** (mid-quantile sampling versus a low/high-tail mixture) to stress-test depletion normalization under extreme cohort composition.
 
 - **Mid-sampled cohort**: frailty restricted to central quantiles (e.g., 25th–75th percentile) and renormalized to mean 1.
 - **Tail-sampled cohort**: mixture of low and high tails (e.g., 0–15th and 85th–100th percentiles) with mixture weights chosen to yield mean 1.
 
-Both cohorts share the same baseline hazard $h_0(t)$ and have no treatment effect (negative-control version). Positive-control versions are also generated by applying a known hazard multiplier in a prespecified window. The evaluation includes (i) KCOR drift, (ii) quiet-window fit RMSE, (iii) post-normalization linearity, and (iv) parameter stability under window perturbation.
+Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
-- **Generation script**: `test/sim_grid/code/generate_tail_sampling_sim.py`
-- **Base frailty distribution**: Log-normal with mean 1, variance 0.5
-- **Mid-quantile cohort**: 25th–75th percentile
-- **Tail-mixture cohort**: [0–15th] + [85th–100th] percentiles, equal weights
-- **Baseline hazard**: 0.002 per week (constant)
-- **Positive-control hazard multiplier**: $r = 1.2$ (harm) or $r = 0.8$ (benefit)
-- **Effect window**: weeks 20–80
-- **Random seed**: 42
+Both cohorts share the same baseline hazard $h_0(t)$ and have no treatment effect (negative-control version). Positive-control versions are also generated by applying a known hazard multiplier in a prespecified window. The evaluation includes (i) KCOR drift, (ii) quiet-window fit RMSE, (iii) post-normalization linearity, and (iv) parameter stability under window perturbation.
 
 ### S4.6 Joint frailty and treatment-effect simulation (S7)
 
