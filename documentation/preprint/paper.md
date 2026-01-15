@@ -732,7 +732,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks James Lyons-Weiler. Dr. Clare Craig, and Paul Fischer for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks James Lyons-Weiler. Clare Craig, Jasmin Cardinal, Alan Mordue, Ben Jackson, and Paul Fischer for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 \newpage
 
