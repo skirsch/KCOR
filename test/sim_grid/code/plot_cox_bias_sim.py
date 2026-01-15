@@ -83,6 +83,36 @@ def plot_kcor_vs_theta(
     print(f"Wrote: {out_path}", file=sys.stderr)
 
 
+def plot_kcor_bias_vs_theta(
+    csv_path: str,
+    out_path: str
+) -> None:
+    """
+    Plot KCOR bias (asymptote - 1) vs frailty variance theta.
+    
+    Args:
+        csv_path: Path to CSV with simulation results
+        out_path: Output figure path
+    """
+    df = pd.read_csv(csv_path).sort_values("theta_B")
+
+    theta = df["theta_B"].to_numpy()
+    kcor_bias = df["kcor_asymptote"].to_numpy() - 1.0
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(theta, kcor_bias, marker="o", linewidth=2, markersize=8, label="KCOR bias")
+    plt.axhline(0.0, color="black", linestyle="--", linewidth=1, label="True bias = 0")
+    plt.xlabel("Frailty variance θ (cohort B)", fontsize=12)
+    plt.ylabel("Bias in KCOR asymptote (KCOR − 1)", fontsize=12)
+    plt.title("KCOR bias under synthetic null across frailty variance", fontsize=13)
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=10)
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"Wrote: {out_path}", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Plot Cox bias demonstration results"
@@ -105,6 +135,12 @@ def main():
         default="fig_cox_bias_kcor_vs_theta.png",
         help="Output path for KCOR vs theta figure"
     )
+    parser.add_argument(
+        "--output-bias-figure",
+        type=str,
+        default="fig_si_kcor_bias_vs_theta.png",
+        help="Output path for KCOR bias vs theta figure"
+    )
     
     args = parser.parse_args()
 
@@ -120,6 +156,8 @@ def main():
 
     plot_cox_hr_vs_theta(args.input_results, args.output_hr_figure)
     plot_kcor_vs_theta(args.input_results, args.output_kcor_figure)
+    if args.output_bias_figure:
+        plot_kcor_bias_vs_theta(args.input_results, args.output_bias_figure)
 
 
 if __name__ == "__main__":

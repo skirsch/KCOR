@@ -404,7 +404,7 @@ Uncertainty is quantified using stratified bootstrap resampling, which propagate
 
 The stratified bootstrap procedure for KCOR proceeds as follows:
 
-1. **Resample individuals (or counts).** Within each cohort and stratum (e.g., age group), resample individuals with replacement, preserving the original cohort and stratum structure. Alternatively, for aggregated data, resample event counts and risk-set sizes within each time bin and stratum.
+1. **Resample cohort--time counts (aggregated bootstrap).** Within each cohort and stratum (e.g., age group), resample event counts and risk-set sizes within time bins, preserving the original cohort/stratum structure. When individual-level data are available, an equivalent individual-level resampling can be used; in this work, we use the aggregated cohort--time bootstrap.
 
 2. **Re-estimate frailty parameters.** For each bootstrap replicate, re-estimate $(\hat{k}_d,\hat{\theta}_d)$ independently for each cohort $d$ using the resampled data, applying the same quiet-window selection and fitting procedure as in the primary analysis.
 
@@ -477,6 +477,8 @@ These results demonstrate that **frailty heterogeneity alone is sufficient to in
 Table @tbl:cox_bias_demo reports numerical summaries of the Cox-vs-KCOR behavior across the frailty grid.
 
 Additional Cox HR results from the same synthetic-null grid are shown in Figure @fig:cox_bias_hr.
+
+A compact summary of KCOR bias as a function of frailty variance $\theta$ is provided in the Supplementary Information (Figure @fig:si_kcor_bias_vs_theta).
 
 ![Cox regression produces spurious non-null hazard ratios under a *synthetic null* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in frailty variance ($\theta$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
 
@@ -672,7 +674,7 @@ In finite samples, KCOR precision is driven primarily by the number of events ob
 
 ## 6. Conclusion
 
-KCOR provides a principled approach to retrospective cohort comparison under selection-induced hazard curvature by estimating and inverting a gamma-frailty mixture model to remove cohort-specific depletion dynamics prior to comparison. Validation via negative and positive controls supports that KCOR remains near-null under selection without effect and detects injected effects when present. KCOR enforces its assumptions diagnostically rather than presuming them, surfacing violations as degraded fit, instability, or residual curvature rather than absorbing them into model-dependent estimates.
+KCOR addresses selection-induced hazard curvature in retrospective cohort comparisons by explicitly modeling and inverting frailty-driven depletion prior to comparison. Across synthetic and empirical controls, KCOR remains near-null under selection without effect and reliably detects injected effects when present. Rather than presuming identifiability, KCOR enforces its assumptions diagnostically, flagging violations through degraded fit, instability, or residual curvature instead of absorbing them into model-dependent estimates.
 
 \newpage
 

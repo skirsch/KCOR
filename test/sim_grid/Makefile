@@ -45,6 +45,7 @@ FIG_S7_DIAGNOSTICS := $(OUT_DIR)/fig_s7_diagnostics.png
 COX_BIAS_RESULTS := $(OUT_DIR)/cox_bias_results.csv
 FIG_COX_BIAS_HR := $(OUT_DIR)/fig_cox_bias_hr_vs_theta.png
 FIG_COX_BIAS_KCOR := $(OUT_DIR)/fig_cox_bias_kcor_vs_theta.png
+FIG_KCOR_BIAS := $(OUT_DIR)/fig_si_kcor_bias_vs_theta.png
 
 .PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout
 
@@ -109,24 +110,26 @@ $(COX_BIAS_RESULTS): $(CODE_DIR)/generate_cox_bias_sim.py
 		--output-results $(COX_BIAS_RESULTS)
 
 # Cox bias figures
-$(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR): $(COX_BIAS_RESULTS) $(CODE_DIR)/plot_cox_bias_sim.py
+$(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR) $(FIG_KCOR_BIAS): $(COX_BIAS_RESULTS) $(CODE_DIR)/plot_cox_bias_sim.py
 	$(PY) $(CODE_DIR)/plot_cox_bias_sim.py \
 		--input-results $(COX_BIAS_RESULTS) \
 		--output-hr-figure $(FIG_COX_BIAS_HR) \
-		--output-kcor-figure $(FIG_COX_BIAS_KCOR)
+		--output-kcor-figure $(FIG_COX_BIAS_KCOR) \
+		--output-bias-figure $(FIG_KCOR_BIAS)
 
 # Copy Cox bias figures
-copy-cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)
+copy-cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR) $(FIG_KCOR_BIAS)
 	@mkdir -p $(FIG_DIR)
 	cp $(FIG_COX_BIAS_HR) $(FIG_DIR)/fig_cox_bias_hr_vs_theta.png
 	cp $(FIG_COX_BIAS_KCOR) $(FIG_DIR)/fig_cox_bias_kcor_vs_theta.png
+	cp $(FIG_KCOR_BIAS) $(FIG_DIR)/fig_si_kcor_bias_vs_theta.png
 	@echo "Copied Cox bias figures to $(FIG_DIR)"
 
 cox-bias: $(COX_BIAS_RESULTS)
 	@echo "Generated Cox bias simulation results"
 
-cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)
-	@echo "Generated Cox bias figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR)"
+cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR) $(FIG_KCOR_BIAS)
+	@echo "Generated Cox bias figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR) $(FIG_KCOR_BIAS)"
 
 # Skip-weeks sensitivity figure
 SKIP_WEEKS_FIG := $(OUT_DIR)/fig_skip_weeks_sensitivity.png
@@ -177,4 +180,5 @@ clean:
 	rm -f $(FIG_DIR)/fig_s7_diagnostics.png
 	rm -f $(FIG_DIR)/fig_cox_bias_hr_vs_theta.png
 	rm -f $(FIG_DIR)/fig_cox_bias_kcor_vs_theta.png
+	rm -f $(FIG_DIR)/fig_si_kcor_bias_vs_theta.png
 
