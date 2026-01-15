@@ -216,8 +216,25 @@ def parse_date(value: Optional[str]) -> Optional[dt.date]:
             return None
 
 
+def normalize_date(value: Optional[object]) -> Optional[dt.date]:
+    """Normalize YAML/CLI date inputs to date objects."""
+    if value is None:
+        return None
+    if isinstance(value, dt.datetime):
+        return value.date()
+    if isinstance(value, dt.date):
+        return value
+    v = str(value).strip()
+    if not v:
+        return None
+    try:
+        return dt.date.fromisoformat(v)
+    except Exception:
+        return None
+
+
 def build_output(
-    df: pd.DataFrame, start_date: Optional[str], end_date: Optional[str]
+    df: pd.DataFrame, start_date: Optional[object], end_date: Optional[object]
 ) -> pd.DataFrame:
     """Convert japan2 wide format to KRF format."""
     print(f"\nConverting {len(df)} records to KRF format...", flush=True)
@@ -235,6 +252,9 @@ def build_output(
 
     # Compute YearOfBirth per person using date_age as reference
     yob_list = []
+    start_dt = normalize_date(start_date)
+    end_dt = normalize_date(end_date)
+
     for idx in df.index:
         age_str = str(age_series.loc[idx]) if idx in age_series.index else ""
         ref_date = date_age_series.loc[idx] if idx in date_age_series.index else pd.NaT
@@ -274,14 +294,10 @@ def build_output(
                     date_obj = parse_date(date_val)
                     if date_obj:
                         # Filter by date window if specified
-                        if start_date:
-                            start_dt = dt.datetime.fromisoformat(start_date).date()
-                            if date_obj < start_dt:
-                                continue
-                        if end_date:
-                            end_dt = dt.datetime.fromisoformat(end_date).date()
-                            if date_obj > end_dt:
-                                continue
+                        if start_dt and date_obj < start_dt:
+                            continue
+                        if end_dt and date_obj > end_dt:
+                            continue
                         brand = normalize_brand(pharma_val)
                         doses.append((date_obj, brand))
         # Sort doses chronologically
@@ -403,6 +419,15 @@ def write_sidecar_yaml(
 def main() -> None:
     args = parse_args()
 
+    def resolve_config_path(value: Optional[str], config_path: Optional[str]) -> Optional[str]:
+        if not value or not config_path or os.path.isabs(value):
+            return value
+        config_dir = os.path.dirname(os.path.abspath(config_path))
+        if value.startswith("data/") or value.startswith(f"data{os.sep}"):
+            repo_root = os.path.abspath(os.path.join(config_dir, os.pardir, os.pardir))
+            return os.path.normpath(os.path.join(repo_root, value))
+        return os.path.normpath(os.path.join(config_dir, value))
+
     # If YAML config provided, override CLI values BEFORE reading input
     if args.config and os.path.exists(args.config) and yaml is not None:
         with open(args.config, "r", encoding="utf-8") as f:
@@ -414,6 +439,9 @@ def main() -> None:
         args.timezone = cfg.get("timezone", args.timezone)
         args.start_date = cfg.get("startDate", args.start_date)
         args.end_date = cfg.get("endDate", args.end_date)
+
+    args.input = resolve_config_path(args.input, args.config)
+    args.output = resolve_config_path(args.output, args.config)
 
     input_path = args.input
     output_path = args.output

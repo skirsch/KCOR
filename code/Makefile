@@ -22,7 +22,7 @@ MC_OUTPUT        = ../data/$(DATASET)/KCOR_CMR_MC.xlsx
 KCOR_MC_OUTPUT   = ../data/$(DATASET)/KCOR_MC.xlsx
 
 
-.PHONY: clean clean-all help sensitivity monte_carlo mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all
+.PHONY: clean clean-all help sensitivity monte_carlo mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all force_krf
 
 # Default target - run complete KCOR pipeline
 KCOR: $(KCOR_OUTPUT)
@@ -51,15 +51,19 @@ $(CMR_OUTPUT): $(INPUT_DATA) KCOR_CMR.py | ../data/$(DATASET)
 
 # If krf.csv is missing, try to build it via the dataset converter (only if convert target exists)
 # This is optional - datasets like Czech don't use KRF format
-$(RECORDS_KRF):
-	@if [ -f "$(RECORDS_KRF)" ]; then \
-		echo "KRF file already exists: $(RECORDS_KRF)"; \
-	elif [ -f "../data/$(DATASET)/Makefile" ] && $(MAKE) -C ../data/$(DATASET) -n convert >/dev/null 2>&1; then \
-		echo "Building KRF via dataset converter in data/$(DATASET)..."; \
-		$(MAKE) -C ../data/$(DATASET) convert || exit 1; \
+$(RECORDS_KRF): force_krf
+	@if [ -f "../data/$(DATASET)/Makefile" ] && $(MAKE) -C ../data/$(DATASET) -n convert >/dev/null 2>&1; then \
+		if $(MAKE) -C ../data/$(DATASET) -q convert >/dev/null 2>&1; then \
+			echo "KRF is up to date: $(RECORDS_KRF)"; \
+		else \
+			echo "Building KRF via dataset converter in data/$(DATASET)..."; \
+			$(MAKE) -C ../data/$(DATASET) convert || exit 1; \
+		fi; \
 	else \
 		echo "No KRF converter found for $(DATASET) (skipping KRF build - will use raw CSV if available)"; \
 	fi
+
+force_krf:
 
 # Build standardized records.csv from available inputs (prefer krf.csv)
 # Note: $(RECORDS_KRF) is listed as dependency but is optional - it will only be built if converter exists

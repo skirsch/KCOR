@@ -12,7 +12,7 @@ OBS_END ?= 2025-12-31
 BIRTH_BAND_YEARS ?= 5
 START_DATE ?=
 END_DATE ?=
-CONFIG ?=
+CONFIG ?= japan2.yaml
 
 .PHONY: convert help clean
 

@@ -15,8 +15,10 @@ CONFIG ?= config.yaml
 
 .PHONY: convert help clean
 
-convert:
+$(OUTPUT): convert.py $(if $(CONFIG),$(CONFIG))
 	$(PY) convert.py $(if $(CONFIG),-c $(CONFIG)) -i $(INPUT) -o $(OUTPUT) --sidecar $(SIDECAR) --observation-end $(OBS_END) --birth-band-years $(BIRTH_BAND_YEARS) --reference-date $(REFERENCE_DATE)
+
+convert: $(OUTPUT)
 
 help:
 	@echo "make convert [INPUT=path_or_dir OUTPUT=furst_krf.csv SIDECAR=furst_krf.sidecar.yaml OBS_END=YYYY-MM-DD BIRTH_BAND_YEARS=1 REFERENCE_DATE=2021-01-01 CONFIG=config.yaml]"

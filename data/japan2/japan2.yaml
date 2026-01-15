@@ -6,7 +6,16 @@
 # 1-1-23 5th dose
 # 7-1-23 6th dose
 
-
+# To make the japan2 dataset, use:
+#            make KCOR dataset=japan2
+#
+# This will create the KCOR_CMR.xlsx file in the data/japan2 directory.
+# This will create the krf.csv file in the data/japan2 directory.
+# The krf.csv file is used by the KCOR_CMR.py script to create the KCOR_CMR.xlsx file.
+# The KCOR_CMR.xlsx file is used by the KCOR.py script to create the KCOR.xlsx file.
+# The KCOR.xlsx file is used by the KCOR_summary.log file to create the KCOR_summary.log file.
+# The KCOR_summary.log file is used by the KCOR_summary.log file to create the KCOR_summary.log file.
+# The KCOR_summary.log file is used by the KCOR_summary.log file to create the KCOR_summary.log file.
 
 schema: KRF-1.0
 timezone: local
@@ -29,6 +38,7 @@ enrollmentDates:
 # Dose pairs configuration
 # Maps enrollment date to list of (numerator, denominator) dose pairs
 # If an enrollment date is not specified, uses the default
+# the 0 comparison groups are always good. The others are convenience. 
 dosePairs:
   default:
     - [1, 0]
@@ -51,6 +61,7 @@ dosePairs:
     - [4, 0]
   '2023-01':
     - [2, 0]
+    - [3, 0]
     - [3, 2]
     - [4, 3]
     - [4, 0]
@@ -58,8 +69,10 @@ dosePairs:
     - [5, 0]
   '2023-26':
     - [2, 0]
+    - [3, 0]
     - [3, 2]
     - [4, 3]
+    - [4, 0]
     - [5, 4]
     - [5, 0]
     - [6, 5]
