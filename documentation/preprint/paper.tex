@@ -386,8 +386,8 @@ retrospective cohort studies.
 \item
   \textbf{Primary estimand (KCOR)}: For two fixed enrollment cohorts
   \(A\) and \(B\), it is defined as \[
-  \mathrm{KCOR}(t)=\tilde{H}_{0,A}(t)/\tilde{H}_{0,B}(t),
-  \] where \(\tilde{H}_{0,d}(t)\) is cohort \(d\)'s
+  \mathrm{KCOR}(t)=\tilde H_{0,A}(t)/\tilde H_{0,B}(t),
+  \] where \(\tilde H_{0,d}(t)\) is cohort \(d\)'s
   \textbf{depletion-neutralized baseline cumulative hazard} obtained by
   fitting depletion geometry in a prespecified quiet window and applying
   the gamma-frailty inversion (Methods §2).
@@ -494,13 +494,13 @@ continuous-time notation is used solely for expositional convenience.
 Scope and interpretation are summarized in Box 1 (§1.6); the formal
 definition used throughout is provided here.
 
-Let \(\tilde{H}_{0,d}(t)\) denote the \textbf{depletion-neutralized
+Let \(\tilde H_{0,d}(t)\) denote the \textbf{depletion-neutralized
 baseline cumulative hazard} for cohort \(d\) at event time \(t\) since
 enrollment (Table \ref{tbl:notation}). For two cohorts \(A\) and \(B\),
 KCOR is defined as
 
 \begin{equation}\protect\phantomsection\label{eq:kcor-estimand}{
-\mathrm{KCOR}(t) = \frac{\tilde{H}_{0,A}(t)}{\tilde{H}_{0,B}(t)}.
+\mathrm{KCOR}(t) = \frac{\tilde H_{0,A}(t)}{\tilde H_{0,B}(t)}.
 }\end{equation}
 
 For visualization, an \textbf{anchored KCOR} is sometimes reported to
@@ -525,7 +525,7 @@ identified and results are not reported. Checks include:
   stability of \((\hat{k}_d,\hat{\theta}_d)\) to small quiet-window
   perturbations,
 \item
-  approximate linearity of \(\tilde{H}_{0,d}(t)\) within the quiet
+  approximate linearity of \(\tilde H_{0,d}(t)\) within the quiet
   window,
 \item
   absence of systematic residual structure in cumulative-hazard space.
@@ -683,16 +683,17 @@ frailty}\label{individual-hazards-with-multiplicative-frailty}
 Within cohort \(d\), individual \(i\) is modeled as having hazard
 
 \begin{equation}\protect\phantomsection\label{eq:individual-hazard-frailty}{
-h_{i,d}(t) = z_{i,d}\,h_{0,d}(t),
+h_{i,d}(t) = z_{i,d}\,\tilde h_{0,d}(t),
 \qquad
 z_{i,d} \sim \mathrm{Gamma}(\mathrm{mean}=1,\ \mathrm{var}=\theta_d).
 }\end{equation}
 
-Here \(h_{0,d}(t)\) is the cohort's depletion-neutralized baseline
-hazard and \(z_{i,d}\) is a latent multiplicative frailty term. The
-frailty variance \(\theta_d\) governs the strength of depletion-induced
-curvature: larger \(\theta_d\) yields stronger deceleration at the
-cohort level due to faster early depletion of high-frailty individuals.
+Here \(\tilde h_{0,d}(t)\) is the cohort's depletion-neutralized
+baseline hazard and \(z_{i,d}\) is a latent multiplicative frailty term.
+The frailty variance \(\theta_d\) governs the strength of
+depletion-induced curvature: larger \(\theta_d\) yields stronger
+deceleration at the cohort level due to faster early depletion of
+high-frailty individuals.
 
 Gamma frailty is used because it yields a closed-form link between
 observed and baseline cumulative hazards via the Laplace
@@ -707,26 +708,29 @@ inversion}\label{gamma-frailty-identity-and-inversion}
 Let
 
 \begin{equation}\protect\phantomsection\label{eq:baseline-cumhazard}{
-H_{0,d}(t) = \int_0^t h_{0,d}(s)\,ds
+\tilde H_{0,d}(t) = \int_0^t \tilde h_{0,d}(s)\,ds
 }\end{equation}
 
-denote the baseline cumulative hazard. Integrating over gamma frailty
-yields the gamma-frailty identity
+denote the depletion-neutralized baseline cumulative hazard. Integrating
+over gamma frailty yields the gamma-frailty identity
 
 \begin{equation}\protect\phantomsection\label{eq:gamma-frailty-identity}{
-H_{\mathrm{obs},d}(t) = \frac{1}{\theta_d}\,\log\!\left(1 + \theta_d H_{0,d}(t)\right),
+H_{\mathrm{obs},d}(t) = \frac{1}{\theta_d}\,\log\!\left(1 + \theta_d \tilde H_{0,d}(t)\right),
 }\end{equation}
 
 which can be inverted exactly as
 
 \begin{equation}\protect\phantomsection\label{eq:gamma-frailty-inversion}{
-H_{0,d}(t) = \frac{\exp\!\left(\theta_d H_{\mathrm{obs},d}(t)\right) - 1}{\theta_d}.
+\tilde H_{0,d}(t) = \frac{\exp\!\left(\theta_d H_{\mathrm{obs},d}(t)\right) - 1}{\theta_d}.
 }\end{equation}
 
 This inversion is the \textbf{normalization operator}: given an estimate
 \(\hat{\theta}_d\), it maps the observed cumulative hazard
 \(H_{\mathrm{obs},d}(t)\) into a depletion-neutralized cumulative hazard
-scale.
+scale. We use a tilde (e.g., \(\tilde H_{0,d}(t)\)) to denote
+depletion-neutralized baseline quantities obtained after frailty
+normalization; observed cohort-aggregated quantities are written without
+a tilde (e.g., \(H_{\mathrm{obs},d}(t)\)).
 
 \paragraph{2.4.3 Baseline shape used for frailty
 identification}\label{baseline-shape-used-for-frailty-identification}
@@ -737,9 +741,9 @@ specification, the baseline hazard is taken to be constant over the fit
 window:
 
 \begin{equation}\protect\phantomsection\label{eq:baseline-shape-default}{
-h_{0,d}(t)=k_d,
+\tilde h_{0,d}(t)=k_d,
 \qquad
-H_{0,d}(t)=k_d\,t.
+\tilde H_{0,d}(t)=k_d\,t.
 }\end{equation}
 
 This choice intentionally minimizes degrees of freedom: during a quiet
@@ -855,7 +859,7 @@ cumulative hazard for each cohort \(d\) by applying the inversion to the
 full post-enrollment trajectory:
 
 \begin{equation}\protect\phantomsection\label{eq:normalized-cumhazard}{
-\tilde{H}_{0,d}(t) = \frac{\exp\!\left(\hat{\theta}_d\,H_{\mathrm{obs},d}(t)\right)-1}{\hat{\theta}_d}.
+\tilde H_{0,d}(t) = \frac{\exp\!\left(\hat{\theta}_d\,H_{\mathrm{obs},d}(t)\right)-1}{\hat{\theta}_d}.
 }\end{equation}
 
 This normalization maps each cohort into a depletion-neutralized
@@ -992,7 +996,7 @@ With depletion-neutralized cumulative hazards in hand, the primary KCOR
 trajectory is defined as:
 
 \begin{equation}\protect\phantomsection\label{eq:kcor-estimator}{
-\mathrm{KCOR}(t) = \frac{\tilde{H}_{0,A}(t)}{\tilde{H}_{0,B}(t)}.
+\mathrm{KCOR}(t) = \frac{\tilde H_{0,A}(t)}{\tilde H_{0,B}(t)}.
 }\end{equation}
 
 This ratio is computed after depletion normalization and is interpreted
@@ -1027,7 +1031,7 @@ The stratified bootstrap procedure for KCOR proceeds as follows:
 \item
   \textbf{Recompute normalized cumulative hazards.} Using the
   bootstrap-estimated frailty parameters, recompute
-  \(\tilde{H}_{0,d}(t)\) for each cohort using Eq.
+  \(\tilde H_{0,d}(t)\) for each cohort using Eq.
   (\ref{eq:normalized-cumhazard}) applied to the resampled observed
   cumulative hazards.
 \item
@@ -1057,7 +1061,7 @@ Table \ref{tbl:KCOR_algorithm} summarizes the complete KCOR pipeline.
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={KCOR as a two-stage framework. (A) Fixed-cohort cumulative hazards exhibit curvature due to selection-induced depletion; late-time curvature is used to estimate frailty parameters for normalization. (B) Gamma-frailty normalization yields approximately linearized cumulative hazards that are directly comparable across cohorts; \textbackslash mathrm\{KCOR\}(t), defined as the ratio of depletion-neutralized baseline cumulative hazards, is near-flat under the null and deviates only under net hazard differences. In the schematic, \textbackslash tilde\{H\}\_\{0,d\}(t) denotes the depletion-neutralized baseline cumulative hazard.}]{figures/fig_kcor_workflow.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={KCOR as a two-stage framework. (A) Fixed-cohort cumulative hazards exhibit curvature due to selection-induced depletion; late-time curvature is used to estimate frailty parameters for normalization. (B) Gamma-frailty normalization yields approximately linearized cumulative hazards that are directly comparable across cohorts; \textbackslash mathrm\{KCOR\}(t), defined as the ratio of depletion-neutralized baseline cumulative hazards, is near-flat under the null and deviates only under net hazard differences. In the schematic, \textbackslash tilde H\_\{0,d\}(t) denotes the depletion-neutralized baseline cumulative hazard.}]{figures/fig_kcor_workflow.png}}
 \caption{\textbf{KCOR as a two-stage framework.} \textbf{(A)}
 Fixed-cohort cumulative hazards exhibit curvature due to
 selection-induced depletion; late-time curvature is used to estimate
@@ -1066,7 +1070,7 @@ normalization yields approximately linearized cumulative hazards that
 are directly comparable across cohorts; \(\mathrm{KCOR}(t)\), defined as
 the ratio of depletion-neutralized baseline cumulative hazards, is
 near-flat under the null and deviates only under net hazard differences.
-\emph{In the schematic, \(\tilde{H}_{0,d}(t)\) denotes the
+\emph{In the schematic, \(\tilde H_{0,d}(t)\) denotes the
 depletion-neutralized baseline cumulative
 hazard.}}\label{fig:kcor_workflow}
 \end{figure}
@@ -1810,15 +1814,14 @@ negative controls.
 
 \subsection{6. Conclusion}\label{conclusion}
 
-KCOR provides a principled approach to retrospective cohort comparison
-under selection-induced hazard curvature by estimating and inverting a
-gamma-frailty mixture model to remove cohort-specific depletion dynamics
-prior to comparison. Validation via negative and positive controls
-supports that KCOR remains near-null under selection without effect and
-detects injected effects when present. KCOR enforces its assumptions
-diagnostically rather than presuming them, surfacing violations as
-degraded fit, instability, or residual curvature rather than absorbing
-them into model-dependent estimates.
+KCOR addresses selection-induced hazard curvature in retrospective
+cohort comparisons by explicitly modeling and inverting frailty-driven
+depletion prior to comparison. Across synthetic and empirical controls,
+KCOR remains near-null under selection without effect and reliably
+detects injected effects when present. Rather than presuming
+identifiability, KCOR enforces its assumptions diagnostically, flagging
+violations through degraded fit, instability, or residual curvature
+instead of absorbing them into model-dependent estimates.
 
 \newpage
 
@@ -2204,12 +2207,10 @@ Definition
 \(N_d(t)\)) \\
 \(H_{\mathrm{obs},d}(t)\) & Observed cumulative hazard (after
 skip/stabilization) \\
-\(h_{0,d}(t)\) & Baseline hazard for cohort \(d\) under the
-depletion-neutralized model \\
-\(H_{0,d}(t)\) & Baseline cumulative hazard for cohort \(d\) under the
-depletion-neutralized model \\
-\(\tilde{H}_{0,d}(t)\) & Depletion-neutralized baseline cumulative
-hazard \\
+\(\tilde h_{0,d}(t)\) & Depletion-neutralized baseline hazard for cohort
+\(d\) \\
+\(\tilde H_{0,d}(t)\) & Depletion-neutralized baseline cumulative hazard
+for cohort \(d\) \\
 \(\theta_d\) & Frailty variance (selection strength) for cohort \(d\);
 governs curvature in the observed cumulative hazard \\
 \(\hat{\theta}_d\) & Estimated frailty variance from quiet-window
@@ -3039,12 +3040,13 @@ synthetic-null grid used in Table \ref{tbl:cox_bias_demo}.
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={Simulated-null summary: KCOR bias as a function of frailty variance \textbackslash theta. Bias is defined as \textbackslash mathrm\{KCOR\}\_\{\textbackslash mathrm\{asymptote\}\} - 1 at the end of follow-up in the synthetic-null grid (no treatment effect). Points show single-run estimates from the grid; no error bars are shown.}]{figures/fig_si_kcor_bias_vs_theta.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Simulated-null summary: KCOR bias as a function of frailty variance \textbackslash theta. Bias is defined as \textbackslash mathrm\{KCOR\}\_\{\textbackslash mathrm\{asymptote\}\} - 1 at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown.}]{figures/fig_si_kcor_bias_vs_theta.png}}
 \caption{Simulated-null summary: KCOR bias as a function of frailty
 variance \(\theta\). Bias is defined as
 \(\mathrm{KCOR}_{\mathrm{asymptote}} - 1\) at the end of follow-up in
-the synthetic-null grid (no treatment effect). Points show single-run
-estimates from the grid; no error bars are
+the synthetic-null grid (no treatment effect), reflecting cumulative
+deviation under the null rather than instantaneous hazard bias. Points
+show single-run estimates from the grid; no error bars are
 shown.}\label{fig:si_kcor_bias_vs_theta}
 \end{figure}
 
