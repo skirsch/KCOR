@@ -1,0 +1,15 @@
+
+---
+
+## 6. Required validations for exported `kcor_cmr`
+
+Per row:
+- `n_risk_start >= 0`
+- `d_death, c_other, c_transition >= 0`
+- `d_death + c_other + c_transition <= n_risk_start`
+
+Per cohort/stratum:
+- `n_risk_start` is non-increasing in `t_week`
+- Stop follow-up once `n_risk_start == 0`
+
+---

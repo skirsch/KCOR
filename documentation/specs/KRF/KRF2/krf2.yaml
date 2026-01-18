@@ -1,0 +1,81 @@
+# kcor_population_schema.yaml
+# KCOR Population Aggregation Schema (2-table master format)
+version: "1.0"
+time_unit: "week"
+week_definition:
+  id: "cal_week"
+  allowed_types: ["ISO_WEEK_INT", "WEEK_START_DATE"]
+  notes: "Use ISO week (YYYYWW integer) or a week-start date (YYYY-MM-DD). Be consistent."
+
+age_band_5yr_definition:
+  name: "age_band_5yr"
+  computed_at: "start_of_week"
+  bins:
+    - "0-4"
+    - "5-9"
+    - "10-14"
+    - "15-19"
+    - "20-24"
+    - "25-29"
+    - "30-34"
+    - "35-39"
+    - "40-44"
+    - "45-49"
+    - "50-54"
+    - "55-59"
+    - "60-64"
+    - "65-69"
+    - "70-74"
+    - "75-79"
+    - "80-84"
+    - "85-89"
+    - "90-94"
+    - "95+"
+  notes: "Closed on lower bound, upper bound exclusive except final bin."
+
+sex_definition:
+  name: "sex"
+  allowed_values: ["M", "F", "U"]
+  notes: "U = unknown/other."
+
+tables:
+  kcor_weekly_state:
+    description: "At-risk stock at start of week + within-week deaths/censoring."
+    primary_key: ["cal_week", "age_band_5yr", "sex", "dose_state"]
+    columns:
+      cal_week: {type: "string|int|date", required: true}
+      age_band_5yr: {type: "string", required: true}
+      sex: {type: "string", required: true, allowed: ["M","F","U"]}
+      dose_state: {type: "int", required: true, min: 0}
+      n_start: {type: "int", required: true, min: 0}
+      d_death: {type: "int", required: true, min: 0}
+      c_other: {type: "int", required: false, min: 0, default: 0}
+    invariants:
+      - name: "nonnegative"
+        rule: "n_start>=0 and d_death>=0 and c_other>=0"
+      - name: "flows_do_not_exceed_risk_set"
+        rule: "d_death + c_other + transitions_out_total <= n_start"
+        notes: "transitions_out_total must be computed from transition table."
+
+  kcor_weekly_transitions:
+    description: "Directed dose transitions during week originating from start-of-week state."
+    primary_key: ["cal_week", "age_band_5yr", "sex", "dose_from", "dose_to"]
+    columns:
+      cal_week: {type: "string|int|date", required: true}
+      age_band_5yr: {type: "string", required: true}
+      sex: {type: "string", required: true, allowed: ["M","F","U"]}
+      dose_from: {type: "int", required: true, min: 0}
+      dose_to: {type: "int", required: true, min: 0}
+      x_count: {type: "int", required: true, min: 0}
+    invariants:
+      - name: "no_self_transition"
+        rule: "dose_to != dose_from"
+      - name: "forward_only_preferred"
+        rule: "dose_to > dose_from"
+        severity: "warn"
+        notes: "Dose decreases are usually data issues; allow but warn if present."
+      - name: "outflow_leq_riskset"
+        rule: "sum_x_out(cal_week,age_band_5yr,sex,dose_from) <= n_start(cal_week,age_band_5yr,sex,dose_from)"
+
+event_ordering_convention:
+  statement: "Start-of-week state defines risk set; deaths/transitions occur within week; if death and transition coincide within week, count as death (death precedence)."
