@@ -188,7 +188,10 @@ Any deviations must be explicitly labeled, justified, and reported separately fr
 
 ---
 
-## Appendix A: KCOR mathematical specification
+## Appendix A: KCOR method reference
 
-[To be inserted]
+The primary analysis will employ the KCOR framework as formally specified in:
 
+[Full citation to KCOR paper, version, DOI or preprint link].
+
+All analyses will adhere to the assumptions, definitions, and diagnostics described therein, except where explicitly overridden by the prespecified protocol parameters in Sections 5.2–5.4.
