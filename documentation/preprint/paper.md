@@ -118,6 +118,9 @@ The strategy is therefore:
 
 All analyses are performed using discrete weekly time bins; continuous-time notation is used solely for expositional convenience.
 
+**Notation preview.**  
+Throughout this paper, $t$ denotes event time since cohort enrollment and $d$ indexes cohorts. Let $H_{\mathrm{obs},d}(t)$ denote the observed cohort-level cumulative hazard, computed from fixed risk sets, and let $\tilde H_{0,d}(t)$ denote the corresponding *depletion-neutralized baseline cumulative hazard* obtained after frailty normalization. Individual hazards are modeled using a latent multiplicative frailty term $z$, with cohort-specific variance $\theta_d$, which governs the strength of selection-induced depletion and resulting curvature in observed cumulative hazards. Full notation is summarized in Table @tbl:notation.
+
 #### 2.1.1 Target estimand
 
 Scope and interpretation are summarized in Box 1 (§1.6); the formal definition used throughout is provided here.
@@ -235,7 +238,7 @@ In addition to the primary implementation above, $\hat H_{\mathrm{obs},d}(t)$ wa
 
 #### 2.4.1 Individual hazards with multiplicative frailty
 
-Within cohort $d$, individual $i$ is modeled as having hazard
+Let $z_{i,d}$ denote an individual-specific latent frailty term with mean $1$ and variance $\theta_d$, and let $\tilde h_{0,d}(t)$ denote the depletion-neutralized baseline hazard for cohort $d$. Individual hazards are modeled as:
 
 $$
 h_{i,d}(t) = z_{i,d}\,\tilde h_{0,d}(t),
@@ -257,14 +260,14 @@ $$
 $$
 {#eq:baseline-cumhazard}
 
-denote the depletion-neutralized baseline cumulative hazard. Integrating over gamma frailty yields the gamma-frailty identity
+denote the depletion-neutralized baseline cumulative hazard. Let $\theta_d$ denote the cohort-specific frailty variance governing selection-induced depletion. Under a gamma-frailty working model, the observed cohort-level cumulative hazard satisfies:
 
 $$
 H_{\mathrm{obs},d}(t) = \frac{1}{\theta_d}\,\log\!\left(1 + \theta_d \tilde H_{0,d}(t)\right),
 $$
 {#eq:gamma-frailty-identity}
 
-which can be inverted exactly as
+Given an estimate $\hat{\theta}_d$, the observed cumulative hazard can be mapped into depletion-neutralized baseline cumulative hazard space via exact inversion:
 
 $$
 \tilde H_{0,d}(t) = \frac{\exp\!\left(\theta_d H_{\mathrm{obs},d}(t)\right) - 1}{\theta_d}.

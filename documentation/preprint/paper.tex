@@ -325,6 +325,41 @@ distinguished here:
   settings.
 \end{itemize}
 
+\begin{quote}
+\textbf{Box 2. Two fundamentally different strategies for cohort
+comparability}
+
+\textbf{Traditional matching and regression approaches} attempt to
+construct comparable cohorts by matching or adjusting
+\emph{characteristics of living individuals} at baseline or over
+follow-up, and then estimating effects via a fitted hazard model (e.g.,
+Cox proportional hazards). This strategy implicitly assumes that
+sufficiently rich covariate information can render cohorts exchangeable
+with respect to unobserved mortality risk.
+
+However, under latent frailty heterogeneity, even meticulous 1:1
+matching on observed covariates fails to equalize mortality risk
+trajectories, as acknowledged in large registry studies despite
+extensive adjustment. In such settings, cohort differences arise not
+from mismeasured covariates, but from \textbf{selection-induced
+depletion of susceptibles}, which alters hazard curvature over time.
+
+\textbf{KCOR adopts a fundamentally different strategy.} Rather than
+attempting to equate cohorts based on characteristics of the living, it
+equates cohorts based on how they die in aggregate. KCOR directly
+estimates cohort-specific depletion geometry from observed cumulative
+mortality during epidemiologically quiet periods, removes that geometry
+via analytic inversion, and then compares cohorts on the resulting
+depletion-neutralized cumulative hazard scale.
+
+Thus, Cox-type methods are \textbf{model-based and individual-level},
+conditioning on survival and fitting covariate effects, whereas KCOR is
+\textbf{measurement-based and cohort-level}, operating directly on
+aggregated mortality trajectories without fitting covariate models. The
+inferential target is therefore cumulative outcome accumulation rather
+than an instantaneous hazard ratio conditional on survival.
+\end{quote}
+
 \subsubsection{1.3 Related work (brief
 positioning)}\label{related-work-brief-positioning}
 
