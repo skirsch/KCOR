@@ -326,38 +326,40 @@ distinguished here:
 \end{itemize}
 
 \begin{quote}
-\textbf{Box 2. Two fundamentally different strategies for cohort
+\textbf{Box 1. Two fundamentally different strategies for cohort
 comparability}
 
-\textbf{Traditional matching and regression approaches} attempt to
-construct comparable cohorts by matching or adjusting
-\emph{characteristics of living individuals} at baseline or over
-follow-up, and then estimating effects via a fitted hazard model (e.g.,
-Cox proportional hazards). This strategy implicitly assumes that
-sufficiently rich covariate information can render cohorts exchangeable
-with respect to unobserved mortality risk.
-
-However, under latent frailty heterogeneity, even meticulous 1:1
-matching on observed covariates fails to equalize mortality risk
-trajectories, as acknowledged in large registry studies despite
-extensive adjustment. In such settings, cohort differences arise not
-from mismeasured covariates, but from \textbf{selection-induced
-depletion of susceptibles}, which alters hazard curvature over time.
-
-\textbf{KCOR adopts a fundamentally different strategy.} Rather than
-attempting to equate cohorts based on characteristics of the living, it
-equates cohorts based on how they die in aggregate. KCOR directly
-estimates cohort-specific depletion geometry from observed cumulative
-mortality during epidemiologically quiet periods, removes that geometry
-via analytic inversion, and then compares cohorts on the resulting
-depletion-neutralized cumulative hazard scale.
-
-Thus, Cox-type methods are \textbf{model-based and individual-level},
-conditioning on survival and fitting covariate effects, whereas KCOR is
-\textbf{measurement-based and cohort-level}, operating directly on
-aggregated mortality trajectories without fitting covariate models. The
-inferential target is therefore cumulative outcome accumulation rather
-than an instantaneous hazard ratio conditional on survival.
+\begin{itemize}
+\item
+  \textbf{Traditional matching and regression approaches:} attempt to
+  construct comparable cohorts by matching or adjusting
+  \emph{characteristics of living individuals} at baseline or over
+  follow-up, and then estimating effects via a fitted hazard model
+  (e.g., Cox proportional hazards). This implicitly assumes that
+  sufficiently rich covariate information can render cohorts
+  exchangeable with respect to unobserved mortality risk.
+\item
+  \textbf{Problem under latent frailty:} even meticulous 1:1 matching on
+  observed covariates can fail to equalize mortality risk trajectories.
+  In such settings, cohort differences arise not from mismeasured
+  covariates, but from \textbf{selection-induced depletion of
+  susceptibles}, which alters hazard curvature over time.
+\item
+  \textbf{KCOR strategy:} rather than equating cohorts based on
+  characteristics of the living, KCOR equates cohorts based on how they
+  die in aggregate. It estimates cohort-specific depletion geometry from
+  observed cumulative mortality during epidemiologically quiet periods,
+  removes that geometry via analytic inversion, and compares cohorts on
+  the resulting depletion-neutralized cumulative hazard scale.
+\item
+  \textbf{Inferential distinction:} Cox-type methods are
+  \textbf{model-based and individual-level}, conditioning on survival
+  and fitting covariate effects, whereas KCOR is
+  \textbf{measurement-based and cohort-level}, operating directly on
+  aggregated mortality trajectories without fitting covariate models.
+  The inferential target is cumulative outcome accumulation rather than
+  an instantaneous hazard ratio conditional on survival.
+\end{itemize}
 \end{quote}
 
 \subsubsection{1.3 Related work (brief
@@ -416,7 +418,7 @@ retrospective cohort studies.
 (non-causal)}\label{target-estimand-and-scope-non-causal}
 
 \begin{quote}
-\textbf{Box 1. Target estimand and scope (non-causal).}
+\textbf{Box 2. Target estimand and scope (non-causal)}
 
 \begin{itemize}
 \tightlist
@@ -546,7 +548,7 @@ summarized in Table \ref{tbl:notation}.
 
 \paragraph{2.1.1 Target estimand}\label{target-estimand}
 
-Scope and interpretation are summarized in Box 1 (§1.6); the formal
+Scope and interpretation are summarized in Box 2 (§1.6); the formal
 definition used throughout is provided here.
 
 Let \(\tilde H_{0,d}(t)\) denote the \textbf{depletion-neutralized
@@ -566,7 +568,7 @@ show post-reference divergence: \[
 \paragraph{2.1.2 Identification versus
 diagnostics}\label{identification-versus-diagnostics}
 
-Scope and interpretation are summarized in Box 1 (§1.6).
+Scope and interpretation are summarized in Box 2 (§1.6).
 
 Interpretability of a KCOR trajectory is assessed via prespecified
 diagnostics (Supplementary Information §S2; Tables
@@ -939,7 +941,7 @@ The core identities used in KCOR are given in Equations
 (\ref{eq:hazard-discrete}), (\ref{eq:nls-objective}),
 (\ref{eq:normalized-cumhazard}), and (\ref{eq:kcor-estimand}).
 Normalization defines a common comparison scale; the scientific estimand
-is then computed on that scale (Box 1).
+is then computed on that scale (Box 2).
 
 \paragraph{2.6.1 Computational
 considerations}\label{computational-considerations}
@@ -1064,7 +1066,7 @@ trajectory is defined as:
 }\end{equation}
 
 This ratio is computed after depletion normalization and is interpreted
-conditional on the stated assumptions and diagnostics (Box 1; §2.1.2).
+conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
 
 \subsubsection{2.9 Uncertainty
 quantification}\label{uncertainty-quantification}
@@ -1522,7 +1524,7 @@ depletion-neutralized baseline cumulative hazards must be compared.
 Once cohorts are mapped into depletion-neutralized baseline cumulative
 hazard space, \(\mathrm{KCOR}(t)\) answers whether one cohort
 accumulated higher or lower cumulative event risk than another by time
-\(t\), conditional on the stated assumptions and diagnostics (Box 1).
+\(t\), conditional on the stated assumptions and diagnostics (Box 2).
 For intuition, \(\mathrm{KCOR}(t)=1.2\) indicates that, after depletion
 normalization, cohort \(A\) has accumulated approximately 20\% greater
 cumulative hazard than cohort \(B\) by time \(t\). Stabilization of
@@ -1659,7 +1661,7 @@ Reporting commonly includes:
 KCOR should therefore be applied and reported as a complete
 pipeline---from cohort freezing, through depletion normalization, to
 cumulative comparison and diagnostics---rather than as a standalone
-adjustment step. Scope and interpretation are summarized once in Box 1
+adjustment step. Scope and interpretation are summarized once in Box 2
 (§1.6).
 
 \subsection{5. Limitations}\label{limitations}

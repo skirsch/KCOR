@@ -48,15 +48,15 @@ Two mechanisms often lumped as the 'healthy vaccinee effect' (HVE) are distingui
 
 - **Dynamic HVE:** short-horizon, time-local selection processes around enrollment that create transient hazard suppression immediately after enrollment (e.g., deferral of vaccination during acute illness, administrative timing, or short-term behavioral/health-seeking changes). Dynamic HVE is operationally addressed by prespecifying a skip/stabilization window (§2.7) and can be evaluated empirically by comparing early-period signatures across related cohorts in multi-dose settings.
 
-> **Box 2. Two fundamentally different strategies for cohort comparability**
+> **Box 1. Two fundamentally different strategies for cohort comparability**
 >
-> **Traditional matching and regression approaches** attempt to construct comparable cohorts by matching or adjusting *characteristics of living individuals* at baseline or over follow-up, and then estimating effects via a fitted hazard model (e.g., Cox proportional hazards). This strategy implicitly assumes that sufficiently rich covariate information can render cohorts exchangeable with respect to unobserved mortality risk.
+> - **Traditional matching and regression approaches:** attempt to construct comparable cohorts by matching or adjusting *characteristics of living individuals* at baseline or over follow-up, and then estimating effects via a fitted hazard model (e.g., Cox proportional hazards). This implicitly assumes that sufficiently rich covariate information can render cohorts exchangeable with respect to unobserved mortality risk.
 >
-> However, under latent frailty heterogeneity, even meticulous 1:1 matching on observed covariates fails to equalize mortality risk trajectories, as acknowledged in large registry studies despite extensive adjustment. In such settings, cohort differences arise not from mismeasured covariates, but from **selection-induced depletion of susceptibles**, which alters hazard curvature over time.
+> - **Problem under latent frailty:** even meticulous 1:1 matching on observed covariates can fail to equalize mortality risk trajectories. In such settings, cohort differences arise not from mismeasured covariates, but from **selection-induced depletion of susceptibles**, which alters hazard curvature over time.
 >
-> **KCOR adopts a fundamentally different strategy.** Rather than attempting to equate cohorts based on characteristics of the living, it equates cohorts based on how they die in aggregate. KCOR directly estimates cohort-specific depletion geometry from observed cumulative mortality during epidemiologically quiet periods, removes that geometry via analytic inversion, and then compares cohorts on the resulting depletion-neutralized cumulative hazard scale.
+> - **KCOR strategy:** rather than equating cohorts based on characteristics of the living, KCOR equates cohorts based on how they die in aggregate. It estimates cohort-specific depletion geometry from observed cumulative mortality during epidemiologically quiet periods, removes that geometry via analytic inversion, and compares cohorts on the resulting depletion-neutralized cumulative hazard scale.
 >
-> Thus, Cox-type methods are **model-based and individual-level**, conditioning on survival and fitting covariate effects, whereas KCOR is **measurement-based and cohort-level**, operating directly on aggregated mortality trajectories without fitting covariate models. The inferential target is therefore cumulative outcome accumulation rather than an instantaneous hazard ratio conditional on survival.
+> - **Inferential distinction:** Cox-type methods are **model-based and individual-level**, conditioning on survival and fitting covariate effects, whereas KCOR is **measurement-based and cohort-level**, operating directly on aggregated mortality trajectories without fitting covariate models. The inferential target is cumulative outcome accumulation rather than an instantaneous hazard ratio conditional on survival.
 
 ### 1.3 Related work (brief positioning)
 
@@ -76,7 +76,7 @@ Together, these contributions position KCOR not as a replacement for existing su
 
 ### 1.6 Target estimand and scope (non-causal)
 
-> **Box 1. Target estimand and scope (non-causal).**
+> **Box 2. Target estimand and scope (non-causal)**
 >
 > - **Primary estimand (KCOR)**: For two fixed enrollment cohorts $A$ and $B$, it is defined as
 >   $$
@@ -123,7 +123,7 @@ Throughout this paper, $t$ denotes event time since cohort enrollment and $d$ in
 
 #### 2.1.1 Target estimand
 
-Scope and interpretation are summarized in Box 1 (§1.6); the formal definition used throughout is provided here.
+Scope and interpretation are summarized in Box 2 (§1.6); the formal definition used throughout is provided here.
 
 Let $\tilde H_{0,d}(t)$ denote the **depletion-neutralized baseline cumulative hazard** for cohort $d$ at event time $t$ since enrollment (Table @tbl:notation). For two cohorts $A$ and $B$, KCOR is defined as
 
@@ -140,7 +140,7 @@ with prespecified $t_0$ (e.g., 4 weeks).
 
 #### 2.1.2 Identification versus diagnostics
 
-Scope and interpretation are summarized in Box 1 (§1.6). 
+Scope and interpretation are summarized in Box 2 (§1.6). 
 
 Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables @tbl:si_assumptions–@tbl:si_identifiability). When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported. Checks include:
 
@@ -343,7 +343,7 @@ $$
 {#eq:normalized-cumhazard}
 
 This normalization maps each cohort into a depletion-neutralized baseline-hazard space in which the contribution of gamma frailty parameters $(\hat{\theta}_d, \hat{k}_d)$ to hazard curvature has been factored out. This normalization defines a common comparison scale in cumulative-hazard space; it is not equivalent to Cox partial-likelihood baseline anchoring, but serves an analogous geometric role for cumulative contrasts. In this space, cumulative hazards are directly comparable across cohorts, and remaining differences reflect real differences in baseline risk rather than selection-induced depletion.
-The core identities used in KCOR are given in Equations @eq:hazard-discrete, @eq:nls-objective, @eq:normalized-cumhazard, and @eq:kcor-estimand. Normalization defines a common comparison scale; the scientific estimand is then computed on that scale (Box 1).
+The core identities used in KCOR are given in Equations @eq:hazard-discrete, @eq:nls-objective, @eq:normalized-cumhazard, and @eq:kcor-estimand. Normalization defines a common comparison scale; the scientific estimand is then computed on that scale (Box 2).
 
 #### 2.6.1 Computational considerations
 
@@ -412,7 +412,7 @@ $$
 $$
 {#eq:kcor-estimator}
 
-This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 1; §2.1.2).
+This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
 
 ### 2.9 Uncertainty quantification
 
@@ -597,7 +597,7 @@ KCOR does not uniquely identify the biological, behavioral, or clinical mechanis
 
 *Table @tbl:positioning clarifies that KCOR differs from non-proportional hazards methods not in flexibility, but in estimand and direction of inference.* KCOR operates at a specific but critical layer of the retrospective inference stack: it both neutralizes selection-induced depletion dynamics and defines how the resulting depletion-neutralized baseline cumulative hazards must be compared.
 
-Once cohorts are mapped into depletion-neutralized baseline cumulative hazard space, $\mathrm{KCOR}(t)$ answers whether one cohort accumulated higher or lower cumulative event risk than another by time $t$, conditional on the stated assumptions and diagnostics (Box 1). For intuition, $\mathrm{KCOR}(t)=1.2$ indicates that, after depletion normalization, cohort $A$ has accumulated approximately 20% greater cumulative hazard than cohort $B$ by time $t$. Stabilization of $\mathrm{KCOR}(t)$ in quiet windows is a falsification check: failure to flatten indicates residual curvature or loss of identifiability, not a substantive cumulative effect.
+Once cohorts are mapped into depletion-neutralized baseline cumulative hazard space, $\mathrm{KCOR}(t)$ answers whether one cohort accumulated higher or lower cumulative event risk than another by time $t$, conditional on the stated assumptions and diagnostics (Box 2). For intuition, $\mathrm{KCOR}(t)=1.2$ indicates that, after depletion normalization, cohort $A$ has accumulated approximately 20% greater cumulative hazard than cohort $B$ by time $t$. Stabilization of $\mathrm{KCOR}(t)$ in quiet windows is a falsification check: failure to flatten indicates residual curvature or loss of identifiability, not a substantive cumulative effect.
 
 *Many commonly used survival estimands—such as hazard ratios, cumulative hazard differences, or restricted mean survival time—are not intrinsically invalid. Their failure in retrospective cohort studies arises when they are applied to unadjusted data exhibiting selection-induced depletion. KCOR does not replace these estimands; instead, it provides a normalization step that restores comparability. After depletion normalization, such estimands may be meaningfully computed, with the choice driven by interpretability rather than by identifiability constraints imposed by selection bias.*
 
@@ -640,7 +640,7 @@ Reporting commonly includes:
 - Predefined negative/positive controls used for validation
 - Sensitivity analysis plan and results
 
-KCOR should therefore be applied and reported as a complete pipeline—from cohort freezing, through depletion normalization, to cumulative comparison and diagnostics—rather than as a standalone adjustment step. Scope and interpretation are summarized once in Box 1 (§1.6).
+KCOR should therefore be applied and reported as a complete pipeline—from cohort freezing, through depletion normalization, to cumulative comparison and diagnostics—rather than as a standalone adjustment step. Scope and interpretation are summarized once in Box 2 (§1.6).
 
 ## 5. Limitations
 
