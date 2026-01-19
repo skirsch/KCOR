@@ -48,6 +48,16 @@ Two mechanisms often lumped as the 'healthy vaccinee effect' (HVE) are distingui
 
 - **Dynamic HVE:** short-horizon, time-local selection processes around enrollment that create transient hazard suppression immediately after enrollment (e.g., deferral of vaccination during acute illness, administrative timing, or short-term behavioral/health-seeking changes). Dynamic HVE is operationally addressed by prespecifying a skip/stabilization window (§2.7) and can be evaluated empirically by comparing early-period signatures across related cohorts in multi-dose settings.
 
+> **Box 2. Two fundamentally different strategies for cohort comparability**
+>
+> **Traditional matching and regression approaches** attempt to construct comparable cohorts by matching or adjusting *characteristics of living individuals* at baseline or over follow-up, and then estimating effects via a fitted hazard model (e.g., Cox proportional hazards). This strategy implicitly assumes that sufficiently rich covariate information can render cohorts exchangeable with respect to unobserved mortality risk.
+>
+> However, under latent frailty heterogeneity, even meticulous 1:1 matching on observed covariates fails to equalize mortality risk trajectories, as acknowledged in large registry studies despite extensive adjustment. In such settings, cohort differences arise not from mismeasured covariates, but from **selection-induced depletion of susceptibles**, which alters hazard curvature over time.
+>
+> **KCOR adopts a fundamentally different strategy.** Rather than attempting to equate cohorts based on characteristics of the living, it equates cohorts based on how they die in aggregate. KCOR directly estimates cohort-specific depletion geometry from observed cumulative mortality during epidemiologically quiet periods, removes that geometry via analytic inversion, and then compares cohorts on the resulting depletion-neutralized cumulative hazard scale.
+>
+> Thus, Cox-type methods are **model-based and individual-level**, conditioning on survival and fitting covariate effects, whereas KCOR is **measurement-based and cohort-level**, operating directly on aggregated mortality trajectories without fitting covariate models. The inferential target is therefore cumulative outcome accumulation rather than an instantaneous hazard ratio conditional on survival.
+
 ### 1.3 Related work (brief positioning)
 
 KCOR builds on the frailty and selection-induced depletion literature in which unobserved heterogeneity induces deceleration of cohort-level hazards over follow-up (a standard working model is gamma frailty) [@vaupel1979]. KCOR’s distinct contribution is not additional hazard flexibility, but a **diagnostics-driven normalization** of selection-induced depletion geometry in cumulative-hazard space prior to defining a cumulative cohort contrast. Related approaches that address non-proportional hazards (time-varying effects, flexible parametric hazards, additive hazards) or time-varying confounding (MSM/IPW/g-methods) target different estimands and typically require richer longitudinal covariates than are available in minimal registry data [@grambsch1994; @andersen1982; @royston2002; @aalen1989; @lin1994; @vanhouwelingen2007; @robins2000; @cole2008]. Additional discussion is provided in the Supplementary Information (SI).
