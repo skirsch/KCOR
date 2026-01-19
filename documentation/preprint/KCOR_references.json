@@ -747,5 +747,65 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "deeks2001",
+		"type": "chapter",
+		"citation-key": "deeks2001",
+		"container-title": "Systematic Reviews in Health Care",
+		"DOI": "10.1002/9780470693926.ch15",
+		"edition": "1",
+		"ISBN": "978-0-7279-1488-0",
+		"language": "en",
+		"page": "285-312",
+		"publisher": "Wiley",
+		"source": "DOI.org (Crossref)",
+		"title": "Statistical Methods for Examining Heterogeneity and Combining Results from Several Studies in Meta‐Analysis",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1002/9780470693926.ch15",
+		"editor": [
+			{
+				"family": "Egger",
+				"given": "Matthias"
+			},
+			{
+				"family": "Smith",
+				"given": "George Davey"
+			},
+			{
+				"family": "Altman",
+				"given": "Douglas G"
+			}
+		],
+		"author": [
+			{
+				"family": "Deeks",
+				"given": "Jonathan J"
+			},
+			{
+				"family": "Altman",
+				"given": "Douglas G"
+			},
+			{
+				"family": "Bradburn",
+				"given": "Michael J"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					19
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2001",
+					1
+				]
+			]
+		}
 	}
 ]

@@ -388,7 +388,7 @@ positioning)}\label{related-work-brief-positioning}
 KCOR builds on the frailty and selection-induced depletion literature in
 which unobserved heterogeneity induces deceleration of cohort-level
 hazards over follow-up (a standard working model is gamma
-frailty)\textsuperscript{1}. KCOR's distinct contribution is not
+frailty).\textsuperscript{1} KCOR's distinct contribution is not
 additional hazard flexibility, but a \textbf{diagnostics-driven
 normalization} of selection-induced depletion geometry in
 cumulative-hazard space prior to defining a cumulative cohort contrast.
@@ -396,7 +396,7 @@ Related approaches that address non-proportional hazards (time-varying
 effects, flexible parametric hazards, additive hazards) or time-varying
 confounding (MSM/IPW/g-methods) target different estimands and typically
 require richer longitudinal covariates than are available in minimal
-registry data\textsuperscript{2--9}. Additional discussion is provided
+registry data.\textsuperscript{2--9} Additional discussion is provided
 in the Supplementary Information (SI).
 
 Time-varying coefficient Cox models allow hazards to change over time
@@ -421,7 +421,7 @@ Motivating applied studies show that even careful matching and
 adjustment can leave substantial residual differences in non-COVID
 mortality and time-varying ``healthy vaccinee effect'' signatures,
 consistent with selection and depletion dynamics not captured by
-measured covariates\textsuperscript{10,11}.
+measured covariates.\textsuperscript{10,11}
 
 \subsubsection{1.5 Contribution of this
 work}\label{contribution-of-this-work}
@@ -804,7 +804,7 @@ high-frailty individuals.
 
 Gamma frailty is used because it yields a closed-form link between
 observed and baseline cumulative hazards via the Laplace
-transform\textsuperscript{1}. In KCOR, gamma frailty is a
+transform.\textsuperscript{1} In KCOR, gamma frailty is a
 \textbf{working geometric model} for depletion normalization, not a
 claim of biological truth. Adequacy is evaluated empirically via fit
 quality, post-normalization linearity, and stability diagnostics.
@@ -1198,9 +1198,15 @@ heterogeneity, this assumption is typically violated, yielding
 time-varying hazard ratios induced purely by depletion dynamics. This
 reflects an estimand mismatch: Cox targets an instantaneous hazard ratio
 conditional on survival, whereas KCOR targets a cumulative hazard
-contrast after depletion normalization. Accordingly, Cox results are
-presented here as a diagnostic demonstration of estimand mismatch, not
-as a competing intervention-effect estimator.
+contrast after depletion normalization.
+
+Accordingly, Cox results are presented here as a diagnostic
+demonstration of estimand mismatch, not as a competing
+intervention-effect estimator. This limitation is consistent with
+earlier work by Deeks showing that increasing covariate adjustment in
+non-randomized analyses can exacerbate bias and increase estimator
+imprecision when selection effects and measurement error
+dominate.\textsuperscript{12}
 
 Even when Cox models are extended with shared frailty to accommodate
 heterogeneity, they continue to estimate instantaneous hazard ratios
@@ -1881,7 +1887,7 @@ validation results use synthetic data. Empirical negative-control
 figures (Figures \ref{fig:neg_control_10yr} and
 \ref{fig:neg_control_20yr}) use aggregated cohort summaries derived from
 Czech Republic administrative data; no record-level data are shared in
-this manuscript.\textsuperscript{12}
+this manuscript.\textsuperscript{13}
 
 \subsubsection{Consent for publication}\label{consent-for-publication}
 
@@ -2039,8 +2045,16 @@ national cohort study in Qatar. Schiffer JT, Henry D, eds. \emph{eLife}.
 2025;14:e103690.
 doi:\href{https://doi.org/10.7554/eLife.103690}{10.7554/eLife.103690}}
 
-\bibitem[\citeproctext]{ref-sanca2024}
+\bibitem[\citeproctext]{ref-deeks2001}
 \CSLLeftMargin{12. }%
+\CSLRightInline{Deeks JJ, Altman DG, Bradburn MJ. Statistical Methods
+for Examining Heterogeneity and Combining Results from Several Studies
+in Meta‐Analysis. In: Egger M, Smith GD, Altman DG, eds.
+\emph{Systematic Reviews in Health Care}. 1st ed. Wiley; 2001:285-312.
+doi:\href{https://doi.org/10.1002/9780470693926.ch15}{10.1002/9780470693926.ch15}}
+
+\bibitem[\citeproctext]{ref-sanca2024}
+\CSLLeftMargin{13. }%
 \CSLRightInline{Šanca O, Jarkovský J, Klimeš D, et al.
 \emph{Vaccination, Positivity, Hospitalization for COVID-19, Deaths,
 Long COVID and Comorbidities in People in the Czech Republic}. National
