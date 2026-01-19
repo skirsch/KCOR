@@ -114,7 +114,33 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
+\usepackage{xcolor}
+\usepackage[framemethod=tikz]{mdframed}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Box all Markdown blockquotes (Pandoc uses the quote environment)
+% Use mdframed for stable full borders with no left/right clipping.
+\mdfdefinestyle{kcorquote}{%
+  linecolor=black,
+  linewidth=0.4pt,
+  backgroundcolor=white,
+  innerleftmargin=6pt,
+  innerrightmargin=6pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  leftmargin=0pt,
+  rightmargin=0pt,
+  skipabove=10pt,
+  skipbelow=10pt,
+  topline=true,
+  bottomline=true,
+  leftline=true,
+  rightline=true,
+  roundcorner=0pt,
+  splittopskip=0pt,
+  splitbottomskip=0pt
+}
+\renewenvironment{quote}{\begin{mdframed}[style=kcorquote]}{\end{mdframed}}
 
 % Appendix lettered numbering for figures and equations.
 %
