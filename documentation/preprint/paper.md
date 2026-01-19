@@ -460,7 +460,7 @@ Table @tbl:KCOR_algorithm summarizes the complete KCOR pipeline.
 
 Cox proportional hazards models estimate an instantaneous hazard ratio under the assumption that hazards differ by a time-invariant multiplicative factor. Under selective uptake with latent frailty heterogeneity, this assumption is typically violated, yielding time-varying hazard ratios induced purely by depletion dynamics. This reflects an estimand mismatch: Cox targets an instantaneous hazard ratio conditional on survival, whereas KCOR targets a cumulative hazard contrast after depletion normalization. 
 
-Accordingly, Cox results are presented here as a diagnostic demonstration of estimand mismatch, not as a competing intervention-effect estimator. This limitation is consistent with earlier work by Deeks showing that increasing covariate adjustment in non-randomized analyses can exacerbate bias and increase estimator imprecision when selection effects and measurement error dominate. [@deeks2001]
+Accordingly, Cox results are presented here as a diagnostic demonstration of estimand mismatch, not as a competing intervention-effect estimator. This limitation is consistent with methodological work on non-randomised intervention studies emphasizing that additional covariate adjustment does not guarantee bias reduction and can increase instability when selection and measurement error dominate. [@deeks2003]
 
 Even when Cox models are extended with shared frailty to accommodate heterogeneity, they continue to estimate instantaneous hazard ratios conditional on survival. KCOR instead uses a parametric working model only to normalize selection-induced depletion geometry, then computes a cumulative contrast on the depletion-neutralized scale.
 

@@ -807,5 +807,71 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "deeks2003",
+		"type": "article-journal",
+		"citation-key": "deeks2003",
+		"container-title": "Health Technology Assessment",
+		"DOI": "10.3310/hta7270",
+		"ISSN": "1366-5278, 2046-4924",
+		"issue": "27",
+		"journalAbbreviation": "Health Technol Assess",
+		"language": "en",
+		"source": "DOI.org (Crossref)",
+		"title": "Evaluating non-randomised intervention studies",
+		"URL": "https://www.journalslibrary.nihr.ac.uk/hta/hta7270/",
+		"volume": "7",
+		"author": [
+			{
+				"family": "Deeks",
+				"given": "J"
+			},
+			{
+				"family": "Dinnes",
+				"given": "J"
+			},
+			{
+				"family": "D'Amico",
+				"given": "R"
+			},
+			{
+				"family": "Sowden",
+				"given": "A"
+			},
+			{
+				"family": "Sakarovitch",
+				"given": "C"
+			},
+			{
+				"family": "Song",
+				"given": "F"
+			},
+			{
+				"family": "Petticrew",
+				"given": "M"
+			},
+			{
+				"family": "Altman",
+				"given": "D"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					19
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2003",
+					9
+				]
+			]
+		}
 	}
 ]
