@@ -813,7 +813,7 @@ Table: Notation used throughout the Methods section. {#tbl:notation}
 | $t_0$ | Anchor time for baseline normalization (prespecified) |
 | $\mathrm{KCOR}(t; t_0)$ | Anchored KCOR: $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$ |
 
-Table: Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. {#tbl:KCOR_algorithm}
+Table: Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as $\theta_d$ are estimated from the data within the prespecified framework.{#tbl:KCOR_algorithm}
 
 | Step | Operation | Output | Prespecify? | Diagnostics |
 |---|---|---|---|---|
@@ -821,7 +821,7 @@ Table: Step-by-step KCOR algorithm (high-level), with recommended prespecificati
 | 2 | Compute discrete-time hazards (observed hazards) | Hazard curves | Yes (binning/transform) | Check for zeros/sparsity |
 | 3 | Apply stabilization skip and accumulate observed cumulative hazards | Observed cumulative hazards | Yes (skip rule) | Plot observed cumulative hazards |
 | 4 | Select quiet-window bins in calendar ISO-week space | Fit points $\mathcal{T}_d$ | Yes | Overlay quiet window on hazard plots |
-| 5 | Fit $(\hat{k}_d,\hat{\theta}_d)$ via cumulative-hazard least squares | Fitted parameters | Yes | RMSE, residuals, fit stability |
+| 5 | Fit $(\hat{k}_d,\hat{\theta}_d)$ via cumulative-hazard least squares | Fitted parameters | Yes (estimation procedure) | RMSE, residuals, fit stability |
 | 6 | Normalize: invert gamma-frailty identity to depletion-neutralized cumulative hazards | Depletion-neutralized cumulative hazards | Yes | Compare pre/post shapes; sanity checks |
 | 7 | Cumulate and ratio: compute $\mathrm{KCOR}(t)$ | $\mathrm{KCOR}(t)$ curve | Yes (horizon) | Flat under negative controls |
 | 8 | Uncertainty | CI / intervals | Yes | Coverage on positive controls |
