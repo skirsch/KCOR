@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v6.0"                # KCOR version number
+VERSION = "v6.1"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -164,6 +164,8 @@ VERSION = "v6.0"                # KCOR version number
 #        - Uses exact discrete-time integrated hazard increments: ΔH = -log(1 - MR) (see hazard_from_mr)
 #        - 560 KCOR commits since Jul 6, 2025
 #        - 12/21/2025: v6.0 implementation started and completed.
+# v6.1 - COVID hazard adjustment for unvaccinated cohorts during specified ISO weeks
+#        - Applies h'(t) = (h(t)-h0)/factor + h0 for COVID interval after start date
 
 import sys
 import math
@@ -963,14 +965,17 @@ def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
 
 # Cache for dataset dose pairs config (loaded once per run)
 _DATASET_DOSE_PAIRS_CACHE = None
+# Cache for dataset COVID correction config (loaded once per run)
+_DATASET_COVID_CORRECTION_CACHE = None
 
 def _load_dataset_dose_pairs_config():
     """Load dose pairs configuration from dataset YAML file."""
-    global _DATASET_DOSE_PAIRS_CACHE
-    if _DATASET_DOSE_PAIRS_CACHE is not None:
+    global _DATASET_DOSE_PAIRS_CACHE, _DATASET_COVID_CORRECTION_CACHE
+    if _DATASET_DOSE_PAIRS_CACHE is not None and _DATASET_COVID_CORRECTION_CACHE is not None:
         return _DATASET_DOSE_PAIRS_CACHE
     
     _DATASET_DOSE_PAIRS_CACHE = {}
+    _DATASET_COVID_CORRECTION_CACHE = {}
     _dataset_name = os.environ.get('DATASET', 'Czech')
     # Resolve path relative to script location to handle different execution contexts
     _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1006,6 +1011,22 @@ def _load_dataset_dose_pairs_config():
                     if _DATASET_DOSE_PAIRS_CACHE:
                         if DEBUG_VERBOSE:
                             print(f"[DEBUG] Loaded dose pairs config from {_dataset_yaml_path}", flush=True)
+                _covid_config = _dataset_config.get('covidCorrection', {})
+                if isinstance(_covid_config, dict):
+                    start_date = _covid_config.get('startDate')
+                    end_date = _covid_config.get('endDate')
+                    factor = _covid_config.get('factor')
+                    if start_date and end_date and factor is not None:
+                        try:
+                            _DATASET_COVID_CORRECTION_CACHE = {
+                                "startDate": str(start_date),
+                                "endDate": str(end_date),
+                                "factor": float(factor),
+                            }
+                            if DEBUG_VERBOSE:
+                                print(f"[DEBUG] Loaded COVID correction config from {_dataset_yaml_path}", flush=True)
+                        except Exception:
+                            _DATASET_COVID_CORRECTION_CACHE = {}
         except Exception as _e_config:
             # Only print warning for non-ImportError exceptions (file read errors, etc.)
             if DEBUG_VERBOSE and 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower():
@@ -1083,6 +1104,26 @@ def _parse_iso_year_week(s: str):
     y, w = s.split("-")
     # ISO week to date: Monday of that ISO week
     return datetime.fromisocalendar(int(y), int(w), 1)
+
+def get_covid_correction_config():
+    """Return parsed COVID correction config or None."""
+    _load_dataset_dose_pairs_config()
+    if not _DATASET_COVID_CORRECTION_CACHE:
+        return None
+    start_str = _DATASET_COVID_CORRECTION_CACHE.get("startDate")
+    end_str = _DATASET_COVID_CORRECTION_CACHE.get("endDate")
+    factor = _DATASET_COVID_CORRECTION_CACHE.get("factor")
+    if not start_str or not end_str or factor is None:
+        return None
+    try:
+        start_dt = _parse_iso_year_week(start_str)
+        end_dt = _parse_iso_year_week(end_str)
+        factor_val = float(factor)
+    except Exception:
+        return None
+    if not np.isfinite(factor_val) or factor_val <= 0.0:
+        return None
+    return {"start_dt": start_dt, "end_dt": end_dt, "factor": factor_val}
 
 def select_dynamic_anchor_offsets(enrollment_date, df_dates):
     """Deprecated; dynamic anchors removed. Return (None, None)."""
@@ -5580,6 +5621,35 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
         # Clip to avoid log(0) and ensure numerical stability
         df["hazard_raw"] = hazard_from_mr(np.clip(mr_used, 0.0, 0.999))
+        
+        # Optional COVID correction: apply only to unvaccinated (Dose == 0)
+        covid_cfg = get_covid_correction_config()
+        if covid_cfg is not None:
+            start_dt = covid_cfg["start_dt"]
+            end_dt = covid_cfg["end_dt"]
+            factor = covid_cfg["factor"]
+            dose0_mask = df["Dose"] == 0
+            if dose0_mask.any():
+                h0_series = (
+                    df[dose0_mask & (df["DateDied"] == start_dt)]
+                    .groupby("YearOfBirth")["hazard_raw"]
+                    .mean()
+                )
+                if not h0_series.empty:
+                    h0_per_row = df.loc[dose0_mask, "YearOfBirth"].map(h0_series)
+                    adjust_mask = (
+                        dose0_mask
+                        & (df["DateDied"] > start_dt)
+                        & (df["DateDied"] <= end_dt)
+                        & h0_per_row.notna()
+                    )
+                    if adjust_mask.any():
+                        df.loc[adjust_mask, "hazard_raw"] = (
+                            (df.loc[adjust_mask, "hazard_raw"] - h0_per_row.loc[adjust_mask]) / factor
+                            + h0_per_row.loc[adjust_mask]
+                        )
+                        df["hazard_raw"] = np.clip(df["hazard_raw"], 0.0, None)
+
         # Initialize adjusted hazard equal to raw
         df["hazard_adj"] = df["hazard_raw"]
         

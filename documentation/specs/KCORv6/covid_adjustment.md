@@ -6,7 +6,7 @@ The parameters for the correction are determined in the config.yaml file for the
 
 Set these Parameters for the Czech dataset yaml file only:
 - COVID_CORRECTION_START_DATE: "2021-41"
-- COVID_CORRECTION_END_DATA: "2021-52"
+- COVID_CORRECTION_END_DATE: "2021-52"
 - COVID_CORRECTION_FACTOR: 1.4
 
 If the parameters aren't specified, the correction is not done.

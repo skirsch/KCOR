@@ -1,4 +1,4 @@
-# KCOR v5.4 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v6.1 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -1085,6 +1085,15 @@ MIN_ANCHOR_SEPARATION_WEEKS = 39      # min weeks between first and second ancho
 
 ```
 
+### Dataset YAML (Czech) COVID Correction
+
+```yaml
+covidCorrection:
+  startDate: "2021-41"
+  endDate: "2021-52"
+  factor: 1.4
+```
+
 ### Sheet-Specific Configuration
 
 The script automatically determines dose pairs based on sheet names:
@@ -1380,6 +1389,12 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
   - **All Ages (YearOfBirth = -2)**: Direct aggregation without age grouping or weighting
 - **Display**: Shown in console and summary outputs right after "ASMR (direct)"
 - **Use Case**: Useful for comparing overall population-level effects without age-specific weighting
+
+### 🆕 Version 6.1
+
+#### Major Improvements
+- **COVID hazard adjustment (Czech)**: Adjusts unvaccinated hazards during specified COVID weeks using a simple scaling around h0
+- **Configurable in dataset YAML**: `covidCorrection` block defines start/end ISO weeks and scaling factor
 
 ### 🆕 Version 4.6
 
