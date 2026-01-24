@@ -6,9 +6,10 @@ timezone: local
 observationEndDate: '2025-12-31'
 birthBandYears: 5
 
+# the COVID correction ONLY will scale values ABOVE the value of the start date until the end date.
 covidCorrection:
   startDate: '2021-41'   # this is 10/11/2021
-  endDate: '2021-52'
+  endDate: '2022-12'     # COVID extends into 3/21/2022
   factor: 1.0    # 1.0 means no adjustment. 1.4 is the minimum conservative adjustment factor.
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)

@@ -159,14 +159,53 @@ VERSION = "v6.1"                # KCOR version number
 #        - Exception: For the most recent/highest dose, fit uses data after skip weeks (SLOPE_FIT_DELAY_WEEKS)
 #          but normalization is applied to the entire period (post enrollment and post DYNAMIC_HVE_SKIP_WEEKS)
 # v6.0 - Gamma-frailty normalization (fits in cumulative-hazard space)
+#        - 12/21/2025: v6.0 implementation started and completed (commit 96066f2).
 #        - Fit (k, theta) per (EnrollmentDate, YearOfBirth, Dose) on quiet-window data (calendar ISO weeks)
 #        - Normalize via H0(t) = (exp(theta * H_obs(t)) - 1) / theta, with theta -> 0 limit
 #        - Uses exact discrete-time integrated hazard increments: ΔH = -log(1 - MR) (see hazard_from_mr)
 #        - 560 KCOR commits since Jul 6, 2025
-#        - 12/21/2025: v6.0 implementation started and completed.
-# v6.1 - COVID hazard adjustment for unvaccinated cohorts during specified ISO weeks
-#        - Applies h'(t) = (h(t)-h0)/factor + h0 for COVID interval after start date
+# v6.1 - COVID hazard adjustment for unvaccinated cohorts during specified ISO weeks (1/24/2026)
+#        - Applies h'(t) = (h(t)-h0)/factor + h0 for COVID interval after start date and before end date
+#        - where h0 is the hazard_raw value at the COVID_CORRECTION_START_DATE for the given YearOfBirth.
+#        - The factor is specified in the dataset's yaml file, e.g., data/Czech/Czech.yaml.
+#        - The adjustment is only applied only if the hazard_raw is greater than the h0 value for the given YearOfBirth.
+#        - See documentation/specs/KCORv6/covid_adjustment.md for more details
+#        - Also computed -2 cohort at the hazard stage so the COVID correction is applied to all cohorts.
+#        - 1/24/2026: v6.1 implementation started and completed.
+#        - Noticed that for the 2021_24 cohort 2 v 0, the KCOR values are lower than before we introduced the gamma frailty
+#        - On 12-21-25 after gamma frailty was introduced, the KCOR values for the 2021_24 cohort 2 v 0 was 1.1043 for all ages
+#        - On 1-8-26 and later, the KCOR value changed to 1.0172 for All Ages, but it's at a different date (1 year post enrollment)
+#        - There are a number of potential changes that could have caused this shift in the KCOR reported value for all ages.
+#        - 1. We switched to the exact hazard transform equation: h(t) = -ln(1 - MR) 
+#        - 2. We changed the quiet window which used to be (2022-24 to 2024-16) to a narrower window using the full CY 2023.
+#        - 3. We changed the KCOR value reporting date in the summary.log to use 1 year post enrollment.
 
+"""
+December 21, 2025 (KCOR reporting date is end of 2022):
+
+Dose combination: 2 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  ASMR (direct)   |   1.1440 [1.130, 1.158] |  1.3105
+  All Ages        |   1.1043 [1.092, 1.117] |  1.3668
+
+
+
+
+Reference values for the Czech dataset for KCOR computed on 12/17/25 BEFORE gamma frailty was introduced into the code:
+
+Dose combination: 2 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns | * |    ka_num    kb_num t_n    ka_den    kb_den t_d
+--------------------------------------------------
+  ASMR (direct)   |   1.2372 [1.222, 1.253] |  1.3105 |   |       ---       --- ---       ---       --- ---
+  All Ages        |   1.2085 [1.195, 1.222] |  1.3668 |   |       ---       --- ---       ---       --- ---
+  1920            |   1.4254 [1.373, 1.480] |  1.0391 |   |    -0.007     0.003  44     0.015    -0.009  49
+  1930            |   1.1465 [1.123, 1.171] |  1.1917 |   |     0.003  9.57e-04  44     0.005    -0.003  49
+  1940            |   1.1942 [1.170, 1.219] |  1.3874 |   |       ---       --- ---       ---       --- ---
+  1950            |   1.4650 [1.425, 1.507] |  1.6773 |   
+"""
 import sys
 import math
 import os
@@ -1124,6 +1163,41 @@ def get_covid_correction_config():
     if not np.isfinite(factor_val) or factor_val <= 0.0:
         return None
     return {"start_dt": start_dt, "end_dt": end_dt, "factor": factor_val}
+
+def apply_covid_correction_in_place(df, covid_cfg):
+    """Adjust hazard_raw in-place for Dose==0 during COVID interval."""
+    if covid_cfg is None:
+        return
+    if "hazard_raw" not in df.columns:
+        return
+    start_dt = covid_cfg["start_dt"]
+    end_dt = covid_cfg["end_dt"]
+    factor = covid_cfg["factor"]
+    dose0_mask = df["Dose"] == 0
+    if not dose0_mask.any():
+        return
+    h0_series = (
+        df[dose0_mask & (df["DateDied"] == start_dt)]
+        .groupby("YearOfBirth")["hazard_raw"]
+        .mean()
+    )
+    if h0_series.empty:
+        return
+    h0_full = df["YearOfBirth"].map(h0_series)
+    h0_per_row = h0_full.loc[dose0_mask]
+    adjust_mask = (
+        dose0_mask
+        & (df["DateDied"] > start_dt)
+        & (df["DateDied"] <= end_dt)
+        & h0_per_row.notna()
+        & (df["hazard_raw"] > h0_full)
+    )
+    if adjust_mask.any():
+        df.loc[adjust_mask, "hazard_raw"] = (
+            (df.loc[adjust_mask, "hazard_raw"] - h0_per_row.loc[adjust_mask]) / factor
+            + h0_per_row.loc[adjust_mask]
+        )
+        df["hazard_raw"] = np.clip(df["hazard_raw"], 0.0, None)
 
 def select_dynamic_anchor_offsets(enrollment_date, df_dates):
     """Deprecated; dynamic anchors removed. Return (None, None)."""
@@ -2717,7 +2791,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     # -------- per-age KCOR rows --------
     dose_pairs = get_dose_pairs(sheet_name)
     # In Monte Carlo mode, process all YearOfBirth values (don't filter by OVERRIDE_YOBS)
-    yob_values = df["YearOfBirth"].unique()
+    yob_values = [y for y in df["YearOfBirth"].unique() if y != -2]
     if OVERRIDE_YOBS is not None and not MONTE_CARLO_MODE:
         yob_values = [yob for yob in yob_values if yob in OVERRIDE_YOBS]
     for yob in yob_values:
@@ -3503,39 +3577,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     # This is different from ASMR pooling which weights across age groups
     all_ages_rows = []
     df_sorted = df.sort_values("DateDied")
-    
-    # Aggregate across all YearOfBirth values for each Dose and DateDied
-    # In MC mode, also group by mc_id to preserve separate iterations
-    # First, aggregate basic counts
-    groupby_cols = ["Dose", "DateDied"]
-    if MONTE_CARLO_MODE and "mc_id" in df_sorted.columns:
-        groupby_cols = ["mc_id"] + groupby_cols
-    all_ages_agg = df_sorted.groupby(groupby_cols).agg({
-        "ISOweekDied": "first",
-        "Alive": "sum",
-        "Dead": "sum",
-        "PT": "sum"
-    }).reset_index()
-    
-    # Recompute MR from aggregated counts
-    all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0, all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS), np.nan)
-    
-    # Sort and compute time index
-    # In MC mode, group by mc_id as well to preserve separate iterations
-    sort_cols = ["Dose", "DateDied"]
-    groupby_for_t = ["Dose"]
-    if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
-        sort_cols = ["mc_id"] + sort_cols
-        groupby_for_t = ["mc_id", "Dose"]
-    all_ages_agg = all_ages_agg.sort_values(sort_cols)
-    all_ages_agg["t"] = all_ages_agg.groupby(groupby_for_t).cumcount().astype(float)
-    
-    # All-ages cohort is computed by aggregating across YearOfBirth buckets.
-    # In KCOR 6.0, this uses gamma-frailty inversion; however, for compatibility (SA mode / rollback),
-    # we fall back to the legacy slope-based normalization when kcor6_params_map is not provided.
-    all_ages_agg["MR_smooth"] = all_ages_agg["MR"]  # Use raw MR for smoothing
-    all_ages_agg["hazard_raw"] = hazard_from_mr(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
-    all_ages_agg["MR_adj"] = all_ages_agg["MR"]  # Keep MR_adj = MR (normalization is at hazard/cumhaz level)
+    all_ages_agg = df_sorted[df_sorted["YearOfBirth"] == -2].copy()
+    if not all_ages_agg.empty:
+        dedupe_cols = ["Dose", "DateDied"]
+        if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+            dedupe_cols = ["mc_id"] + dedupe_cols
+        all_ages_agg = all_ages_agg.drop_duplicates(subset=dedupe_cols, keep="first")
 
     if kcor6_params_map is not None:
         # KCOR 6.0 path: gamma-frailty inversion
@@ -3998,7 +4045,7 @@ def build_kcor_o_rows(df, sheet_name):
     # In MC mode, group by mc_id as well
     by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(groupby_cols_o, sort=False)}
     dose_pairs = get_dose_pairs(sheet_name)
-    for yob in df["YearOfBirth"].unique():
+    for yob in [y for y in df["YearOfBirth"].unique() if y != -2]:
         for num, den in dose_pairs:
             # In MC mode, need to process each mc_id separately
             mc_id_values_o = [None]
@@ -4086,7 +4133,7 @@ def build_kcor_ns_rows(df, sheet_name):
     # Dictionary comprehension handles both 2-tuple (non-MC) and 3-tuple (MC) keys
     by_age_dose = {key: g.sort_values("DateDied") for key, g in df_ns.groupby(groupby_cols_ns, sort=False)}
     dose_pairs = get_dose_pairs(sheet_name)
-    for yob in df_ns["YearOfBirth"].unique():
+    for yob in [y for y in df_ns["YearOfBirth"].unique() if y != -2]:
         for num, den in dose_pairs:
             # In MC mode, process each mc_id separately
             mc_id_values_ns = [None]
@@ -4260,7 +4307,7 @@ def build_kcor_o_deaths_details(df, sheet_name):
     out_rows = []
     by_age_dose = {(y,d): g.sort_values("DateDied") for (y,d), g in df.groupby(["YearOfBirth","Dose"], sort=False)}
     dose_pairs = get_dose_pairs(sheet_name)
-    for yob in df["YearOfBirth"].unique():
+    for yob in [y for y in df["YearOfBirth"].unique() if y != -2]:
         for num, den in dose_pairs:
             gv = by_age_dose.get((yob, num))
             gu = by_age_dose.get((yob, den))
@@ -5624,31 +5671,42 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Optional COVID correction: apply only to unvaccinated (Dose == 0)
         covid_cfg = get_covid_correction_config()
-        if covid_cfg is not None:
-            start_dt = covid_cfg["start_dt"]
-            end_dt = covid_cfg["end_dt"]
-            factor = covid_cfg["factor"]
-            dose0_mask = df["Dose"] == 0
-            if dose0_mask.any():
-                h0_series = (
-                    df[dose0_mask & (df["DateDied"] == start_dt)]
-                    .groupby("YearOfBirth")["hazard_raw"]
-                    .mean()
+        apply_covid_correction_in_place(df, covid_cfg)
+        
+        # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing
+        if -2 not in df["YearOfBirth"].values:
+            df_for_agg = df[df["YearOfBirth"] > 0].copy()
+            if not df_for_agg.empty:
+                groupby_cols = ["Dose", "DateDied"]
+                if MONTE_CARLO_MODE and "mc_id" in df_for_agg.columns:
+                    groupby_cols = ["mc_id"] + groupby_cols
+                all_ages_agg = df_for_agg.groupby(groupby_cols).agg({
+                    "ISOweekDied": "first",
+                    "Alive": "sum",
+                    "Dead": "sum",
+                    "PT": "sum"
+                }).reset_index()
+                all_ages_agg["MR"] = np.where(
+                    all_ages_agg["PT"] > 0,
+                    all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
+                    np.nan
                 )
-                if not h0_series.empty:
-                    h0_per_row = df.loc[dose0_mask, "YearOfBirth"].map(h0_series)
-                    adjust_mask = (
-                        dose0_mask
-                        & (df["DateDied"] > start_dt)
-                        & (df["DateDied"] <= end_dt)
-                        & h0_per_row.notna()
-                    )
-                    if adjust_mask.any():
-                        df.loc[adjust_mask, "hazard_raw"] = (
-                            (df.loc[adjust_mask, "hazard_raw"] - h0_per_row.loc[adjust_mask]) / factor
-                            + h0_per_row.loc[adjust_mask]
-                        )
-                        df["hazard_raw"] = np.clip(df["hazard_raw"], 0.0, None)
+                sort_cols = ["Dose", "DateDied"]
+                groupby_for_t = ["Dose"]
+                if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+                    sort_cols = ["mc_id"] + sort_cols
+                    groupby_for_t = ["mc_id", "Dose"]
+                all_ages_agg = all_ages_agg.sort_values(sort_cols)
+                all_ages_agg["t"] = all_ages_agg.groupby(groupby_for_t).cumcount().astype(float)
+                all_ages_agg["YearOfBirth"] = -2
+                all_ages_agg["hazard_raw"] = hazard_from_mr(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
+                all_ages_agg["MR_adj"] = all_ages_agg["MR"]
+                all_ages_agg["slope"] = 0.0
+                all_ages_agg["scale_factor"] = 1.0
+                if "MR_smooth" in df.columns:
+                    all_ages_agg["MR_smooth"] = all_ages_agg["MR"]
+                apply_covid_correction_in_place(all_ages_agg, covid_cfg)
+                df = pd.concat([df, all_ages_agg], ignore_index=True)
 
         # Initialize adjusted hazard equal to raw
         df["hazard_adj"] = df["hazard_raw"]
