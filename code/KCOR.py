@@ -169,7 +169,8 @@ VERSION = "v6.1"                # KCOR version number
 #        - where h0 is the hazard_raw value at the COVID_CORRECTION_START_DATE for the given YearOfBirth.
 #        - The factor is specified in the dataset's yaml file, e.g., data/Czech/Czech.yaml.
 #        - The adjustment is only applied only if the hazard_raw is greater than the h0 value for the given YearOfBirth.
-#        - See documentation/specs/KCORv6/covid_adjustment.md for more details
+#        - See documentation/specs/KCORv6/covid_adjustment.md for more details.
+#        - Added quietWindow configuration to the dataset yaml file, e.g., data/Czech/Czech.yaml.
 #        - Also computed -2 cohort at the hazard stage so the COVID correction is applied to all cohorts.
 #        - 1/24/2026: v6.1 implementation started and completed.
 #        - Noticed that for the 2021_24 cohort 2 v 0, the KCOR values are lower than before we introduced the gamma frailty
@@ -179,6 +180,10 @@ VERSION = "v6.1"                # KCOR version number
 #        - 1. We switched to the exact hazard transform equation: h(t) = -ln(1 - MR) 
 #        - 2. We changed the quiet window which used to be (2022-24 to 2024-16) to a narrower window using the full CY 2023.
 #        - 3. We changed the KCOR value reporting date in the summary.log to use 1 year post enrollment.
+#        - The shift was caused by the window. In general, larger windows are better.
+#        - Also, fixed bug so now config parameters set by the yaml file are printed in the summary.log whereas 
+#        - before, they were taken from the defaults so this was very misleading.
+#        - config parameters are now printed in the summary.log for the COVID correction.
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
@@ -897,6 +902,16 @@ def in_quiet_window(iso_year: int, iso_week: int) -> bool:
     return KCOR6_QUIET_START_INT <= x <= KCOR6_QUIET_END_INT
 
 
+def _set_kcor6_quiet_window(start_iso: str, end_iso: str):
+    """Override KCOR6 quiet window (ISO weeks, inclusive)."""
+    global KCOR6_QUIET_START_ISO, KCOR6_QUIET_END_ISO
+    global KCOR6_QUIET_START_INT, KCOR6_QUIET_END_INT
+    KCOR6_QUIET_START_ISO = str(start_iso)
+    KCOR6_QUIET_END_ISO = str(end_iso)
+    KCOR6_QUIET_START_INT = iso_label_to_int(KCOR6_QUIET_START_ISO)
+    KCOR6_QUIET_END_INT = iso_label_to_int(KCOR6_QUIET_END_ISO)
+
+
 def H_model(t, k, theta):
     """KCOR 6.0 cumulative-hazard model:
 
@@ -1066,6 +1081,22 @@ def _load_dataset_dose_pairs_config():
                                 print(f"[DEBUG] Loaded COVID correction config from {_dataset_yaml_path}", flush=True)
                         except Exception:
                             _DATASET_COVID_CORRECTION_CACHE = {}
+                _quiet_config = _dataset_config.get('quietWindow', {})
+                if isinstance(_quiet_config, dict):
+                    quiet_start = _quiet_config.get('startDate')
+                    quiet_end = _quiet_config.get('endDate')
+                    if quiet_start and quiet_end:
+                        qs_norm = str(quiet_start).strip().replace("_", "-")
+                        qe_norm = str(quiet_end).strip().replace("_", "-")
+                        try:
+                            qs_int = iso_label_to_int(qs_norm)
+                            qe_int = iso_label_to_int(qe_norm)
+                            if qs_int <= qe_int:
+                                _set_kcor6_quiet_window(qs_norm, qe_norm)
+                                if DEBUG_VERBOSE:
+                                    print(f"[DEBUG] Loaded quiet window config from {_dataset_yaml_path}", flush=True)
+                        except Exception:
+                            pass
         except Exception as _e_config:
             # Only print warning for non-ImportError exceptions (file read errors, etc.)
             if DEBUG_VERBOSE and 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower():
@@ -4477,6 +4508,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"Output File: {out_path}")
         dual_print(f"Log File: {log_file_display}")
 
+    # Ensure dataset YAML is loaded before printing config parameters
+    _load_dataset_dose_pairs_config()
+
     # Monte Carlo enrollment cohort (controls dose-pairs + reporting-date label for MC runs)
     mc_enrollment_label = None
     mc_enrollment_iso = None
@@ -4518,6 +4552,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  Reporting date calculation: 1 year from enrollment date")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
+    covid_cfg = get_covid_correction_config()
+    if covid_cfg is None:
+        dual_print("  COVID_CORRECTION      = disabled")
+    else:
+        start_iso = covid_cfg["start_dt"].strftime("%G-%V")
+        end_iso = covid_cfg["end_dt"].strftime("%G-%V")
+        dual_print(f"  COVID_CORRECTION      = {start_iso}..{end_iso}, factor={covid_cfg['factor']}")
     dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
     dual_print("="*80)
     dual_print("")
