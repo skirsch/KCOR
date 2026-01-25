@@ -8,12 +8,18 @@ PYTHON ?= python3
 RECORDS_CSV      = ../data/$(DATASET)/records.csv
 # Optional KRF input produced by dataset converters
 RECORDS_KRF      = ../data/$(DATASET)/krf.csv
+# Optional KRF inputs (avoid forcing rebuilds when absent)
+KRF_INPUTS       = $(wildcard $(RECORDS_KRF))
 # Raw Czech CSV (compressed asset) — used only for datasets that ship this file
 RAW_CSV_GZ       = ../data/$(DATASET)/Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gz
 # Keep the same base name when unzipped (…csv.gz -> …csv)
 RAW_CSV          = $(RAW_CSV_GZ:.gz=)
+# Optional raw inputs (avoid forcing rebuilds when absent)
+# Only track the .gz as a dependency; the .csv is an intermediate artifact.
+RAW_CSV_INPUTS   = $(wildcard $(RAW_CSV_GZ))
 # Always target the standardized records.csv as input; provide a single rule to build it
 INPUT_DATA       = $(RECORDS_CSV)
+DATASET_YAML     = ../data/$(DATASET)/$(DATASET).yaml
 CMR_OUTPUT       = ../data/$(DATASET)/KCOR_CMR.xlsx
 KCOR_OUTPUT      = ../data/$(DATASET)/KCOR.xlsx
 VARIABLE_OUTPUT  = ../data/$(DATASET)/KCOR_variable.xlsx
@@ -28,7 +34,7 @@ KCOR_MC_OUTPUT   = ../data/$(DATASET)/KCOR_MC.xlsx
 KCOR: $(KCOR_OUTPUT)
 
 # KCOR analysis depends on CMR output and KCOR.py script
-$(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py
+$(KCOR_OUTPUT): $(CMR_OUTPUT) KCOR.py $(DATASET_YAML)
 	@echo "Running KCOR analysis..."
 	$(PYTHON) KCOR.py $(CMR_OUTPUT) $(KCOR_OUTPUT) "Primary Analysis" KCOR_summary.log
 	@echo "KCOR analysis complete!"
@@ -68,7 +74,7 @@ force_krf:
 # Build standardized records.csv from available inputs (prefer krf.csv)
 # Note: $(RECORDS_KRF) is listed as dependency but is optional - it will only be built if converter exists
 # Also depends on krf_adapter.py so changes to the adapter trigger a rebuild
-$(RECORDS_CSV): $(RECORDS_KRF) krf_adapter.py | ../data/$(DATASET)
+$(RECORDS_CSV): $(KRF_INPUTS) krf_adapter.py $(RAW_CSV_INPUTS) | ../data/$(DATASET)
 	@set -e; \
 	if [ -f "$(RECORDS_KRF)" ]; then \
 	  echo "Adapting KRF CSV to Czech-like input..."; \

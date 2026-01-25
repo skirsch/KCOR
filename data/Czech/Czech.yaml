@@ -1,16 +1,17 @@
 # Czech dataset yaml file
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
+# Changing this file will cause KCOR.py to be re-run, but NOT KCOR_CMR.py (since it's rare you change the enrollment dates)
 
 schema: Czech-1.0
 timezone: local
-observationEndDate: '2025-12-31'
+observationEndDate: '2025-12-31'    # not used for the Czech dataset because it doesn't go though a converter.
 birthBandYears: 5
 
 # the COVID correction ONLY will scale values ABOVE the value of the start date until the end date.
 covidCorrection:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  factor: 1.0    # 1.0 means no adjustment. 1.4 is the minimum conservative adjustment factor.
+  factor: 1.7    # 1.0 means no adjustment. 1.7 is the adjustment factor for a 3X mortality difference between cohorts.
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Enrollment dates for cohort analysis (ISO week format: YYYY-WW)
