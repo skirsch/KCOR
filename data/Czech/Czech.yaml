@@ -11,7 +11,7 @@ birthBandYears: 5
 covidCorrection:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  factor: 1.7    # 1.0 means no adjustment. 1.7 is the adjustment factor for a 3X mortality difference between cohorts.
+  factor: 2.0    # 1.0 means no adjustment. 1.7 is the adjustment factor for a 3X mortality difference between cohorts.
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Enrollment dates for cohort analysis (ISO week format: YYYY-WW)
