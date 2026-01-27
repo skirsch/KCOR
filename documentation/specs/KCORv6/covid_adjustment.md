@@ -21,8 +21,11 @@ The correction is simple.
 
 Look at h(t) at the COVID_CORRECTION_START_DATE. call this h0
 
-Apply the adjustment formula from after the start date to the END_DATE inclusive:
-h'(t) = (h(t)-h0)/COVID_CORRECTION_FACTOR + h0
+Apply the adjustment formula from after the COVID wave START to the END date inclusive
+
+h0=h(t0) where t0=start of COVID wave
+if h(t)>h0:
+    h'(t) = (h(t)-h0)/COVID_CORRECTION_FACTOR + h0
 
 That's it.
 
