@@ -24,7 +24,7 @@ PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -303,6 +303,12 @@ slope-test: $(VENV_PYTHON)
 	cd test/slope_normalization && $(abspath $(VENV_PYTHON)) test.py
 	@echo "Slope normalization test complete!"
 
+# Quiet-window sensitivity scan (Czech 2021_24)
+quiet-window: $(VENV_PYTHON)
+	@echo "Running quiet-window scan (Czech 2021_24)..."
+	$(abspath $(VENV_PYTHON)) scripts/quiet_window_scan_theta_czech_2021_24.py
+	@echo "Quiet-window scan complete!"
+
 # Simulation grid (operating characteristics and failure-mode diagnostics)
 sim_grid: $(VENV_PYTHON)
 	$(MAKE) -C test/sim_grid all PYTHON=$(abspath $(VENV_PYTHON))
@@ -571,6 +577,7 @@ help:
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
 	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid)"
+	@echo "  quiet-window    - Run quiet-window scan (scripts/quiet_window_scan_theta_czech_2021_24.py)"
 	@echo "  cox-bias        - Run Cox bias demonstration simulation (test/sim_grid)"
 	@echo "  cox-bias-figures - Generate Cox bias demonstration figures"
 	@echo "  copy-cox-bias-figures - Copy Cox bias figures to preprint directory"
