@@ -350,6 +350,11 @@ distinguished here:
   settings.
 \end{itemize}
 
+In COVID-era applications, an additional complication arises from
+epidemic-wave non-proportional hazards that interact with baseline
+frailty; this COVID-specific effect is discussed separately as a
+limitation in Section 5.4.
+
 \begin{quote}
 \textbf{Box 1. Two fundamentally different strategies for cohort
 comparability}
@@ -1026,8 +1031,8 @@ required. \textbf{Numerical stability at vanishing frailty variance.}\\
 When the fitted frailty variance satisfies
 \(\hat\theta_d < \varepsilon\) (with \(\varepsilon\) set to a small
 numerical tolerance, e.g., \(10^{-8}\)), the gamma-frailty inversion in
-Eq. (@eq:normalized-cumhazard) is evaluated in the \(\theta \to 0\)
-limit, yielding \[
+Eq. ((\ref{eq:normalized-cumhazard})) is evaluated in the
+\(\theta \to 0\) limit, yielding \[
 \tilde H_{0,d}(t)=H_{\mathrm{obs},d}(t),
 \] which corresponds to the standard Nelson--Aalen cumulative hazard.
 This avoids numerical instability from evaluating
@@ -1494,7 +1499,8 @@ reported.
 \subsection{3. Results}\label{results}
 
 Negative controls test false positives, positive controls test power,
-and stress tests probe diagnostic failure modes.
+and stress tests probe diagnostic failure modes (see §5.4 for
+COVID-specific non-proportionality considerations).
 
 This section is the core validation claim of KCOR:
 
@@ -1848,6 +1854,16 @@ counterfactual outcomes under hypothetical interventions.
   normalization.
 \end{itemize}
 
+Sensitivity analyses in this work are intentionally embedded alongside
+the assumptions they interrogate, rather than consolidated into a single
+omnibus robustness section. Parameters governing quiet-window
+identification, frailty normalization, aggregation, and uncertainty
+estimation are stress-tested through targeted negative controls,
+pathological simulations, and diagnostic failure demonstrations. This
+structure reflects the diagnostic-first philosophy of KCOR: robustness
+is assessed by whether assumptions remain identifiable and diagnostics
+pass, not by tuning parameters to stabilize point estimates.
+
 \textbf{Interpretation of sub-nominal bootstrap coverage}
 
 In Table \ref{tbl:bootstrap_coverage}, empirical coverage falls below
@@ -2025,6 +2041,35 @@ often selection-induced depletion dominates observed hazard curvature
 and how frequently post-normalization trajectories remain stable under
 negative controls.
 
+\subsubsection{5.4 COVID-specific non-proportional hazard
+amplification}\label{covid-specific-non-proportional-hazard-amplification}
+
+COVID-19 mortality exhibits a pronounced departure from proportional
+hazards, with epidemic waves disproportionately amplifying risk among
+individuals with higher underlying frailty or baseline all-cause
+mortality risk.\textsuperscript{14} This phenomenon represents a
+distinct class of bias from both static and dynamic healthy-vaccinee
+effects. Even after frailty-driven depletion is neutralized, wave-period
+mortality can remain differentially distorted because external infection
+pressure interacts super-linearly with baseline vulnerability.
+
+KCOR does not attempt to correct this COVID-specific
+non-proportionality. The method is designed to isolate and neutralize
+bias arising from selection-induced depletion under diagnostically
+identifiable quiet windows, not to model or remove hazard amplification
+during acute external shocks. As a result, KCOR analyses spanning major
+epidemic waves should be interpreted as descriptive unless additional
+adjustments are applied.
+
+In principle, further mitigation is possible by incorporating
+wave-specific adjustments to the baseline hazard---such as
+stratification, exclusion of wave periods, or rescaling using external
+intensity proxies (e.g., excess mortality or surveillance-based
+indicators). However, these approaches require additional assumptions
+about separability and identifiability that are context- and
+dataset-specific. Accordingly, such COVID-wave adjustments are beyond
+the scope of the present work.
+
 \subsection{6. Conclusion}\label{conclusion}
 
 KCOR addresses selection-induced hazard curvature in retrospective
@@ -2055,7 +2100,7 @@ validation results use synthetic data. Empirical negative-control
 figures (Figures \ref{fig:neg_control_10yr} and
 \ref{fig:neg_control_20yr}) use aggregated cohort summaries derived from
 Czech Republic administrative data; no record-level data are shared in
-this manuscript.\textsuperscript{14}
+this manuscript.\textsuperscript{15}
 
 \subsubsection{Consent for publication}\label{consent-for-publication}
 
@@ -2225,8 +2270,17 @@ doi:\href{https://doi.org/10.1002/9781118032985}{10.1002/9781118032985}}
 non-randomised intervention studies. \emph{Health Technol Assess}.
 2003;7(27). doi:\href{https://doi.org/10.3310/hta7270}{10.3310/hta7270}}
 
-\bibitem[\citeproctext]{ref-sanca2024}
+\bibitem[\citeproctext]{ref-levin2020}
 \CSLLeftMargin{14. }%
+\CSLRightInline{Levin AT, Hanage WP, Owusu-Boaitey N, Cochran KB, Walsh
+SP, Meyerowitz-Katz G. Assessing the age specificity of infection
+fatality rates for COVID-19: systematic review, meta-analysis, and
+public policy implications. \emph{Eur J Epidemiol}.
+2020;35(12):1123-1138.
+doi:\href{https://doi.org/10.1007/s10654-020-00698-1}{10.1007/s10654-020-00698-1}}
+
+\bibitem[\citeproctext]{ref-sanca2024}
+\CSLLeftMargin{15. }%
 \CSLRightInline{Šanca O, Jarkovský J, Klimeš D, et al.
 \emph{Vaccination, Positivity, Hospitalization for COVID-19, Deaths,
 Long COVID and Comorbidities in People in the Czech Republic}. National

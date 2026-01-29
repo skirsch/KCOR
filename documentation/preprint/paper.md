@@ -46,6 +46,8 @@ Two mechanisms often lumped as the 'healthy vaccinee effect' (HVE) are distingui
 
 - **Dynamic HVE:** short-horizon, time-local selection processes around enrollment that create transient hazard suppression immediately after enrollment (e.g., deferral of vaccination during acute illness, administrative timing, or short-term behavioral/health-seeking changes). Dynamic HVE is operationally addressed by prespecifying a skip/stabilization window (§2.7) and can be evaluated empirically by comparing early-period signatures across related cohorts in multi-dose settings.
 
+In COVID-era applications, an additional complication arises from epidemic-wave non-proportional hazards that interact with baseline frailty; this COVID-specific effect is discussed separately as a limitation in Section 5.4.
+
 > **Box 1. Two fundamentally different strategies for cohort comparability**
 >
 > - **Traditional matching and regression approaches:** attempt to construct comparable cohorts by matching or adjusting *characteristics of living individuals* at baseline or over follow-up, and then estimating effects via a fitted hazard model (e.g., Cox proportional hazards). This implicitly assumes that sufficiently rich covariate information can render cohorts exchangeable with respect to unobserved mortality risk.
@@ -363,7 +365,7 @@ The core identities used in KCOR are given in Equations @eq:hazard-discrete, @eq
 
 KCOR operates on aggregated event counts in discrete time and cumulative-hazard space. Computational complexity scales linearly with the number of time bins and strata rather than the number of individuals, making the method feasible for very large population registries. In practice, KCOR analyses on national-scale datasets (millions of individuals) are memory-bound rather than CPU-bound and can be implemented efficiently using standard vectorized numerical libraries. No iterative optimization over individual-level records is required.
 **Numerical stability at vanishing frailty variance.**  
-When the fitted frailty variance satisfies $\hat\theta_d < \varepsilon$ (with $\varepsilon$ set to a small numerical tolerance, e.g., $10^{-8}$), the gamma-frailty inversion in Eq. (\@eq:normalized-cumhazard) is evaluated in the $\theta \to 0$ limit, yielding
+When the fitted frailty variance satisfies $\hat\theta_d < \varepsilon$ (with $\varepsilon$ set to a small numerical tolerance, e.g., $10^{-8}$), the gamma-frailty inversion in Eq. (@eq:normalized-cumhazard) is evaluated in the $\theta \to 0$ limit, yielding
 $$
 \tilde H_{0,d}(t)=H_{\mathrm{obs},d}(t),
 $$
@@ -565,7 +567,7 @@ KCOR is designed for settings where outcomes are ascertained repeatedly over tim
 
 ## 3. Results
 
-Negative controls test false positives, positive controls test power, and stress tests probe diagnostic failure modes.
+Negative controls test false positives, positive controls test power, and stress tests probe diagnostic failure modes (see §5.4 for COVID-specific non-proportionality considerations).
 
 This section is the core validation claim of KCOR:
 
@@ -683,6 +685,8 @@ KCOR is intentionally diagnostic rather than test-based: it does not attempt to 
 - **Applicability to other outcomes**: Although this paper focuses on all-cause mortality, KCOR is applicable to other irreversible outcomes provided that event timing and risk sets are well defined. Application to cause-specific mortality would require explicit competing-risk definitions and cause-specific hazards, but the normalization logic remains cumulative and descriptive. Extension to non-fatal outcomes such as hospitalization is conceptually straightforward but may require additional attention to outcome definitions, censoring mechanisms, and recurrent events. These considerations affect interpretation rather than the core KCOR framework.
 - **Non-gamma frailty**: The KCOR framework assumes that selection acts approximately multiplicatively through a time-invariant frailty distribution, for which the gamma family provides a convenient and empirically testable approximation. In settings where depletion dynamics are driven by more complex mechanisms—such as time-varying frailty variance, interacting risk factors, or shared frailty correlations within subgroups—the curvature structure exploited by KCOR may be misspecified. In such cases, KCOR diagnostics (e.g., poor curvature fit or unstable fitted frailty variance estimates) serve as indicators of model inadequacy rather than targets for parameter tuning. Extending the framework to accommodate dynamic or correlated frailty structures would require explicit model generalization rather than modification of KCOR normalization steps and is left to future work. Empirically, KCOR's validity depends on curvature removal rather than the specific parametric form; alternative frailty distributions that generate similar depletion geometry would yield equivalent normalization.
 
+Sensitivity analyses in this work are intentionally embedded alongside the assumptions they interrogate, rather than consolidated into a single omnibus robustness section. Parameters governing quiet-window identification, frailty normalization, aggregation, and uncertainty estimation are stress-tested through targeted negative controls, pathological simulations, and diagnostic failure demonstrations. This structure reflects the diagnostic-first philosophy of KCOR: robustness is assessed by whether assumptions remain identifiable and diagnostics pass, not by tuning parameters to stabilize point estimates.
+
 **Interpretation of sub-nominal bootstrap coverage**
 
 In Table @tbl:bootstrap_coverage, empirical coverage falls below the nominal 95% level under non-gamma frailty (89.3%) and sparse-event regimes (87.6%). In both cases, the deviation reflects anti-conservative intervals (intervals that are too narrow), arising primarily from variance underestimation rather than bias in the point estimate. Under non-gamma frailty, the working gamma-frailty approximation no longer captures depletion geometry exactly; under sparse events, limited information in cumulative-hazard space leads to underestimated variability. Importantly, these regimes coincide with degraded KCOR diagnostics (poor fit, residual structure, or parameter instability), and analyses are therefore flagged as weakly identified or not reported in practice. In applied analyses, such cases would fail diagnostics and would not be reported. Sub-nominal coverage thus occurs specifically when KCOR’s assumptions are violated and diagnostics signal non-identifiability, reinforcing the framework’s diagnostic-first and conservative design.
@@ -729,6 +733,14 @@ Increasing model complexity within the Cox regression framework—via random eff
 In finite samples, KCOR precision is driven primarily by the number of events observed over follow-up. In simulation (selection-only null), cohorts of approximately 5,000 per arm yielded stable KCOR estimates with narrow uncertainty, whereas smaller cohorts exhibited appreciable Monte Carlo variability and occasional spurious deviations. Reporting event counts and conducting a simple cohort-size sensitivity check are recommended when applying KCOR to sparse outcomes.
 
 **External validation across interventions.** A natural next step is to apply KCOR to other vaccines and interventions where large-scale individual-level event timing data are available. Many RCTs are underpowered for all-cause mortality and typically do not provide record-level timing needed for KCOR-style hazard-space normalization, while large observational studies often publish only aggregated effect estimates. Where sufficiently detailed time-to-event data exist (registries, integrated health systems, or open individual-level datasets), cross-intervention comparisons can help characterize how often selection-induced depletion dominates observed hazard curvature and how frequently post-normalization trajectories remain stable under negative controls.
+
+### 5.4 COVID-specific non-proportional hazard amplification
+
+COVID-19 mortality exhibits a pronounced departure from proportional hazards, with epidemic waves disproportionately amplifying risk among individuals with higher underlying frailty or baseline all-cause mortality risk. [@levin2020] This phenomenon represents a distinct class of bias from both static and dynamic healthy-vaccinee effects. Even after frailty-driven depletion is neutralized, wave-period mortality can remain differentially distorted because external infection pressure interacts super-linearly with baseline vulnerability.
+
+KCOR does not attempt to correct this COVID-specific non-proportionality. The method is designed to isolate and neutralize bias arising from selection-induced depletion under diagnostically identifiable quiet windows, not to model or remove hazard amplification during acute external shocks. As a result, KCOR analyses spanning major epidemic waves should be interpreted as descriptive unless additional adjustments are applied.
+
+In principle, further mitigation is possible by incorporating wave-specific adjustments to the baseline hazard—such as stratification, exclusion of wave periods, or rescaling using external intensity proxies (e.g., excess mortality or surveillance-based indicators). However, these approaches require additional assumptions about separability and identifiability that are context- and dataset-specific. Accordingly, such COVID-wave adjustments are beyond the scope of the present work.
 
 ## 6. Conclusion
 
