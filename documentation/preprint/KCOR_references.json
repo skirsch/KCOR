@@ -873,5 +873,48 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "kalbfleisch2002",
+		"type": "book",
+		"citation-key": "kalbfleisch2002",
+		"collection-title": "Wiley Series in Probability and Statistics",
+		"DOI": "10.1002/9781118032985",
+		"edition": "1",
+		"ISBN": "978-0-471-36357-6",
+		"language": "en",
+		"license": "http://doi.wiley.com/10.1002/tdm_license_1.1",
+		"publisher": "Wiley",
+		"source": "DOI.org (Crossref)",
+		"title": "The Statistical Analysis of Failure Time Data",
+		"URL": "https://onlinelibrary.wiley.com/doi/book/10.1002/9781118032985",
+		"author": [
+			{
+				"family": "Kalbfleisch",
+				"given": "John D."
+			},
+			{
+				"family": "Prentice",
+				"given": "Ross L."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					28
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2002",
+					8,
+					26
+				]
+			]
+		}
 	}
 ]
