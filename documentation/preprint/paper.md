@@ -524,7 +524,7 @@ Across increasing values of $\theta$, Cox regression produced progressively larg
 
 These results indicate that **frailty heterogeneity alone is sufficient to induce spurious hazard ratios in Cox regression**, while KCOR returns a null result under the same conditions.
 
-Table @tbl:cox_bias_demo reports numerical summaries of the Cox-vs-KCOR behavior across the frailty grid.
+Table @tbl:cox_bias_demo reports numerical summaries of the Cox-vs-KCOR behavior across the frailty grid. Small residual deviations in the asymptotic level are expected under extreme frailty heterogeneity and are negligible relative to the distortions observed under Cox; the diagnostic criterion is slope stability rather than exact unity. 
 
 Additional Cox HR results from the same synthetic-null grid are shown in Figure @fig:cox_bias_hr.
 
