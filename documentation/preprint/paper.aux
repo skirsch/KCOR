@@ -111,62 +111,64 @@
 \newlabel{fig:cox_bias_hr}{{2}{15}{Cox regression produces spurious non-null hazard ratios under a \emph {synthetic null} as frailty heterogeneity increases. Hazard ratios (with 95\% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in frailty variance (\(\theta \)). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards}{figure.2}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \(\mathrm {KCOR}(t)\) remains null under a synthetic null across increasing frailty heterogeneity. \(\mathrm {KCOR}(t)\) asymptotes remain near 1 across \(\mittheta \) in the same simulations, consistent with correct null behavior after depletion normalization. Uncertainty bands (95\% bootstrap intervals) are shown but are narrow due to large sample sizes.}}{16}{figure.3}\protected@file@percent }
 \newlabel{fig:cox_bias_kcor}{{3}{16}{\(\mathrm {KCOR}(t)\) remains null under a synthetic null across increasing frailty heterogeneity. \(\mathrm {KCOR}(t)\) asymptotes remain near 1 across \(\theta \) in the same simulations, consistent with correct null behavior after depletion normalization. Uncertainty bands (95\% bootstrap intervals) are shown but are narrow due to large sample sizes}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{3. Results}{17}{subsection*.52}\protected@file@percent }
-\newlabel{results}{{}{17}{3. Results}{subsection*.52}{}}
-\@writefile{toc}{\contentsline {subsubsection}{3.1 Negative controls (selection-only null)}{17}{subsubsection*.53}\protected@file@percent }
-\newlabel{negative-controls-selection-only-null}{{}{17}{3.1 Negative controls (selection-only null)}{subsubsection*.53}{}}
-\@writefile{toc}{\contentsline {paragraph}{3.1.1 Fully synthetic negative control (in-model gamma-frailty null)}{17}{paragraph*.54}\protected@file@percent }
-\newlabel{fully-synthetic-negative-control-in-model-gamma-frailty-null}{{}{17}{3.1.1 Fully synthetic negative control (in-model gamma-frailty null)}{paragraph*.54}{}}
-\@writefile{toc}{\contentsline {paragraph}{3.1.2 Empirical negative control using national registry data (Czech Republic)}{17}{paragraph*.55}\protected@file@percent }
-\newlabel{empirical-negative-control-using-national-registry-data-czech-republic}{{}{17}{3.1.2 Empirical negative control using national registry data (Czech Republic)}{paragraph*.55}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \(\mathrm {KCOR}(t)\) is expected to be horizontal under the null, subject to sampling stochasticity, consistent with the pseudo-null construction. Curves are shown as anchored \(\mathrm {KCOR}(t; t_0)\), i.e., \(\mathrm {KCOR}(t)/\mathrm {KCOR}(t_0)\), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).}}{18}{figure.4}\protected@file@percent }
-\newlabel{fig:neg_control_10yr}{{4}{18}{Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \(\mathrm {KCOR}(t)\) is expected to be horizontal under the null, subject to sampling stochasticity, consistent with the pseudo-null construction. Curves are shown as anchored \(\mathrm {KCOR}(t; t_0)\), i.e., \(\mathrm {KCOR}(t)/\mathrm {KCOR}(t_0)\), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information (SI))}{figure.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{3.2 Positive controls (injected effects)}{19}{subsubsection*.56}\protected@file@percent }
-\newlabel{positive-controls-injected-effects}{{}{19}{3.2 Positive controls (injected effects)}{subsubsection*.56}{}}
-\@writefile{toc}{\contentsline {subsubsection}{3.3 Stress tests (frailty misspecification)}{19}{subsubsection*.57}\protected@file@percent }
-\newlabel{stress-tests-frailty-misspecification}{{}{19}{3.3 Stress tests (frailty misspecification)}{subsubsection*.57}{}}
-\@writefile{toc}{\contentsline {paragraph}{3.3.1 Frailty misspecification robustness}{19}{paragraph*.58}\protected@file@percent }
-\newlabel{frailty-misspecification-robustness}{{}{19}{3.3.1 Frailty misspecification robustness}{paragraph*.58}{}}
-\@writefile{toc}{\contentsline {subsection}{4. Discussion}{19}{subsection*.59}\protected@file@percent }
-\newlabel{discussion}{{}{19}{4. Discussion}{subsection*.59}{}}
-\@writefile{toc}{\contentsline {subsubsection}{4.1 Limits of attribution and non-identifiability}{19}{subsubsection*.60}\protected@file@percent }
-\newlabel{limits-of-attribution-and-non-identifiability}{{}{19}{4.1 Limits of attribution and non-identifiability}{subsubsection*.60}{}}
-\@writefile{toc}{\contentsline {subsubsection}{4.2 What KCOR estimates}{20}{subsubsection*.61}\protected@file@percent }
-\newlabel{what-kcor-estimates}{{}{20}{4.2 What KCOR estimates}{subsubsection*.61}{}}
-\@writefile{toc}{\contentsline {subsubsection}{4.3 Relationship to negative control methods}{20}{subsubsection*.62}\protected@file@percent }
-\newlabel{relationship-to-negative-control-methods}{{}{20}{4.3 Relationship to negative control methods}{subsubsection*.62}{}}
-\@writefile{toc}{\contentsline {subsubsection}{4.4 Practical guidelines for implementation}{20}{subsubsection*.63}\protected@file@percent }
-\newlabel{practical-guidelines-for-implementation}{{}{20}{4.4 Practical guidelines for implementation}{subsubsection*.63}{}}
-\@writefile{toc}{\contentsline {subsection}{5. Limitations}{20}{subsection*.64}\protected@file@percent }
-\newlabel{limitations}{{}{20}{5. Limitations}{subsection*.64}{}}
-\@writefile{toc}{\contentsline {subsubsection}{5.1 Failure modes and diagnostics}{21}{subsubsection*.65}\protected@file@percent }
-\newlabel{failure-modes-and-diagnostics}{{}{21}{5.1 Failure modes and diagnostics}{subsubsection*.65}{}}
-\@writefile{toc}{\contentsline {subsubsection}{5.2 Conservativeness and edge-case detection limits}{22}{subsubsection*.66}\protected@file@percent }
-\newlabel{conservativeness-and-edge-case-detection-limits}{{}{22}{5.2 Conservativeness and edge-case detection limits}{subsubsection*.66}{}}
-\@writefile{toc}{\contentsline {subsubsection}{5.3 Data requirements and external validation}{23}{subsubsection*.67}\protected@file@percent }
-\newlabel{data-requirements-and-external-validation}{{}{23}{5.3 Data requirements and external validation}{subsubsection*.67}{}}
-\@writefile{toc}{\contentsline {subsection}{6. Conclusion}{23}{subsection*.68}\protected@file@percent }
-\newlabel{conclusion}{{}{23}{6. Conclusion}{subsection*.68}{}}
-\@writefile{toc}{\contentsline {subsection}{Declarations}{24}{subsection*.69}\protected@file@percent }
-\newlabel{declarations}{{}{24}{Declarations}{subsection*.69}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Ethics approval and consent to participate}{24}{subsubsection*.70}\protected@file@percent }
-\newlabel{ethics-approval-and-consent-to-participate}{{}{24}{Ethics approval and consent to participate}{subsubsection*.70}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Consent for publication}{24}{subsubsection*.71}\protected@file@percent }
-\newlabel{consent-for-publication}{{}{24}{Consent for publication}{subsubsection*.71}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Data availability}{24}{subsubsection*.72}\protected@file@percent }
-\newlabel{data-availability}{{}{24}{Data availability}{subsubsection*.72}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Software availability}{24}{subsubsection*.73}\protected@file@percent }
-\newlabel{software-availability}{{}{24}{Software availability}{subsubsection*.73}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Use of artificial intelligence tools}{24}{subsubsection*.74}\protected@file@percent }
-\newlabel{use-of-artificial-intelligence-tools}{{}{24}{Use of artificial intelligence tools}{subsubsection*.74}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Competing interests}{24}{subsubsection*.75}\protected@file@percent }
-\newlabel{competing-interests}{{}{24}{Competing interests}{subsubsection*.75}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Funding}{24}{subsubsection*.76}\protected@file@percent }
-\newlabel{funding}{{}{24}{Funding}{subsubsection*.76}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Authors' contributions}{25}{subsubsection*.77}\protected@file@percent }
-\newlabel{authors-contributions}{{}{25}{Authors' contributions}{subsubsection*.77}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Acknowledgements}{25}{subsubsection*.78}\protected@file@percent }
-\newlabel{acknowledgements}{{}{25}{Acknowledgements}{subsubsection*.78}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.14 Data requirements and feasible study designs}{17}{subsubsection*.52}\protected@file@percent }
+\newlabel{data-requirements-and-feasible-study-designs}{{}{17}{2.14 Data requirements and feasible study designs}{subsubsection*.52}{}}
+\@writefile{toc}{\contentsline {subsection}{3. Results}{17}{subsection*.53}\protected@file@percent }
+\newlabel{results}{{}{17}{3. Results}{subsection*.53}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.1 Negative controls (selection-only null)}{17}{subsubsection*.54}\protected@file@percent }
+\newlabel{negative-controls-selection-only-null}{{}{17}{3.1 Negative controls (selection-only null)}{subsubsection*.54}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.1.1 Fully synthetic negative control (in-model gamma-frailty null)}{17}{paragraph*.55}\protected@file@percent }
+\newlabel{fully-synthetic-negative-control-in-model-gamma-frailty-null}{{}{17}{3.1.1 Fully synthetic negative control (in-model gamma-frailty null)}{paragraph*.55}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.1.2 Empirical negative control using national registry data (Czech Republic)}{18}{paragraph*.56}\protected@file@percent }
+\newlabel{empirical-negative-control-using-national-registry-data-czech-republic}{{}{18}{3.1.2 Empirical negative control using national registry data (Czech Republic)}{paragraph*.56}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.2 Positive controls (injected effects)}{18}{subsubsection*.57}\protected@file@percent }
+\newlabel{positive-controls-injected-effects}{{}{18}{3.2 Positive controls (injected effects)}{subsubsection*.57}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.3 Stress tests (frailty misspecification)}{18}{subsubsection*.58}\protected@file@percent }
+\newlabel{stress-tests-frailty-misspecification}{{}{18}{3.3 Stress tests (frailty misspecification)}{subsubsection*.58}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.3.1 Frailty misspecification robustness}{18}{paragraph*.59}\protected@file@percent }
+\newlabel{frailty-misspecification-robustness}{{}{18}{3.3.1 Frailty misspecification robustness}{paragraph*.59}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \(\mathrm {KCOR}(t)\) is expected to be horizontal under the null, subject to sampling stochasticity, consistent with the pseudo-null construction. Curves are shown as anchored \(\mathrm {KCOR}(t; t_0)\), i.e., \(\mathrm {KCOR}(t)/\mathrm {KCOR}(t_0)\), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).}}{19}{figure.4}\protected@file@percent }
+\newlabel{fig:neg_control_10yr}{{4}{19}{Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \(\mathrm {KCOR}(t)\) is expected to be horizontal under the null, subject to sampling stochasticity, consistent with the pseudo-null construction. Curves are shown as anchored \(\mathrm {KCOR}(t; t_0)\), i.e., \(\mathrm {KCOR}(t)/\mathrm {KCOR}(t_0)\), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information (SI))}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{4. Discussion}{20}{subsection*.60}\protected@file@percent }
+\newlabel{discussion}{{}{20}{4. Discussion}{subsection*.60}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.1 Limits of attribution and non-identifiability}{20}{subsubsection*.61}\protected@file@percent }
+\newlabel{limits-of-attribution-and-non-identifiability}{{}{20}{4.1 Limits of attribution and non-identifiability}{subsubsection*.61}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.2 What KCOR estimates}{20}{subsubsection*.62}\protected@file@percent }
+\newlabel{what-kcor-estimates}{{}{20}{4.2 What KCOR estimates}{subsubsection*.62}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.3 Relationship to negative control methods}{20}{subsubsection*.63}\protected@file@percent }
+\newlabel{relationship-to-negative-control-methods}{{}{20}{4.3 Relationship to negative control methods}{subsubsection*.63}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.4 Practical guidelines for implementation}{21}{subsubsection*.64}\protected@file@percent }
+\newlabel{practical-guidelines-for-implementation}{{}{21}{4.4 Practical guidelines for implementation}{subsubsection*.64}{}}
+\@writefile{toc}{\contentsline {subsection}{5. Limitations}{21}{subsection*.65}\protected@file@percent }
+\newlabel{limitations}{{}{21}{5. Limitations}{subsection*.65}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.1 Failure modes and diagnostics}{22}{subsubsection*.66}\protected@file@percent }
+\newlabel{failure-modes-and-diagnostics}{{}{22}{5.1 Failure modes and diagnostics}{subsubsection*.66}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.2 Conservativeness and edge-case detection limits}{23}{subsubsection*.67}\protected@file@percent }
+\newlabel{conservativeness-and-edge-case-detection-limits}{{}{23}{5.2 Conservativeness and edge-case detection limits}{subsubsection*.67}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.3 Data requirements and external validation}{23}{subsubsection*.68}\protected@file@percent }
+\newlabel{data-requirements-and-external-validation}{{}{23}{5.3 Data requirements and external validation}{subsubsection*.68}{}}
+\@writefile{toc}{\contentsline {subsection}{6. Conclusion}{24}{subsection*.69}\protected@file@percent }
+\newlabel{conclusion}{{}{24}{6. Conclusion}{subsection*.69}{}}
+\@writefile{toc}{\contentsline {subsection}{Declarations}{25}{subsection*.70}\protected@file@percent }
+\newlabel{declarations}{{}{25}{Declarations}{subsection*.70}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Ethics approval and consent to participate}{25}{subsubsection*.71}\protected@file@percent }
+\newlabel{ethics-approval-and-consent-to-participate}{{}{25}{Ethics approval and consent to participate}{subsubsection*.71}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Consent for publication}{25}{subsubsection*.72}\protected@file@percent }
+\newlabel{consent-for-publication}{{}{25}{Consent for publication}{subsubsection*.72}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Data availability}{25}{subsubsection*.73}\protected@file@percent }
+\newlabel{data-availability}{{}{25}{Data availability}{subsubsection*.73}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Software availability}{25}{subsubsection*.74}\protected@file@percent }
+\newlabel{software-availability}{{}{25}{Software availability}{subsubsection*.74}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Use of artificial intelligence tools}{25}{subsubsection*.75}\protected@file@percent }
+\newlabel{use-of-artificial-intelligence-tools}{{}{25}{Use of artificial intelligence tools}{subsubsection*.75}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Competing interests}{25}{subsubsection*.76}\protected@file@percent }
+\newlabel{competing-interests}{{}{25}{Competing interests}{subsubsection*.76}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Funding}{25}{subsubsection*.77}\protected@file@percent }
+\newlabel{funding}{{}{25}{Funding}{subsubsection*.77}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Authors' contributions}{26}{subsubsection*.78}\protected@file@percent }
+\newlabel{authors-contributions}{{}{26}{Authors' contributions}{subsubsection*.78}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Acknowledgements}{26}{subsubsection*.79}\protected@file@percent }
+\newlabel{acknowledgements}{{}{26}{Acknowledgements}{subsubsection*.79}{}}
 \bibcite{ref-vaupel1979}{\citeproctext }
 \bibcite{ref-grambsch1994}{\citeproctext }
 \bibcite{ref-andersen1982}{\citeproctext }
@@ -181,26 +183,26 @@
 \bibcite{ref-kalbfleisch2002}{\citeproctext }
 \bibcite{ref-deeks2003}{\citeproctext }
 \bibcite{ref-sanca2024}{\citeproctext }
-\@writefile{toc}{\contentsline {subsection}{References}{26}{subsection*.79}\protected@file@percent }
-\newlabel{references}{{}{26}{References}{subsection*.79}{}}
-\newlabel{refs}{{}{26}{References}{section*.80}{}}
+\@writefile{toc}{\contentsline {subsection}{References}{27}{subsection*.80}\protected@file@percent }
+\newlabel{references}{{}{27}{References}{subsection*.80}{}}
+\newlabel{refs}{{}{27}{References}{section*.81}{}}
 \gdef \LT@i {\LT@entry 
     {1}{90.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{90.34972pt}}
-\@writefile{toc}{\contentsline {subsection}{Tables}{27}{subsection*.81}\protected@file@percent }
-\newlabel{tables}{{}{27}{Tables}{subsection*.81}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching.}}{27}{table.1}\protected@file@percent }
-\newlabel{tbl:HVE_motivation}{{1}{27}{Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{Tables}{28}{subsection*.82}\protected@file@percent }
+\newlabel{tables}{{}{28}{Tables}{subsection*.82}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching.}}{28}{table.1}\protected@file@percent }
+\newlabel{tbl:HVE_motivation}{{1}{28}{Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching}{table.1}{}}
 \gdef \LT@ii {\LT@entry 
     {1}{180.49876pt}\LT@entry 
     {1}{71.81207pt}\LT@entry 
     {1}{96.75748pt}\LT@entry 
     {1}{120.68668pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions.}}{28}{table.2}\protected@file@percent }
-\newlabel{tbl:cox_vs_kcor}{{2}{28}{Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions.}}{29}{table.2}\protected@file@percent }
+\newlabel{tbl:cox_vs_kcor}{{2}{29}{Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions}{table.2}{}}
 \gdef \LT@iii {\LT@entry 
     {1}{90.61325pt}\LT@entry 
     {1}{81.04486pt}\LT@entry 
@@ -208,21 +210,21 @@
     {1}{92.18658pt}\LT@entry 
     {1}{65.43271pt}\LT@entry 
     {1}{79.47154pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{Positioning KCOR relative to non-proportional hazards methods.}}{29}{table.3}\protected@file@percent }
-\newlabel{tbl:positioning}{{3}{29}{Positioning KCOR relative to non-proportional hazards methods}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{Positioning KCOR relative to non-proportional hazards methods.}}{30}{table.3}\protected@file@percent }
+\newlabel{tbl:positioning}{{3}{30}{Positioning KCOR relative to non-proportional hazards methods}{table.3}{}}
 \gdef \LT@iv {\LT@entry 
     {1}{189.09921pt}\LT@entry 
     {1}{280.65579pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{Notation used throughout the Methods section.}}{30}{table.4}\protected@file@percent }
-\newlabel{tbl:notation}{{4}{30}{Notation used throughout the Methods section}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{Notation used throughout the Methods section.}}{31}{table.4}\protected@file@percent }
+\newlabel{tbl:notation}{{4}{31}{Notation used throughout the Methods section}{table.4}{}}
 \gdef \LT@v {\LT@entry 
     {1}{90.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{90.34972pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as \(\mittheta _d\) are estimated from the data within the prespecified framework.}}{31}{table.5}\protected@file@percent }
-\newlabel{tbl:KCOR_algorithm}{{5}{31}{Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as \(\theta _d\) are estimated from the data within the prespecified framework}{table.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as \(\mittheta _d\) are estimated from the data within the prespecified framework.}}{32}{table.5}\protected@file@percent }
+\newlabel{tbl:KCOR_algorithm}{{5}{32}{Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as \(\theta _d\) are estimated from the data within the prespecified framework}{table.5}{}}
 \gdef \LT@vi {\LT@entry 
     {1}{61.8899pt}\LT@entry 
     {1}{49.24533pt}\LT@entry 
@@ -230,23 +232,23 @@
     {1}{80.30708pt}\LT@entry 
     {1}{98.90787pt}\LT@entry 
     {1}{130.15321pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect \emph  {(null by construction)}; cohorts differ only in gamma frailty variance (\(\mittheta \)). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as \(\mittheta \) increases, reflecting depletion-induced non-proportional hazards. \(\mathrm {KCOR}(t)\) remains centered near unity with negligible post-normalization slope across \(\mittheta \) values, expected to be horizontal under the null subject to sampling stochasticity. (Exact values depend on simulation seed and follow-up horizon.)}}{32}{table.6}\protected@file@percent }
-\newlabel{tbl:cox_bias_demo}{{6}{32}{Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect \emph {(null by construction)}; cohorts differ only in gamma frailty variance (\(\theta \)). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as \(\theta \) increases, reflecting depletion-induced non-proportional hazards. \(\mathrm {KCOR}(t)\) remains centered near unity with negligible post-normalization slope across \(\theta \) values, expected to be horizontal under the null subject to sampling stochasticity. (Exact values depend on simulation seed and follow-up horizon.)}{table.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect \emph  {(null by construction)}; cohorts differ only in gamma frailty variance (\(\mittheta \)). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as \(\mittheta \) increases, reflecting depletion-induced non-proportional hazards. \(\mathrm {KCOR}(t)\) remains centered near unity with negligible post-normalization slope across \(\mittheta \) values, expected to be horizontal under the null subject to sampling stochasticity. (Exact values depend on simulation seed and follow-up horizon.)}}{33}{table.6}\protected@file@percent }
+\newlabel{tbl:cox_bias_demo}{{6}{33}{Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect \emph {(null by construction)}; cohorts differ only in gamma frailty variance (\(\theta \)). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as \(\theta \) increases, reflecting depletion-induced non-proportional hazards. \(\mathrm {KCOR}(t)\) remains centered near unity with negligible post-normalization slope across \(\theta \) values, expected to be horizontal under the null subject to sampling stochasticity. (Exact values depend on simulation seed and follow-up horizon.)}{table.6}{}}
 \gdef \LT@vii {\LT@entry 
     {1}{51.00002pt}\LT@entry 
     {1}{81.91002pt}\LT@entry 
     {1}{106.73001pt}\LT@entry 
     {4}{62.66002pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{Example end-of-window \(\mathrm {KCOR}(t)\) values from the empirical negative control (pooled/ASMR summaries), showing near-null behavior under large composition differences. (Source: \texttt {test/negative\_control/out/KCOR\_summary.log})}}{33}{table.7}\protected@file@percent }
-\newlabel{tbl:neg_control_summary}{{7}{33}{Example end-of-window \(\mathrm {KCOR}(t)\) values from the empirical negative control (pooled/ASMR summaries), showing near-null behavior under large composition differences. (Source: \protect \texttt {test/negative\_control/out/KCOR\_summary.log})}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{Example end-of-window \(\mathrm {KCOR}(t)\) values from the empirical negative control (pooled/ASMR summaries), showing near-null behavior under large composition differences. (Source: \texttt {test/negative\_control/out/KCOR\_summary.log})}}{34}{table.7}\protected@file@percent }
+\newlabel{tbl:neg_control_summary}{{7}{34}{Example end-of-window \(\mathrm {KCOR}(t)\) values from the empirical negative control (pooled/ASMR summaries), showing near-null behavior under large composition differences. (Source: \protect \texttt {test/negative\_control/out/KCOR\_summary.log})}{table.7}{}}
 \gdef \LT@viii {\LT@entry 
     {1}{80.43909pt}\LT@entry 
     {1}{86.43909pt}\LT@entry 
     {1}{111.2414pt}\LT@entry 
     {1}{86.43909pt}\LT@entry 
     {1}{105.2414pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios indicate KCOR deviating from 1.0 in the expected direction, consistent with the estimator detecting injected effects.}}{34}{table.8}\protected@file@percent }
-\newlabel{tbl:pos_control_summary}{{8}{34}{Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios indicate KCOR deviating from 1.0 in the expected direction, consistent with the estimator detecting injected effects}{table.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios indicate KCOR deviating from 1.0 in the expected direction, consistent with the estimator detecting injected effects.}}{35}{table.8}\protected@file@percent }
+\newlabel{tbl:pos_control_summary}{{8}{35}{Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios indicate KCOR deviating from 1.0 in the expected direction, consistent with the estimator detecting injected effects}{table.8}{}}
 \gdef \LT@ix {\LT@entry 
     {1}{32.96446pt}\LT@entry 
     {1}{57.86491pt}\LT@entry 
@@ -256,29 +258,29 @@
     {1}{68.666pt}\LT@entry 
     {1}{84.82938pt}\LT@entry 
     {1}{62.666pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds.}}{35}{table.9}\protected@file@percent }
-\newlabel{tbl:joint_frailty_comparison}{{9}{35}{Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds}{table.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds.}}{36}{table.9}\protected@file@percent }
+\newlabel{tbl:joint_frailty_comparison}{{9}{36}{Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds}{table.9}{}}
 \gdef \LT@x {\LT@entry 
     {1}{39.40009pt}\LT@entry 
     {1}{78.80661pt}\LT@entry 
     {1}{145.61324pt}\LT@entry 
     {1}{99.68329pt}\LT@entry 
     {1}{106.20671pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs.}}{36}{table.10}\protected@file@percent }
-\newlabel{tbl:comparison_estimands}{{10}{36}{Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs}{table.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs.}}{37}{table.10}\protected@file@percent }
+\newlabel{tbl:comparison_estimands}{{10}{37}{Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs}{table.10}{}}
 \gdef \LT@xi {\LT@entry 
     {1}{87.85193pt}\LT@entry 
     {1}{151.14894pt}\LT@entry 
     {1}{167.50345pt}\LT@entry 
     {1}{63.29701pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated across simulation scenarios using stratified bootstrap resampling. Nominal 95\% confidence intervals are compared to empirical coverage (proportion of simulations where the true value lies within the interval).}}{37}{table.11}\protected@file@percent }
-\newlabel{tbl:bootstrap_coverage}{{11}{37}{Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated across simulation scenarios using stratified bootstrap resampling. Nominal 95\% confidence intervals are compared to empirical coverage (proportion of simulations where the true value lies within the interval)}{table.11}{}}
-\@writefile{toc}{\contentsline {section}{KCOR Supplementary Information (SI)}{37}{section*.82}\protected@file@percent }
-\newlabel{kcor-supplementary-information-si}{{}{37}{KCOR Supplementary Information (SI)}{section*.82}{}}
-\@writefile{toc}{\contentsline {subsection}{S1. Overview}{37}{subsection*.83}\protected@file@percent }
-\newlabel{s1.-overview}{{}{37}{S1. Overview}{subsection*.83}{}}
-\@writefile{toc}{\contentsline {subsection}{S2. Extended diagnostics and failure modes}{37}{subsection*.84}\protected@file@percent }
-\newlabel{s2.-extended-diagnostics-and-failure-modes}{{}{37}{S2. Extended diagnostics and failure modes}{subsection*.84}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated across simulation scenarios using stratified bootstrap resampling. Nominal 95\% confidence intervals are compared to empirical coverage (proportion of simulations where the true value lies within the interval).}}{38}{table.11}\protected@file@percent }
+\newlabel{tbl:bootstrap_coverage}{{11}{38}{Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated across simulation scenarios using stratified bootstrap resampling. Nominal 95\% confidence intervals are compared to empirical coverage (proportion of simulations where the true value lies within the interval)}{table.11}{}}
+\@writefile{toc}{\contentsline {section}{KCOR Supplementary Information (SI)}{38}{section*.83}\protected@file@percent }
+\newlabel{kcor-supplementary-information-si}{{}{38}{KCOR Supplementary Information (SI)}{section*.83}{}}
+\@writefile{toc}{\contentsline {subsection}{S1. Overview}{38}{subsection*.84}\protected@file@percent }
+\newlabel{s1.-overview}{{}{38}{S1. Overview}{subsection*.84}{}}
+\@writefile{toc}{\contentsline {subsection}{S2. Extended diagnostics and failure modes}{38}{subsection*.85}\protected@file@percent }
+\newlabel{s2.-extended-diagnostics-and-failure-modes}{{}{38}{S2. Extended diagnostics and failure modes}{subsection*.85}{}}
 \gdef \LT@xii {\LT@entry 
     {1}{154.56912pt}\LT@entry 
     {1}{160.56912pt}\LT@entry 
@@ -291,119 +293,119 @@
     {1}{154.56912pt}\LT@entry 
     {1}{160.56912pt}\LT@entry 
     {1}{154.56912pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {S1}{KCOR working assumptions.}}{38}{table.1}\protected@file@percent }
-\newlabel{tbl:si_assumptions}{{S1}{38}{KCOR working assumptions}{table.1}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {S2}{Empirical diagnostics associated with KCOR assumptions.}}{38}{table.2}\protected@file@percent }
-\newlabel{tbl:si_diagnostics}{{S2}{38}{Empirical diagnostics associated with KCOR assumptions}{table.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {S3}{Identifiability criteria governing KCOR interpretation.}}{38}{table.3}\protected@file@percent }
-\newlabel{tbl:si_identifiability}{{S3}{38}{Identifiability criteria governing KCOR interpretation}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S1}{KCOR working assumptions.}}{39}{table.1}\protected@file@percent }
+\newlabel{tbl:si_assumptions}{{S1}{39}{KCOR working assumptions}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S2}{Empirical diagnostics associated with KCOR assumptions.}}{39}{table.2}\protected@file@percent }
+\newlabel{tbl:si_diagnostics}{{S2}{39}{Empirical diagnostics associated with KCOR assumptions}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S3}{Identifiability criteria governing KCOR interpretation.}}{39}{table.3}\protected@file@percent }
+\newlabel{tbl:si_identifiability}{{S3}{39}{Identifiability criteria governing KCOR interpretation}{table.3}{}}
 \gdef \LT@xv {\LT@entry 
     {1}{90.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{96.34972pt}\LT@entry 
     {1}{90.34972pt}}
-\@writefile{toc}{\contentsline {subsection}{S3. Positive controls}{39}{subsection*.85}\protected@file@percent }
-\newlabel{s3.-positive-controls}{{}{39}{S3. Positive controls}{subsection*.85}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S3.1 Construction of injected effects}{39}{subsubsection*.86}\protected@file@percent }
-\newlabel{s3.1-construction-of-injected-effects}{{}{39}{S3.1 Construction of injected effects}{subsubsection*.86}{}}
-\newlabel{eq:pos-control-injection}{{15}{39}{S3.1 Construction of injected effects}{section*.87}{}}
-\@writefile{toc}{\contentsline {subsection}{S4. Control-test specifications and simulation parameters}{39}{subsection*.88}\protected@file@percent }
-\newlabel{s4.-control-test-specifications-and-simulation-parameters}{{}{39}{S4. Control-test specifications and simulation parameters}{subsection*.88}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.0 Summary tables for control-test and simulation parameters}{39}{subsubsection*.89}\protected@file@percent }
-\newlabel{s4.0-summary-tables-for-control-test-and-simulation-parameters}{{}{39}{S4.0 Summary tables for control-test and simulation parameters}{subsubsection*.89}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {S4}{Summary of control-test and simulation parameters referenced in Sections S4.2--S4.6. Numeric values are fixed unless otherwise noted; ranges indicate sensitivity grids.}}{39}{table.4}\protected@file@percent }
-\newlabel{tbl:si_sim_params}{{S4}{39}{Summary of control-test and simulation parameters referenced in Sections S4.2--S4.6. Numeric values are fixed unless otherwise noted; ranges indicate sensitivity grids}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{S3. Positive controls}{40}{subsection*.86}\protected@file@percent }
+\newlabel{s3.-positive-controls}{{}{40}{S3. Positive controls}{subsection*.86}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S3.1 Construction of injected effects}{40}{subsubsection*.87}\protected@file@percent }
+\newlabel{s3.1-construction-of-injected-effects}{{}{40}{S3.1 Construction of injected effects}{subsubsection*.87}{}}
+\newlabel{eq:pos-control-injection}{{15}{40}{S3.1 Construction of injected effects}{section*.88}{}}
+\@writefile{toc}{\contentsline {subsection}{S4. Control-test specifications and simulation parameters}{40}{subsection*.89}\protected@file@percent }
+\newlabel{s4.-control-test-specifications-and-simulation-parameters}{{}{40}{S4. Control-test specifications and simulation parameters}{subsection*.89}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.0 Summary tables for control-test and simulation parameters}{40}{subsubsection*.90}\protected@file@percent }
+\newlabel{s4.0-summary-tables-for-control-test-and-simulation-parameters}{{}{40}{S4.0 Summary tables for control-test and simulation parameters}{subsubsection*.90}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S4}{Summary of control-test and simulation parameters referenced in Sections S4.2--S4.6. Numeric values are fixed unless otherwise noted; ranges indicate sensitivity grids.}}{40}{table.4}\protected@file@percent }
+\newlabel{tbl:si_sim_params}{{S4}{40}{Summary of control-test and simulation parameters referenced in Sections S4.2--S4.6. Numeric values are fixed unless otherwise noted; ranges indicate sensitivity grids}{table.4}{}}
 \gdef \LT@xvi {\LT@entry 
     {1}{114.43875pt}\LT@entry 
     {1}{120.43875pt}\LT@entry 
     {1}{120.43875pt}\LT@entry 
     {1}{114.43875pt}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.1 Reference implementation and default operational settings}{41}{subsubsection*.90}\protected@file@percent }
-\newlabel{s4.1-reference-implementation-and-default-operational-settings}{{}{41}{S4.1 Reference implementation and default operational settings}{subsubsection*.90}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {S5}{Reference implementation and default operational settings.}}{41}{table.5}\protected@file@percent }
-\newlabel{tbl:si_defaults}{{S5}{41}{Reference implementation and default operational settings}{table.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.2 Negative controls}{41}{subsubsection*.91}\protected@file@percent }
-\newlabel{s4.2-negative-controls}{{}{41}{S4.2 Negative controls}{subsubsection*.91}{}}
-\@writefile{toc}{\contentsline {paragraph}{S4.2.1 Synthetic negative control: gamma-frailty null}{41}{paragraph*.92}\protected@file@percent }
-\newlabel{s4.2.1-synthetic-negative-control-gamma-frailty-null}{{}{41}{S4.2.1 Synthetic negative control: gamma-frailty null}{paragraph*.92}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S1}{\ignorespaces Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows \(\mathrm {KCOR}(t)\) deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment.}}{42}{figure.1}\protected@file@percent }
-\newlabel{fig:pos_control_injected}{{S1}{42}{Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows \(\mathrm {KCOR}(t)\) deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment}{figure.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S2}{\ignorespaces Simulated-null summary: KCOR bias as a function of frailty variance \(\mittheta \). Bias is defined as \(\mathrm {KCOR}_{\mathrm {asymptote}} - 1\) at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown.}}{43}{figure.2}\protected@file@percent }
-\newlabel{fig:si_kcor_bias_vs_theta}{{S2}{43}{Simulated-null summary: KCOR bias as a function of frailty variance \(\theta \). Bias is defined as \(\mathrm {KCOR}_{\mathrm {asymptote}} - 1\) at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown}{figure.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S3}{\ignorespaces Synthetic negative control under strong selection (different curvature) but no effect: \(\mathrm {KCOR}(t)\) remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows \(\mathrm {KCOR}(t)\) remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown.}}{44}{figure.3}\protected@file@percent }
-\newlabel{fig:neg_control_synthetic}{{S3}{44}{Synthetic negative control under strong selection (different curvature) but no effect: \(\mathrm {KCOR}(t)\) remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows \(\mathrm {KCOR}(t)\) remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown}{figure.3}{}}
-\@writefile{toc}{\contentsline {paragraph}{S4.2.2 Empirical negative control: age-shift construction}{45}{paragraph*.93}\protected@file@percent }
-\newlabel{s4.2.2-empirical-negative-control-age-shift-construction}{{}{45}{S4.2.2 Empirical negative control: age-shift construction}{paragraph*.93}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.3 Positive control: injected effect}{45}{subsubsection*.94}\protected@file@percent }
-\newlabel{s4.3-positive-control-injected-effect}{{}{45}{S4.3 Positive control: injected effect}{subsubsection*.94}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.4 Sensitivity analysis parameters}{45}{subsubsection*.95}\protected@file@percent }
-\newlabel{s4.4-sensitivity-analysis-parameters}{{}{45}{S4.4 Sensitivity analysis parameters}{subsubsection*.95}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S4}{\ignorespaces Sensitivity analysis summary showing \(\mathrm {KCOR}(t)\) values across parameter grid. Heatmaps display \(\mathrm {KCOR}(t)\) estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, \(\mathrm {KCOR}(t)\) varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons.}}{45}{figure.4}\protected@file@percent }
-\newlabel{fig:sensitivity_overview}{{S4}{45}{Sensitivity analysis summary showing \(\mathrm {KCOR}(t)\) values across parameter grid. Heatmaps display \(\mathrm {KCOR}(t)\) estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, \(\mathrm {KCOR}(t)\) varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons}{figure.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)}{46}{subsubsection*.96}\protected@file@percent }
-\newlabel{s4.5-tail-sampling-bimodal-selection-adversarial-selection-geometry}{{}{46}{S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)}{subsubsection*.96}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S4.6 Joint frailty and treatment-effect simulation}{46}{subsubsection*.97}\protected@file@percent }
-\newlabel{s4.6-joint-frailty-and-treatment-effect-simulation}{{}{46}{S4.6 Joint frailty and treatment-effect simulation}{subsubsection*.97}{}}
-\@writefile{toc}{\contentsline {paragraph}{Design}{46}{paragraph*.98}\protected@file@percent }
-\newlabel{design}{{}{46}{Design}{paragraph*.98}{}}
-\newlabel{eq:si_individual_hazard_with_effect}{{16}{46}{Design}{section*.99}{}}
-\@writefile{toc}{\contentsline {subsection}{S5. Additional figures and diagnostics}{46}{subsection*.100}\protected@file@percent }
-\newlabel{s5.-additional-figures-and-diagnostics}{{}{46}{S5. Additional figures and diagnostics}{subsection*.100}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S5.1 Fit diagnostics}{46}{subsubsection*.101}\protected@file@percent }
-\newlabel{s5.1-fit-diagnostics}{{}{46}{S5.1 Fit diagnostics}{subsubsection*.101}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S5.2 Residual analysis}{47}{subsubsection*.102}\protected@file@percent }
-\newlabel{s5.2-residual-analysis}{{}{47}{S5.2 Residual analysis}{subsubsection*.102}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S5.3 Parameter stability checks}{47}{subsubsection*.103}\protected@file@percent }
-\newlabel{s5.3-parameter-stability-checks}{{}{47}{S5.3 Parameter stability checks}{subsubsection*.103}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S5.4 Quiet-window overlay plots}{47}{subsubsection*.104}\protected@file@percent }
-\newlabel{s5.4-quiet-window-overlay-plots}{{}{47}{S5.4 Quiet-window overlay plots}{subsubsection*.104}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S5.5 Robustness to age stratification}{47}{subsubsection*.105}\protected@file@percent }
-\newlabel{s5.5-robustness-to-age-stratification}{{}{47}{S5.5 Robustness to age stratification}{subsubsection*.105}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S5}{\ignorespaces Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{48}{figure.5}\protected@file@percent }
-\newlabel{fig:si_yob1930}{{S5}{48}{Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S6}{\ignorespaces Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{49}{figure.6}\protected@file@percent }
-\newlabel{fig:si_yob1940}{{S6}{49}{Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S7}{\ignorespaces Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{50}{figure.7}\protected@file@percent }
-\newlabel{fig:si_yob1950}{{S7}{50}{Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S8}{\ignorespaces Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \(\mathrm {KCOR}(t)\) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.}}{51}{figure.8}\protected@file@percent }
-\newlabel{fig:neg_control_20yr}{{S8}{51}{Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \(\mathrm {KCOR}(t)\) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment}{figure.8}{}}
-\@writefile{toc}{\contentsline {subsection}{S6. Extended Czech empirical application}{52}{subsection*.106}\protected@file@percent }
-\newlabel{s6.-extended-czech-empirical-application}{{}{52}{S6. Extended Czech empirical application}{subsection*.106}{}}
-\@writefile{toc}{\contentsline {subsubsection}{S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data}{52}{subsubsection*.107}\protected@file@percent }
-\newlabel{s6.1-empirical-application-with-diagnostic-validation-czech-republic-national-registry-mortality-data}{{}{52}{S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data}{subsubsection*.107}{}}
-\@writefile{toc}{\contentsline {paragraph}{S6.1.1 Illustrative empirical context: COVID-19 mortality data}{52}{paragraph*.108}\protected@file@percent }
-\newlabel{s6.1.1-illustrative-empirical-context-covid-19-mortality-data}{{}{52}{S6.1.1 Illustrative empirical context: COVID-19 mortality data}{paragraph*.108}{}}
-\@writefile{toc}{\contentsline {paragraph}{S6.1.2 Frailty normalization behavior under empirical validation}{52}{paragraph*.109}\protected@file@percent }
-\newlabel{s6.1.2-frailty-normalization-behavior-under-empirical-validation}{{}{52}{S6.1.2 Frailty normalization behavior under empirical validation}{paragraph*.109}{}}
-\newlabel{eq:si_theta_near_zero}{{17}{52}{S6.1.2 Frailty normalization behavior under empirical validation}{section*.110}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.1 Reference implementation and default operational settings}{42}{subsubsection*.91}\protected@file@percent }
+\newlabel{s4.1-reference-implementation-and-default-operational-settings}{{}{42}{S4.1 Reference implementation and default operational settings}{subsubsection*.91}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S5}{Reference implementation and default operational settings.}}{42}{table.5}\protected@file@percent }
+\newlabel{tbl:si_defaults}{{S5}{42}{Reference implementation and default operational settings}{table.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.2 Negative controls}{42}{subsubsection*.92}\protected@file@percent }
+\newlabel{s4.2-negative-controls}{{}{42}{S4.2 Negative controls}{subsubsection*.92}{}}
+\@writefile{toc}{\contentsline {paragraph}{S4.2.1 Synthetic negative control: gamma-frailty null}{42}{paragraph*.93}\protected@file@percent }
+\newlabel{s4.2.1-synthetic-negative-control-gamma-frailty-null}{{}{42}{S4.2.1 Synthetic negative control: gamma-frailty null}{paragraph*.93}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S1}{\ignorespaces Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows \(\mathrm {KCOR}(t)\) deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment.}}{43}{figure.1}\protected@file@percent }
+\newlabel{fig:pos_control_injected}{{S1}{43}{Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows \(\mathrm {KCOR}(t)\) deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S2}{\ignorespaces Simulated-null summary: KCOR bias as a function of frailty variance \(\mittheta \). Bias is defined as \(\mathrm {KCOR}_{\mathrm {asymptote}} - 1\) at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown.}}{44}{figure.2}\protected@file@percent }
+\newlabel{fig:si_kcor_bias_vs_theta}{{S2}{44}{Simulated-null summary: KCOR bias as a function of frailty variance \(\theta \). Bias is defined as \(\mathrm {KCOR}_{\mathrm {asymptote}} - 1\) at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S3}{\ignorespaces Synthetic negative control under strong selection (different curvature) but no effect: \(\mathrm {KCOR}(t)\) remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows \(\mathrm {KCOR}(t)\) remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown.}}{45}{figure.3}\protected@file@percent }
+\newlabel{fig:neg_control_synthetic}{{S3}{45}{Synthetic negative control under strong selection (different curvature) but no effect: \(\mathrm {KCOR}(t)\) remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows \(\mathrm {KCOR}(t)\) remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95\% bootstrap intervals; aggregated cohort--time resampling) are shown}{figure.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{S4.2.2 Empirical negative control: age-shift construction}{46}{paragraph*.94}\protected@file@percent }
+\newlabel{s4.2.2-empirical-negative-control-age-shift-construction}{{}{46}{S4.2.2 Empirical negative control: age-shift construction}{paragraph*.94}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.3 Positive control: injected effect}{46}{subsubsection*.95}\protected@file@percent }
+\newlabel{s4.3-positive-control-injected-effect}{{}{46}{S4.3 Positive control: injected effect}{subsubsection*.95}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.4 Sensitivity analysis parameters}{46}{subsubsection*.96}\protected@file@percent }
+\newlabel{s4.4-sensitivity-analysis-parameters}{{}{46}{S4.4 Sensitivity analysis parameters}{subsubsection*.96}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S4}{\ignorespaces Sensitivity analysis summary showing \(\mathrm {KCOR}(t)\) values across parameter grid. Heatmaps display \(\mathrm {KCOR}(t)\) estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, \(\mathrm {KCOR}(t)\) varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons.}}{46}{figure.4}\protected@file@percent }
+\newlabel{fig:sensitivity_overview}{{S4}{46}{Sensitivity analysis summary showing \(\mathrm {KCOR}(t)\) values across parameter grid. Heatmaps display \(\mathrm {KCOR}(t)\) estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, \(\mathrm {KCOR}(t)\) varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)}{47}{subsubsection*.97}\protected@file@percent }
+\newlabel{s4.5-tail-sampling-bimodal-selection-adversarial-selection-geometry}{{}{47}{S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)}{subsubsection*.97}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.6 Joint frailty and treatment-effect simulation}{47}{subsubsection*.98}\protected@file@percent }
+\newlabel{s4.6-joint-frailty-and-treatment-effect-simulation}{{}{47}{S4.6 Joint frailty and treatment-effect simulation}{subsubsection*.98}{}}
+\@writefile{toc}{\contentsline {paragraph}{Design}{47}{paragraph*.99}\protected@file@percent }
+\newlabel{design}{{}{47}{Design}{paragraph*.99}{}}
+\newlabel{eq:si_individual_hazard_with_effect}{{16}{47}{Design}{section*.100}{}}
+\@writefile{toc}{\contentsline {subsection}{S5. Additional figures and diagnostics}{47}{subsection*.101}\protected@file@percent }
+\newlabel{s5.-additional-figures-and-diagnostics}{{}{47}{S5. Additional figures and diagnostics}{subsection*.101}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.1 Fit diagnostics}{47}{subsubsection*.102}\protected@file@percent }
+\newlabel{s5.1-fit-diagnostics}{{}{47}{S5.1 Fit diagnostics}{subsubsection*.102}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.2 Residual analysis}{48}{subsubsection*.103}\protected@file@percent }
+\newlabel{s5.2-residual-analysis}{{}{48}{S5.2 Residual analysis}{subsubsection*.103}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.3 Parameter stability checks}{48}{subsubsection*.104}\protected@file@percent }
+\newlabel{s5.3-parameter-stability-checks}{{}{48}{S5.3 Parameter stability checks}{subsubsection*.104}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.4 Quiet-window overlay plots}{48}{subsubsection*.105}\protected@file@percent }
+\newlabel{s5.4-quiet-window-overlay-plots}{{}{48}{S5.4 Quiet-window overlay plots}{subsubsection*.105}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.5 Robustness to age stratification}{48}{subsubsection*.106}\protected@file@percent }
+\newlabel{s5.5-robustness-to-age-stratification}{{}{48}{S5.5 Robustness to age stratification}{subsubsection*.106}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S5}{\ignorespaces Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{49}{figure.5}\protected@file@percent }
+\newlabel{fig:si_yob1930}{{S5}{49}{Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S6}{\ignorespaces Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{50}{figure.6}\protected@file@percent }
+\newlabel{fig:si_yob1940}{{S6}{50}{Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S7}{\ignorespaces Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{51}{figure.7}\protected@file@percent }
+\newlabel{fig:si_yob1950}{{S7}{51}{Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S8}{\ignorespaces Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \(\mathrm {KCOR}(t)\) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.}}{52}{figure.8}\protected@file@percent }
+\newlabel{fig:neg_control_20yr}{{S8}{52}{Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \(\mathrm {KCOR}(t)\) exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment}{figure.8}{}}
+\@writefile{toc}{\contentsline {subsection}{S6. Extended Czech empirical application}{53}{subsection*.107}\protected@file@percent }
+\newlabel{s6.-extended-czech-empirical-application}{{}{53}{S6. Extended Czech empirical application}{subsection*.107}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data}{53}{subsubsection*.108}\protected@file@percent }
+\newlabel{s6.1-empirical-application-with-diagnostic-validation-czech-republic-national-registry-mortality-data}{{}{53}{S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data}{subsubsection*.108}{}}
+\@writefile{toc}{\contentsline {paragraph}{S6.1.1 Illustrative empirical context: COVID-19 mortality data}{53}{paragraph*.109}\protected@file@percent }
+\newlabel{s6.1.1-illustrative-empirical-context-covid-19-mortality-data}{{}{53}{S6.1.1 Illustrative empirical context: COVID-19 mortality data}{paragraph*.109}{}}
+\@writefile{toc}{\contentsline {paragraph}{S6.1.2 Frailty normalization behavior under empirical validation}{53}{paragraph*.110}\protected@file@percent }
+\newlabel{s6.1.2-frailty-normalization-behavior-under-empirical-validation}{{}{53}{S6.1.2 Frailty normalization behavior under empirical validation}{paragraph*.110}{}}
+\newlabel{eq:si_theta_near_zero}{{17}{53}{S6.1.2 Frailty normalization behavior under empirical validation}{section*.111}{}}
 \gdef \LT@xvii {\LT@entry 
     {1}{77.78123pt}\LT@entry 
     {1}{92.76515pt}\LT@entry 
     {1}{137.6397pt}\LT@entry 
     {1}{97.23781pt}\LT@entry 
     {1}{64.3311pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {S6}{Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass.}}{53}{table.6}\protected@file@percent }
-\newlabel{tbl:si_diagnostic_gate}{{S6}{53}{Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass}{table.6}{}}
-\newlabel{eq:si_theta_positive}{{18}{53}{S6.1.2 Frailty normalization behavior under empirical validation}{section*.111}{}}
-\newlabel{eq:si_theta_near_zero_dose2}{{19}{53}{S6.1.2 Frailty normalization behavior under empirical validation}{section*.112}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S6}{Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass.}}{54}{table.6}\protected@file@percent }
+\newlabel{tbl:si_diagnostic_gate}{{S6}{54}{Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass}{table.6}{}}
+\newlabel{eq:si_theta_positive}{{18}{54}{S6.1.2 Frailty normalization behavior under empirical validation}{section*.112}{}}
+\newlabel{eq:si_theta_near_zero_dose2}{{19}{54}{S6.1.2 Frailty normalization behavior under empirical validation}{section*.113}{}}
 \gdef \LT@xviii {\LT@entry 
     {1}{143.1559pt}\LT@entry 
     {1}{166.32335pt}\LT@entry 
     {1}{160.32335pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {S7}{Estimated gamma-frailty variance (fitted frailty variance) by age band and vaccination status for Czech cohorts enrolled in 2021\_24.}}{54}{table.7}\protected@file@percent }
-\newlabel{tbl:si_frailty_variance}{{S7}{54}{Estimated gamma-frailty variance (fitted frailty variance) by age band and vaccination status for Czech cohorts enrolled in 2021\_24}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S7}{Estimated gamma-frailty variance (fitted frailty variance) by age band and vaccination status for Czech cohorts enrolled in 2021\_24.}}{55}{table.7}\protected@file@percent }
+\newlabel{tbl:si_frailty_variance}{{S7}{55}{Estimated gamma-frailty variance (fitted frailty variance) by age band and vaccination status for Czech cohorts enrolled in 2021\_24}{table.7}{}}
 \gdef \LT@xix {\LT@entry 
     {1}{108.06506pt}\LT@entry 
     {1}{158.69412pt}\LT@entry 
     {1}{165.07443pt}\LT@entry 
     {1}{37.88167pt}}
-\@writefile{lot}{\contentsline {table}{\numberline {S8}{Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021\_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.)}}{55}{table.8}\protected@file@percent }
-\newlabel{tbl:si_raw_hazards}{{S8}{55}{Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021\_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.)}{table.8}{}}
-\@writefile{toc}{\contentsline {paragraph}{S6.1.3 Illustrative application to national registry mortality data}{55}{paragraph*.113}\protected@file@percent }
-\newlabel{s6.1.3-illustrative-application-to-national-registry-mortality-data}{{}{55}{S6.1.3 Illustrative application to national registry mortality data}{paragraph*.113}{}}
-\@writefile{toc}{\contentsline {subsection}{S7. Computational environment and runtime notes}{55}{subsection*.114}\protected@file@percent }
-\newlabel{s7.-computational-environment-and-runtime-notes}{{}{55}{S7. Computational environment and runtime notes}{subsection*.114}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {S9}{\ignorespaces All-ages stress test: \(\mathrm {KCOR}(t)\) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment.}}{56}{figure.9}\protected@file@percent }
-\newlabel{fig:si_allages}{{S9}{56}{All-ages stress test: \(\mathrm {KCOR}(t)\) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment}{figure.9}{}}
-\gdef \@abspage@last{56}
+\@writefile{lot}{\contentsline {table}{\numberline {S8}{Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021\_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.)}}{56}{table.8}\protected@file@percent }
+\newlabel{tbl:si_raw_hazards}{{S8}{56}{Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021\_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.)}{table.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{S6.1.3 Illustrative application to national registry mortality data}{56}{paragraph*.114}\protected@file@percent }
+\newlabel{s6.1.3-illustrative-application-to-national-registry-mortality-data}{{}{56}{S6.1.3 Illustrative application to national registry mortality data}{paragraph*.114}{}}
+\@writefile{toc}{\contentsline {subsection}{S7. Computational environment and runtime notes}{56}{subsection*.115}\protected@file@percent }
+\newlabel{s7.-computational-environment-and-runtime-notes}{{}{56}{S7. Computational environment and runtime notes}{subsection*.115}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S9}{\ignorespaces All-ages stress test: \(\mathrm {KCOR}(t)\) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment.}}{57}{figure.9}\protected@file@percent }
+\newlabel{fig:si_allages}{{S9}{57}{All-ages stress test: \(\mathrm {KCOR}(t)\) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment}{figure.9}{}}
+\gdef \@abspage@last{57}

@@ -551,6 +551,18 @@ All figures, tables, and simulations can be reproduced from the accompanying cod
 Additional environment and runtime details are provided in the Supplementary Information (SI); code and archival links are provided in Code/Data Availability.
 
 
+### 2.14 Data requirements and feasible study designs
+
+KCOR is designed for settings where outcomes are ascertained repeatedly over time but individual-level covariates, visit schedules, or counterfactual exposure histories are unavailable or unreliable. This section clarifies the data structures required for valid application, as well as designs for which the method is not appropriate.
+
+**Minimum data requirements.** KCOR requires (i) a well-defined cohort entry or enrollment rule, (ii) repeated outcome ascertainment over calendar or follow-up time (which may be passive), (iii) sufficient event counts to estimate cumulative hazards with reasonable stability, and (iv) the presence of at least one diagnostically identifiable “quiet” window during which baseline risk is approximately stable. Individual-level covariates, treatment assignment models, or visit-based follow-up schedules are not required.
+
+**What KCOR does not require.** Unlike causal estimators, interrupted time-series methods, synthetic controls, or digital twin approaches, KCOR does not require exchangeability assumptions, individual-level confounder measurement, continuous exposure tracking, or explicit modeling of counterfactual untreated trajectories. The method operates entirely on aggregated cumulative hazard information and is therefore compatible with registries and administrative systems where outcomes are captured far more frequently than exposures or visits.
+
+**Well-suited data sources and designs.** KCOR is particularly well matched to vital statistics–linked cohorts, administrative or registry-based studies with passive outcome capture, program enrollments with irregular follow-up but reliable endpoints, and population-based datasets where cohorts are defined by eligibility, vulnerability, or sociodemographic characteristics rather than repeated clinical encounters.
+
+**Designs where KCOR is not appropriate.** KCOR is not suitable for settings with extremely sparse events, rapidly shifting baseline hazards with no diagnostically quiet interval, highly fluid cohorts with frequent switching between exposure groups, or outcome ascertainment that is strictly conditional on clinic visits. In such cases, the required identifiability diagnostics will fail and results should not be reported.
+
 ## 3. Results
 
 Negative controls test false positives, positive controls test power, and stress tests probe diagnostic failure modes.
