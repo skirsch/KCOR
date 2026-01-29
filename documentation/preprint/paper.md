@@ -875,15 +875,14 @@ Table: Step-by-step KCOR algorithm (high-level), with recommended prespecificati
 Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect *(null by construction)*; cohorts differ only in gamma frailty variance ($\theta$). Despite the true hazard ratio being 1 by construction, Cox regression produces increasingly non-null hazard ratios as $\theta$ increases, reflecting depletion-induced non-proportional hazards. $\mathrm{KCOR}(t)$ remains centered near unity with negligible post-normalization slope across $\theta$ values, expected to be horizontal under the null subject to sampling stochasticity. (Exact values depend on simulation seed and follow-up horizon.) {#tbl:cox_bias_demo}
 
 | $\theta$ | Cox HR | 95% CI | Cox p-value | KCOR asymptote | KCOR post-norm slope |
-| --------: | -----: | -----: | ----------: | -------------: | -------------------: |
-|                         0.0 |  0.988 | [0.969, 1.008] | 0.234 | 0.988 | $7.6 \times 10^{-4}$ |
-|                         0.5 |  0.965 | [0.946, 0.985] | $4.9 \times 10^{-4}$ | 0.990 | $-3.8 \times 10^{-5}$ |
-|                         1.0 |  0.944 | [0.926, 0.963] | $1.7 \times 10^{-8}$ | 0.992 | $-3.0 \times 10^{-4}$ |
-|                         2.0 |  0.902 | [0.884, 0.921] | $2.4 \times 10^{-23}$ | 0.991 | $3.7 \times 10^{-4}$ |
-|                         5.0 |  0.804 | [0.787, 0.820] | $1.5 \times 10^{-93}$ | 0.993 | $-5.3 \times 10^{-4}$ |
-|                        10.0 |  0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
-|                        20.0 |  0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
-
+| --------: | -----: | ------: | ----------: | -------------: | -------------------: |
+| 0.0  | 0.988 | [0.969, 1.008] | 0.234 | 0.988 | $7.6 \times 10^{-4}$ |
+| 0.5  | 0.965 | [0.946, 0.985] | $4.9 \times 10^{-4}$ | 0.990 | $-3.8 \times 10^{-5}$ |
+| 1.0  | 0.944 | [0.926, 0.963] | $1.7 \times 10^{-8}$ | 0.992 | $-3.0 \times 10^{-4}$ |
+| 2.0  | 0.902 | [0.884, 0.921] | $2.4 \times 10^{-23}$ | 0.991 | $3.7 \times 10^{-4}$ |
+| 5.0  | 0.804 | [0.787, 0.820] | $1.5 \times 10^{-93}$ | 0.993 | $-5.3 \times 10^{-4}$ |
+| 10.0 | 0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
+| 20.0 | 0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
 
 Table: Example end-of-window $\mathrm{KCOR}(t)$ values from the empirical negative control (pooled/ASMR summaries), showing near-null behavior under large composition differences. (Source: `test/negative_control/out/KCOR_summary.log`) {#tbl:neg_control_summary}
 
@@ -932,3 +931,5 @@ Table: Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated 
 | Injected effect (benefit) | 95% | 93.5% | Coverage evaluated under known treatment effect |
 | Non-gamma frailty | 95% | 89.3% | Coverage under frailty misspecification |
 | Sparse events | 95% | 87.6% | Coverage under reduced event counts |
+
+\newpage
