@@ -60,7 +60,7 @@ In COVID-era applications, an additional complication arises from epidemic-wave 
 
 ### 1.3 Related work (brief positioning)
 
-KCOR builds on the frailty and selection-induced depletion literature in which unobserved heterogeneity induces deceleration of cohort-level hazards over follow-up (a standard working model is gamma frailty). [@vaupel1979] KCOR’s distinct contribution is not additional hazard flexibility, but a **diagnostics-driven normalization** of selection-induced depletion geometry in cumulative-hazard space prior to defining a cumulative cohort contrast. Related approaches that address non-proportional hazards (time-varying effects, flexible parametric hazards, additive hazards) or time-varying confounding (MSM/IPW/g-methods) target different estimands and typically require richer longitudinal covariates than are available in minimal registry data. [@grambsch1994; @andersen1982; @royston2002; @aalen1989; @lin1994; @vanhouwelingen2007; @robins2000; @cole2008] Additional discussion is provided in the Supplementary Information (SI).
+KCOR builds on the frailty and selection-induced depletion literature in which unobserved heterogeneity induces deceleration of cohort-level hazards over follow-up (a standard working model is gamma frailty) [@vaupel1979]. KCOR’s distinct contribution is not additional hazard flexibility, but a **diagnostics-driven normalization** of selection-induced depletion geometry in cumulative-hazard space prior to defining a cumulative cohort contrast. Related approaches that address non-proportional hazards (time-varying effects, flexible parametric hazards, additive hazards) or time-varying confounding (MSM/IPW/g-methods) target different estimands and typically require richer longitudinal covariates than are available in minimal registry data [@grambsch1994; @andersen1982; @royston2002; @aalen1989; @lin1994; @vanhouwelingen2007; @robins2000; @cole2008]. Additional discussion is provided in the Supplementary Information (SI).
 
 Time-varying coefficient Cox models allow hazards to change over time but do not neutralize frailty-induced depletion because estimation remains conditional on survival; they therefore address non-proportionality without removing selection-induced curvature.
 
@@ -70,7 +70,7 @@ Flexible parametric survival models improve baseline fit but do not resolve depl
 
 ### 1.4 Evidence from the literature: residual confounding despite meticulous matching
 
-Motivating applied studies suggest that even careful matching and adjustment can leave substantial residual differences in non-COVID mortality and time-varying “healthy vaccinee effect” signatures, consistent with selection and depletion dynamics not captured by measured covariates. [@obel2024; @chemaitelly2025; @agampodi2024; @bakker2025]
+Motivating applied studies suggest that even careful matching and adjustment can leave substantial residual differences in non-COVID mortality and time-varying “healthy vaccinee effect” signatures, consistent with selection and depletion dynamics not captured by measured covariates [@obel2024; @chemaitelly2025; @agampodi2024; @bakker2025].
 
 ### 1.5 Contribution of this work
 
@@ -232,7 +232,7 @@ $$
 
 This transform is standard: it maps an interval event probability into a continuous-time equivalent hazard under a piecewise-constant hazard assumption. For rare events, $h_{\mathrm{obs},d}(t) \approx \mathrm{MR}_{d,t} = d_d(t)/N_d(t)$, but the log form remains accurate and stable when weekly risks are not negligible.
 The exact transform $h_{\mathrm{obs},d}(t) = -\log(1 - \mathrm{MR}_{d,t})$ is used throughout; the rare-event approximation is provided for intuition only.
-This discrete-time hazard transform under a piecewise-constant hazard assumption is standard; see, e.g., Kalbfleisch and Prentice (*The Statistical Analysis of Failure Time Data*). [@kalbfleisch2002]
+This discrete-time hazard transform under a piecewise-constant hazard assumption is standard; see, e.g., Kalbfleisch and Prentice (*The Statistical Analysis of Failure Time Data*) [@kalbfleisch2002].
 
 *All hazard and cumulative-hazard quantities used in KCOR are discrete-time integrated hazard estimators derived from fixed-cohort risk sets; likelihood-based or partial-likelihood formulations are not used for estimation or for the subsequent frailty-based normalization.*
 
@@ -263,7 +263,7 @@ $$
 
 Here $\tilde h_{0,d}(t)$ is the cohort's depletion-neutralized baseline hazard and $z_{i,d}$ is a latent multiplicative frailty term. The frailty variance $\theta_d$ governs the strength of depletion-induced curvature: larger $\theta_d$ yields stronger deceleration at the cohort level due to faster early depletion of high-frailty individuals.
 
-Gamma frailty is used because it yields a closed-form link between observed and baseline cumulative hazards via the Laplace transform. [@vaupel1979] In KCOR, gamma frailty is a **working geometric model** for depletion normalization, not a claim of biological truth. Adequacy is evaluated empirically via fit quality, post-normalization linearity, and stability diagnostics.
+Gamma frailty is used because it yields a closed-form link between observed and baseline cumulative hazards via the Laplace transform [@vaupel1979]. In KCOR, gamma frailty is a **working geometric model** for depletion normalization, not a claim of biological truth. Adequacy is evaluated empirically via fit quality, post-normalization linearity, and stability diagnostics.
 
 #### 2.4.2 Gamma-frailty identity and inversion
 
@@ -442,7 +442,7 @@ Uncertainty is quantified using stratified bootstrap resampling, which propagate
 
 #### 2.9.1 Stratified bootstrap procedure
 
-Throughout this manuscript, cohorts define the primary comparison groups and are the units at which frailty parameters $(k_d, \theta_d)$ are estimated. Strata (e.g., age bands or sex) are treated as independent realizations of the same cohort-level process and are used solely for aggregation, age standardization, and uncertainty propagation; frailty parameters are not estimated separately by stratum. This use of stratification follows standard survival-analysis practice (e.g., Kalbfleisch and Prentice, The Statistical Analysis of Failure Time Data). [@kalbfleisch2002]
+Throughout this manuscript, cohorts define the primary comparison groups and are the units at which frailty parameters $(k_d, \theta_d)$ are estimated. Strata (e.g., age bands or sex) are treated as independent realizations of the same cohort-level process and are used solely for aggregation, age standardization, and uncertainty propagation; frailty parameters are not estimated separately by stratum. This use of stratification follows standard survival-analysis practice (e.g., Kalbfleisch and Prentice, The Statistical Analysis of Failure Time Data) [@kalbfleisch2002].
 
 The stratified bootstrap procedure for KCOR proceeds as follows:
 
@@ -482,7 +482,7 @@ Table @tbl:KCOR_algorithm summarizes the complete KCOR pipeline.
 
 Cox proportional hazards models estimate an instantaneous hazard ratio under the assumption that hazards differ by a time-invariant multiplicative factor. Under selection on frailty with latent heterogeneity, this assumption is typically violated, yielding time-varying hazard ratios induced purely by depletion dynamics. This reflects an estimand mismatch: Cox targets an instantaneous hazard ratio conditional on survival, whereas KCOR targets a cumulative hazard contrast after depletion normalization. The resulting Cox failure is structural (selection plus non-proportional hazards), not a finite-sample artifact. KCOR operates on Nelson–Aalen–type cumulative hazards without individual-level frailty observables. 
 
-Accordingly, Cox results are presented here as a diagnostic demonstration of estimand mismatch, not as a competing intervention-effect estimator. This limitation is consistent with earlier work by Deeks showing that increasing covariate adjustment in non-randomized analyses can exacerbate bias and imprecision when selection effects and measurement error dominate. Deeks further noted that, despite the widespread reliance on covariate adjustment in non-randomized studies, there is no empirical evidence that such adjustment reduces bias on average. [@deeks2003]
+Accordingly, Cox results are presented here as a diagnostic demonstration of estimand mismatch, not as a competing intervention-effect estimator. This limitation is consistent with earlier work by Deeks showing that increasing covariate adjustment in non-randomized analyses can exacerbate bias and imprecision when selection effects and measurement error dominate. Deeks further noted that, despite the widespread reliance on covariate adjustment in non-randomized studies, there is no empirical evidence that such adjustment reduces bias on average [@deeks2003].
 
 Even when Cox models are extended with shared frailty to accommodate heterogeneity, they continue to estimate instantaneous hazard ratios conditional on survival. KCOR instead uses a parametric working model only to normalize selection-induced depletion geometry, then computes a cumulative contrast on the depletion-neutralized scale.
 
@@ -736,7 +736,7 @@ In finite samples, KCOR precision is driven primarily by the number of events ob
 
 ### 5.4 COVID-specific non-proportional hazard amplification
 
-COVID-19 mortality exhibits a pronounced departure from proportional hazards, with epidemic waves disproportionately amplifying risk among individuals with higher underlying frailty or baseline all-cause mortality risk. [@levin2020] This phenomenon represents a distinct class of bias from both static and dynamic healthy-vaccinee effects. Even after frailty-driven depletion is neutralized, wave-period mortality can remain differentially distorted because external infection pressure interacts super-linearly with baseline vulnerability.
+COVID-19 mortality exhibits a pronounced departure from proportional hazards, with epidemic waves disproportionately amplifying risk among individuals with higher underlying frailty or baseline all-cause mortality risk [@levin2020]. This phenomenon represents a distinct class of bias from both static and dynamic healthy-vaccinee effects. Even after frailty-driven depletion is neutralized, wave-period mortality can remain differentially distorted because external infection pressure interacts super-linearly with baseline vulnerability.
 
 KCOR does not attempt to correct this COVID-specific non-proportionality. The method is designed to isolate and neutralize bias arising from selection-induced depletion under diagnostically identifiable quiet windows, not to model or remove hazard amplification during acute external shocks. As a result, KCOR analyses spanning major epidemic waves should be interpreted as descriptive unless additional adjustments are applied.
 
@@ -752,7 +752,7 @@ KCOR addresses selection-induced hazard curvature in retrospective cohort compar
 
 ### Ethics approval and consent to participate
 
-This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from Czech Republic administrative data; no record-level data are shared in this manuscript. [@sanca2024]
+This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from publicly available Czech Republic administrative data; no record-level data are reproduced in this manuscript, although the underlying Czech datasets are available at the record level [@sanca2024].
 
 ### Consent for publication
 
@@ -760,7 +760,7 @@ Not applicable.
 
 ### Data availability
 
-This study analyzes aggregated cohort-level summaries derived from administrative health records. The underlying individual-level data from the Czech Republic are record-level administrative data collected and maintained by the National Health Information Portal. Access to the underlying record-level data is subject to the data provider’s governance, approval, and disclosure-control policies.
+This study analyzes aggregated cohort-level summaries derived from administrative health records. The Czech Republic mortality and vaccination data used in this study are publicly available, record-level administrative datasets released by the Czech National Health Information Portal [@sanca2024]. No restricted-access or proprietary data sources were used. For reproducibility and disclosure control, analyses in this manuscript are conducted on aggregated cohort-time summaries derived from the public record-level data.
 
 ### Software availability
 
