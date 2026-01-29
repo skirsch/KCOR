@@ -70,7 +70,7 @@ Flexible parametric survival models improve baseline fit but do not resolve depl
 
 ### 1.4 Evidence from the literature: residual confounding despite meticulous matching
 
-Motivating applied studies suggest that even careful matching and adjustment can leave substantial residual differences in non-COVID mortality and time-varying “healthy vaccinee effect” signatures, consistent with selection and depletion dynamics not captured by measured covariates. [@obel2024; @chemaitelly2025]
+Motivating applied studies suggest that even careful matching and adjustment can leave substantial residual differences in non-COVID mortality and time-varying “healthy vaccinee effect” signatures, consistent with selection and depletion dynamics not captured by measured covariates. [@obel2024; @chemaitelly2025; @agampodi2024; @bakker2025]
 
 ### 1.5 Contribution of this work
 
@@ -790,7 +790,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks James Lyons-Weiler. Clare Craig, Jasmin Cardinal Prévost, Alan Mordue, Ben Jackson, and Paul Fischer for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks Clare Craig, James Lyons-Weiler, Stefan Baral, Jasmin Cardinal Prévost, Alan Mordue, and Ben Jackson for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 \newpage
 
@@ -804,12 +804,13 @@ The author thanks James Lyons-Weiler. Clare Craig, Jasmin Cardinal Prévost, Ala
 
 ## Tables
 
-Table: Summary of two large matched observational studies showing residual confounding / HVE despite meticulous matching. {#tbl:HVE_motivation}
+Table: Summary of three large matched observational studies showing residual confounding / HVE despite meticulous matching. {#tbl:HVE_motivation}
 
 | Study | Design | Matching/adjustment | Key control finding | Implication for methods |
 |---|---|---|---|---|
 | Obel et al. (Denmark) [@obel2024] | Nationwide registry cohorts (60–90y) | 1:1 match on age/sex + covariate adjustment; negative control outcomes | Vaccinated had higher rates of multiple negative control outcomes, but substantially lower mortality after unrelated diagnoses | Strong evidence of confounding in observational VE estimates; "negative control methods indicate… substantial confounding" |
 | Chemaitelly et al. (Qatar) [@chemaitelly2025] | Matched national cohorts (primary series and booster) | Exact 1:1 matching on demographics + coexisting conditions + prior infection; Cox models | Strong early reduction in non-COVID mortality (HVE), with time-varying reversal later | Even meticulous matching leaves time-varying residual differences consistent with selection/frailty depletion |
+| Bakker et al. (Netherlands) [@bakker2025] | National observational mortality + COVID-19 vaccination cohort | Stratification + matching on multiple population and health indicators; survival analyses + calendar-time sanity checks | Evidence consistent with residual HVE despite matching; additional evidence of vaccination-status misclassification artifacts | Demonstrates how strong selection + misclassification artifacts can dominate VE/safety estimates; underscores need for diagnostics-first cohort comparison |
 
 
 Table: Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions. {#tbl:cox_vs_kcor}

@@ -977,5 +977,91 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "bakker2025",
+		"type": "article",
+		"abstract": "We analyze a large Dutch national observational mortality and Covid-19 vaccination cohort with the goal of (re)assessing real-world vaccine effectiveness (VE), comparing against earlier work based on the same dataset that reported very high positive effectiveness and safety. We use standard epidemiological survival analyses combined with stratification and matching based on multiple available population and health indicators to correct for confounding. We also perform complementary, calendar time-based analyses using diverse population and health-related data, as well as epidemiological sanity checks related to negative controls and data integrity. In all analyses, we primarily focus on all-cause mortality (ACM) effects, and on identifying potential biases and artifacts. Our results and supporting evidence strongly suggest two large statistical artifacts: residual healthy vaccinee bias (despite matching) and vaccination status misclassification bias. These lead to unrealistically high mortality among individuals with status unvaccinated during vaccination rounds, which cannot be attributed to Covid-19 prevention, as well as related and longer-term effects. These anomalies have a detrimental and disqualifying effect on both our own calculated VE results and previously reported results based on the same dataset, anomalies that are very hard to correct without additional fine-grained and high-integrity data. The realistic Covid-19 vaccine effectiveness and safety profile is masked by the large artifacts; vaccine protection against ACM appears at best to be considerably lower than previously described, and its true effect is unclear. Finally, we provide suggestions for additional analyses and future research.",
+		"citation-key": "bakker2025",
+		"source": "ResearchGate",
+		"title": "Healthy vaccinee and misclassification biases in Dutch observational health data in relation to Covid-19 vaccine effectiveness and safety",
+		"author": [
+			{
+				"family": "Bakker",
+				"given": "Bram"
+			},
+			{
+				"family": "Walk",
+				"given": "Jona"
+			},
+			{
+				"family": "Meester",
+				"given": "Ronald"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2025",
+					6,
+					30
+				]
+			]
+		}
+	},
+	{
+		"id": "agampodi2024",
+		"type": "article-journal",
+		"abstract": "Observational studies on COVID-19 vaccine effectiveness (VE) have provided critical real-world data, informing public health policy globally. These studies, primarily using pre-existing data sources, have been indispensable in assessing VE across diverse populations and developing sustainable vaccination strategies. Cohort design is frequently employed in VE research. The rapid implementation of vaccination campaigns during the COVID-19 pandemic introduced differential vaccination influenced by sociodemographic disparities, public policies, perceived risks, health-promoting behaviors, and health status, potentially resulting in biases such as healthy user bias, healthy vaccinee effect, frailty bias, differential depletion of susceptibility bias, and confounding by indication. The overwhelming burden on healthcare systems has escalated the risk of data inaccuracies, leading to outcome misclassifications. Additionally, the extensive array of diagnostic tests used during the pandemic has also contributed to misclassification biases. The urgency to publish quickly may have further influenced these biases or led to their oversight, affecting the validity of the findings. These biases in studies vary considerably depending on the setting, data sources, and analytical methods and are likely more pronounced in low- and middle-income country (LMIC) settings due to inadequate data infrastructure. Addressing and mitigating these biases is essential for accurate VE estimates, guiding public health strategies, and sustaining public trust in vaccination programs. Transparent communication about these biases and rigorous improvement in the design of future observational studies are essential.",
+		"citation-key": "agampodi2024",
+		"container-title": "Frontiers in Medicine",
+		"DOI": "10.3389/fmed.2024.1474045",
+		"ISSN": "2296-858X",
+		"journalAbbreviation": "Front. Med.",
+		"page": "1474045",
+		"source": "DOI.org (Crossref)",
+		"title": "Biases in COVID-19 vaccine effectiveness studies using cohort design",
+		"URL": "https://www.frontiersin.org/articles/10.3389/fmed.2024.1474045/full",
+		"volume": "11",
+		"author": [
+			{
+				"family": "Agampodi",
+				"given": "Suneth"
+			},
+			{
+				"family": "Tadesse",
+				"given": "Birkneh Tilahun"
+			},
+			{
+				"family": "Sahastrabuddhe",
+				"given": "Sushant"
+			},
+			{
+				"family": "Excler",
+				"given": "Jean-Louis"
+			},
+			{
+				"family": "Kim",
+				"given": "Jerome Han"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2026",
+					1,
+					29
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2024",
+					10,
+					30
+				]
+			]
+		}
 	}
 ]
