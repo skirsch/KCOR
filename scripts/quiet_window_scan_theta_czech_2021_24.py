@@ -20,7 +20,7 @@ ENROLL_ISO_WEEK = 24
 WINDOW_START_DATE = date(2022, 4, 1)
 WINDOW_END_DATE = date(2023, 4, 1)
 
-YOB_DECADES = {1930, 1940, 1950}
+YOB_DECADES = {1940, 1950}
 
 
 @dataclass
@@ -258,7 +258,7 @@ def main():
 
     results_df["pass"] = results_df.apply(classify_pass, axis=1)
 
-    results_path = out_dir / "quiet_window_scan_theta_czech_2021_24_yob1930_40_50.csv"
+    results_path = out_dir / "quiet_window_scan_theta_czech_2021_24_yob1940_50.csv"
     results_df.to_csv(results_path, index=False)
 
     summary = (
@@ -289,7 +289,8 @@ def main():
         plot_df["window_midpoint_date"] = pd.to_datetime(plot_df["window_midpoint_date"])
 
         doses = sorted(plot_df["dose"].unique())
-        markers = {1930: "o", 1940: "s", 1950: "^"}
+        markers = {1940: "s", 1950: "^"}
+        label_map = {1940: "1940s", 1950: "1950s"}
         edge_color = "#222222"
 
         fig, axes = plt.subplots(len(doses), 1, figsize=(10, 3 * len(doses)), sharex=True)
@@ -305,7 +306,7 @@ def main():
                     ax.scatter(
                         subset["window_midpoint_date"],
                         subset["theta_hat"],
-                        label=f"{decade}s",
+                        label=label_map.get(decade, f"{decade}s"),
                         alpha=0.8,
                         marker=markers.get(decade, "o"),
                         facecolors=edge_color if pass_value == 1 else "none",
@@ -325,12 +326,14 @@ def main():
             fig.legend(
                 list(unique.values()),
                 list(unique.keys()),
-                loc="center right",
-                bbox_to_anchor=(1.02, 0.5),
+                loc="lower center",
+                bbox_to_anchor=(0.5, -0.08),
+                ncol=len(unique),
                 fontsize=8,
+                frameon=False,
             )
-        fig.tight_layout(rect=[0, 0, 0.85, 1])
-        fig.savefig(fig_path, dpi=200)
+        fig.tight_layout(rect=[0, 0.12, 1, 1])
+        fig.savefig(fig_path, dpi=200, bbox_inches="tight")
         plt.close(fig)
         print(f"Wrote figure to {fig_path}")
     except Exception as exc:
