@@ -475,6 +475,28 @@ def enrollment_label(E: pd.Timestamp) -> str:
     return E.strftime("%Y%m%d")
 
 
+def remove_legacy_plot(new_path: Path, legacy_path: Path) -> None:
+    """Remove legacy plot filename if it exists and differs from new."""
+    try:
+        if legacy_path.exists() and legacy_path.resolve() != new_path.resolve():
+            legacy_path.unlink()
+    except Exception:
+        # Best-effort cleanup; avoid breaking runs due to filesystem issues.
+        pass
+
+
+def birth_year_label(by_min: Optional[int], by_max: Optional[int]) -> str:
+    if by_min is None or by_max is None:
+        return "birth years: all (unknown included)"
+    return f"birth years: {int(by_min)}-{int(by_max)}"
+
+
+def birth_year_tag(by_min: Optional[int], by_max: Optional[int]) -> str:
+    if by_min is None or by_max is None:
+        return "by_all"
+    return f"by_{int(by_min)}_{int(by_max)}"
+
+
 def build_baseline_masks(df: pd.DataFrame, S: pd.Timestamp, E: pd.Timestamp) -> dict[str, pd.Series]:
     """Return boolean masks for baseline cohorts using as-of S and alive at E."""
     # Alive at E (week-start): death missing or death >= E
@@ -590,6 +612,8 @@ def compute_counts_for_cohort(
 def plot_per_enrollment(
     outdir: Path,
     enroll_label: str,
+    age_label: str,
+    age_tag: str,
     t: np.ndarray,
     h0: np.ndarray,
     h2: np.ndarray,
@@ -634,10 +658,12 @@ def plot_per_enrollment(
     plt.plot(t, h3, label="h3 (dose3 incident)")
     plt.xlabel("t (weeks since enrollment)")
     plt.ylabel("h(t) = -ln(1 - dead/alive)")
-    plt.title(f"Hazards by cohort (E={enroll_label})")
+    plt.title(f"Hazards by cohort (E={enroll_label}; {age_label})")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(outdir / f"h_curves_E{enroll_label}.png", dpi=160)
+    new_path = outdir / f"h_curves_E{enroll_label}_{age_tag}.png"
+    plt.savefig(new_path, dpi=160)
+    remove_legacy_plot(new_path, outdir / f"h_curves_E{enroll_label}.png")
     plt.close()
 
     # HR (with counts panel)
@@ -654,7 +680,7 @@ def plot_per_enrollment(
         for k in sorted(hr30_bins.keys()):
             ax_top.plot(t, hr30_bins[k], linewidth=1.2, alpha=0.75, label=f"HR30_w{k} = h3_w{k}/h0")
     ax_top.set_ylabel("Hazard ratio")
-    ax_top.set_title(f"HR curves (E={enroll_label})")
+    ax_top.set_title(f"HR curves (E={enroll_label}; {age_label})")
     ax_top.legend(fontsize=8)
 
     d0 = dead0 if dead0 is not None else np.full_like(t, np.nan, dtype=float)
@@ -673,7 +699,9 @@ def plot_per_enrollment(
     _counts_panel(ax_bot, title="Counts by cohort", death_series=death_series, alive_series=alive_series)
     ax_bot.set_xlabel("t (weeks since enrollment)")
     fig.tight_layout()
-    fig.savefig(outdir / f"HR_curves_E{enroll_label}.png", dpi=160)
+    new_path = outdir / f"HR_curves_E{enroll_label}_{age_tag}.png"
+    fig.savefig(new_path, dpi=160)
+    remove_legacy_plot(new_path, outdir / f"HR_curves_E{enroll_label}.png")
     plt.close(fig)
 
     # HR32 (dose 3 vs dose 2)
@@ -690,7 +718,7 @@ def plot_per_enrollment(
             for k in sorted(hr32_bins.keys()):
                 ax_top.plot(t, hr32_bins[k], linewidth=1.2, alpha=0.75, label=f"HR32_w{k} = h3_w{k}/h2")
         ax_top.set_ylabel("Hazard ratio")
-        ax_top.set_title(f"HR32 curves (E={enroll_label})")
+        ax_top.set_title(f"HR32 curves (E={enroll_label}; {age_label})")
         ax_top.legend(fontsize=8)
 
         d2 = dead2 if dead2 is not None else np.full_like(t, np.nan, dtype=float)
@@ -706,11 +734,15 @@ def plot_per_enrollment(
         _counts_panel(ax_bot, title="Counts by cohort", death_series=death_series, alive_series=alive_series)
         ax_bot.set_xlabel("t (weeks since enrollment)")
         fig.tight_layout()
-        fig.savefig(outdir / f"HR32_curves_E{enroll_label}.png", dpi=160)
+        new_path = outdir / f"HR32_curves_E{enroll_label}_{age_tag}.png"
+        fig.savefig(new_path, dpi=160)
+        remove_legacy_plot(new_path, outdir / f"HR32_curves_E{enroll_label}.png")
         plt.close(fig)
 
 
-def plot_spaghetti(outdir: Path, series_df: pd.DataFrame, which: str) -> None:
+def plot_spaghetti(
+    outdir: Path, series_df: pd.DataFrame, which: str, *, age_label: str = "", age_tag: str = "by_all"
+) -> None:
     """Deprecated: kept for backwards compatibility; use plot_spaghetti_summary()."""
     import matplotlib.pyplot as plt
 
@@ -723,10 +755,13 @@ def plot_spaghetti(outdir: Path, series_df: pd.DataFrame, which: str) -> None:
         plt.plot(g2["t"].values, g2[which].values, alpha=0.7, linewidth=1.5, label=str(enroll_date))
     plt.xlabel("t (weeks since enrollment)")
     plt.ylabel(which)
-    plt.title(f"{which} spaghetti across enrollments")
+    suffix = f" ({age_label})" if age_label else ""
+    plt.title(f"{which} spaghetti across enrollments{suffix}")
     # Too many legend entries; omit by default.
     plt.tight_layout()
-    plt.savefig(outdir / f"{which}_spaghetti.png", dpi=160)
+    new_path = outdir / f"{which}_spaghetti_{age_tag}.png"
+    plt.savefig(new_path, dpi=160)
+    remove_legacy_plot(new_path, outdir / f"{which}_spaghetti.png")
     plt.close()
 
 
@@ -767,7 +802,16 @@ def _curve_count_columns(which: str) -> list[tuple[str, str, str]]:
     return []
 
 
-def plot_spaghetti_summary(outdir: Path, series_df: pd.DataFrame, which: str, *, q_lo: float = 0.10, q_hi: float = 0.90) -> None:
+def plot_spaghetti_summary(
+    outdir: Path,
+    series_df: pd.DataFrame,
+    which: str,
+    *,
+    q_lo: float = 0.10,
+    q_hi: float = 0.90,
+    age_label: str = "",
+    age_tag: str = "by_all",
+) -> None:
     """
     Summary spaghetti plot:
     - Top: median across enrollments with quantile envelope.
@@ -798,7 +842,8 @@ def plot_spaghetti_summary(outdir: Path, series_df: pd.DataFrame, which: str, *,
     ax_top.fill_between(t_vals, lo.to_numpy(dtype=float), hi.to_numpy(dtype=float), alpha=0.25, label=f"q{int(q_lo*100)}–q{int(q_hi*100)} across enrollments")
     ax_top.plot(t_vals, med.to_numpy(dtype=float), linewidth=2.2, label="median")
     ax_top.set_ylabel(which)
-    ax_top.set_title(f"{which} summary across enrollments")
+    suffix = f" ({age_label})" if age_label else ""
+    ax_top.set_title(f"{which} summary across enrollments{suffix}")
     ax_top.legend(fontsize=9)
 
     # Counts panel
@@ -852,13 +897,16 @@ def plot_spaghetti_summary(outdir: Path, series_df: pd.DataFrame, which: str, *,
 
     ax_bot.set_xlabel("t (weeks since enrollment)")
     fig.tight_layout()
-    fig.savefig(outdir / f"{which}_spaghetti.png", dpi=160)
+    new_path = outdir / f"{which}_summary_{age_tag}.png"
+    fig.savefig(new_path, dpi=160)
     plt.close(fig)
 
 
 def plot_placebo_per_enrollment(
     outdir: Path,
     enroll_label: str,
+    age_label: str,
+    age_tag: str,
     t: np.ndarray,
     hr_future32: np.ndarray,
     hr_future30: Optional[np.ndarray] = None,
@@ -883,7 +931,7 @@ def plot_placebo_per_enrollment(
     if hr_future30 is not None:
         ax_top.plot(t, hr_future30, label="HR_future30 = h_future3/h0 (placebo)", alpha=0.85)
     ax_top.set_ylabel("Hazard ratio")
-    ax_top.set_title(f"Future-booster placebo HR (E={enroll_label})")
+    ax_top.set_title(f"Future-booster placebo HR (E={enroll_label}; {age_label})")
     ax_top.legend(fontsize=9)
 
     # counts panel (future3 plus comparators)
@@ -915,7 +963,9 @@ def plot_placebo_per_enrollment(
         ax_bot.legend(h1 + h2, l1 + l2, loc="upper right", fontsize=8)
     ax_bot.set_xlabel("t (weeks since enrollment)")
     fig.tight_layout()
-    fig.savefig(outdir / f"HR_future_placebo_curves_E{enroll_label}.png", dpi=160)
+    new_path = outdir / f"HR_future_placebo_curves_E{enroll_label}_{age_tag}.png"
+    fig.savefig(new_path, dpi=160)
+    remove_legacy_plot(new_path, outdir / f"HR_future_placebo_curves_E{enroll_label}.png")
     plt.close(fig)
 
 
@@ -1145,8 +1195,12 @@ def main() -> int:
 
     parse_dates_inplace(df)
 
-    def run_one_stratum(df_s: pd.DataFrame, outdir_s: Path, stratum_label: str) -> None:
+    def run_one_stratum(
+        df_s: pd.DataFrame, outdir_s: Path, stratum_label: str, *, birth_year_min: Optional[int], birth_year_max: Optional[int]
+    ) -> None:
         ensure_outdir(outdir_s)
+        age_label = birth_year_label(birth_year_min, birth_year_max)
+        age_tag = birth_year_tag(birth_year_min, birth_year_max)
         enrollment_start = pd.to_datetime(args.enrollment_start)
         if enrollment_start.weekday() != 0:
             print("WARNING: enrollment_start is not a Monday; week-start semantics assume Monday.", flush=True)
@@ -1156,6 +1210,7 @@ def main() -> int:
         perm_all: list[pd.DataFrame] = []
 
         print(f"\n=== Stratum: {stratum_label}  rows={len(df_s):,}  outdir={outdir_s} ===", flush=True)
+        print(f"    {age_label}", flush=True)
 
         for i in range(int(args.n_enrollments)):
             E = enrollment_start + pd.Timedelta(days=7 * i)
@@ -1390,6 +1445,8 @@ def main() -> int:
             plot_per_enrollment(
                 outdir_s,
                 enroll_lbl,
+                age_label,
+                age_tag,
                 t=g["t"].to_numpy(dtype=int),
                 h0=g["h0"].to_numpy(dtype=float),
                 h2=g["h2"].to_numpy(dtype=float),
@@ -1420,6 +1477,8 @@ def main() -> int:
                 plot_placebo_per_enrollment(
                     outdir_s,
                     enroll_lbl,
+                    age_label,
+                    age_tag,
                     t=g["t"].to_numpy(dtype=int),
                     hr_future32=g["HR_future32"].to_numpy(dtype=float),
                     hr_future30=g["HR_future30"].to_numpy(dtype=float) if "HR_future30" in g.columns else None,
@@ -1463,11 +1522,13 @@ def main() -> int:
                         )
                     plt.xlabel("t (weeks since enrollment)")
                     plt.ylabel("Hazard ratio")
-                    plt.title(f"Permutation placebo band vs observed (E={enroll_lbl})")
+                    plt.title(f"Permutation placebo band vs observed (E={enroll_lbl}; {age_label})")
                     if len(lead_cols) <= 6:
                         plt.legend()
                     plt.tight_layout()
-                    plt.savefig(outdir_s / f"perm_band_E{enroll_lbl}.png", dpi=160)
+                    new_path = outdir_s / f"perm_band_E{enroll_lbl}_{age_tag}.png"
+                    plt.savefig(new_path, dpi=160)
+                    remove_legacy_plot(new_path, outdir_s / f"perm_band_E{enroll_lbl}.png")
                     plt.close()
                 except Exception as e:
                     print(f"WARNING: permutation band plot failed: {e}", flush=True)
@@ -1492,17 +1553,22 @@ def main() -> int:
         print(f"Wrote {summary_path} ({len(summary_df):,} rows)", flush=True)
 
         # Summary spaghetti plots: median + quantile envelope + counts panel
-        plot_spaghetti_summary(outdir_s, series_df, "HR30")
-        plot_spaghetti_summary(outdir_s, series_df, "HR20")
-        plot_spaghetti_summary(outdir_s, series_df, "HR32")
-        plot_spaghetti_summary(outdir_s, series_df, "HR_future32")
-        plot_spaghetti_summary(outdir_s, series_df, "HR_future30")
+        plot_spaghetti_summary(outdir_s, series_df, "HR30", age_label=age_label, age_tag=age_tag)
+        plot_spaghetti_summary(outdir_s, series_df, "HR20", age_label=age_label, age_tag=age_tag)
+        plot_spaghetti_summary(outdir_s, series_df, "HR32", age_label=age_label, age_tag=age_tag)
+        plot_spaghetti_summary(outdir_s, series_df, "HR_future32", age_label=age_label, age_tag=age_tag)
+        plot_spaghetti_summary(outdir_s, series_df, "HR_future30", age_label=age_label, age_tag=age_tag)
+
+        # Raw spaghetti plots (one line per enrollment)
+        plot_spaghetti(outdir_s, series_df, "HR30", age_label=age_label, age_tag=age_tag)
+        plot_spaghetti(outdir_s, series_df, "HR20", age_label=age_label, age_tag=age_tag)
+        plot_spaghetti(outdir_s, series_df, "HR32", age_label=age_label, age_tag=age_tag)
 
         # Selection suite curves if present
-        plot_spaghetti_summary(outdir_s, series_df, "HR_tt32")
+        plot_spaghetti_summary(outdir_s, series_df, "HR_tt32", age_label=age_label, age_tag=age_tag)
         # Plot lead curves that exist (HR_lead1..)
         for c in sorted([c for c in series_df.columns if c.startswith("HR_lead")], key=lambda x: int(x.replace("HR_lead", ""))):
-            plot_spaghetti_summary(outdir_s, series_df, c)
+            plot_spaghetti_summary(outdir_s, series_df, c, age_label=age_label, age_tag=age_tag)
 
     # If --strata is provided, interpret --outdir as a base directory and run each stratum to <outdir>/<name>/.
     if args.strata:
@@ -1519,6 +1585,8 @@ def main() -> int:
                 # all ages (no birth-year filter); keep unknown birth years
                 df_s = df
                 label = name
+                by_min = None
+                by_max = None
             else:
                 if len(parts) < 3 or parts[2].strip() == "":
                     raise SystemExit(f"ERROR: invalid --strata '{spec}' (expected name:min:max)")
@@ -1526,7 +1594,7 @@ def main() -> int:
                 by_max = int(parts[2])
                 df_s = df[(df["birth_year"] >= by_min) & (df["birth_year"] <= by_max)].copy()
                 label = f"{name} [{by_min},{by_max}]"
-            run_one_stratum(df_s, base_outdir / name, label)
+            run_one_stratum(df_s, base_outdir / name, label, birth_year_min=by_min, birth_year_max=by_max)
         print("Done.", flush=True)
         end_local = datetime.now().astimezone()
         print(f"[build_weekly_emulation] end_local={end_local.isoformat()}", flush=True)
@@ -1539,11 +1607,19 @@ def main() -> int:
     if args.birth_year_min is not None and args.birth_year_max is not None:
         df = df[(df["birth_year"] >= args.birth_year_min) & (df["birth_year"] <= args.birth_year_max)].copy()
         print(f"After birth-year filter [{args.birth_year_min},{args.birth_year_max}]: {len(df):,} rows", flush=True)
+        stratum_label = f"single [{args.birth_year_min},{args.birth_year_max}]"
     else:
         print(f"Birth-year filter: disabled (all ages; includes unknown birth years)", flush=True)
+        stratum_label = "single (all ages)"
 
     outdir = Path(args.outdir)
-    run_one_stratum(df, outdir, "single")
+    run_one_stratum(
+        df,
+        outdir,
+        stratum_label,
+        birth_year_min=args.birth_year_min,
+        birth_year_max=args.birth_year_max,
+    )
     print("Done.", flush=True)
     end_local = datetime.now().astimezone()
     print(f"[build_weekly_emulation] end_local={end_local.isoformat()}", flush=True)

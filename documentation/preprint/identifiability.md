@@ -110,12 +110,14 @@ Outputs:
   HR20, HR30
 * Per-enrollment plots:
 
-  * `h_curves_EYYYYMMDD.png` (h0,h2,h3 vs t)
-  * `HR_curves_EYYYYMMDD.png` (HR20,HR30 vs t)
+  * `h_curves_EYYYYMMDD_by_YYYY_YYYY.png` (h0,h2,h3 vs t; `by_all` if unfiltered)
+  * `HR_curves_EYYYYMMDD_by_YYYY_YYYY.png` (HR20,HR30 vs t; `by_all` if unfiltered)
 * Combined spaghetti plots across all E:
 
-  * `HR30_spaghetti.png`
-  * `HR20_spaghetti.png`
+  * `HR30_spaghetti_by_YYYY_YYYY.png`
+  * `HR20_spaghetti_by_YYYY_YYYY.png`
+  * `HR30_summary_by_YYYY_YYYY.png`
+  * `HR20_summary_by_YYYY_YYYY.png`
 * Summary table `outputs/summary.csv` per E:
 
   * peak_week_HR30, peak_value_HR30, HR30_at_t0, HR30_at_t2, etc.

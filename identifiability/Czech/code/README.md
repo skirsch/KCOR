@@ -48,11 +48,12 @@ Written under the output directory you pass (for `make identifiability`, default
   - `HR32 = h3/h2` (dose 3 vs dose 2), plus `HR32_w1..wK` for the dose-3 bins
 - `summary.csv`: per enrollment date summary metrics, including peak HR week/value and edge-case counts.
 - Plots:
-  - Per-enrollment hazards: `h_curves_EYYYYMMDD.png`
-  - Per-enrollment HRs: `HR_curves_EYYYYMMDD.png`
-  - Per-enrollment HR32: `HR32_curves_EYYYYMMDD.png`
-  - Spaghetti plots across enrollments: `HR30_spaghetti.png`, `HR20_spaghetti.png`
-  - Spaghetti HR32: `HR32_spaghetti.png`
+  - Per-enrollment hazards: `h_curves_EYYYYMMDD_by_YYYY_YYYY.png` (or `by_all`)
+  - Per-enrollment HRs: `HR_curves_EYYYYMMDD_by_YYYY_YYYY.png` (or `by_all`)
+  - Per-enrollment HR32: `HR32_curves_EYYYYMMDD_by_YYYY_YYYY.png` (or `by_all`)
+  - Spaghetti plots across enrollments: `HR30_spaghetti_by_YYYY_YYYY.png`, `HR20_spaghetti_by_YYYY_YYYY.png`
+  - Spaghetti HR32: `HR32_spaghetti_by_YYYY_YYYY.png`
+  - Summary plots (median + q10–q90 + counts): `HR30_summary_by_YYYY_YYYY.png`, `HR20_summary_by_YYYY_YYYY.png`, `HR32_summary_by_YYYY_YYYY.png`
 
 ## Run
 
