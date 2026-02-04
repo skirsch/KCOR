@@ -155,7 +155,7 @@ def build_windows():
 
 
 def main():
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[3]
     data_path = repo_root / "data" / "Czech" / "KCOR_CMR.xlsx"
     out_dir = repo_root / "test" / "quiet_window" / "out"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -280,10 +280,9 @@ def main():
         import matplotlib
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+        from matplotlib.patches import Patch
 
-        fig_dir = repo_root / "figures" / "si"
-        fig_dir.mkdir(parents=True, exist_ok=True)
-        fig_path = fig_dir / "fig_quiet_window_theta_scan_czech_2021_24.png"
+        fig_path = out_dir / "fig_quiet_window_theta_scan_czech_2021_24.png"
 
         plot_df = results_df.copy()
         plot_df["window_midpoint_date"] = pd.to_datetime(plot_df["window_midpoint_date"])
@@ -322,17 +321,36 @@ def main():
         for handle, label in zip(handles, labels):
             if label not in unique:
                 unique[label] = handle
-        if unique:
+        
+        # Create custom legend entries for decades and fill style
+        # Sort decades to ensure consistent order
+        sorted_decades = sorted(unique.keys())
+        decade_handles = [unique[decade] for decade in sorted_decades]
+        decade_labels = sorted_decades
+        
+        # Add fill style explanation
+        fill_pass = Patch(facecolor=edge_color, edgecolor=edge_color)
+        fill_fail = Patch(facecolor="none", edgecolor=edge_color)
+        
+        # Arrange for two-column layout: decades in first column, fill style in second column
+        # Put all decades first, then all fills
+        fill_handles = [fill_pass, fill_fail]
+        fill_labels = ["Filled = diagnostic pass", "Open = diagnostic fail"]
+        
+        combined_handles = decade_handles + fill_handles
+        combined_labels = decade_labels + fill_labels
+        
+        if combined_handles:
             fig.legend(
-                list(unique.values()),
-                list(unique.keys()),
+                combined_handles,
+                combined_labels,
                 loc="lower center",
                 bbox_to_anchor=(0.5, -0.08),
-                ncol=len(unique),
+                ncol=2,
                 fontsize=8,
                 frameon=False,
             )
-        fig.tight_layout(rect=[0, 0.12, 1, 1])
+        fig.tight_layout(rect=[0, 0.18, 1, 1])
         fig.savefig(fig_path, dpi=200, bbox_inches="tight")
         plt.close(fig)
         print(f"Wrote figure to {fig_path}")

@@ -306,7 +306,7 @@ slope-test: $(VENV_PYTHON)
 # Quiet-window sensitivity scan (Czech 2021_24)
 quiet-window: $(VENV_PYTHON)
 	@echo "Running quiet-window scan (Czech 2021_24)..."
-	$(abspath $(VENV_PYTHON)) scripts/quiet_window_scan_theta_czech_2021_24.py
+	$(abspath $(VENV_PYTHON)) test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py
 	@echo "Quiet-window scan complete!"
 
 # Simulation grid (operating characteristics and failure-mode diagnostics)
@@ -577,7 +577,7 @@ help:
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
 	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid)"
-	@echo "  quiet-window    - Run quiet-window scan (scripts/quiet_window_scan_theta_czech_2021_24.py)"
+	@echo "  quiet-window    - Run quiet-window scan (test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py)"
 	@echo "  cox-bias        - Run Cox bias demonstration simulation (test/sim_grid)"
 	@echo "  cox-bias-figures - Generate Cox bias demonstration figures"
 	@echo "  copy-cox-bias-figures - Copy Cox bias figures to preprint directory"
