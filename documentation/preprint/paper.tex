@@ -398,7 +398,7 @@ positioning)}\label{related-work-brief-positioning}
 KCOR builds on the frailty and selection-induced depletion literature in
 which unobserved heterogeneity induces deceleration of cohort-level
 hazards over follow-up (a standard working model is gamma
-frailty).\textsuperscript{1} KCOR's distinct contribution is not
+frailty)\textsuperscript{1}. KCOR's distinct contribution is not
 additional hazard flexibility, but a \textbf{diagnostics-driven
 normalization} of selection-induced depletion geometry in
 cumulative-hazard space prior to defining a cumulative cohort contrast.
@@ -406,7 +406,7 @@ Related approaches that address non-proportional hazards (time-varying
 effects, flexible parametric hazards, additive hazards) or time-varying
 confounding (MSM/IPW/g-methods) target different estimands and typically
 require richer longitudinal covariates than are available in minimal
-registry data.\textsuperscript{2--9} Additional discussion is provided
+registry data\textsuperscript{2--9}. Additional discussion is provided
 in the Supplementary Information (SI).
 
 Time-varying coefficient Cox models allow hazards to change over time
@@ -431,7 +431,7 @@ Motivating applied studies suggest that even careful matching and
 adjustment can leave substantial residual differences in non-COVID
 mortality and time-varying ``healthy vaccinee effect'' signatures,
 consistent with selection and depletion dynamics not captured by
-measured covariates.\textsuperscript{10,11}
+measured covariates\textsuperscript{10--13}.
 
 \subsubsection{1.5 Contribution of this
 work}\label{contribution-of-this-work}
@@ -667,7 +667,10 @@ diagnostically:
   \textbf{Quiet-window stability.} A prespecified epidemiologically
   quiet period exists during which external shocks to the baseline
   hazard are minimal, allowing depletion geometry to be estimated from
-  observed cumulative hazards.
+  observed cumulative hazards. Empirical robustness of the fitted
+  frailty parameters to quiet-window placement (12-month windows shifted
+  monthly) is demonstrated in Supplementary Figure
+  \ref{fig:si_quiet_window_theta_scan} using Czech registry data.
 \item
   \textbf{Independence across strata.} Cohorts or strata are analyzed
   independently, without interference, spillover, or cross-cohort
@@ -772,7 +775,7 @@ negligible. The exact transform
 throughout; the rare-event approximation is provided for intuition only.
 This discrete-time hazard transform under a piecewise-constant hazard
 assumption is standard; see, e.g., Kalbfleisch and Prentice (\emph{The
-Statistical Analysis of Failure Time Data}).\textsuperscript{12}
+Statistical Analysis of Failure Time Data})\textsuperscript{14}.
 
 \emph{All hazard and cumulative-hazard quantities used in KCOR are
 discrete-time integrated hazard estimators derived from fixed-cohort
@@ -823,7 +826,7 @@ high-frailty individuals.
 
 Gamma frailty is used because it yields a closed-form link between
 observed and baseline cumulative hazards via the Laplace
-transform.\textsuperscript{1} In KCOR, gamma frailty is a
+transform\textsuperscript{1}. In KCOR, gamma frailty is a
 \textbf{working geometric model} for depletion normalization, not a
 claim of biological truth. Adequacy is evaluated empirically via fit
 quality, post-normalization linearity, and stability diagnostics.
@@ -1171,7 +1174,7 @@ aggregation, age standardization, and uncertainty propagation; frailty
 parameters are not estimated separately by stratum. This use of
 stratification follows standard survival-analysis practice (e.g.,
 Kalbfleisch and Prentice, The Statistical Analysis of Failure Time
-Data).\textsuperscript{12}
+Data)\textsuperscript{14}.
 
 The stratified bootstrap procedure for KCOR proceeds as follows:
 
@@ -1275,7 +1278,7 @@ non-randomized analyses can exacerbate bias and imprecision when
 selection effects and measurement error dominate. Deeks further noted
 that, despite the widespread reliance on covariate adjustment in
 non-randomized studies, there is no empirical evidence that such
-adjustment reduces bias on average.\textsuperscript{13}
+adjustment reduces bias on average\textsuperscript{15}.
 
 Even when Cox models are extended with shared frailty to accommodate
 heterogeneity, they continue to estimate instantaneous hazard ratios
@@ -1686,6 +1689,10 @@ implementation details are provided in the Supplementary Information.
 \subsubsection{4.1 Limits of attribution and
 non-identifiability}\label{limits-of-attribution-and-non-identifiability}
 
+A notable strength of this study is the use of publicly available,
+record-level national mortality data, which permits independent
+verification and replication without reliance on restricted registries.
+
 KCOR does not uniquely identify the biological, behavioral, or clinical
 mechanisms responsible for observed hazard heterogeneity. In particular,
 curvature in the cumulative hazard may arise from multiple sources,
@@ -2047,7 +2054,7 @@ amplification}\label{covid-specific-non-proportional-hazard-amplification}
 COVID-19 mortality exhibits a pronounced departure from proportional
 hazards, with epidemic waves disproportionately amplifying risk among
 individuals with higher underlying frailty or baseline all-cause
-mortality risk.\textsuperscript{14} This phenomenon represents a
+mortality risk\textsuperscript{16}. This phenomenon represents a
 distinct class of bias from both static and dynamic healthy-vaccinee
 effects. Even after frailty-driven depletion is neutralized, wave-period
 mortality can remain differentially distorted because external infection
@@ -2099,8 +2106,9 @@ was exempt from institutional review board oversight. The primary
 validation results use synthetic data. Empirical negative-control
 figures (Figures \ref{fig:neg_control_10yr} and
 \ref{fig:neg_control_20yr}) use aggregated cohort summaries derived from
-Czech Republic administrative data; no record-level data are shared in
-this manuscript.\textsuperscript{15}
+publicly available Czech Republic administrative data; no record-level
+data are reproduced in this manuscript, although the underlying Czech
+datasets are available at the record level\textsuperscript{17}.
 
 \subsubsection{Consent for publication}\label{consent-for-publication}
 
@@ -2109,11 +2117,13 @@ Not applicable.
 \subsubsection{Data availability}\label{data-availability}
 
 This study analyzes aggregated cohort-level summaries derived from
-administrative health records. The underlying individual-level data from
-the Czech Republic are record-level administrative data collected and
-maintained by the National Health Information Portal. Access to the
-underlying record-level data is subject to the data provider's
-governance, approval, and disclosure-control policies.
+administrative health records. The Czech Republic mortality and
+vaccination data used in this study are publicly available, record-level
+administrative datasets released by the Czech National Health
+Information Portal\textsuperscript{17}. No restricted-access or
+proprietary data sources were used. For reproducibility and disclosure
+control, analyses in this manuscript are conducted on aggregated
+cohort-time summaries derived from the public record-level data.
 
 \subsubsection{Software availability}\label{software-availability}
 
@@ -2145,9 +2155,9 @@ Simulation designs were either specified by the author or proposed
 during iterative discussion and subsequently reviewed and approved by
 the author prior to implementation. AI assistance was used to draft code
 for approved simulations, which the author reviewed, tested, and
-validated. Additional large language models (including Gemini, DeepSeek,
-and Claude) were used to provide feedback on manuscript wording and
-methodological exposition in a role analogous to informal peer review.
+validated. Additional large language models (including Grok and Claude)
+were used to provide feedback on manuscript wording and methodological
+exposition in a role analogous to informal peer review.
 
 All scientific decisions, methodological choices, analyses,
 interpretations, and judgments regarding which suggestions to accept or
@@ -2169,10 +2179,10 @@ analysis, and wrote the manuscript.
 
 \subsubsection{Acknowledgements}\label{acknowledgements}
 
-The author thanks Clare Craig, James Lyons-Weiler, Stefan Baral, Jasmin
-Cardinal Prévost, Alan Mordue, and Ben Jackson for helpful discussions
-and methodological feedback during the development of this work. All
-errors remain the author's responsibility.
+The author thanks Clare Craig, James Lyons-Weiler, Jasmin Cardinal
+Prévost, Stefan Baral, Paul Fischer, Alan Mordue, and Ben Jackson for
+helpful discussions and methodological feedback during the development
+of this work. All errors remain the author's responsibility.
 
 \newpage
 
@@ -2258,20 +2268,35 @@ national cohort study in Qatar. Schiffer JT, Henry D, eds. \emph{eLife}.
 2025;14:e103690.
 doi:\href{https://doi.org/10.7554/eLife.103690}{10.7554/eLife.103690}}
 
-\bibitem[\citeproctext]{ref-kalbfleisch2002}
+\bibitem[\citeproctext]{ref-agampodi2024}
 \CSLLeftMargin{12. }%
+\CSLRightInline{Agampodi S, Tadesse BT, Sahastrabuddhe S, Excler JL, Kim
+JH. Biases in COVID-19 vaccine effectiveness studies using cohort
+design. \emph{Front Med}. 2024;11:1474045.
+doi:\href{https://doi.org/10.3389/fmed.2024.1474045}{10.3389/fmed.2024.1474045}}
+
+\bibitem[\citeproctext]{ref-bakker2025}
+\CSLLeftMargin{13. }%
+\CSLRightInline{Bakker B, Walk J, Meester R. Healthy vaccinee and
+misclassification biases in Dutch observational health data in relation
+to Covid-19 vaccine effectiveness and safety. Preprint posted online
+June 30, 2025.
+\url{https://www.researchgate.net/publication/391008852_Healthy_vaccinee_and_misclassification_biases_in_Dutch_observational_health_data_in_relation_to_Covid-19_vaccine_effectiveness_and_safety}}
+
+\bibitem[\citeproctext]{ref-kalbfleisch2002}
+\CSLLeftMargin{14. }%
 \CSLRightInline{Kalbfleisch JD, Prentice RL. \emph{The Statistical
 Analysis of Failure Time Data}. 1st ed. Wiley; 2002.
 doi:\href{https://doi.org/10.1002/9781118032985}{10.1002/9781118032985}}
 
 \bibitem[\citeproctext]{ref-deeks2003}
-\CSLLeftMargin{13. }%
+\CSLLeftMargin{15. }%
 \CSLRightInline{Deeks J, Dinnes J, D'Amico R, et al. Evaluating
 non-randomised intervention studies. \emph{Health Technol Assess}.
 2003;7(27). doi:\href{https://doi.org/10.3310/hta7270}{10.3310/hta7270}}
 
 \bibitem[\citeproctext]{ref-levin2020}
-\CSLLeftMargin{14. }%
+\CSLLeftMargin{16. }%
 \CSLRightInline{Levin AT, Hanage WP, Owusu-Boaitey N, Cochran KB, Walsh
 SP, Meyerowitz-Katz G. Assessing the age specificity of infection
 fatality rates for COVID-19: systematic review, meta-analysis, and
@@ -2280,7 +2305,7 @@ public policy implications. \emph{Eur J Epidemiol}.
 doi:\href{https://doi.org/10.1007/s10654-020-00698-1}{10.1007/s10654-020-00698-1}}
 
 \bibitem[\citeproctext]{ref-sanca2024}
-\CSLLeftMargin{15. }%
+\CSLLeftMargin{17. }%
 \CSLRightInline{Šanca O, Jarkovský J, Klimeš D, et al.
 \emph{Vaccination, Positivity, Hospitalization for COVID-19, Deaths,
 Long COVID and Comorbidities in People in the Czech Republic}. National
@@ -2299,7 +2324,7 @@ Health Information Portal, Czech Republic; 2024. Accessed December 20,
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
   >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
-\caption{Summary of two large matched observational studies showing
+\caption{Summary of three large matched observational studies showing
 residual confounding / HVE despite meticulous
 matching.}\label{tbl:HVE_motivation}\tabularnewline
 \toprule\noalign{}
@@ -2345,6 +2370,14 @@ demographics + coexisting conditions + prior infection; Cox models &
 Strong early reduction in non-COVID mortality (HVE), with time-varying
 reversal later & Even meticulous matching leaves time-varying residual
 differences consistent with selection/frailty depletion \\
+Bakker et al.~(Netherlands)\textsuperscript{13} & National observational
+mortality + COVID-19 vaccination cohort & Stratification + matching on
+multiple population and health indicators; survival analyses +
+calendar-time sanity checks & Evidence consistent with residual HVE
+despite matching; additional evidence of vaccination-status
+misclassification artifacts & Demonstrates how strong selection +
+misclassification artifacts can dominate VE/safety estimates;
+underscores need for diagnostics-first cohort comparison \\
 \end{longtable}
 
 \newpage
@@ -3033,6 +3066,10 @@ Residual structure & Examine residuals in cumulative-hazard space. & No
 systematic curvature or autocorrelation \\
 \end{longtable}
 
+Empirical illustration of the ``Quiet-window perturbation'' diagnostic
+is provided in Figure \ref{fig:si_quiet_window_theta_scan}, which scans
+monthly-shifted 12-month windows in Czech registry data.
+
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
@@ -3579,8 +3616,50 @@ Robustness of fitted parameters is assessed by:
   normalization is not sensitive to this choice.
 \end{itemize}
 
-\subsubsection{S5.4 Quiet-window overlay
-plots}\label{s5.4-quiet-window-overlay-plots}
+\subsubsection{S5.4 Quiet-window perturbation scan (empirical Czech
+data)}\label{s5.4-quiet-window-perturbation-scan-empirical-czech-data}
+
+To assess whether diagnostically valid quiet windows are rare or fragile
+in applied registry data, we performed a systematic scan of quiet-window
+placements in the Czech Republic 2021--2024 cohort (enrollment ISO week
+2021-24). We re-estimated gamma-frailty parameters
+\((\hat{k}_d,\hat{\theta}_d)\) across a sequence of overlapping quiet
+windows of fixed duration, holding all other settings fixed.
+
+Specifically, we considered 12-month windows beginning at successive
+monthly offsets between April 2022 and April 2023 (inclusive). For each
+window placement, parameters were estimated independently using
+nonlinear least squares in cumulative-hazard space over bins within the
+window, subject to the same diagnostic pass/fail criteria used elsewhere
+in this SI. Results are shown for two birth-decade strata (1940s and
+1950s), and for dose groups \(d \in \{0,1,2\}\).
+
+Figure \ref{fig:si_quiet_window_theta_scan} shows \(\hat{\theta}_d\) as
+a function of quiet-window midpoint date. For Dose 0 (unvaccinated)
+cohorts, \(\hat{\theta}_0\) is consistently non-zero and stable across
+many window placements, indicating that depletion curvature and the
+associated frailty parameters are not driven by a narrowly tuned quiet
+interval. For Dose 1 and Dose 2 cohorts, \(\hat{\theta}_d\) collapses
+toward zero across placements (note the panel-specific y-axis scales),
+reflecting near-linear cumulative hazards and weak or absent depletion
+curvature rather than estimator instability. Open markers denote windows
+failing diagnostics (treated as non-identified and not interpreted).
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Quiet-window robustness scan: estimated frailty variance \textbackslash hat\{\textbackslash theta\}\_d vs.~quiet-window midpoint date for Czech 2021--2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Marker shape denotes birth decade (1940s, 1950s). Filled markers indicate diagnostic pass; open markers indicate diagnostic fail. Note the changing y-axis scales across panels: Dose 1 and Dose 2 estimates collapse toward zero.}]{figures/fig_si_quiet_window_theta_scan_czech_2021_24.png}}
+\caption{Quiet-window robustness scan: estimated frailty variance
+\(\hat{\theta}_d\) vs.~quiet-window midpoint date for Czech 2021--2024
+enrollment cohort, using 12-month windows shifted monthly from April
+2022 through April 2023. Marker shape denotes birth decade (1940s,
+1950s). Filled markers indicate diagnostic pass; open markers indicate
+diagnostic fail. Note the changing y-axis scales across panels: Dose 1
+and Dose 2 estimates collapse toward
+zero.}\label{fig:si_quiet_window_theta_scan}
+\end{figure}
+
+\subsubsection{S5.5 Quiet-window overlay
+plots}\label{s5.5-quiet-window-overlay-plots}
 
 Overlaying the prespecified quiet window on hazard and cumulative-hazard
 time series plots provides a visual diagnostic of window placement
@@ -3599,8 +3678,8 @@ relative to mortality dynamics. The fit window should:
 Visual inspection of quiet-window placement relative to mortality
 dynamics is an essential diagnostic step.
 
-\subsubsection{S5.5 Robustness to age
-stratification}\label{s5.5-robustness-to-age-stratification}
+\subsubsection{S5.6 Robustness to age
+stratification}\label{s5.6-robustness-to-age-stratification}
 
 This subsection illustrates robustness of \(\mathrm{KCOR}(t)\) to narrow
 age stratification by repeating the same fixed-cohort comparison in

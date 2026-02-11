@@ -47,6 +47,8 @@ Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnost
 | Quiet-window perturbation | Shift quiet-window boundaries by ± several weeks. | Parameter and trajectory stability |
 | Residual structure | Examine residuals in cumulative-hazard space. | No systematic curvature or autocorrelation |
 
+Empirical illustration of the "Quiet-window perturbation" diagnostic is provided in Figure @fig:si_quiet_window_theta_scan, which scans monthly-shifted 12-month windows in Czech registry data.
+
 Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifiability}
 
 | Criterion | Condition | Consequence if violated |
@@ -267,7 +269,17 @@ Robustness of fitted parameters is assessed by:
 - **Skip-weeks sensitivity**: Vary SKIP_WEEKS from 0 to 8 and verify KCOR(t) trajectories remain qualitatively similar.
 - **Baseline-shape alternatives**: Compare the default constant baseline over the fit window to mild linear trends and verify normalization is not sensitive to this choice.
 
-### S5.4 Quiet-window overlay plots
+### S5.4 Quiet-window perturbation scan (empirical Czech data)
+
+To assess whether diagnostically valid quiet windows are rare or fragile in applied registry data, we performed a systematic scan of quiet-window placements in the Czech Republic 2021–2024 cohort (enrollment ISO week 2021-24). We re-estimated gamma-frailty parameters $(\hat{k}_d,\hat{\theta}_d)$ across a sequence of overlapping quiet windows of fixed duration, holding all other settings fixed.
+
+Specifically, we considered 12-month windows beginning at successive monthly offsets between April 2022 and April 2023 (inclusive). For each window placement, parameters were estimated independently using nonlinear least squares in cumulative-hazard space over bins within the window, subject to the same diagnostic pass/fail criteria used elsewhere in this SI. Results are shown for two birth-decade strata (1940s and 1950s), and for dose groups $d \in \{0,1,2\}$.
+
+Figure @fig:si_quiet_window_theta_scan shows $\hat{\theta}_d$ as a function of quiet-window midpoint date. For Dose 0 (unvaccinated) cohorts, $\hat{\theta}_0$ is consistently non-zero and stable across many window placements, indicating that depletion curvature and the associated frailty parameters are not driven by a narrowly tuned quiet interval. For Dose 1 and Dose 2 cohorts, $\hat{\theta}_d$ collapses toward zero across placements (note the panel-specific y-axis scales), reflecting near-linear cumulative hazards and consequent non-identifiability of frailty curvature rather than estimator instability. Open markers denote windows failing diagnostics (treated as non-identified and not interpreted).
+
+![Quiet-window robustness scan: estimated frailty variance $\hat{\theta}_d$ vs. quiet-window midpoint date for Czech 2021–2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Marker shape denotes birth decade (1940s, 1950s). Filled markers indicate diagnostic pass; open markers indicate diagnostic fail. Note the changing y-axis scales across panels: Dose 1 and Dose 2 estimates collapse toward zero.](figures/fig_si_quiet_window_theta_scan_czech_2021_24.png){#fig:si_quiet_window_theta_scan}
+
+### S5.5 Quiet-window overlay plots
 
 Overlaying the prespecified quiet window on hazard and cumulative-hazard time series plots provides a visual diagnostic of window placement relative to mortality dynamics. The fit window should:
 
@@ -277,7 +289,7 @@ Overlaying the prespecified quiet window on hazard and cumulative-hazard time se
 
 Visual inspection of quiet-window placement relative to mortality dynamics is an essential diagnostic step.
 
-### S5.5 Robustness to age stratification
+### S5.6 Robustness to age stratification
 
 This subsection illustrates robustness of $\mathrm{KCOR}(t)$ to narrow age stratification by repeating the same fixed-cohort comparison in three single birth-year cohorts spanning advanced ages (1930, 1940, 1950). Across these strata, the trajectories remain qualitatively stable after depletion normalization, supporting the claim that the observed behavior is not an artifact of age aggregation.
 

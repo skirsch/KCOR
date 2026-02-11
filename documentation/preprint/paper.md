@@ -173,7 +173,7 @@ The KCOR framework relies on the following assumptions, which are framed diagnos
    Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
 
 3. **Quiet-window stability.**
-   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards.
+   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Empirical robustness of the fitted frailty parameters to quiet-window placement (12-month windows shifted monthly) is demonstrated in Supplementary Figure @fig:si_quiet_window_theta_scan using Czech registry data.
 
 4. **Independence across strata.**
    Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
@@ -774,7 +774,7 @@ All synthetic validation datasets used for method development and evaluation (in
 
 The KCOR method and estimand were developed by the author without the use of artificial intelligence (AI) tools. Generative AI tools, including OpenAI’s ChatGPT and Cursor Composer 1, were used during manuscript preparation to assist with drafting and editing text, mathematical typesetting, refactoring code, and implementing simulation studies described in this manuscript.
 
-Simulation designs were either specified by the author or proposed during iterative discussion and subsequently reviewed and approved by the author prior to implementation. AI assistance was used to draft code for approved simulations, which the author reviewed, tested, and validated. Additional large language models (including Gemini, DeepSeek, and Claude) were used to provide feedback on manuscript wording and methodological exposition in a role analogous to informal peer review.
+Simulation designs were either specified by the author or proposed during iterative discussion and subsequently reviewed and approved by the author prior to implementation. AI assistance was used to draft code for approved simulations, which the author reviewed, tested, and validated. Additional large language models (including Grok and Claude) were used to provide feedback on manuscript wording and methodological exposition in a role analogous to informal peer review.
 
 All scientific decisions, methodological choices, analyses, interpretations, and judgments regarding which suggestions to accept or reject were made solely by the author, who reviewed and understands all content and takes full responsibility for the manuscript.
 
@@ -792,7 +792,7 @@ Steven T. Kirsch conceived the method, wrote the code, performed the analysis, a
 
 ### Acknowledgements
 
-The author thanks Clare Craig, James Lyons-Weiler, Stefan Baral, Jasmin Cardinal Prévost, Alan Mordue, and Ben Jackson for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+The author thanks Clare Craig, James Lyons-Weiler, Jasmin Cardinal Prévost, Stefan Baral, Paul Fischer, Alan Mordue, and Ben Jackson for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
 
 \newpage
 
