@@ -173,7 +173,7 @@ The KCOR framework relies on the following assumptions, which are framed diagnos
    Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
 
 3. **Quiet-window stability.**
-   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Empirical robustness of the fitted frailty parameters to quiet-window placement (12-month windows shifted monthly) is demonstrated in Supplementary Figure @fig:si_quiet_window_theta_scan using Czech registry data.
+   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Residual baseline drift can be absorbed into the frailty parameter if quiet-window conditions are violated; empirical robustness of fitted frailty parameters to quiet-window placement (12-month windows shifted monthly) is demonstrated in Supplementary Figure @fig:si_quiet_window_theta_scan using Czech registry data.
 
 4. **Independence across strata.**
    Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
@@ -289,6 +289,8 @@ $$
 {#eq:gamma-frailty-inversion}
 
 This inversion is the **normalization operator**: given an estimate $\hat{\theta}_d$, it maps the observed cumulative hazard $H_{\mathrm{obs},d}(t)$ into a depletion-neutralized cumulative hazard scale. We use a tilde (e.g., $\tilde H_{0,d}(t)$) to denote depletion-neutralized baseline quantities obtained after frailty normalization; observed cohort-aggregated quantities are written without a tilde (e.g., $H_{\mathrm{obs},d}(t)$).
+
+The gamma frailty assumption serves as a geometric working model that enables closed-form inversion between observed cumulative hazard and latent baseline hazard. KCOR does not assume that the true frailty distribution is gamma; rather, gamma provides a tractable parametric family whose induced cumulative-hazard curvature approximates depletion geometry in many settings. When the true frailty distribution deviates from gamma, the inversion becomes approximate, and identifiability is evaluated through diagnostics rather than assumed.
 
 #### 2.4.3 Baseline shape used for frailty identification
 
@@ -466,6 +468,8 @@ Importantly, event-time bins are **not resampled independently**. Any bootstrap 
 Bootstrap resampling is performed at the cohort-count level in the aggregated representation by resampling contiguous blocks of $(d_d(t), N_d(t))$ event-time pairs within cohort-time strata with replacement, preserving within-cohort temporal structure, rather than resampling individual-level records.
 
 Uncertainty intervals reflect event stochasticity and model-fit uncertainty in $(\hat{k}_d,\hat{\theta}_d)$ and are interpreted as sampling variability of the aggregated counting process, not uncertainty in individual-level causal effects.
+
+Bootstrap intervals are calibrated under the working gamma frailty model. Simulation studies (Table @tbl:bootstrap_coverage) indicate that coverage remains near nominal when diagnostic criteria are satisfied, but becomes mildly anti-conservative under frailty misspecification or sparse-event regimes. Estimates are therefore intended to be interpreted conditionally on diagnostic pass status.
 
 ### 2.10 Algorithm summary and reproducibility checklist
 
@@ -678,6 +682,8 @@ KCOR is diagnostic-first: multiplicity concerns are mitigated by prespecificatio
 This section summarizes the principal limitations of the KCOR framework, emphasizing conditions under which interpretation is restricted rather than situations in which the estimator fails. These limitations are diagnostic and design-related, reflecting the framework’s intentionally conservative scope.
 
 KCOR is intentionally diagnostic rather than test-based: it does not attempt to formally test properties such as quiet-window validity or frailty distributional form, but instead enforces conservative interpretability gates when prespecified empirical diagnostics fail. KCOR is not a causal effect estimator and does not identify counterfactual outcomes under hypothetical interventions.
+
+KCOR does not guarantee nominal uncertainty calibration under arbitrary frailty misspecification. Because the gamma frailty model is used as a working approximation, confidence intervals may be mildly anti-conservative in sparse-event regimes or when depletion geometry deviates substantially from gamma. Diagnostic criteria are intended to identify such regimes; estimates from failing windows should not be interpreted.
 
 - **Model dependence**: Normalization relies on the adequacy of the gamma-frailty model and the baseline-shape assumption during the quiet window.
 - **Relation to existing non-PH methods**: KCOR is complementary to time-varying Cox, flexible parametric, additive hazards, and MSM approaches; these methods address different estimands and identification strategies, whereas KCOR targets depletion-geometry normalization under minimal-data constraints (see §1.3.1).
@@ -925,7 +931,7 @@ Table: Simulation comparison of KCOR and alternative estimands under selection-i
 | **Cox** | Time-varying hazard ratio | Non-zero under frailty heterogeneity | Moderate (HR instability across time windows) | Improves fit to non-proportional hazards but does not normalize selection geometry; inherits depletion structure |
 
 
-Table: Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated across simulation scenarios using stratified bootstrap resampling. Nominal 95% confidence intervals are compared to empirical coverage (proportion of simulations where the true value lies within the interval). {#tbl:bootstrap_coverage}
+Table: Bootstrap coverage for KCOR uncertainty intervals. Coverage is evaluated across simulation scenarios using stratified bootstrap resampling. Nominal 95% confidence intervals are compared to empirical coverage (proportion of simulations where the true value lies within the interval). Coverage degradation is concentrated in regimes where diagnostic criteria fail or event counts are sparse; when diagnostics pass, coverage remains close to nominal. {#tbl:bootstrap_coverage}
 
 | Scenario | Nominal coverage | Empirical coverage | Notes |
 |----------|-----------------|-------------------|-------|

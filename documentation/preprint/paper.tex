@@ -667,10 +667,12 @@ diagnostically:
   \textbf{Quiet-window stability.} A prespecified epidemiologically
   quiet period exists during which external shocks to the baseline
   hazard are minimal, allowing depletion geometry to be estimated from
-  observed cumulative hazards. Empirical robustness of the fitted
-  frailty parameters to quiet-window placement (12-month windows shifted
-  monthly) is demonstrated in Supplementary Figure
-  \ref{fig:si_quiet_window_theta_scan} using Czech registry data.
+  observed cumulative hazards. Residual baseline drift can be absorbed
+  into the frailty parameter if quiet-window conditions are violated;
+  empirical robustness of fitted frailty parameters to quiet-window
+  placement (12-month windows shifted monthly) is demonstrated in
+  Supplementary Figure \ref{fig:si_quiet_window_theta_scan} using Czech
+  registry data.
 \item
   \textbf{Independence across strata.} Cohorts or strata are analyzed
   independently, without interference, spillover, or cross-cohort
@@ -864,6 +866,15 @@ scale. We use a tilde (e.g., \(\tilde H_{0,d}(t)\)) to denote
 depletion-neutralized baseline quantities obtained after frailty
 normalization; observed cohort-aggregated quantities are written without
 a tilde (e.g., \(H_{\mathrm{obs},d}(t)\)).
+
+The gamma frailty assumption serves as a geometric working model that
+enables closed-form inversion between observed cumulative hazard and
+latent baseline hazard. KCOR does not assume that the true frailty
+distribution is gamma; rather, gamma provides a tractable parametric
+family whose induced curvature approximates depletion effects in many
+settings. When the true frailty distribution deviates from gamma, the
+inversion becomes approximate, and identifiability is evaluated through
+diagnostics rather than assumed.
 
 \paragraph{2.4.3 Baseline shape used for frailty
 identification}\label{baseline-shape-used-for-frailty-identification}
@@ -1232,6 +1243,13 @@ Uncertainty intervals reflect event stochasticity and model-fit
 uncertainty in \((\hat{k}_d,\hat{\theta}_d)\) and are interpreted as
 sampling variability of the aggregated counting process, not uncertainty
 in individual-level causal effects.
+
+Bootstrap intervals are calibrated under the working gamma frailty
+model. Simulation studies (Table \ref{tbl:bootstrap_coverage}) indicate
+that coverage remains near nominal when diagnostic criteria are
+satisfied, but becomes mildly anti-conservative under frailty
+misspecification or sparse-event regimes. Estimates are therefore
+intended to be interpreted conditionally on diagnostic pass status.
 
 \subsubsection{2.10 Algorithm summary and reproducibility
 checklist}\label{algorithm-summary-and-reproducibility-checklist}
@@ -1803,6 +1821,14 @@ frailty distributional form, but instead enforces conservative
 interpretability gates when prespecified empirical diagnostics fail.
 KCOR is not a causal effect estimator and does not identify
 counterfactual outcomes under hypothetical interventions.
+
+KCOR does not guarantee nominal uncertainty calibration under arbitrary
+frailty misspecification. Because the gamma frailty model is used as a
+working approximation, confidence intervals may be mildly
+anti-conservative in sparse-event regimes or when depletion geometry
+deviates substantially from gamma. Diagnostic criteria are intended to
+identify such regimes; estimates from failing windows should not be
+interpreted.
 
 \begin{itemize}
 \tightlist
@@ -2890,7 +2916,10 @@ geometry; inherits depletion structure \\
 evaluated across simulation scenarios using stratified bootstrap
 resampling. Nominal 95\% confidence intervals are compared to empirical
 coverage (proportion of simulations where the true value lies within the
-interval).}\label{tbl:bootstrap_coverage}\tabularnewline
+interval). Coverage degradation is concentrated in regimes where
+diagnostic criteria fail or event counts are sparse; when diagnostics
+pass, coverage remains close to
+nominal.}\label{tbl:bootstrap_coverage}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Scenario
@@ -3641,9 +3670,10 @@ many window placements, indicating that depletion curvature and the
 associated frailty parameters are not driven by a narrowly tuned quiet
 interval. For Dose 1 and Dose 2 cohorts, \(\hat{\theta}_d\) collapses
 toward zero across placements (note the panel-specific y-axis scales),
-reflecting near-linear cumulative hazards and weak or absent depletion
-curvature rather than estimator instability. Open markers denote windows
-failing diagnostics (treated as non-identified and not interpreted).
+reflecting near-linear cumulative hazards and consequent
+non-identifiability of frailty curvature rather than estimator
+instability. Open markers denote windows failing diagnostics (treated as
+non-identified and not interpreted).
 
 \begin{figure}
 \centering
