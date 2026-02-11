@@ -587,6 +587,13 @@ The strategy is therefore:
   hazards (KCOR) are used here.
 \end{enumerate}
 
+KCOR deliberately targets cumulative mortality contrasts rather than
+instantaneous hazard ratios. It is therefore not intended as a
+replacement for Cox proportional hazards models or flexible parametric
+survival models that estimate time-varying hazard effects. Instead, KCOR
+provides a geometry-based normalization of cumulative risk in settings
+where selection-induced depletion distorts marginal comparisons.
+
 All analyses are performed using discrete weekly time bins;
 continuous-time notation is used solely for expositional convenience.
 See Table \ref{tbl:notation} for the full symbol list.
@@ -1173,6 +1180,11 @@ trajectory is defined as:
 This ratio is computed after depletion normalization and is interpreted
 conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
 
+Normalized cumulative contrasts at clinically relevant horizons (e.g.,
+90-day or 1-year mortality) are obtained directly from
+\(\tilde H_{0,d}(t)\) without requiring proportional hazards
+assumptions.
+
 \subsubsection{2.9 Uncertainty
 quantification}\label{uncertainty-quantification}
 
@@ -1718,6 +1730,14 @@ A notable strength of this study is the use of publicly available,
 record-level national mortality data, which permits independent
 verification and replication without reliance on restricted registries.
 
+KCOR should be viewed as complementary to hazard-based modeling rather
+than as a substitute. Cox models and flexible parametric approaches
+estimate instantaneous hazard relationships and allow time-varying
+coefficients, whereas KCOR addresses cumulative survival curvature
+arising from frailty-induced depletion. When depletion geometry
+materially distorts marginal hazard ratios, KCOR provides an alternative
+summary contrast at the cumulative scale.
+
 KCOR does not uniquely identify the biological, behavioral, or clinical
 mechanisms responsible for observed hazard heterogeneity. In particular,
 curvature in the cumulative hazard may arise from multiple sources,
@@ -1765,6 +1785,11 @@ not reported and results are treated as non-identifiable rather than as
 substantive cumulative effects. Anchored KCOR is used only when
 explicitly stated to remove pre-existing level differences and emphasize
 post-reference divergence.
+
+Cumulative contrasts are particularly informative in settings where
+early hazard ratios attenuate over time due to depletion of high-risk
+individuals, leading instantaneous hazard-based summaries to obscure
+long-horizon risk differences.
 
 \subsubsection{4.3 Relationship to negative control
 methods}\label{relationship-to-negative-control-methods}
@@ -2107,8 +2132,9 @@ KCOR is not designed to normalize epidemic-wave periods characterized by
 abrupt, non-stationary hazard shocks that differentially impact
 high-frailty individuals. The quiet-window requirement is explicitly
 intended to exclude such intervals. Estimates obtained during pronounced
-wave periods should therefore be treated as non-identified under the
-KCOR framework rather than interpreted as corrected contrasts.
+wave periods should therefore be regarded as outside the identifiability
+domain of the KCOR framework rather than interpreted as corrected
+contrasts.
 
 KCOR does not attempt to correct this COVID-specific
 non-proportionality. The method is designed to isolate and remove
@@ -2133,19 +2159,21 @@ intervals; inference is restricted to diagnostically stable periods.
 
 \subsection{6. Conclusion}\label{conclusion}
 
-KCOR addresses selection-induced hazard curvature in retrospective
-cohort comparisons by modeling and inverting depletion geometry under a
-working frailty assumption prior to cumulative comparison. Across
-synthetic and empirical controls, KCOR remains near-null under selection
-without effect and reliably detects injected effects when present. The
-synthetic null validates depletion-neutralized behavior under
-selection-only regimes, the age-shift negative control validates
-stability under large composition differences, and the Cox failure under
-a true null illustrates estimand mismatch under frailty-driven
-non-proportional hazards. Rather than presuming identifiability, KCOR
-enforces its assumptions diagnostically, flagging violations through
-degraded fit, instability, or residual curvature instead of absorbing
-them into model-dependent estimates.
+KCOR complements hazard-based modeling by stabilizing cumulative risk
+comparisons when selection-induced depletion distorts marginal hazard
+ratios. KCOR addresses selection-induced hazard curvature in
+retrospective cohort comparisons by modeling and inverting depletion
+geometry under a working frailty assumption prior to cumulative
+comparison. Across synthetic and empirical controls, KCOR remains
+near-null under selection without effect and reliably detects injected
+effects when present. The synthetic null validates depletion-neutralized
+behavior under selection-only regimes, the age-shift negative control
+validates stability under large composition differences, and the Cox
+failure under a true null illustrates estimand mismatch under
+frailty-driven non-proportional hazards. Rather than presuming
+identifiability, KCOR enforces its assumptions diagnostically, flagging
+violations through degraded fit, instability, or residual curvature
+instead of absorbing them into model-dependent estimates.
 
 \newpage
 
