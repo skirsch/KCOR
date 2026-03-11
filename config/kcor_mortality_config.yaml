@@ -1,5 +1,9 @@
 # KCOR Mortality Analysis Configuration File
 # This file centralizes parameters for the KCOR mortality analysis pipeline
+# this is used to establish the parameters for "make sensitivity"
+
+# yaml config file for each dataset can be found in the data/dataset/dataset.yaml file
+# for example, the yaml config file for the Czech dataset is in the data/Czech/Czech.yaml file
 
 # Default enrollment dates for analysis
 enrollment_dates:

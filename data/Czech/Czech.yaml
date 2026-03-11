@@ -1,18 +1,19 @@
 # Czech dataset yaml file
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Changing this file will cause KCOR.py to be re-run, but NOT KCOR_CMR.py (since it's rare you change the enrollment dates)
+# KCOR_analysis.xlsx is stored for cases where the COVID correction is and is not applied for comparison purposes.
 
 schema: Czech-1.0
 timezone: local
 observationEndDate: '2025-12-31'    # not used for the Czech dataset because it doesn't go though a converter.
-birthBandYears: 5
+birthBandYears: 5                   # 5 years age bands for the cohorts.
 
 # see figure 3 in https://pmc.ncbi.nlm.nih.gov/articles/PMC7721859/
 # the COVID correction ONLY will scale values ABOVE the value of the start date until the end date.
 covidCorrection:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  factor: 1.27  # 1.27 is the adjustment factor for a 2X mortality difference between cohorts because it is 2^1.35 where 1.35 is the ratio between 11.5% and 8.5% standard death annual hazard rates. 
+  factor: 1.00           # 1.27 is the adjustment factor for a 2X mortality difference between cohorts because it is 2^1.35 where 1.35 is the ratio between 11.5% and 8.5% standard death annual hazard rates. 
 
 
 # The quiet window is used to estimate the theta parameter for the gamma frailty model.
