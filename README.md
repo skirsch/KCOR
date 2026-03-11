@@ -1,4 +1,4 @@
-# KCOR v6.1 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v6.2 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -767,7 +767,7 @@ KCOR/
 ├── README.md                           # This file
 ├── code/
 │   ├── KCOR.py                      # Main analysis script (v4.6)
-│   ├── KCOR_CMR.py                    # Data aggregation script
+│   ├── KCOR_CMR.py                    # Data aggregation script (DCCI buckets: -1,0,1,2,3,4,5; 2 and 4 preserved)
 │   ├── KCOR_ts.py                      # Time series analysis script
 │   ├── Makefile                        # Build automation (Windows/Linux/Mac)
 │   ├── debug/                          # Helper scripts for development/verification
@@ -916,6 +916,7 @@ Notes:
 cd code
 # Step 1: Data aggregation
 python KCOR_CMR.py [input_file] [output_file]
+# DCCI handling: KCOR_CMR preserves buckets -1,0,1,2,3,4,5 (2 and 4 are not collapsed into 3).
 
 # Step 2: KCOR analysis
 python KCOR.py [aggregated_file] [analysis_output] [mode] [log_filename]
@@ -1389,6 +1390,13 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
   - **All Ages (YearOfBirth = -2)**: Direct aggregation without age grouping or weighting
 - **Display**: Shown in console and summary outputs right after "ASMR (direct)"
 - **Use Case**: Useful for comparing overall population-level effects without age-specific weighting
+
+### 🆕 Version 6.2
+
+#### Major Improvements
+- **KCOR_CMR DCCI stratification update**: DCCI `2` and `4` are now preserved as separate strata.
+- **Removed DCCI collapse**: Previous KCOR_CMR behavior that collapsed DCCI `2-4` into `3` was removed.
+- **Expanded DCCI buckets**: KCOR_CMR now uses `{-1, 0, 1, 2, 3, 4, 5}`.
 
 ### 🆕 Version 6.1
 

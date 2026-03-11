@@ -14,6 +14,9 @@
 #   KCORv4 eliminates duplicate individual records before analysis (e.g., multiple COVID infections per person),
 #   so downstream KCOR death counts will be lower than earlier KCOR implementations that double-counted duplicates.
 #   The KCORv4 behavior is correct; prior KCOR totals were inflated by counting duplicate entries.
+# VERSION NOTE (v6.2, 2026-03-11):
+#   DCCI stratification now keeps 2 and 4 as distinct buckets.
+#   Previous behavior collapsed DCCI 2-4 into DCCI 3.
 #
 #
 # I run it from VS Code (execute the buffer). It takes about 10 minutes to run for each enrollment date.
@@ -422,15 +425,13 @@ a.columns = [
     'min_MechanicalVentilation_ECMO', 'days_MechanicalVentilation_ECMO', 'max_MechanicalVentilation_ECMO',
     'Mutation', 'DateOfDeath', 'Long_COVID', 'DCCI']
 
-# Ensure DCCI buckets are {-1,0,1,3,5}; collapse 2–4 -> 3; map NaN/negatives -> -1
+# Ensure DCCI buckets are {-1,0,1,2,3,4,5}; keep 2 and 4 separate; map NaN/negatives -> -1
 a['DCCI'] = pd.to_numeric(a['DCCI'], errors='coerce')
 # NaN and negatives become -1 (unknown)
 a['DCCI'] = a['DCCI'].where(a['DCCI'].notna(), -1)
 a['DCCI'] = a['DCCI'].where(a['DCCI'] >= 0, -1)
-# Collapse 2–4 to 3
-a.loc[(a['DCCI'] >= 2) & (a['DCCI'] <= 4), 'DCCI'] = 3
 # Enforce allowed set; unexpected values fallback to -1
-a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([-1, 0, 1, 3, 5]), -1).astype('Int8')
+a['DCCI'] = a['DCCI'].where(a['DCCI'].isin([-1, 0, 1, 2, 3, 4, 5]), -1).astype('Int8')
 
 # Immediately drop columns we won't use to reduce memory
 needed_cols = [

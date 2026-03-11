@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v6.1"                # KCOR version number
+VERSION = "v6.2"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -184,6 +184,10 @@ VERSION = "v6.1"                # KCOR version number
 #        - Also, fixed bug so now config parameters set by the yaml file are printed in the summary.log whereas 
 #        - before, they were taken from the defaults so this was very misleading.
 #        - config parameters are now printed in the summary.log for the COVID correction.
+# v6.2 - KCOR_CMR DCCI stratification update (3/11/2026)
+#        - Preserved DCCI buckets 2 and 4 as separate strata in KCOR_CMR output.
+#        - Removed prior collapse of DCCI 2-4 into DCCI 3.
+#        - DCCI buckets used by KCOR_CMR are now {-1, 0, 1, 2, 3, 4, 5}.
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
