@@ -1,7 +1,7 @@
 ================================================================================
-KCOR v6.1 - Kirsch Cumulative Outcomes Ratio Analysis
+KCOR v6.2 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2026-03-11 12:40:05
+Analysis Date: 2026-03-11 16:37:40
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -27,9 +27,9 @@ Configuration Parameters (effective):
 [DEBUG] Limiting to age range: 1920-2009
 [DEBUG] Limiting to enrollment dates: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
 [Info] Processing sheet: 2021_13
-[DEBUG] Filtered to start from enrollment date 03/29/2021: 199430 rows
-[DEBUG] Filtered to 186480 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 79920 rows
+[DEBUG] Filtered to start from enrollment date 03/29/2021: 296555 rows
+[DEBUG] Filtered to 279720 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 119880 rows
 [DEBUG] Aggregated across sexes: 4995 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -64,9 +64,9 @@ enroll | YoB | dose | theta | k | relRMSE | bins
 2021_13 | -2 | 1 | 7.889219e-13 | 4.741849e-04 | 1.256892e-02 | 52
 2021_13 | -2 | 2 | 0.2 | 9.451704e-04 | 8.023194e-03 | 52
 [Info] Processing sheet: 2021_20
-[DEBUG] Filtered to start from enrollment date 05/17/2021: 191884 rows
-[DEBUG] Filtered to 179424 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 76896 rows
+[DEBUG] Filtered to start from enrollment date 05/17/2021: 285334 rows
+[DEBUG] Filtered to 269136 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 115344 rows
 [DEBUG] Aggregated across sexes: 4806 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -101,9 +101,9 @@ enroll | YoB | dose | theta | k | relRMSE | bins
 2021_20 | -2 | 1 | 6.230171e-09 | 1.959753e-04 | 1.754605e-02 | 52
 2021_20 | -2 | 2 | 0.2 | 6.654994e-04 | 7.829879e-03 | 52
 [Info] Processing sheet: 2021_24
-[DEBUG] Filtered to start from enrollment date 06/14/2021: 187572 rows
-[DEBUG] Filtered to 175392 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 75168 rows
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 278922 rows
+[DEBUG] Filtered to 263088 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 112752 rows
 [DEBUG] Aggregated across sexes: 4698 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -138,9 +138,9 @@ enroll | YoB | dose | theta | k | relRMSE | bins
 2021_24 | -2 | 1 | 1.348299e-08 | 1.023920e-04 | 1.753797e-02 | 52
 2021_24 | -2 | 2 | 0.3 | 4.936247e-04 | 7.416024e-03 | 52
 [Info] Processing sheet: 2021_30
-[DEBUG] Filtered to start from enrollment date 07/26/2021: 181104 rows
-[DEBUG] Filtered to 169344 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 72576 rows
+[DEBUG] Filtered to start from enrollment date 07/26/2021: 269304 rows
+[DEBUG] Filtered to 254016 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 108864 rows
 [DEBUG] Aggregated across sexes: 4536 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -175,9 +175,9 @@ enroll | YoB | dose | theta | k | relRMSE | bins
 2021_30 | -2 | 1 | 25.1 | 7.973617e-05 | 4.172982e-03 | 52
 2021_30 | -2 | 2 | 0.7 | 2.771311e-04 | 7.293689e-03 | 52
 [Info] Processing sheet: 2022_06
-[DEBUG] Filtered to start from enrollment date 02/07/2022: 150920 rows
-[DEBUG] Filtered to 141120 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 80640 rows
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 224420 rows
+[DEBUG] Filtered to 211680 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 120960 rows
 [DEBUG] Aggregated across sexes: 5040 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -222,9 +222,9 @@ enroll | YoB | dose | theta | k | relRMSE | bins
 2022_06 | -2 | 2 | 30.6 | 1.533423e-04 | 8.194665e-03 | 52
 2022_06 | -2 | 3 | 1.364613e-14 | 2.869916e-04 | 8.184876e-03 | 52
 [Info] Processing sheet: 2022_26
-[DEBUG] Filtered to start from enrollment date 06/27/2022: 129360 rows
-[DEBUG] Filtered to 120960 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 69120 rows
+[DEBUG] Filtered to start from enrollment date 06/27/2022: 192360 rows
+[DEBUG] Filtered to 181440 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 103680 rows
 [DEBUG] Aggregated across sexes: 4320 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -269,9 +269,9 @@ enroll | YoB | dose | theta | k | relRMSE | bins
 2022_26 | -2 | 2 | 30.7 | 1.433622e-04 | 8.399592e-03 | 52
 2022_26 | -2 | 3 | 3.2 | 2.875387e-04 | 7.478809e-03 | 52
 [Info] Processing sheet: 2022_47
-[DEBUG] Filtered to start from enrollment date 11/21/2022: 106722 rows
-[DEBUG] Filtered to 99792 rows for ages 1920-2009
-[DEBUG] Filtered to doses [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] (max dose 9): 99792 rows
+[DEBUG] Filtered to start from enrollment date 11/21/2022: 158697 rows
+[DEBUG] Filtered to 149688 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] (max dose 9): 149688 rows
 [DEBUG] Aggregated across sexes: 6237 rows
 enroll | YoB | dose | theta | k | relRMSE | bins
 ----------------------------------------------------------------------
@@ -946,7 +946,7 @@ M/P by decades (Dose 4)
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
-[Done] Wrote 40487 rows to ../data/Czech/KCOR.xlsx at 2026-03-11 12:47:22
+[Done] Wrote 40487 rows to ../data/Czech/KCOR.xlsx at 2026-03-11 16:45:57
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 37 summary rows
   - 2021_20: 3 dose combinations, 37 summary rows
