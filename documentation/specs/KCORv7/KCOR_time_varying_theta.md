@@ -123,3 +123,10 @@ Gamma frailty is correctly specified
 The time-varying correction in v7 is built on a solid foundation
 That plot belongs in the paper.
 
+## Two important corrections
+1. Use the - root selection, not the + selection. And use the umerically stable form which is:
+θ(0) = 2θ(t) / [1 - 2θ(t)H(t) + √(1 - 4θ(t)H(t))]
+
+2. Add validity check in code by verifying that:
+1 - 4θ(t)H(t) ≥ 0 
+at every anchor point (i.e., a point used to determine theta(0)) and warn if violated
