@@ -1,4 +1,4 @@
-# KCOR v6.2 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v7.0 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -1094,6 +1094,30 @@ covidCorrection:
   endDate: "2021-52"
   factor: 1.4
 ```
+
+### Dataset YAML (KCOR v7 Time-Varying Theta)
+
+KCOR v7 replaces fixed-theta normalization with a theta0-anchored time-varying model.
+The current v6 implementation is preserved in `code/KCORv6.py` for reproducibility.
+
+```yaml
+time_varying_theta:
+  enabled: true
+  apply_to: unvaccinated_only           # unvaccinated_only | vaccinated_only | both_cohorts
+  theta_estimation_windows:
+    - ['2023-22', '2023-37', 'post COVID']
+    - ['2022-22', '2022-25', 'post booster']
+    - ['2021-26', '2021-36', 'post primary']
+  diagnostics:
+    plot_theta0_estimates_by_window: true
+    plot_theta_trajectory: true
+    report_consistency_test: true
+```
+
+Implementation notes:
+- Inversion from `(theta_t, H_t)` to `theta0` uses the numerically stable branch:
+  `theta0 = 2*theta_t / (1 - 2*theta_t*H_t + sqrt(1 - 4*theta_t*H_t))`
+- Every anchor enforces the discriminant check `1 - 4*theta_t*H_t >= 0`; invalid anchors are skipped and counted in diagnostics.
 
 ### Sheet-Specific Configuration
 

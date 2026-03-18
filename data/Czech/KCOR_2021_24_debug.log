@@ -1,0 +1,30 @@
+================================================================================
+KCOR v6.2 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-03-18 15:51:22
+Mode: Primary Analysis
+Input File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_CMR.xlsx
+Output File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/_tmp_kcor_2021_24_debug.xlsx
+Log File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_2021_24_debug.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = ['2021_24']
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  KCOR6_QUIET_WINDOW    = 2023-01..2023-52
+  TIME_VARYING_THETA    = enabled (unvaccinated_only)
+  THETA_EST_WINDOWS     = ['2023-22..2023-37(post COVID)', '2022-22..2022-25(post booster)', '2021-26..2021-36(post primary)']
+  COVID_CORRECTION      = 2021-41..2022-12, factor=1.0
+  NORMALIZATION_METHOD  = KCOR7 (time-varying theta, theta0-pooled)
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_24']
+[Info] Processing sheet: 2021_24

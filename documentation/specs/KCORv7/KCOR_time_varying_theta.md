@@ -5,6 +5,51 @@ That is very crude. It's fine for the vaccinated (perfect actually since it is i
 
 But for the unvaccinated, a fixed correction is not precise. We can do this better.
 
+We can identify quiet windows in the data where there is no COVID or other excess mortality. 
+
+From each point in that quiet window, we can use H(t) to estimate the theta(0) value.
+
+### The ideal v7 procedure:
+So the v7 procedure is:
+
+In each quiet window, 
+- use the same nonlinear regression as v6 to estimate θ(t*) at each timepoint t* within that window
+- You now have θ(t*) and H(t*) at each anchor point
+- Apply the inversion formula to get θ(0) from each anchor point
+- Pool across all anchor points and windows → single MLE θ(0)
+- Propagate forward using θ(t) = θ(0) / (1 + θ(0)·H(t))²
+
+
+### what the code actually does right now
+For each quiet window w:
+    1. Fit one nonlinear regression across all timepoints in w
+       → yields θ_anchor for window w
+    2. For each timepoint t in w:
+       - Compute θ(t) from closed form using θ_anchor and H(t)
+       - Invert to get θ(0) estimate at timepoint t
+
+Pool all θ(0) estimates across windows → single MLE θ(0)
+
+### comment from Cursor
+Your lines 8-20 are a good conceptual summary of v7, and the current code does implement the key pillars:
+
+multi-window theta0 estimation,
+stable --branch inversion,
+discriminant checks with skip counts,
+pooled theta0,
+forward propagation into normalization.
+
+One important implementation detail differs from that wording:
+
+In code/KCOR.py, v7 currently fits one theta_anchor per quiet window (via fit_k_theta_cumhaz on window data), then derives per-timepoint theta(t*) from the closed form within that window before inverting to theta0.
+So it does NOT run a separate nonlinear regression at every anchor timepoint.
+
+Also, the normalization path applies theta0 via invert_gamma_frailty(H_obs, theta_for_h0) (with theta_for_h0 = theta0_hat in v7 mode), rather than explicitly writing a per-timepoint theta(t) adjustment step in that section.
+
+If you want strict one-to-one alignment with 8-20 wording, I can refactor the estimator to do per-anchor regressions explicitly and update comments/spec text to match exactly.
+
+## the approach
+
 In KCOR v7, get rid of the constant theta assumption and instead used the closed form to compute theta at any point in time given you know θ(t₀):
 
 θ(t) = θ(0) / (1 + θ(0)·H(t))²

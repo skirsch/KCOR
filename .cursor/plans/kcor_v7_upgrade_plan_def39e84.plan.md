@@ -4,28 +4,28 @@ overview: Memorialize the current KCOR v6 implementation, then upgrade the activ
 todos:
   - id: snapshot-v6
     content: Copy code/KCOR.py to code/KCORv6.py as immutable v6 baseline.
-    status: pending
+    status: completed
   - id: parse-v7-config
     content: Add time_varying_theta YAML parsing with backward-compatible defaults in KCOR.py.
-    status: pending
+    status: completed
   - id: theta0-estimation
     content: Implement theta0 inversion using the numerically stable - root form, plus pooling, CI, and window-level consistency metrics.
-    status: pending
+    status: completed
   - id: apply-theta-timevarying
     content: Integrate theta(t)-driven normalization path with apply_to cohort scoping.
-    status: pending
+    status: completed
   - id: diagnostics
     content: Add v7 logging and optional diagnostics outputs/plots per spec toggles.
-    status: pending
+    status: completed
   - id: acceptance-tests
     content: Add explicit branch-convention and inversion validity acceptance tests, including skipped-anchor counts and cross-window consistency checks.
-    status: pending
+    status: completed
   - id: docs-readme
     content: Update README and Czech YAML example to document v7 and migration from v6.
-    status: pending
+    status: completed
   - id: regression-checks
     content: Run v6-compat and v7-enabled validation checks; fix any regressions.
-    status: pending
+    status: completed
 isProject: false
 ---
 
