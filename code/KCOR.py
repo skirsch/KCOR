@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v7.0"                # KCOR version number
+VERSION = "v7.1"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -188,6 +188,10 @@ VERSION = "v7.0"                # KCOR version number
 #        - Preserved DCCI buckets 2 and 4 as separate strata in KCOR_CMR output.
 #        - Removed prior collapse of DCCI 2-4 into DCCI 3.
 #        - DCCI buckets used by KCOR_CMR are now {-1, 0, 1, 2, 3, 4, 5}.
+# v7.1 - KCOR v7 stabilization update (3/19/2026)
+#        - Added configurable degenerate-theta guard based on (theta0_max, relRMSE threshold).
+#        - Logs degenerate fits and applies configurable action (default: set theta to 0.0).
+#        - Added overflow-safe safeguards in frailty inversion and CI variance calculations.
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
@@ -1127,20 +1131,25 @@ _DATASET_DOSE_PAIRS_CACHE = None
 _DATASET_COVID_CORRECTION_CACHE = None
 # Cache for dataset theta-estimation windows (loaded once per run)
 _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = None
+# Cache for theta degenerate-fit config (loaded once per run)
+_DATASET_THETA_DEGENERATE_CFG_CACHE = None
 
 def _load_dataset_dose_pairs_config():
     """Load dose pairs configuration from dataset YAML file."""
-    global _DATASET_DOSE_PAIRS_CACHE, _DATASET_COVID_CORRECTION_CACHE, _DATASET_THETA_ESTIMATION_WINDOWS_CACHE
+    global _DATASET_DOSE_PAIRS_CACHE, _DATASET_COVID_CORRECTION_CACHE
+    global _DATASET_THETA_ESTIMATION_WINDOWS_CACHE, _DATASET_THETA_DEGENERATE_CFG_CACHE
     if (
         _DATASET_DOSE_PAIRS_CACHE is not None
         and _DATASET_COVID_CORRECTION_CACHE is not None
         and _DATASET_THETA_ESTIMATION_WINDOWS_CACHE is not None
+        and _DATASET_THETA_DEGENERATE_CFG_CACHE is not None
     ):
         return _DATASET_DOSE_PAIRS_CACHE
     
     _DATASET_DOSE_PAIRS_CACHE = {}
     _DATASET_COVID_CORRECTION_CACHE = {}
     _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = []
+    _DATASET_THETA_DEGENERATE_CFG_CACHE = {}
     _dataset_name = os.environ.get('DATASET', 'Czech')
     # Resolve path relative to script location to handle different execution contexts
     _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1234,6 +1243,65 @@ def _load_dataset_dose_pairs_config():
                     if DEBUG_VERBOSE and parsed_theta_windows:
                         print(
                             f"[DEBUG] Loaded {len(parsed_theta_windows)} theta estimation window(s) from {_dataset_yaml_path}",
+                            flush=True,
+                        )
+                # Optional v7 degenerate-fit controls
+                # Preferred schema:
+                #   time_varying_theta:
+                #     min_quiet_deaths: 30
+                #     degenerate_theta_max: 100
+                #     degenerate_fit:
+                #       theta0_max: 100
+                #       rmse_threshold: 0.05
+                #       action: set_zero
+                _theta_degen_cfg = {}
+                _tv_theta_cfg = _dataset_config.get("time_varying_theta", {})
+                if isinstance(_tv_theta_cfg, dict):
+                    _theta_degen_cfg = _tv_theta_cfg.get("degenerate_fit", {}) or {}
+                if not isinstance(_theta_degen_cfg, dict) or not _theta_degen_cfg:
+                    _theta_degen_cfg = _dataset_config.get("degenerate_fit", {}) or {}
+                if isinstance(_theta_degen_cfg, dict):
+                    parsed_cfg = {}
+                    # Aliases supported by spec prose
+                    try:
+                        min_quiet_deaths = None
+                        if isinstance(_tv_theta_cfg, dict):
+                            min_quiet_deaths = _tv_theta_cfg.get("min_quiet_deaths")
+                        if min_quiet_deaths is None:
+                            min_quiet_deaths = _dataset_config.get("min_quiet_deaths")
+                        if min_quiet_deaths is not None:
+                            min_quiet_deaths = int(min_quiet_deaths)
+                            if min_quiet_deaths >= 0:
+                                parsed_cfg["min_quiet_deaths"] = min_quiet_deaths
+                    except Exception:
+                        pass
+                    try:
+                        theta0_max = _theta_degen_cfg.get("theta0_max")
+                        if theta0_max is None and isinstance(_tv_theta_cfg, dict):
+                            theta0_max = _tv_theta_cfg.get("degenerate_theta_max")
+                        if theta0_max is None:
+                            theta0_max = _dataset_config.get("degenerate_theta_max")
+                        if theta0_max is not None:
+                            theta0_max = float(theta0_max)
+                            if np.isfinite(theta0_max) and theta0_max > 0.0:
+                                parsed_cfg["theta0_max"] = theta0_max
+                    except Exception:
+                        pass
+                    try:
+                        rmse_threshold = _theta_degen_cfg.get("rmse_threshold")
+                        if rmse_threshold is not None:
+                            rmse_threshold = float(rmse_threshold)
+                            if np.isfinite(rmse_threshold) and rmse_threshold >= 0.0:
+                                parsed_cfg["rmse_threshold"] = rmse_threshold
+                    except Exception:
+                        pass
+                    action = str(_theta_degen_cfg.get("action", "")).strip().lower()
+                    if action in ("set_zero", "warn_only"):
+                        parsed_cfg["action"] = action
+                    _DATASET_THETA_DEGENERATE_CFG_CACHE = parsed_cfg
+                    if DEBUG_VERBOSE and parsed_cfg:
+                        print(
+                            f"[DEBUG] Loaded theta degenerate-fit config from {_dataset_yaml_path}: {parsed_cfg}",
                             flush=True,
                         )
         except Exception as _e_config:
@@ -1341,6 +1409,85 @@ def get_theta_estimation_windows():
     if not _DATASET_THETA_ESTIMATION_WINDOWS_CACHE:
         return []
     return list(_DATASET_THETA_ESTIMATION_WINDOWS_CACHE)
+
+
+def get_theta_degenerate_fit_config():
+    """Return theta degenerate-fit guard config with defaults."""
+    _load_dataset_dose_pairs_config()
+    cfg = _DATASET_THETA_DEGENERATE_CFG_CACHE or {}
+    out = {
+        "min_quiet_deaths": 30,
+        "theta0_max": 100.0,
+        "rmse_threshold": 0.05,
+        "action": "set_zero",
+    }
+    if isinstance(cfg, dict):
+        try:
+            min_quiet_deaths = int(cfg.get("min_quiet_deaths", out["min_quiet_deaths"]))
+            if min_quiet_deaths >= 0:
+                out["min_quiet_deaths"] = min_quiet_deaths
+        except Exception:
+            pass
+        try:
+            theta0_max = float(cfg.get("theta0_max", out["theta0_max"]))
+            if np.isfinite(theta0_max) and theta0_max > 0.0:
+                out["theta0_max"] = theta0_max
+        except Exception:
+            pass
+        try:
+            rmse_threshold = float(cfg.get("rmse_threshold", out["rmse_threshold"]))
+            if np.isfinite(rmse_threshold) and rmse_threshold >= 0.0:
+                out["rmse_threshold"] = rmse_threshold
+        except Exception:
+            pass
+        action = str(cfg.get("action", out["action"])).strip().lower()
+        if action in ("set_zero", "warn_only"):
+            out["action"] = action
+    return out
+
+
+def _apply_theta_degenerate_guard(theta_hat, relrmse_hspan, cfg):
+    """Apply configurable degeneracy rule to theta estimates.
+
+    Degenerate detector:
+      theta_hat > theta0_max and relRMSE > rmse_threshold
+    """
+    flagged = False
+    reason = ""
+    theta_eff = theta_hat
+    if not np.isfinite(theta_hat):
+        return theta_eff, flagged, reason
+    if not np.isfinite(relrmse_hspan):
+        return theta_eff, flagged, reason
+
+    theta0_max = float(cfg.get("theta0_max", 100.0))
+    rmse_threshold = float(cfg.get("rmse_threshold", 0.05))
+    action = str(cfg.get("action", "set_zero")).strip().lower()
+    if (theta_hat > theta0_max) and (relrmse_hspan > rmse_threshold):
+        flagged = True
+        reason = f"theta0>{theta0_max:g} and relRMSE>{rmse_threshold:g}"
+        if action == "set_zero":
+            theta_eff = 0.0
+    return theta_eff, flagged, reason
+
+
+def _apply_theta_min_deaths_guard(theta_hat, total_quiet_deaths, cfg):
+    """If quiet-window deaths are too sparse, force no correction."""
+    flagged = False
+    reason = ""
+    theta_eff = theta_hat
+    try:
+        deaths = float(total_quiet_deaths)
+    except Exception:
+        return theta_eff, flagged, reason
+    if not np.isfinite(deaths):
+        return theta_eff, flagged, reason
+    min_quiet_deaths = int(cfg.get("min_quiet_deaths", 30))
+    if deaths < float(min_quiet_deaths):
+        flagged = True
+        reason = f"quiet_deaths<{min_quiet_deaths}"
+        theta_eff = 0.0
+    return theta_eff, flagged, reason
 
 
 def _format_theta_windows_label(theta_windows):
@@ -3842,7 +3989,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 theta = 0.0
                 params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
                 if isinstance(params, dict):
-                    th = params.get("theta_hat", np.nan)
+                    th = params.get("theta_applied", params.get("theta_hat", np.nan))
                     ok = bool(params.get("success", False))
                     if ok and np.isfinite(th) and float(th) >= 0.0:
                         theta = float(th)
@@ -3892,7 +4039,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 else:
                     params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
                 if isinstance(params, dict):
-                    th = params.get("theta_hat", np.nan)
+                    th = params.get("theta_applied", params.get("theta_hat", np.nan))
                     ok = bool(params.get("success", False))
                     if ok and np.isfinite(th) and float(th) >= 0.0:
                         theta = float(th)
@@ -4753,6 +4900,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         dual_print(f"  THETA_ESTIMATION_WINDOWS = {_format_theta_windows_label(theta_windows_cfg)}")
     else:
         dual_print("  THETA_ESTIMATION_WINDOWS = (fallback to dataset quietWindow)")
+    theta_degen_cfg = get_theta_degenerate_fit_config()
+    dual_print(
+        f"  THETA_IDENTIFIABILITY = min_quiet_deaths={theta_degen_cfg['min_quiet_deaths']}, "
+        f"theta0_max={theta_degen_cfg['theta0_max']}, "
+        f"rmse_threshold={theta_degen_cfg['rmse_threshold']}, action={theta_degen_cfg['action']}"
+    )
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
         dual_print("  COVID_CORRECTION      = disabled")
@@ -4970,6 +5123,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "t": t_vals,
                             "H_obs": H_obs,
                             "h_eff_obs": h_eff_obs,
+                            "dead": g_sorted["Dead"].to_numpy(dtype=float) if "Dead" in g_sorted.columns else np.zeros_like(t_vals, dtype=float),
                             "iso_int": iso_int,
                         }
 
@@ -4987,6 +5141,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             t_vals = d["t"]
                             H_obs = d["H_obs"]
                             h_eff_obs = d["h_eff_obs"]
+                            dead_vals = d["dead"]
                             iso_int = d["iso_int"]
 
                             fit_mask = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
@@ -4994,6 +5149,27 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             theta = 0.0
                             if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                                 theta = float(theta_hat)
+                            try:
+                                H_fit = H_obs[fit_mask]
+                                if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
+                                    hspan_hobs = float(H_fit[-1] - H_fit[0])
+                                else:
+                                    hspan_hobs = np.nan
+                                rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
+                                if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                                    relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
+                                else:
+                                    relrmse_hspan = np.nan
+                            except Exception:
+                                relrmse_hspan = np.nan
+                            try:
+                                total_quiet_deaths = float(
+                                    np.nansum(np.where(fit_mask, np.clip(np.asarray(dead_vals, dtype=float), 0.0, None), 0.0))
+                                )
+                            except Exception:
+                                total_quiet_deaths = np.nan
+                            theta, _, _ = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
+                            theta, _, _ = _apply_theta_degenerate_guard(theta, relrmse_hspan, theta_degen_cfg)
 
                             H0 = invert_gamma_frailty(H_obs, theta)
                             h0_inc = np.diff(H0, prepend=0.0)
@@ -5346,6 +5522,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 g_sorted = g.sort_values("DateDied")
                 t_vals = g_sorted["t"].to_numpy(dtype=float)
                 mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                dead_vals = g_sorted["Dead"].to_numpy(dtype=float) if "Dead" in g_sorted.columns else np.zeros_like(t_vals, dtype=float)
                 hazard_obs = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
                 hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
                 H_obs = np.cumsum(hazard_eff)
@@ -5384,10 +5561,27 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 H_fit = H_obs[fit_mask]
 
                 (k_hat, theta_hat), diag = fit_theta0_global(hazard_eff, H_obs, fit_mask)
+                theta0_raw = float(theta_hat) if np.isfinite(theta_hat) else np.nan
                 rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
                 n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
                 success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                 note = diag.get("message", "") if isinstance(diag, dict) else ""
+
+                # Precompute span-relative RMSE for degeneracy guard before inversion
+                try:
+                    if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
+                        hspan_hobs = float(H_fit[-1] - H_fit[0])
+                    else:
+                        hspan_hobs = np.nan
+                except Exception:
+                    hspan_hobs = np.nan
+                try:
+                    if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                        relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
+                    else:
+                        relrmse_hspan = np.nan
+                except Exception:
+                    relrmse_hspan = np.nan
                 
                 # Print debug output only if we got 0 bins (diagnostic for NaN issue)
                 if MONTE_CARLO_MODE and n_obs == 0:
@@ -5420,6 +5614,26 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 theta = 0.0
                 if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                     theta = float(theta_hat)
+                try:
+                    total_quiet_deaths = float(
+                        np.nansum(np.where(fit_mask, np.clip(np.asarray(dead_vals, dtype=float), 0.0, None), 0.0))
+                    )
+                except Exception:
+                    total_quiet_deaths = np.nan
+                theta, lowdeath_flag, lowdeath_reason = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
+                if lowdeath_flag:
+                    note = f"{note} | insufficient_deaths: {lowdeath_reason}".strip(" |")
+                    dual_print(
+                        f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
+                        f"quiet_deaths={total_quiet_deaths:.1f} -> theta0_applied=0.0"
+                    )
+                theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, relrmse_hspan, theta_degen_cfg)
+                if degenerate_flag:
+                    note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
+                    dual_print(
+                        f"[KCOR7_DEGENERATE] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
+                        f"theta0_raw={theta0_raw:.6g}, relRMSE={relrmse_hspan:.6g} -> theta0_applied={theta:.1f}"
+                    )
                 H0_full = invert_gamma_frailty(H_obs, theta)
                 H0_quiet = H0_full[fit_mask]
                 t_quiet = t_vals[fit_mask]
@@ -5429,28 +5643,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                 # Extra diagnostics for auditability:
                 # - Hspan_Hobs: observed cumulative hazard span over quiet-window fit points
-                # - relRMSE_HobsSpan: RMSE / Hspan_Hobs (unitless; interpretable as % error when small)
-                # - z_end: theta_hat * H_model(t_end) (proxy for strength of frailty correction at quiet-window end)
+                # - relRMSE_HobsSpan: RMSE / Hspan_Hobs (unitless)
+                # - z_end: theta_applied * H_obs(t_end) proxy for correction strength
                 try:
-                    if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
-                        hspan_hobs = float(H_fit[-1] - H_fit[0])
-                    else:
-                        hspan_hobs = np.nan
-                except Exception:
-                    hspan_hobs = np.nan
-
-                try:
-                    if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
-                        relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
-                    else:
-                        relrmse_hspan = np.nan
-                except Exception:
-                    relrmse_hspan = np.nan
-
-                try:
-                    if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
+                    if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta):
                         h_end_model = float(H_fit[-1])
-                        z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
+                        z_end = float(float(theta) * h_end_model) if np.isfinite(h_end_model) else np.nan
                     else:
                         z_end = np.nan
                 except Exception:
@@ -5463,7 +5661,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     yob,
                     dose,
                     k_hat,
-                    theta_hat,
+                    theta,
                     rmse_h,
                     n_obs,
                     success,
@@ -5476,8 +5674,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                 params_dict = {
                     "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
-                    "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
-                    "theta0_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                    "theta_hat": float(theta) if np.isfinite(theta) else np.nan,
+                    "theta0_hat": float(theta) if np.isfinite(theta) else np.nan,
+                    "theta0_raw": float(theta0_raw) if np.isfinite(theta0_raw) else np.nan,
+                    "theta_applied": float(theta) if np.isfinite(theta) else np.nan,
+                    "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+                    "insufficient_deaths": bool(lowdeath_flag),
+                    "degenerate_fit": bool(degenerate_flag),
                     "theta_source": str(theta_source),
                     "quiet_window": str(quiet_window_label),
                     "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
@@ -5559,6 +5762,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         g_sorted = g.sort_values("DateDied")
                         t_vals = g_sorted["t"].to_numpy(dtype=float)
                         mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                        dead_vals = g_sorted["Dead"].to_numpy(dtype=float) if "Dead" in g_sorted.columns else np.zeros_like(t_vals, dtype=float)
                         hazard_obs = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
                         hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
                         H_obs = np.cumsum(hazard_eff)
@@ -5568,23 +5772,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
 
                         (k_hat, theta_hat), diag = fit_theta0_global(hazard_eff, H_obs, fit_mask)
+                        theta0_raw = float(theta_hat) if np.isfinite(theta_hat) else np.nan
                         rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
                         n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
                         success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                         note = diag.get("message", "") if isinstance(diag, dict) else ""
 
-                        # Compute normalized cumulative hazard H0 for diagnostics
-                        theta = 0.0
-                        if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
-                            theta = float(theta_hat)
-                        H0_full = invert_gamma_frailty(H_obs, theta)
-                        H0_quiet = H0_full[fit_mask]
-                        t_quiet = t_vals[fit_mask]
-                        
-                        # Compute fit diagnostics
-                        fit_diagnostics = _compute_fit_diagnostics(H0_quiet, t_quiet)
-
-                        # Extra diagnostics for All Ages fit
+                        # Extra diagnostics + degeneracy guard (pre-inversion)
                         try:
                             t_fit = t_vals[fit_mask]
                             H_fit = H_obs[fit_mask]
@@ -5603,10 +5797,42 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         except Exception:
                             relrmse_hspan = np.nan
 
+                        # Compute normalized cumulative hazard H0 for diagnostics
+                        theta = 0.0
+                        if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
+                            theta = float(theta_hat)
                         try:
-                            if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
+                            total_quiet_deaths = float(
+                                np.nansum(np.where(fit_mask, np.clip(np.asarray(dead_vals, dtype=float), 0.0, None), 0.0))
+                            )
+                        except Exception:
+                            total_quiet_deaths = np.nan
+                        theta, lowdeath_flag, lowdeath_reason = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
+                        if lowdeath_flag:
+                            note = f"{note} | insufficient_deaths: {lowdeath_reason}".strip(" |")
+                            dual_print(
+                                f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
+                                f"quiet_deaths={total_quiet_deaths:.1f} -> theta0_applied=0.0"
+                            )
+                        theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, relrmse_hspan, theta_degen_cfg)
+                        if degenerate_flag:
+                            note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
+                            dual_print(
+                                f"[KCOR7_DEGENERATE] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
+                                f"theta0_raw={theta0_raw:.6g}, relRMSE={relrmse_hspan:.6g} -> theta0_applied={theta:.1f}"
+                            )
+
+                        H0_full = invert_gamma_frailty(H_obs, theta)
+                        H0_quiet = H0_full[fit_mask]
+                        t_quiet = t_vals[fit_mask]
+                        
+                        # Compute fit diagnostics
+                        fit_diagnostics = _compute_fit_diagnostics(H0_quiet, t_quiet)
+
+                        try:
+                            if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta):
                                 h_end_model = float(H_fit[-1])
-                                z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
+                                z_end = float(float(theta) * h_end_model) if np.isfinite(h_end_model) else np.nan
                             else:
                                 z_end = np.nan
                         except Exception:
@@ -5619,7 +5845,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             -2,
                             int(dose),
                             k_hat,
-                            theta_hat,
+                            theta,
                             rmse_h,
                             n_obs,
                             success,
@@ -5631,8 +5857,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         )
                         params_dict = {
                             "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
-                            "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
-                            "theta0_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                            "theta_hat": float(theta) if np.isfinite(theta) else np.nan,
+                            "theta0_hat": float(theta) if np.isfinite(theta) else np.nan,
+                            "theta0_raw": float(theta0_raw) if np.isfinite(theta0_raw) else np.nan,
+                            "theta_applied": float(theta) if np.isfinite(theta) else np.nan,
+                            "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+                            "insufficient_deaths": bool(lowdeath_flag),
+                            "degenerate_fit": bool(degenerate_flag),
                             "theta_source": str(theta_source),
                             "quiet_window": str(quiet_window_label),
                             "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
@@ -6234,7 +6465,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
                     if isinstance(params, dict):
-                        th = params.get("theta_hat", params.get("theta0_hat", np.nan))
+                        th = params.get("theta_applied", params.get("theta_hat", params.get("theta0_hat", np.nan)))
                         ok = bool(params.get("success", False))
                         if ok and np.isfinite(th) and float(th) >= 0.0:
                             theta = float(th)
@@ -7678,8 +7909,13 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         # Extract diagnostics that were computed during the fit
                         theta_hat = params.get("theta_hat", np.nan)
                         theta0_hat = params.get("theta0_hat", theta_hat)
+                        theta0_raw = params.get("theta0_raw", np.nan)
+                        theta_applied = params.get("theta_applied", theta_hat)
                         theta_source = params.get("theta_source", "legacy_quiet_window")
                         quiet_window = params.get("quiet_window", quiet_window_label)
+                        total_quiet_deaths = params.get("total_quiet_deaths", np.nan)
+                        insufficient_deaths = bool(params.get("insufficient_deaths", False))
+                        degenerate_fit = bool(params.get("degenerate_fit", False))
                         k_hat = params.get("k_hat", np.nan)
                         mean = params.get("mean", np.nan)
                         sd = params.get("sd", np.nan)
@@ -7697,6 +7933,11 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                                 "dose": int(dose),
                                 "quiet_window": quiet_window,
                                 "theta_source": theta_source,
+                                "total_quiet_deaths": total_quiet_deaths,
+                                "insufficient_deaths": insufficient_deaths,
+                                "degenerate_fit": degenerate_fit,
+                                "theta0_raw": theta0_raw,
+                                "theta_applied": theta_applied,
                                 "theta0_hat": theta0_hat,
                                 "theta_hat": theta_hat,
                                 "k_hat": k_hat,
@@ -7837,7 +8078,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     # Ensure columns are in the correct order
                     column_order = [
                         "reporting_date", "enrollment_date", "age_group", "year_of_birth", "dose",
-                        "quiet_window", "theta_source", "theta0_hat", "theta_hat", "k_hat", "mean", "sd", "max_abs_dev",
+                        "quiet_window", "theta_source", "total_quiet_deaths", "insufficient_deaths", "degenerate_fit",
+                        "theta0_raw", "theta_applied", "theta0_hat", "theta_hat", "k_hat", "mean", "sd", "max_abs_dev",
                         "drift_per_year", "n_bins"
                     ]
                     gamma_frailty_df = gamma_frailty_df[[col for col in column_order if col in gamma_frailty_df.columns]]

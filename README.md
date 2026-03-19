@@ -1,4 +1,4 @@
-# KCOR v7.0 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v7.1 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -1121,6 +1121,24 @@ Implementation notes:
 - Bounds: `k >= 1e-12`, `theta0 >= 0`.
 - `theta0 = 0` is a valid degenerate boundary solution (`h_q = k`), indicating no detectable frailty curvature.
 - Same fitting method is applied independently to both cohorts; no cohort-specific special-casing is required.
+
+V7.1 note:
+- Added minimum-quiet-deaths identifiability guard (`min_quiet_deaths`, default `30`). If quiet-window deaths are below this threshold, applied theta is set to `0.0`.
+- Added a configurable degenerate-fit guard that flags `theta0` outliers only when both conditions hold:
+  - `theta0_hat > theta0_max`
+  - `relRMSE > rmse_threshold`
+- Default behavior is conservative (`set_zero`): set applied theta to `0.0` (no frailty correction) and log the event.
+- Optional YAML config:
+
+```yaml
+time_varying_theta:
+  min_quiet_deaths: 30
+  degenerate_theta_max: 100   # alias for degenerate_fit.theta0_max
+  degenerate_fit:
+    theta0_max: 100
+    rmse_threshold: 0.05
+    action: set_zero   # set_zero | warn_only
+```
 
 ### Sheet-Specific Configuration
 

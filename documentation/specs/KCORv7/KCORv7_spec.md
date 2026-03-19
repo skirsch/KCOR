@@ -146,3 +146,134 @@ theta_estimation_windows:
 **Start from clean v6, make these two targeted changes, and you have a correct v7.** 
 
 Make sure the README reflects this V7 change (replace the V7 description that is there)
+
+## degenerate fit
+**The case for a threshold:**
+
+A theta0 of 456 for YoB=2000/dose=2 is physically nonsensical. The frailty variance at enrollment cannot be that large for a young healthy vaccinated cohort. It is clearly a degenerate fit driven by noise on near-zero mortality data.
+
+* * * *
+
+**But >100 is the wrong criterion:**
+
+For YoB=1970 unvaccinated, theta0=22.6 is legitimate. For YoB=-2 (unknown age), theta0=28.4 is legitimate. A threshold of 100 would pass these correctly. But the right criterion should not depend on picking a magic number --- it should be detectable from the fit itself.
+
+* * * *
+
+**The principled criterion is relRMSE, not theta0:**
+
+A degenerate fit has two signatures that are already computed:
+
+1.  **Large theta0** --- but this alone is not sufficient since large theta can be real for some cohorts
+2.  **Large relRMSE** --- a bad fit is always accompanied by poor residuals
+
+The combination is the right detector:
+
+```
+if theta0_hat > THETA0_MAX and relRMSE > RMSE_THRESHOLD:
+    # Degenerate fit --- set theta0 to 0
+    theta0_hat = 0.0
+    flag = "degenerate_fit"
+
+```
+
+Suggested values:
+
+-   `THETA0_MAX = 100` --- anything above this is biologically implausible
+-   `RMSE_THRESHOLD = 0.05` --- 5% relative error indicates poor fit
+
+* * * *
+
+**The action should be theta0=0, not exclusion:**
+
+Setting theta0=0 means `invert_gamma_frailty` returns H\_obs unchanged --- no correction applied. This is the conservative safe choice. It does not crash, does not propagate a bad value, and makes the behavior transparent in the logs.
+
+* * * *
+
+**What to log:**
+
+```
+KCOR7_DEGENERATE: YoB=2000, Dose=2, theta0=456.7, relRMSE=0.022
+  → theta0 set to 0.0 (no frailty correction applied)
+  → reason: theta0 > 100 and relRMSE > 0.05
+
+```
+
+* * * *
+
+**YAML config:**
+
+```
+time_varying_theta:
+  degenerate_fit:
+    theta0_max: 100
+    rmse_threshold: 0.05
+    action: set_zero   # set_zero | warn_only | exclude
+
+```
+
+Making both thresholds configurable means you can tune them per dataset without code changes, and `warn_only` mode lets you audit without affecting results during validation.
+
+## final mitigations due to low counts
+For early enrollment dates, younger cohorts have virtually not counts. This can cause undetectable slopes.
+
+---
+
+**The root cause:**
+
+For early enrollment dates (2021_13, 2021_20), the vaccinated cohorts for young birth years (1950-1980) are tiny — only the earliest adopters got vaccinated in March-May 2021, and those were overwhelmingly elderly. So:
+
+- YoB=1950-1980, dose=1/2, enrolled 2021_13: **very few people**
+- Fixed cohort — no new entrants after enrollment
+- Weekly deaths: possibly 0, 1, 2 per week
+- H(t) accumulation: essentially flat noise
+- Optimizer finds theta≈0 because there is nothing to fit
+
+This is not a model failure — it is correct behavior given the data. There simply is not enough mortality signal to identify theta in a tiny cohort.
+
+---
+
+**The right criterion is minimum deaths, not minimum H(t):**
+
+H(t) is a rate — it can be small either because the cohort is young/healthy OR because the cohort is tiny. You want to distinguish these two cases:
+
+- Small H(t) because young cohort, large N → theta genuinely near zero, correct
+- Small H(t) because tiny cohort, any age → theta unidentifiable, set to zero
+
+The discriminator is **total deaths in the quiet windows**, not the rate:
+
+```python
+total_quiet_deaths = sum of deaths across all quiet window timepoints
+
+if total_quiet_deaths < MIN_DEATHS:
+    theta0 = 0.0
+    flag = "insufficient_deaths"
+```
+
+---
+
+**What threshold?**
+
+You need enough deaths to fit two parameters (k and theta0) reliably. A rough rule: at least **30 total deaths** across all quiet windows for a stable two-parameter fit. Below that, the Poisson noise dominates.
+
+```yaml
+time_varying_theta:
+  min_quiet_deaths: 30
+  degenerate_theta_max: 100
+```
+
+---
+
+**This handles all three failure modes cleanly:**
+
+| Case | Symptom | Caught by |
+|---|---|---|
+| Tiny early cohort (1950/2021_13) | Near-zero deaths, theta→0 | min_quiet_deaths |
+| Young cohort, large N (1990/any) | Flat H(t), theta→0 naturally | Correct behavior — no action needed |
+| Noise fitting (1970/2022_26) | theta=573, sparse data | degenerate_theta_max |
+
+---
+
+**And the fix is always the same — set theta=0:**
+
+For a tiny cohort with insufficient deaths, theta=0 means no frailty correction — which is the right answer. You cannot correct for something you cannot measure. The correction is only applied when there is enough data to identify theta reliably.
