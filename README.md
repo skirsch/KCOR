@@ -1095,33 +1095,32 @@ covidCorrection:
   factor: 1.4
 ```
 
-### Dataset YAML (KCOR v7 Time-Varying Theta)
+### Dataset YAML (KCOR v7 Theta Estimation)
 
-KCOR v7 replaces fixed-theta normalization with a theta0-anchored time-varying model.
+KCOR v7 keeps the KCOR v6 correction machinery (`invert_gamma_frailty`) unchanged and only
+updates the theta input. Instead of fitting a single late-period theta from one window,
+KCOR v7 estimates enrollment-anchored `theta0` from all configured quiet windows.
+
 The current v6 implementation is preserved in `code/KCORv6.py` for reproducibility.
 
 ```yaml
-time_varying_theta:
-  enabled: true
-  apply_to: unvaccinated_only           # unvaccinated_only | vaccinated_only | both_cohorts
-  theta_estimation_windows:
-    - ['2023-22', '2023-37', 'post COVID']
-    - ['2022-22', '2022-25', 'post booster']
-    - ['2021-26', '2021-36', 'post primary']
-  theta_identifiability:
-    z_min: 0.01
-    flag_weak_id: true
-  diagnostics:
-    plot_theta0_estimates_by_window: true
-    plot_theta_trajectory: true
-    report_consistency_test: true
+# Existing v6 fallback window (still supported)
+quietWindow:
+  startDate: "2023-01"
+  endDate: "2023-52"
+
+# v7 preferred windows for global theta0 fit
+theta_estimation_windows:
+  - ['2023-22', '2023-37', 'post COVID']
+  - ['2022-22', '2022-25', 'post booster']
+  - ['2021-26', '2021-36', 'post primary']
 ```
 
 Implementation notes:
-- Inversion from `(theta_t, H_t)` to `theta0` uses the numerically stable branch:
-  `theta0 = 2*theta_t / (1 - 2*theta_t*H_t + sqrt(1 - 4*theta_t*H_t))`
-- Every anchor enforces the discriminant check `1 - 4*theta_t*H_t >= 0`; invalid anchors are skipped and counted in diagnostics.
-- Windows with weak curvature can be skipped via `theta_identifiability.z_min` using `z_end = theta_anchor * H_rel_end`.
+- V7 global fit model: `h_q = k / (1 + theta0 * H_q)` over all quiet-window points.
+- Bounds: `k >= 1e-12`, `theta0 >= 0`.
+- `theta0 = 0` is a valid degenerate boundary solution (`h_q = k`), indicating no detectable frailty curvature.
+- Same fitting method is applied independently to both cohorts; no cohort-specific special-casing is required.
 
 ### Sheet-Specific Configuration
 

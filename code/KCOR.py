@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v6.2"                # KCOR version number
+VERSION = "v7.0"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -229,10 +229,6 @@ import shutil
 import csv
 import statsmodels.api as sm
 from scipy.optimize import least_squares, minimize
-try:
-    from scipy.stats import f as scipy_f_dist
-except Exception:
-    scipy_f_dist = None
 
 # Dependencies: pandas, numpy, openpyxl, statsmodels, scipy
 
@@ -663,17 +659,6 @@ DEBUG_VERBOSE = True            # Print detailed debugging info for each date
 OVERRIDE_DOSE_PAIRS = None
 OVERRIDE_YOBS = None
 
-# Optional targeted debug dump for KCOR7 theta0 estimation.
-# Enable with KCOR7_DEBUG_THETA0=1 and optionally set KCOR7_DEBUG_THETA0_YOB (default 1940).
-try:
-    KCOR7_DEBUG_THETA0 = int(str(os.environ.get("KCOR7_DEBUG_THETA0", "0")).strip() or "0")
-except Exception:
-    KCOR7_DEBUG_THETA0 = 0
-try:
-    KCOR7_DEBUG_THETA0_YOB = int(str(os.environ.get("KCOR7_DEBUG_THETA0_YOB", "1940")).strip())
-except Exception:
-    KCOR7_DEBUG_THETA0_YOB = 1940
-
 
 # ---------------- Configuration Parameters ----------------
 
@@ -1036,493 +1021,104 @@ def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
         }
 
 
-# ---------------------------------------------------------------------------
-# KCOR 7.0 (time-varying theta) helpers
-# ---------------------------------------------------------------------------
-def _dose_matches_time_varying_apply(dose, apply_to: str) -> bool:
-    """Return whether v7 time-varying theta should apply to the given dose."""
-    try:
-        dose_int = int(dose)
-    except Exception:
-        return False
+def fit_theta0_global(h_arr, H_cum, quiet_mask, theta0_init=1.0):
+    """Fit (k, theta0) in hazard space over selected quiet-window points.
 
-    mode = str(apply_to or "unvaccinated_only").strip().lower()
-    if mode == "both_cohorts":
-        return True
-    if mode == "vaccinated_only":
-        return dose_int > 0
-    # Default and fallback: unvaccinated_only
-    return dose_int == 0
+    Model:
+        h_q = k / (1 + theta0 * H_q)
 
-
-def theta0_from_anchor(theta_t, h_t):
-    """Invert (theta_t, H_t) -> theta0 using numerically stable minus-root form.
-
-    IMPORTANT IDENTIFIABILITY NOTE:
-    The algebraic inverse is generally two-valued. KCOR v7 intentionally uses
-    the continuous small-H branch (stable minus-root form):
-
-        theta0 = 2*theta_t / (1 - 2*theta_t*H_t + sqrt(1 - 4*theta_t*H_t))
+    The boundary theta0=0 is a valid degenerate solution (flat hazard h_q=k).
 
     Returns:
-        (theta0, ok_flag, reason)
+        (k_hat, theta0_hat), diagnostics_dict
     """
+    h_arr = np.asarray(h_arr, dtype=float)
+    H_arr = np.asarray(H_cum, dtype=float)
+    mask = np.asarray(quiet_mask, dtype=bool)
+    valid = mask & np.isfinite(h_arr) & np.isfinite(H_arr)
+    h_q = h_arr[valid]
+    H_q = H_arr[valid]
+    n_obs = int(len(h_q))
+
+    if n_obs < 2:
+        return (np.nan, np.nan), {
+            "success": False,
+            "n_obs": n_obs,
+            "rmse_hazard": np.nan,
+            "status": None,
+            "message": "insufficient_points",
+            "nfev": 0,
+        }
+
     try:
-        th = float(theta_t)
-        ht = float(h_t)
+        k0 = float(np.nanmean(h_q))
+        if not np.isfinite(k0):
+            k0 = 1e-12
+        k0 = max(k0, 1e-12)
     except Exception:
-        return np.nan, False, "nonfinite_input"
+        k0 = 1e-12
+    theta0_init = max(float(theta0_init), 0.0)
 
-    if (not np.isfinite(th)) or (not np.isfinite(ht)) or (th <= 0.0) or (ht < 0.0):
-        return np.nan, False, "nonfinite_input"
+    def _residuals(params):
+        k, theta0 = params
+        if (k <= 0.0) or (theta0 < 0.0) or (not np.isfinite(k)) or (not np.isfinite(theta0)):
+            return np.ones_like(h_q) * 1e6
+        denom = 1.0 + theta0 * H_q
+        denom = np.where(denom > EPS, denom, EPS)
+        return h_q - (k / denom)
 
-    disc = 1.0 - 4.0 * th * ht
-    if (not np.isfinite(disc)) or (disc < 0.0):
-        return np.nan, False, "invalid_discriminant"
-
-    sqrt_disc = math.sqrt(max(disc, 0.0))
-    denom = 1.0 - 2.0 * th * ht + sqrt_disc
-    if (not np.isfinite(denom)) or (abs(denom) < EPS):
-        return np.nan, False, "nonfinite_input"
-
-    th0 = (2.0 * th) / denom
-    if (not np.isfinite(th0)) or (th0 <= 0.0):
-        return np.nan, False, "nonfinite_input"
-    return float(th0), True, "ok"
-
-
-def estimate_theta0_from_windows(
-    t_vals,
-    h_obs,
-    iso_int,
-    windows,
-    skip_weeks=0.0,
-    debug_ctx=None,
-    debug_print=None,
-    ident_cfg=None,
-    enrollment_iso=None,
-):
-    """Estimate theta0 from post-enrollment windows for KCOR v7.
-
-    Selection rule:
-    - Sort candidate quiet windows by start date.
-    - Choose the first window with window_start > enrollment_date as the primary estimator window.
-    - Estimate theta0_hat from the primary window only.
-    - Use subsequent post-enrollment windows for cross-window diagnostics only.
-    """
-    out = {
-        "theta0_hat": np.nan,
-        "theta0_ci_low": np.nan,
-        "theta0_ci_high": np.nan,
-        "theta0_n": 0,
-        "anchors_total": 0,
-        "anchors_used": 0,
-        "anchors_skipped_invalid_discriminant": 0,
-        "anchors_skipped_nonfinite": 0,
-        "anchors_skipped_weak_id": 0,
-        "windows_skipped_weak_id": 0,
-        "anchors_skipped_step1_invalid_discriminant": 0,
-        "anchors_skipped_step1_nonfinite": 0,
-        "anchors_skipped_step2_invalid_discriminant": 0,
-        "anchors_skipped_step2_nonfinite": 0,
-        "window_stats": [],
-        "cross_window_variance": np.nan,
-        "within_window_variance": np.nan,
-        "f_statistic": np.nan,
-        "p_value": np.nan,
-        "cross_window_ratio": np.nan,
-        "all_theta0_estimates": [],
-        "no_post_enrollment_window": False,
-        "primary_window_name": "",
-        "selected_window_count": 0,
-        "window_selection_note": "",
-    }
-
-    t_arr = np.asarray(t_vals, dtype=float)
-    h_arr = np.asarray(h_obs, dtype=float)
-    iso_arr = np.asarray(iso_int, dtype=float)
-    if len(t_arr) == 0 or len(h_arr) == 0 or len(iso_arr) == 0:
-        return out
-
-    window_details = []
-    all_est = []
-    primary_est = []
-    total_anchors = 0
-    skip_disc = 0
-    skip_nonfinite = 0
-    skip_weak_id = 0
-    windows_skipped_weak_id = 0
-    skip_step1_disc = 0
-    skip_step1_nonfinite = 0
-    skip_step2_disc = 0
-    skip_step2_nonfinite = 0
-
-    def _coerce_iso_int(val):
-        if val is None:
-            return np.nan
-        try:
-            if np.isfinite(float(val)):
-                return float(int(val))
-        except Exception:
-            pass
-        try:
-            s = str(val).strip().replace("_", "-")
-            if len(s) >= 6 and "-" in s:
-                return float(int(iso_label_to_int(s)))
-        except Exception:
-            return np.nan
-        return np.nan
-
-    sorted_windows = []
-    for w in windows if isinstance(windows, list) else []:
-        if not isinstance(w, dict):
-            continue
-        try:
-            ws_int = int(w.get("start_int"))
-            we_int = int(w.get("end_int"))
-            if ws_int <= we_int:
-                sorted_windows.append(w)
-        except Exception:
-            continue
-    sorted_windows = sorted(sorted_windows, key=lambda x: int(x.get("start_int", 0)))
-
-    enroll_int = _coerce_iso_int(enrollment_iso)
-    if np.isfinite(enroll_int):
-        selected_windows = [w for w in sorted_windows if int(w.get("start_int", -1)) > int(enroll_int)]
-    else:
-        selected_windows = sorted_windows
-
-    out["selected_window_count"] = int(len(selected_windows))
-    if len(selected_windows) == 0:
-        out["no_post_enrollment_window"] = bool(np.isfinite(enroll_int))
-        out["window_selection_note"] = "no_quiet_window_after_enrollment" if np.isfinite(enroll_int) else "no_valid_quiet_windows"
-        return out
-
-    primary_window_name = str(selected_windows[0].get("name", f"{selected_windows[0].get('start_iso')}:{selected_windows[0].get('end_iso')}"))
-    out["primary_window_name"] = primary_window_name
-    out["window_selection_note"] = "first_post_enrollment_window_used_for_theta0"
-
-    for idx, w in enumerate(selected_windows):
-        ws_int = int(w.get("start_int"))
-        we_int = int(w.get("end_int"))
-        wname = str(w.get("name", f"{w.get('start_iso')}:{w.get('end_iso')}"))
-        is_primary_window = bool(idx == 0)
-        window_role = "primary" if is_primary_window else "diagnostic"
-
-        mask = (
-            np.isfinite(iso_arr)
-            & (iso_arr >= float(ws_int))
-            & (iso_arr <= float(we_int))
-            & np.isfinite(t_arr)
-            & np.isfinite(h_arr)
-            & (t_arr >= float(skip_weeks))
+    try:
+        res = least_squares(
+            _residuals,
+            x0=[k0, theta0_init],
+            bounds=([1e-12, 0.0], [np.inf, np.inf]),
+            method="trf",
+            ftol=1e-14,
+            xtol=1e-14,
+            gtol=1e-14,
         )
-        if int(np.sum(mask)) < 3:
-            window_details.append({
-                "name": wname,
-                "role": window_role,
-                "n": 0,
-                "mean": np.nan,
-                "sd": np.nan,
-                "anchors_total": 0,
-                "anchors_used": 0,
-                "skip_step1": 0,
-                "skip_step2": 0,
-                "skip_step1_invalid_discriminant": 0,
-                "skip_step1_nonfinite": 0,
-                "skip_step2_invalid_discriminant": 0,
-                "skip_step2_nonfinite": 0,
-                "theta_anchor": np.nan,
-                "H_abs_start": np.nan,
-                "H_abs_min": np.nan,
-                "H_abs_max": np.nan,
-                "H_rel_min": np.nan,
-                "H_rel_max": np.nan,
-                "theta_window_start_mean": np.nan,
-                "status": "insufficient_points",
-            })
-            continue
-
-        t_w = t_arr[mask]
-        h_w = h_arr[mask]
-        # Anchor this window locally so fitted theta represents theta at window start.
-        t_rel = t_w - float(t_w[0])
-        h_rel = h_w - float(h_w[0])
-        (k_hat_w, theta_anchor), diag_w = fit_k_theta_cumhaz(t_rel, h_rel)
-        success_w = bool(diag_w.get("success", False)) if isinstance(diag_w, dict) else False
-        if (not success_w) or (not np.isfinite(theta_anchor)) or (float(theta_anchor) <= 0.0):
-            # Treat all candidate anchors in this window as skipped non-finite.
-            skip_nonfinite += int(len(t_w))
-            skip_step1_nonfinite += int(len(t_w))
-            total_anchors += int(len(t_w))
-            h_abs_start = float(h_w[0]) if len(h_w) > 0 and np.isfinite(h_w[0]) else np.nan
-            window_details.append({
-                "name": wname,
-                "role": window_role,
-                "n": 0,
-                "mean": np.nan,
-                "sd": np.nan,
-                "anchors_total": int(len(t_w)),
-                "anchors_used": 0,
-                "skip_step1": int(len(t_w)),
-                "skip_step2": 0,
-                "skip_step1_invalid_discriminant": 0,
-                "skip_step1_nonfinite": int(len(t_w)),
-                "skip_step2_invalid_discriminant": 0,
-                "skip_step2_nonfinite": 0,
-                "theta_anchor": np.nan,
-                "H_abs_start": h_abs_start,
-                "H_abs_min": float(np.nanmin(h_w)) if len(h_w) > 0 else np.nan,
-                "H_abs_max": float(np.nanmax(h_w)) if len(h_w) > 0 else np.nan,
-                "H_rel_min": float(np.nanmin(h_rel)) if len(h_rel) > 0 else np.nan,
-                "H_rel_max": float(np.nanmax(h_rel)) if len(h_rel) > 0 else np.nan,
-                "theta_window_start_mean": np.nan,
-                "status": "fit_failed",
-            })
-            continue
-
-        theta_anchor = float(theta_anchor)
-        h_rel_end = float(h_rel[-1]) if len(h_rel) > 0 and np.isfinite(h_rel[-1]) else np.nan
-        z_end = float(theta_anchor * h_rel_end) if np.isfinite(theta_anchor) and np.isfinite(h_rel_end) else np.nan
-
-        theta_t_w = theta_anchor / np.square(1.0 + theta_anchor * h_rel)
-        disc_abs_w = 1.0 - 4.0 * theta_t_w * h_w
-        disc_rel_w = 1.0 - 4.0 * theta_t_w * h_rel
-        used_w = 0
-        skipped_step1_w = 0
-        skipped_step2_w = 0
-        skipped_step1_disc_w = 0
-        skipped_step1_nonfinite_w = 0
-        skipped_step2_disc_w = 0
-        skipped_step2_nonfinite_w = 0
-        theta_window_start_vals = []
-        h_abs_start = float(h_w[0]) if len(h_w) > 0 and np.isfinite(h_w[0]) else np.nan
-        win_est = []
-        for th_t, h_abs, h_local in zip(theta_t_w, h_w, h_rel):
-            total_anchors += 1
-            # Step 1: local-frame inversion using H_rel -> theta_window_start estimate.
-            theta0_local, ok1, reason1 = theta0_from_anchor(th_t, h_local)
-            if not ok1:
-                skipped_step1_w += 1
-                if reason1 == "invalid_discriminant":
-                    skip_disc += 1
-                    skip_step1_disc += 1
-                    skipped_step1_disc_w += 1
-                else:
-                    skip_nonfinite += 1
-                    skip_step1_nonfinite += 1
-                    skipped_step1_nonfinite_w += 1
-                continue
-
-            theta_window_start_vals.append(float(theta0_local))
-
-            # Step 2: transport to global enrollment frame using H_abs_start.
-            theta0_global, ok2, reason2 = theta0_from_anchor(theta0_local, h_abs_start)
-            if not ok2:
-                skipped_step2_w += 1
-                if reason2 == "invalid_discriminant":
-                    skip_disc += 1
-                    skip_step2_disc += 1
-                    skipped_step2_disc_w += 1
-                else:
-                    skip_nonfinite += 1
-                    skip_step2_nonfinite += 1
-                    skipped_step2_nonfinite_w += 1
-                continue
-
-            if np.isfinite(theta0_global) and float(theta0_global) > 0.0:
-                win_est.append(float(theta0_global))
-                all_est.append(float(theta0_global))
-                used_w += 1
-            else:
-                skip_nonfinite += 1
-                skip_step2_nonfinite += 1
-                skipped_step2_w += 1
-                skipped_step2_nonfinite_w += 1
-
-        if len(win_est) > 0:
-            win_arr = np.asarray(win_est, dtype=float)
-            theta_window_start_mean = float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals) > 0 else np.nan
-            step2_theta_limit = (1.0 / (4.0 * h_abs_start)) if np.isfinite(h_abs_start) and (h_abs_start > EPS) else np.nan
-            step2_ratio = (theta_window_start_mean / step2_theta_limit) if np.isfinite(theta_window_start_mean) and np.isfinite(step2_theta_limit) and step2_theta_limit > EPS else np.nan
-            window_details.append({
-                "name": wname,
-                "role": window_role,
-                "n": int(len(win_arr)),
-                "mean": float(np.nanmean(win_arr)),
-                "sd": float(np.nanstd(win_arr, ddof=1)) if len(win_arr) > 1 else np.nan,
-                "anchors_total": int(len(t_w)),
-                "anchors_used": int(used_w),
-                "skip_step1": int(skipped_step1_w),
-                "skip_step2": int(skipped_step2_w),
-                "skip_weak_id": 0,
-                "status": "identified" if int(used_w) > 0 else "transport_or_anchor_fail",
-                "skip_step1_invalid_discriminant": int(skipped_step1_disc_w),
-                "skip_step1_nonfinite": int(skipped_step1_nonfinite_w),
-                "skip_step2_invalid_discriminant": int(skipped_step2_disc_w),
-                "skip_step2_nonfinite": int(skipped_step2_nonfinite_w),
-                "theta_anchor": float(theta_anchor),
-                "H_abs_start": h_abs_start,
-                "H_abs_min": float(np.nanmin(h_w)) if len(h_w) > 0 else np.nan,
-                "H_abs_max": float(np.nanmax(h_w)) if len(h_w) > 0 else np.nan,
-                "H_rel_min": float(np.nanmin(h_rel)) if len(h_rel) > 0 else np.nan,
-                "H_rel_max": float(np.nanmax(h_rel)) if len(h_rel) > 0 else np.nan,
-                "H_rel_end": h_rel_end,
-                "z_end": z_end,
-                "z_min": np.nan,
-                "theta_window_start_mean": theta_window_start_mean,
-                "step2_theta_limit": step2_theta_limit,
-                "step2_ratio": step2_ratio,
-                "note": "",
-            })
-            if is_primary_window:
-                primary_est.extend(win_est)
-        else:
-            theta_window_start_mean = float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals) > 0 else np.nan
-            step2_theta_limit = (1.0 / (4.0 * h_abs_start)) if np.isfinite(h_abs_start) and (h_abs_start > EPS) else np.nan
-            step2_ratio = (theta_window_start_mean / step2_theta_limit) if np.isfinite(theta_window_start_mean) and np.isfinite(step2_theta_limit) and step2_theta_limit > EPS else np.nan
-            window_details.append({
-                "name": wname,
-                "role": window_role,
-                "n": 0,
-                "mean": np.nan,
-                "sd": np.nan,
-                "anchors_total": int(len(t_w)),
-                "anchors_used": 0,
-                "skip_step1": int(skipped_step1_w),
-                "skip_step2": int(skipped_step2_w),
-                "skip_weak_id": 0,
-                "status": "transport_or_anchor_fail",
-                "skip_step1_invalid_discriminant": int(skipped_step1_disc_w),
-                "skip_step1_nonfinite": int(skipped_step1_nonfinite_w),
-                "skip_step2_invalid_discriminant": int(skipped_step2_disc_w),
-                "skip_step2_nonfinite": int(skipped_step2_nonfinite_w),
-                "theta_anchor": float(theta_anchor),
-                "H_abs_start": h_abs_start,
-                "H_abs_min": float(np.nanmin(h_w)) if len(h_w) > 0 else np.nan,
-                "H_abs_max": float(np.nanmax(h_w)) if len(h_w) > 0 else np.nan,
-                "H_rel_min": float(np.nanmin(h_rel)) if len(h_rel) > 0 else np.nan,
-                "H_rel_max": float(np.nanmax(h_rel)) if len(h_rel) > 0 else np.nan,
-                "H_rel_end": h_rel_end,
-                "z_end": z_end,
-                "z_min": np.nan,
-                "theta_window_start_mean": theta_window_start_mean,
-                "step2_theta_limit": step2_theta_limit,
-                "step2_ratio": step2_ratio,
-                "note": "",
-            })
-
-        # Optional targeted debug dump: diagnose H_abs vs H_rel/discriminant behavior.
-        _debug_enabled = int(KCOR7_DEBUG_THETA0) == 1
-        _debug_yob_target = int(KCOR7_DEBUG_THETA0_YOB)
-        _ctx_yob = None
-        _ctx_enroll = ""
-        _ctx_dose = ""
-        if isinstance(debug_ctx, dict):
-            _ctx_yob = debug_ctx.get("yob")
-            _ctx_enroll = str(debug_ctx.get("enrollment", ""))
-            _ctx_dose = str(debug_ctx.get("dose", ""))
-        if _debug_enabled and (_ctx_yob is not None) and (int(_ctx_yob) == int(_debug_yob_target)) and callable(debug_print):
-            def _rng(x):
-                arr = np.asarray(x, dtype=float)
-                finite = arr[np.isfinite(arr)]
-                if len(finite) == 0:
-                    return "nan..nan"
-                return f"{float(np.min(finite)):.6e}..{float(np.max(finite)):.6e}"
-
-            debug_print(
-                f"[KCOR7_DEBUG] Enrollment={_ctx_enroll},YoB={int(_ctx_yob)},Dose={_ctx_dose},"
-                f"Window={wname},anchors={int(len(t_w))},used={int(used_w)},"
-                f"skip_step1={int(skipped_step1_w)},skip_step2={int(skipped_step2_w)},"
-                f"skip_step1_disc={int(skipped_step1_disc_w)},skip_step1_nonfinite={int(skipped_step1_nonfinite_w)},"
-                f"skip_step2_disc={int(skipped_step2_disc_w)},skip_step2_nonfinite={int(skipped_step2_nonfinite_w)},"
-                f"theta_anchor={theta_anchor:.6e},H_abs={_rng(h_w)},H_rel={_rng(h_rel)},"
-                f"H_abs_start={h_abs_start:.6e},theta_window_start_mean={float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals)>0 else np.nan:.6e},"
-                f"step2_theta_limit={((1.0 / (4.0 * h_abs_start)) if np.isfinite(h_abs_start) and (h_abs_start > EPS) else np.nan):.6e},"
-                f"step2_ratio={((float(np.nanmean(theta_window_start_vals)) / (1.0 / (4.0 * h_abs_start))) if (len(theta_window_start_vals)>0 and np.isfinite(h_abs_start) and (h_abs_start > EPS)) else np.nan):.6e},"
-                f"z_end={z_end:.6e},"
-                f"disc_abs={_rng(disc_abs_w)},disc_rel={_rng(disc_rel_w)}"
-            )
-
-    out["anchors_total"] = int(total_anchors)
-    out["anchors_skipped_invalid_discriminant"] = int(skip_disc)
-    out["anchors_skipped_nonfinite"] = int(skip_nonfinite)
-    out["anchors_skipped_weak_id"] = int(skip_weak_id)
-    out["windows_skipped_weak_id"] = int(windows_skipped_weak_id)
-    out["anchors_skipped_step1_invalid_discriminant"] = int(skip_step1_disc)
-    out["anchors_skipped_step1_nonfinite"] = int(skip_step1_nonfinite)
-    out["anchors_skipped_step2_invalid_discriminant"] = int(skip_step2_disc)
-    out["anchors_skipped_step2_nonfinite"] = int(skip_step2_nonfinite)
-    out["window_stats"] = window_details
-    out["all_theta0_estimates"] = all_est
-    out["anchors_used"] = int(len(primary_est))
-    out["theta0_n"] = int(len(primary_est))
-    if len(primary_est) == 0:
-        return out
-
-    est_arr = np.asarray(primary_est, dtype=float)
-    pooled = float(np.nanmean(est_arr))
-    out["theta0_hat"] = pooled
-    if len(est_arr) >= 2:
-        se = float(np.nanstd(est_arr, ddof=1) / max(math.sqrt(len(est_arr)), EPS))
-        ci_half = 1.96 * se
-        out["theta0_ci_low"] = pooled - ci_half
-        out["theta0_ci_high"] = pooled + ci_half
-    else:
-        out["theta0_ci_low"] = np.nan
-        out["theta0_ci_high"] = np.nan
-
-    # Cross-window consistency diagnostics over selected post-enrollment windows.
-    valid_windows = [w for w in window_details if int(w.get("n", 0)) > 0 and np.isfinite(w.get("mean", np.nan))]
-    if len(valid_windows) >= 2:
-        means = np.asarray([float(w["mean"]) for w in valid_windows], dtype=float)
-        finite_pos_means = means[np.isfinite(means) & (means > 0.0)]
-        if len(finite_pos_means) >= 2:
-            out["cross_window_ratio"] = float(np.max(finite_pos_means) / max(np.min(finite_pos_means), EPS))
-        vars_within = []
-        for w in valid_windows:
-            sd_w = float(w.get("sd", np.nan))
-            n_w = int(w.get("n", 0))
-            if np.isfinite(sd_w) and n_w > 1:
-                vars_within.append(sd_w * sd_w)
-        cross_var = float(np.nanvar(means, ddof=1)) if len(means) > 1 else np.nan
-        within_var = float(np.nanmean(vars_within)) if len(vars_within) > 0 else np.nan
-        out["cross_window_variance"] = cross_var
-        out["within_window_variance"] = within_var
-        if np.isfinite(cross_var) and np.isfinite(within_var) and within_var > 0.0:
-            f_stat = float(cross_var / within_var)
-            out["f_statistic"] = f_stat
-            if scipy_f_dist is not None and len(means) > 1 and len(est_arr) > len(means):
-                try:
-                    df1 = max(len(means) - 1, 1)
-                    df2 = max(len(est_arr) - len(means), 1)
-                    out["p_value"] = float(1.0 - scipy_f_dist.cdf(f_stat, df1, df2))
-                except Exception:
-                    out["p_value"] = np.nan
-
-    return out
+        k_hat, theta0_hat = float(res.x[0]), float(res.x[1])
+        rmse_h = float(np.sqrt(np.mean(np.asarray(res.fun, dtype=float) ** 2))) if n_obs > 0 else np.nan
+        return (k_hat, theta0_hat), {
+            "success": bool(res.success),
+            "n_obs": n_obs,
+            "rmse_hazard": rmse_h,
+            "status": int(res.status) if hasattr(res, "status") else None,
+            "message": str(res.message) if hasattr(res, "message") else None,
+            "nfev": int(res.nfev) if hasattr(res, "nfev") else None,
+            "cost": float(res.cost) if hasattr(res, "cost") else None,
+        }
+    except Exception as e:
+        return (np.nan, np.nan), {
+            "success": False,
+            "n_obs": n_obs,
+            "rmse_hazard": np.nan,
+            "status": None,
+            "message": f"exception: {e}",
+            "nfev": None,
+        }
 
 
 # Cache for dataset dose pairs config (loaded once per run)
 _DATASET_DOSE_PAIRS_CACHE = None
 # Cache for dataset COVID correction config (loaded once per run)
 _DATASET_COVID_CORRECTION_CACHE = None
-# Cache for dataset KCOR v7 time-varying theta config
-_DATASET_TIME_VARYING_THETA_CACHE = None
+# Cache for dataset theta-estimation windows (loaded once per run)
+_DATASET_THETA_ESTIMATION_WINDOWS_CACHE = None
 
 def _load_dataset_dose_pairs_config():
     """Load dose pairs configuration from dataset YAML file."""
-    global _DATASET_DOSE_PAIRS_CACHE, _DATASET_COVID_CORRECTION_CACHE, _DATASET_TIME_VARYING_THETA_CACHE
+    global _DATASET_DOSE_PAIRS_CACHE, _DATASET_COVID_CORRECTION_CACHE, _DATASET_THETA_ESTIMATION_WINDOWS_CACHE
     if (
         _DATASET_DOSE_PAIRS_CACHE is not None
         and _DATASET_COVID_CORRECTION_CACHE is not None
-        and _DATASET_TIME_VARYING_THETA_CACHE is not None
+        and _DATASET_THETA_ESTIMATION_WINDOWS_CACHE is not None
     ):
         return _DATASET_DOSE_PAIRS_CACHE
     
     _DATASET_DOSE_PAIRS_CACHE = {}
     _DATASET_COVID_CORRECTION_CACHE = {}
-    _DATASET_TIME_VARYING_THETA_CACHE = {}
+    _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = []
     _dataset_name = os.environ.get('DATASET', 'Czech')
     # Resolve path relative to script location to handle different execution contexts
     _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1590,76 +1186,34 @@ def _load_dataset_dose_pairs_config():
                                     print(f"[DEBUG] Loaded quiet window config from {_dataset_yaml_path}", flush=True)
                         except Exception:
                             pass
-                _tv_cfg = _dataset_config.get('time_varying_theta', {})
-                if isinstance(_tv_cfg, dict):
-                    try:
-                        _enabled = bool(_tv_cfg.get('enabled', False))
-                        _apply_to = str(_tv_cfg.get('apply_to', 'unvaccinated_only')).strip().lower()
-                        if _apply_to not in ('unvaccinated_only', 'vaccinated_only', 'both_cohorts'):
-                            _apply_to = 'unvaccinated_only'
-                        _diag_cfg = _tv_cfg.get('diagnostics', {})
-                        if not isinstance(_diag_cfg, dict):
-                            _diag_cfg = {}
-                        _ident_cfg = _tv_cfg.get('theta_identifiability', {})
-                        if not isinstance(_ident_cfg, dict):
-                            _ident_cfg = {}
+                _theta_windows_cfg = _dataset_config.get("theta_estimation_windows", [])
+                if isinstance(_theta_windows_cfg, list):
+                    parsed_theta_windows = []
+                    for item in _theta_windows_cfg:
+                        if not isinstance(item, (list, tuple)) or len(item) < 2:
+                            continue
+                        start_raw = str(item[0]).strip().replace("_", "-")
+                        end_raw = str(item[1]).strip().replace("_", "-")
+                        label = str(item[2]).strip() if len(item) >= 3 and item[2] is not None else ""
                         try:
-                            _z_min = max(float(_ident_cfg.get("z_min", 0.01)), 0.0)
+                            start_int = iso_label_to_int(start_raw)
+                            end_int = iso_label_to_int(end_raw)
+                            if start_int <= end_int:
+                                parsed_theta_windows.append({
+                                    "start_iso": start_raw,
+                                    "end_iso": end_raw,
+                                    "start_int": int(start_int),
+                                    "end_int": int(end_int),
+                                    "label": label,
+                                })
                         except Exception:
-                            _z_min = 0.01
-                        try:
-                            _theta_min = max(float(_ident_cfg.get("theta_min", 0.0)), 0.0)
-                        except Exception:
-                            _theta_min = 0.0
-                        _flag_weak_id = bool(_ident_cfg.get("flag_weak_id", True))
-                        _windows_raw = _tv_cfg.get('theta_estimation_windows', [])
-                        _windows = []
-                        if isinstance(_windows_raw, list):
-                            for _row in _windows_raw:
-                                try:
-                                    if not isinstance(_row, (list, tuple)) or len(_row) < 2:
-                                        continue
-                                    _ws = str(_row[0]).strip().replace('_', '-')
-                                    _we = str(_row[1]).strip().replace('_', '-')
-                                    _wn = str(_row[2]).strip() if len(_row) >= 3 else f"{_ws}:{_we}"
-                                    _wsi = iso_label_to_int(_ws)
-                                    _wei = iso_label_to_int(_we)
-                                    if _wsi <= _wei:
-                                        _windows.append({
-                                            "start_iso": _ws,
-                                            "end_iso": _we,
-                                            "start_int": int(_wsi),
-                                            "end_int": int(_wei),
-                                            "name": _wn,
-                                        })
-                                except Exception:
-                                    continue
-                        # Backward-compatible fallback: if enabled and no explicit windows, use current KCOR6 quiet window.
-                        if _enabled and len(_windows) == 0:
-                            _windows = [{
-                                "start_iso": str(KCOR6_QUIET_START_ISO),
-                                "end_iso": str(KCOR6_QUIET_END_ISO),
-                                "start_int": int(KCOR6_QUIET_START_INT),
-                                "end_int": int(KCOR6_QUIET_END_INT),
-                                "name": "legacy_quiet_window",
-                            }]
-                        _DATASET_TIME_VARYING_THETA_CACHE = {
-                            "enabled": _enabled,
-                            "apply_to": _apply_to,
-                            "theta_estimation_windows": _windows,
-                            "diagnostics": {
-                                "plot_theta0_estimates_by_window": bool(_diag_cfg.get("plot_theta0_estimates_by_window", False)),
-                                "plot_theta_trajectory": bool(_diag_cfg.get("plot_theta_trajectory", False)),
-                                "report_consistency_test": bool(_diag_cfg.get("report_consistency_test", False)),
-                            },
-                            "theta_identifiability": {
-                                "z_min": _z_min,
-                                "theta_min": _theta_min,
-                                "flag_weak_id": _flag_weak_id,
-                            },
-                        }
-                    except Exception:
-                        _DATASET_TIME_VARYING_THETA_CACHE = {}
+                            continue
+                    _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = parsed_theta_windows
+                    if DEBUG_VERBOSE and parsed_theta_windows:
+                        print(
+                            f"[DEBUG] Loaded {len(parsed_theta_windows)} theta estimation window(s) from {_dataset_yaml_path}",
+                            flush=True,
+                        )
         except Exception as _e_config:
             # Only print warning for non-ImportError exceptions (file read errors, etc.)
             if DEBUG_VERBOSE and 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower():
@@ -1759,47 +1313,53 @@ def get_covid_correction_config():
     return {"start_dt": start_dt, "end_dt": end_dt, "factor": factor_val}
 
 
-def get_time_varying_theta_config():
-    """Return parsed KCOR v7 time-varying-theta config with defaults."""
+def get_theta_estimation_windows():
+    """Return parsed theta_estimation_windows from dataset YAML."""
     _load_dataset_dose_pairs_config()
-    cfg = _DATASET_TIME_VARYING_THETA_CACHE if isinstance(_DATASET_TIME_VARYING_THETA_CACHE, dict) else {}
-    enabled = bool(cfg.get("enabled", False))
-    apply_to = str(cfg.get("apply_to", "unvaccinated_only")).strip().lower()
-    if apply_to not in ("unvaccinated_only", "vaccinated_only", "both_cohorts"):
-        apply_to = "unvaccinated_only"
-    windows = cfg.get("theta_estimation_windows", [])
-    if not isinstance(windows, list):
-        windows = []
-    diagnostics = cfg.get("diagnostics", {})
-    if not isinstance(diagnostics, dict):
-        diagnostics = {}
-    theta_ident = cfg.get("theta_identifiability", {})
-    if not isinstance(theta_ident, dict):
-        theta_ident = {}
-    try:
-        z_min = max(float(theta_ident.get("z_min", 0.01)), 0.0)
-    except Exception:
-        z_min = 0.01
-    try:
-        theta_min = max(float(theta_ident.get("theta_min", 0.0)), 0.0)
-    except Exception:
-        theta_min = 0.0
-    flag_weak_id = bool(theta_ident.get("flag_weak_id", True))
-    return {
-        "enabled": enabled,
-        "apply_to": apply_to,
-        "theta_estimation_windows": windows,
-        "diagnostics": {
-            "plot_theta0_estimates_by_window": bool(diagnostics.get("plot_theta0_estimates_by_window", False)),
-            "plot_theta_trajectory": bool(diagnostics.get("plot_theta_trajectory", False)),
-            "report_consistency_test": bool(diagnostics.get("report_consistency_test", False)),
-        },
-        "theta_identifiability": {
-            "z_min": z_min,
-            "theta_min": theta_min,
-            "flag_weak_id": flag_weak_id,
-        },
-    }
+    if not _DATASET_THETA_ESTIMATION_WINDOWS_CACHE:
+        return []
+    return list(_DATASET_THETA_ESTIMATION_WINDOWS_CACHE)
+
+
+def _format_theta_windows_label(theta_windows):
+    if not theta_windows:
+        return f"{KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}"
+    chunks = []
+    for w in theta_windows:
+        start_iso = str(w.get("start_iso", "")).strip()
+        end_iso = str(w.get("end_iso", "")).strip()
+        label = str(w.get("label", "")).strip()
+        if label:
+            chunks.append(f"{start_iso}..{end_iso} ({label})")
+        else:
+            chunks.append(f"{start_iso}..{end_iso}")
+    return "; ".join(chunks)
+
+
+def _build_theta_quiet_mask(iso_int, t_vals):
+    """Build quiet-window mask for theta estimation.
+
+    Uses `theta_estimation_windows` if configured; otherwise falls back to KCOR6 quietWindow.
+    """
+    t_arr = np.asarray(t_vals, dtype=float)
+    if iso_int is None:
+        return np.ones_like(t_arr, dtype=bool), "all_dates_fallback", "all_dates_fallback"
+
+    iso_arr = np.asarray(iso_int, dtype=float)
+    valid_iso = np.isfinite(iso_arr)
+    quiet_mask = np.zeros_like(t_arr, dtype=bool)
+    theta_windows = get_theta_estimation_windows()
+    if theta_windows:
+        for w in theta_windows:
+            w_start = int(w["start_int"])
+            w_end = int(w["end_int"])
+            quiet_mask[valid_iso] |= (iso_arr[valid_iso] >= w_start) & (iso_arr[valid_iso] <= w_end)
+        return quiet_mask, "theta_estimation_windows", _format_theta_windows_label(theta_windows)
+
+    quiet_start_int = iso_label_to_int(KCOR6_QUIET_START_ISO)
+    quiet_end_int = iso_label_to_int(KCOR6_QUIET_END_ISO)
+    quiet_mask[valid_iso] = (iso_arr[valid_iso] >= quiet_start_int) & (iso_arr[valid_iso] <= quiet_end_int)
+    return quiet_mask, "legacy_quiet_window", f"{KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}"
 
 def apply_covid_correction_in_place(df, covid_cfg):
     """Adjust hazard_raw in-place for Dose==0 during COVID interval."""
@@ -3606,11 +3166,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         params_num_kcor6 = kcor6_params_map.get((sheet_name, int(yob), int(num)), {})
                         params_den_kcor6 = kcor6_params_map.get((sheet_name, int(yob), int(den)), {})
                     if isinstance(params_num_kcor6, dict):
-                        theta_num_val = params_num_kcor6.get("theta_for_h0", params_num_kcor6.get("theta_hat", np.nan))
+                        theta_num_val = params_num_kcor6.get("theta_hat", np.nan)
                         if np.isfinite(theta_num_val):
                             theta_num = float(theta_num_val)
                     if isinstance(params_den_kcor6, dict):
-                        theta_den_val = params_den_kcor6.get("theta_for_h0", params_den_kcor6.get("theta_hat", np.nan))
+                        theta_den_val = params_den_kcor6.get("theta_hat", np.nan)
                         if np.isfinite(theta_den_val):
                             theta_den = float(theta_den_val)
                 merged["theta_num"] = theta_num
@@ -3952,11 +3512,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                             params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
                             params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
                             if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled):
-                                theta_num_val = params_num_check.get("theta_for_h0", params_num_check.get("theta_hat", np.nan))
+                                theta_num_val = params_num_check.get("theta_hat", np.nan)
                                 if np.isfinite(theta_num_val):
                                     theta_num_pooled = float(theta_num_val)
                             if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled):
-                                theta_den_val = params_den_check.get("theta_for_h0", params_den_check.get("theta_hat", np.nan))
+                                theta_den_val = params_den_check.get("theta_hat", np.nan)
                                 if np.isfinite(theta_den_val):
                                     theta_den_pooled = float(theta_den_val)
                             if not (np.isnan(theta_num_pooled) or np.isnan(theta_den_pooled)):
@@ -4174,11 +3734,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
                         params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
                         if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled_asmr):
-                            theta_num_val = params_num_check.get("theta_for_h0", params_num_check.get("theta_hat", np.nan))
+                            theta_num_val = params_num_check.get("theta_hat", np.nan)
                             if np.isfinite(theta_num_val):
                                 theta_num_pooled_asmr = float(theta_num_val)
                         if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled_asmr):
-                            theta_den_val = params_den_check.get("theta_for_h0", params_den_check.get("theta_hat", np.nan))
+                            theta_den_val = params_den_check.get("theta_hat", np.nan)
                             if np.isfinite(theta_den_val):
                                 theta_den_pooled_asmr = float(theta_den_val)
                         if not (np.isnan(theta_num_pooled_asmr) or np.isnan(theta_den_pooled_asmr)):
@@ -4251,7 +3811,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 theta = 0.0
                 params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
                 if isinstance(params, dict):
-                    th = params.get("theta_for_h0", params.get("theta_hat", np.nan))
+                    th = params.get("theta_hat", np.nan)
                     ok = bool(params.get("success", False))
                     if ok and np.isfinite(th) and float(th) >= 0.0:
                         theta = float(th)
@@ -4301,7 +3861,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 else:
                     params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
                 if isinstance(params, dict):
-                    th = params.get("theta_for_h0", params.get("theta_hat", np.nan))
+                    th = params.get("theta_hat", np.nan)
                     ok = bool(params.get("success", False))
                     if ok and np.isfinite(th) and float(th) >= 0.0:
                         theta = float(th)
@@ -4539,11 +4099,11 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     params_num_all_kcor6 = kcor6_params_map.get((sheet_name, -2, int(num)), {})
                     params_den_all_kcor6 = kcor6_params_map.get((sheet_name, -2, int(den)), {})
                 if isinstance(params_num_all_kcor6, dict):
-                    theta_num_val = params_num_all_kcor6.get("theta_for_h0", params_num_all_kcor6.get("theta_hat", np.nan))
+                    theta_num_val = params_num_all_kcor6.get("theta_hat", np.nan)
                     if np.isfinite(theta_num_val):
                         theta_num_all = float(theta_num_val)
                 if isinstance(params_den_all_kcor6, dict):
-                    theta_den_val = params_den_all_kcor6.get("theta_for_h0", params_den_all_kcor6.get("theta_hat", np.nan))
+                    theta_den_val = params_den_all_kcor6.get("theta_hat", np.nan)
                     if np.isfinite(theta_den_val):
                         theta_den_all = float(theta_den_val)
             
@@ -5158,16 +4718,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  Reporting date calculation: 1 year from enrollment date")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
     dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
-    tv_theta_cfg = get_time_varying_theta_config()
-    tv_windows = tv_theta_cfg.get("theta_estimation_windows", [])
-    if bool(tv_theta_cfg.get("enabled", False)):
-        dual_print(f"  TIME_VARYING_THETA    = enabled ({tv_theta_cfg.get('apply_to', 'unvaccinated_only')})")
-        dual_print("  THETA_WINDOW_RULE    = first quiet window after enrollment for theta0; later windows diagnostics only")
-        if len(tv_windows) > 0:
-            tv_window_labels = [f"{w.get('start_iso')}..{w.get('end_iso')}({w.get('name')})" for w in tv_windows]
-            dual_print(f"  THETA_EST_WINDOWS     = {tv_window_labels}")
+    theta_windows_cfg = get_theta_estimation_windows()
+    if theta_windows_cfg:
+        dual_print(f"  THETA_ESTIMATION_WINDOWS = {_format_theta_windows_label(theta_windows_cfg)}")
     else:
-        dual_print("  TIME_VARYING_THETA    = disabled")
+        dual_print("  THETA_ESTIMATION_WINDOWS = (fallback to KCOR6_QUIET_WINDOW)")
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
         dual_print("  COVID_CORRECTION      = disabled")
@@ -5175,10 +4730,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         start_iso = covid_cfg["start_dt"].strftime("%G-%V")
         end_iso = covid_cfg["end_dt"].strftime("%G-%V")
         dual_print(f"  COVID_CORRECTION      = {start_iso}..{end_iso}, factor={covid_cfg['factor']}")
-    if bool(tv_theta_cfg.get("enabled", False)):
-        dual_print("  NORMALIZATION_METHOD  = KCOR7 (time-varying theta, first post-enrollment window)")
-    else:
-        dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
+    dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
     dual_print("="*80)
     dual_print("")
     
@@ -5401,10 +4953,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             iso_int = d["iso_int"]
 
                             fit_mask = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
-                            t_fit = t_vals[fit_mask]
-                            H_fit = H_obs[fit_mask]
-
-                            (_k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_fit, H_fit)
+                            (_k_hat, theta_hat), diag = fit_theta0_global(h_eff_obs, H_obs, fit_mask)
                             theta = 0.0
                             if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                                 theta = float(theta_hat)
@@ -5789,22 +5338,16 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                 if iso_int_series is not None:
                     iso_int = iso_int_series.loc[g_sorted.index].to_numpy(dtype=float)
-                    # Handle NaN values (use False for quiet_mask where ISO week is unknown)
-                    # Compare against quiet window INT values (derived from ISO strings)
-                    quiet_start_int = iso_label_to_int(KCOR6_QUIET_START_ISO)
-                    quiet_end_int = iso_label_to_int(KCOR6_QUIET_END_ISO)
-                    valid_iso = np.isfinite(iso_int)
-                    quiet_mask = np.zeros_like(t_vals, dtype=bool)
-                    quiet_mask[valid_iso] = (iso_int[valid_iso] >= quiet_start_int) & (iso_int[valid_iso] <= quiet_end_int)
                 else:
-                    quiet_mask = np.ones_like(t_vals, dtype=bool)
+                    iso_int = None
 
+                quiet_mask, theta_source, quiet_window_label = _build_theta_quiet_mask(iso_int, t_vals)
                 fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
                 t_fit = t_vals[fit_mask]
                 H_fit = H_obs[fit_mask]
 
-                (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_fit, H_fit)
-                rmse_h = diag.get("rmse_Hobs", np.nan) if isinstance(diag, dict) else np.nan
+                (k_hat, theta_hat), diag = fit_theta0_global(hazard_eff, H_obs, fit_mask)
+                rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
                 n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
                 success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                 note = diag.get("message", "") if isinstance(diag, dict) else ""
@@ -5824,7 +5367,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             iso_max = int(np.nanmax(iso_int_debug[valid_iso_debug]))
                             dual_print(f"[DEBUG] KCOR6 fit FAILED: enroll={effective_sheet_name}, yob={yob}, dose={dose}")
                             dual_print(f"  ISO weeks in data: {iso_min} to {iso_max}")
-                            dual_print(f"  Quiet window: {KCOR6_QUIET_START_ISO} ({quiet_start_int}) to {KCOR6_QUIET_END_ISO} ({quiet_end_int})")
+                            dual_print(f"  Quiet windows source: {theta_source}")
+                            dual_print(f"  Quiet windows: {quiet_window_label}")
                             dual_print(f"  Quiet mask matches: {np.sum(quiet_mask)}/{len(quiet_mask)}")
                             dual_print(f"  t_vals >= DYNAMIC_HVE_SKIP_WEEKS ({DYNAMIC_HVE_SKIP_WEEKS}): {np.sum(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))}/{len(t_vals)}")
                             dual_print(f"  Fit mask (quiet & skip): {np.sum(fit_mask)}/{len(fit_mask)} points")
@@ -5835,73 +5379,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             dual_print(f"  ERROR: No valid ISO week values found in iso_int_series!")
                             dual_print(f"  ISOweekDied sample: {g_sorted['ISOweekDied'].head(3).tolist() if 'ISOweekDied' in g_sorted.columns else 'N/A'}")
 
-                # Compute normalized cumulative hazard H0 for diagnostics.
-                # KCOR6 uses theta_hat; KCOR7 optionally replaces with pooled theta0.
+                # Compute normalized cumulative hazard H0 for diagnostics
                 theta = 0.0
                 if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                     theta = float(theta_hat)
-                theta_for_h0 = float(theta)
-                theta0_info = {}
-                tv_enabled = bool(tv_theta_cfg.get("enabled", False))
-                tv_apply_to = str(tv_theta_cfg.get("apply_to", "unvaccinated_only"))
-                tv_windows_cfg = tv_theta_cfg.get("theta_estimation_windows", [])
-                if tv_enabled and _dose_matches_time_varying_apply(dose, tv_apply_to) and isinstance(tv_windows_cfg, list) and len(tv_windows_cfg) > 0:
-                    theta0_info = estimate_theta0_from_windows(
-                        t_vals=t_vals,
-                        h_obs=H_obs,
-                        iso_int=iso_int if iso_int_series is not None else np.full_like(t_vals, np.nan, dtype=float),
-                        windows=tv_windows_cfg,
-                        skip_weeks=float(DYNAMIC_HVE_SKIP_WEEKS),
-                        debug_ctx={"enrollment": effective_sheet_name, "yob": int(yob), "dose": int(dose)},
-                        debug_print=dual_print,
-                        ident_cfg=tv_theta_cfg.get("theta_identifiability", {}),
-                        enrollment_iso=effective_sheet_name,
-                    )
-                    theta0_hat = theta0_info.get("theta0_hat", np.nan)
-                    if np.isfinite(theta0_hat) and float(theta0_hat) > 0.0:
-                        theta_for_h0 = float(theta0_hat)
-                        if bool(tv_theta_cfg.get("diagnostics", {}).get("report_consistency_test", False)):
-                            dual_print(
-                                f"KCOR7_THETA0,EnrollmentDate={effective_sheet_name},YoB={int(yob)},Dose={int(dose)},"
-                                f"theta0_hat={theta_for_h0:.6e},n={int(theta0_info.get('theta0_n', 0))},"
-                                f"primary_window={theta0_info.get('primary_window_name', '')},"
-                                f"no_post_window={int(bool(theta0_info.get('no_post_enrollment_window', False)))},"
-                                f"skipped_disc={int(theta0_info.get('anchors_skipped_invalid_discriminant', 0))},"
-                                f"skipped_nonfinite={int(theta0_info.get('anchors_skipped_nonfinite', 0))},"
-                                f"skipped_weak_id={int(theta0_info.get('anchors_skipped_weak_id', 0))},"
-                                f"skip_step1={int(theta0_info.get('anchors_skipped_step1_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step1_nonfinite', 0))},"
-                                f"skip_step2={int(theta0_info.get('anchors_skipped_step2_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step2_nonfinite', 0))},"
-                                f"cross_window_ratio={float(theta0_info.get('cross_window_ratio', np.nan)):.6f}"
-                            )
-                            for _w in theta0_info.get("window_stats", []) if isinstance(theta0_info.get("window_stats", []), list) else []:
-                                if not isinstance(_w, dict):
-                                    continue
-                                dual_print(
-                                    f"KCOR7_THETA0_WINDOW,EnrollmentDate={effective_sheet_name},YoB={int(yob)},Dose={int(dose)},"
-                                    f"window={_w.get('name','')},theta_anchor={float(_w.get('theta_anchor', np.nan)):.6e},"
-                                    f"role={_w.get('role','')},"
-                                    f"H_abs_start={float(_w.get('H_abs_start', np.nan)):.6e},"
-                                    f"H_abs_range=[{float(_w.get('H_abs_min', np.nan)):.6e},{float(_w.get('H_abs_max', np.nan)):.6e}],"
-                                    f"H_rel_range=[{float(_w.get('H_rel_min', np.nan)):.6e},{float(_w.get('H_rel_max', np.nan)):.6e}],"
-                                    f"step2_theta_limit={float(_w.get('step2_theta_limit', np.nan)):.6e},"
-                                    f"step2_ratio={float(_w.get('step2_ratio', np.nan)):.6e},"
-                                    f"H_rel_end={float(_w.get('H_rel_end', np.nan)):.6e},"
-                                    f"z_end={float(_w.get('z_end', np.nan)):.6e},"
-                                    f"z_min={float(_w.get('z_min', np.nan)):.6e},"
-                                    f"status={_w.get('status','')},"
-                                    f"anchors_total={int(_w.get('anchors_total', 0))},"
-                                    f"skip_step1={int(_w.get('skip_step1', 0))},"
-                                    f"skip_step2={int(_w.get('skip_step2', 0))},"
-                                    f"skip_weak_id={int(_w.get('skip_weak_id', 0))},"
-                                    f"anchors_used={int(_w.get('anchors_used', 0))},"
-                                    f"theta0_window_mean={float(_w.get('mean', np.nan)):.6e}"
-                                )
-                    if bool(theta0_info.get("no_post_enrollment_window", False)):
-                        dual_print(
-                            f"[KCOR7] No quiet window after enrollment: EnrollmentDate={effective_sheet_name},YoB={int(yob)},Dose={int(dose)}"
-                        )
-
-                H0_full = invert_gamma_frailty(H_obs, theta_for_h0)
+                H0_full = invert_gamma_frailty(H_obs, theta)
                 H0_quiet = H0_full[fit_mask]
                 t_quiet = t_vals[fit_mask]
                 
@@ -5930,7 +5412,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                 try:
                     if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
-                        h_end_model = float(H_model(float(t_fit[-1]), float(k_hat), float(theta_hat)))
+                        h_end_model = float(H_fit[-1])
                         z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
                     else:
                         z_end = np.nan
@@ -5958,32 +5440,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 params_dict = {
                     "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
                     "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
-                    "theta_for_h0": float(theta_for_h0) if np.isfinite(theta_for_h0) else np.nan,
-                    "theta_mode": "kcor7_theta0" if np.isfinite(theta0_info.get("theta0_hat", np.nan)) else "kcor6_theta_hat",
-                    "theta0_hat": float(theta0_info.get("theta0_hat", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "theta0_ci_low": float(theta0_info.get("theta0_ci_low", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "theta0_ci_high": float(theta0_info.get("theta0_ci_high", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "theta0_n": int(theta0_info.get("theta0_n", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_total": int(theta0_info.get("anchors_total", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_used": int(theta0_info.get("anchors_used", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_invalid_discriminant": int(theta0_info.get("anchors_skipped_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_nonfinite": int(theta0_info.get("anchors_skipped_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_weak_id": int(theta0_info.get("anchors_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
-                    "windows_skipped_weak_id": int(theta0_info.get("windows_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_step1_invalid_discriminant": int(theta0_info.get("anchors_skipped_step1_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_step1_nonfinite": int(theta0_info.get("anchors_skipped_step1_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_step2_invalid_discriminant": int(theta0_info.get("anchors_skipped_step2_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
-                    "anchors_skipped_step2_nonfinite": int(theta0_info.get("anchors_skipped_step2_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
-                    "cross_window_variance": float(theta0_info.get("cross_window_variance", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "within_window_variance": float(theta0_info.get("within_window_variance", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "f_statistic": float(theta0_info.get("f_statistic", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "p_value": float(theta0_info.get("p_value", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "cross_window_ratio": float(theta0_info.get("cross_window_ratio", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                    "no_post_enrollment_window": bool(theta0_info.get("no_post_enrollment_window", False)) if isinstance(theta0_info, dict) else False,
-                    "primary_window_name": str(theta0_info.get("primary_window_name", "")) if isinstance(theta0_info, dict) else "",
-                    "selected_window_count": int(theta0_info.get("selected_window_count", 0)) if isinstance(theta0_info, dict) else 0,
-                    "theta0_window_stats": theta0_info.get("window_stats", []) if isinstance(theta0_info, dict) else [],
-                    "theta0_estimates": theta0_info.get("all_theta0_estimates", []) if isinstance(theta0_info, dict) else [],
+                    "theta0_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                    "theta_source": str(theta_source),
+                    "quiet_window": str(quiet_window_label),
                     "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
                     "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
                     "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
@@ -6068,84 +5527,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         H_obs = np.cumsum(hazard_eff)
 
                         iso_int = iso_int_all[g_sorted.index.to_numpy(dtype=int)]
-                        # Compare against quiet window INT values (derived from ISO strings)
-                        quiet_start_int = iso_label_to_int(KCOR6_QUIET_START_ISO)
-                        quiet_end_int = iso_label_to_int(KCOR6_QUIET_END_ISO)
-                        quiet_mask = (iso_int >= quiet_start_int) & (iso_int <= quiet_end_int)
+                        quiet_mask, theta_source, quiet_window_label = _build_theta_quiet_mask(iso_int, t_vals)
                         fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
 
-                        (k_hat, theta_hat), diag = fit_k_theta_cumhaz(t_vals[fit_mask], H_obs[fit_mask])
-                        rmse_h = diag.get("rmse_Hobs", np.nan) if isinstance(diag, dict) else np.nan
+                        (k_hat, theta_hat), diag = fit_theta0_global(hazard_eff, H_obs, fit_mask)
+                        rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
                         n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
                         success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
                         note = diag.get("message", "") if isinstance(diag, dict) else ""
 
-                        # Compute normalized cumulative hazard H0 for diagnostics.
-                        # KCOR6 uses theta_hat; KCOR7 optionally replaces with pooled theta0.
+                        # Compute normalized cumulative hazard H0 for diagnostics
                         theta = 0.0
                         if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                             theta = float(theta_hat)
-                        theta_for_h0 = float(theta)
-                        theta0_info = {}
-                        tv_enabled = bool(tv_theta_cfg.get("enabled", False))
-                        tv_apply_to = str(tv_theta_cfg.get("apply_to", "unvaccinated_only"))
-                        tv_windows_cfg = tv_theta_cfg.get("theta_estimation_windows", [])
-                        if tv_enabled and _dose_matches_time_varying_apply(dose, tv_apply_to) and isinstance(tv_windows_cfg, list) and len(tv_windows_cfg) > 0:
-                            theta0_info = estimate_theta0_from_windows(
-                                t_vals=t_vals,
-                                h_obs=H_obs,
-                                iso_int=iso_int,
-                                windows=tv_windows_cfg,
-                                skip_weeks=float(DYNAMIC_HVE_SKIP_WEEKS),
-                                debug_ctx={"enrollment": effective_sheet_name, "yob": -2, "dose": int(dose)},
-                                debug_print=dual_print,
-                                ident_cfg=tv_theta_cfg.get("theta_identifiability", {}),
-                                enrollment_iso=effective_sheet_name,
-                            )
-                            theta0_hat = theta0_info.get("theta0_hat", np.nan)
-                            if np.isfinite(theta0_hat) and float(theta0_hat) > 0.0:
-                                theta_for_h0 = float(theta0_hat)
-                                if bool(tv_theta_cfg.get("diagnostics", {}).get("report_consistency_test", False)):
-                                    dual_print(
-                                        f"KCOR7_THETA0,EnrollmentDate={effective_sheet_name},YoB=-2,Dose={int(dose)},"
-                                        f"theta0_hat={theta_for_h0:.6e},n={int(theta0_info.get('theta0_n', 0))},"
-                                        f"primary_window={theta0_info.get('primary_window_name', '')},"
-                                        f"no_post_window={int(bool(theta0_info.get('no_post_enrollment_window', False)))},"
-                                        f"skipped_disc={int(theta0_info.get('anchors_skipped_invalid_discriminant', 0))},"
-                                        f"skipped_nonfinite={int(theta0_info.get('anchors_skipped_nonfinite', 0))},"
-                                        f"skipped_weak_id={int(theta0_info.get('anchors_skipped_weak_id', 0))},"
-                                        f"skip_step1={int(theta0_info.get('anchors_skipped_step1_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step1_nonfinite', 0))},"
-                                        f"skip_step2={int(theta0_info.get('anchors_skipped_step2_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step2_nonfinite', 0))},"
-                                        f"cross_window_ratio={float(theta0_info.get('cross_window_ratio', np.nan)):.6f}"
-                                    )
-                                    for _w in theta0_info.get("window_stats", []) if isinstance(theta0_info.get("window_stats", []), list) else []:
-                                        if not isinstance(_w, dict):
-                                            continue
-                                        dual_print(
-                                            f"KCOR7_THETA0_WINDOW,EnrollmentDate={effective_sheet_name},YoB=-2,Dose={int(dose)},"
-                                            f"window={_w.get('name','')},theta_anchor={float(_w.get('theta_anchor', np.nan)):.6e},"
-                                            f"role={_w.get('role','')},"
-                                            f"H_abs_start={float(_w.get('H_abs_start', np.nan)):.6e},"
-                                            f"H_abs_range=[{float(_w.get('H_abs_min', np.nan)):.6e},{float(_w.get('H_abs_max', np.nan)):.6e}],"
-                                            f"H_rel_range=[{float(_w.get('H_rel_min', np.nan)):.6e},{float(_w.get('H_rel_max', np.nan)):.6e}],"
-                                            f"step2_theta_limit={float(_w.get('step2_theta_limit', np.nan)):.6e},"
-                                            f"step2_ratio={float(_w.get('step2_ratio', np.nan)):.6e},"
-                                            f"H_rel_end={float(_w.get('H_rel_end', np.nan)):.6e},"
-                                            f"z_end={float(_w.get('z_end', np.nan)):.6e},"
-                                            f"z_min={float(_w.get('z_min', np.nan)):.6e},"
-                                            f"status={_w.get('status','')},"
-                                            f"anchors_total={int(_w.get('anchors_total', 0))},"
-                                            f"skip_step1={int(_w.get('skip_step1', 0))},"
-                                            f"skip_step2={int(_w.get('skip_step2', 0))},"
-                                            f"skip_weak_id={int(_w.get('skip_weak_id', 0))},"
-                                            f"anchors_used={int(_w.get('anchors_used', 0))},"
-                                            f"theta0_window_mean={float(_w.get('mean', np.nan)):.6e}"
-                                        )
-                            if bool(theta0_info.get("no_post_enrollment_window", False)):
-                                dual_print(
-                                    f"[KCOR7] No quiet window after enrollment: EnrollmentDate={effective_sheet_name},YoB=-2,Dose={int(dose)}"
-                                )
-                        H0_full = invert_gamma_frailty(H_obs, theta_for_h0)
+                        H0_full = invert_gamma_frailty(H_obs, theta)
                         H0_quiet = H0_full[fit_mask]
                         t_quiet = t_vals[fit_mask]
                         
@@ -6173,7 +5568,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                         try:
                             if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta_hat):
-                                h_end_model = float(H_model(float(t_fit[-1]), float(k_hat), float(theta_hat)))
+                                h_end_model = float(H_fit[-1])
                                 z_end = float(float(theta_hat) * h_end_model) if np.isfinite(h_end_model) else np.nan
                             else:
                                 z_end = np.nan
@@ -6200,32 +5595,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         params_dict = {
                             "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
                             "theta_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
-                            "theta_for_h0": float(theta_for_h0) if np.isfinite(theta_for_h0) else np.nan,
-                            "theta_mode": "kcor7_theta0" if np.isfinite(theta0_info.get("theta0_hat", np.nan)) else "kcor6_theta_hat",
-                            "theta0_hat": float(theta0_info.get("theta0_hat", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "theta0_ci_low": float(theta0_info.get("theta0_ci_low", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "theta0_ci_high": float(theta0_info.get("theta0_ci_high", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "theta0_n": int(theta0_info.get("theta0_n", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_total": int(theta0_info.get("anchors_total", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_used": int(theta0_info.get("anchors_used", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_invalid_discriminant": int(theta0_info.get("anchors_skipped_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_nonfinite": int(theta0_info.get("anchors_skipped_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_weak_id": int(theta0_info.get("anchors_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
-                            "windows_skipped_weak_id": int(theta0_info.get("windows_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_step1_invalid_discriminant": int(theta0_info.get("anchors_skipped_step1_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_step1_nonfinite": int(theta0_info.get("anchors_skipped_step1_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_step2_invalid_discriminant": int(theta0_info.get("anchors_skipped_step2_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
-                            "anchors_skipped_step2_nonfinite": int(theta0_info.get("anchors_skipped_step2_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
-                            "cross_window_variance": float(theta0_info.get("cross_window_variance", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "within_window_variance": float(theta0_info.get("within_window_variance", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "f_statistic": float(theta0_info.get("f_statistic", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "p_value": float(theta0_info.get("p_value", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "cross_window_ratio": float(theta0_info.get("cross_window_ratio", np.nan)) if isinstance(theta0_info, dict) else np.nan,
-                            "no_post_enrollment_window": bool(theta0_info.get("no_post_enrollment_window", False)) if isinstance(theta0_info, dict) else False,
-                            "primary_window_name": str(theta0_info.get("primary_window_name", "")) if isinstance(theta0_info, dict) else "",
-                            "selected_window_count": int(theta0_info.get("selected_window_count", 0)) if isinstance(theta0_info, dict) else 0,
-                            "theta0_window_stats": theta0_info.get("window_stats", []) if isinstance(theta0_info, dict) else [],
-                            "theta0_estimates": theta0_info.get("all_theta0_estimates", []) if isinstance(theta0_info, dict) else [],
+                            "theta0_hat": float(theta_hat) if np.isfinite(theta_hat) else np.nan,
+                            "theta_source": str(theta_source),
+                            "quiet_window": str(quiet_window_label),
                             "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
                             "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
                             "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
@@ -6825,7 +6197,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     else:
                         params = kcor6_params_map.get((sh, int(yob), int(dose)), None)
                     if isinstance(params, dict):
-                        th = params.get("theta_for_h0", params.get("theta_hat", np.nan))
+                        th = params.get("theta_hat", params.get("theta0_hat", np.nan))
                         ok = bool(params.get("success", False))
                         if ok and np.isfinite(th) and float(th) >= 0.0:
                             theta = float(th)
@@ -8139,186 +7511,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     
     # Standard summary (SA mode is handled earlier via early-return grid sweep)
     create_summary_file(combined, out_path, dual_print, kcor6_params_map=kcor6_params_map, src_path=None)
-    try:
-        _tv_cfg_final = get_time_varying_theta_config()
-        write_kcor7_diagnostics(out_path, dual_print, kcor6_params_map, _tv_cfg_final)
-    except Exception as _e_kcor7_diag:
-        try:
-            dual_print(f"[WARN] Failed to write KCOR7 diagnostics: {_e_kcor7_diag}")
-        except Exception:
-            pass
     
     # Close log file
     log_file_handle.close()
     
     return combined
-
-
-def write_kcor7_diagnostics(out_path, dual_print, kcor6_params_map, tv_cfg):
-    """Write KCOR7 theta0 diagnostics tables and optional plots."""
-    if not isinstance(tv_cfg, dict) or not bool(tv_cfg.get("enabled", False)):
-        return
-
-    diagnostics_cfg = tv_cfg.get("diagnostics", {}) if isinstance(tv_cfg.get("diagnostics", {}), dict) else {}
-    out_dir = os.path.dirname(os.path.abspath(out_path))
-    rows = []
-    window_rows = []
-
-    for key, params in (kcor6_params_map or {}).items():
-        if not isinstance(params, dict):
-            continue
-        theta0_n = int(params.get("theta0_n", 0))
-        if theta0_n <= 0:
-            continue
-
-        if isinstance(key, tuple) and len(key) == 4:
-            enrollment, mc_id, yob, dose = key
-        elif isinstance(key, tuple) and len(key) == 3:
-            enrollment, yob, dose = key
-            mc_id = np.nan
-        else:
-            continue
-
-        row = {
-            "EnrollmentDate": enrollment,
-            "mc_id": mc_id,
-            "YearOfBirth": yob,
-            "Dose": dose,
-            "theta_mode": params.get("theta_mode", ""),
-            "theta_hat": params.get("theta_hat", np.nan),
-            "theta_for_h0": params.get("theta_for_h0", np.nan),
-            "theta0_hat": params.get("theta0_hat", np.nan),
-            "theta0_ci_low": params.get("theta0_ci_low", np.nan),
-            "theta0_ci_high": params.get("theta0_ci_high", np.nan),
-            "theta0_n": theta0_n,
-            "anchors_total": int(params.get("anchors_total", 0)),
-            "anchors_used": int(params.get("anchors_used", 0)),
-            "anchors_skipped_invalid_discriminant": int(params.get("anchors_skipped_invalid_discriminant", 0)),
-            "anchors_skipped_nonfinite": int(params.get("anchors_skipped_nonfinite", 0)),
-            "anchors_skipped_weak_id": int(params.get("anchors_skipped_weak_id", 0)),
-            "windows_skipped_weak_id": int(params.get("windows_skipped_weak_id", 0)),
-            "anchors_skipped_step1_invalid_discriminant": int(params.get("anchors_skipped_step1_invalid_discriminant", 0)),
-            "anchors_skipped_step1_nonfinite": int(params.get("anchors_skipped_step1_nonfinite", 0)),
-            "anchors_skipped_step2_invalid_discriminant": int(params.get("anchors_skipped_step2_invalid_discriminant", 0)),
-            "anchors_skipped_step2_nonfinite": int(params.get("anchors_skipped_step2_nonfinite", 0)),
-            "cross_window_variance": params.get("cross_window_variance", np.nan),
-            "within_window_variance": params.get("within_window_variance", np.nan),
-            "f_statistic": params.get("f_statistic", np.nan),
-            "p_value": params.get("p_value", np.nan),
-            "cross_window_ratio": params.get("cross_window_ratio", np.nan),
-            "no_post_enrollment_window": bool(params.get("no_post_enrollment_window", False)),
-            "primary_window_name": str(params.get("primary_window_name", "")),
-            "selected_window_count": int(params.get("selected_window_count", 0)),
-        }
-        rows.append(row)
-
-        for w in params.get("theta0_window_stats", []) if isinstance(params.get("theta0_window_stats", []), list) else []:
-            if not isinstance(w, dict):
-                continue
-            window_rows.append({
-                "EnrollmentDate": enrollment,
-                "mc_id": mc_id,
-                "YearOfBirth": yob,
-                "Dose": dose,
-                "window_name": str(w.get("name", "")),
-                "window_role": str(w.get("role", "")),
-                "window_n": int(w.get("n", 0)) if str(w.get("n", "")).strip() != "" else 0,
-                "window_theta0_mean": w.get("mean", np.nan),
-                "window_theta0_sd": w.get("sd", np.nan),
-                "window_theta_anchor": w.get("theta_anchor", np.nan),
-                "window_H_abs_start": w.get("H_abs_start", np.nan),
-                "window_H_abs_min": w.get("H_abs_min", np.nan),
-                "window_H_abs_max": w.get("H_abs_max", np.nan),
-                "window_H_rel_min": w.get("H_rel_min", np.nan),
-                "window_H_rel_max": w.get("H_rel_max", np.nan),
-                "window_step2_theta_limit": w.get("step2_theta_limit", np.nan),
-                "window_step2_ratio": w.get("step2_ratio", np.nan),
-                "window_H_rel_end": w.get("H_rel_end", np.nan),
-                "window_z_end": w.get("z_end", np.nan),
-                "window_z_min": w.get("z_min", np.nan),
-                "window_status": str(w.get("status", "")),
-                "window_note": str(w.get("note", "")),
-                "window_anchors_total": int(w.get("anchors_total", 0)),
-                "window_anchors_used": int(w.get("anchors_used", 0)),
-                "window_skip_step1": int(w.get("skip_step1", 0)),
-                "window_skip_step2": int(w.get("skip_step2", 0)),
-                "window_skip_weak_id": int(w.get("skip_weak_id", 0)),
-                "window_skip_step1_invalid_discriminant": int(w.get("skip_step1_invalid_discriminant", 0)),
-                "window_skip_step1_nonfinite": int(w.get("skip_step1_nonfinite", 0)),
-                "window_skip_step2_invalid_discriminant": int(w.get("skip_step2_invalid_discriminant", 0)),
-                "window_skip_step2_nonfinite": int(w.get("skip_step2_nonfinite", 0)),
-            })
-
-    if len(rows) == 0:
-        dual_print("[KCOR7] No theta0 diagnostics rows to write.")
-        return
-
-    diag_csv = os.path.join(out_dir, "kcor7_theta0_diagnostics.csv")
-    pd.DataFrame(rows).to_csv(diag_csv, index=False)
-    dual_print(f"[KCOR7] Wrote theta0 diagnostics: {diag_csv}")
-
-    if len(window_rows) > 0:
-        win_csv = os.path.join(out_dir, "kcor7_theta0_window_stats.csv")
-        pd.DataFrame(window_rows).to_csv(win_csv, index=False)
-        dual_print(f"[KCOR7] Wrote theta0 window stats: {win_csv}")
-
-    # Optional plots controlled by YAML toggles.
-    if bool(diagnostics_cfg.get("plot_theta0_estimates_by_window", False)) or bool(diagnostics_cfg.get("plot_theta_trajectory", False)):
-        try:
-            import matplotlib.pyplot as plt
-        except Exception:
-            dual_print("[KCOR7] matplotlib not available; skipping KCOR7 plots.")
-            return
-
-        if bool(diagnostics_cfg.get("plot_theta0_estimates_by_window", False)) and len(window_rows) > 0:
-            try:
-                wdf = pd.DataFrame(window_rows)
-                wdf = wdf[np.isfinite(pd.to_numeric(wdf["window_theta0_mean"], errors="coerce"))]
-                if not wdf.empty:
-                    fig, ax = plt.subplots(figsize=(11, 6))
-                    x = np.arange(len(wdf))
-                    ax.scatter(x, wdf["window_theta0_mean"].to_numpy(dtype=float), alpha=0.75, s=24)
-                    ax.set_xticks(x)
-                    ax.set_xticklabels(
-                        [f"{r.window_name}|{int(r.YearOfBirth)}|d{int(r.Dose)}" for r in wdf.itertuples(index=False)],
-                        rotation=75,
-                        ha="right",
-                        fontsize=7,
-                    )
-                    ax.set_ylabel("theta0 estimate")
-                    ax.set_title("KCOR7 theta0 estimates by window/cohort")
-                    ax.grid(True, alpha=0.3)
-                    fig.tight_layout()
-                    out_png = os.path.join(out_dir, "kcor7_theta0_estimates_by_window.png")
-                    fig.savefig(out_png, dpi=160)
-                    plt.close(fig)
-                    dual_print(f"[KCOR7] Wrote plot: {out_png}")
-            except Exception as e:
-                dual_print(f"[KCOR7] Failed to write theta0 window plot: {e}")
-
-        if bool(diagnostics_cfg.get("plot_theta_trajectory", False)):
-            try:
-                diag_df = pd.DataFrame(rows)
-                theta_vals = pd.to_numeric(diag_df["theta0_hat"], errors="coerce")
-                theta_vals = theta_vals[np.isfinite(theta_vals) & (theta_vals > 0)]
-                if len(theta_vals) > 0:
-                    theta0_med = float(np.median(theta_vals))
-                    h_grid = np.linspace(0.0, 2.0, 250)
-                    theta_t = theta0_med / np.square(1.0 + theta0_med * h_grid)
-                    fig, ax = plt.subplots(figsize=(8, 5))
-                    ax.plot(h_grid, theta_t, linewidth=2.0)
-                    ax.set_xlabel("Cumulative hazard H")
-                    ax.set_ylabel("theta(H)")
-                    ax.set_title("KCOR7 implied theta trajectory (median theta0)")
-                    ax.grid(True, alpha=0.3)
-                    fig.tight_layout()
-                    out_png = os.path.join(out_dir, "kcor7_theta_trajectory.png")
-                    fig.savefig(out_png, dpi=160)
-                    plt.close(fig)
-                    dual_print(f"[KCOR7] Wrote plot: {out_png}")
-            except Exception as e:
-                dual_print(f"[KCOR7] Failed to write theta trajectory plot: {e}")
-
 
 def _compute_fit_diagnostics(H0_quiet, t_quiet_weeks):
     """Compute gamma-frailty fit diagnostics from normalized cumulative hazard in quiet window.
@@ -8443,6 +7640,9 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     if params is not None:
                         # Extract diagnostics that were computed during the fit
                         theta_hat = params.get("theta_hat", np.nan)
+                        theta0_hat = params.get("theta0_hat", theta_hat)
+                        theta_source = params.get("theta_source", "legacy_quiet_window")
+                        quiet_window = params.get("quiet_window", quiet_window_label)
                         k_hat = params.get("k_hat", np.nan)
                         mean = params.get("mean", np.nan)
                         sd = params.get("sd", np.nan)
@@ -8451,14 +7651,16 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         n_bins = params.get("n_bins", params.get("n_obs", 0))
                         
                         # Only include if we have valid fit parameters
-                        if np.isfinite(theta_hat) or np.isfinite(k_hat):
+                        if np.isfinite(theta0_hat) or np.isfinite(k_hat):
                             gamma_frailty_rows.append({
                                 "reporting_date": reporting_date_str,
                                 "enrollment_date": enrollment_date,
                                 "age_group": age_group,
                                 "year_of_birth": yob_label,
                                 "dose": int(dose),
-                                "quiet_window": quiet_window_label,
+                                "quiet_window": quiet_window,
+                                "theta_source": theta_source,
+                                "theta0_hat": theta0_hat,
                                 "theta_hat": theta_hat,
                                 "k_hat": k_hat,
                                 "mean": mean,
@@ -8598,7 +7800,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     # Ensure columns are in the correct order
                     column_order = [
                         "reporting_date", "enrollment_date", "age_group", "year_of_birth", "dose",
-                        "quiet_window", "theta_hat", "k_hat", "mean", "sd", "max_abs_dev",
+                        "quiet_window", "theta_source", "theta0_hat", "theta_hat", "k_hat", "mean", "sd", "max_abs_dev",
                         "drift_per_year", "n_bins"
                     ]
                     gamma_frailty_df = gamma_frailty_df[[col for col in column_order if col in gamma_frailty_df.columns]]

@@ -25,20 +25,11 @@ quietWindow:
   # startDate: '2022-24'
   #endDate: '2024-16'
 
-# KCOR v7: time-varying theta configuration.
-# When enabled, KCOR estimates theta0 from anchor windows and applies theta0-based
-# gamma-frailty inversion (equivalent to time-varying theta under the closed form).
-time_varying_theta:
-  enabled: true
-  apply_to: unvaccinated_only   # unvaccinated_only | vaccinated_only | both_cohorts
-  theta_estimation_windows:
+# KCOR v7: estimate theta(0) from points within these quiet windows (no COVID, no excess mortality)
+theta_estimation_windows:
     - ['2023-22', '2023-37', 'post COVID']
     - ['2022-22', '2022-25', 'post booster']
     - ['2021-26', '2021-36', 'post primary']
-  diagnostics:
-    plot_theta0_estimates_by_window: true
-    plot_theta_trajectory: true
-    report_consistency_test: true
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Enrollment dates for cohort analysis (ISO week format: YYYY-WW)
