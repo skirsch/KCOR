@@ -1091,8 +1091,25 @@ def theta0_from_anchor(theta_t, h_t):
     return float(th0), True, "ok"
 
 
-def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0, debug_ctx=None, debug_print=None):
-    """Estimate theta0 from multiple windows/timepoints for KCOR v7."""
+def estimate_theta0_from_windows(
+    t_vals,
+    h_obs,
+    iso_int,
+    windows,
+    skip_weeks=0.0,
+    debug_ctx=None,
+    debug_print=None,
+    ident_cfg=None,
+    enrollment_iso=None,
+):
+    """Estimate theta0 from post-enrollment windows for KCOR v7.
+
+    Selection rule:
+    - Sort candidate quiet windows by start date.
+    - Choose the first window with window_start > enrollment_date as the primary estimator window.
+    - Estimate theta0_hat from the primary window only.
+    - Use subsequent post-enrollment windows for cross-window diagnostics only.
+    """
     out = {
         "theta0_hat": np.nan,
         "theta0_ci_low": np.nan,
@@ -1102,6 +1119,8 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
         "anchors_used": 0,
         "anchors_skipped_invalid_discriminant": 0,
         "anchors_skipped_nonfinite": 0,
+        "anchors_skipped_weak_id": 0,
+        "windows_skipped_weak_id": 0,
         "anchors_skipped_step1_invalid_discriminant": 0,
         "anchors_skipped_step1_nonfinite": 0,
         "anchors_skipped_step2_invalid_discriminant": 0,
@@ -1113,6 +1132,10 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
         "p_value": np.nan,
         "cross_window_ratio": np.nan,
         "all_theta0_estimates": [],
+        "no_post_enrollment_window": False,
+        "primary_window_name": "",
+        "selected_window_count": 0,
+        "window_selection_note": "",
     }
 
     t_arr = np.asarray(t_vals, dtype=float)
@@ -1123,18 +1146,68 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
 
     window_details = []
     all_est = []
+    primary_est = []
     total_anchors = 0
     skip_disc = 0
     skip_nonfinite = 0
+    skip_weak_id = 0
+    windows_skipped_weak_id = 0
     skip_step1_disc = 0
     skip_step1_nonfinite = 0
     skip_step2_disc = 0
     skip_step2_nonfinite = 0
 
-    for w in windows:
+    def _coerce_iso_int(val):
+        if val is None:
+            return np.nan
+        try:
+            if np.isfinite(float(val)):
+                return float(int(val))
+        except Exception:
+            pass
+        try:
+            s = str(val).strip().replace("_", "-")
+            if len(s) >= 6 and "-" in s:
+                return float(int(iso_label_to_int(s)))
+        except Exception:
+            return np.nan
+        return np.nan
+
+    sorted_windows = []
+    for w in windows if isinstance(windows, list) else []:
+        if not isinstance(w, dict):
+            continue
+        try:
+            ws_int = int(w.get("start_int"))
+            we_int = int(w.get("end_int"))
+            if ws_int <= we_int:
+                sorted_windows.append(w)
+        except Exception:
+            continue
+    sorted_windows = sorted(sorted_windows, key=lambda x: int(x.get("start_int", 0)))
+
+    enroll_int = _coerce_iso_int(enrollment_iso)
+    if np.isfinite(enroll_int):
+        selected_windows = [w for w in sorted_windows if int(w.get("start_int", -1)) > int(enroll_int)]
+    else:
+        selected_windows = sorted_windows
+
+    out["selected_window_count"] = int(len(selected_windows))
+    if len(selected_windows) == 0:
+        out["no_post_enrollment_window"] = bool(np.isfinite(enroll_int))
+        out["window_selection_note"] = "no_quiet_window_after_enrollment" if np.isfinite(enroll_int) else "no_valid_quiet_windows"
+        return out
+
+    primary_window_name = str(selected_windows[0].get("name", f"{selected_windows[0].get('start_iso')}:{selected_windows[0].get('end_iso')}"))
+    out["primary_window_name"] = primary_window_name
+    out["window_selection_note"] = "first_post_enrollment_window_used_for_theta0"
+
+    for idx, w in enumerate(selected_windows):
         ws_int = int(w.get("start_int"))
         we_int = int(w.get("end_int"))
         wname = str(w.get("name", f"{w.get('start_iso')}:{w.get('end_iso')}"))
+        is_primary_window = bool(idx == 0)
+        window_role = "primary" if is_primary_window else "diagnostic"
 
         mask = (
             np.isfinite(iso_arr)
@@ -1147,6 +1220,7 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
         if int(np.sum(mask)) < 3:
             window_details.append({
                 "name": wname,
+                "role": window_role,
                 "n": 0,
                 "mean": np.nan,
                 "sd": np.nan,
@@ -1165,6 +1239,7 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 "H_rel_min": np.nan,
                 "H_rel_max": np.nan,
                 "theta_window_start_mean": np.nan,
+                "status": "insufficient_points",
             })
             continue
 
@@ -1183,6 +1258,7 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
             h_abs_start = float(h_w[0]) if len(h_w) > 0 and np.isfinite(h_w[0]) else np.nan
             window_details.append({
                 "name": wname,
+                "role": window_role,
                 "n": 0,
                 "mean": np.nan,
                 "sd": np.nan,
@@ -1201,10 +1277,14 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 "H_rel_min": float(np.nanmin(h_rel)) if len(h_rel) > 0 else np.nan,
                 "H_rel_max": float(np.nanmax(h_rel)) if len(h_rel) > 0 else np.nan,
                 "theta_window_start_mean": np.nan,
+                "status": "fit_failed",
             })
             continue
 
         theta_anchor = float(theta_anchor)
+        h_rel_end = float(h_rel[-1]) if len(h_rel) > 0 and np.isfinite(h_rel[-1]) else np.nan
+        z_end = float(theta_anchor * h_rel_end) if np.isfinite(theta_anchor) and np.isfinite(h_rel_end) else np.nan
+
         theta_t_w = theta_anchor / np.square(1.0 + theta_anchor * h_rel)
         disc_abs_w = 1.0 - 4.0 * theta_t_w * h_w
         disc_rel_w = 1.0 - 4.0 * theta_t_w * h_rel
@@ -1262,8 +1342,12 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
 
         if len(win_est) > 0:
             win_arr = np.asarray(win_est, dtype=float)
+            theta_window_start_mean = float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals) > 0 else np.nan
+            step2_theta_limit = (1.0 / (4.0 * h_abs_start)) if np.isfinite(h_abs_start) and (h_abs_start > EPS) else np.nan
+            step2_ratio = (theta_window_start_mean / step2_theta_limit) if np.isfinite(theta_window_start_mean) and np.isfinite(step2_theta_limit) and step2_theta_limit > EPS else np.nan
             window_details.append({
                 "name": wname,
+                "role": window_role,
                 "n": int(len(win_arr)),
                 "mean": float(np.nanmean(win_arr)),
                 "sd": float(np.nanstd(win_arr, ddof=1)) if len(win_arr) > 1 else np.nan,
@@ -1271,6 +1355,8 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 "anchors_used": int(used_w),
                 "skip_step1": int(skipped_step1_w),
                 "skip_step2": int(skipped_step2_w),
+                "skip_weak_id": 0,
+                "status": "identified" if int(used_w) > 0 else "transport_or_anchor_fail",
                 "skip_step1_invalid_discriminant": int(skipped_step1_disc_w),
                 "skip_step1_nonfinite": int(skipped_step1_nonfinite_w),
                 "skip_step2_invalid_discriminant": int(skipped_step2_disc_w),
@@ -1281,11 +1367,23 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 "H_abs_max": float(np.nanmax(h_w)) if len(h_w) > 0 else np.nan,
                 "H_rel_min": float(np.nanmin(h_rel)) if len(h_rel) > 0 else np.nan,
                 "H_rel_max": float(np.nanmax(h_rel)) if len(h_rel) > 0 else np.nan,
-                "theta_window_start_mean": float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals) > 0 else np.nan,
+                "H_rel_end": h_rel_end,
+                "z_end": z_end,
+                "z_min": np.nan,
+                "theta_window_start_mean": theta_window_start_mean,
+                "step2_theta_limit": step2_theta_limit,
+                "step2_ratio": step2_ratio,
+                "note": "",
             })
+            if is_primary_window:
+                primary_est.extend(win_est)
         else:
+            theta_window_start_mean = float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals) > 0 else np.nan
+            step2_theta_limit = (1.0 / (4.0 * h_abs_start)) if np.isfinite(h_abs_start) and (h_abs_start > EPS) else np.nan
+            step2_ratio = (theta_window_start_mean / step2_theta_limit) if np.isfinite(theta_window_start_mean) and np.isfinite(step2_theta_limit) and step2_theta_limit > EPS else np.nan
             window_details.append({
                 "name": wname,
+                "role": window_role,
                 "n": 0,
                 "mean": np.nan,
                 "sd": np.nan,
@@ -1293,6 +1391,8 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 "anchors_used": 0,
                 "skip_step1": int(skipped_step1_w),
                 "skip_step2": int(skipped_step2_w),
+                "skip_weak_id": 0,
+                "status": "transport_or_anchor_fail",
                 "skip_step1_invalid_discriminant": int(skipped_step1_disc_w),
                 "skip_step1_nonfinite": int(skipped_step1_nonfinite_w),
                 "skip_step2_invalid_discriminant": int(skipped_step2_disc_w),
@@ -1303,7 +1403,13 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 "H_abs_max": float(np.nanmax(h_w)) if len(h_w) > 0 else np.nan,
                 "H_rel_min": float(np.nanmin(h_rel)) if len(h_rel) > 0 else np.nan,
                 "H_rel_max": float(np.nanmax(h_rel)) if len(h_rel) > 0 else np.nan,
-                "theta_window_start_mean": float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals) > 0 else np.nan,
+                "H_rel_end": h_rel_end,
+                "z_end": z_end,
+                "z_min": np.nan,
+                "theta_window_start_mean": theta_window_start_mean,
+                "step2_theta_limit": step2_theta_limit,
+                "step2_ratio": step2_ratio,
+                "note": "",
             })
 
         # Optional targeted debug dump: diagnose H_abs vs H_rel/discriminant behavior.
@@ -1332,24 +1438,29 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
                 f"skip_step2_disc={int(skipped_step2_disc_w)},skip_step2_nonfinite={int(skipped_step2_nonfinite_w)},"
                 f"theta_anchor={theta_anchor:.6e},H_abs={_rng(h_w)},H_rel={_rng(h_rel)},"
                 f"H_abs_start={h_abs_start:.6e},theta_window_start_mean={float(np.nanmean(theta_window_start_vals)) if len(theta_window_start_vals)>0 else np.nan:.6e},"
+                f"step2_theta_limit={((1.0 / (4.0 * h_abs_start)) if np.isfinite(h_abs_start) and (h_abs_start > EPS) else np.nan):.6e},"
+                f"step2_ratio={((float(np.nanmean(theta_window_start_vals)) / (1.0 / (4.0 * h_abs_start))) if (len(theta_window_start_vals)>0 and np.isfinite(h_abs_start) and (h_abs_start > EPS)) else np.nan):.6e},"
+                f"z_end={z_end:.6e},"
                 f"disc_abs={_rng(disc_abs_w)},disc_rel={_rng(disc_rel_w)}"
             )
 
     out["anchors_total"] = int(total_anchors)
     out["anchors_skipped_invalid_discriminant"] = int(skip_disc)
     out["anchors_skipped_nonfinite"] = int(skip_nonfinite)
+    out["anchors_skipped_weak_id"] = int(skip_weak_id)
+    out["windows_skipped_weak_id"] = int(windows_skipped_weak_id)
     out["anchors_skipped_step1_invalid_discriminant"] = int(skip_step1_disc)
     out["anchors_skipped_step1_nonfinite"] = int(skip_step1_nonfinite)
     out["anchors_skipped_step2_invalid_discriminant"] = int(skip_step2_disc)
     out["anchors_skipped_step2_nonfinite"] = int(skip_step2_nonfinite)
     out["window_stats"] = window_details
     out["all_theta0_estimates"] = all_est
-    out["anchors_used"] = int(len(all_est))
-    out["theta0_n"] = int(len(all_est))
-    if len(all_est) == 0:
+    out["anchors_used"] = int(len(primary_est))
+    out["theta0_n"] = int(len(primary_est))
+    if len(primary_est) == 0:
         return out
 
-    est_arr = np.asarray(all_est, dtype=float)
+    est_arr = np.asarray(primary_est, dtype=float)
     pooled = float(np.nanmean(est_arr))
     out["theta0_hat"] = pooled
     if len(est_arr) >= 2:
@@ -1361,7 +1472,7 @@ def estimate_theta0_from_windows(t_vals, h_obs, iso_int, windows, skip_weeks=0.0
         out["theta0_ci_low"] = np.nan
         out["theta0_ci_high"] = np.nan
 
-    # Simple cross-window consistency diagnostics (reported when >= 2 windows have estimates).
+    # Cross-window consistency diagnostics over selected post-enrollment windows.
     valid_windows = [w for w in window_details if int(w.get("n", 0)) > 0 and np.isfinite(w.get("mean", np.nan))]
     if len(valid_windows) >= 2:
         means = np.asarray([float(w["mean"]) for w in valid_windows], dtype=float)
@@ -1489,6 +1600,18 @@ def _load_dataset_dose_pairs_config():
                         _diag_cfg = _tv_cfg.get('diagnostics', {})
                         if not isinstance(_diag_cfg, dict):
                             _diag_cfg = {}
+                        _ident_cfg = _tv_cfg.get('theta_identifiability', {})
+                        if not isinstance(_ident_cfg, dict):
+                            _ident_cfg = {}
+                        try:
+                            _z_min = max(float(_ident_cfg.get("z_min", 0.01)), 0.0)
+                        except Exception:
+                            _z_min = 0.01
+                        try:
+                            _theta_min = max(float(_ident_cfg.get("theta_min", 0.0)), 0.0)
+                        except Exception:
+                            _theta_min = 0.0
+                        _flag_weak_id = bool(_ident_cfg.get("flag_weak_id", True))
                         _windows_raw = _tv_cfg.get('theta_estimation_windows', [])
                         _windows = []
                         if isinstance(_windows_raw, list):
@@ -1528,6 +1651,11 @@ def _load_dataset_dose_pairs_config():
                                 "plot_theta0_estimates_by_window": bool(_diag_cfg.get("plot_theta0_estimates_by_window", False)),
                                 "plot_theta_trajectory": bool(_diag_cfg.get("plot_theta_trajectory", False)),
                                 "report_consistency_test": bool(_diag_cfg.get("report_consistency_test", False)),
+                            },
+                            "theta_identifiability": {
+                                "z_min": _z_min,
+                                "theta_min": _theta_min,
+                                "flag_weak_id": _flag_weak_id,
                             },
                         }
                     except Exception:
@@ -1645,6 +1773,18 @@ def get_time_varying_theta_config():
     diagnostics = cfg.get("diagnostics", {})
     if not isinstance(diagnostics, dict):
         diagnostics = {}
+    theta_ident = cfg.get("theta_identifiability", {})
+    if not isinstance(theta_ident, dict):
+        theta_ident = {}
+    try:
+        z_min = max(float(theta_ident.get("z_min", 0.01)), 0.0)
+    except Exception:
+        z_min = 0.01
+    try:
+        theta_min = max(float(theta_ident.get("theta_min", 0.0)), 0.0)
+    except Exception:
+        theta_min = 0.0
+    flag_weak_id = bool(theta_ident.get("flag_weak_id", True))
     return {
         "enabled": enabled,
         "apply_to": apply_to,
@@ -1653,6 +1793,11 @@ def get_time_varying_theta_config():
             "plot_theta0_estimates_by_window": bool(diagnostics.get("plot_theta0_estimates_by_window", False)),
             "plot_theta_trajectory": bool(diagnostics.get("plot_theta_trajectory", False)),
             "report_consistency_test": bool(diagnostics.get("report_consistency_test", False)),
+        },
+        "theta_identifiability": {
+            "z_min": z_min,
+            "theta_min": theta_min,
+            "flag_weak_id": flag_weak_id,
         },
     }
 
@@ -5017,6 +5162,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     tv_windows = tv_theta_cfg.get("theta_estimation_windows", [])
     if bool(tv_theta_cfg.get("enabled", False)):
         dual_print(f"  TIME_VARYING_THETA    = enabled ({tv_theta_cfg.get('apply_to', 'unvaccinated_only')})")
+        dual_print("  THETA_WINDOW_RULE    = first quiet window after enrollment for theta0; later windows diagnostics only")
         if len(tv_windows) > 0:
             tv_window_labels = [f"{w.get('start_iso')}..{w.get('end_iso')}({w.get('name')})" for w in tv_windows]
             dual_print(f"  THETA_EST_WINDOWS     = {tv_window_labels}")
@@ -5030,7 +5176,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         end_iso = covid_cfg["end_dt"].strftime("%G-%V")
         dual_print(f"  COVID_CORRECTION      = {start_iso}..{end_iso}, factor={covid_cfg['factor']}")
     if bool(tv_theta_cfg.get("enabled", False)):
-        dual_print("  NORMALIZATION_METHOD  = KCOR7 (time-varying theta, theta0-pooled)")
+        dual_print("  NORMALIZATION_METHOD  = KCOR7 (time-varying theta, first post-enrollment window)")
     else:
         dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
     dual_print("="*80)
@@ -5708,6 +5854,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         skip_weeks=float(DYNAMIC_HVE_SKIP_WEEKS),
                         debug_ctx={"enrollment": effective_sheet_name, "yob": int(yob), "dose": int(dose)},
                         debug_print=dual_print,
+                        ident_cfg=tv_theta_cfg.get("theta_identifiability", {}),
+                        enrollment_iso=effective_sheet_name,
                     )
                     theta0_hat = theta0_info.get("theta0_hat", np.nan)
                     if np.isfinite(theta0_hat) and float(theta0_hat) > 0.0:
@@ -5716,8 +5864,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             dual_print(
                                 f"KCOR7_THETA0,EnrollmentDate={effective_sheet_name},YoB={int(yob)},Dose={int(dose)},"
                                 f"theta0_hat={theta_for_h0:.6e},n={int(theta0_info.get('theta0_n', 0))},"
+                                f"primary_window={theta0_info.get('primary_window_name', '')},"
+                                f"no_post_window={int(bool(theta0_info.get('no_post_enrollment_window', False)))},"
                                 f"skipped_disc={int(theta0_info.get('anchors_skipped_invalid_discriminant', 0))},"
                                 f"skipped_nonfinite={int(theta0_info.get('anchors_skipped_nonfinite', 0))},"
+                                f"skipped_weak_id={int(theta0_info.get('anchors_skipped_weak_id', 0))},"
                                 f"skip_step1={int(theta0_info.get('anchors_skipped_step1_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step1_nonfinite', 0))},"
                                 f"skip_step2={int(theta0_info.get('anchors_skipped_step2_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step2_nonfinite', 0))},"
                                 f"cross_window_ratio={float(theta0_info.get('cross_window_ratio', np.nan)):.6f}"
@@ -5728,15 +5879,27 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 dual_print(
                                     f"KCOR7_THETA0_WINDOW,EnrollmentDate={effective_sheet_name},YoB={int(yob)},Dose={int(dose)},"
                                     f"window={_w.get('name','')},theta_anchor={float(_w.get('theta_anchor', np.nan)):.6e},"
+                                    f"role={_w.get('role','')},"
                                     f"H_abs_start={float(_w.get('H_abs_start', np.nan)):.6e},"
                                     f"H_abs_range=[{float(_w.get('H_abs_min', np.nan)):.6e},{float(_w.get('H_abs_max', np.nan)):.6e}],"
                                     f"H_rel_range=[{float(_w.get('H_rel_min', np.nan)):.6e},{float(_w.get('H_rel_max', np.nan)):.6e}],"
+                                    f"step2_theta_limit={float(_w.get('step2_theta_limit', np.nan)):.6e},"
+                                    f"step2_ratio={float(_w.get('step2_ratio', np.nan)):.6e},"
+                                    f"H_rel_end={float(_w.get('H_rel_end', np.nan)):.6e},"
+                                    f"z_end={float(_w.get('z_end', np.nan)):.6e},"
+                                    f"z_min={float(_w.get('z_min', np.nan)):.6e},"
+                                    f"status={_w.get('status','')},"
                                     f"anchors_total={int(_w.get('anchors_total', 0))},"
                                     f"skip_step1={int(_w.get('skip_step1', 0))},"
                                     f"skip_step2={int(_w.get('skip_step2', 0))},"
+                                    f"skip_weak_id={int(_w.get('skip_weak_id', 0))},"
                                     f"anchors_used={int(_w.get('anchors_used', 0))},"
                                     f"theta0_window_mean={float(_w.get('mean', np.nan)):.6e}"
                                 )
+                    if bool(theta0_info.get("no_post_enrollment_window", False)):
+                        dual_print(
+                            f"[KCOR7] No quiet window after enrollment: EnrollmentDate={effective_sheet_name},YoB={int(yob)},Dose={int(dose)}"
+                        )
 
                 H0_full = invert_gamma_frailty(H_obs, theta_for_h0)
                 H0_quiet = H0_full[fit_mask]
@@ -5805,6 +5968,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "anchors_used": int(theta0_info.get("anchors_used", 0)) if isinstance(theta0_info, dict) else 0,
                     "anchors_skipped_invalid_discriminant": int(theta0_info.get("anchors_skipped_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
                     "anchors_skipped_nonfinite": int(theta0_info.get("anchors_skipped_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
+                    "anchors_skipped_weak_id": int(theta0_info.get("anchors_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
+                    "windows_skipped_weak_id": int(theta0_info.get("windows_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
                     "anchors_skipped_step1_invalid_discriminant": int(theta0_info.get("anchors_skipped_step1_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
                     "anchors_skipped_step1_nonfinite": int(theta0_info.get("anchors_skipped_step1_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
                     "anchors_skipped_step2_invalid_discriminant": int(theta0_info.get("anchors_skipped_step2_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
@@ -5814,6 +5979,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "f_statistic": float(theta0_info.get("f_statistic", np.nan)) if isinstance(theta0_info, dict) else np.nan,
                     "p_value": float(theta0_info.get("p_value", np.nan)) if isinstance(theta0_info, dict) else np.nan,
                     "cross_window_ratio": float(theta0_info.get("cross_window_ratio", np.nan)) if isinstance(theta0_info, dict) else np.nan,
+                    "no_post_enrollment_window": bool(theta0_info.get("no_post_enrollment_window", False)) if isinstance(theta0_info, dict) else False,
+                    "primary_window_name": str(theta0_info.get("primary_window_name", "")) if isinstance(theta0_info, dict) else "",
+                    "selected_window_count": int(theta0_info.get("selected_window_count", 0)) if isinstance(theta0_info, dict) else 0,
                     "theta0_window_stats": theta0_info.get("window_stats", []) if isinstance(theta0_info, dict) else [],
                     "theta0_estimates": theta0_info.get("all_theta0_estimates", []) if isinstance(theta0_info, dict) else [],
                     "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
@@ -5931,6 +6099,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 skip_weeks=float(DYNAMIC_HVE_SKIP_WEEKS),
                                 debug_ctx={"enrollment": effective_sheet_name, "yob": -2, "dose": int(dose)},
                                 debug_print=dual_print,
+                                ident_cfg=tv_theta_cfg.get("theta_identifiability", {}),
+                                enrollment_iso=effective_sheet_name,
                             )
                             theta0_hat = theta0_info.get("theta0_hat", np.nan)
                             if np.isfinite(theta0_hat) and float(theta0_hat) > 0.0:
@@ -5939,8 +6109,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                     dual_print(
                                         f"KCOR7_THETA0,EnrollmentDate={effective_sheet_name},YoB=-2,Dose={int(dose)},"
                                         f"theta0_hat={theta_for_h0:.6e},n={int(theta0_info.get('theta0_n', 0))},"
+                                        f"primary_window={theta0_info.get('primary_window_name', '')},"
+                                        f"no_post_window={int(bool(theta0_info.get('no_post_enrollment_window', False)))},"
                                         f"skipped_disc={int(theta0_info.get('anchors_skipped_invalid_discriminant', 0))},"
                                         f"skipped_nonfinite={int(theta0_info.get('anchors_skipped_nonfinite', 0))},"
+                                        f"skipped_weak_id={int(theta0_info.get('anchors_skipped_weak_id', 0))},"
                                         f"skip_step1={int(theta0_info.get('anchors_skipped_step1_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step1_nonfinite', 0))},"
                                         f"skip_step2={int(theta0_info.get('anchors_skipped_step2_invalid_discriminant', 0)) + int(theta0_info.get('anchors_skipped_step2_nonfinite', 0))},"
                                         f"cross_window_ratio={float(theta0_info.get('cross_window_ratio', np.nan)):.6f}"
@@ -5951,15 +6124,27 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                         dual_print(
                                             f"KCOR7_THETA0_WINDOW,EnrollmentDate={effective_sheet_name},YoB=-2,Dose={int(dose)},"
                                             f"window={_w.get('name','')},theta_anchor={float(_w.get('theta_anchor', np.nan)):.6e},"
+                                            f"role={_w.get('role','')},"
                                             f"H_abs_start={float(_w.get('H_abs_start', np.nan)):.6e},"
                                             f"H_abs_range=[{float(_w.get('H_abs_min', np.nan)):.6e},{float(_w.get('H_abs_max', np.nan)):.6e}],"
                                             f"H_rel_range=[{float(_w.get('H_rel_min', np.nan)):.6e},{float(_w.get('H_rel_max', np.nan)):.6e}],"
+                                            f"step2_theta_limit={float(_w.get('step2_theta_limit', np.nan)):.6e},"
+                                            f"step2_ratio={float(_w.get('step2_ratio', np.nan)):.6e},"
+                                            f"H_rel_end={float(_w.get('H_rel_end', np.nan)):.6e},"
+                                            f"z_end={float(_w.get('z_end', np.nan)):.6e},"
+                                            f"z_min={float(_w.get('z_min', np.nan)):.6e},"
+                                            f"status={_w.get('status','')},"
                                             f"anchors_total={int(_w.get('anchors_total', 0))},"
                                             f"skip_step1={int(_w.get('skip_step1', 0))},"
                                             f"skip_step2={int(_w.get('skip_step2', 0))},"
+                                            f"skip_weak_id={int(_w.get('skip_weak_id', 0))},"
                                             f"anchors_used={int(_w.get('anchors_used', 0))},"
                                             f"theta0_window_mean={float(_w.get('mean', np.nan)):.6e}"
                                         )
+                            if bool(theta0_info.get("no_post_enrollment_window", False)):
+                                dual_print(
+                                    f"[KCOR7] No quiet window after enrollment: EnrollmentDate={effective_sheet_name},YoB=-2,Dose={int(dose)}"
+                                )
                         H0_full = invert_gamma_frailty(H_obs, theta_for_h0)
                         H0_quiet = H0_full[fit_mask]
                         t_quiet = t_vals[fit_mask]
@@ -6025,6 +6210,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "anchors_used": int(theta0_info.get("anchors_used", 0)) if isinstance(theta0_info, dict) else 0,
                             "anchors_skipped_invalid_discriminant": int(theta0_info.get("anchors_skipped_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
                             "anchors_skipped_nonfinite": int(theta0_info.get("anchors_skipped_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
+                            "anchors_skipped_weak_id": int(theta0_info.get("anchors_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
+                            "windows_skipped_weak_id": int(theta0_info.get("windows_skipped_weak_id", 0)) if isinstance(theta0_info, dict) else 0,
                             "anchors_skipped_step1_invalid_discriminant": int(theta0_info.get("anchors_skipped_step1_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
                             "anchors_skipped_step1_nonfinite": int(theta0_info.get("anchors_skipped_step1_nonfinite", 0)) if isinstance(theta0_info, dict) else 0,
                             "anchors_skipped_step2_invalid_discriminant": int(theta0_info.get("anchors_skipped_step2_invalid_discriminant", 0)) if isinstance(theta0_info, dict) else 0,
@@ -6034,6 +6221,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "f_statistic": float(theta0_info.get("f_statistic", np.nan)) if isinstance(theta0_info, dict) else np.nan,
                             "p_value": float(theta0_info.get("p_value", np.nan)) if isinstance(theta0_info, dict) else np.nan,
                             "cross_window_ratio": float(theta0_info.get("cross_window_ratio", np.nan)) if isinstance(theta0_info, dict) else np.nan,
+                            "no_post_enrollment_window": bool(theta0_info.get("no_post_enrollment_window", False)) if isinstance(theta0_info, dict) else False,
+                            "primary_window_name": str(theta0_info.get("primary_window_name", "")) if isinstance(theta0_info, dict) else "",
+                            "selected_window_count": int(theta0_info.get("selected_window_count", 0)) if isinstance(theta0_info, dict) else 0,
                             "theta0_window_stats": theta0_info.get("window_stats", []) if isinstance(theta0_info, dict) else [],
                             "theta0_estimates": theta0_info.get("all_theta0_estimates", []) if isinstance(theta0_info, dict) else [],
                             "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
@@ -8005,6 +8195,8 @@ def write_kcor7_diagnostics(out_path, dual_print, kcor6_params_map, tv_cfg):
             "anchors_used": int(params.get("anchors_used", 0)),
             "anchors_skipped_invalid_discriminant": int(params.get("anchors_skipped_invalid_discriminant", 0)),
             "anchors_skipped_nonfinite": int(params.get("anchors_skipped_nonfinite", 0)),
+            "anchors_skipped_weak_id": int(params.get("anchors_skipped_weak_id", 0)),
+            "windows_skipped_weak_id": int(params.get("windows_skipped_weak_id", 0)),
             "anchors_skipped_step1_invalid_discriminant": int(params.get("anchors_skipped_step1_invalid_discriminant", 0)),
             "anchors_skipped_step1_nonfinite": int(params.get("anchors_skipped_step1_nonfinite", 0)),
             "anchors_skipped_step2_invalid_discriminant": int(params.get("anchors_skipped_step2_invalid_discriminant", 0)),
@@ -8014,6 +8206,9 @@ def write_kcor7_diagnostics(out_path, dual_print, kcor6_params_map, tv_cfg):
             "f_statistic": params.get("f_statistic", np.nan),
             "p_value": params.get("p_value", np.nan),
             "cross_window_ratio": params.get("cross_window_ratio", np.nan),
+            "no_post_enrollment_window": bool(params.get("no_post_enrollment_window", False)),
+            "primary_window_name": str(params.get("primary_window_name", "")),
+            "selected_window_count": int(params.get("selected_window_count", 0)),
         }
         rows.append(row)
 
@@ -8026,6 +8221,7 @@ def write_kcor7_diagnostics(out_path, dual_print, kcor6_params_map, tv_cfg):
                 "YearOfBirth": yob,
                 "Dose": dose,
                 "window_name": str(w.get("name", "")),
+                "window_role": str(w.get("role", "")),
                 "window_n": int(w.get("n", 0)) if str(w.get("n", "")).strip() != "" else 0,
                 "window_theta0_mean": w.get("mean", np.nan),
                 "window_theta0_sd": w.get("sd", np.nan),
@@ -8035,10 +8231,18 @@ def write_kcor7_diagnostics(out_path, dual_print, kcor6_params_map, tv_cfg):
                 "window_H_abs_max": w.get("H_abs_max", np.nan),
                 "window_H_rel_min": w.get("H_rel_min", np.nan),
                 "window_H_rel_max": w.get("H_rel_max", np.nan),
+                "window_step2_theta_limit": w.get("step2_theta_limit", np.nan),
+                "window_step2_ratio": w.get("step2_ratio", np.nan),
+                "window_H_rel_end": w.get("H_rel_end", np.nan),
+                "window_z_end": w.get("z_end", np.nan),
+                "window_z_min": w.get("z_min", np.nan),
+                "window_status": str(w.get("status", "")),
+                "window_note": str(w.get("note", "")),
                 "window_anchors_total": int(w.get("anchors_total", 0)),
                 "window_anchors_used": int(w.get("anchors_used", 0)),
                 "window_skip_step1": int(w.get("skip_step1", 0)),
                 "window_skip_step2": int(w.get("skip_step2", 0)),
+                "window_skip_weak_id": int(w.get("skip_weak_id", 0)),
                 "window_skip_step1_invalid_discriminant": int(w.get("skip_step1_invalid_discriminant", 0)),
                 "window_skip_step1_nonfinite": int(w.get("skip_step1_nonfinite", 0)),
                 "window_skip_step2_invalid_discriminant": int(w.get("skip_step2_invalid_discriminant", 0)),

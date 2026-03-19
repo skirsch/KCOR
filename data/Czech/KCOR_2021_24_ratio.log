@@ -1,0 +1,185 @@
+================================================================================
+KCOR v6.2 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-03-18 16:47:49
+Mode: Primary Analysis
+Input File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_CMR.xlsx
+Output File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/_tmp_kcor_2021_24_ratio.xlsx
+Log File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_2021_24_ratio.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = ['2021_24']
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  KCOR6_QUIET_WINDOW    = 2023-01..2023-52
+  TIME_VARYING_THETA    = enabled (unvaccinated_only)
+  THETA_IDENTIFIABILITY = z_min=1.000e-02, flag_weak_id=True
+  THETA_EST_WINDOWS     = ['2023-22..2023-37(post COVID)', '2022-22..2022-25(post booster)', '2021-26..2021-36(post primary)']
+  COVID_CORRECTION      = 2021-41..2022-12, factor=1.0
+  NORMALIZATION_METHOD  = KCOR7 (time-varying theta, theta0-pooled)
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_24']
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 278922 rows
+[DEBUG] Filtered to 263088 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 112752 rows
+[DEBUG] Aggregated across sexes: 4698 rows
+KCOR7_THETA0,EnrollmentDate=2021_24,YoB=1920,Dose=0,theta0_hat=1.309238e+00,n=11,skipped_disc=16,skipped_nonfinite=0,skipped_weak_id=4,skip_step1=0,skip_step2=16,cross_window_ratio=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1920,Dose=0,window=post COVID,theta_anchor=2.032875e+00,H_abs_start=7.755277e-01,H_abs_range=[7.755277e-01,8.545329e-01],H_rel_range=[0.000000e+00,7.900520e-02],step2_theta_limit=3.223612e-01,step2_ratio=6.306203e+00,H_rel_end=7.900520e-02,z_end=1.606077e-01,z_min=1.000000e-02,status=transport_or_anchor_fail,anchors_total=16,skip_step1=0,skip_step2=16,skip_weak_id=0,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1920,Dose=0,window=post booster,theta_anchor=1.393529e-10,H_abs_start=4.015237e-01,H_abs_range=[4.015237e-01,4.206718e-01],H_rel_range=[0.000000e+00,1.914816e-02],step2_theta_limit=6.226283e-01,step2_ratio=2.238140e-10,H_rel_end=1.914816e-02,z_end=2.668352e-12,z_min=1.000000e-02,status=weak_id,anchors_total=4,skip_step1=0,skip_step2=0,skip_weak_id=4,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1920,Dose=0,window=post primary,theta_anchor=1.290373e+00,H_abs_start=5.563166e-03,H_abs_range=[5.563166e-03,6.738224e-02],H_rel_range=[0.000000e+00,6.181908e-02],step2_theta_limit=4.493844e+01,step2_ratio=2.871424e-02,H_rel_end=6.181908e-02,z_end=7.976967e-02,z_min=1.000000e-02,status=identified,anchors_total=11,skip_step1=0,skip_step2=0,skip_weak_id=0,anchors_used=11,theta0_window_mean=1.309238e+00
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_24 | 1920 | 0 | 0.7 | 1.026484e-02 | 1.172527e-02 | 52
+2021_24 | 1920 | 1 | 1.746672e-18 | 6.081863e-03 | 2.549670e-02 | 52
+2021_24 | 1920 | 2 | 8.105529e-16 | 5.583561e-03 | 9.364768e-03 | 52
+KCOR7_THETA0,EnrollmentDate=2021_24,YoB=1930,Dose=0,theta0_hat=1.033836e+01,n=11,skipped_disc=0,skipped_nonfinite=0,skipped_weak_id=20,skip_step1=0,skip_step2=0,cross_window_ratio=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1930,Dose=0,window=post COVID,theta_anchor=1.777504e-12,H_abs_start=3.759786e-01,H_abs_range=[3.759786e-01,4.153576e-01],H_rel_range=[0.000000e+00,3.937892e-02],step2_theta_limit=6.649314e-01,step2_ratio=2.673214e-12,H_rel_end=3.937892e-02,z_end=6.999620e-14,z_min=1.000000e-02,status=weak_id,anchors_total=16,skip_step1=0,skip_step2=0,skip_weak_id=16,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1930,Dose=0,window=post booster,theta_anchor=9.121632e-02,H_abs_start=2.018722e-01,H_abs_range=[2.018722e-01,2.110069e-01],H_rel_range=[0.000000e+00,9.134749e-03],step2_theta_limit=1.238407e+00,step2_ratio=7.365615e-02,H_rel_end=9.134749e-03,z_end=8.332382e-04,z_min=1.000000e-02,status=weak_id,anchors_total=4,skip_step1=0,skip_step2=0,skip_weak_id=4,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1930,Dose=0,window=post primary,theta_anchor=9.658786e+00,H_abs_start=3.344915e-03,H_abs_range=[3.344915e-03,3.428630e-02],H_rel_range=[0.000000e+00,3.094138e-02],step2_theta_limit=7.474031e+01,step2_ratio=1.292313e-01,H_rel_end=3.094138e-02,z_end=2.988562e-01,z_min=1.000000e-02,status=identified,anchors_total=11,skip_step1=0,skip_step2=0,skip_weak_id=0,anchors_used=11,theta0_window_mean=1.033836e+01
+2021_24 | 1930 | 0 | 1.2 | 4.660393e-03 | 1.323474e-02 | 52
+2021_24 | 1930 | 1 | 0.4 | 2.617800e-03 | 1.380347e-02 | 52
+2021_24 | 1930 | 2 | 2.352798e-16 | 1.980976e-03 | 1.529507e-02 | 52
+KCOR7_THETA0,EnrollmentDate=2021_24,YoB=1940,Dose=0,theta0_hat=1.670824e+01,n=11,skipped_disc=20,skipped_nonfinite=0,skipped_weak_id=0,skip_step1=0,skip_step2=20,cross_window_ratio=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1940,Dose=0,window=post COVID,theta_anchor=1.120346e+01,H_abs_start=1.424042e-01,H_abs_range=[1.424042e-01,1.572136e-01],H_rel_range=[0.000000e+00,1.480942e-02],step2_theta_limit=1.755566e+00,step2_ratio=6.381680e+00,H_rel_end=1.480942e-02,z_end=1.659167e-01,z_min=1.000000e-02,status=transport_or_anchor_fail,anchors_total=16,skip_step1=0,skip_step2=16,skip_weak_id=0,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1940,Dose=0,window=post booster,theta_anchor=5.737544e+01,H_abs_start=7.984287e-02,H_abs_range=[7.984287e-02,8.318110e-02],H_rel_range=[0.000000e+00,3.338233e-03],step2_theta_limit=3.131150e+00,step2_ratio=1.832408e+01,H_rel_end=3.338233e-03,z_end=1.915326e-01,z_min=1.000000e-02,status=transport_or_anchor_fail,anchors_total=4,skip_step1=0,skip_step2=4,skip_weak_id=0,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1940,Dose=0,window=post primary,theta_anchor=1.599566e+01,H_abs_start=1.318609e-03,H_abs_range=[1.318609e-03,1.467477e-02],H_rel_range=[0.000000e+00,1.335616e-02],step2_theta_limit=1.895937e+02,step2_ratio=8.436807e-02,H_rel_end=1.335616e-02,z_end=2.136405e-01,z_min=1.000000e-02,status=identified,anchors_total=11,skip_step1=0,skip_step2=0,skip_weak_id=0,anchors_used=11,theta0_window_mean=1.670824e+01
+2021_24 | 1940 | 0 | 3.9 | 1.871961e-03 | 1.305227e-02 | 52
+2021_24 | 1940 | 1 | 1.435086e-17 | 7.773234e-04 | 1.977191e-02 | 52
+2021_24 | 1940 | 2 | 5.354040e-12 | 6.203860e-04 | 1.861726e-02 | 52
+KCOR7_THETA0,EnrollmentDate=2021_24,YoB=1950,Dose=0,theta0_hat=2.553184e+01,n=11,skipped_disc=16,skipped_nonfinite=0,skipped_weak_id=4,skip_step1=0,skip_step2=16,cross_window_ratio=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1950,Dose=0,window=post COVID,theta_anchor=6.597169e+00,H_abs_start=5.702185e-02,H_abs_range=[5.702185e-02,6.333374e-02],H_rel_range=[0.000000e+00,6.311889e-03],step2_theta_limit=4.384284e+00,step2_ratio=1.504731e+00,H_rel_end=6.311889e-03,z_end=4.164060e-02,z_min=1.000000e-02,status=transport_or_anchor_fail,anchors_total=16,skip_step1=0,skip_step2=16,skip_weak_id=0,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1950,Dose=0,window=post booster,theta_anchor=2.000001e-01,H_abs_start=3.187483e-02,H_abs_range=[3.187483e-02,3.323968e-02],H_rel_range=[0.000000e+00,1.364841e-03],step2_theta_limit=7.843178e+00,step2_ratio=2.549988e-02,H_rel_end=1.364841e-03,z_end=2.729684e-04,z_min=1.000000e-02,status=weak_id,anchors_total=4,skip_step1=0,skip_step2=0,skip_weak_id=4,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1950,Dose=0,window=post primary,theta_anchor=2.473370e+01,H_abs_start=6.269280e-04,H_abs_range=[6.269280e-04,6.132962e-03],H_rel_range=[0.000000e+00,5.506034e-03],step2_theta_limit=3.987699e+02,step2_ratio=6.202500e-02,H_rel_end=5.506034e-03,z_end=1.361846e-01,z_min=1.000000e-02,status=identified,anchors_total=11,skip_step1=0,skip_step2=0,skip_weak_id=0,anchors_used=11,theta0_window_mean=2.553184e+01
+2021_24 | 1950 | 0 | 8.4 | 7.196856e-04 | 9.585695e-03 | 52
+2021_24 | 1950 | 1 | 1.812005e-17 | 2.357605e-04 | 2.600906e-02 | 52
+2021_24 | 1950 | 2 | 7.368322e-17 | 2.356529e-04 | 1.429055e-02 | 52
+2021_24 | 1960 | 0 | 15.8 | 2.128605e-04 | 7.084777e-03 | 52
+2021_24 | 1960 | 1 | 1.399808e-06 | 7.206695e-05 | 4.463803e-02 | 52
+2021_24 | 1960 | 2 | 3.576877e-11 | 1.000317e-04 | 1.336582e-02 | 52
+KCOR7_THETA0,EnrollmentDate=2021_24,YoB=1970,Dose=0,theta0_hat=3.803334e+02,n=11,skipped_disc=16,skipped_nonfinite=0,skipped_weak_id=4,skip_step1=0,skip_step2=16,cross_window_ratio=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1970,Dose=0,window=post COVID,theta_anchor=3.674007e+02,H_abs_start=6.198350e-03,H_abs_range=[6.198350e-03,7.011718e-03],H_rel_range=[0.000000e+00,8.133675e-04],step2_theta_limit=4.033331e+01,step2_ratio=9.109114e+00,H_rel_end=8.133675e-04,z_end=2.988318e-01,z_min=1.000000e-02,status=transport_or_anchor_fail,anchors_total=16,skip_step1=0,skip_step2=16,skip_weak_id=0,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1970,Dose=0,window=post booster,theta_anchor=1.000000e-01,H_abs_start=3.205037e-03,H_abs_range=[3.205037e-03,3.357496e-03],H_rel_range=[0.000000e+00,1.524585e-04],step2_theta_limit=7.800222e+01,step2_ratio=1.282015e-03,H_rel_end=1.524585e-04,z_end=1.524585e-05,z_min=1.000000e-02,status=weak_id,anchors_total=4,skip_step1=0,skip_step2=0,skip_weak_id=4,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=1970,Dose=0,window=post primary,theta_anchor=3.635763e+02,H_abs_start=5.990872e-05,H_abs_range=[5.990872e-05,6.811253e-04],H_rel_range=[0.000000e+00,6.212165e-04],step2_theta_limit=4.173015e+03,step2_ratio=8.712556e-02,H_rel_end=6.212165e-04,z_end=2.258596e-01,z_min=1.000000e-02,status=identified,anchors_total=11,skip_step1=0,skip_step2=0,skip_weak_id=0,anchors_used=11,theta0_window_mean=3.803334e+02
+2021_24 | 1970 | 0 | 29.8 | 6.676768e-05 | 3.599937e-03 | 52
+2021_24 | 1970 | 1 | 3.380333e-07 | 2.413970e-05 | 5.195714e-02 | 52
+2021_24 | 1970 | 2 | 8.397327e-08 | 3.977264e-05 | 1.130136e-02 | 52
+2021_24 | 1980 | 0 | 37.3 | 2.267212e-05 | 1.130558e-02 | 52
+2021_24 | 1980 | 1 | 1.619297e-05 | 1.006341e-05 | 6.504961e-02 | 52
+2021_24 | 1980 | 2 | 3.224104e-05 | 2.120867e-05 | 1.761057e-02 | 52
+2021_24 | 1990 | 0 | 2.771792e-09 | 9.161140e-06 | 1.625365e-02 | 52
+2021_24 | 1990 | 1 | 4.068077e-05 | 7.917833e-06 | 7.967971e-02 | 52
+2021_24 | 1990 | 2 | 212.3 | 1.802299e-05 | 3.989402e-02 | 52
+2021_24 | 2000 | 0 | 2.064413e-05 | 4.610091e-06 | 1.433022e-02 | 52
+2021_24 | 2000 | 1 | 0.2 | 7.200640e-06 | 6.304185e-02 | 52
+2021_24 | 2000 | 2 | 402.0 | 5.436340e-05 | 1.258489e-01 | 52
+KCOR7_THETA0,EnrollmentDate=2021_24,YoB=-2,Dose=0,theta0_hat=1.162302e+02,n=11,skipped_disc=16,skipped_nonfinite=0,skipped_weak_id=4,skip_step1=0,skip_step2=16,cross_window_ratio=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=-2,Dose=0,window=post COVID,theta_anchor=5.150705e+01,H_abs_start=1.739343e-02,H_abs_range=[1.739343e-02,1.915346e-02],H_rel_range=[0.000000e+00,1.760035e-03],step2_theta_limit=1.437325e+01,step2_ratio=3.583536e+00,H_rel_end=1.760035e-03,z_end=9.065422e-02,z_min=1.000000e-02,status=transport_or_anchor_fail,anchors_total=16,skip_step1=0,skip_step2=16,skip_weak_id=0,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=-2,Dose=0,window=post booster,theta_anchor=1.448629e-01,H_abs_start=9.831986e-03,H_abs_range=[9.831986e-03,1.025071e-02],H_rel_range=[0.000000e+00,4.187280e-04],step2_theta_limit=2.542721e+01,step2_ratio=5.697160e-03,H_rel_end=4.187280e-04,z_end=6.065815e-05,z_min=1.000000e-02,status=weak_id,anchors_total=4,skip_step1=0,skip_step2=0,skip_weak_id=4,anchors_used=0,theta0_window_mean=nan
+KCOR7_THETA0_WINDOW,EnrollmentDate=2021_24,YoB=-2,Dose=0,window=post primary,theta_anchor=1.114672e+02,H_abs_start=1.818918e-04,H_abs_range=[1.818918e-04,1.891464e-03],H_rel_range=[0.000000e+00,1.709572e-03],step2_theta_limit=1.374444e+03,step2_ratio=8.109988e-02,H_rel_end=1.709572e-03,z_end=1.905613e-01,z_min=1.000000e-02,status=identified,anchors_total=11,skip_step1=0,skip_step2=0,skip_weak_id=0,anchors_used=11,theta0_window_mean=1.162302e+02
+2021_24 | -2 | 0 | 36.3 | 2.379548e-04 | 9.418959e-03 | 52
+2021_24 | -2 | 1 | 1.348299e-08 | 1.023920e-04 | 1.753797e-02 | 52
+2021_24 | -2 | 2 | 0.3 | 4.936247e-04 | 7.416024e-03 | 52
+
+================================================================================
+KCOR VALUES AT REPORTING DATES - ALL SHEETS
+================================================================================
+
+Sheet: 2021_24 — Reporting date: 2022-06-13
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.462610
+  Age 1920: weight = 0.049778
+  Age 1930: weight = 0.169840
+  Age 1940: weight = 0.163836
+  Age 1950: weight = 0.089431
+  Age 1960: weight = 0.034651
+  Age 1970: weight = 0.014757
+  Age 1980: weight = 0.005040
+  Age 1990: weight = 0.003680
+  Age 2000: weight = 0.006377
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.6068 [0.594, 0.620] |  1.1078
+  ASMR (direct)   |   0.1876 [0.186, 0.189] |  1.0141
+  1920            |   0.5647 [0.503, 0.635] |  0.7375
+  1930            |   0.3008 [0.286, 0.317] |  0.9637
+  1940            |   0.4851 [0.466, 0.505] |  0.9922
+  1950            |   0.8189 [0.788, 0.851] |  1.2437
+  1960            |   1.1077 [1.045, 1.175] |  1.1955
+  1970            |   0.6834 [0.630, 0.741] |  1.3019
+  1980            |   0.9481 [0.797, 1.128] |  0.9668
+  1990            |   3.1828 [2.274, 4.455] |  3.1828
+  2000            |   0.5841 [0.300, 1.135] |  0.5841
+
+Dose combination: 2 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.6642 [0.657, 0.672] |  1.2090
+  ASMR (direct)   |   0.2078 [0.207, 0.209] |  1.1731
+  1920            |   0.7461 [0.717, 0.776] |  0.9744
+  1930            |   0.3219 [0.316, 0.327] |  1.0565
+  1940            |   0.5964 [0.585, 0.608] |  1.2200
+  1950            |   0.9706 [0.941, 1.001] |  1.4741
+  1960            |   1.0562 [0.986, 1.131] |  1.1399
+  1970            |   0.6146 [0.553, 0.684] |  1.1708
+  1980            |   1.2819 [1.048, 1.568] |  1.3071
+  1990            |   2.1448 [1.600, 2.875] |  1.9897
+  2000            |   1.3659 [0.955, 1.954] |  0.9564
+
+Dose combination: 2 vs 1 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0947 [1.070, 1.120] |  1.0914
+  ASMR (direct)   |   1.1078 [1.097, 1.118] |  1.1568
+  1920            |   1.3212 [1.175, 1.486] |  1.3212
+  1930            |   1.0702 [1.014, 1.130] |  1.0964
+  1940            |   1.2295 [1.177, 1.284] |  1.2295
+  1950            |   1.1852 [1.133, 1.240] |  1.1852
+  1960            |   0.9535 [0.880, 1.033] |  0.9535
+  1970            |   0.8993 [0.790, 1.024] |  0.8993
+  1980            |   1.3520 [1.055, 1.733] |  1.3520
+  1990            |   0.6738 [0.444, 1.024] |  0.6251
+  2000            |   2.3384 [1.128, 4.847] |  1.6375
+
+M/P by decades (Dose 2)
+--------------------------------------------------
+  1920: M/P KCOR = 1.0565
+  1930: M/P KCOR = 1.3368
+  1940: M/P KCOR = 1.2148
+  1950: M/P KCOR = 2.0493
+  1960: M/P KCOR = 1.3211
+  1970: M/P KCOR = 1.3137
+  1980: M/P KCOR = 1.4301
+  1990: M/P KCOR = 2.2605
+  2000: M/P KCOR = 1.0466
+================================================================================
+[MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
+[Done] Wrote 5223 rows to /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/_tmp_kcor_2021_24_ratio.xlsx at 2026-03-18 16:49:18
+[Summary] Creating summary file: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_summary.xlsx
+  - 2021_24: 3 dose combinations, 37 summary rows
+  - gamma_frailty_fit: 30 diagnostic rows
+[Summary] Created summary with 1 enrollment periods
+[KCOR7] Wrote theta0 diagnostics: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/kcor7_theta0_diagnostics.csv
+[KCOR7] Wrote theta0 window stats: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/kcor7_theta0_window_stats.csv
+[KCOR7] Wrote plot: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/kcor7_theta0_estimates_by_window.png
+[KCOR7] Wrote plot: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/kcor7_theta_trajectory.png

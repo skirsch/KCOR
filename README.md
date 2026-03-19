@@ -1108,6 +1108,9 @@ time_varying_theta:
     - ['2023-22', '2023-37', 'post COVID']
     - ['2022-22', '2022-25', 'post booster']
     - ['2021-26', '2021-36', 'post primary']
+  theta_identifiability:
+    z_min: 0.01
+    flag_weak_id: true
   diagnostics:
     plot_theta0_estimates_by_window: true
     plot_theta_trajectory: true
@@ -1118,6 +1121,7 @@ Implementation notes:
 - Inversion from `(theta_t, H_t)` to `theta0` uses the numerically stable branch:
   `theta0 = 2*theta_t / (1 - 2*theta_t*H_t + sqrt(1 - 4*theta_t*H_t))`
 - Every anchor enforces the discriminant check `1 - 4*theta_t*H_t >= 0`; invalid anchors are skipped and counted in diagnostics.
+- Windows with weak curvature can be skipped via `theta_identifiability.z_min` using `z_end = theta_anchor * H_rel_end`.
 
 ### Sheet-Specific Configuration
 
