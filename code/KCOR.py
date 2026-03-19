@@ -1252,7 +1252,6 @@ def _load_dataset_dose_pairs_config():
                 #     degenerate_theta_max: 100
                 #     degenerate_fit:
                 #       theta0_max: 100
-                #       rmse_threshold: 0.05
                 #       action: set_zero
                 _theta_degen_cfg = {}
                 _tv_theta_cfg = _dataset_config.get("time_varying_theta", {})
@@ -1288,14 +1287,9 @@ def _load_dataset_dose_pairs_config():
                     except Exception:
                         pass
                     try:
-                        rmse_threshold = _theta_degen_cfg.get("rmse_threshold")
-                        if rmse_threshold is not None:
-                            rmse_threshold = float(rmse_threshold)
-                            if np.isfinite(rmse_threshold) and rmse_threshold >= 0.0:
-                                parsed_cfg["rmse_threshold"] = rmse_threshold
+                        action = str(_theta_degen_cfg.get("action", "")).strip().lower()
                     except Exception:
-                        pass
-                    action = str(_theta_degen_cfg.get("action", "")).strip().lower()
+                        action = ""
                     if action in ("set_zero", "warn_only"):
                         parsed_cfg["action"] = action
                     _DATASET_THETA_DEGENERATE_CFG_CACHE = parsed_cfg
@@ -1418,7 +1412,6 @@ def get_theta_degenerate_fit_config():
     out = {
         "min_quiet_deaths": 30,
         "theta0_max": 100.0,
-        "rmse_threshold": 0.05,
         "action": "set_zero",
     }
     if isinstance(cfg, dict):
@@ -1434,38 +1427,29 @@ def get_theta_degenerate_fit_config():
                 out["theta0_max"] = theta0_max
         except Exception:
             pass
-        try:
-            rmse_threshold = float(cfg.get("rmse_threshold", out["rmse_threshold"]))
-            if np.isfinite(rmse_threshold) and rmse_threshold >= 0.0:
-                out["rmse_threshold"] = rmse_threshold
-        except Exception:
-            pass
         action = str(cfg.get("action", out["action"])).strip().lower()
         if action in ("set_zero", "warn_only"):
             out["action"] = action
     return out
 
 
-def _apply_theta_degenerate_guard(theta_hat, relrmse_hspan, cfg):
+def _apply_theta_degenerate_guard(theta_hat, cfg):
     """Apply configurable degeneracy rule to theta estimates.
 
     Degenerate detector:
-      theta_hat > theta0_max and relRMSE > rmse_threshold
+      theta_hat > theta0_max
     """
     flagged = False
     reason = ""
     theta_eff = theta_hat
     if not np.isfinite(theta_hat):
         return theta_eff, flagged, reason
-    if not np.isfinite(relrmse_hspan):
-        return theta_eff, flagged, reason
 
     theta0_max = float(cfg.get("theta0_max", 100.0))
-    rmse_threshold = float(cfg.get("rmse_threshold", 0.05))
     action = str(cfg.get("action", "set_zero")).strip().lower()
-    if (theta_hat > theta0_max) and (relrmse_hspan > rmse_threshold):
+    if bool(theta_hat > theta0_max):
         flagged = True
-        reason = f"theta0>{theta0_max:g} and relRMSE>{rmse_threshold:g}"
+        reason = f"theta0>{theta0_max:g}"
         if action == "set_zero":
             theta_eff = 0.0
     return theta_eff, flagged, reason
@@ -4903,8 +4887,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     theta_degen_cfg = get_theta_degenerate_fit_config()
     dual_print(
         f"  THETA_IDENTIFIABILITY = min_quiet_deaths={theta_degen_cfg['min_quiet_deaths']}, "
-        f"theta0_max={theta_degen_cfg['theta0_max']}, "
-        f"rmse_threshold={theta_degen_cfg['rmse_threshold']}, action={theta_degen_cfg['action']}"
+        f"theta0_max={theta_degen_cfg['theta0_max']}, action={theta_degen_cfg['action']}"
     )
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
@@ -5169,7 +5152,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             except Exception:
                                 total_quiet_deaths = np.nan
                             theta, _, _ = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
-                            theta, _, _ = _apply_theta_degenerate_guard(theta, relrmse_hspan, theta_degen_cfg)
+                            theta, _, _ = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
 
                             H0 = invert_gamma_frailty(H_obs, theta)
                             h0_inc = np.diff(H0, prepend=0.0)
@@ -5627,7 +5610,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
                         f"quiet_deaths={total_quiet_deaths:.1f} -> theta0_applied=0.0"
                     )
-                theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, relrmse_hspan, theta_degen_cfg)
+                theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                 if degenerate_flag:
                     note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
                     dual_print(
@@ -5814,7 +5797,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
                                 f"quiet_deaths={total_quiet_deaths:.1f} -> theta0_applied=0.0"
                             )
-                        theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, relrmse_hspan, theta_degen_cfg)
+                        theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                         if degenerate_flag:
                             note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
                             dual_print(

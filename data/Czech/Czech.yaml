@@ -27,7 +27,8 @@ quietWindow:
 
 # KCOR v7: estimate theta(0) from points within these quiet windows (no COVID, no excess mortality)
 theta_estimation_windows:
-    - ['2023-22', '2023-37', 'post COVID']
+#    - ['2023-22', '2023-37', 'post COVID']
+    - ['2023-05', '2023-40', 'post COVID']   # try a longer window to see if it makes a difference
     - ['2022-22', '2022-25', 'post booster']
     - ['2021-26', '2021-36', 'post primary']
 
@@ -79,9 +80,8 @@ dosePairs:
   '2022-47':
     - [1, 0]
     - [2, 0]
-    - [3, 9]
+    - [3, 0]
     - [3, 2]
-    - [4, 3]
     - [4, 0]
     - [4, 2]
     - [4, 3]
