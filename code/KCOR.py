@@ -849,6 +849,13 @@ def safe_exp(x, max_val=1e6):
     clipped_x = np.clip(x, -np.log(max_val), np.log(max_val))
     return np.exp(clipped_x)
 
+
+def _safe_square(x, max_abs=1e154):
+    """Overflow-safe square for scalars/arrays."""
+    arr = np.asarray(x, dtype=float)
+    arr = np.clip(np.abs(arr), 0.0, float(max_abs))
+    return arr * arr
+
 def hazard_from_mr(mr: np.ndarray) -> np.ndarray:
     """Exact discrete-time integrated hazard increment from weekly mortality risk.
 
@@ -942,7 +949,22 @@ def invert_gamma_frailty(H_obs, theta):
     theta = float(theta)
     if theta < KCOR6_THETA_EPS:
         return H_arr.copy()
-    return np.expm1(theta * H_arr) / theta
+
+    # Numerical guardrail: cap theta so theta*H does not overflow expm1.
+    # This preserves monotonicity while preventing hard failures in extreme fits.
+    finite_H = H_arr[np.isfinite(H_arr)]
+    if finite_H.size > 0:
+        max_H = float(np.nanmax(np.abs(finite_H)))
+    else:
+        max_H = 0.0
+    if max_H > EPS:
+        max_theta_for_exp = 80.0 / max_H
+        if np.isfinite(max_theta_for_exp) and max_theta_for_exp > 0.0:
+            theta = min(theta, max_theta_for_exp)
+
+    z = theta * H_arr
+    z = np.clip(z, -80.0, 80.0)
+    return np.expm1(z) / max(theta, KCOR6_THETA_EPS)
 
 
 def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
@@ -3118,9 +3140,13 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 var_cum_num = np.clip(var_cum_num.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
                 var_cum_den = np.clip(var_cum_den.replace([np.inf, -np.inf], np.nan).fillna(0.0), 0.0, np.inf)
                 # SE on log scale
-                denom_num = np.maximum(np.abs(dCH_num.values), EPS)
-                denom_den = np.maximum(np.abs(dCH_den.values), EPS)
-                se_log_sq = (var_cum_num.values / (denom_num**2)) + (var_cum_den.values / (denom_den**2))
+                denom_num = np.clip(np.maximum(np.abs(dCH_num.values), EPS), EPS, 1e154)
+                denom_den = np.clip(np.maximum(np.abs(dCH_den.values), EPS), EPS, 1e154)
+                denom_num_sq = _safe_square(denom_num)
+                denom_den_sq = _safe_square(denom_den)
+                with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                    se_log_sq = (var_cum_num.values / denom_num_sq) + (var_cum_den.values / denom_den_sq)
+                se_log_sq = np.nan_to_num(se_log_sq, nan=0.0, posinf=0.0, neginf=0.0)
                 merged["SE_logKCOR"] = np.sqrt(np.clip(se_log_sq, 0.0, np.inf))
             
                 # Calculate 95% CI bounds on log scale, then exponentiate, with clipping applied at creation
@@ -3448,9 +3474,14 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         var_cum_num_age = float(csum_num[-1] - csum_num[t0_idx_age]) if csum_num.size > 0 else 0.0
                         var_cum_den_age = float(csum_den[-1] - csum_den[t0_idx_age]) if csum_den.size > 0 else 0.0
                         # Per-age log-variance contribution
-                        denom_num_age = max(abs(dCH_num_age), EPS)
-                        denom_den_age = max(abs(dCH_den_age), EPS)
-                        var_log_age = (var_cum_num_age / (denom_num_age**2)) + (var_cum_den_age / (denom_den_age**2))
+                        denom_num_age = float(min(max(abs(dCH_num_age), EPS), 1e154))
+                        denom_den_age = float(min(max(abs(dCH_den_age), EPS), 1e154))
+                        denom_num_sq_age = float(_safe_square(denom_num_age))
+                        denom_den_sq_age = float(_safe_square(denom_den_age))
+                        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+                            var_log_age = (var_cum_num_age / denom_num_sq_age) + (var_cum_den_age / denom_den_sq_age)
+                        if not np.isfinite(var_log_age):
+                            var_log_age = 0.0
                         w = weights.get(yob, 0.0)
                         var_terms.append((w**2) * var_log_age)
                     # Final pooled SE on log scale
@@ -4717,12 +4748,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     # Legacy quiet-anchor config removed
     dual_print(f"  Reporting date calculation: 1 year from enrollment date")
     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
-    dual_print(f"  KCOR6_QUIET_WINDOW    = {KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}")
     theta_windows_cfg = get_theta_estimation_windows()
     if theta_windows_cfg:
         dual_print(f"  THETA_ESTIMATION_WINDOWS = {_format_theta_windows_label(theta_windows_cfg)}")
     else:
-        dual_print("  THETA_ESTIMATION_WINDOWS = (fallback to KCOR6_QUIET_WINDOW)")
+        dual_print("  THETA_ESTIMATION_WINDOWS = (fallback to dataset quietWindow)")
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
         dual_print("  COVID_CORRECTION      = disabled")
@@ -4730,7 +4760,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         start_iso = covid_cfg["start_dt"].strftime("%G-%V")
         end_iso = covid_cfg["end_dt"].strftime("%G-%V")
         dual_print(f"  COVID_CORRECTION      = {start_iso}..{end_iso}, factor={covid_cfg['factor']}")
-    dual_print("  NORMALIZATION_METHOD  = KCOR6 (gamma-frailty inversion)")
+    dual_print("  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)")
     dual_print("="*80)
     dual_print("")
     
@@ -4935,7 +4965,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         H_obs = np.cumsum(h_eff_obs)
                         iso_parts = g_sorted["DateDied"].dt.isocalendar()
                         iso_int = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int)).to_numpy(dtype=int)
-                        per_dose[int(dose)] = {"DateDied": g_sorted["DateDied"].to_numpy(), "t": t_vals, "H_obs": H_obs, "iso_int": iso_int}
+                        per_dose[int(dose)] = {
+                            "DateDied": g_sorted["DateDied"].to_numpy(),
+                            "t": t_vals,
+                            "H_obs": H_obs,
+                            "h_eff_obs": h_eff_obs,
+                            "iso_int": iso_int,
+                        }
 
                     # Dose pairs to compute (optionally restricted)
                     dose_pairs_use = dose_pairs_sa
@@ -4950,6 +4986,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         for dose_i, d in per_dose.items():
                             t_vals = d["t"]
                             H_obs = d["H_obs"]
+                            h_eff_obs = d["h_eff_obs"]
                             iso_int = d["iso_int"]
 
                             fit_mask = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
