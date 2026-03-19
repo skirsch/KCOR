@@ -27,10 +27,17 @@ quietWindow:
 
 # KCOR v7: estimate theta(0) from points within these quiet windows (no COVID, no excess mortality)
 theta_estimation_windows:
-    - ['2023-22', '2023-37', 'post COVID']
+    - ['2023-19', '2023-40', '2023 post COVID']
 #  - ['2023-05', '2023-40', 'post COVID']   # try a longer window to see if it makes a difference
     - ['2022-22', '2022-25', 'post booster']
     - ['2021-26', '2021-36', 'post primary']
+    - ['2024-11', '2020-14', 'post 2024']
+
+# KCOR v7: Gompertz + frailty-depletion theta0 fit (see documentation/specs/KCORv7/KCOR_v7_gompertz_instructions.md)
+# k is fixed from mean hazard over k_anchor_weeks after DYNAMIC_HVE_SKIP_WEEKS (in code, not YAML).
+time_varying_theta:
+  gompertz_gamma: 0.085   # per year; biological aging scale for theta fit
+  k_anchor_weeks: 4       # weeks after HVE skip used to pin baseline k
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Enrollment dates for cohort analysis (ISO week format: YYYY-WW)

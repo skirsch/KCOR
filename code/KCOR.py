@@ -1047,81 +1047,125 @@ def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
         }
 
 
-def fit_theta0_global(h_arr, H_cum, quiet_mask, theta0_init=1.0):
-    """Fit (k, theta0) in hazard space over selected quiet-window points.
+def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_week, theta0_init=1.0):
+    """Estimate theta0 using Gompertz + frailty-depletion in hazard space (KCOR v7).
 
-    Model:
-        h_q = k / (1 + theta0 * H_q)
+    Time axis ``t_rebased`` = enrollment week index minus DYNAMIC_HVE_SKIP_WEEKS so that
+    t_rebased=0 is the first post-HVE week and H_gompertz(0)=0.
 
-    The boundary theta0=0 is a valid degenerate solution (flat hazard h_q=k).
+    Model on fit points:
+        h = k * exp(gamma * t_rebased) / (1 + theta0 * H_gom)
+        H_gom = (k/gamma) * expm1(gamma * t_rebased)
+
+    k is fixed as the mean of h over t_rebased in [0, k_anchor_weeks). Theta fit uses
+    (quiet_mask | anchor_mask) & (t_rebased >= 0) with finite h.
 
     Returns:
         (k_hat, theta0_hat), diagnostics_dict
     """
     h_arr = np.asarray(h_arr, dtype=float)
-    H_arr = np.asarray(H_cum, dtype=float)
-    mask = np.asarray(quiet_mask, dtype=bool)
-    valid = mask & np.isfinite(h_arr) & np.isfinite(H_arr)
-    h_q = h_arr[valid]
-    H_q = H_arr[valid]
-    n_obs = int(len(h_q))
-
-    if n_obs < 2:
-        return (np.nan, np.nan), {
-            "success": False,
-            "n_obs": n_obs,
-            "rmse_hazard": np.nan,
-            "status": None,
-            "message": "insufficient_points",
-            "nfev": 0,
-        }
-
-    try:
-        k0 = float(np.nanmean(h_q))
-        if not np.isfinite(k0):
-            k0 = 1e-12
-        k0 = max(k0, 1e-12)
-    except Exception:
-        k0 = 1e-12
+    t_r = np.asarray(t_rebased, dtype=float)
+    quiet = np.asarray(quiet_mask, dtype=bool)
+    k_anch = int(k_anchor_weeks)
+    gamma = float(gamma_per_week)
     theta0_init = max(float(theta0_init), 0.0)
 
+    def _fail(k_val, msg, n_fit=0, fit_mask=None):
+        fm = fit_mask if fit_mask is not None else np.zeros_like(quiet, dtype=bool)
+        return (k_val, np.nan), {
+            "success": False,
+            "n_obs": int(n_fit),
+            "n_fit": int(n_fit),
+            "rmse_hazard": np.nan,
+            "relRMSE_hazard_fit": np.nan,
+            "status": "insufficient_data",
+            "message": msg,
+            "fit_mask_theta": fm,
+            "anchor_only": False,
+            "k_hat": float(k_val) if np.isfinite(k_val) else np.nan,
+        }
+
+    anchor_mask = (t_r >= 0.0) & (t_r < float(k_anch))
+    if not np.any(anchor_mask):
+        return _fail(np.nan, "empty_anchor", 0)
+
+    k = float(np.nanmean(h_arr[anchor_mask]))
+    if not np.isfinite(k) or k < 1e-12:
+        return _fail(np.nan, "k_too_small", 0)
+
+    if (not np.isfinite(gamma)) or gamma <= 0.0:
+        return _fail(k, "bad_gamma", 0)
+
+    H_gom = (k / gamma) * np.expm1(gamma * t_r)
+    fit_mask_theta = (quiet | anchor_mask) & (t_r >= 0.0)
+    fit_mask_theta &= np.isfinite(h_arr) & np.isfinite(t_r)
+    n_fit = int(np.count_nonzero(fit_mask_theta))
+    if n_fit < 3:
+        return _fail(k, "n_fit<3", n_fit, fit_mask_theta.copy())
+
+    h_q = h_arr[fit_mask_theta]
+    t_q = t_r[fit_mask_theta]
+    H_q = H_gom[fit_mask_theta]
+    has_quiet_pt = bool(np.any(quiet & fit_mask_theta))
+    anchor_only_flag = not has_quiet_pt
+
     def _residuals(params):
-        k, theta0 = params
-        if (k <= 0.0) or (theta0 < 0.0) or (not np.isfinite(k)) or (not np.isfinite(theta0)):
-            return np.ones_like(h_q) * 1e6
-        denom = 1.0 + theta0 * H_q
-        denom = np.where(denom > EPS, denom, EPS)
-        return h_q - (k / denom)
+        th0 = float(params[0])
+        if th0 < 0.0 or not np.isfinite(th0):
+            return np.ones_like(h_q, dtype=float) * 1e6
+        den = 1.0 + th0 * H_q
+        den = np.where(den > EPS, den, EPS)
+        pred = k * np.exp(gamma * t_q) / den
+        return h_q - pred
 
     try:
         res = least_squares(
             _residuals,
-            x0=[k0, theta0_init],
-            bounds=([1e-12, 0.0], [np.inf, np.inf]),
+            x0=[theta0_init],
+            bounds=([0.0], [np.inf]),
             method="trf",
             ftol=1e-14,
             xtol=1e-14,
             gtol=1e-14,
         )
-        k_hat, theta0_hat = float(res.x[0]), float(res.x[1])
-        rmse_h = float(np.sqrt(np.mean(np.asarray(res.fun, dtype=float) ** 2))) if n_obs > 0 else np.nan
-        return (k_hat, theta0_hat), {
-            "success": bool(res.success),
-            "n_obs": n_obs,
+        theta0_hat = float(res.x[0])
+        fun = np.asarray(res.fun, dtype=float)
+        rmse_h = float(np.sqrt(np.mean(fun**2))) if fun.size else np.nan
+        den = 1.0 + theta0_hat * H_q
+        den = np.where(den > EPS, den, EPS)
+        pred = k * np.exp(gamma * t_q) / den
+        rel_rmse = float(np.sqrt(np.mean(((h_q - pred) / (h_q + 1e-12)) ** 2)))
+        converged = bool(res.success) or (
+            hasattr(res, "cost") and res.cost is not None and float(res.cost) < 1e-20
+        )
+        status = "anchor_only" if anchor_only_flag else "ok"
+        success = bool(converged and status in ("ok", "anchor_only") and np.isfinite(theta0_hat))
+        return (k, theta0_hat), {
+            "success": success,
+            "n_obs": n_fit,
+            "n_fit": n_fit,
             "rmse_hazard": rmse_h,
-            "status": int(res.status) if hasattr(res, "status") else None,
-            "message": str(res.message) if hasattr(res, "message") else None,
+            "relRMSE_hazard_fit": rel_rmse,
+            "status": status,
+            "message": status if status != "ok" else (str(res.message) if hasattr(res, "message") else "ok"),
             "nfev": int(res.nfev) if hasattr(res, "nfev") else None,
             "cost": float(res.cost) if hasattr(res, "cost") else None,
+            "fit_mask_theta": fit_mask_theta.copy(),
+            "anchor_only": anchor_only_flag,
+            "k_hat": k,
         }
     except Exception as e:
-        return (np.nan, np.nan), {
+        return (k, np.nan), {
             "success": False,
-            "n_obs": n_obs,
+            "n_obs": n_fit,
+            "n_fit": n_fit,
             "rmse_hazard": np.nan,
-            "status": None,
+            "relRMSE_hazard_fit": np.nan,
+            "status": "error",
             "message": f"exception: {e}",
-            "nfev": None,
+            "fit_mask_theta": fit_mask_theta.copy(),
+            "anchor_only": anchor_only_flag,
+            "k_hat": k,
         }
 
 
@@ -1133,16 +1177,20 @@ _DATASET_COVID_CORRECTION_CACHE = None
 _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = None
 # Cache for theta degenerate-fit config (loaded once per run)
 _DATASET_THETA_DEGENERATE_CFG_CACHE = None
+# Gompertz theta0 fit parameters from time_varying_theta (loaded once per run)
+_DATASET_GOMPERTZ_THETA_CFG_CACHE = None
 
 def _load_dataset_dose_pairs_config():
     """Load dose pairs configuration from dataset YAML file."""
     global _DATASET_DOSE_PAIRS_CACHE, _DATASET_COVID_CORRECTION_CACHE
     global _DATASET_THETA_ESTIMATION_WINDOWS_CACHE, _DATASET_THETA_DEGENERATE_CFG_CACHE
+    global _DATASET_GOMPERTZ_THETA_CFG_CACHE
     if (
         _DATASET_DOSE_PAIRS_CACHE is not None
         and _DATASET_COVID_CORRECTION_CACHE is not None
         and _DATASET_THETA_ESTIMATION_WINDOWS_CACHE is not None
         and _DATASET_THETA_DEGENERATE_CFG_CACHE is not None
+        and _DATASET_GOMPERTZ_THETA_CFG_CACHE is not None
     ):
         return _DATASET_DOSE_PAIRS_CACHE
     
@@ -1150,6 +1198,11 @@ def _load_dataset_dose_pairs_config():
     _DATASET_COVID_CORRECTION_CACHE = {}
     _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = []
     _DATASET_THETA_DEGENERATE_CFG_CACHE = {}
+    _DATASET_GOMPERTZ_THETA_CFG_CACHE = {
+        "gamma_per_year": 0.085,
+        "k_anchor_weeks": 4,
+        "gamma_per_week": 0.085 / 52.0,
+    }
     _dataset_name = os.environ.get('DATASET', 'Czech')
     # Resolve path relative to script location to handle different execution contexts
     _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1298,6 +1351,29 @@ def _load_dataset_dose_pairs_config():
                             f"[DEBUG] Loaded theta degenerate-fit config from {_dataset_yaml_path}: {parsed_cfg}",
                             flush=True,
                         )
+                if isinstance(_tv_theta_cfg, dict):
+                    try:
+                        _gg = _tv_theta_cfg.get("gompertz_gamma")
+                        if _gg is not None:
+                            _gg = float(_gg)
+                            if np.isfinite(_gg) and _gg > 0.0:
+                                _DATASET_GOMPERTZ_THETA_CFG_CACHE["gamma_per_year"] = _gg
+                                _DATASET_GOMPERTZ_THETA_CFG_CACHE["gamma_per_week"] = _gg / 52.0
+                    except Exception:
+                        pass
+                    try:
+                        _ka = _tv_theta_cfg.get("k_anchor_weeks")
+                        if _ka is not None:
+                            _ka = int(_ka)
+                            if _ka > 0:
+                                _DATASET_GOMPERTZ_THETA_CFG_CACHE["k_anchor_weeks"] = _ka
+                    except Exception:
+                        pass
+                    if DEBUG_VERBOSE:
+                        print(
+                            f"[DEBUG] Loaded Gompertz theta fit config from {_dataset_yaml_path}: {_DATASET_GOMPERTZ_THETA_CFG_CACHE}",
+                            flush=True,
+                        )
         except Exception as _e_config:
             # Only print warning for non-ImportError exceptions (file read errors, etc.)
             if DEBUG_VERBOSE and 'yaml' not in str(_e_config).lower() and 'import' not in str(_e_config).lower():
@@ -1431,6 +1507,21 @@ def get_theta_degenerate_fit_config():
         if action in ("set_zero", "warn_only"):
             out["action"] = action
     return out
+
+
+def get_gompertz_theta_fit_config():
+    """Return Gompertz theta0 fit parameters from dataset YAML (with defaults)."""
+    _load_dataset_dose_pairs_config()
+    cfg = _DATASET_GOMPERTZ_THETA_CFG_CACHE or {
+        "gamma_per_year": 0.085,
+        "k_anchor_weeks": 4,
+        "gamma_per_week": 0.085 / 52.0,
+    }
+    return {
+        "gamma_per_year": float(cfg["gamma_per_year"]),
+        "k_anchor_weeks": int(cfg["k_anchor_weeks"]),
+        "gamma_per_week": float(cfg["gamma_per_week"]),
+    }
 
 
 def _apply_theta_degenerate_guard(theta_hat, cfg):
@@ -4889,6 +4980,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         f"  THETA_IDENTIFIABILITY = min_quiet_deaths={theta_degen_cfg['min_quiet_deaths']}, "
         f"theta0_max={theta_degen_cfg['theta0_max']}, action={theta_degen_cfg['action']}"
     )
+    _gc = get_gompertz_theta_fit_config()
+    dual_print(
+        f"  GOMPERTZ_THETA_FIT     = gamma={_gc['gamma_per_year']}/yr, "
+        f"k_anchor_weeks={_gc['k_anchor_weeks']}, gamma_per_week={_gc['gamma_per_week']:.6g}"
+    )
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
         dual_print("  COVID_CORRECTION      = disabled")
@@ -4990,6 +5086,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
             sa_results = {}
             skip_weeks = int(DYNAMIC_HVE_SKIP_WEEKS)
+            _sa_gompertz_cfg = get_gompertz_theta_fit_config()
 
             # Respect SA_COHORTS via ENROLLMENT_DATES override (set near the top-level env override block)
             cohorts_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else sheets_to_process
@@ -5127,8 +5224,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             dead_vals = d["dead"]
                             iso_int = d["iso_int"]
 
-                            fit_mask = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
-                            (_k_hat, theta_hat), diag = fit_theta0_global(h_eff_obs, H_obs, fit_mask)
+                            quiet_mask_sa = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
+                            t_rebased_sa = t_vals - float(skip_weeks)
+                            (_k_hat, theta_hat), diag = fit_theta0_gompertz(
+                                h_eff_obs,
+                                t_rebased_sa,
+                                quiet_mask_sa,
+                                _sa_gompertz_cfg["k_anchor_weeks"],
+                                _sa_gompertz_cfg["gamma_per_week"],
+                            )
+                            fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
+                            if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
+                                fit_mask = np.asarray(quiet_mask_sa, dtype=bool)
+                            else:
+                                fit_mask = np.asarray(fit_mask, dtype=bool)
                             theta = 0.0
                             if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                                 theta = float(theta_hat)
@@ -5489,6 +5598,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     dual_print(f"{enroll_label} | {int(yob_val)} | {int(dose_val)} | {th_str} | {k_str} | {rel_str} | {int(n_obs)}")
 
             # Fit per (YearOfBirth, Dose) cohort
+            _gcf = get_gompertz_theta_fit_config()
             # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode so each iteration gets its own fit
             # CRITICAL FIX: Exclude YearOfBirth=-2 (all-ages) from per-age loop - it's computed separately below
             df_per_age = df[df["YearOfBirth"] != -2].copy()
@@ -5539,16 +5649,32 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     iso_int = None
 
                 quiet_mask, theta_source, quiet_window_label = _build_theta_quiet_mask(iso_int, t_vals)
-                fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
+                t_rebased = t_vals - float(DYNAMIC_HVE_SKIP_WEEKS)
+                (k_hat, theta_hat), diag = fit_theta0_gompertz(
+                    hazard_eff,
+                    t_rebased,
+                    quiet_mask,
+                    _gcf["k_anchor_weeks"],
+                    _gcf["gamma_per_week"],
+                )
+                fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
+                if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
+                    fit_mask = np.zeros_like(t_vals, dtype=bool)
+                else:
+                    fit_mask = np.asarray(fit_mask, dtype=bool)
                 t_fit = t_vals[fit_mask]
                 H_fit = H_obs[fit_mask]
 
-                (k_hat, theta_hat), diag = fit_theta0_global(hazard_eff, H_obs, fit_mask)
                 theta0_raw = float(theta_hat) if np.isfinite(theta_hat) else np.nan
                 rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
-                n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
+                n_obs = int(diag.get("n_fit", diag.get("n_obs", 0))) if isinstance(diag, dict) else 0
                 success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
-                note = diag.get("message", "") if isinstance(diag, dict) else ""
+                note = str(diag.get("message", "") or "") if isinstance(diag, dict) else ""
+                if isinstance(diag, dict) and diag.get("anchor_only"):
+                    dual_print(
+                        f"[KCOR7_THETA_ANCHOR_ONLY] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
+                        f"n_fit={diag.get('n_fit', 0)}"
+                    )
 
                 # Precompute span-relative RMSE for degeneracy guard before inversion
                 try:
@@ -5558,13 +5684,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         hspan_hobs = np.nan
                 except Exception:
                     hspan_hobs = np.nan
+                relrmse_hspan = diag.get("relRMSE_hazard_fit", np.nan) if isinstance(diag, dict) else np.nan
                 try:
-                    if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                    if not np.isfinite(relrmse_hspan) and np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
                         relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
-                    else:
-                        relrmse_hspan = np.nan
                 except Exception:
-                    relrmse_hspan = np.nan
+                    if not np.isfinite(relrmse_hspan):
+                        relrmse_hspan = np.nan
                 
                 # Print debug output only if we got 0 bins (diagnostic for NaN issue)
                 if MONTE_CARLO_MODE and n_obs == 0:
@@ -5585,7 +5711,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             dual_print(f"  Quiet windows: {quiet_window_label}")
                             dual_print(f"  Quiet mask matches: {np.sum(quiet_mask)}/{len(quiet_mask)}")
                             dual_print(f"  t_vals >= DYNAMIC_HVE_SKIP_WEEKS ({DYNAMIC_HVE_SKIP_WEEKS}): {np.sum(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))}/{len(t_vals)}")
-                            dual_print(f"  Fit mask (quiet & skip): {np.sum(fit_mask)}/{len(fit_mask)} points")
+                            dual_print(f"  Fit mask (theta fit): {np.sum(fit_mask)}/{len(fit_mask)} points")
                             dual_print(f"  t_fit range: {t_fit.min() if len(t_fit) > 0 else 'N/A'} to {t_fit.max() if len(t_fit) > 0 else 'N/A'}")
                             dual_print(f"  H_fit range: {H_fit.min() if len(H_fit) > 0 else 'N/A'} to {H_fit.max() if len(H_fit) > 0 else 'N/A'}")
                         else:
@@ -5669,6 +5795,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
                     "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
                     "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
+                    "relRMSE_hazard_fit": float(diag.get("relRMSE_hazard_fit", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "theta_fit_status": str(diag.get("status", "")) if isinstance(diag, dict) else "",
                     "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                     "n_obs": int(n_obs),
                     "success": bool(success),
@@ -5752,14 +5880,30 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                         iso_int = iso_int_all[g_sorted.index.to_numpy(dtype=int)]
                         quiet_mask, theta_source, quiet_window_label = _build_theta_quiet_mask(iso_int, t_vals)
-                        fit_mask = quiet_mask & (t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS))
+                        t_rebased_aa = t_vals - float(DYNAMIC_HVE_SKIP_WEEKS)
+                        (k_hat, theta_hat), diag = fit_theta0_gompertz(
+                            hazard_eff,
+                            t_rebased_aa,
+                            quiet_mask,
+                            _gcf["k_anchor_weeks"],
+                            _gcf["gamma_per_week"],
+                        )
+                        fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
+                        if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
+                            fit_mask = np.zeros_like(t_vals, dtype=bool)
+                        else:
+                            fit_mask = np.asarray(fit_mask, dtype=bool)
 
-                        (k_hat, theta_hat), diag = fit_theta0_global(hazard_eff, H_obs, fit_mask)
                         theta0_raw = float(theta_hat) if np.isfinite(theta_hat) else np.nan
                         rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
-                        n_obs = diag.get("n_obs", 0) if isinstance(diag, dict) else 0
+                        n_obs = int(diag.get("n_fit", diag.get("n_obs", 0))) if isinstance(diag, dict) else 0
                         success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
-                        note = diag.get("message", "") if isinstance(diag, dict) else ""
+                        note = str(diag.get("message", "") or "") if isinstance(diag, dict) else ""
+                        if isinstance(diag, dict) and diag.get("anchor_only"):
+                            dual_print(
+                                f"[KCOR7_THETA_ANCHOR_ONLY] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
+                                f"n_fit={diag.get('n_fit', 0)}"
+                            )
 
                         # Extra diagnostics + degeneracy guard (pre-inversion)
                         try:
@@ -5772,13 +5916,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         except Exception:
                             hspan_hobs = np.nan
 
+                        relrmse_hspan = diag.get("relRMSE_hazard_fit", np.nan) if isinstance(diag, dict) else np.nan
                         try:
-                            if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+                            if not np.isfinite(relrmse_hspan) and np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
                                 relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
-                            else:
-                                relrmse_hspan = np.nan
                         except Exception:
-                            relrmse_hspan = np.nan
+                            if not np.isfinite(relrmse_hspan):
+                                relrmse_hspan = np.nan
 
                         # Compute normalized cumulative hazard H0 for diagnostics
                         theta = 0.0
@@ -5852,6 +5996,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
                             "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
                             "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
+                            "relRMSE_hazard_fit": float(diag.get("relRMSE_hazard_fit", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "theta_fit_status": str(diag.get("status", "")) if isinstance(diag, dict) else "",
                             "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                             "n_obs": int(n_obs),
                             "success": bool(success),
@@ -7900,6 +8046,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         insufficient_deaths = bool(params.get("insufficient_deaths", False))
                         degenerate_fit = bool(params.get("degenerate_fit", False))
                         k_hat = params.get("k_hat", np.nan)
+                        theta_fit_status = params.get("theta_fit_status", "")
+                        relRMSE_hazard_fit = params.get("relRMSE_hazard_fit", np.nan)
                         mean = params.get("mean", np.nan)
                         sd = params.get("sd", np.nan)
                         max_abs_dev = params.get("max_abs_dev", np.nan)
@@ -7924,6 +8072,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                                 "theta0_hat": theta0_hat,
                                 "theta_hat": theta_hat,
                                 "k_hat": k_hat,
+                                "theta_fit_status": theta_fit_status,
+                                "relRMSE_hazard_fit": relRMSE_hazard_fit,
                                 "mean": mean,
                                 "sd": sd,
                                 "max_abs_dev": max_abs_dev,
@@ -8062,7 +8212,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     column_order = [
                         "reporting_date", "enrollment_date", "age_group", "year_of_birth", "dose",
                         "quiet_window", "theta_source", "total_quiet_deaths", "insufficient_deaths", "degenerate_fit",
-                        "theta0_raw", "theta_applied", "theta0_hat", "theta_hat", "k_hat", "mean", "sd", "max_abs_dev",
+                        "theta_fit_status", "theta0_raw", "theta_applied", "theta0_hat", "theta_hat", "k_hat",
+                        "relRMSE_hazard_fit", "mean", "sd", "max_abs_dev",
                         "drift_per_year", "n_bins"
                     ]
                     gamma_frailty_df = gamma_frailty_df[[col for col in column_order if col in gamma_frailty_df.columns]]
