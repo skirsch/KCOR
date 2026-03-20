@@ -1,4 +1,4 @@
-# KCOR v7.1 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v7.2 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -25,6 +25,7 @@
 - [🤝 Contributing](#-contributing)
 - [📚 Citation](#-citation)
 - [Version History](#version-history)
+  - [🆕 Version 7.2](#-version-72)
   - [🆕 Version 4.3](#-version-43)
   - [🆕 Version 4.2](#-version-42)
   - [🆕 Version 4.1](#-version-41)
@@ -1097,46 +1098,57 @@ covidCorrection:
 
 ### Dataset YAML (KCOR v7 Theta Estimation)
 
-KCOR v7 keeps the KCOR v6 correction machinery (`invert_gamma_frailty`) unchanged and only
-updates the theta input. Instead of fitting a single late-period theta from one window,
-KCOR v7 estimates enrollment-anchored `theta0` from all configured quiet windows.
+KCOR v7 keeps the KCOR v6 **application** machinery (`invert_gamma_frailty`) unchanged and only
+changes how enrollment-anchored `theta0` is estimated. KCOR v7 uses **all** configured quiet windows
+(root-level `theta_estimation_windows` triples); v7.2 fits a **Gompertz + frailty-depletion** hazard
+model instead of the earlier flat-`k` hazard fit.
 
 The current v6 implementation is preserved in `code/KCORv6.py` for reproducibility.
 
 ```yaml
-# Existing v6 fallback window (still supported)
+# Existing v6 fallback window (still supported if no theta_estimation_windows)
 quietWindow:
   startDate: "2023-01"
   endDate: "2023-52"
 
-# v7 preferred windows for global theta0 fit
+# v7 preferred windows for theta0 fit (ISO start, ISO end, optional label)
 theta_estimation_windows:
-  - ['2023-22', '2023-37', 'post COVID']
+  - ['2023-19', '2023-40', '2023 post COVID']
   - ['2022-22', '2022-25', 'post booster']
   - ['2021-26', '2021-36', 'post primary']
+
+# v7.2 Gompertz theta fit (optional; defaults match if omitted)
+time_varying_theta:
+  gompertz_gamma: 0.085    # per calendar year → gamma_per_week = gamma/52 in the fitter
+  k_anchor_weeks: 4        # mean hazard over first k weeks after HVE skip pins k
 ```
 
-Implementation notes:
-- V7 global fit model: `h_q = k / (1 + theta0 * H_q)` over all quiet-window points.
-- Bounds: `k >= 1e-12`, `theta0 >= 0`.
-- `theta0 = 0` is a valid degenerate boundary solution (`h_q = k`), indicating no detectable frailty curvature.
-- Same fitting method is applied independently to both cohorts; no cohort-specific special-casing is required.
+Implementation notes (v7.2):
+- **Time axis in the fitter:** `t_rebased = t_enrollment − DYNAMIC_HVE_SKIP_WEEKS` so `H_gompertz(0)=0` at the first post–HVE-skip week; pipeline column `t` is unchanged elsewhere.
+- **Model:** `h = k·exp(γ·t_rebased) / (1 + θ₀·H_gom)` with `H_gom = (k/γ)·(exp(γ·t_rebased)−1)`; **γ** is `gompertz_gamma/52` per week; **k** is **not** fitted (mean of `hazard_eff` over anchor weeks). **θ₀** is the only free parameter (nonlinear least squares on quiet ∪ anchor points with `t_rebased ≥ 0`).
+- **K-anchor weeks** contribute to the θ fit (not held out).
+- If no ISO window overlaps follow-up, fit may be **anchor-only** (`[KCOR7_THETA_ANCHOR_ONLY]` in log).
+- **Bounds:** `θ₀ ≥ 0`; `k` from data; same fitting idea per cohort as before.
 
-V7.1 note:
-- Added minimum-quiet-deaths identifiability guard (`min_quiet_deaths`, default `30`). If quiet-window deaths are below this threshold, applied theta is set to `0.0`.
-- Added a configurable degenerate-fit guard that flags `theta0` outliers by hard cap:
-  - `theta0_hat > theta0_max`
-- Default behavior is conservative (`set_zero`): set applied theta to `0.0` (no frailty correction) and log the event.
-- Optional YAML config:
+V7.1 (guards, still in effect):
+- Minimum-quiet-deaths guard (`min_quiet_deaths`, default `30`).
+- Degenerate-fit guard: `theta0_hat > theta0_max` → default `set_zero` and log.
+- v7.2 addition: when that degenerate guard fires and **`gamma_per_week / k_hat > theta0_max / 52`** (consistent units: weekly hazard from `hazard_from_mr` vs weekly γ), log **`[KCOR7_GOMPERTZ_UNIDENTIFIABLE]`** instead of the generic degenerate line — young/low-`k` cohorts where Gompertz aging dominates identifiable frailty curvature.
+
+Optional YAML (degenerate / identifiability):
 
 ```yaml
 time_varying_theta:
+  gompertz_gamma: 0.085
+  k_anchor_weeks: 4
   min_quiet_deaths: 30
   degenerate_theta_max: 100   # alias for degenerate_fit.theta0_max
   degenerate_fit:
     theta0_max: 100
     action: set_zero   # set_zero | warn_only
 ```
+
+**Summary output:** `KCOR_summary.xlsx` sheet `gamma_frailty_fit` includes **`theta_fit_status`** (e.g. `ok`, `anchor_only`, `insufficient_data`) and **`relRMSE_hazard_fit`** for the hazard-space fit.
 
 ### Sheet-Specific Configuration
 
@@ -1264,6 +1276,21 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Version history
+
+### 🆕 Version 7.2
+
+*Released 2026-03-20.*
+
+#### Theta estimation (KCOR v7.2)
+
+- **Gompertz + frailty-depletion fit** replaces the prior v7 **flat-`k`** hazard fit `h = k/(1+θ₀H)` on quiet points. **`invert_gamma_frailty` is unchanged**; only how **θ₀** is estimated changes.
+- **`k`** is fixed from the mean of **`hazard_eff`** over the first **`k_anchor_weeks`** after **`DYNAMIC_HVE_SKIP_WEEKS`** (implemented via **`t_rebased`** so the Gompertz clock aligns with post–HVE-skip hazard).
+- **γ** defaults to **0.085/year** from dataset YAML (`time_varying_theta.gompertz_gamma`); the fit uses **γ per week = γ/52**.
+- **Least-squares sample:** `(quiet_mask | anchor_mask)` with **`t_rebased ≥ 0`**; anchor weeks are **included** in the θ fit.
+- **Logs:** `[KCOR7_THETA_ANCHOR_ONLY]` when the fit uses anchor points only; **`[KCOR7_GOMPERTZ_UNIDENTIFIABLE]`** when the degenerate guard fires and **`gamma_per_week/k_hat > theta0_max/52`** (dimensionally consistent screen; equivalent to the old annual-γ over weekly-`k` ratio check against **`theta0_max`**).
+- **Spreadsheet:** `gamma_frailty_fit` adds **`theta_fit_status`** and **`relRMSE_hazard_fit`**.
+
+See `documentation/specs/KCORv7/KCOR_v7_gompertz_instructions.md` for the full spec (with repo-specific implementation notes at the top).
 
 ### 🆕 Version 5.4 (2025-01-XX)
 

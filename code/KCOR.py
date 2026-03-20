@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v7.1"                # KCOR version number
+VERSION = "v7.2"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -192,6 +192,12 @@ VERSION = "v7.1"                # KCOR version number
 #        - Added configurable degenerate-theta guard based on (theta0_max, relRMSE threshold).
 #        - Logs degenerate fits and applies configurable action (default: set theta to 0.0).
 #        - Added overflow-safe safeguards in frailty inversion and CI variance calculations.
+# v7.2 - Gompertz theta0 estimation (3/20/2026)
+#        - Replaced flat-k global fit with Gompertz+depletion model (fixed k from anchor weeks,
+#          single-parameter theta0; t_rebased = t - DYNAMIC_HVE_SKIP_WEEKS in fitter).
+#        - YAML: time_varying_theta.gompertz_gamma, k_anchor_weeks (see Czech.yaml).
+#        - KCOR7_GOMPERTZ_UNIDENTIFIABLE when degenerate and gamma_per_week/k_hat > theta0_max/52.
+#        - Summary gamma_frailty_fit: theta_fit_status, relRMSE_hazard_fit.
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
@@ -1544,6 +1550,50 @@ def _apply_theta_degenerate_guard(theta_hat, cfg):
         if action == "set_zero":
             theta_eff = 0.0
     return theta_eff, flagged, reason
+
+
+def _log_kcor7_degenerate_or_unidentifiable(
+    degenerate_flag,
+    theta0_raw,
+    k_hat,
+    gamma_per_week,
+    theta0_max,
+    enroll_label,
+    yob_val,
+    dose_val,
+    relrmse_hspan,
+    theta_applied,
+    dual_print_fn,
+):
+    """If degenerate: log Gompertz unidentifiable when gamma_per_week/k_hat exceeds screen.
+
+    k_hat is the anchor mean of hazard_eff = hazard_from_mr(MR), i.e. **per-week** integrated
+    hazard increment (MR is weekly D_t/Y_t). gamma_per_week matches the Gompertz fit in
+    fit_theta0_gompertz (gamma_per_year/52). The screen
+
+        gamma_per_week / k_hat > theta0_max / 52
+
+    is equivalent to the previously used (but unit-mixed) gamma_per_year / k_hat > theta0_max.
+    """
+    if not degenerate_flag:
+        return
+    tmax = float(theta0_max)
+    ratio_threshold = tmax / 52.0
+    ratio = np.nan
+    if np.isfinite(k_hat) and float(k_hat) > 0.0 and np.isfinite(gamma_per_week) and float(gamma_per_week) > 0.0:
+        ratio = float(gamma_per_week) / float(k_hat)
+    rel_str = f"{float(relrmse_hspan):.6g}" if np.isfinite(relrmse_hspan) else "nan"
+    if np.isfinite(ratio) and ratio > ratio_threshold:
+        dual_print_fn(
+            f"[KCOR7_GOMPERTZ_UNIDENTIFIABLE] enroll={enroll_label}, yob={yob_val}, dose={int(dose_val)}\n"
+            f"  gamma_per_week/k_hat = {ratio:.4g} > theta0_max/52 = {ratio_threshold:g}\n"
+            f"  Gompertz model unidentifiable for this cohort — theta0 set to 0"
+        )
+    else:
+        dual_print_fn(
+            f"[KCOR7_DEGENERATE] enroll={enroll_label}, yob={yob_val}, dose={int(dose_val)}, "
+            f"theta0_raw={float(theta0_raw):.6g}, relRMSE={rel_str} -> theta0_applied={float(theta_applied):.1f}"
+        )
 
 
 def _apply_theta_min_deaths_guard(theta_hat, total_quiet_deaths, cfg):
@@ -5261,7 +5311,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             except Exception:
                                 total_quiet_deaths = np.nan
                             theta, _, _ = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
-                            theta, _, _ = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
+                            theta_pre_degenerate = float(theta)
+                            theta, sa_deg_flag, _ = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
+                            if sa_deg_flag:
+                                _log_kcor7_degenerate_or_unidentifiable(
+                                    sa_deg_flag,
+                                    theta_pre_degenerate,
+                                    _k_hat,
+                                    _sa_gompertz_cfg["gamma_per_week"],
+                                    float(theta_degen_cfg.get("theta0_max", 100.0)),
+                                    str(sh),
+                                    "SA",
+                                    int(dose_i),
+                                    relrmse_hspan,
+                                    theta,
+                                    dual_print,
+                                )
 
                             H0 = invert_gamma_frailty(H_obs, theta)
                             h0_inc = np.diff(H0, prepend=0.0)
@@ -5739,9 +5804,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                 if degenerate_flag:
                     note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
-                    dual_print(
-                        f"[KCOR7_DEGENERATE] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
-                        f"theta0_raw={theta0_raw:.6g}, relRMSE={relrmse_hspan:.6g} -> theta0_applied={theta:.1f}"
+                    _log_kcor7_degenerate_or_unidentifiable(
+                        degenerate_flag,
+                        theta0_raw,
+                        k_hat,
+                        _gcf["gamma_per_week"],
+                        float(theta_degen_cfg.get("theta0_max", 100.0)),
+                        effective_sheet_name,
+                        int(yob),
+                        int(dose),
+                        relrmse_hspan,
+                        theta,
+                        dual_print,
                     )
                 H0_full = invert_gamma_frailty(H_obs, theta)
                 H0_quiet = H0_full[fit_mask]
@@ -5944,9 +6018,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                         if degenerate_flag:
                             note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
-                            dual_print(
-                                f"[KCOR7_DEGENERATE] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
-                                f"theta0_raw={theta0_raw:.6g}, relRMSE={relrmse_hspan:.6g} -> theta0_applied={theta:.1f}"
+                            _log_kcor7_degenerate_or_unidentifiable(
+                                degenerate_flag,
+                                theta0_raw,
+                                k_hat,
+                                _gcf["gamma_per_week"],
+                                float(theta_degen_cfg.get("theta0_max", 100.0)),
+                                effective_sheet_name,
+                                -2,
+                                int(dose),
+                                relrmse_hspan,
+                                theta,
+                                dual_print,
                             )
 
                         H0_full = invert_gamma_frailty(H_obs, theta)
