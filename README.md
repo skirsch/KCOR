@@ -1,4 +1,4 @@
-# KCOR v7.2 - Kirsch Cumulative Outcomes Ratio Analysis
+# KCOR v7.3 - Kirsch Cumulative Outcomes Ratio Analysis
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -25,6 +25,7 @@
 - [🤝 Contributing](#-contributing)
 - [📚 Citation](#-citation)
 - [Version History](#version-history)
+  - [🆕 Version 7.3](#-version-73)
   - [🆕 Version 7.2](#-version-72)
   - [🆕 Version 4.3](#-version-43)
   - [🆕 Version 4.2](#-version-42)
@@ -1276,6 +1277,14 @@ If you use KCOR in your research, please cite:
 That is, if I'm lucky enough to get this published. It's ground breaking, but people seem uninterested in methods that expose the truth about the COVID vaccines for some reason.
 
 ## Version history
+
+### 🆕 Version 7.3
+
+*Released 2026-03-21.*
+
+#### Configuration validation
+
+- Loading **`theta_estimation_windows`** from the dataset YAML now **aborts** (`sys.exit(1)`) if any triple has **end ISO week before start** (with a clear stderr message and path to the YAML). Previously such rows were **silently dropped**, which could hide typos.
 
 ### 🆕 Version 7.2
 

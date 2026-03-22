@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v7.2"                # KCOR version number
+VERSION = "v7.3"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -198,6 +198,9 @@ VERSION = "v7.2"                # KCOR version number
 #        - YAML: time_varying_theta.gompertz_gamma, k_anchor_weeks (see Czech.yaml).
 #        - KCOR7_GOMPERTZ_UNIDENTIFIABLE when degenerate and gamma_per_week/k_hat > theta0_max/52.
 #        - Summary gamma_frailty_fit: theta_fit_status, relRMSE_hazard_fit.
+# v7.3 - Dataset YAML validation for theta windows (3/21/2026)
+#        - Exit with error if any theta_estimation_windows entry has end ISO week before start
+#          (no longer silently skipped).
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
@@ -1288,14 +1291,22 @@ def _load_dataset_dose_pairs_config():
                         try:
                             start_int = iso_label_to_int(start_raw)
                             end_int = iso_label_to_int(end_raw)
-                            if start_int <= end_int:
-                                parsed_theta_windows.append({
-                                    "start_iso": start_raw,
-                                    "end_iso": end_raw,
-                                    "start_int": int(start_int),
-                                    "end_int": int(end_int),
-                                    "label": label,
-                                })
+                            if start_int > end_int:
+                                lab = f" ({label})" if label else ""
+                                print(
+                                    f"ERROR: dataset YAML theta_estimation_windows: end < start{lab}: "
+                                    f"{start_raw!r} .. {end_raw!r} (fix order in {_dataset_yaml_path})",
+                                    file=sys.stderr,
+                                    flush=True,
+                                )
+                                sys.exit(1)
+                            parsed_theta_windows.append({
+                                "start_iso": start_raw,
+                                "end_iso": end_raw,
+                                "start_int": int(start_int),
+                                "end_int": int(end_int),
+                                "label": label,
+                            })
                         except Exception:
                             continue
                     _DATASET_THETA_ESTIMATION_WINDOWS_CACHE = parsed_theta_windows

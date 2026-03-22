@@ -13,7 +13,7 @@ birthBandYears: 5                   # 5 years age bands for the cohorts.
 covidCorrection:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  factor: 1.00           # 1.27 is the adjustment factor for a 2X mortality difference between cohorts because it is 2^1.35 where 1.35 is the ratio between 11.5% and 8.5% standard death annual hazard rates. 
+  factor: 1.27           # 1.27 is the adjustment factor for a 2X mortality difference between cohorts because it is 2^1.35 where 1.35 is the ratio between 11.5% and 8.5% standard death annual hazard rates. 
 
 
 # The quiet window is used to estimate the theta parameter for the gamma frailty model.
@@ -31,7 +31,7 @@ theta_estimation_windows:
 #  - ['2023-05', '2023-40', 'post COVID']   # try a longer window to see if it makes a difference
     - ['2022-22', '2022-25', 'post booster']
     - ['2021-26', '2021-36', 'post primary']
-    - ['2024-11', '2020-14', 'post 2024']
+    - ['2024-11', '2024-14', 'post 2024']
 
 # KCOR v7: Gompertz + frailty-depletion theta0 fit (see documentation/specs/KCORv7/KCOR_v7_gompertz_instructions.md)
 # k is fixed from mean hazard over k_anchor_weeks after DYNAMIC_HVE_SKIP_WEEKS (in code, not YAML).
