@@ -1132,11 +1132,13 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     if not np.isfinite(k_fixed) or k_fixed <= EPS:
         return _fail(np.nan, "k_anchor_too_small", int(np.count_nonzero(fit_mask_theta)))
 
-    quiet_idx = np.where(fit_mask_theta)[0]
+    quiet_only_mask = quiet & post_skip
+    quiet_idx = np.where(quiet_only_mask)[0]
     if quiet_idx.size < 3:
         return _fail(k_fixed, "n_fit<3", int(quiet_idx.size))
 
-    # Build contiguous quiet windows by index and keep first quiet window for seeding.
+    # Build contiguous quiet windows from quiet-only points.
+    # Do not include anchor-only bins here; first quiet window is the pre-wave seed window.
     segments = []
     seg_start = int(quiet_idx[0])
     prev = int(quiet_idx[0])
@@ -1152,7 +1154,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     first_seg_start, first_seg_end = segments[0]
     first_quiet_mask = np.zeros_like(fit_mask_theta, dtype=bool)
     first_quiet_mask[first_seg_start:first_seg_end + 1] = True
-    first_quiet_mask &= fit_mask_theta
+    first_quiet_mask &= quiet_only_mask
     first_idx = np.where(first_quiet_mask)[0]
     if first_idx.size < 3:
         return _fail(k_fixed, "first_quiet_window_too_small", int(first_idx.size))
@@ -1268,10 +1270,12 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             if _iter == 0:
                 # Applicability failure: do NOT clamp-and-continue.
                 delta_inapplicable = True
-                theta_fb, rmse_fb, rel_fb, fb_ok = _fit_theta(first_quiet_mask, theta, Delta=None)
+                # Fallback to single-pass fit on the full theta-fit mask
+                # (quiet + anchor bins), not the anchor-only segment.
+                theta_fb, rmse_fb, rel_fb, fb_ok = _fit_theta(fit_mask_theta, theta, Delta=None)
                 if fb_ok and np.isfinite(theta_fb):
                     theta = float(theta_fb)
-                fit_mask_out = first_quiet_mask.copy()
+                fit_mask_out = fit_mask_theta.copy()
                 n_fit_out = int(np.count_nonzero(fit_mask_out))
                 status = "delta_inapplicable"
                 return (k_fixed, theta), {
