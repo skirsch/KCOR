@@ -40,6 +40,7 @@ theta_estimation_windows:
 time_varying_theta:
   gompertz_gamma: 0.085   # per year; biological aging scale for theta fit
   k_anchor_weeks: 4       # weeks after HVE skip used to pin baseline k
+  k_anchor_tolerance: 0.20  # bounded first-window k fit: [k_anchor*(1-tol), k_anchor*(1+tol)]
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Enrollment dates for cohort analysis (ISO week format: YYYY-WW)
