@@ -8621,7 +8621,10 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     ]
                     gamma_frailty_df = gamma_frailty_df[[col for col in column_order if col in gamma_frailty_df.columns]]
                     gamma_frailty_df.to_excel(writer, index=False, sheet_name="gamma_frailty_fit")
-                    dual_print(f"  - gamma_frailty_fit: {len(gamma_frailty_df)} diagnostic rows")
+                    dual_print(
+                        f"  - gamma_frailty_fit: {len(gamma_frailty_df)} diagnostic rows "
+                        f"(file={summary_path}, sheet=gamma_frailty_fit)"
+                    )
             
             # If we get here, the file was written successfully
             dual_print(f"[Summary] Created summary with {len(sheets)} enrollment periods")
