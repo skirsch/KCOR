@@ -4,16 +4,16 @@ overview: Replace the current Gompertz single-pass theta fit with the v7.4 delta
 todos:
   - id: upgrade-estimator-core
     content: Implement v7.4 delta-iteration theta estimator and helper functions in code/KCOR.py.
-    status: pending
+    status: completed
   - id: wire-existing-call-sites
     content: Keep existing call sites working with compatible diagnostics for sensitivity/per-age/all-ages fits.
-    status: pending
+    status: completed
   - id: version-and-docs
     content: Update version marker/history and README notes to describe v7.4 method change.
-    status: pending
+    status: completed
   - id: validate-paths
     content: Run theta-related tests/checks and verify no lints/regressions in touched files.
-    status: pending
+    status: completed
 isProject: false
 ---
 

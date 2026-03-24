@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v7.3"                # KCOR version number
+VERSION = "v7.4"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -201,6 +201,12 @@ VERSION = "v7.3"                # KCOR version number
 # v7.3 - Dataset YAML validation for theta windows (3/21/2026)
 #        - Exit with error if any theta_estimation_windows entry has end ISO week before start
 #          (no longer silently skipped).
+# v7.4 - Delta-iteration theta0 estimator (3/23/2026)
+#        - Replaced single-pass Gompertz theta fit with iterative gap-aware estimator:
+#          seed bounded (k,theta) on first quiet window, then iterate theta with per-gap deltas.
+#        - Added YAML config for k_anchor_tolerance and iteration controls
+#          (convergence_tol, max_iterations) under time_varying_theta.
+#        - Added diagnostics/warnings for k bound hits, weak identifiability, and negative-delta clamps.
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
@@ -1057,30 +1063,38 @@ def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
 
 
 def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_week, theta0_init=1.0):
-    """Estimate theta0 using Gompertz + frailty-depletion in hazard space (KCOR v7).
+    """Estimate theta0 using v7.4 delta-iteration (hazard space).
 
-    Time axis ``t_rebased`` = enrollment week index minus DYNAMIC_HVE_SKIP_WEEKS so that
-    t_rebased=0 is the first post-HVE week and H_gompertz(0)=0.
+    Inputs:
+      - h_arr: NPH-corrected weekly hazard series (same stream used downstream).
+      - t_rebased: enrollment-week index rebased so the first post-skip week is at 0.
+      - quiet_mask: mask of quiet weeks from configured theta estimation windows.
 
-    Model on fit points:
-        h = k * exp(gamma * t_rebased) / (1 + theta0 * H_gom)
-        H_gom = (k/gamma) * expm1(gamma * t_rebased)
-
-    k is fixed as the mean of h over t_rebased in [0, k_anchor_weeks). Theta fit uses
-    (quiet_mask | anchor_mask) & (t_rebased >= 0) with finite h.
-
-    Returns:
-        (k_hat, theta0_hat), diagnostics_dict
+    v7.4 steps:
+      1) Direct k read from early post-skip weeks (no optimization/bounds):
+         k = mean(h_obs(t) / exp(gamma*t)) over first k_anchor_weeks.
+      2) Initial theta from first quiet window only (pre-first-wave window).
+      3) Hold k fixed; iterate theta + delta_i across all quiet windows.
+         If any delta is negative on the first reconstruction pass, delta mode is
+         inapplicable and we fall back immediately to first-window-only theta fit.
     """
     h_arr = np.asarray(h_arr, dtype=float)
     t_r = np.asarray(t_rebased, dtype=float)
     quiet = np.asarray(quiet_mask, dtype=bool)
-    k_anch = int(k_anchor_weeks)
     gamma = float(gamma_per_week)
     theta0_init = max(float(theta0_init), 0.0)
 
-    def _fail(k_val, msg, n_fit=0, fit_mask=None):
-        fm = fit_mask if fit_mask is not None else np.zeros_like(quiet, dtype=bool)
+    gom_cfg = get_gompertz_theta_fit_config()
+    degen_cfg = get_theta_degenerate_fit_config()
+    theta0_max = float(degen_cfg.get("theta0_max", 100.0))
+    convergence_tol = float(gom_cfg.get("convergence_tol", 1e-8))
+    max_iterations = int(gom_cfg.get("max_iterations", 25))
+
+    valid = np.isfinite(h_arr) & np.isfinite(t_r)
+    post_skip = valid & (t_r >= 0.0)
+    fit_mask_theta = quiet & post_skip
+
+    def _fail(k_val, msg, n_fit=0):
         return (k_val, np.nan), {
             "success": False,
             "n_obs": int(n_fit),
@@ -1089,93 +1103,310 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             "relRMSE_hazard_fit": np.nan,
             "status": "insufficient_data",
             "message": msg,
-            "fit_mask_theta": fm,
+            "fit_mask_theta": fit_mask_theta.copy(),
             "anchor_only": False,
             "k_hat": float(k_val) if np.isfinite(k_val) else np.nan,
+            "identifiability_flag": False,
+            "delta_negative_clamped": False,
+            "delta_inapplicable": False,
+            "n_iterations": 0,
         }
 
-    anchor_mask = (t_r >= 0.0) & (t_r < float(k_anch))
-    if not np.any(anchor_mask):
-        return _fail(np.nan, "empty_anchor", 0)
+    if not np.isfinite(gamma) or gamma <= 0.0:
+        return _fail(np.nan, "bad_gamma", int(np.count_nonzero(fit_mask_theta)))
 
-    k = float(np.nanmean(h_arr[anchor_mask]))
-    if not np.isfinite(k) or k < 1e-12:
-        return _fail(np.nan, "k_too_small", 0)
+    post_idx = np.where(post_skip)[0]
+    if post_idx.size == 0:
+        return _fail(np.nan, "empty_post_skip", 0)
+    anchor_mask = post_skip & (t_r < float(k_anchor_weeks))
+    anchor_idx = np.where(anchor_mask)[0]
+    if anchor_idx.size == 0:
+        return _fail(np.nan, "empty_anchor", int(np.count_nonzero(fit_mask_theta)))
+    scale = np.exp(gamma * t_r[anchor_idx])
+    k_terms = h_arr[anchor_idx] / np.where(scale > EPS, scale, EPS)
+    k_terms = k_terms[np.isfinite(k_terms)]
+    if k_terms.size == 0:
+        return _fail(np.nan, "k_anchor_too_small", int(np.count_nonzero(fit_mask_theta)))
+    k_fixed = float(np.average(k_terms))
+    if not np.isfinite(k_fixed) or k_fixed <= EPS:
+        return _fail(np.nan, "k_anchor_too_small", int(np.count_nonzero(fit_mask_theta)))
 
-    if (not np.isfinite(gamma)) or gamma <= 0.0:
-        return _fail(k, "bad_gamma", 0)
+    quiet_idx = np.where(fit_mask_theta)[0]
+    if quiet_idx.size < 3:
+        return _fail(k_fixed, "n_fit<3", int(quiet_idx.size))
 
-    H_gom = (k / gamma) * np.expm1(gamma * t_r)
-    fit_mask_theta = (quiet | anchor_mask) & (t_r >= 0.0)
-    fit_mask_theta &= np.isfinite(h_arr) & np.isfinite(t_r)
-    n_fit = int(np.count_nonzero(fit_mask_theta))
-    if n_fit < 3:
-        return _fail(k, "n_fit<3", n_fit, fit_mask_theta.copy())
+    # Build contiguous quiet windows by index and keep first quiet window for seeding.
+    segments = []
+    seg_start = int(quiet_idx[0])
+    prev = int(quiet_idx[0])
+    for idx in quiet_idx[1:]:
+        idx = int(idx)
+        if idx == prev + 1:
+            prev = idx
+            continue
+        segments.append((seg_start, prev))
+        seg_start = idx
+        prev = idx
+    segments.append((seg_start, prev))
+    first_seg_start, first_seg_end = segments[0]
+    first_quiet_mask = np.zeros_like(fit_mask_theta, dtype=bool)
+    first_quiet_mask[first_seg_start:first_seg_end + 1] = True
+    first_quiet_mask &= fit_mask_theta
+    first_idx = np.where(first_quiet_mask)[0]
+    if first_idx.size < 3:
+        return _fail(k_fixed, "first_quiet_window_too_small", int(first_idx.size))
 
-    h_q = h_arr[fit_mask_theta]
-    t_q = t_r[fit_mask_theta]
-    H_q = H_gom[fit_mask_theta]
-    has_quiet_pt = bool(np.any(quiet & fit_mask_theta))
-    anchor_only_flag = not has_quiet_pt
+    def _build_H_gom_discrete(k_val):
+        H = np.zeros_like(h_arr, dtype=float)
+        H_running = 0.0
+        prev_t = None
+        prev_h_g = 0.0
+        for i in post_idx:
+            ti = float(t_r[i])
+            if prev_t is not None:
+                dt_steps = int(max(1, round(ti - prev_t)))
+                H_running += prev_h_g * float(dt_steps)
+            H[i] = H_running
+            prev_t = ti
+            prev_h_g = float(k_val) * safe_exp(gamma * ti)
+        return H
 
-    def _residuals(params):
-        th0 = float(params[0])
-        if th0 < 0.0 or not np.isfinite(th0):
-            return np.ones_like(h_q, dtype=float) * 1e6
-        den = 1.0 + th0 * H_q
-        den = np.where(den > EPS, den, EPS)
-        pred = k * np.exp(gamma * t_q) / den
-        return h_q - pred
+    H_gom_full = _build_H_gom_discrete(k_fixed)
 
-    try:
+    def _fit_theta(mask_bool, theta_start, Delta=None):
+        idx = np.where(mask_bool)[0]
+        if idx.size < 3:
+            return np.nan, np.nan, np.nan, False
+        h_local = h_arr[idx]
+        t_local = t_r[idx]
+        if Delta is None:
+            H_eff_local = H_gom_full[idx]
+        else:
+            H_eff_local = H_gom_full[idx] + Delta[idx]
+
+        def _res(params):
+            th = float(params[0])
+            if (not np.isfinite(th)) or th < 0.0:
+                return np.ones_like(h_local, dtype=float) * 1e6
+            den = np.where(1.0 + th * H_eff_local > EPS, 1.0 + th * H_eff_local, EPS)
+            pred_local = k_fixed * np.exp(gamma * t_local) / den
+            return h_local - pred_local
+
         res = least_squares(
-            _residuals,
-            x0=[theta0_init],
-            bounds=([0.0], [np.inf]),
+            _res,
+            x0=[min(max(float(theta_start), 0.0), theta0_max)],
+            bounds=([0.0], [theta0_max]),
             method="trf",
             ftol=1e-14,
             xtol=1e-14,
             gtol=1e-14,
         )
-        theta0_hat = float(res.x[0])
-        fun = np.asarray(res.fun, dtype=float)
-        rmse_h = float(np.sqrt(np.mean(fun**2))) if fun.size else np.nan
-        den = 1.0 + theta0_hat * H_q
-        den = np.where(den > EPS, den, EPS)
-        pred = k * np.exp(gamma * t_q) / den
-        rel_rmse = float(np.sqrt(np.mean(((h_q - pred) / (h_q + 1e-12)) ** 2)))
-        converged = bool(res.success) or (
-            hasattr(res, "cost") and res.cost is not None and float(res.cost) < 1e-20
-        )
-        status = "anchor_only" if anchor_only_flag else "ok"
-        success = bool(converged and status in ("ok", "anchor_only") and np.isfinite(theta0_hat))
-        return (k, theta0_hat), {
-            "success": success,
-            "n_obs": n_fit,
-            "n_fit": n_fit,
-            "rmse_hazard": rmse_h,
-            "relRMSE_hazard_fit": rel_rmse,
-            "status": status,
-            "message": status if status != "ok" else (str(res.message) if hasattr(res, "message") else "ok"),
-            "nfev": int(res.nfev) if hasattr(res, "nfev") else None,
-            "cost": float(res.cost) if hasattr(res, "cost") else None,
-            "fit_mask_theta": fit_mask_theta.copy(),
-            "anchor_only": anchor_only_flag,
-            "k_hat": k,
-        }
+        th_hat = float(res.x[0])
+        den = np.where(1.0 + th_hat * H_eff_local > EPS, 1.0 + th_hat * H_eff_local, EPS)
+        pred_local = k_fixed * np.exp(gamma * t_local) / den
+        resid_local = h_local - pred_local
+        rmse_local = float(np.sqrt(np.mean(resid_local**2))) if resid_local.size else np.nan
+        rel_local = float(np.sqrt(np.mean(((h_local - pred_local) / (h_local + 1e-12)) ** 2))) if resid_local.size else np.nan
+        return th_hat, rmse_local, rel_local, bool(res.success)
+
+    # Step 2: initial theta from first quiet window only (fixed k).
+    try:
+        theta_seed, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)
     except Exception as e:
-        return (k, np.nan), {
-            "success": False,
-            "n_obs": n_fit,
-            "n_fit": n_fit,
-            "rmse_hazard": np.nan,
-            "relRMSE_hazard_fit": np.nan,
-            "status": "error",
-            "message": f"exception: {e}",
-            "fit_mask_theta": fit_mask_theta.copy(),
-            "anchor_only": anchor_only_flag,
-            "k_hat": k,
-        }
+        return _fail(k_fixed, f"seed_fit_exception: {e}", int(first_idx.size))
+    if (not seed_ok) or (not np.isfinite(theta_seed)):
+        return _fail(k_fixed, "seed_fit_failed", int(first_idx.size))
+    theta = float(theta_seed)
+
+    # Derive gap-end boundaries from quiet-window gaps: t_gap_end = start(next_quiet)-1 index.
+    gap_end_idx = []
+    for i in range(len(segments) - 1):
+        next_start = int(segments[i + 1][0])
+        t_gap_end = int(next_start - 1)
+        if t_gap_end >= int(segments[i][1]) and t_gap_end < len(h_arr):
+            gap_end_idx.append(t_gap_end)
+
+    h_fit = h_arr[fit_mask_theta]
+    t_fit = t_r[fit_mask_theta]
+    n_fit = int(h_fit.size)
+
+    if n_fit < 3:
+        return _fail(k_fixed, "n_fit<3", n_fit)
+
+    delta_negative_clamped = False
+    delta_inapplicable = False
+    history = []
+    converged = False
+
+    for _iter in range(max_iterations):
+        # 3a: Reconstruct H0_eff over all post-skip points using current theta.
+        H0_eff = np.zeros_like(h_arr, dtype=float)
+        H_running = 0.0
+        for i in post_idx:
+            H0_eff[i] = H_running
+            hi = float(h_arr[i]) if np.isfinite(h_arr[i]) else 0.0
+            h0_i = hi * (1.0 + theta * H_running)
+            H_running += max(h0_i, 0.0)
+
+        # 3b: compute incremental deltas at each gap end.
+        deltas = []
+        cumulative_prev = 0.0
+        iteration_neg_preclamp = False
+        for gidx in gap_end_idx:
+            cumulative_i = float(H0_eff[gidx] - H_gom_full[gidx])
+            delta_i_raw = cumulative_i - cumulative_prev
+            if delta_i_raw < 0.0:
+                iteration_neg_preclamp = True
+                delta_i = 0.0
+            else:
+                delta_i = float(delta_i_raw)
+            deltas.append(delta_i)
+            cumulative_prev = cumulative_i
+
+        if iteration_neg_preclamp:
+            if _iter == 0:
+                # Applicability failure: do NOT clamp-and-continue.
+                delta_inapplicable = True
+                theta_fb, rmse_fb, rel_fb, fb_ok = _fit_theta(first_quiet_mask, theta, Delta=None)
+                if fb_ok and np.isfinite(theta_fb):
+                    theta = float(theta_fb)
+                fit_mask_out = first_quiet_mask.copy()
+                n_fit_out = int(np.count_nonzero(fit_mask_out))
+                status = "delta_inapplicable"
+                return (k_fixed, theta), {
+                    "success": bool(np.isfinite(theta)),
+                    "n_obs": n_fit_out,
+                    "n_fit": n_fit_out,
+                    "rmse_hazard": rmse_fb if np.isfinite(rmse_fb) else np.nan,
+                    "relRMSE_hazard_fit": rel_fb if np.isfinite(rel_fb) else np.nan,
+                    "status": status,
+                    "message": "DELTA_INAPPLICABLE: negative delta on first reconstruction pass; fallback to first quiet window",
+                    "fit_mask_theta": fit_mask_out,
+                    "anchor_only": False,
+                    "k_hat": k_fixed,
+                    "identifiability_flag": False,
+                    "delta_negative_clamped": False,
+                    "delta_inapplicable": True,
+                    "n_iterations": 0,
+                }
+            delta_negative_clamped = True
+
+        Delta = np.zeros_like(h_arr, dtype=float)
+        for gidx, di in zip(gap_end_idx, deltas):
+            start_idx = int(gidx + 1)
+            if start_idx < len(Delta):
+                Delta[start_idx:] += float(di)
+
+        # 3c: refit theta on all quiet windows with fixed k and accumulated Delta.
+        H_eff_fit = H_gom_full[fit_mask_theta] + Delta[fit_mask_theta]
+
+        def _residual_theta(params):
+            th = float(params[0])
+            if (not np.isfinite(th)) or th < 0.0:
+                return np.ones_like(h_fit, dtype=float) * 1e6
+            den = np.where(1.0 + th * H_eff_fit > EPS, 1.0 + th * H_eff_fit, EPS)
+            pred = k_fixed * np.exp(gamma * t_fit) / den
+            return h_fit - pred
+
+        try:
+            r = least_squares(
+                _residual_theta,
+                x0=[min(max(theta, 0.0), theta0_max)],
+                bounds=([0.0], [theta0_max]),
+                method="trf",
+                ftol=1e-14,
+                xtol=1e-14,
+                gtol=1e-14,
+            )
+        except Exception as e:
+            return (k_fixed, np.nan), {
+                "success": False,
+                "n_obs": n_fit,
+                "n_fit": n_fit,
+                "rmse_hazard": np.nan,
+                "relRMSE_hazard_fit": np.nan,
+                "status": "error",
+                "message": f"iter_fit_exception: {e}",
+                "fit_mask_theta": fit_mask_theta.copy(),
+                "anchor_only": False,
+                "k_hat": k_fixed,
+                "identifiability_flag": False,
+                "delta_negative_clamped": delta_negative_clamped,
+                "delta_inapplicable": delta_inapplicable,
+                "n_iterations": len(history),
+            }
+
+        theta_new = float(r.x[0])
+        history.append(theta_new)
+        if abs(theta_new - theta) < convergence_tol:
+            theta = theta_new
+            converged = True
+            break
+        theta = theta_new
+
+    # Final diagnostics at converged theta.
+    H_eff_final = H_gom_full[fit_mask_theta]
+    if gap_end_idx:
+        # Rebuild final Delta once at converged theta for RMSE diagnostics.
+        H0_eff = np.zeros_like(h_arr, dtype=float)
+        H_running = 0.0
+        for i in post_idx:
+            H0_eff[i] = H_running
+            hi = float(h_arr[i]) if np.isfinite(h_arr[i]) else 0.0
+            H_running += max(hi * (1.0 + theta * H_running), 0.0)
+        cumulative_prev = 0.0
+        Delta = np.zeros_like(h_arr, dtype=float)
+        for gidx in gap_end_idx:
+            cumulative_i = float(H0_eff[gidx] - H_gom_full[gidx])
+            delta_i_raw = cumulative_i - cumulative_prev
+            di = float(max(delta_i_raw, 0.0))
+            cumulative_prev = cumulative_i
+            if gidx + 1 < len(Delta):
+                Delta[gidx + 1:] += di
+        H_eff_final = H_gom_full[fit_mask_theta] + Delta[fit_mask_theta]
+
+    den = np.where(1.0 + theta * H_eff_final > EPS, 1.0 + theta * H_eff_final, EPS)
+    pred = k_fixed * np.exp(gamma * t_fit) / den
+    resid = h_fit - pred
+    rmse_h = float(np.sqrt(np.mean(resid**2))) if resid.size else np.nan
+    rel_rmse = float(np.sqrt(np.mean(((h_fit - pred) / (h_fit + 1e-12)) ** 2))) if resid.size else np.nan
+
+    # Identifiability flag: low quiet deaths or weak h-span on fit points.
+    quiet_hspan = np.nan
+    try:
+        if n_fit >= 2 and np.isfinite(H_eff_final[-1]) and np.isfinite(H_eff_final[0]):
+            quiet_hspan = float(H_eff_final[-1] - H_eff_final[0])
+    except Exception:
+        quiet_hspan = np.nan
+    identifiability_flag = bool((n_fit < 6) or (np.isfinite(quiet_hspan) and quiet_hspan < 1e-4))
+
+    status = "ok"
+    if identifiability_flag:
+        status = "weak_identifiability"
+    success = bool(np.isfinite(theta) and converged)
+
+    message = status
+    if delta_negative_clamped:
+        message += " | delta_negative_clamped"
+    if delta_inapplicable:
+        message += " | DELTA_INAPPLICABLE"
+
+    return (k_fixed, theta), {
+        "success": success,
+        "n_obs": n_fit,
+        "n_fit": n_fit,
+        "rmse_hazard": rmse_h,
+        "relRMSE_hazard_fit": rel_rmse,
+        "status": status,
+        "message": message,
+        "fit_mask_theta": fit_mask_theta.copy(),
+        "anchor_only": False,
+        "k_hat": k_fixed,
+        "identifiability_flag": identifiability_flag,
+        "delta_negative_clamped": delta_negative_clamped,
+        "delta_inapplicable": delta_inapplicable,
+        "n_iterations": len(history),
+    }
 
 
 # Cache for dataset dose pairs config (loaded once per run)
@@ -1211,6 +1442,9 @@ def _load_dataset_dose_pairs_config():
         "gamma_per_year": 0.085,
         "k_anchor_weeks": 4,
         "gamma_per_week": 0.085 / 52.0,
+        "k_anchor_tolerance": 0.20,
+        "convergence_tol": 1e-8,
+        "max_iterations": 25,
     }
     _dataset_name = os.environ.get('DATASET', 'Czech')
     # Resolve path relative to script location to handle different execution contexts
@@ -1386,6 +1620,30 @@ def _load_dataset_dose_pairs_config():
                                 _DATASET_GOMPERTZ_THETA_CFG_CACHE["k_anchor_weeks"] = _ka
                     except Exception:
                         pass
+                    try:
+                        _kat = _tv_theta_cfg.get("k_anchor_tolerance")
+                        if _kat is not None:
+                            _kat = float(_kat)
+                            if np.isfinite(_kat) and 0.0 <= _kat < 1.0:
+                                _DATASET_GOMPERTZ_THETA_CFG_CACHE["k_anchor_tolerance"] = _kat
+                    except Exception:
+                        pass
+                    try:
+                        _ctol = _tv_theta_cfg.get("convergence_tol")
+                        if _ctol is not None:
+                            _ctol = float(_ctol)
+                            if np.isfinite(_ctol) and _ctol > 0.0:
+                                _DATASET_GOMPERTZ_THETA_CFG_CACHE["convergence_tol"] = _ctol
+                    except Exception:
+                        pass
+                    try:
+                        _mit = _tv_theta_cfg.get("max_iterations")
+                        if _mit is not None:
+                            _mit = int(_mit)
+                            if _mit >= 1:
+                                _DATASET_GOMPERTZ_THETA_CFG_CACHE["max_iterations"] = _mit
+                    except Exception:
+                        pass
                     if DEBUG_VERBOSE:
                         print(
                             f"[DEBUG] Loaded Gompertz theta fit config from {_dataset_yaml_path}: {_DATASET_GOMPERTZ_THETA_CFG_CACHE}",
@@ -1533,11 +1791,17 @@ def get_gompertz_theta_fit_config():
         "gamma_per_year": 0.085,
         "k_anchor_weeks": 4,
         "gamma_per_week": 0.085 / 52.0,
+        "k_anchor_tolerance": 0.20,
+        "convergence_tol": 1e-8,
+        "max_iterations": 25,
     }
     return {
         "gamma_per_year": float(cfg["gamma_per_year"]),
         "k_anchor_weeks": int(cfg["k_anchor_weeks"]),
         "gamma_per_week": float(cfg["gamma_per_week"]),
+        "k_anchor_tolerance": float(cfg["k_anchor_tolerance"]),
+        "convergence_tol": float(cfg["convergence_tol"]),
+        "max_iterations": int(cfg["max_iterations"]),
     }
 
 
@@ -5044,7 +5308,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     _gc = get_gompertz_theta_fit_config()
     dual_print(
         f"  GOMPERTZ_THETA_FIT     = gamma={_gc['gamma_per_year']}/yr, "
-        f"k_anchor_weeks={_gc['k_anchor_weeks']}, gamma_per_week={_gc['gamma_per_week']:.6g}"
+        f"k_anchor_weeks={_gc['k_anchor_weeks']}, "
+        f"convergence_tol={_gc['convergence_tol']:.2g}, "
+        f"max_iterations={_gc['max_iterations']}, "
+        f"gamma_per_week={_gc['gamma_per_week']:.6g}"
     )
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
@@ -5294,6 +5561,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 _sa_gompertz_cfg["k_anchor_weeks"],
                                 _sa_gompertz_cfg["gamma_per_week"],
                             )
+                            if isinstance(diag, dict) and bool(diag.get("delta_negative_clamped", False)):
+                                dual_print(
+                                    f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
+                                )
+                            if isinstance(diag, dict) and bool(diag.get("delta_inapplicable", False)):
+                                dual_print(
+                                    f"[KCOR7_DELTA_INAPPLICABLE] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
+                                )
                             fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
                             if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
                                 fit_mask = np.asarray(quiet_mask_sa, dtype=bool)
@@ -5751,6 +6026,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"[KCOR7_THETA_ANCHOR_ONLY] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
                         f"n_fit={diag.get('n_fit', 0)}"
                     )
+                if isinstance(diag, dict) and bool(diag.get("identifiability_flag", False)):
+                    dual_print(
+                        f"[KCOR7_WEAK_IDENTIFIABILITY] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
+                        f"n_fit={diag.get('n_fit', 0)}, status={diag.get('status', '')}"
+                    )
+                    note = f"{note} | weak_identifiability".strip(" |")
+                if isinstance(diag, dict) and bool(diag.get("delta_negative_clamped", False)):
+                    dual_print(
+                        f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}"
+                    )
+                    note = f"{note} | delta_negative_clamped".strip(" |")
+                if isinstance(diag, dict) and bool(diag.get("delta_inapplicable", False)):
+                    dual_print(
+                        f"[KCOR7_DELTA_INAPPLICABLE] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}"
+                    )
+                    note = f"{note} | delta_inapplicable".strip(" |")
 
                 # Precompute span-relative RMSE for degeneracy guard before inversion
                 try:
@@ -5882,6 +6173,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
                     "relRMSE_hazard_fit": float(diag.get("relRMSE_hazard_fit", np.nan)) if isinstance(diag, dict) else np.nan,
                     "theta_fit_status": str(diag.get("status", "")) if isinstance(diag, dict) else "",
+                    "identifiability_flag": bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False,
                     "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                     "n_obs": int(n_obs),
                     "success": bool(success),
@@ -5989,6 +6281,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 f"[KCOR7_THETA_ANCHOR_ONLY] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
                                 f"n_fit={diag.get('n_fit', 0)}"
                             )
+                        if isinstance(diag, dict) and bool(diag.get("identifiability_flag", False)):
+                            dual_print(
+                                f"[KCOR7_WEAK_IDENTIFIABILITY] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
+                                f"n_fit={diag.get('n_fit', 0)}, status={diag.get('status', '')}"
+                            )
+                            note = f"{note} | weak_identifiability".strip(" |")
+                        if isinstance(diag, dict) and bool(diag.get("delta_negative_clamped", False)):
+                            dual_print(
+                                f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}"
+                            )
+                            note = f"{note} | delta_negative_clamped".strip(" |")
+                        if isinstance(diag, dict) and bool(diag.get("delta_inapplicable", False)):
+                            dual_print(
+                                f"[KCOR7_DELTA_INAPPLICABLE] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}"
+                            )
+                            note = f"{note} | delta_inapplicable".strip(" |")
 
                         # Extra diagnostics + degeneracy guard (pre-inversion)
                         try:
@@ -6092,6 +6400,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
                             "relRMSE_hazard_fit": float(diag.get("relRMSE_hazard_fit", np.nan)) if isinstance(diag, dict) else np.nan,
                             "theta_fit_status": str(diag.get("status", "")) if isinstance(diag, dict) else "",
+                            "identifiability_flag": bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False,
                             "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                             "n_obs": int(n_obs),
                             "success": bool(success),

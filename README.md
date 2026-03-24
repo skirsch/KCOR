@@ -1278,6 +1278,19 @@ That is, if I'm lucky enough to get this published. It's ground breaking, but pe
 
 ## Version history
 
+### 🆕 Version 7.4
+
+*Released 2026-03-23.*
+
+#### Theta estimation (KCOR v7.4)
+
+- Replaced the v7.2 single-pass Gompertz theta fit with a **delta-iteration** estimator that handles depletion jumps between quiet windows.
+- First-stage seed now uses bounded joint `(k, theta)` fit on the **first quiet window only**, where `k_anchor = h_nph(skip_week)` and `k` bounds are controlled by `time_varying_theta.k_anchor_tolerance` (e.g., `0.20 -> [0.8, 1.2] * k_anchor`).
+- During iteration, `k` is fixed; only `theta` and per-gap `delta_i` are updated. Wave gaps are inferred from `theta_estimation_windows` and evaluated with explicit gap-end indexing.
+- `H_gom` in the estimator is built as a **discrete running sum** (not analytic closed form) to align with discrete hazard reconstruction.
+- Added diagnostics/logging for bounded-`k` edge hits (`k_hit_bound`), weak identifiability, and negative-delta clamping/persistence warnings.
+- Added estimator controls under `time_varying_theta`: `k_anchor_tolerance`, `convergence_tol`, `max_iterations`.
+
 ### 🆕 Version 7.3
 
 *Released 2026-03-21.*
