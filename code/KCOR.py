@@ -1119,6 +1119,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     if post_idx.size == 0:
         return _fail(np.nan, "empty_post_skip", 0)
     anchor_mask = post_skip & (t_r < float(k_anchor_weeks))
+    fit_mask_theta = (quiet | anchor_mask) & post_skip
     anchor_idx = np.where(anchor_mask)[0]
     if anchor_idx.size == 0:
         return _fail(np.nan, "empty_anchor", int(np.count_nonzero(fit_mask_theta)))
