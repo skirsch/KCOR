@@ -1,0 +1,29 @@
+# Theta0 identification test parameters -- N-wave version
+# Demonstrates exact recovery of theta0 under multiple epidemic waves
+#
+# Range syntax for sweeps: "start:end:step"
+# e.g. "0.01:0.20:0.01" expands to [0.01, 0.02, ..., 0.20]
+
+cohort:
+  n_initial: 100000
+  annual_death_rates: "0.01:0.20:0.01"   # 1% to 20% per year in 1% steps
+  theta0_values:      "1:20:1"            # theta 1 to 20 in steps of 1
+
+gompertz:
+  gamma_per_year: 0.085
+
+epidemic_waves:
+  - start_week: 10
+    duration_weeks: 8
+    mortality_multiplier: 1.8
+  - start_week: 30
+    duration_weeks: 6
+    mortality_multiplier: 2.5
+
+simulation:
+  n_weeks: 104
+
+estimation:
+  theta0_max: 100.0
+  convergence_tol: 1e-10
+  max_iterations: 20

@@ -1,4 +1,6 @@
 # Czech dataset yaml file
+# make KCOR will use this file to run the KCOR analysis.
+
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
 # Changing this file will cause KCOR.py to be re-run, but NOT KCOR_CMR.py (since it's rare you change the enrollment dates)
 # KCOR_analysis.xlsx is stored for cases where the COVID correction is and is not applied for comparison purposes.
