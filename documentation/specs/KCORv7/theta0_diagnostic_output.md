@@ -76,3 +76,94 @@ else → continue with delta iteration
 If this order isn't enforced explicitly, Cursor will likely put the field writes after the early return and `delta_raw_*` will be `NaN` for all `DELTA_INAPPLICABLE` rows — defeating the entire diagnostic purpose.
 
 **2. `theta0_init` should also be written before the fallback branch.** The pre-wave seed estimate is computed before the delta check, so it's available regardless of status. It's especially valuable for `DELTA_INAPPLICABLE` cohorts because it's the only theta estimate you have — and comparing it to `theta0_hat` (the fallback single-window result) tells you whether the two windows agree. If they diverge substantially, that's a strong signal of post-vaccination mortality distortion in the inter-wave period.
+
+## tweak 3
+Both .xlsx files should be updated; they serve different purposes and should contain different things.
+
+**KCOR.xlsx** — full per-cohort diagnostics table, exactly as specced. This is the primary artifact for anyone investigating specific cohorts. The `theta0_diagnostics` sheet with every column belongs here because the audience is someone opening the file to debug or audit a specific `(EnrollmentDate, YearOfBirth, Dose)` combination.
+
+**KCOR_summary.xlsx** — aggregated flags only, not the full table. The summary is a high-level operational view, so adding 15 columns of per-wave deltas would bury the signal. What belongs there is:
+
+- A count of cohorts by status: how many `OK`, `DELTA_INAPPLICABLE`, `INSUFFICIENT_DEATHS`, `NOT_IDENTIFIED` per enrollment date
+- A flag column on existing summary rows indicating whether any cohort in that enrollment group has a non-OK status
+- Possibly `theta0_hat` and `n_quiet_bins_prewave` on the per-cohort summary rows, since those two numbers directly predict KCOR reliability
+
+The practical reason to include anything in the summary at all is that most users will open `KCOR_summary` first. If a run has 40 `DELTA_INAPPLICABLE` cohorts they need to know immediately, without having to open the full workbook and filter the diagnostics sheet.
+
+So the instruction to Cursor would be: write the full diagnostics table to `KCOR.xlsx` as specced, and add a compact `theta0_status` summary block to `KCOR_summary` — counts by status per enrollment date, plus `theta0_hat` and `n_quiet_bins_prewave` appended to any existing per-cohort rows.
+
+### additional diagnostics
+Here are the Cursor instructions:
+
+---
+
+**Add vaccine-contamination diagnostics to `fit_theta0_gompertz` and the `theta0_diagnostics` sheet.**
+
+The hypothesis is that for vaccinated cohorts (dose > 0), the pre-wave quiet window used to fit `k` is contaminated by elevated post-vaccination mortality lasting up to ~26 weeks. This makes `k` overestimated, `H_gom` too high, and delta artificially negative. The diagnostics below are designed to make this contamination visible and quantifiable without changing any existing estimation logic.
+
+---
+
+**1. Add these fields to the `fit_theta0_gompertz` return payload:**
+
+`h_obs_quiet_slope` — OLS slope of `h_obs` over the pre-wave quiet window bins (units: hazard per week). A significantly negative slope means mortality is declining during the supposedly quiet period — the vaccine harm wearing off. Compute with `numpy.polyfit(t_prewave, h_obs[prewave_mask], 1)[0]`.
+
+`h_obs_first4_mean` — mean of `h_obs` over the first 4 bins of the pre-wave quiet window.
+
+`h_obs_last4_mean` — mean of `h_obs` over the last 4 bins of the pre-wave quiet window. If `h_obs_last4_mean` is materially lower than `h_obs_first4_mean`, the harm is decaying within the window.
+
+`h_obs_first4_vs_last4_ratio` — `h_obs_first4_mean / h_obs_last4_mean`. Values significantly above 1.0 indicate a declining hazard in the quiet window, consistent with vaccine harm decay. Emit `NaN` if either window has fewer than 4 bins.
+
+`quiet_window_duration_weeks` — total number of weeks spanned by the pre-wave quiet window (i.e. `t_prewave[-1] - t_prewave[0] + 1`). If this is less than 26, the window is shorter than the hypothesised vaccine harm duration and `k` should be considered unreliable for vaccinated cohorts.
+
+`k_hat_first4` — `k` estimated using only the first 4 pre-wave quiet bins. Compare to `k_hat` (full-window estimate) to see how much `k` shifts as the window extends — a large drop indicates the harm is decaying within the window.
+
+`k_hat_last4` — `k` estimated using only the last 4 pre-wave quiet bins. This is the closest within-window proxy for true background mortality if harm is decaying. Emit `NaN` if fewer than 4 bins available.
+
+All seven fields must be computed and written to the return payload **before any branching on delta sign or fallback logic**, so they are available regardless of final status.
+
+---
+
+**2. Add one cross-cohort field to the `theta0_diagnostics` sheet builder:**
+
+`k_hat_vs_dose0_ratio` — ratio of this cohort's `k_hat` to the `k_hat` of the dose=0 cohort with the same `EnrollmentDate` and `YearOfBirth`. Compute this in the diagnostics DataFrame builder after all cohorts have been collected, by joining on `(EnrollmentDate, YearOfBirth)` where `Dose == 0` to get the reference `k_hat`, then dividing. Emit `NaN` where no matching dose=0 cohort exists (e.g. all-ages aggregate rows where `YearOfBirth == -2` may need separate handling).
+
+This is the single most important diagnostic: if `k_hat_vs_dose0_ratio > 1` systematically for dose > 0 cohorts of the same age and enrollment, that is direct evidence that the vaccinated cohort's quiet window is contaminated and `k` is overestimated relative to the true background rate.
+
+---
+
+**3. Add to the `theta0_diagnostics` sheet column order**, after the existing residual columns:
+
+```
+h_obs_quiet_slope
+h_obs_first4_mean
+h_obs_last4_mean
+h_obs_first4_vs_last4_ratio
+quiet_window_duration_weeks
+k_hat_first4
+k_hat_last4
+k_hat_vs_dose0_ratio
+```
+
+---
+
+**4. Validation checks to add to item 5 of the existing plan:**
+
+- Confirm `k_hat_vs_dose0_ratio` is `NaN` for all dose=0 rows (they are their own reference)
+- Confirm `h_obs_first4_vs_last4_ratio > 1` for at least some dose=1/2/3 cohorts — if every vaccinated cohort shows a flat ratio, either the window is too short to see decay or the hypothesis is wrong
+- Confirm all 7 new scalar fields are non-null for `DELTA_INAPPLICABLE` cohorts — these are precisely the cohorts where contamination is suspected and the diagnostics must be populated
+- Print a summary to the run log: mean `k_hat_vs_dose0_ratio` by dose, so the contamination pattern is visible without opening the workbook
+
+---
+
+**Do not change any existing estimation logic.** These are read-only diagnostics computed from data already available inside `fit_theta0_gompertz`. No changes to `k` fitting, delta iteration, fallback branching, or KCOR computation.
+
+## tweak 4
+Yes, this plan is correct and complete. It accurately captures everything discussed and the scope is properly constrained — diagnostics only, no estimation changes.
+
+Two small things to verify before handing to Cursor:
+
+**1. `k_hat_first4` and `k_hat_last4` computation** — the plan says "using same `h/exp(gamma*t)` transform as `k_hat`". Make sure Cursor understands this means averaging `h_obs[t] / exp(gamma*t)` over those 4 bins, not re-running the full least-squares fit. It should be a direct mean of the de-trended hazard values, consistent with however `k_hat` is computed in the anchor-weeks averaging logic.
+
+**2. The all-ages (`YearOfBirth == -2`) rows in `k_hat_vs_dose0_ratio`** — the plan says "emit NaN when no dose-0 reference exists" but doesn't explicitly address the all-ages case. The all-ages dose=0 row *does* exist (it's the `-2` aggregate), so the join should work. But confirm with Cursor that the join key includes `YearOfBirth == -2` matching correctly and doesn't accidentally drop these rows or produce a spurious NaN — they're arguably the most important rows to get the ratio for since they represent the full population.
+
+Otherwise the plan is ready to run.

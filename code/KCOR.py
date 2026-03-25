@@ -76,7 +76,7 @@ uses slope8 (quantile regression depletion-mode normalization) and direct hazard
 """
 
 # Version information
-VERSION = "v7.4"                # KCOR version number
+VERSION = "v7.5"                # KCOR version number
 
 # Version History:
 # v4.0 - Initial implementation with slope correction applied to individual MRs then cumulated
@@ -207,6 +207,10 @@ VERSION = "v7.4"                # KCOR version number
 #        - Added YAML config for k_anchor_tolerance and iteration controls
 #          (convergence_tol, max_iterations) under time_varying_theta.
 #        - Added diagnostics/warnings for k bound hits, weak identifiability, and negative-delta clamps.
+# v7.5 - Theta diagnostics output expansion (3/24/2026)
+#        - Added theta0_diagnostics sheet to KCOR.xlsx with per-cohort theta fit diagnostics,
+#          including dynamic delta_raw_*/delta_applied_* wave columns and fallback-safe raw delta capture.
+#        - Added theta0 status columns to dose_pairs and compact theta0 status summary metrics in KCOR_summary.xlsx.
 
 """
 December 21, 2025 (KCOR reporting date is end of 2022):
@@ -1094,12 +1098,23 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     post_skip = valid & (t_r >= 0.0)
     fit_mask_theta = quiet & post_skip
 
+    def _window_bounds(mask_bool):
+        idx = np.where(np.asarray(mask_bool, dtype=bool))[0]
+        if idx.size == 0:
+            return (np.nan, np.nan)
+        t_vals_local = t_r[idx]
+        if t_vals_local.size == 0:
+            return (np.nan, np.nan)
+        return (float(np.nanmin(t_vals_local)), float(np.nanmax(t_vals_local)))
+
     def _fail(k_val, msg, n_fit=0):
+        win_start, win_end = _window_bounds(fit_mask_theta)
         return (k_val, np.nan), {
             "success": False,
             "n_obs": int(n_fit),
             "n_fit": int(n_fit),
             "rmse_hazard": np.nan,
+            "fit_residual_max": np.nan,
             "relRMSE_hazard_fit": np.nan,
             "status": "insufficient_data",
             "message": msg,
@@ -1109,7 +1124,23 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             "identifiability_flag": False,
             "delta_negative_clamped": False,
             "delta_inapplicable": False,
+            "delta_negative": False,
+            "delta_raw_values": [],
+            "delta_applied_values": [],
+            "theta0_init": np.nan,
+            "n_quiet_bins": int(np.count_nonzero(quiet & post_skip)),
+            "n_quiet_bins_prewave": 0,
+            "h_obs_quiet_slope": np.nan,
+            "h_obs_first4_mean": np.nan,
+            "h_obs_last4_mean": np.nan,
+            "h_obs_first4_vs_last4_ratio": np.nan,
+            "quiet_window_duration_weeks": np.nan,
+            "k_hat_first4": np.nan,
+            "k_hat_last4": np.nan,
+            "quiet_window_start": win_start,
+            "quiet_window_end": win_end,
             "n_iterations": 0,
+            "n_iter": 0,
         }
 
     if not np.isfinite(gamma) or gamma <= 0.0:
@@ -1179,7 +1210,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     def _fit_theta(mask_bool, theta_start, Delta=None):
         idx = np.where(mask_bool)[0]
         if idx.size < 3:
-            return np.nan, np.nan, np.nan, False
+            return np.nan, np.nan, np.nan, np.nan, False
         h_local = h_arr[idx]
         t_local = t_r[idx]
         if Delta is None:
@@ -1210,11 +1241,12 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         resid_local = h_local - pred_local
         rmse_local = float(np.sqrt(np.mean(resid_local**2))) if resid_local.size else np.nan
         rel_local = float(np.sqrt(np.mean(((h_local - pred_local) / (h_local + 1e-12)) ** 2))) if resid_local.size else np.nan
-        return th_hat, rmse_local, rel_local, bool(res.success)
+        max_abs_local = float(np.nanmax(np.abs(resid_local))) if resid_local.size else np.nan
+        return th_hat, rmse_local, rel_local, max_abs_local, bool(res.success)
 
     # Step 2: initial theta from first quiet window only (fixed k).
     try:
-        theta_seed, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)
+        theta_seed, _, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)
     except Exception as e:
         return _fail(k_fixed, f"seed_fit_exception: {e}", int(first_idx.size))
     if (not seed_ok) or (not np.isfinite(theta_seed)):
@@ -1238,8 +1270,53 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
 
     delta_negative_clamped = False
     delta_inapplicable = False
+    delta_negative = False
+    delta_raw_values = []
+    delta_applied_values = []
     history = []
     converged = False
+    theta0_init_fitted = float(theta_seed)
+    n_quiet_bins = int(np.count_nonzero(quiet_only_mask))
+    n_quiet_bins_prewave = int(first_idx.size)
+    win_start, win_end = _window_bounds(fit_mask_theta)
+    t_prewave = t_r[first_idx]
+    h_prewave = h_arr[first_idx]
+
+    h_obs_quiet_slope = np.nan
+    h_obs_first4_mean = np.nan
+    h_obs_last4_mean = np.nan
+    h_obs_first4_vs_last4_ratio = np.nan
+    quiet_window_duration_weeks = np.nan
+    k_hat_first4 = np.nan
+    k_hat_last4 = np.nan
+
+    try:
+        if t_prewave.size >= 2:
+            h_obs_quiet_slope = float(np.polyfit(t_prewave, h_prewave, 1)[0])
+        if t_prewave.size >= 1:
+            quiet_window_duration_weeks = float(t_prewave[-1] - t_prewave[0] + 1.0)
+        if t_prewave.size >= 4:
+            first4_idx = first_idx[:4]
+            last4_idx = first_idx[-4:]
+            h_obs_first4_mean = float(np.nanmean(h_arr[first4_idx]))
+            h_obs_last4_mean = float(np.nanmean(h_arr[last4_idx]))
+            if np.isfinite(h_obs_first4_mean) and np.isfinite(h_obs_last4_mean) and abs(h_obs_last4_mean) > EPS:
+                h_obs_first4_vs_last4_ratio = float(h_obs_first4_mean / h_obs_last4_mean)
+
+            first4_scale = np.exp(gamma * t_r[first4_idx])
+            first4_terms = h_arr[first4_idx] / np.where(first4_scale > EPS, first4_scale, EPS)
+            first4_terms = first4_terms[np.isfinite(first4_terms)]
+            if first4_terms.size == 4:
+                k_hat_first4 = float(np.average(first4_terms))
+
+            last4_scale = np.exp(gamma * t_r[last4_idx])
+            last4_terms = h_arr[last4_idx] / np.where(last4_scale > EPS, last4_scale, EPS)
+            last4_terms = last4_terms[np.isfinite(last4_terms)]
+            if last4_terms.size == 4:
+                k_hat_last4 = float(np.average(last4_terms))
+    except Exception:
+        # Diagnostics are read-only; keep NaN if any edge-case computation fails.
+        pass
 
     for _iter in range(max_iterations):
         # 3a: Reconstruct H0_eff over all post-skip points using current theta.
@@ -1253,11 +1330,13 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
 
         # 3b: compute incremental deltas at each gap end.
         deltas = []
+        delta_raw_iter = []
         cumulative_prev = 0.0
         iteration_neg_preclamp = False
         for gidx in gap_end_idx:
             cumulative_i = float(H0_eff[gidx] - H_gom_full[gidx])
             delta_i_raw = cumulative_i - cumulative_prev
+            delta_raw_iter.append(float(delta_i_raw))
             if delta_i_raw < 0.0:
                 iteration_neg_preclamp = True
                 delta_i = 0.0
@@ -1266,13 +1345,23 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             deltas.append(delta_i)
             cumulative_prev = cumulative_i
 
+        # Persist first-pass raw/apply diagnostics before any early return branch.
+        if _iter == 0:
+            delta_raw_values = [float(x) for x in delta_raw_iter]
+            delta_applied_values = [float(x) for x in deltas]
+            delta_negative = bool(any(x < 0.0 for x in delta_raw_values))
+        else:
+            delta_raw_values = [float(x) for x in delta_raw_iter]
+            delta_applied_values = [float(x) for x in deltas]
+            delta_negative = bool(delta_negative or any(x < 0.0 for x in delta_raw_iter))
+
         if iteration_neg_preclamp:
             if _iter == 0:
                 # Applicability failure: do NOT clamp-and-continue.
                 delta_inapplicable = True
                 # Fallback to single-pass fit on the full theta-fit mask
                 # (quiet + anchor bins), not the anchor-only segment.
-                theta_fb, rmse_fb, rel_fb, fb_ok = _fit_theta(fit_mask_theta, theta, Delta=None)
+                theta_fb, rmse_fb, rel_fb, max_abs_fb, fb_ok = _fit_theta(fit_mask_theta, theta, Delta=None)
                 if fb_ok and np.isfinite(theta_fb):
                     theta = float(theta_fb)
                 fit_mask_out = fit_mask_theta.copy()
@@ -1283,6 +1372,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                     "n_obs": n_fit_out,
                     "n_fit": n_fit_out,
                     "rmse_hazard": rmse_fb if np.isfinite(rmse_fb) else np.nan,
+                    "fit_residual_max": max_abs_fb if np.isfinite(max_abs_fb) else np.nan,
                     "relRMSE_hazard_fit": rel_fb if np.isfinite(rel_fb) else np.nan,
                     "status": status,
                     "message": "DELTA_INAPPLICABLE: negative delta on first reconstruction pass; fallback to first quiet window",
@@ -1292,7 +1382,23 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                     "identifiability_flag": False,
                     "delta_negative_clamped": False,
                     "delta_inapplicable": True,
+                    "delta_negative": delta_negative,
+                    "delta_raw_values": [float(x) for x in delta_raw_values],
+                    "delta_applied_values": [float(x) for x in delta_applied_values],
+                    "theta0_init": theta0_init_fitted,
+                    "n_quiet_bins": n_quiet_bins,
+                    "n_quiet_bins_prewave": n_quiet_bins_prewave,
+                    "h_obs_quiet_slope": h_obs_quiet_slope,
+                    "h_obs_first4_mean": h_obs_first4_mean,
+                    "h_obs_last4_mean": h_obs_last4_mean,
+                    "h_obs_first4_vs_last4_ratio": h_obs_first4_vs_last4_ratio,
+                    "quiet_window_duration_weeks": quiet_window_duration_weeks,
+                    "k_hat_first4": k_hat_first4,
+                    "k_hat_last4": k_hat_last4,
+                    "quiet_window_start": win_start,
+                    "quiet_window_end": win_end,
                     "n_iterations": 0,
+                    "n_iter": 0,
                 }
             delta_negative_clamped = True
 
@@ -1329,6 +1435,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                 "n_obs": n_fit,
                 "n_fit": n_fit,
                 "rmse_hazard": np.nan,
+                "fit_residual_max": np.nan,
                 "relRMSE_hazard_fit": np.nan,
                 "status": "error",
                 "message": f"iter_fit_exception: {e}",
@@ -1338,7 +1445,23 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                 "identifiability_flag": False,
                 "delta_negative_clamped": delta_negative_clamped,
                 "delta_inapplicable": delta_inapplicable,
+                "delta_negative": delta_negative,
+                "delta_raw_values": [float(x) for x in delta_raw_values],
+                "delta_applied_values": [float(x) for x in delta_applied_values],
+                "theta0_init": theta0_init_fitted,
+                "n_quiet_bins": n_quiet_bins,
+                "n_quiet_bins_prewave": n_quiet_bins_prewave,
+                "h_obs_quiet_slope": h_obs_quiet_slope,
+                "h_obs_first4_mean": h_obs_first4_mean,
+                "h_obs_last4_mean": h_obs_last4_mean,
+                "h_obs_first4_vs_last4_ratio": h_obs_first4_vs_last4_ratio,
+                "quiet_window_duration_weeks": quiet_window_duration_weeks,
+                "k_hat_first4": k_hat_first4,
+                "k_hat_last4": k_hat_last4,
+                "quiet_window_start": win_start,
+                "quiet_window_end": win_end,
                 "n_iterations": len(history),
+                "n_iter": len(history),
             }
 
         theta_new = float(r.x[0])
@@ -1374,6 +1497,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     pred = k_fixed * np.exp(gamma * t_fit) / den
     resid = h_fit - pred
     rmse_h = float(np.sqrt(np.mean(resid**2))) if resid.size else np.nan
+    fit_resid_max = float(np.nanmax(np.abs(resid))) if resid.size else np.nan
     rel_rmse = float(np.sqrt(np.mean(((h_fit - pred) / (h_fit + 1e-12)) ** 2))) if resid.size else np.nan
 
     # Identifiability flag: low quiet deaths or weak h-span on fit points.
@@ -1401,6 +1525,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         "n_obs": n_fit,
         "n_fit": n_fit,
         "rmse_hazard": rmse_h,
+        "fit_residual_max": fit_resid_max,
         "relRMSE_hazard_fit": rel_rmse,
         "status": status,
         "message": message,
@@ -1410,7 +1535,23 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         "identifiability_flag": identifiability_flag,
         "delta_negative_clamped": delta_negative_clamped,
         "delta_inapplicable": delta_inapplicable,
+        "delta_negative": delta_negative,
+        "delta_raw_values": [float(x) for x in delta_raw_values],
+        "delta_applied_values": [float(x) for x in delta_applied_values],
+        "theta0_init": theta0_init_fitted,
+        "n_quiet_bins": n_quiet_bins,
+        "n_quiet_bins_prewave": n_quiet_bins_prewave,
+        "h_obs_quiet_slope": h_obs_quiet_slope,
+        "h_obs_first4_mean": h_obs_first4_mean,
+        "h_obs_last4_mean": h_obs_last4_mean,
+        "h_obs_first4_vs_last4_ratio": h_obs_first4_vs_last4_ratio,
+        "quiet_window_duration_weeks": quiet_window_duration_weeks,
+        "k_hat_first4": k_hat_first4,
+        "k_hat_last4": k_hat_last4,
+        "quiet_window_start": win_start,
+        "quiet_window_end": win_end,
         "n_iterations": len(history),
+        "n_iter": len(history),
     }
 
 
@@ -3735,6 +3876,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 # Extract theta_num and theta_den from KCOR6 params map
                 theta_num = np.nan
                 theta_den = np.nan
+                theta0_status_num = ""
+                theta0_status_den = ""
                 if kcor6_params_map is not None:
                     # In Monte Carlo mode, include mc_id in the lookup key
                     if MONTE_CARLO_MODE and mc_id_val_yob is not None:
@@ -3747,19 +3890,23 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         theta_num_val = params_num_kcor6.get("theta_hat", np.nan)
                         if np.isfinite(theta_num_val):
                             theta_num = float(theta_num_val)
+                        theta0_status_num = str(params_num_kcor6.get("theta0_status", "") or "")
                     if isinstance(params_den_kcor6, dict):
                         theta_den_val = params_den_kcor6.get("theta_hat", np.nan)
                         if np.isfinite(theta_den_val):
                             theta_den = float(theta_den_val)
+                        theta0_status_den = str(params_den_kcor6.get("theta0_status", "") or "")
                 merged["theta_num"] = theta_num
                 merged["theta_den"] = theta_den
+                merged["theta0_status_num"] = theta0_status_num
+                merged["theta0_status_den"] = theta0_status_den
             
                 # Output columns: hazard=raw, cum_hazard=raw cumulative, adj_cum_hazard=adjusted cumulative
                 # Include mc_id if present (Monte Carlo mode)
                 output_cols = ["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
                               "hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
                               "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den",
-                              "theta_num","theta_den","abnormal_fit"]
+                              "theta_num","theta_den","theta0_status_num","theta0_status_den","abnormal_fit"]
                 # CRITICAL FIX: Always include mc_id if it exists in merged, regardless of has_mc_id flag
                 # (has_mc_id might be False if gv/gu don't have it, but merged might have it from the merge)
                 if "mc_id" in merged.columns:
@@ -3834,7 +3981,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 column_order = [
                     "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
                     "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-                    "theta_num", "theta_den",
+                    "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
                     "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
                     "hazard_den", "cum_hazard_den", "adj_cum_hazard_den", "abnormal_fit", "mc_id"
                 ]
@@ -4085,6 +4232,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     # Extract theta_num and theta_den from KCOR6 params map for pooled rows
                     theta_num_pooled = np.nan
                     theta_den_pooled = np.nan
+                    theta0_status_num_pooled = ""
+                    theta0_status_den_pooled = ""
                     if kcor6_params_map is not None:
                         # For pooled rows, we need to aggregate theta across age groups
                         # Use weighted average or take from highest-weight age group
@@ -4098,10 +4247,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                                 theta_num_val = params_num_check.get("theta_hat", np.nan)
                                 if np.isfinite(theta_num_val):
                                     theta_num_pooled = float(theta_num_val)
+                                theta0_status_num_pooled = str(params_num_check.get("theta0_status", "") or theta0_status_num_pooled)
                             if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled):
                                 theta_den_val = params_den_check.get("theta_hat", np.nan)
                                 if np.isfinite(theta_den_val):
                                     theta_den_pooled = float(theta_den_val)
+                                theta0_status_den_pooled = str(params_den_check.get("theta0_status", "") or theta0_status_den_pooled)
                             if not (np.isnan(theta_num_pooled) or np.isnan(theta_den_pooled)):
                                 break
                     
@@ -4122,6 +4273,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                         "Dose_den": den,
                         "theta_num": theta_num_pooled,
                         "theta_den": theta_den_pooled,
+                        "theta0_status_num": theta0_status_num_pooled,
+                        "theta0_status_den": theta0_status_den_pooled,
                         "hazard_num": np.nan,  # Pooled ASMR has no per-dose hazards
                         "cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose cumulative hazards
                         "adj_cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose adjusted cumulative hazards
@@ -4309,6 +4462,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 # Extract theta_num and theta_den from KCOR6 params map for pooled rows
                 theta_num_pooled_asmr = np.nan
                 theta_den_pooled_asmr = np.nan
+                theta0_status_num_pooled_asmr = ""
+                theta0_status_den_pooled_asmr = ""
                 if kcor6_params_map is not None:
                     # Use theta from first contributing age group
                     for yob_check in df_sorted["YearOfBirth"].unique():
@@ -4320,10 +4475,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                             theta_num_val = params_num_check.get("theta_hat", np.nan)
                             if np.isfinite(theta_num_val):
                                 theta_num_pooled_asmr = float(theta_num_val)
+                            theta0_status_num_pooled_asmr = str(params_num_check.get("theta0_status", "") or theta0_status_num_pooled_asmr)
                         if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled_asmr):
                             theta_den_val = params_den_check.get("theta_hat", np.nan)
                             if np.isfinite(theta_den_val):
                                 theta_den_pooled_asmr = float(theta_den_val)
+                            theta0_status_den_pooled_asmr = str(params_den_check.get("theta0_status", "") or theta0_status_den_pooled_asmr)
                         if not (np.isnan(theta_num_pooled_asmr) or np.isnan(theta_den_pooled_asmr)):
                             break
                 
@@ -4342,6 +4499,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     "Dose_den": den,
                     "theta_num": theta_num_pooled_asmr,
                     "theta_den": theta_den_pooled_asmr,
+                    "theta0_status_num": theta0_status_num_pooled_asmr,
+                    "theta0_status_den": theta0_status_den_pooled_asmr,
                     "CH_num": np.nan,  # Pooled All Ages ASMR has no per-dose CH
                     "CH_den": np.nan,
                     "hazard_num": np.nan,
@@ -4674,6 +4833,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
             # In Monte Carlo mode, include mc_id in the lookup key
             theta_num_all = np.nan
             theta_den_all = np.nan
+            theta0_status_num_all = ""
+            theta0_status_den_all = ""
             if kcor6_params_map is not None:
                 if MONTE_CARLO_MODE and mc_id_all_ages_val is not None:
                     params_num_all_kcor6 = kcor6_params_map.get((sheet_name, int(mc_id_all_ages_val), -2, int(num)), {})
@@ -4685,10 +4846,12 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                     theta_num_val = params_num_all_kcor6.get("theta_hat", np.nan)
                     if np.isfinite(theta_num_val):
                         theta_num_all = float(theta_num_val)
+                    theta0_status_num_all = str(params_num_all_kcor6.get("theta0_status", "") or "")
                 if isinstance(params_den_all_kcor6, dict):
                     theta_den_val = params_den_all_kcor6.get("theta_hat", np.nan)
                     if np.isfinite(theta_den_val):
                         theta_den_all = float(theta_den_val)
+                    theta0_status_den_all = str(params_den_all_kcor6.get("theta0_status", "") or "")
             
             # Build output rows for all-ages: hazard, cum_hazard, adj_cum_hazard
             # Preserve mc_id from merged data if present
@@ -4720,6 +4883,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
                 "Dose_den": den,
                 "theta_num": theta_num_all,
                 "theta_den": theta_den_all,
+                "theta0_status_num": theta0_status_num_all,
+                "theta0_status_den": theta0_status_den_all,
                 "hazard_num": row["hazard_raw_num"],
                 "cum_hazard_num": row["CH_actual_num"],  # cum_hazard_num = raw cumulative hazard
                 "adj_cum_hazard_num": row["CH_num"],  # adj_cum_hazard_num = adjusted cumulative hazard
@@ -4740,7 +4905,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         # Keep standard columns: Dose_num, Dose_den, theta_num, theta_den, hazard_num, hazard_den,
         # cum_hazard_num, cum_hazard_den, adj_cum_hazard_num, adj_cum_hazard_den
         cols_to_drop = [c for c in combined.columns if any(c.endswith(suffix) for suffix in ["_num", "_den", "_X", "_y", "_M", "_P"]) 
-                       and c not in ["Dose_num", "Dose_den", "theta_num", "theta_den",
+                       and c not in ["Dose_num", "Dose_den", "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
                                     "hazard_num", "hazard_den", "cum_hazard_num", "cum_hazard_den",
                                     "adj_cum_hazard_num", "adj_cum_hazard_den"]]
         for col in cols_to_drop:
@@ -4769,7 +4934,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         standard_columns = [
             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-            "theta_num", "theta_den",
+            "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
             "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
             "abnormal_fit", "mc_id"
@@ -4784,7 +4949,7 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     return pd.DataFrame(columns=[
         "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
         "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-        "theta_num", "theta_den",
+        "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
         "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
         "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
         "abnormal_fit", "mc_id"
@@ -4887,6 +5052,157 @@ def build_kcor_o_rows(df, sheet_name):
     if out_rows:
         return pd.concat(out_rows, ignore_index=True)
     return pd.DataFrame(columns=["EnrollmentDate","ISOweekDied","Date","YearOfBirth","Dose_num","Dose_den","KCOR_o"])
+
+
+def build_theta0_diagnostics_rows(kcor6_params_map):
+    """Build one theta0 diagnostics row per cohort key in kcor6_params_map."""
+    if not isinstance(kcor6_params_map, dict) or not kcor6_params_map:
+        base_cols = [
+            "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
+            "n_quiet_bins", "n_quiet_bins_prewave", "n_iter",
+            "delta_negative", "status", "quiet_window_start", "quiet_window_end",
+            "fit_residual_max", "fit_residual_rms",
+            "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+            "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+            "k_hat_first4", "k_hat_last4", "k_hat_vs_dose0_ratio"
+        ]
+        return pd.DataFrame(columns=base_cols)
+
+    def _as_float(v):
+        try:
+            fv = float(v)
+            return fv if np.isfinite(fv) else np.nan
+        except Exception:
+            return np.nan
+
+    def _as_int(v, default=0):
+        try:
+            return int(v)
+        except Exception:
+            return int(default)
+
+    rows = []
+    max_waves = 0
+    has_mc_id = False
+
+    for key, params in kcor6_params_map.items():
+        if not isinstance(params, dict):
+            continue
+        enrollment = None
+        mc_id = None
+        yob = None
+        dose = None
+        if isinstance(key, tuple):
+            if len(key) == 4:
+                enrollment, mc_id, yob, dose = key
+                has_mc_id = True
+            elif len(key) == 3:
+                enrollment, yob, dose = key
+            else:
+                continue
+        else:
+            continue
+
+        delta_raw_values = params.get("delta_raw_values", [])
+        delta_applied_values = params.get("delta_applied_values", [])
+        if not isinstance(delta_raw_values, (list, tuple, np.ndarray)):
+            delta_raw_values = []
+        if not isinstance(delta_applied_values, (list, tuple, np.ndarray)):
+            delta_applied_values = []
+        max_waves = max(max_waves, len(delta_raw_values), len(delta_applied_values))
+
+        row = {
+            "EnrollmentDate": str(enrollment),
+            "YearOfBirth": _as_int(yob, default=-1),
+            "Dose": _as_int(dose, default=-1),
+            "k_hat": _as_float(params.get("k_hat", np.nan)),
+            "theta0_init": _as_float(params.get("theta0_init", np.nan)),
+            "theta0_hat": _as_float(params.get("theta0_hat", params.get("theta_hat", np.nan))),
+            "n_quiet_bins": _as_int(params.get("n_quiet_bins", params.get("n_obs", 0)), default=0),
+            "n_quiet_bins_prewave": _as_int(params.get("n_quiet_bins_prewave", 0), default=0),
+            "n_iter": _as_int(params.get("n_iter", params.get("n_iterations", 0)), default=0),
+            "delta_negative": bool(params.get("delta_negative", False)),
+            "status": str(params.get("theta0_status", "") or ""),
+            "quiet_window_start": _as_float(params.get("quiet_window_start", np.nan)),
+            "quiet_window_end": _as_float(params.get("quiet_window_end", np.nan)),
+            "fit_residual_max": _as_float(params.get("fit_residual_max", np.nan)),
+            "fit_residual_rms": _as_float(params.get("fit_residual_rms", params.get("rmse_Hobs", np.nan))),
+            "h_obs_quiet_slope": _as_float(params.get("h_obs_quiet_slope", np.nan)),
+            "h_obs_first4_mean": _as_float(params.get("h_obs_first4_mean", np.nan)),
+            "h_obs_last4_mean": _as_float(params.get("h_obs_last4_mean", np.nan)),
+            "h_obs_first4_vs_last4_ratio": _as_float(params.get("h_obs_first4_vs_last4_ratio", np.nan)),
+            "quiet_window_duration_weeks": _as_float(params.get("quiet_window_duration_weeks", np.nan)),
+            "k_hat_first4": _as_float(params.get("k_hat_first4", np.nan)),
+            "k_hat_last4": _as_float(params.get("k_hat_last4", np.nan)),
+        }
+        if mc_id is not None:
+            row["mc_id"] = _as_int(mc_id, default=-1)
+
+        for idx, val in enumerate(delta_raw_values, start=1):
+            row[f"delta_raw_{idx}"] = _as_float(val)
+        for idx, val in enumerate(delta_applied_values, start=1):
+            row[f"delta_applied_{idx}"] = _as_float(val)
+        rows.append(row)
+
+    if not rows:
+        base_cols = [
+            "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
+            "n_quiet_bins", "n_quiet_bins_prewave", "n_iter",
+            "delta_negative", "status", "quiet_window_start", "quiet_window_end",
+            "fit_residual_max", "fit_residual_rms",
+            "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+            "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+            "k_hat_first4", "k_hat_last4", "k_hat_vs_dose0_ratio"
+        ]
+        if has_mc_id:
+            base_cols = ["mc_id"] + base_cols
+        return pd.DataFrame(columns=base_cols)
+
+    base_cols = [
+        "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
+        "n_quiet_bins", "n_quiet_bins_prewave", "n_iter"
+    ]
+    wave_cols = []
+    for idx in range(1, max_waves + 1):
+        wave_cols.extend([f"delta_raw_{idx}", f"delta_applied_{idx}"])
+    tail_cols = [
+        "delta_negative", "status", "quiet_window_start", "quiet_window_end",
+        "fit_residual_max", "fit_residual_rms",
+        "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+        "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+        "k_hat_first4", "k_hat_last4", "k_hat_vs_dose0_ratio"
+    ]
+
+    df_diag = pd.DataFrame(rows)
+    ref_keys = ["EnrollmentDate", "YearOfBirth"]
+    if has_mc_id and "mc_id" in df_diag.columns:
+        ref_keys = ["mc_id"] + ref_keys
+    ref_dose0 = df_diag[df_diag["Dose"] == 0][ref_keys + ["k_hat"]].copy()
+    ref_dose0 = ref_dose0.rename(columns={"k_hat": "k_hat_dose0_ref"})
+    if not ref_dose0.empty:
+        df_diag = df_diag.merge(ref_dose0, on=ref_keys, how="left")
+    else:
+        df_diag["k_hat_dose0_ref"] = np.nan
+    df_diag["k_hat_vs_dose0_ratio"] = np.where(
+        df_diag["Dose"] == 0,
+        np.nan,
+        df_diag["k_hat"] / df_diag["k_hat_dose0_ref"]
+    )
+    df_diag.drop(columns=["k_hat_dose0_ref"], inplace=True, errors="ignore")
+    if has_mc_id:
+        ordered = ["mc_id"] + base_cols + wave_cols + tail_cols
+    else:
+        ordered = base_cols + wave_cols + tail_cols
+    for col in ordered:
+        if col not in df_diag.columns:
+            df_diag[col] = np.nan
+    df_diag = df_diag[ordered].copy()
+
+    sort_cols = ["EnrollmentDate", "YearOfBirth", "Dose"]
+    if "mc_id" in df_diag.columns:
+        sort_cols = ["mc_id"] + sort_cols
+    return df_diag.sort_values(sort_cols).reset_index(drop=True)
+
 
 def build_kcor_ns_rows(df, sheet_name):
     """Compute KCOR_ns assuming zero slopes for all cohorts (no slope normalization).
@@ -6162,10 +6478,28 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     mc_id_val=mc_id_fit,
                 )
 
+                identifiability_flag = bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False
+                diag_status = str(diag.get("status", "")) if isinstance(diag, dict) else ""
+                delta_inapplicable_flag = bool(diag.get("delta_inapplicable", False)) if isinstance(diag, dict) else False
+                not_identified_flag = bool(
+                    identifiability_flag
+                    or (not bool(success))
+                    or (diag_status in ("insufficient_data", "error", "weak_identifiability"))
+                )
+                if not_identified_flag:
+                    theta0_status = "NOT_IDENTIFIED"
+                elif bool(lowdeath_flag):
+                    theta0_status = "INSUFFICIENT_DEATHS"
+                elif delta_inapplicable_flag:
+                    theta0_status = "DELTA_INAPPLICABLE"
+                else:
+                    theta0_status = "OK"
+
                 params_dict = {
                     "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
                     "theta_hat": float(theta) if np.isfinite(theta) else np.nan,
                     "theta0_hat": float(theta) if np.isfinite(theta) else np.nan,
+                    "theta0_init": float(diag.get("theta0_init", np.nan)) if isinstance(diag, dict) else np.nan,
                     "theta0_raw": float(theta0_raw) if np.isfinite(theta0_raw) else np.nan,
                     "theta_applied": float(theta) if np.isfinite(theta) else np.nan,
                     "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
@@ -6174,13 +6508,32 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "theta_source": str(theta_source),
                     "quiet_window": str(quiet_window_label),
                     "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                    "fit_residual_rms": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                    "fit_residual_max": float(diag.get("fit_residual_max", np.nan)) if isinstance(diag, dict) else np.nan,
                     "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
                     "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
                     "relRMSE_hazard_fit": float(diag.get("relRMSE_hazard_fit", np.nan)) if isinstance(diag, dict) else np.nan,
-                    "theta_fit_status": str(diag.get("status", "")) if isinstance(diag, dict) else "",
-                    "identifiability_flag": bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False,
+                    "theta_fit_status": diag_status,
+                    "identifiability_flag": identifiability_flag,
                     "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                     "n_obs": int(n_obs),
+                    "n_quiet_bins": int(diag.get("n_quiet_bins", n_obs)) if isinstance(diag, dict) else int(n_obs),
+                    "n_quiet_bins_prewave": int(diag.get("n_quiet_bins_prewave", 0)) if isinstance(diag, dict) else 0,
+                    "h_obs_quiet_slope": float(diag.get("h_obs_quiet_slope", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "h_obs_first4_mean": float(diag.get("h_obs_first4_mean", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "h_obs_last4_mean": float(diag.get("h_obs_last4_mean", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "h_obs_first4_vs_last4_ratio": float(diag.get("h_obs_first4_vs_last4_ratio", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "quiet_window_duration_weeks": float(diag.get("quiet_window_duration_weeks", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "k_hat_first4": float(diag.get("k_hat_first4", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "k_hat_last4": float(diag.get("k_hat_last4", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "n_iter": int(diag.get("n_iter", diag.get("n_iterations", 0))) if isinstance(diag, dict) else 0,
+                    "delta_negative": bool(diag.get("delta_negative", False)) if isinstance(diag, dict) else False,
+                    "delta_inapplicable": delta_inapplicable_flag,
+                    "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                    "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
+                    "quiet_window_start": float(diag.get("quiet_window_start", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "quiet_window_end": float(diag.get("quiet_window_end", np.nan)) if isinstance(diag, dict) else np.nan,
+                    "theta0_status": theta0_status,
                     "success": bool(success),
                     "note": str(note),
                 }
@@ -6389,10 +6742,27 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             z_end=z_end,
                             mc_id_val=mc_id_all,
                         )
+                        identifiability_flag = bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False
+                        diag_status = str(diag.get("status", "")) if isinstance(diag, dict) else ""
+                        delta_inapplicable_flag = bool(diag.get("delta_inapplicable", False)) if isinstance(diag, dict) else False
+                        not_identified_flag = bool(
+                            identifiability_flag
+                            or (not bool(success))
+                            or (diag_status in ("insufficient_data", "error", "weak_identifiability"))
+                        )
+                        if not_identified_flag:
+                            theta0_status = "NOT_IDENTIFIED"
+                        elif bool(lowdeath_flag):
+                            theta0_status = "INSUFFICIENT_DEATHS"
+                        elif delta_inapplicable_flag:
+                            theta0_status = "DELTA_INAPPLICABLE"
+                        else:
+                            theta0_status = "OK"
                         params_dict = {
                             "k_hat": float(k_hat) if np.isfinite(k_hat) else np.nan,
                             "theta_hat": float(theta) if np.isfinite(theta) else np.nan,
                             "theta0_hat": float(theta) if np.isfinite(theta) else np.nan,
+                            "theta0_init": float(diag.get("theta0_init", np.nan)) if isinstance(diag, dict) else np.nan,
                             "theta0_raw": float(theta0_raw) if np.isfinite(theta0_raw) else np.nan,
                             "theta_applied": float(theta) if np.isfinite(theta) else np.nan,
                             "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
@@ -6401,13 +6771,32 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "theta_source": str(theta_source),
                             "quiet_window": str(quiet_window_label),
                             "rmse_Hobs": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                            "fit_residual_rms": float(rmse_h) if np.isfinite(rmse_h) else np.nan,
+                            "fit_residual_max": float(diag.get("fit_residual_max", np.nan)) if isinstance(diag, dict) else np.nan,
                             "Hspan_Hobs": float(hspan_hobs) if np.isfinite(hspan_hobs) else np.nan,
                             "relRMSE_HobsSpan": float(relrmse_hspan) if np.isfinite(relrmse_hspan) else np.nan,
                             "relRMSE_hazard_fit": float(diag.get("relRMSE_hazard_fit", np.nan)) if isinstance(diag, dict) else np.nan,
-                            "theta_fit_status": str(diag.get("status", "")) if isinstance(diag, dict) else "",
-                            "identifiability_flag": bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False,
+                            "theta_fit_status": diag_status,
+                            "identifiability_flag": identifiability_flag,
                             "z_end": float(z_end) if np.isfinite(z_end) else np.nan,
                             "n_obs": int(n_obs),
+                            "n_quiet_bins": int(diag.get("n_quiet_bins", n_obs)) if isinstance(diag, dict) else int(n_obs),
+                            "n_quiet_bins_prewave": int(diag.get("n_quiet_bins_prewave", 0)) if isinstance(diag, dict) else 0,
+                            "h_obs_quiet_slope": float(diag.get("h_obs_quiet_slope", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "h_obs_first4_mean": float(diag.get("h_obs_first4_mean", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "h_obs_last4_mean": float(diag.get("h_obs_last4_mean", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "h_obs_first4_vs_last4_ratio": float(diag.get("h_obs_first4_vs_last4_ratio", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "quiet_window_duration_weeks": float(diag.get("quiet_window_duration_weeks", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "k_hat_first4": float(diag.get("k_hat_first4", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "k_hat_last4": float(diag.get("k_hat_last4", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "n_iter": int(diag.get("n_iter", diag.get("n_iterations", 0))) if isinstance(diag, dict) else 0,
+                            "delta_negative": bool(diag.get("delta_negative", False)) if isinstance(diag, dict) else False,
+                            "delta_inapplicable": delta_inapplicable_flag,
+                            "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                            "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
+                            "quiet_window_start": float(diag.get("quiet_window_start", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "quiet_window_end": float(diag.get("quiet_window_end", np.nan)) if isinstance(diag, dict) else np.nan,
+                            "theta0_status": theta0_status,
                             "success": bool(success),
                             "note": str(note),
                         }
@@ -8121,7 +8510,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         standard_col_order = [
                             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
-                            "theta_num", "theta_den",
+                            "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
                             "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
                             "abnormal_fit", "mc_id"
@@ -8179,6 +8568,66 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 "K_raw_o","KCOR_o","CMRR"
                             ])
                         pair_deaths_df.to_excel(writer, index=False, sheet_name="dose_pair_deaths")
+
+                        # Cohort-level theta0 diagnostics (one row per EnrollmentDate/YoB/Dose[/mc_id]).
+                        theta0_diag_df = build_theta0_diagnostics_rows(kcor6_params_map)
+                        if not theta0_diag_df.empty:
+                            # Validation: ratio must be NaN for dose=0 rows.
+                            dose0_bad_ratio = theta0_diag_df[
+                                (theta0_diag_df.get("Dose", np.nan) == 0)
+                                & (theta0_diag_df.get("k_hat_vs_dose0_ratio", np.nan).notna())
+                            ]
+                            if len(dose0_bad_ratio) > 0:
+                                dual_print(
+                                    f"[THETA0_DIAG_WARNING] k_hat_vs_dose0_ratio non-NaN for {len(dose0_bad_ratio)} dose=0 rows."
+                                )
+
+                            # Validation: at least some vaccinated cohorts should show within-window decline (>1 ratio).
+                            decay_rows = theta0_diag_df[
+                                (theta0_diag_df.get("Dose", np.nan) > 0)
+                                & (theta0_diag_df.get("h_obs_first4_vs_last4_ratio", np.nan) > 1.0)
+                            ]
+                            vaccinated_rows = theta0_diag_df[theta0_diag_df.get("Dose", np.nan) > 0]
+                            if len(vaccinated_rows) > 0 and len(decay_rows) == 0:
+                                dual_print(
+                                    "[THETA0_DIAG_INFO] No vaccinated cohorts with h_obs_first4_vs_last4_ratio > 1.0 "
+                                    "(window may be short or contamination signal absent)."
+                                )
+
+                            # Validation: these diagnostic scalars should be populated for DELTA_INAPPLICABLE rows.
+                            required_diag_cols = [
+                                "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+                                "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+                                "k_hat_first4", "k_hat_last4",
+                            ]
+                            delta_inapplicable_rows = theta0_diag_df[
+                                theta0_diag_df.get("status", "").astype(str) == "DELTA_INAPPLICABLE"
+                            ]
+                            if len(delta_inapplicable_rows) > 0:
+                                missing_mask = delta_inapplicable_rows[required_diag_cols].isna().any(axis=1)
+                                missing_count = int(np.count_nonzero(missing_mask.to_numpy()))
+                                if missing_count > 0:
+                                    dual_print(
+                                        f"[THETA0_DIAG_WARNING] {missing_count} DELTA_INAPPLICABLE rows have missing contamination diagnostics."
+                                    )
+
+                            # Run-log summary: mean k_hat_vs_dose0_ratio by dose.
+                            ratio_by_dose = (
+                                theta0_diag_df[
+                                    (theta0_diag_df.get("Dose", np.nan) > 0)
+                                    & (theta0_diag_df.get("k_hat_vs_dose0_ratio", np.nan).notna())
+                                ]
+                                .groupby("Dose", as_index=False)["k_hat_vs_dose0_ratio"]
+                                .mean()
+                            )
+                            if not ratio_by_dose.empty:
+                                ratio_parts = []
+                                for _, _r in ratio_by_dose.sort_values("Dose").iterrows():
+                                    ratio_parts.append(f"dose={int(_r['Dose'])}:mean_ratio={float(_r['k_hat_vs_dose0_ratio']):.4f}")
+                                dual_print(f"[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | {'; '.join(ratio_parts)}")
+                            else:
+                                dual_print("[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | no eligible dose>0 rows")
+                        theta0_diag_df.to_excel(writer, index=False, sheet_name="theta0_diagnostics")
 
                         # --- Manufacturer KCOR (Moderna vs Pfizer) comparisons ---
                         # Read auxiliary MFG sheets from input workbook and compute M/P KCOR by cohort
@@ -8498,6 +8947,28 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
             x["year_of_birth"],
             x["dose"]
         ))
+
+    theta0_status_summary_rows = []
+
+    def _theta0_status_from_params(params):
+        if not isinstance(params, dict):
+            return "NOT_IDENTIFIED"
+        status = str(params.get("theta0_status", "") or "").strip()
+        if status:
+            return status
+        if bool(params.get("identifiability_flag", False)):
+            return "NOT_IDENTIFIED"
+        if bool(params.get("insufficient_deaths", False)):
+            return "INSUFFICIENT_DEATHS"
+        if bool(params.get("delta_inapplicable", False)):
+            return "DELTA_INAPPLICABLE"
+        return "OK"
+
+    def _theta0_params_lookup(enrollment_date, yob, dose):
+        if not isinstance(kcor6_params_map, dict):
+            return None
+        params = kcor6_params_map.get((enrollment_date, int(yob), int(dose)))
+        return params if isinstance(params, dict) else None
     
     # Write summary file with retry logic
     max_retries = 3
@@ -8527,6 +8998,33 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         report_date = sheet_data["Date"].max()
                     latest_data = sheet_data[sheet_data["Date"] == report_date]
                     
+                    # Compact counts of theta0 status for this enrollment date.
+                    theta_counts = {"OK": 0, "DELTA_INAPPLICABLE": 0, "INSUFFICIENT_DEATHS": 0, "NOT_IDENTIFIED": 0}
+                    if isinstance(kcor6_params_map, dict):
+                        for key, params in kcor6_params_map.items():
+                            if not isinstance(key, tuple) or len(key) != 3:
+                                continue
+                            if str(key[0]) != str(sheet_name):
+                                continue
+                            st = _theta0_status_from_params(params)
+                            if st not in theta_counts:
+                                st = "NOT_IDENTIFIED"
+                            theta_counts[st] += 1
+                    any_non_ok_theta = bool(
+                        theta_counts["DELTA_INAPPLICABLE"] > 0
+                        or theta_counts["INSUFFICIENT_DEATHS"] > 0
+                        or theta_counts["NOT_IDENTIFIED"] > 0
+                    )
+                    theta0_status_summary_rows.append({
+                        "enrollment_date": sheet_name,
+                        "reporting_date": report_date.strftime("%Y-%m-%d"),
+                        "OK": int(theta_counts["OK"]),
+                        "DELTA_INAPPLICABLE": int(theta_counts["DELTA_INAPPLICABLE"]),
+                        "INSUFFICIENT_DEATHS": int(theta_counts["INSUFFICIENT_DEATHS"]),
+                        "NOT_IDENTIFIED": int(theta_counts["NOT_IDENTIFIED"]),
+                        "any_non_ok_status": any_non_ok_theta,
+                    })
+
                     # Create summary format similar to console output
                     summary_rows = []
                     # Insert a header noting reporting date for this sheet
@@ -8535,7 +9033,12 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         "YearOfBirth": "",
                         "KCOR": "",
                         "CI_Lower": "",
-                        "CI_Upper": ""
+                        "CI_Upper": "",
+                        "Any_NonOK_Status": any_non_ok_theta,
+                        "theta0_hat_num": "",
+                        "theta0_hat_den": "",
+                        "n_quiet_bins_prewave_num": "",
+                        "n_quiet_bins_prewave_den": "",
                     })
                     
                     # Get unique dose pairs for this sheet
@@ -8571,7 +9074,12 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                             "YearOfBirth": "",
                             "KCOR": "",
                             "CI_Lower": "",
-                            "CI_Upper": ""
+                            "CI_Upper": "",
+                            "Any_NonOK_Status": any_non_ok_theta,
+                            "theta0_hat_num": "",
+                            "theta0_hat_den": "",
+                            "n_quiet_bins_prewave_num": "",
+                            "n_quiet_bins_prewave_den": "",
                         })
                         
                         # Add data rows for each age group
@@ -8589,13 +9097,34 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                             # Check if abnormal fit flag is present
                             abnormal_fit_flag = row.get("abnormal_fit", False) if "abnormal_fit" in row.index else False
                             abnormal_marker = "*" if abnormal_fit_flag else ""
+                            theta0_hat_num = np.nan
+                            theta0_hat_den = np.nan
+                            n_qb_pre_num = np.nan
+                            n_qb_pre_den = np.nan
+                            row_theta_non_ok = False
+                            params_num = _theta0_params_lookup(sheet_name, age, dose_num)
+                            params_den = _theta0_params_lookup(sheet_name, age, dose_den)
+                            if isinstance(params_num, dict):
+                                theta0_hat_num = params_num.get("theta0_hat", params_num.get("theta_hat", np.nan))
+                                n_qb_pre_num = params_num.get("n_quiet_bins_prewave", np.nan)
+                                row_theta_non_ok = row_theta_non_ok or (_theta0_status_from_params(params_num) != "OK")
+                            if isinstance(params_den, dict):
+                                theta0_hat_den = params_den.get("theta0_hat", params_den.get("theta_hat", np.nan))
+                                n_qb_pre_den = params_den.get("n_quiet_bins_prewave", np.nan)
+                                row_theta_non_ok = row_theta_non_ok or (_theta0_status_from_params(params_den) != "OK")
                             
                             summary_rows.append({
                                 "Dose_Combination": "",
                                 "YearOfBirth": age_label,
                                 "KCOR": f"{row['KCOR']:.4f}{abnormal_marker}",
                                 "CI_Lower": f"{row['CI_lower']:.3f}",
-                                "CI_Upper": f"{row['CI_upper']:.3f}"
+                                "CI_Upper": f"{row['CI_upper']:.3f}",
+                                "Any_NonOK_Status": any_non_ok_theta,
+                                "theta0_hat_num": theta0_hat_num,
+                                "theta0_hat_den": theta0_hat_den,
+                                "n_quiet_bins_prewave_num": n_qb_pre_num,
+                                "n_quiet_bins_prewave_den": n_qb_pre_den,
+                                "Row_Theta0_NonOK": row_theta_non_ok,
                             })
                         
                         # Add empty row for separation
@@ -8604,7 +9133,12 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                             "YearOfBirth": "",
                             "KCOR": "",
                             "CI_Lower": "",
-                            "CI_Upper": ""
+                            "CI_Upper": "",
+                            "Any_NonOK_Status": any_non_ok_theta,
+                            "theta0_hat_num": "",
+                            "theta0_hat_den": "",
+                            "n_quiet_bins_prewave_num": "",
+                            "n_quiet_bins_prewave_den": "",
                         })
                     
                     # Create DataFrame and write to Excel
@@ -8612,7 +9146,21 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     summary_df.to_excel(writer, index=False, sheet_name=sheet_name)
                     
                     dual_print(f"  - {sheet_name}: {len(dose_pairs)} dose combinations, {len(summary_rows)} summary rows")
-                
+
+                # Write compact status counts per enrollment date for quick triage.
+                if theta0_status_summary_rows:
+                    theta0_status_df = pd.DataFrame(theta0_status_summary_rows)
+                    status_col_order = [
+                        "enrollment_date", "reporting_date", "OK", "DELTA_INAPPLICABLE",
+                        "INSUFFICIENT_DEATHS", "NOT_IDENTIFIED", "any_non_ok_status"
+                    ]
+                    theta0_status_df = theta0_status_df[[c for c in status_col_order if c in theta0_status_df.columns]]
+                    theta0_status_df.to_excel(writer, index=False, sheet_name="theta0_status_summary")
+                    dual_print(
+                        f"  - theta0_status_summary: {len(theta0_status_df)} enrollment rows "
+                        f"(file={summary_path}, sheet=theta0_status_summary)"
+                    )
+
                 # Write gamma-frailty fit diagnostics worksheet
                 if gamma_frailty_rows:
                     gamma_frailty_df = pd.DataFrame(gamma_frailty_rows)

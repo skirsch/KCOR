@@ -4,19 +4,19 @@ overview: Add a cohort-level `theta0_diagnostics` sheet to the primary KCOR outp
 todos:
   - id: extend-fit-diagnostics
     content: Add missing delta/residual/window diagnostics to fit_theta0_gompertz return payload, including theta0_init and prewave-bin count.
-    status: pending
+    status: completed
   - id: persist-status-and-fields
     content: Propagate new fields into params_dict and compute canonical theta0_status.
-    status: pending
+    status: completed
   - id: update-dose-pairs-columns
     content: Add theta0_status_num/theta0_status_den to build_kcor_rows and output column order.
-    status: pending
+    status: completed
   - id: add-theta0-diagnostics-sheet
     content: Create and write theta0_diagnostics DataFrame in primary workbook writer.
-    status: pending
+    status: completed
   - id: verify-output-shape
     content: Run targeted validation and lints, including delta_raw population checks for DELTA_INAPPLICABLE cohorts.
-    status: pending
+    status: completed
 isProject: false
 ---
 

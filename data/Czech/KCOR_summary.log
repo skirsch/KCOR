@@ -1,7 +1,7 @@
 ================================================================================
-KCOR v7.4 - Kirsch Cumulative Outcomes Ratio Analysis
+KCOR v7.5 - Kirsch Cumulative Outcomes Ratio Analysis
 ================================================================================
-Analysis Date: 2026-03-23 22:30:21
+Analysis Date: 2026-03-24 22:51:29
 Mode: Primary Analysis
 Input File: ../data/Czech/KCOR_CMR.xlsx
 Output File: ../data/Czech/KCOR.xlsx
@@ -1048,7 +1048,7 @@ M/P by decades (Dose 4)
 [MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
 [MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
-[Done] Wrote 38507 rows to ../data/Czech/KCOR.xlsx at 2026-03-23 22:37:53
+[Done] Wrote 38507 rows to ../data/Czech/KCOR.xlsx at 2026-03-24 22:59:03
 [Summary] Creating summary file: ../data/Czech/KCOR_summary.xlsx
   - 2021_13: 3 dose combinations, 37 summary rows
   - 2021_20: 3 dose combinations, 37 summary rows
@@ -1057,5 +1057,6 @@ M/P by decades (Dose 4)
   - 2022_06: 4 dose combinations, 49 summary rows
   - 2022_26: 4 dose combinations, 49 summary rows
   - 2022_47: 7 dose combinations, 85 summary rows
+  - theta0_status_summary: 7 enrollment rows (file=../data/Czech/KCOR_summary.xlsx, sheet=theta0_status_summary)
   - gamma_frailty_fit: 250 diagnostic rows (file=../data/Czech/KCOR_summary.xlsx, sheet=gamma_frailty_fit)
 [Summary] Created summary with 7 enrollment periods
