@@ -250,6 +250,7 @@ from datetime import datetime, timedelta
 import tempfile
 import shutil
 import csv
+import time
 import statsmodels.api as sm
 from scipy.optimize import least_squares, minimize
 
@@ -1079,8 +1080,8 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
          k = mean(h_obs(t) / exp(gamma*t)) over first k_anchor_weeks.
       2) Initial theta from first quiet window only (pre-first-wave window).
       3) Hold k fixed; iterate theta + delta_i across all quiet windows.
-         If any delta is negative on the first reconstruction pass, delta mode is
-         inapplicable and we fall back immediately to first-window-only theta fit.
+         If first-pass delta is negative, signal is treated as insufficient and we
+         apply theta=0.0 (no frailty correction) instead of fallback refitting.
     """
     h_arr = np.asarray(h_arr, dtype=float)
     t_r = np.asarray(t_rebased, dtype=float)
@@ -1121,9 +1122,11 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             "fit_mask_theta": fit_mask_theta.copy(),
             "anchor_only": False,
             "k_hat": float(k_val) if np.isfinite(k_val) else np.nan,
+            "theta0_raw": np.nan,
             "identifiability_flag": False,
             "delta_negative_clamped": False,
-            "delta_inapplicable": False,
+            "insufficient_signal": False,
+            "theta_hit_bound": False,
             "delta_negative": False,
             "delta_raw_values": [],
             "delta_applied_values": [],
@@ -1269,7 +1272,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         return _fail(k_fixed, "n_fit<3", n_fit)
 
     delta_negative_clamped = False
-    delta_inapplicable = False
+    insufficient_signal = False
     delta_negative = False
     delta_raw_values = []
     delta_applied_values = []
@@ -1337,7 +1340,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             cumulative_i = float(H0_eff[gidx] - H_gom_full[gidx])
             delta_i_raw = cumulative_i - cumulative_prev
             delta_raw_iter.append(float(delta_i_raw))
-            if delta_i_raw < 0.0:
+            if delta_i_raw <= 0.0:
                 iteration_neg_preclamp = True
                 delta_i = 0.0
             else:
@@ -1349,39 +1352,36 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         if _iter == 0:
             delta_raw_values = [float(x) for x in delta_raw_iter]
             delta_applied_values = [float(x) for x in deltas]
-            delta_negative = bool(any(x < 0.0 for x in delta_raw_values))
+            delta_negative = bool(any(x <= 0.0 for x in delta_raw_values))
         else:
             delta_raw_values = [float(x) for x in delta_raw_iter]
             delta_applied_values = [float(x) for x in deltas]
-            delta_negative = bool(delta_negative or any(x < 0.0 for x in delta_raw_iter))
+            delta_negative = bool(delta_negative or any(x <= 0.0 for x in delta_raw_iter))
 
         if iteration_neg_preclamp:
             if _iter == 0:
-                # Applicability failure: do NOT clamp-and-continue.
-                delta_inapplicable = True
-                # Fallback to single-pass fit on the full theta-fit mask
-                # (quiet + anchor bins), not the anchor-only segment.
-                theta_fb, rmse_fb, rel_fb, max_abs_fb, fb_ok = _fit_theta(fit_mask_theta, theta, Delta=None)
-                if fb_ok and np.isfinite(theta_fb):
-                    theta = float(theta_fb)
+                # Weak/ambiguous frailty signal on first pass: apply zero-theta and exit.
+                insufficient_signal = True
                 fit_mask_out = fit_mask_theta.copy()
                 n_fit_out = int(np.count_nonzero(fit_mask_out))
-                status = "delta_inapplicable"
-                return (k_fixed, theta), {
-                    "success": bool(np.isfinite(theta)),
+                theta0_raw = float(theta) if np.isfinite(theta) else np.nan
+                return (k_fixed, 0.0), {
+                    "success": True,
                     "n_obs": n_fit_out,
                     "n_fit": n_fit_out,
-                    "rmse_hazard": rmse_fb if np.isfinite(rmse_fb) else np.nan,
-                    "fit_residual_max": max_abs_fb if np.isfinite(max_abs_fb) else np.nan,
-                    "relRMSE_hazard_fit": rel_fb if np.isfinite(rel_fb) else np.nan,
-                    "status": status,
-                    "message": "DELTA_INAPPLICABLE: negative delta on first reconstruction pass; fallback to first quiet window",
+                    "rmse_hazard": np.nan,
+                    "fit_residual_max": np.nan,
+                    "relRMSE_hazard_fit": np.nan,
+                    "status": "insufficient_signal",
+                    "message": "INSUFFICIENT_SIGNAL: negative delta on first reconstruction pass; applied theta=0.0",
                     "fit_mask_theta": fit_mask_out,
                     "anchor_only": False,
                     "k_hat": k_fixed,
+                    "theta0_raw": theta0_raw,
                     "identifiability_flag": False,
                     "delta_negative_clamped": False,
-                    "delta_inapplicable": True,
+                    "insufficient_signal": True,
+                    "theta_hit_bound": False,
                     "delta_negative": delta_negative,
                     "delta_raw_values": [float(x) for x in delta_raw_values],
                     "delta_applied_values": [float(x) for x in delta_applied_values],
@@ -1442,9 +1442,11 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                 "fit_mask_theta": fit_mask_theta.copy(),
                 "anchor_only": False,
                 "k_hat": k_fixed,
+                "theta0_raw": np.nan,
                 "identifiability_flag": False,
                 "delta_negative_clamped": delta_negative_clamped,
-                "delta_inapplicable": delta_inapplicable,
+                "insufficient_signal": False,
+                "theta_hit_bound": False,
                 "delta_negative": delta_negative,
                 "delta_raw_values": [float(x) for x in delta_raw_values],
                 "delta_applied_values": [float(x) for x in delta_applied_values],
@@ -1514,11 +1516,51 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         status = "weak_identifiability"
     success = bool(np.isfinite(theta) and converged)
 
+    theta0_raw = float(theta) if np.isfinite(theta) else np.nan
+    theta_hit_bound = bool(np.isfinite(theta0_raw) and theta0_raw >= (theta0_max * 0.999))
+    if theta_hit_bound:
+        insufficient_signal = True
+        fit_mask_out = fit_mask_theta.copy()
+        n_fit_out = int(np.count_nonzero(fit_mask_out))
+        return (k_fixed, 0.0), {
+            "success": True,
+            "n_obs": n_fit_out,
+            "n_fit": n_fit_out,
+            "rmse_hazard": rmse_h,
+            "fit_residual_max": fit_resid_max,
+            "relRMSE_hazard_fit": rel_rmse,
+            "status": "insufficient_signal",
+            "message": "INSUFFICIENT_SIGNAL: theta0_raw reached upper bound; applied theta=0.0",
+            "fit_mask_theta": fit_mask_out,
+            "anchor_only": False,
+            "k_hat": k_fixed,
+            "theta0_raw": theta0_raw,
+            "identifiability_flag": identifiability_flag,
+            "delta_negative_clamped": delta_negative_clamped,
+            "insufficient_signal": True,
+            "theta_hit_bound": True,
+            "delta_negative": delta_negative,
+            "delta_raw_values": [float(x) for x in delta_raw_values],
+            "delta_applied_values": [float(x) for x in delta_applied_values],
+            "theta0_init": theta0_init_fitted,
+            "n_quiet_bins": n_quiet_bins,
+            "n_quiet_bins_prewave": n_quiet_bins_prewave,
+            "h_obs_quiet_slope": h_obs_quiet_slope,
+            "h_obs_first4_mean": h_obs_first4_mean,
+            "h_obs_last4_mean": h_obs_last4_mean,
+            "h_obs_first4_vs_last4_ratio": h_obs_first4_vs_last4_ratio,
+            "quiet_window_duration_weeks": quiet_window_duration_weeks,
+            "k_hat_first4": k_hat_first4,
+            "k_hat_last4": k_hat_last4,
+            "quiet_window_start": win_start,
+            "quiet_window_end": win_end,
+            "n_iterations": len(history),
+            "n_iter": len(history),
+        }
+
     message = status
     if delta_negative_clamped:
         message += " | delta_negative_clamped"
-    if delta_inapplicable:
-        message += " | DELTA_INAPPLICABLE"
 
     return (k_fixed, theta), {
         "success": success,
@@ -1532,9 +1574,11 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         "fit_mask_theta": fit_mask_theta.copy(),
         "anchor_only": False,
         "k_hat": k_fixed,
+        "theta0_raw": theta0_raw,
         "identifiability_flag": identifiability_flag,
         "delta_negative_clamped": delta_negative_clamped,
-        "delta_inapplicable": delta_inapplicable,
+        "insufficient_signal": False,
+        "theta_hit_bound": False,
         "delta_negative": delta_negative,
         "delta_raw_values": [float(x) for x in delta_raw_values],
         "delta_applied_values": [float(x) for x in delta_applied_values],
@@ -5060,7 +5104,7 @@ def build_theta0_diagnostics_rows(kcor6_params_map):
         base_cols = [
             "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
             "n_quiet_bins", "n_quiet_bins_prewave", "n_iter",
-            "delta_negative", "status", "quiet_window_start", "quiet_window_end",
+            "delta_negative", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
             "fit_residual_max", "fit_residual_rms",
             "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
             "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
@@ -5122,6 +5166,7 @@ def build_theta0_diagnostics_rows(kcor6_params_map):
             "n_quiet_bins_prewave": _as_int(params.get("n_quiet_bins_prewave", 0), default=0),
             "n_iter": _as_int(params.get("n_iter", params.get("n_iterations", 0)), default=0),
             "delta_negative": bool(params.get("delta_negative", False)),
+            "theta_hit_bound": bool(params.get("theta_hit_bound", False)),
             "status": str(params.get("theta0_status", "") or ""),
             "quiet_window_start": _as_float(params.get("quiet_window_start", np.nan)),
             "quiet_window_end": _as_float(params.get("quiet_window_end", np.nan)),
@@ -5148,7 +5193,7 @@ def build_theta0_diagnostics_rows(kcor6_params_map):
         base_cols = [
             "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
             "n_quiet_bins", "n_quiet_bins_prewave", "n_iter",
-            "delta_negative", "status", "quiet_window_start", "quiet_window_end",
+            "delta_negative", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
             "fit_residual_max", "fit_residual_rms",
             "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
             "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
@@ -5166,7 +5211,7 @@ def build_theta0_diagnostics_rows(kcor6_params_map):
     for idx in range(1, max_waves + 1):
         wave_cols.extend([f"delta_raw_{idx}", f"delta_applied_{idx}"])
     tail_cols = [
-        "delta_negative", "status", "quiet_window_start", "quiet_window_end",
+        "delta_negative", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
         "fit_residual_max", "fit_residual_rms",
         "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
         "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
@@ -5886,9 +5931,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 dual_print(
                                     f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
                                 )
-                            if isinstance(diag, dict) and bool(diag.get("delta_inapplicable", False)):
+                            if isinstance(diag, dict) and bool(diag.get("insufficient_signal", False)):
                                 dual_print(
-                                    f"[KCOR7_DELTA_INAPPLICABLE] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
+                                    f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
                                 )
                             fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
                             if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
@@ -6337,7 +6382,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 t_fit = t_vals[fit_mask]
                 H_fit = H_obs[fit_mask]
 
-                theta0_raw = float(theta_hat) if np.isfinite(theta_hat) else np.nan
+                theta0_raw = float(diag.get("theta0_raw", theta_hat)) if isinstance(diag, dict) and np.isfinite(diag.get("theta0_raw", np.nan)) else (float(theta_hat) if np.isfinite(theta_hat) else np.nan)
                 rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
                 n_obs = int(diag.get("n_fit", diag.get("n_obs", 0))) if isinstance(diag, dict) else 0
                 success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
@@ -6358,11 +6403,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}"
                     )
                     note = f"{note} | delta_negative_clamped".strip(" |")
-                if isinstance(diag, dict) and bool(diag.get("delta_inapplicable", False)):
+                if isinstance(diag, dict) and bool(diag.get("insufficient_signal", False)):
                     dual_print(
-                        f"[KCOR7_DELTA_INAPPLICABLE] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}"
+                        f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}"
                     )
-                    note = f"{note} | delta_inapplicable".strip(" |")
+                    note = f"{note} | insufficient_signal".strip(" |")
 
                 # Precompute span-relative RMSE for degeneracy guard before inversion
                 try:
@@ -6440,6 +6485,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         theta,
                         dual_print,
                     )
+                # theta==0 is an intentional identity path (no frailty correction): H0_full == H_obs.
                 H0_full = invert_gamma_frailty(H_obs, theta)
                 H0_quiet = H0_full[fit_mask]
                 t_quiet = t_vals[fit_mask]
@@ -6480,7 +6526,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                 identifiability_flag = bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False
                 diag_status = str(diag.get("status", "")) if isinstance(diag, dict) else ""
-                delta_inapplicable_flag = bool(diag.get("delta_inapplicable", False)) if isinstance(diag, dict) else False
+                insufficient_signal_flag = bool(diag.get("insufficient_signal", False)) if isinstance(diag, dict) else False
                 not_identified_flag = bool(
                     identifiability_flag
                     or (not bool(success))
@@ -6490,8 +6536,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     theta0_status = "NOT_IDENTIFIED"
                 elif bool(lowdeath_flag):
                     theta0_status = "INSUFFICIENT_DEATHS"
-                elif delta_inapplicable_flag:
-                    theta0_status = "DELTA_INAPPLICABLE"
+                elif insufficient_signal_flag:
+                    theta0_status = "INSUFFICIENT_SIGNAL"
                 else:
                     theta0_status = "OK"
 
@@ -6528,7 +6574,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     "k_hat_last4": float(diag.get("k_hat_last4", np.nan)) if isinstance(diag, dict) else np.nan,
                     "n_iter": int(diag.get("n_iter", diag.get("n_iterations", 0))) if isinstance(diag, dict) else 0,
                     "delta_negative": bool(diag.get("delta_negative", False)) if isinstance(diag, dict) else False,
-                    "delta_inapplicable": delta_inapplicable_flag,
+                    "insufficient_signal": insufficient_signal_flag,
+                    "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
                     "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
                     "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
                     "quiet_window_start": float(diag.get("quiet_window_start", np.nan)) if isinstance(diag, dict) else np.nan,
@@ -6629,7 +6676,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         else:
                             fit_mask = np.asarray(fit_mask, dtype=bool)
 
-                        theta0_raw = float(theta_hat) if np.isfinite(theta_hat) else np.nan
+                        theta0_raw = float(diag.get("theta0_raw", theta_hat)) if isinstance(diag, dict) and np.isfinite(diag.get("theta0_raw", np.nan)) else (float(theta_hat) if np.isfinite(theta_hat) else np.nan)
                         rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
                         n_obs = int(diag.get("n_fit", diag.get("n_obs", 0))) if isinstance(diag, dict) else 0
                         success = bool(diag.get("success", False)) if isinstance(diag, dict) else False
@@ -6650,11 +6697,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}"
                             )
                             note = f"{note} | delta_negative_clamped".strip(" |")
-                        if isinstance(diag, dict) and bool(diag.get("delta_inapplicable", False)):
+                        if isinstance(diag, dict) and bool(diag.get("insufficient_signal", False)):
                             dual_print(
-                                f"[KCOR7_DELTA_INAPPLICABLE] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}"
+                                f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}"
                             )
-                            note = f"{note} | delta_inapplicable".strip(" |")
+                            note = f"{note} | insufficient_signal".strip(" |")
 
                         # Extra diagnostics + degeneracy guard (pre-inversion)
                         try:
@@ -6709,6 +6756,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 dual_print,
                             )
 
+                        # theta==0 is an intentional identity path (no frailty correction): H0_full == H_obs.
                         H0_full = invert_gamma_frailty(H_obs, theta)
                         H0_quiet = H0_full[fit_mask]
                         t_quiet = t_vals[fit_mask]
@@ -6744,7 +6792,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         )
                         identifiability_flag = bool(diag.get("identifiability_flag", False)) if isinstance(diag, dict) else False
                         diag_status = str(diag.get("status", "")) if isinstance(diag, dict) else ""
-                        delta_inapplicable_flag = bool(diag.get("delta_inapplicable", False)) if isinstance(diag, dict) else False
+                        insufficient_signal_flag = bool(diag.get("insufficient_signal", False)) if isinstance(diag, dict) else False
                         not_identified_flag = bool(
                             identifiability_flag
                             or (not bool(success))
@@ -6754,8 +6802,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             theta0_status = "NOT_IDENTIFIED"
                         elif bool(lowdeath_flag):
                             theta0_status = "INSUFFICIENT_DEATHS"
-                        elif delta_inapplicable_flag:
-                            theta0_status = "DELTA_INAPPLICABLE"
+                        elif insufficient_signal_flag:
+                            theta0_status = "INSUFFICIENT_SIGNAL"
                         else:
                             theta0_status = "OK"
                         params_dict = {
@@ -6791,7 +6839,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             "k_hat_last4": float(diag.get("k_hat_last4", np.nan)) if isinstance(diag, dict) else np.nan,
                             "n_iter": int(diag.get("n_iter", diag.get("n_iterations", 0))) if isinstance(diag, dict) else 0,
                             "delta_negative": bool(diag.get("delta_negative", False)) if isinstance(diag, dict) else False,
-                            "delta_inapplicable": delta_inapplicable_flag,
+                            "insufficient_signal": insufficient_signal_flag,
+                            "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
                             "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
                             "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
                             "quiet_window_start": float(diag.get("quiet_window_start", np.nan)) if isinstance(diag, dict) else np.nan,
@@ -8594,21 +8643,21 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                     "(window may be short or contamination signal absent)."
                                 )
 
-                            # Validation: these diagnostic scalars should be populated for DELTA_INAPPLICABLE rows.
+                            # Validation: these diagnostic scalars should be populated for INSUFFICIENT_SIGNAL rows.
                             required_diag_cols = [
                                 "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
                                 "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
                                 "k_hat_first4", "k_hat_last4",
                             ]
-                            delta_inapplicable_rows = theta0_diag_df[
-                                theta0_diag_df.get("status", "").astype(str) == "DELTA_INAPPLICABLE"
+                            insufficient_signal_rows = theta0_diag_df[
+                                theta0_diag_df.get("status", "").astype(str) == "INSUFFICIENT_SIGNAL"
                             ]
-                            if len(delta_inapplicable_rows) > 0:
-                                missing_mask = delta_inapplicable_rows[required_diag_cols].isna().any(axis=1)
+                            if len(insufficient_signal_rows) > 0:
+                                missing_mask = insufficient_signal_rows[required_diag_cols].isna().any(axis=1)
                                 missing_count = int(np.count_nonzero(missing_mask.to_numpy()))
                                 if missing_count > 0:
                                     dual_print(
-                                        f"[THETA0_DIAG_WARNING] {missing_count} DELTA_INAPPLICABLE rows have missing contamination diagnostics."
+                                        f"[THETA0_DIAG_WARNING] {missing_count} INSUFFICIENT_SIGNAL rows have missing contamination diagnostics."
                                     )
 
                             # Run-log summary: mean k_hat_vs_dose0_ratio by dose.
@@ -8960,8 +9009,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
             return "NOT_IDENTIFIED"
         if bool(params.get("insufficient_deaths", False)):
             return "INSUFFICIENT_DEATHS"
-        if bool(params.get("delta_inapplicable", False)):
-            return "DELTA_INAPPLICABLE"
+        if bool(params.get("insufficient_signal", False)):
+            return "INSUFFICIENT_SIGNAL"
         return "OK"
 
     def _theta0_params_lookup(enrollment_date, yob, dose):
@@ -8999,7 +9048,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     latest_data = sheet_data[sheet_data["Date"] == report_date]
                     
                     # Compact counts of theta0 status for this enrollment date.
-                    theta_counts = {"OK": 0, "DELTA_INAPPLICABLE": 0, "INSUFFICIENT_DEATHS": 0, "NOT_IDENTIFIED": 0}
+                    theta_counts = {"OK": 0, "INSUFFICIENT_SIGNAL": 0, "INSUFFICIENT_DEATHS": 0, "NOT_IDENTIFIED": 0}
                     if isinstance(kcor6_params_map, dict):
                         for key, params in kcor6_params_map.items():
                             if not isinstance(key, tuple) or len(key) != 3:
@@ -9011,7 +9060,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                                 st = "NOT_IDENTIFIED"
                             theta_counts[st] += 1
                     any_non_ok_theta = bool(
-                        theta_counts["DELTA_INAPPLICABLE"] > 0
+                        theta_counts["INSUFFICIENT_SIGNAL"] > 0
                         or theta_counts["INSUFFICIENT_DEATHS"] > 0
                         or theta_counts["NOT_IDENTIFIED"] > 0
                     )
@@ -9019,7 +9068,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         "enrollment_date": sheet_name,
                         "reporting_date": report_date.strftime("%Y-%m-%d"),
                         "OK": int(theta_counts["OK"]),
-                        "DELTA_INAPPLICABLE": int(theta_counts["DELTA_INAPPLICABLE"]),
+                        "INSUFFICIENT_SIGNAL": int(theta_counts["INSUFFICIENT_SIGNAL"]),
                         "INSUFFICIENT_DEATHS": int(theta_counts["INSUFFICIENT_DEATHS"]),
                         "NOT_IDENTIFIED": int(theta_counts["NOT_IDENTIFIED"]),
                         "any_non_ok_status": any_non_ok_theta,
@@ -9151,7 +9200,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                 if theta0_status_summary_rows:
                     theta0_status_df = pd.DataFrame(theta0_status_summary_rows)
                     status_col_order = [
-                        "enrollment_date", "reporting_date", "OK", "DELTA_INAPPLICABLE",
+                        "enrollment_date", "reporting_date", "OK", "INSUFFICIENT_SIGNAL",
                         "INSUFFICIENT_DEATHS", "NOT_IDENTIFIED", "any_non_ok_status"
                     ]
                     theta0_status_df = theta0_status_df[[c for c in status_col_order if c in theta0_status_df.columns]]
@@ -9380,7 +9429,13 @@ def main():
     log_filename = sys.argv[4] if len(sys.argv) == 5 else "KCOR_summary.log"
     # Propagate mode to header via env for consistent printing
     os.environ['KCOR_MODE'] = mode
+    start_ts = time.perf_counter()
     process_workbook(src, dst, log_filename)
+    elapsed_sec = max(0.0, float(time.perf_counter() - start_ts))
+    elapsed_td = timedelta(seconds=elapsed_sec)
+    completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[KCOR] Completed at: {completed_at}")
+    print(f"[KCOR] Elapsed time: {str(elapsed_td).split('.')[0]}")
 
 if __name__ == "__main__":
     main()
