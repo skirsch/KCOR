@@ -1,0 +1,1099 @@
+================================================================================
+KCOR v7.5 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-03-26 17:45:02
+Mode: Primary Analysis
+Input File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_CMR.xlsx
+Output File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_finalchanges_test.xlsx
+Log File: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_finalchanges_test.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = None
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  THETA_ESTIMATION_WINDOWS = 2023-19..2023-40 (2023 post COVID); 2022-22..2022-25 (post booster); 2021-26..2021-36 (post primary); 2024-11..2024-14 (post 2024)
+  THETA_IDENTIFIABILITY = min_quiet_deaths=30, theta0_max=100.0, action=set_zero
+  GOMPERTZ_THETA_FIT     = gamma=0.085/yr, k_anchor_weeks=4, convergence_tol=1e-08, max_iterations=25, gamma_per_week=0.00163462
+  COVID_CORRECTION      = 2021-41..2022-12, factor=1.4
+  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)
+================================================================================
+
+[INFO] Auto-derived enrollment dates from Excel file: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_13', '2021_20', '2021_24', '2021_30', '2022_06', '2022_26', '2022_47']
+[Info] Processing sheet: 2021_13
+[DEBUG] Filtered to start from enrollment date 03/29/2021: 296555 rows
+[DEBUG] Filtered to 279720 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 119880 rows
+[DEBUG] Aggregated across sexes: 4995 rows
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1920, dose=0
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_13 | 1920 | 0 | 0.6 | 7.253123e-03 | 1.793123e-01 | 45
+2021_13 | 1920 | 1 | 0.2 | 5.072612e-03 | 3.750174e-01 | 45
+2021_13 | 1920 | 2 | 1.980145e-20 | 3.358501e-03 | 2.293686e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1930, dose=0
+2021_13 | 1930 | 0 | 1.9 | 4.054799e-03 | 2.331535e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1930, dose=1
+2021_13 | 1930 | 1 | 0.7 | 1.940365e-03 | 2.156785e-01 | 45
+2021_13 | 1930 | 2 | 1.000000e-10 | 1.183187e-03 | 2.338361e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1940, dose=0
+2021_13 | 1940 | 0 | 7.5 | 1.294703e-03 | 2.850127e-01 | 45
+2021_13 | 1940 | 1 | 1.000000e-10 | 3.781341e-04 | 1.922933e-01 | 45
+2021_13 | 1940 | 2 | 1.443964e-08 | 8.305285e-04 | 1.593259e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1950, dose=0
+2021_13 | 1950 | 0 | 15.6 | 4.064539e-04 | 2.325529e-01 | 45
+2021_13 | 1950 | 1 | 2.996230e-06 | 2.114189e-04 | 3.529417e-01 | 45
+2021_13 | 1950 | 2 | 7.7 | 3.956847e-04 | 3.106448e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1960, dose=0
+2021_13 | 1960 | 0 | 31.8 | 1.474995e-04 | 1.937941e-01 | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_13, yob=1960, dose=1
+[KCOR7_BAD_FIT] enroll=2021_13, yob=1960, dose=1, relRMSE_hazard_fit=9.22837e+06 -> theta0_applied=0.0
+2021_13 | 1960 | 1 | 0.000000e+00 | 6.875321e-05 | 9.228368e+06 | 45
+2021_13 | 1960 | 2 | 2.2 | 6.966308e-05 | 7.856950e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=1970, dose=0
+2021_13 | 1970 | 0 | 48.3 | 4.476355e-05 | 1.660201e-01 | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_13, yob=1970, dose=1
+[KCOR7_BAD_FIT] enroll=2021_13, yob=1970, dose=1, relRMSE_hazard_fit=6.11836e+06 -> theta0_applied=0.0
+2021_13 | 1970 | 1 | 0.000000e+00 | 1.005964e-05 | 6.118359e+06 | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_13, yob=1970, dose=2
+[KCOR7_BAD_FIT] enroll=2021_13, yob=1970, dose=2, relRMSE_hazard_fit=1.24548e+07 -> theta0_applied=0.0
+2021_13 | 1970 | 2 | 0.000000e+00 | 2.329822e-05 | 1.245480e+07 | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_13, yob=1980, dose=0
+2021_13 | 1980 | 0 | 0.000000e+00 | 1.857919e-05 | nan | 45
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_13, yob=1980, dose=1, quiet_deaths=22.0 -> theta0_applied=0.0
+2021_13 | 1980 | 1 | 0.000000e+00 | 1.866052e-05 | nan | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_13, yob=1980, dose=2
+2021_13 | 1980 | 2 | 0.000000e+00 | 2.670577e-05 | nan | 45
+2021_13 | 1990 | 0 | 0.1 | 6.994075e-06 | 4.270734e-01 | 45
+2021_13 | 1990 | 1 | 0.000000e+00 | nan | nan | 45
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_13, yob=1990, dose=2, quiet_deaths=12.0 -> theta0_applied=0.0
+2021_13 | 1990 | 2 | 0.000000e+00 | 1.058916e-05 | nan | 45
+2021_13 | 2000 | 0 | 4.333095e-04 | 1.718772e-06 | 5.573174e-01 | 45
+2021_13 | 2000 | 1 | 0.000000e+00 | nan | nan | 45
+2021_13 | 2000 | 2 | 0.000000e+00 | nan | nan | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_13, yob=-2, dose=0
+2021_13 | -2 | 0 | 40.0 | 2.258202e-04 | 2.070636e-01 | 45
+2021_13 | -2 | 1 | 0.3 | 3.952936e-04 | 7.557330e-02 | 45
+2021_13 | -2 | 2 | 1.388851e-08 | 6.732012e-04 | 1.011176e-01 | 45
+[Info] Processing sheet: 2021_20
+[DEBUG] Filtered to start from enrollment date 05/17/2021: 285334 rows
+[DEBUG] Filtered to 269136 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 115344 rows
+[DEBUG] Aggregated across sexes: 4806 rows
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=1920, dose=0
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_20 | 1920 | 0 | 0.4 | 6.604862e-03 | 1.767100e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=1920, dose=1
+2021_20 | 1920 | 1 | 0.5 | 6.387356e-03 | 8.425178e-01 | 45
+2021_20 | 1920 | 2 | 5.032599e-18 | 4.077119e-03 | 1.455552e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=1930, dose=0
+2021_20 | 1930 | 0 | 1.2 | 3.478618e-03 | 1.244821e-01 | 45
+2021_20 | 1930 | 1 | 5.067566e-09 | 1.855323e-03 | 2.078839e-01 | 45
+2021_20 | 1930 | 2 | 7.439185e-17 | 1.393792e-03 | 1.367371e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=1940, dose=0
+2021_20 | 1940 | 0 | 4.1 | 1.421870e-03 | 1.159239e-01 | 45
+2021_20 | 1940 | 1 | 1.000000e-10 | 4.425396e-04 | 1.297311e-01 | 45
+2021_20 | 1940 | 2 | 1.000000e-10 | 4.064266e-04 | 2.320210e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=1950, dose=0
+2021_20 | 1950 | 0 | 10.1 | 5.539173e-04 | 1.287012e-01 | 45
+2021_20 | 1950 | 1 | 4.050102e-08 | 1.101182e-04 | 3.214616e-01 | 45
+2021_20 | 1950 | 2 | 4.3 | 2.948609e-04 | 1.663534e-01 | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=1960, dose=0
+2021_20 | 1960 | 0 | 20.7 | 1.615828e-04 | 1.291684e-01 | 45
+2021_20 | 1960 | 1 | 2.697792e-08 | 4.259957e-05 | 3.366522e-01 | 45
+2021_20 | 1960 | 2 | 5.969220e-08 | 6.473254e-05 | 2.321512e-01 | 45
+2021_20 | 1970 | 0 | 29.6 | 4.115355e-05 | 1.364604e-01 | 45
+2021_20 | 1970 | 1 | 5.419750e-09 | 2.286126e-05 | 4.146465e-01 | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_20, yob=1970, dose=2
+[KCOR7_BAD_FIT] enroll=2021_20, yob=1970, dose=2, relRMSE_hazard_fit=6.35673e+06 -> theta0_applied=0.0
+2021_20 | 1970 | 2 | 0.000000e+00 | 2.863811e-05 | 6.356732e+06 | 45
+2021_20 | 1980 | 0 | 59.8 | 1.672641e-05 | 2.522477e-01 | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_20, yob=1980, dose=1
+2021_20 | 1980 | 1 | 0.000000e+00 | 1.712831e-05 | nan | 45
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_20, yob=1980, dose=2
+[KCOR7_BAD_FIT] enroll=2021_20, yob=1980, dose=2, relRMSE_hazard_fit=3.22826e+06 -> theta0_applied=0.0
+2021_20 | 1980 | 2 | 0.000000e+00 | 6.818460e-06 | 3.228261e+06 | 45
+2021_20 | 1990 | 0 | 7.302014e-03 | 6.313575e-06 | 3.783892e-01 | 45
+2021_20 | 1990 | 1 | 0.000000e+00 | nan | nan | 45
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_20, yob=1990, dose=2, quiet_deaths=24.0 -> theta0_applied=0.0
+2021_20 | 1990 | 2 | 0.000000e+00 | 1.640140e-05 | nan | 45
+2021_20 | 2000 | 0 | 1.268191e-03 | 2.721971e-06 | 6.360329e-01 | 45
+2021_20 | 2000 | 1 | 0.000000e+00 | nan | nan | 45
+2021_20 | 2000 | 2 | 0.000000e+00 | nan | nan | 45
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_20, yob=-2, dose=0
+2021_20 | -2 | 0 | 38.1 | 1.674827e-04 | 8.331964e-02 | 45
+2021_20 | -2 | 1 | 1.050676e-06 | 1.358573e-04 | 1.597285e-01 | 45
+2021_20 | -2 | 2 | 5.771232e-09 | 4.966401e-04 | 7.415103e-02 | 45
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 278922 rows
+[DEBUG] Filtered to 263088 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 112752 rows
+[DEBUG] Aggregated across sexes: 4698 rows
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1920, dose=0
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_24 | 1920 | 0 | 0.000000e+00 | 6.028410e-03 | nan | 41
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1920, dose=1
+2021_24 | 1920 | 1 | 0.000000e+00 | 6.041416e-03 | nan | 41
+2021_24 | 1920 | 2 | 1.000000e-10 | 4.022534e-03 | 1.506436e-01 | 41
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=1930, dose=0
+2021_24 | 1930 | 0 | 1.0 | 3.367776e-03 | 1.124728e-01 | 41
+2021_24 | 1930 | 1 | 0.4 | 2.114944e-03 | 2.295041e-01 | 41
+2021_24 | 1930 | 2 | 1.000000e-10 | 1.428959e-03 | 1.361462e-01 | 41
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=1940, dose=0
+2021_24 | 1940 | 0 | 3.4 | 1.410500e-03 | 8.827123e-02 | 41
+2021_24 | 1940 | 1 | 0.3 | 6.469205e-04 | 1.403112e-01 | 41
+2021_24 | 1940 | 2 | 1.000000e-10 | 4.176259e-04 | 2.000534e-01 | 41
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=1950, dose=0
+2021_24 | 1950 | 0 | 8.7 | 5.877117e-04 | 9.562993e-02 | 41
+2021_24 | 1950 | 1 | 1.092851e-07 | 1.585708e-04 | 2.202282e-01 | 41
+2021_24 | 1950 | 2 | 4.935818e-08 | 1.374541e-04 | 2.733693e-01 | 41
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=1960, dose=0
+2021_24 | 1960 | 0 | 19.3 | 1.862715e-04 | 1.081713e-01 | 41
+2021_24 | 1960 | 1 | 2.459798e-06 | 5.000035e-05 | 2.456332e-01 | 41
+2021_24 | 1960 | 2 | 2.216705e-06 | 7.968021e-05 | 1.877994e-01 | 41
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=1970, dose=0
+2021_24 | 1970 | 0 | 52.9 | 6.414959e-05 | 1.791669e-01 | 41
+2021_24 | 1970 | 1 | 6.894329e-09 | 1.568847e-05 | 3.524024e-01 | 41
+2021_24 | 1970 | 2 | 9.404663e-08 | 3.265872e-05 | 3.118675e-01 | 41
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1980, dose=0
+2021_24 | 1980 | 0 | 0.000000e+00 | 2.410448e-05 | nan | 41
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1980, dose=1
+2021_24 | 1980 | 1 | 0.000000e+00 | 1.006200e-05 | nan | 41
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1980, dose=2
+[KCOR7_BAD_FIT] enroll=2021_24, yob=1980, dose=2, relRMSE_hazard_fit=3.83988e+06 -> theta0_applied=0.0
+2021_24 | 1980 | 2 | 0.000000e+00 | 1.737157e-05 | 3.839878e+06 | 41
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1990, dose=0
+2021_24 | 1990 | 0 | 0.000000e+00 | 8.630764e-06 | nan | 41
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_24, yob=1990, dose=1
+[KCOR7_BAD_FIT] enroll=2021_24, yob=1990, dose=1, relRMSE_hazard_fit=1.20816e+06 -> theta0_applied=0.0
+2021_24 | 1990 | 1 | 0.000000e+00 | 1.800391e-06 | 1.208164e+06 | 41
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_24, yob=1990, dose=2, quiet_deaths=29.0 -> theta0_applied=0.0
+2021_24 | 1990 | 2 | 0.000000e+00 | 7.263958e-06 | nan | 41
+2021_24 | 2000 | 0 | 2.128631e-03 | 3.081121e-06 | 7.347534e-01 | 41
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_24, yob=2000, dose=1, quiet_deaths=9.0 -> theta0_applied=0.0
+2021_24 | 2000 | 1 | 0.000000e+00 | 6.485512e-06 | nan | 41
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_24, yob=2000, dose=2, quiet_deaths=15.0 -> theta0_applied=0.0
+2021_24 | 2000 | 2 | 0.000000e+00 | 2.451822e-05 | nan | 41
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=-2, dose=0
+2021_24 | -2 | 0 | 33.7 | 1.819692e-04 | 5.725533e-02 | 41
+2021_24 | -2 | 1 | 4.865412e-07 | 8.019215e-05 | 9.444848e-02 | 41
+2021_24 | -2 | 2 | 4.002931e-10 | 3.593099e-04 | 8.983969e-02 | 41
+[Info] Processing sheet: 2021_30
+[DEBUG] Filtered to start from enrollment date 07/26/2021: 269304 rows
+[DEBUG] Filtered to 254016 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2] (max dose 2): 108864 rows
+[DEBUG] Aggregated across sexes: 4536 rows
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1920, dose=0
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_30 | 1920 | 0 | 0.000000e+00 | 6.013021e-03 | nan | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=1920, dose=1
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1920, dose=1
+[KCOR7_BAD_FIT] enroll=2021_30, yob=1920, dose=1, relRMSE_hazard_fit=2.44194e+09 -> theta0_applied=0.0
+2021_30 | 1920 | 1 | 0.000000e+00 | 1.080370e-02 | 2.441937e+09 | 35
+2021_30 | 1920 | 2 | 1.000000e-10 | 4.477864e-03 | 1.295331e-01 | 35
+2021_30 | 1930 | 0 | 0.6 | 2.885059e-03 | 1.103392e-01 | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=1930, dose=1
+2021_30 | 1930 | 1 | 2.1 | 3.443445e-03 | 4.457752e-01 | 35
+2021_30 | 1930 | 2 | 1.000000e-10 | 1.467892e-03 | 1.365789e-01 | 35
+2021_30 | 1940 | 0 | 3.0 | 1.372368e-03 | 9.147042e-02 | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1940, dose=1
+2021_30 | 1940 | 1 | 0.000000e+00 | 1.212733e-03 | nan | 35
+2021_30 | 1940 | 2 | 3.023117e-09 | 4.697688e-04 | 1.416038e-01 | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=1950, dose=0
+2021_30 | 1950 | 0 | 7.7 | 5.857254e-04 | 1.025534e-01 | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1950, dose=1
+2021_30 | 1950 | 1 | 0.000000e+00 | 4.781922e-04 | nan | 35
+2021_30 | 1950 | 2 | 1.000000e-10 | 1.784670e-04 | 1.202618e-01 | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=1960, dose=0
+2021_30 | 1960 | 0 | 24.0 | 2.111208e-04 | 1.282453e-01 | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=1960, dose=1
+2021_30 | 1960 | 1 | 1.405401e-07 | 1.168797e-04 | 5.333849e-01 | 35
+2021_30 | 1960 | 2 | 2.733801e-08 | 5.290825e-05 | 2.628687e-01 | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=1970, dose=0
+2021_30 | 1970 | 0 | 59.0 | 6.986394e-05 | 1.986380e-01 | 35
+2021_30 | 1970 | 1 | 1.460731e-06 | 3.427740e-05 | 4.293976e-01 | 35
+2021_30 | 1970 | 2 | 5.319391e-04 | 2.085284e-05 | 2.561893e-01 | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1980, dose=0
+2021_30 | 1980 | 0 | 0.000000e+00 | 2.483948e-05 | 2.343068e-01 | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1980, dose=1
+2021_30 | 1980 | 1 | 0.000000e+00 | 1.133493e-05 | nan | 35
+2021_30 | 1980 | 2 | 1.600424e-03 | 6.720564e-06 | 6.030849e-01 | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1990, dose=0
+2021_30 | 1990 | 0 | 0.000000e+00 | 1.159123e-05 | nan | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1990, dose=1
+2021_30 | 1990 | 1 | 0.000000e+00 | 5.189293e-06 | nan | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=1990, dose=2
+2021_30 | 1990 | 2 | 0.000000e+00 | 8.608844e-06 | nan | 35
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2021_30, yob=2000, dose=0
+2021_30 | 2000 | 0 | 0.000000e+00 | 4.326631e-06 | nan | 35
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_30, yob=2000, dose=1, quiet_deaths=29.0 -> theta0_applied=0.0
+2021_30 | 2000 | 1 | 0.000000e+00 | 2.374018e-06 | nan | 35
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2021_30, yob=2000, dose=2, quiet_deaths=21.0 -> theta0_applied=0.0
+2021_30 | 2000 | 2 | 0.000000e+00 | 2.827012e-05 | nan | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=-2, dose=0
+2021_30 | -2 | 0 | 27.2 | 1.982134e-04 | 5.821108e-02 | 35
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_30, yob=-2, dose=1
+2021_30 | -2 | 1 | 65.1 | 8.993513e-05 | 1.521771e-01 | 35
+2021_30 | -2 | 2 | 1.000000e-10 | 2.130255e-04 | 5.377925e-02 | 35
+[Info] Processing sheet: 2022_06
+[DEBUG] Filtered to start from enrollment date 02/07/2022: 224420 rows
+[DEBUG] Filtered to 211680 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 120960 rows
+[DEBUG] Aggregated across sexes: 5040 rows
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1920, dose=0
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2022_06 | 1920 | 0 | 1.5 | 1.008945e-02 | 2.638040e-01 | 34
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_06, yob=1920, dose=1, quiet_deaths=28.0 -> theta0_applied=0.0
+2022_06 | 1920 | 1 | 0.000000e+00 | 5.987173e-03 | nan | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1920, dose=2
+2022_06 | 1920 | 2 | 1.0 | 1.003446e-02 | 4.104234e-01 | 34
+2022_06 | 1920 | 3 | 0.2 | 5.132502e-03 | 1.377786e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1930, dose=0
+2022_06 | 1930 | 0 | 2.8 | 5.067617e-03 | 1.932207e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1930, dose=1
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1930, dose=1
+[KCOR7_BAD_FIT] enroll=2022_06, yob=1930, dose=1, relRMSE_hazard_fit=5.07298e+08 -> theta0_applied=0.0
+2022_06 | 1930 | 1 | 0.000000e+00 | 5.773457e-03 | 5.072976e+08 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1930, dose=2
+2022_06 | 1930 | 2 | 2.4 | 4.368006e-03 | 1.766637e-01 | 34
+2022_06 | 1930 | 3 | 1.000000e-10 | 1.678743e-03 | 6.278699e-02 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1940, dose=0
+2022_06 | 1940 | 0 | 7.6 | 1.959456e-03 | 1.941255e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1940, dose=1
+2022_06 | 1940 | 1 | 6.2 | 3.117063e-03 | 7.844362e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1940, dose=2
+2022_06 | 1940 | 2 | 6.5 | 1.503835e-03 | 1.284549e-01 | 34
+2022_06 | 1940 | 3 | 1.000000e-10 | 4.775769e-04 | 1.347709e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1950, dose=0
+2022_06 | 1950 | 0 | 17.3 | 7.556089e-04 | 1.736891e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1950, dose=1
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1950, dose=1
+[KCOR7_BAD_FIT] enroll=2022_06, yob=1950, dose=1, relRMSE_hazard_fit=1.46652e+08 -> theta0_applied=0.0
+2022_06 | 1950 | 1 | 0.000000e+00 | 1.233960e-03 | 1.466516e+08 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1950, dose=2
+2022_06 | 1950 | 2 | 13.9 | 4.880209e-04 | 1.408251e-01 | 34
+2022_06 | 1950 | 3 | 1.000000e-10 | 1.736451e-04 | 1.445404e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1960, dose=0
+2022_06 | 1960 | 0 | 30.0 | 2.023198e-04 | 1.575930e-01 | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1960, dose=1
+2022_06 | 1960 | 1 | 0.000000e+00 | 4.185777e-04 | nan | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=1960, dose=2
+2022_06 | 1960 | 2 | 32.5 | 1.330814e-04 | 1.979969e-01 | 34
+2022_06 | 1960 | 3 | 1.880458e-09 | 6.998422e-05 | 1.550679e-01 | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1970, dose=0
+2022_06 | 1970 | 0 | 0.000000e+00 | 7.848967e-05 | nan | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1970, dose=1
+2022_06 | 1970 | 1 | 0.000000e+00 | 1.635416e-04 | nan | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1970, dose=2
+2022_06 | 1970 | 2 | 0.000000e+00 | 3.753281e-05 | nan | 34
+2022_06 | 1970 | 3 | 1.592720e-06 | 2.278521e-05 | 2.857379e-01 | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1980, dose=0
+2022_06 | 1980 | 0 | 0.000000e+00 | 2.921257e-05 | nan | 34
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_06, yob=1980, dose=1, quiet_deaths=23.0 -> theta0_applied=0.0
+2022_06 | 1980 | 1 | 0.000000e+00 | 3.938264e-05 | nan | 34
+2022_06 | 1980 | 2 | 2.633316e-04 | 1.258755e-05 | 3.955846e-01 | 34
+2022_06 | 1980 | 3 | 1.582157e-03 | 1.170581e-05 | 5.029661e-01 | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1990, dose=0
+2022_06 | 1990 | 0 | 0.000000e+00 | 1.420209e-05 | nan | 34
+2022_06 | 1990 | 1 | 0.000000e+00 | nan | nan | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1990, dose=2
+[KCOR7_BAD_FIT] enroll=2022_06, yob=1990, dose=2, relRMSE_hazard_fit=773711 -> theta0_applied=0.0
+2022_06 | 1990 | 2 | 0.000000e+00 | 4.489405e-06 | 7.737114e+05 | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=1990, dose=3
+2022_06 | 1990 | 3 | 0.000000e+00 | 8.522181e-06 | nan | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=2000, dose=0
+2022_06 | 2000 | 0 | 0.000000e+00 | 6.335042e-06 | nan | 34
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_06, yob=2000, dose=1, quiet_deaths=5.0 -> theta0_applied=0.0
+2022_06 | 2000 | 1 | 0.000000e+00 | 1.199128e-05 | nan | 34
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_06, yob=2000, dose=2
+[KCOR7_BAD_FIT] enroll=2022_06, yob=2000, dose=2, relRMSE_hazard_fit=1.19289e+06 -> theta0_applied=0.0
+2022_06 | 2000 | 2 | 0.000000e+00 | 3.124354e-06 | 1.192894e+06 | 34
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_06, yob=2000, dose=3, quiet_deaths=18.0 -> theta0_applied=0.0
+2022_06 | 2000 | 3 | 0.000000e+00 | 5.672951e-06 | nan | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=-2, dose=0
+2022_06 | -2 | 0 | 55.7 | 2.880901e-04 | 1.482275e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=-2, dose=1
+2022_06 | -2 | 1 | 45.6 | 3.950862e-04 | 3.063938e-01 | 34
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_06, yob=-2, dose=2
+2022_06 | -2 | 2 | 57.8 | 1.737999e-04 | 9.076982e-02 | 34
+2022_06 | -2 | 3 | 7.674144e-07 | 2.440478e-04 | 3.812594e-02 | 34
+[Info] Processing sheet: 2022_26
+[DEBUG] Filtered to start from enrollment date 06/27/2022: 192360 rows
+[DEBUG] Filtered to 181440 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3] (max dose 3): 103680 rows
+[DEBUG] Aggregated across sexes: 4320 rows
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2022_26 | 1920 | 0 | 0.8 | 6.380690e-03 | 2.794547e-01 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_26, yob=1920, dose=1, quiet_deaths=15.0 -> theta0_applied=0.0
+2022_26 | 1920 | 1 | 0.000000e+00 | 7.230280e-03 | nan | 30
+2022_26 | 1920 | 2 | 0.1 | 6.238980e-03 | 4.146669e-01 | 30
+2022_26 | 1920 | 3 | 0.5 | 5.790584e-03 | 1.377474e-01 | 30
+2022_26 | 1930 | 0 | 1.6 | 3.347080e-03 | 1.398582e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1930, dose=1
+[KCOR7_BAD_FIT] enroll=2022_26, yob=1930, dose=1, relRMSE_hazard_fit=9.0993e+08 -> theta0_applied=0.0
+2022_26 | 1930 | 1 | 0.000000e+00 | 3.554302e-03 | 9.099298e+08 | 30
+2022_26 | 1930 | 2 | 1.3 | 3.107484e-03 | 1.636041e-01 | 30
+2022_26 | 1930 | 3 | 0.3 | 1.858805e-03 | 7.367269e-02 | 30
+2022_26 | 1940 | 0 | 5.5 | 1.388403e-03 | 1.378924e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1940, dose=1
+[KCOR7_BAD_FIT] enroll=2022_26, yob=1940, dose=1, relRMSE_hazard_fit=3.39042e+08 -> theta0_applied=0.0
+2022_26 | 1940 | 1 | 0.000000e+00 | 1.620103e-03 | 3.390420e+08 | 30
+2022_26 | 1940 | 2 | 3.9 | 1.155891e-03 | 1.390869e-01 | 30
+2022_26 | 1940 | 3 | 0.9 | 6.047204e-04 | 8.461110e-02 | 30
+2022_26 | 1950 | 0 | 6.4 | 4.580649e-04 | 1.279083e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1950, dose=1
+[KCOR7_BAD_FIT] enroll=2022_26, yob=1950, dose=1, relRMSE_hazard_fit=1.38135e+08 -> theta0_applied=0.0
+2022_26 | 1950 | 1 | 0.000000e+00 | 1.509888e-03 | 1.381351e+08 | 30
+2022_26 | 1950 | 2 | 6.4 | 3.921652e-04 | 1.152952e-01 | 30
+2022_26 | 1950 | 3 | 3.4 | 2.244988e-04 | 7.973015e-02 | 30
+2022_26 | 1960 | 0 | 22.9 | 1.716286e-04 | 1.503532e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1960, dose=1
+[KCOR7_BAD_FIT] enroll=2022_26, yob=1960, dose=1, relRMSE_hazard_fit=9.12004e+07 -> theta0_applied=0.0
+2022_26 | 1960 | 1 | 0.000000e+00 | 2.495848e-04 | 9.120039e+07 | 30
+2022_26 | 1960 | 2 | 22.5 | 1.219417e-04 | 1.965793e-01 | 30
+2022_26 | 1960 | 3 | 9.246620e-05 | 7.551708e-05 | 1.284623e-01 | 30
+2022_26 | 1970 | 0 | 77.6 | 6.509905e-05 | 1.510084e-01 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_26, yob=1970, dose=1, quiet_deaths=24.0 -> theta0_applied=0.0
+2022_26 | 1970 | 1 | 0.000000e+00 | 1.218610e-04 | nan | 30
+2022_26 | 1970 | 2 | 3.577624e-05 | 3.359803e-05 | 2.406668e-01 | 30
+2022_26 | 1970 | 3 | 1.219145e-05 | 3.097374e-05 | 2.079502e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1980, dose=0
+2022_26 | 1980 | 0 | 0.000000e+00 | 2.938959e-05 | nan | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_26, yob=1980, dose=1, quiet_deaths=17.0 -> theta0_applied=0.0
+2022_26 | 1980 | 1 | 0.000000e+00 | 1.771348e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1980, dose=2
+2022_26 | 1980 | 2 | 0.000000e+00 | 1.580741e-05 | nan | 30
+2022_26 | 1980 | 3 | 62.2 | 1.354739e-05 | 5.966240e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1990, dose=0
+[KCOR7_BAD_FIT] enroll=2022_26, yob=1990, dose=0, relRMSE_hazard_fit=1.84565e+06 -> theta0_applied=0.0
+2022_26 | 1990 | 0 | 0.000000e+00 | 9.346220e-06 | 1.845654e+06 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_26, yob=1990, dose=1, quiet_deaths=4.0 -> theta0_applied=0.0
+2022_26 | 1990 | 1 | 0.000000e+00 | 3.469442e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1990, dose=2
+2022_26 | 1990 | 2 | 0.000000e+00 | 8.817038e-06 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=1990, dose=3
+2022_26 | 1990 | 3 | 0.000000e+00 | 6.633180e-06 | 2.864697e+06 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=2000, dose=0
+2022_26 | 2000 | 0 | 0.000000e+00 | 6.999245e-06 | nan | 30
+2022_26 | 2000 | 1 | 0.000000e+00 | nan | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_26, yob=2000, dose=2
+2022_26 | 2000 | 2 | 0.000000e+00 | 4.079953e-06 | 2.114622e+06 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_26, yob=2000, dose=3, quiet_deaths=23.0 -> theta0_applied=0.0
+2022_26 | 2000 | 3 | 0.000000e+00 | 3.261191e-06 | nan | 30
+2022_26 | -2 | 0 | 37.7 | 1.923726e-04 | 9.191926e-02 | 30
+2022_26 | -2 | 1 | 41.4 | 2.896864e-04 | 4.995055e-01 | 30
+2022_26 | -2 | 2 | 36.2 | 1.309953e-04 | 6.322512e-02 | 30
+2022_26 | -2 | 3 | 6.2 | 2.656708e-04 | 5.275838e-02 | 30
+[Info] Processing sheet: 2022_47
+[DEBUG] Filtered to start from enrollment date 11/21/2022: 158697 rows
+[DEBUG] Filtered to 149688 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1, 2, 3, 4] (max dose 4): 106920 rows
+[DEBUG] Aggregated across sexes: 4455 rows
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2022_47 | 1920 | 0 | 2.9 | 9.827860e-03 | 3.237243e-01 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_47, yob=1920, dose=1, quiet_deaths=21.0 -> theta0_applied=0.0
+2022_47 | 1920 | 1 | 0.000000e+00 | 3.062513e-03 | nan | 30
+2022_47 | 1920 | 2 | 0.3 | 6.562061e-03 | 8.420244e-01 | 30
+2022_47 | 1920 | 3 | 2.3 | 9.028292e-03 | 2.774470e-01 | 30
+2022_47 | 1920 | 4 | 1.2 | 7.001887e-03 | 2.702492e-01 | 30
+2022_47 | 1930 | 0 | 4.5 | 4.507677e-03 | 1.820233e-01 | 30
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_47, yob=1930, dose=1
+2022_47 | 1930 | 1 | 3.6 | 6.734932e-03 | 1.048037e+00 | 30
+2022_47 | 1930 | 2 | 4.1 | 4.162046e-03 | 2.050737e-01 | 30
+2022_47 | 1930 | 3 | 4.5 | 2.980019e-03 | 1.653949e-01 | 30
+2022_47 | 1930 | 4 | 3.5 | 2.353430e-03 | 1.540648e-01 | 30
+2022_47 | 1940 | 0 | 9.9 | 1.552850e-03 | 1.857148e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1940, dose=1
+[KCOR7_BAD_FIT] enroll=2022_47, yob=1940, dose=1, relRMSE_hazard_fit=2.76433e+08 -> theta0_applied=0.0
+2022_47 | 1940 | 1 | 0.000000e+00 | 2.903571e-03 | 2.764327e+08 | 30
+2022_47 | 1940 | 2 | 10.2 | 1.437952e-03 | 1.657550e-01 | 30
+2022_47 | 1940 | 3 | 11.1 | 8.726228e-04 | 1.177459e-01 | 30
+2022_47 | 1940 | 4 | 4.4 | 6.493025e-04 | 1.663220e-01 | 30
+2022_47 | 1950 | 0 | 23.6 | 6.250269e-04 | 1.635230e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1950, dose=1
+[KCOR7_BAD_FIT] enroll=2022_47, yob=1950, dose=1, relRMSE_hazard_fit=1.87626e+08 -> theta0_applied=0.0
+2022_47 | 1950 | 1 | 0.000000e+00 | 9.926201e-04 | 1.876259e+08 | 30
+2022_47 | 1950 | 2 | 23.7 | 5.167571e-04 | 1.601081e-01 | 30
+2022_47 | 1950 | 3 | 33.5 | 3.155824e-04 | 1.435401e-01 | 30
+2022_47 | 1950 | 4 | 2.7 | 2.403297e-04 | 1.788720e-01 | 30
+2022_47 | 1960 | 0 | 53.4 | 2.031704e-04 | 1.759645e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1960, dose=1
+[KCOR7_BAD_FIT] enroll=2022_47, yob=1960, dose=1, relRMSE_hazard_fit=5.61819e+07 -> theta0_applied=0.0
+2022_47 | 1960 | 1 | 0.000000e+00 | 1.667994e-04 | 5.618194e+07 | 30
+2022_47 | 1960 | 2 | 65.9 | 1.463765e-04 | 2.511775e-01 | 30
+[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2022_47, yob=1960, dose=3
+2022_47 | 1960 | 3 | 41.6 | 1.006389e-04 | 1.386090e-01 | 30
+2022_47 | 1960 | 4 | 1.376025e-05 | 9.543622e-05 | 4.796515e-01 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1970, dose=0
+2022_47 | 1970 | 0 | 0.000000e+00 | 6.772917e-05 | 2.206652e-01 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_47, yob=1970, dose=1, quiet_deaths=23.0 -> theta0_applied=0.0
+2022_47 | 1970 | 1 | 0.000000e+00 | 1.709926e-04 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1970, dose=2
+2022_47 | 1970 | 2 | 0.000000e+00 | 4.783315e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1970, dose=3
+2022_47 | 1970 | 3 | 0.000000e+00 | 3.406160e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1970, dose=4
+[KCOR7_BAD_FIT] enroll=2022_47, yob=1970, dose=4, relRMSE_hazard_fit=7.13534e+06 -> theta0_applied=0.0
+2022_47 | 1970 | 4 | 0.000000e+00 | 2.138326e-05 | 7.135340e+06 | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1980, dose=0
+2022_47 | 1980 | 0 | 0.000000e+00 | 3.602801e-05 | nan | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_47, yob=1980, dose=1, quiet_deaths=18.0 -> theta0_applied=0.0
+2022_47 | 1980 | 1 | 0.000000e+00 | 5.345341e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1980, dose=2
+2022_47 | 1980 | 2 | 0.000000e+00 | 1.704503e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1980, dose=3
+2022_47 | 1980 | 3 | 0.000000e+00 | 1.431342e-05 | nan | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_47, yob=1980, dose=4, quiet_deaths=24.0 -> theta0_applied=0.0
+2022_47 | 1980 | 4 | 0.000000e+00 | 7.414932e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1990, dose=0
+2022_47 | 1990 | 0 | 0.000000e+00 | 1.687296e-05 | nan | 30
+2022_47 | 1990 | 1 | 0.000000e+00 | nan | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1990, dose=2
+2022_47 | 1990 | 2 | 0.000000e+00 | 9.229631e-06 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=1990, dose=3
+2022_47 | 1990 | 3 | 0.000000e+00 | 7.360196e-06 | 2.770403e+06 | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_47, yob=1990, dose=4, quiet_deaths=3.0 -> theta0_applied=0.0
+2022_47 | 1990 | 4 | 0.000000e+00 | 2.395439e-05 | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=2000, dose=0
+[KCOR7_BAD_FIT] enroll=2022_47, yob=2000, dose=0, relRMSE_hazard_fit=2.1071e+06 -> theta0_applied=0.0
+2022_47 | 2000 | 0 | 0.000000e+00 | 4.093370e-06 | 2.107105e+06 | 30
+2022_47 | 2000 | 1 | 0.000000e+00 | nan | nan | 30
+[KCOR7_INSUFFICIENT_SIGNAL] enroll=2022_47, yob=2000, dose=2
+2022_47 | 2000 | 2 | 0.000000e+00 | 6.036354e-06 | nan | 30
+[KCOR7_INSUFFICIENT_DEATHS] enroll=2022_47, yob=2000, dose=3, quiet_deaths=25.0 -> theta0_applied=0.0
+2022_47 | 2000 | 3 | 0.000000e+00 | 4.517593e-06 | nan | 30
+2022_47 | 2000 | 4 | 0.000000e+00 | nan | nan | 30
+2022_47 | -2 | 0 | 79.4 | 2.320696e-04 | 1.458306e-01 | 30
+2022_47 | -2 | 1 | 66.6 | 3.504324e-04 | 3.982925e-01 | 30
+2022_47 | -2 | 2 | 92.3 | 1.560106e-04 | 1.101344e-01 | 30
+2022_47 | -2 | 3 | 40.4 | 3.087311e-04 | 1.194965e-01 | 30
+2022_47 | -2 | 4 | 10.0 | 5.956065e-04 | 1.211725e-01 | 30
+
+================================================================================
+KCOR VALUES AT REPORTING DATES - ALL SHEETS
+================================================================================
+
+Sheet: 2021_13 — Reporting date: 2022-03-28
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.627988
+  Age 1920: weight = 0.032277
+  Age 1930: weight = 0.121176
+  Age 1940: weight = 0.114501
+  Age 1950: weight = 0.064429
+  Age 1960: weight = 0.020991
+  Age 1970: weight = 0.009654
+  Age 1980: weight = 0.005787
+  Age 1990: weight = 0.002952
+  Age 2000: weight = 0.000246
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.2066 [1.181, 1.233] |  1.3719
+  ASMR (direct)   |   1.0544 [1.046, 1.063] |  1.4392
+  1920            |   1.0161 [0.934, 1.105] |  1.0930
+  1930            |   1.0134 [0.973, 1.056] |  1.1477
+  1940            |   1.4317 [1.388, 1.477] |  1.6896
+  1950            |   1.4896 [1.377, 1.612] |  1.6802
+  1960            |   1.3231 [1.142, 1.532] |  1.4494
+  1970            |   2.9678 [2.330, 3.780] |  3.1106
+  1980            |   1.0879 [0.713, 1.660] |  1.0879
+  1990            |   2.3549 [1.402, 3.954] |  2.3549
+  2000            |  12.6752 [5.962, 26.946] | 12.6752
+
+Dose combination: 2 vs 0 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.4421 [1.419, 1.466] |  1.6453
+  ASMR (direct)   |   1.1499 [1.143, 1.157] |  1.5574
+  1920            |   1.3571 [1.297, 1.420] |  1.4990
+  1930            |   1.4686 [1.432, 1.506] |  1.7134
+  1940            |   1.4929 [1.437, 1.551] |  1.7618
+  1950            |   1.2339 [1.151, 1.323] |  1.2905
+  1960            |   1.2004 [1.038, 1.388] |  1.3097
+  1970            |   1.0975 [0.864, 1.395] |  1.1503
+  1980            |   0.6309 [0.409, 0.974] |  0.6309
+  1990            |   1.2510 [0.746, 2.099] |  1.2510
+  2000            |   2.2822 [0.320, 16.279] |  2.2822
+
+Dose combination: 2 vs 1 [2021_13]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.1951 [1.165, 1.226] |  1.1993
+  ASMR (direct)   |   1.0900 [1.079, 1.101] |  1.0857
+  1920            |   1.3356 [1.226, 1.455] |  1.3715
+  1930            |   1.4492 [1.389, 1.512] |  1.4930
+  1940            |   1.0427 [0.996, 1.091] |  1.0427
+  1950            |   0.8283 [0.747, 0.918] |  0.7681
+  1960            |   0.9072 [0.740, 1.112] |  0.9036
+  1970            |   0.3698 [0.264, 0.518] |  0.3698
+  1980            |   0.5799 [0.319, 1.056] |  0.5799
+  1990            |   0.8037 [0.393, 1.643] |  0.8037
+  2000            |   0.1800 [0.022, 1.463] |  0.1800
+
+Sheet: 2021_20 — Reporting date: 2022-05-16
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.522743
+  Age 1920: weight = 0.045624
+  Age 1930: weight = 0.147961
+  Age 1940: weight = 0.142304
+  Age 1950: weight = 0.087578
+  Age 1960: weight = 0.024075
+  Age 1970: weight = 0.012120
+  Age 1980: weight = 0.005454
+  Age 1990: weight = 0.003270
+  Age 2000: weight = 0.008871
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_20]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.1850 [1.162, 1.208] |  1.3242
+  ASMR (direct)   |   1.1711 [1.162, 1.180] |  1.2922
+  1920            |   0.7970 [0.725, 0.876] |  0.8068
+  1930            |   1.0364 [0.985, 1.090] |  1.1521
+  1940            |   1.0937 [1.057, 1.131] |  1.2573
+  1950            |   1.4863 [1.437, 1.538] |  1.6907
+  1960            |   1.4266 [1.342, 1.516] |  1.5439
+  1970            |   1.2429 [1.105, 1.398] |  1.2815
+  1980            |   1.2066 [0.948, 1.536] |  1.2360
+  1990            |   1.0902 [0.660, 1.801] |  1.0902
+  2000            |   7.3475 [4.013, 13.454] |  7.3475
+
+Dose combination: 2 vs 0 [2021_20]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.1262 [1.110, 1.142] |  1.2585
+  ASMR (direct)   |   1.1081 [1.102, 1.114] |  1.3163
+  1920            |   1.0236 [0.979, 1.070] |  1.1108
+  1930            |   1.0691 [1.042, 1.097] |  1.1885
+  1940            |   1.2794 [1.247, 1.313] |  1.4709
+  1950            |   1.0898 [1.038, 1.144] |  1.1972
+  1960            |   1.2368 [1.125, 1.359] |  1.3385
+  1970            |   1.0287 [0.884, 1.197] |  1.0606
+  1980            |   2.7903 [2.181, 3.570] |  2.8582
+  1990            |   0.9048 [0.641, 1.278] |  0.9048
+  2000            |   6.8041 [3.490, 13.267] |  6.8041
+
+Dose combination: 2 vs 1 [2021_20]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9504 [0.931, 0.970] |  0.9504
+  ASMR (direct)   |   0.9476 [0.940, 0.955] |  1.0254
+  1920            |   1.2843 [1.169, 1.411] |  1.3768
+  1930            |   1.0316 [0.981, 1.085] |  1.0316
+  1940            |   1.1698 [1.129, 1.212] |  1.1698
+  1950            |   0.7332 [0.695, 0.773] |  0.7081
+  1960            |   0.8670 [0.781, 0.963] |  0.8670
+  1970            |   0.8276 [0.689, 0.994] |  0.8276
+  1980            |   2.3124 [1.659, 3.223] |  2.3124
+  1990            |   2.1574 [1.198, 3.884] |  2.1574
+  2000            |   0.9260 [0.384, 2.231] |  0.9260
+
+Sheet: 2021_24 — Reporting date: 2022-06-13
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.462610
+  Age 1920: weight = 0.049778
+  Age 1930: weight = 0.169840
+  Age 1940: weight = 0.163836
+  Age 1950: weight = 0.089431
+  Age 1960: weight = 0.034651
+  Age 1970: weight = 0.014757
+  Age 1980: weight = 0.005040
+  Age 1990: weight = 0.003680
+  Age 2000: weight = 0.006377
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9902 [0.968, 1.012] |  1.1078
+  ASMR (direct)   |   1.0430 [1.033, 1.053] |  1.0649
+  1920            |   0.7803 [0.692, 0.880] |  0.7803
+  1930            |   0.9529 [0.901, 1.007] |  1.0245
+  1940            |   0.9148 [0.876, 0.956] |  1.0359
+  1950            |   1.1362 [1.091, 1.184] |  1.2934
+  1960            |   1.1384 [1.073, 1.208] |  1.2452
+  1970            |   1.2451 [1.139, 1.361] |  1.3473
+  1980            |   1.0103 [0.847, 1.205] |  1.0103
+  1990            |   3.4186 [2.435, 4.800] |  3.4186
+  2000            |   0.5954 [0.306, 1.158] |  0.5954
+
+Dose combination: 2 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0807 [1.066, 1.095] |  1.2090
+  ASMR (direct)   |   1.1392 [1.133, 1.145] |  1.2319
+  1920            |   1.0309 [0.983, 1.081] |  1.0309
+  1930            |   1.0212 [0.995, 1.048] |  1.1232
+  1940            |   1.1195 [1.092, 1.147] |  1.2736
+  1950            |   1.3467 [1.301, 1.394] |  1.5330
+  1960            |   1.0854 [1.013, 1.163] |  1.1873
+  1970            |   1.1198 [1.000, 1.253] |  1.2117
+  1980            |   1.3660 [1.115, 1.674] |  1.3660
+  1990            |   2.1371 [1.556, 2.936] |  2.1371
+  2000            |   0.9749 [0.586, 1.622] |  0.9749
+
+Dose combination: 2 vs 1 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0914 [1.067, 1.116] |  1.0914
+  ASMR (direct)   |   1.0922 [1.082, 1.103] |  1.1568
+  1920            |   1.3212 [1.175, 1.486] |  1.3212
+  1930            |   1.0717 [1.015, 1.132] |  1.0964
+  1940            |   1.2238 [1.172, 1.278] |  1.2295
+  1950            |   1.1852 [1.133, 1.240] |  1.1852
+  1960            |   0.9535 [0.880, 1.033] |  0.9535
+  1970            |   0.8993 [0.790, 1.024] |  0.8993
+  1980            |   1.3520 [1.055, 1.733] |  1.3520
+  1990            |   0.6251 [0.405, 0.964] |  0.6251
+  2000            |   1.6375 [0.726, 3.694] |  1.6375
+
+M/P by decades (Dose 2)
+--------------------------------------------------
+  1920: M/P KCOR = 1.0565
+  1930: M/P KCOR = 1.3368
+  1940: M/P KCOR = 1.2148
+  1950: M/P KCOR = 2.0493
+  1960: M/P KCOR = 1.3211
+  1970: M/P KCOR = 1.3137
+  1980: M/P KCOR = 1.4301
+  1990: M/P KCOR = 2.2605
+  2000: M/P KCOR = 1.0466
+
+Sheet: 2021_30 — Reporting date: 2022-07-25
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.366620
+  Age 1920: weight = 0.057267
+  Age 1930: weight = 0.190152
+  Age 1940: weight = 0.199059
+  Age 1950: weight = 0.117876
+  Age 1960: weight = 0.039483
+  Age 1970: weight = 0.018566
+  Age 1980: weight = 0.005411
+  Age 1990: weight = 0.002042
+  Age 2000: weight = 0.003526
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_30]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.7436 [0.719, 0.769] |  0.7305
+  ASMR (direct)   |   0.7606 [0.750, 0.772] |  0.7090
+  1920            |   0.5278 [0.438, 0.637] |  0.5278
+  1930            |   0.7267 [0.673, 0.785] |  0.6575
+  1940            |   0.6172 [0.573, 0.665] |  0.6939
+  1950            |   0.6433 [0.595, 0.695] |  0.7271
+  1960            |   0.9728 [0.871, 1.086] |  1.0956
+  1970            |   1.0787 [0.931, 1.250] |  1.1868
+  1980            |   1.2307 [0.999, 1.516] |  1.2307
+  1990            |   1.0784 [0.786, 1.480] |  1.0784
+  2000            |   1.2371 [0.839, 1.825] |  1.2371
+
+Dose combination: 2 vs 0 [2021_30]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9653 [0.953, 0.978] |  1.0675
+  ASMR (direct)   |   1.0593 [1.054, 1.065] |  1.0610
+  1920            |   0.9364 [0.893, 0.982] |  0.9364
+  1930            |   0.9062 [0.883, 0.930] |  0.9567
+  1940            |   0.9785 [0.955, 1.003] |  1.1001
+  1950            |   0.9889 [0.959, 1.020] |  1.1178
+  1960            |   1.2945 [1.232, 1.360] |  1.4579
+  1970            |   1.1196 [1.037, 1.209] |  1.2317
+  1980            |   1.7405 [1.507, 2.010] |  1.7405
+  1990            |   1.1971 [0.937, 1.529] |  1.1971
+  2000            |   0.2749 [0.164, 0.462] |  0.2749
+
+Dose combination: 2 vs 1 [2021_30]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.2980 [1.255, 1.343] |  1.4614
+  ASMR (direct)   |   1.3927 [1.373, 1.413] |  1.4965
+  1920            |   1.7741 [1.473, 2.136] |  1.7741
+  1930            |   1.2471 [1.157, 1.344] |  1.4549
+  1940            |   1.5854 [1.473, 1.706] |  1.5854
+  1950            |   1.5373 [1.422, 1.662] |  1.5373
+  1960            |   1.3307 [1.189, 1.489] |  1.3307
+  1970            |   1.0379 [0.890, 1.210] |  1.0379
+  1980            |   1.4142 [1.126, 1.776] |  1.4142
+  1990            |   1.1100 [0.777, 1.585] |  1.1100
+  2000            |   0.2222 [0.121, 0.408] |  0.2222
+
+Sheet: 2022_06 — Reporting date: 2023-02-06
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.382660
+  Age 1920: weight = 0.035477
+  Age 1930: weight = 0.154902
+  Age 1940: weight = 0.240856
+  Age 1950: weight = 0.113921
+  Age 1960: weight = 0.041204
+  Age 1970: weight = 0.022627
+  Age 1980: weight = 0.004802
+  Age 1990: weight = 0.002351
+  Age 2000: weight = 0.001200
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9793 [0.937, 1.023] |  0.9590
+  ASMR (direct)   |   0.7949 [0.778, 0.812] |  0.9520
+  1920            |   0.8713 [0.657, 1.155] |  1.1616
+  1930            |   0.8557 [0.761, 0.962] |  1.1007
+  1940            |   0.9054 [0.831, 0.987] |  0.8754
+  1950            |   0.7499 [0.650, 0.866] |  0.9451
+  1960            |   0.6965 [0.570, 0.851] |  0.7965
+  1970            |   0.9082 [0.704, 1.171] |  0.9082
+  1980            |   1.0792 [0.756, 1.540] |  1.0792
+  1990            |   1.2431 [0.726, 2.128] |  1.2431
+  2000            |   0.3143 [0.100, 0.989] |  0.3143
+
+Dose combination: 2 vs 0 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0104 [0.994, 1.027] |  1.1040
+  ASMR (direct)   |   0.9807 [0.975, 0.986] |  1.1010
+  1920            |   0.8765 [0.823, 0.934] |  0.9707
+  1930            |   1.0068 [0.974, 1.041] |  1.0633
+  1940            |   1.0347 [1.002, 1.068] |  1.1100
+  1950            |   1.0859 [1.045, 1.128] |  1.1860
+  1960            |   0.9228 [0.870, 0.979] |  0.9636
+  1970            |   1.2703 [1.161, 1.389] |  1.2703
+  1980            |   1.1205 [0.968, 1.297] |  1.1205
+  1990            |   1.9621 [1.591, 2.420] |  1.9621
+  2000            |   1.3618 [1.034, 1.793] |  1.3618
+
+Dose combination: 3 vs 2 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.2083 [1.189, 1.228] |  1.4675
+  ASMR (direct)   |   1.0944 [1.088, 1.101] |  1.4866
+  1920            |   1.2363 [1.161, 1.316] |  1.4519
+  1930            |   1.2187 [1.182, 1.257] |  1.4843
+  1940            |   1.3174 [1.279, 1.357] |  1.5886
+  1950            |   1.2853 [1.238, 1.334] |  1.4830
+  1960            |   1.1791 [1.107, 1.255] |  1.2913
+  1970            |   1.1959 [1.086, 1.317] |  1.1959
+  1980            |   1.1443 [0.958, 1.367] |  1.1443
+  1990            |   0.6445 [0.494, 0.842] |  0.6445
+  2000            |   0.8366 [0.538, 1.301] |  0.8366
+
+Dose combination: 3 vs 0 [2022_06]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.2209 [1.204, 1.238] |  1.6200
+  ASMR (direct)   |   1.0732 [1.067, 1.079] |  1.6368
+  1920            |   1.0836 [1.035, 1.135] |  1.4093
+  1930            |   1.2270 [1.195, 1.260] |  1.5783
+  1940            |   1.3631 [1.328, 1.399] |  1.7635
+  1950            |   1.3957 [1.350, 1.443] |  1.7588
+  1960            |   1.0881 [1.028, 1.151] |  1.2443
+  1970            |   1.5192 [1.387, 1.663] |  1.5192
+  1980            |   1.2822 [1.095, 1.502] |  1.2822
+  1990            |   1.2647 [0.981, 1.631] |  1.2647
+  2000            |   1.1393 [0.740, 1.754] |  1.1393
+
+M/P by decades (Dose 3)
+--------------------------------------------------
+  1920: M/P KCOR = 1.0787
+  1930: M/P KCOR = 1.1831
+  1940: M/P KCOR = 1.2520
+  1950: M/P KCOR = 1.1587
+  1960: M/P KCOR = 1.0970
+  1970: M/P KCOR = 1.2468
+  1980: M/P KCOR = 1.0107
+  1990: M/P KCOR = 0.7294
+  2000: M/P KCOR = 1.5851
+
+Sheet: 2022_26 — Reporting date: 2023-06-26
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.397441
+  Age 1920: weight = 0.038260
+  Age 1930: weight = 0.156855
+  Age 1940: weight = 0.190828
+  Age 1950: weight = 0.136955
+  Age 1960: weight = 0.038785
+  Age 1970: weight = 0.025438
+  Age 1980: weight = 0.006108
+  Age 1990: weight = 0.007352
+  Age 2000: weight = 0.001977
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2022_26]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0193 [0.964, 1.078] |  0.9284
+  ASMR (direct)   |   0.8100 [0.783, 0.838] |  0.9280
+  1920            |   0.4861 [0.333, 0.710] |  0.5600
+  1930            |   1.0175 [0.880, 1.177] |  1.1668
+  1940            |   1.0295 [0.892, 1.188] |  1.2161
+  1950            |   0.4738 [0.397, 0.565] |  0.5119
+  1960            |   1.0851 [0.870, 1.353] |  1.1956
+  1970            |   0.9473 [0.719, 1.248] |  1.0605
+  1980            |   3.1946 [2.246, 4.544] |  3.1946
+  1990            |   0.3274 [0.148, 0.726] |  0.3274
+  2000            |   1.0288 [0.379, 2.794] |  1.0288
+
+Dose combination: 2 vs 0 [2022_26]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9808 [0.962, 1.000] |  1.0365
+  ASMR (direct)   |   0.9661 [0.958, 0.975] |  1.0311
+  1920            |   0.9244 [0.849, 1.007] |  1.0423
+  1930            |   0.9746 [0.935, 1.015] |  1.0073
+  1940            |   1.0212 [0.984, 1.060] |  1.0841
+  1950            |   0.9675 [0.924, 1.013] |  0.9796
+  1960            |   0.9217 [0.865, 0.982] |  0.9529
+  1970            |   1.1493 [1.053, 1.255] |  1.2867
+  1980            |   1.0552 [0.909, 1.225] |  1.0552
+  1990            |   0.7525 [0.611, 0.927] |  0.7525
+  2000            |   1.2225 [0.912, 1.639] |  1.2225
+
+Dose combination: 3 vs 2 [2022_26]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0014 [0.984, 1.019] |  1.0757
+  ASMR (direct)   |   0.9880 [0.980, 0.996] |  1.0677
+  1920            |   0.9317 [0.860, 1.009] |  0.8881
+  1930            |   1.0001 [0.965, 1.037] |  1.0955
+  1940            |   1.0186 [0.986, 1.053] |  1.1168
+  1950            |   0.9685 [0.930, 1.009] |  1.0128
+  1960            |   1.1067 [1.038, 1.180] |  1.1794
+  1970            |   0.8530 [0.777, 0.937] |  0.8530
+  1980            |   1.1897 [1.006, 1.406] |  1.1648
+  1990            |   1.5029 [1.178, 1.917] |  1.5029
+  2000            |   1.3696 [0.899, 2.087] |  1.3696
+
+Dose combination: 3 vs 0 [2022_26]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9822 [0.968, 0.997] |  1.1149
+  ASMR (direct)   |   0.9545 [0.948, 0.961] |  1.1010
+  1920            |   0.8613 [0.816, 0.909] |  0.9256
+  1930            |   0.9747 [0.946, 1.004] |  1.1035
+  1940            |   1.0402 [1.011, 1.070] |  1.2107
+  1950            |   0.9370 [0.903, 0.972] |  0.9921
+  1960            |   1.0200 [0.964, 1.079] |  1.1238
+  1970            |   0.9803 [0.903, 1.064] |  1.0975
+  1980            |   1.2554 [1.084, 1.454] |  1.2291
+  1990            |   1.1309 [0.904, 1.415] |  1.1309
+  2000            |   1.6744 [1.112, 2.522] |  1.6744
+
+Sheet: 2022_47 — Reporting date: 2023-11-20
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age -2: weight = 0.463456
+  Age 1920: weight = 0.032115
+  Age 1930: weight = 0.147531
+  Age 1940: weight = 0.178342
+  Age 1950: weight = 0.094936
+  Age 1960: weight = 0.043167
+  Age 1970: weight = 0.022872
+  Age 1980: weight = 0.009360
+  Age 1990: weight = 0.006852
+  Age 2000: weight = 0.001370
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0604 [1.009, 1.114] |  0.9786
+  ASMR (direct)   |   0.8228 [0.798, 0.848] |  1.0010
+  1920            |   1.9535 [1.417, 2.693] |  2.9817
+  1930            |   0.9519 [0.864, 1.049] |  0.9208
+  1940            |   0.5912 [0.505, 0.692] |  0.7786
+  1950            |   0.7504 [0.624, 0.902] |  0.9757
+  1960            |   1.5758 [1.240, 2.003] |  1.9515
+  1970            |   0.7257 [0.533, 0.988] |  0.7257
+  1980            |   1.4276 [0.999, 2.040] |  1.4276
+  1990            |   0.8876 [0.438, 1.799] |  0.8876
+  2000            |   1.5185 [0.618, 3.731] |  1.5185
+
+Dose combination: 2 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   0.9983 [0.980, 1.016] |  1.0562
+  ASMR (direct)   |   0.9683 [0.961, 0.976] |  1.0501
+  1920            |   1.1857 [1.081, 1.300] |  1.7253
+  1930            |   0.9435 [0.909, 0.979] |  0.9994
+  1940            |   0.9961 [0.962, 1.031] |  1.0069
+  1950            |   1.0375 [0.997, 1.080] |  1.0681
+  1960            |   0.9749 [0.921, 1.032] |  0.9992
+  1970            |   0.9543 [0.866, 1.051] |  0.9543
+  1980            |   1.2930 [1.113, 1.501] |  1.2930
+  1990            |   1.1370 [0.905, 1.429] |  1.1370
+  2000            |   0.5389 [0.394, 0.737] |  0.5389
+
+Dose combination: 3 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0104 [0.997, 1.024] |  1.0975
+  ASMR (direct)   |   0.9843 [0.979, 0.990] |  1.1097
+  1920            |   0.9952 [0.948, 1.045] |  1.0892
+  1930            |   0.9755 [0.950, 1.002] |  1.0756
+  1940            |   1.0326 [1.005, 1.061] |  1.1208
+  1950            |   1.0464 [1.013, 1.081] |  1.1053
+  1960            |   0.9714 [0.922, 1.023] |  1.1000
+  1970            |   1.1041 [1.010, 1.206] |  1.1041
+  1980            |   1.3606 [1.164, 1.591] |  1.3606
+  1990            |   1.6672 [1.314, 2.116] |  1.6672
+  2000            |   0.8259 [0.559, 1.220] |  0.8259
+
+Dose combination: 3 vs 2 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0121 [0.996, 1.029] |  1.0391
+  ASMR (direct)   |   1.0165 [1.009, 1.024] |  1.0567
+  1920            |   0.8394 [0.767, 0.918] |  0.6313
+  1930            |   1.0339 [1.000, 1.069] |  1.0762
+  1940            |   1.0366 [1.005, 1.069] |  1.1132
+  1950            |   1.0086 [0.972, 1.046] |  1.0348
+  1960            |   0.9965 [0.940, 1.056] |  1.1008
+  1970            |   1.1569 [1.049, 1.276] |  1.1569
+  1980            |   1.0523 [0.884, 1.252] |  1.0523
+  1990            |   1.4663 [1.124, 1.913] |  1.4663
+  2000            |   1.5326 [1.015, 2.314] |  1.5326
+
+Dose combination: 4 vs 0 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0144 [0.996, 1.034] |  1.2307
+  ASMR (direct)   |   0.9560 [0.947, 0.965] |  1.3137
+  1920            |   1.0708 [1.009, 1.137] |  1.3735
+  1930            |   0.9841 [0.953, 1.016] |  1.1801
+  1940            |   1.0047 [0.969, 1.042] |  1.2426
+  1950            |   1.0777 [1.024, 1.134] |  1.3796
+  1960            |   1.2462 [1.122, 1.384] |  1.5433
+  1970            |   2.8088 [2.316, 3.406] |  2.8088
+  1980            |   0.7242 [0.506, 1.036] |  0.7242
+  1990            |   1.1835 [0.576, 2.431] |  1.1835
+  2000            |   4.2857 [1.577, 11.651] |  4.2857
+
+Dose combination: 4 vs 2 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0162 [0.995, 1.038] |  1.1653
+  ASMR (direct)   |   0.9865 [0.976, 0.997] |  1.2497
+  1920            |   0.9031 [0.820, 0.994] |  0.7960
+  1930            |   1.0430 [1.004, 1.084] |  1.1808
+  1940            |   1.0086 [0.970, 1.048] |  1.2341
+  1950            |   1.0388 [0.985, 1.096] |  1.2916
+  1960            |   1.2783 [1.147, 1.425] |  1.5445
+  1970            |   2.9432 [2.417, 3.585] |  2.9432
+  1980            |   0.5601 [0.389, 0.807] |  0.5601
+  1990            |   1.0409 [0.502, 2.159] |  1.0409
+  2000            |   5.3897 [1.965, 14.781] |  5.3897
+
+Dose combination: 4 vs 3 [2022_47]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0040 [0.987, 1.022] |  1.1214
+  ASMR (direct)   |   0.9710 [0.962, 0.980] |  1.1835
+  1920            |   1.0759 [1.018, 1.138] |  1.2609
+  1930            |   1.0088 [0.981, 1.037] |  1.0972
+  1940            |   0.9730 [0.942, 1.005] |  1.1087
+  1950            |   1.0299 [0.982, 1.081] |  1.2482
+  1960            |   1.2828 [1.154, 1.426] |  1.4030
+  1970            |   2.5441 [2.097, 3.087] |  2.5441
+  1980            |   0.5323 [0.368, 0.770] |  0.5323
+  1990            |   0.7099 [0.341, 1.477] |  0.7099
+  2000            |   4.7056 [1.671, 13.254] |  4.7056
+
+M/P by decades (Dose 4)
+--------------------------------------------------
+  1920: M/P KCOR = 0.1950
+  1930: M/P KCOR = 2.3212
+  1940: M/P KCOR = 0.2830
+  1950: M/P KCOR = 5.0974
+  1960: M/P KCOR = 1.6793
+  1970: M/P KCOR = 1.6815
+  1980: M/P KCOR = 1.5134
+  1990: M/P KCOR = 1.2180
+  2000: M/P KCOR = 0.0000
+================================================================================
+[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | dose=1:mean_ratio=1.0470; dose=2:mean_ratio=0.9570; dose=3:mean_ratio=0.5976; dose=4:mean_ratio=0.9852
+[MFG] Wrote M/P KCOR: 2021_24 Dose 2 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_06 Dose 3 by decades ( 2169 rows)
+[MFG] Wrote M/P KCOR: 2022_47 Dose 4 by decades ( 2169 rows)
+[Done] Wrote 38507 rows to /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_finalchanges_test.xlsx at 2026-03-26 17:53:01
+[Summary] Creating summary file: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_summary.xlsx
+  - 2021_13: 3 dose combinations, 37 summary rows
+  - 2021_20: 3 dose combinations, 37 summary rows
+  - 2021_24: 3 dose combinations, 37 summary rows
+  - 2021_30: 3 dose combinations, 37 summary rows
+  - 2022_06: 4 dose combinations, 49 summary rows
+  - 2022_26: 4 dose combinations, 49 summary rows
+  - 2022_47: 7 dose combinations, 85 summary rows
+  - theta0_status_summary: 7 enrollment rows (file=/mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_summary.xlsx, sheet=theta0_status_summary)
+    2021_13: any_non_ok_status=True, quality_flag=False, quality_flag_detail=
+    2021_20: any_non_ok_status=True, quality_flag=False, quality_flag_detail=
+    2021_24: any_non_ok_status=True, quality_flag=True, quality_flag_detail=(1920,0,INSUFFICIENT_SIGNAL)
+    2021_30: any_non_ok_status=True, quality_flag=True, quality_flag_detail=(1920,0,INSUFFICIENT_SIGNAL)
+    2022_06: any_non_ok_status=True, quality_flag=False, quality_flag_detail=
+    2022_26: any_non_ok_status=True, quality_flag=False, quality_flag_detail=
+    2022_47: any_non_ok_status=True, quality_flag=False, quality_flag_detail=
+  - gamma_frailty_fit: 250 diagnostic rows (file=/mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/KCOR_summary.xlsx, sheet=gamma_frailty_fit)
+[Summary] Created summary with 7 enrollment periods

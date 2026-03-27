@@ -15,8 +15,7 @@ birthBandYears: 5                   # 5 years age bands for the cohorts.
 covidCorrection:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  factor: 1.27           # 1.27 is the adjustment factor for a 2X mortality difference between cohorts because it is 2^1.35 where 1.35 is the ratio between 11.5% and 8.5% standard death annual hazard rates. 
-
+  factor: 1.4           # 1.4 is the adjustment factor for a 2X mortality difference between cohorts because it is 2**.49
 
 # The quiet window is used to estimate the theta parameter for the gamma frailty model.
 # Generally, larger windows are better if there are no major epidemic waves or policy shocks.

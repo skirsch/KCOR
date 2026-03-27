@@ -1067,7 +1067,15 @@ def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
         }
 
 
-def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_week, theta0_init=1.0):
+def fit_theta0_gompertz(
+    h_arr,
+    t_rebased,
+    quiet_mask,
+    k_anchor_weeks,
+    gamma_per_week,
+    theta0_init=1.0,
+    deaths_arr=None,
+):
     """Estimate theta0 using v7.4 delta-iteration (hazard space).
 
     Inputs:
@@ -1092,8 +1100,11 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     gom_cfg = get_gompertz_theta_fit_config()
     degen_cfg = get_theta_degenerate_fit_config()
     theta0_max = float(degen_cfg.get("theta0_max", 100.0))
+    min_quiet_deaths = int(degen_cfg.get("min_quiet_deaths", 30))
+    bad_fit_relrmse_threshold = float(degen_cfg.get("bad_fit_relrmse_threshold", 1e5))
     convergence_tol = float(gom_cfg.get("convergence_tol", 1e-8))
     max_iterations = int(gom_cfg.get("max_iterations", 25))
+    deaths = None if deaths_arr is None else np.asarray(deaths_arr, dtype=float)
 
     valid = np.isfinite(h_arr) & np.isfinite(t_r)
     post_skip = valid & (t_r >= 0.0)
@@ -1126,11 +1137,15 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             "identifiability_flag": False,
             "delta_negative_clamped": False,
             "insufficient_signal": False,
+            "insufficient_deaths": False,
+            "bad_fit": False,
             "theta_hit_bound": False,
             "delta_negative": False,
             "delta_raw_values": [],
             "delta_applied_values": [],
             "theta0_init": np.nan,
+            "total_quiet_deaths": np.nan,
+            "min_quiet_deaths": int(min_quiet_deaths),
             "n_quiet_bins": int(np.count_nonzero(quiet & post_skip)),
             "n_quiet_bins_prewave": 0,
             "h_obs_quiet_slope": np.nan,
@@ -1170,6 +1185,60 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     quiet_idx = np.where(quiet_only_mask)[0]
     if quiet_idx.size < 3:
         return _fail(k_fixed, "n_fit<3", int(quiet_idx.size))
+
+    total_quiet_deaths = np.nan
+    if deaths is not None and deaths.shape == h_arr.shape:
+        try:
+            total_quiet_deaths = float(
+                np.nansum(np.where(quiet_only_mask, np.clip(deaths, 0.0, None), 0.0))
+            )
+        except Exception:
+            total_quiet_deaths = np.nan
+    if np.isfinite(total_quiet_deaths) and total_quiet_deaths < float(min_quiet_deaths):
+        fit_mask_out = fit_mask_theta.copy()
+        n_fit_out = int(np.count_nonzero(fit_mask_out))
+        return (k_fixed, 0.0), {
+            "success": True,
+            "n_obs": n_fit_out,
+            "n_fit": n_fit_out,
+            "rmse_hazard": np.nan,
+            "fit_residual_max": np.nan,
+            "relRMSE_hazard_fit": np.nan,
+            "status": "insufficient_deaths",
+            "message": (
+                f"INSUFFICIENT_DEATHS: quiet-window deaths {total_quiet_deaths:.1f} "
+                f"< min_quiet_deaths={min_quiet_deaths}; applied theta=0.0"
+            ),
+            "fit_mask_theta": fit_mask_out,
+            "anchor_only": False,
+            "k_hat": k_fixed,
+            "theta0_raw": 0.0,
+            "identifiability_flag": False,
+            "delta_negative_clamped": False,
+            "insufficient_signal": False,
+            "insufficient_deaths": True,
+            "bad_fit": False,
+            "theta_hit_bound": False,
+            "delta_negative": False,
+            "delta_raw_values": [],
+            "delta_applied_values": [],
+            "theta0_init": np.nan,
+            "total_quiet_deaths": float(total_quiet_deaths),
+            "min_quiet_deaths": int(min_quiet_deaths),
+            "n_quiet_bins": int(np.count_nonzero(quiet_only_mask)),
+            "n_quiet_bins_prewave": 0,
+            "h_obs_quiet_slope": np.nan,
+            "h_obs_first4_mean": np.nan,
+            "h_obs_last4_mean": np.nan,
+            "h_obs_first4_vs_last4_ratio": np.nan,
+            "quiet_window_duration_weeks": np.nan,
+            "k_hat_first4": np.nan,
+            "k_hat_last4": np.nan,
+            "quiet_window_start": np.nan,
+            "quiet_window_end": np.nan,
+            "n_iterations": 0,
+            "n_iter": 0,
+        }
 
     # Build contiguous quiet windows from quiet-only points.
     # Do not include anchor-only bins here; first quiet window is the pre-wave seed window.
@@ -1381,11 +1450,15 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                     "identifiability_flag": False,
                     "delta_negative_clamped": False,
                     "insufficient_signal": True,
+                    "insufficient_deaths": False,
+                    "bad_fit": False,
                     "theta_hit_bound": False,
                     "delta_negative": delta_negative,
                     "delta_raw_values": [float(x) for x in delta_raw_values],
                     "delta_applied_values": [float(x) for x in delta_applied_values],
                     "theta0_init": theta0_init_fitted,
+                    "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+                    "min_quiet_deaths": int(min_quiet_deaths),
                     "n_quiet_bins": n_quiet_bins,
                     "n_quiet_bins_prewave": n_quiet_bins_prewave,
                     "h_obs_quiet_slope": h_obs_quiet_slope,
@@ -1446,11 +1519,15 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
                 "identifiability_flag": False,
                 "delta_negative_clamped": delta_negative_clamped,
                 "insufficient_signal": False,
+                "insufficient_deaths": False,
+                "bad_fit": False,
                 "theta_hit_bound": False,
                 "delta_negative": delta_negative,
                 "delta_raw_values": [float(x) for x in delta_raw_values],
                 "delta_applied_values": [float(x) for x in delta_applied_values],
                 "theta0_init": theta0_init_fitted,
+                "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+                "min_quiet_deaths": int(min_quiet_deaths),
                 "n_quiet_bins": n_quiet_bins,
                 "n_quiet_bins_prewave": n_quiet_bins_prewave,
                 "h_obs_quiet_slope": h_obs_quiet_slope,
@@ -1502,7 +1579,7 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
     fit_resid_max = float(np.nanmax(np.abs(resid))) if resid.size else np.nan
     rel_rmse = float(np.sqrt(np.mean(((h_fit - pred) / (h_fit + 1e-12)) ** 2))) if resid.size else np.nan
 
-    # Identifiability flag: low quiet deaths or weak h-span on fit points.
+    # Identifiability flag: weak h-span or too few fit bins.
     quiet_hspan = np.nan
     try:
         if n_fit >= 2 and np.isfinite(H_eff_final[-1]) and np.isfinite(H_eff_final[0]):
@@ -1538,11 +1615,62 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
             "identifiability_flag": identifiability_flag,
             "delta_negative_clamped": delta_negative_clamped,
             "insufficient_signal": True,
+            "insufficient_deaths": False,
+            "bad_fit": False,
             "theta_hit_bound": True,
             "delta_negative": delta_negative,
             "delta_raw_values": [float(x) for x in delta_raw_values],
             "delta_applied_values": [float(x) for x in delta_applied_values],
             "theta0_init": theta0_init_fitted,
+            "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+            "min_quiet_deaths": int(min_quiet_deaths),
+            "n_quiet_bins": n_quiet_bins,
+            "n_quiet_bins_prewave": n_quiet_bins_prewave,
+            "h_obs_quiet_slope": h_obs_quiet_slope,
+            "h_obs_first4_mean": h_obs_first4_mean,
+            "h_obs_last4_mean": h_obs_last4_mean,
+            "h_obs_first4_vs_last4_ratio": h_obs_first4_vs_last4_ratio,
+            "quiet_window_duration_weeks": quiet_window_duration_weeks,
+            "k_hat_first4": k_hat_first4,
+            "k_hat_last4": k_hat_last4,
+            "quiet_window_start": win_start,
+            "quiet_window_end": win_end,
+            "n_iterations": len(history),
+            "n_iter": len(history),
+        }
+
+    if np.isfinite(rel_rmse) and rel_rmse > float(bad_fit_relrmse_threshold):
+        insufficient_signal = True
+        fit_mask_out = fit_mask_theta.copy()
+        n_fit_out = int(np.count_nonzero(fit_mask_out))
+        return (k_fixed, 0.0), {
+            "success": True,
+            "n_obs": n_fit_out,
+            "n_fit": n_fit_out,
+            "rmse_hazard": rmse_h,
+            "fit_residual_max": fit_resid_max,
+            "relRMSE_hazard_fit": rel_rmse,
+            "status": "insufficient_signal",
+            "message": (
+                f"INSUFFICIENT_SIGNAL: BAD_FIT relRMSE_hazard_fit={rel_rmse:.6g} "
+                f"> threshold={bad_fit_relrmse_threshold:.6g}; applied theta=0.0"
+            ),
+            "fit_mask_theta": fit_mask_out,
+            "anchor_only": False,
+            "k_hat": k_fixed,
+            "theta0_raw": theta0_raw,
+            "identifiability_flag": identifiability_flag,
+            "delta_negative_clamped": delta_negative_clamped,
+            "insufficient_signal": True,
+            "insufficient_deaths": False,
+            "bad_fit": True,
+            "theta_hit_bound": False,
+            "delta_negative": delta_negative,
+            "delta_raw_values": [float(x) for x in delta_raw_values],
+            "delta_applied_values": [float(x) for x in delta_applied_values],
+            "theta0_init": theta0_init_fitted,
+            "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+            "min_quiet_deaths": int(min_quiet_deaths),
             "n_quiet_bins": n_quiet_bins,
             "n_quiet_bins_prewave": n_quiet_bins_prewave,
             "h_obs_quiet_slope": h_obs_quiet_slope,
@@ -1578,11 +1706,15 @@ def fit_theta0_gompertz(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_
         "identifiability_flag": identifiability_flag,
         "delta_negative_clamped": delta_negative_clamped,
         "insufficient_signal": False,
+        "insufficient_deaths": False,
+        "bad_fit": False,
         "theta_hit_bound": False,
         "delta_negative": delta_negative,
         "delta_raw_values": [float(x) for x in delta_raw_values],
         "delta_applied_values": [float(x) for x in delta_applied_values],
         "theta0_init": theta0_init_fitted,
+        "total_quiet_deaths": float(total_quiet_deaths) if np.isfinite(total_quiet_deaths) else np.nan,
+        "min_quiet_deaths": int(min_quiet_deaths),
         "n_quiet_bins": n_quiet_bins,
         "n_quiet_bins_prewave": n_quiet_bins_prewave,
         "h_obs_quiet_slope": h_obs_quiet_slope,
@@ -1781,6 +1913,18 @@ def _load_dataset_dose_pairs_config():
                     except Exception:
                         pass
                     try:
+                        bad_fit_relrmse_threshold = _theta_degen_cfg.get("bad_fit_relrmse_threshold")
+                        if bad_fit_relrmse_threshold is None and isinstance(_tv_theta_cfg, dict):
+                            bad_fit_relrmse_threshold = _tv_theta_cfg.get("bad_fit_relrmse_threshold")
+                        if bad_fit_relrmse_threshold is None:
+                            bad_fit_relrmse_threshold = _dataset_config.get("bad_fit_relrmse_threshold")
+                        if bad_fit_relrmse_threshold is not None:
+                            bad_fit_relrmse_threshold = float(bad_fit_relrmse_threshold)
+                            if np.isfinite(bad_fit_relrmse_threshold) and bad_fit_relrmse_threshold > 0.0:
+                                parsed_cfg["bad_fit_relrmse_threshold"] = bad_fit_relrmse_threshold
+                    except Exception:
+                        pass
+                    try:
                         action = str(_theta_degen_cfg.get("action", "")).strip().lower()
                     except Exception:
                         action = ""
@@ -1953,6 +2097,7 @@ def get_theta_degenerate_fit_config():
     out = {
         "min_quiet_deaths": 30,
         "theta0_max": 100.0,
+        "bad_fit_relrmse_threshold": 1e5,
         "action": "set_zero",
     }
     if isinstance(cfg, dict):
@@ -1966,6 +2111,14 @@ def get_theta_degenerate_fit_config():
             theta0_max = float(cfg.get("theta0_max", out["theta0_max"]))
             if np.isfinite(theta0_max) and theta0_max > 0.0:
                 out["theta0_max"] = theta0_max
+        except Exception:
+            pass
+        try:
+            bad_fit_relrmse_threshold = float(
+                cfg.get("bad_fit_relrmse_threshold", out["bad_fit_relrmse_threshold"])
+            )
+            if np.isfinite(bad_fit_relrmse_threshold) and bad_fit_relrmse_threshold > 0.0:
+                out["bad_fit_relrmse_threshold"] = bad_fit_relrmse_threshold
         except Exception:
             pass
         action = str(cfg.get("action", out["action"])).strip().lower()
@@ -5926,6 +6079,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 quiet_mask_sa,
                                 _sa_gompertz_cfg["k_anchor_weeks"],
                                 _sa_gompertz_cfg["gamma_per_week"],
+                                deaths_arr=dead_vals,
                             )
                             if isinstance(diag, dict) and bool(diag.get("delta_negative_clamped", False)):
                                 dual_print(
@@ -5934,6 +6088,20 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             if isinstance(diag, dict) and bool(diag.get("insufficient_signal", False)):
                                 dual_print(
                                     f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
+                                )
+                            if isinstance(diag, dict) and bool(diag.get("insufficient_deaths", False)):
+                                qd = float(diag.get("total_quiet_deaths", np.nan))
+                                qd_str = f"{qd:.1f}" if np.isfinite(qd) else "nan"
+                                dual_print(
+                                    f"[KCOR7_INSUFFICIENT_DEATHS] enroll={str(sh)}, yob=SA, dose={int(dose_i)}, "
+                                    f"quiet_deaths={qd_str} -> theta0_applied=0.0"
+                                )
+                            if isinstance(diag, dict) and bool(diag.get("bad_fit", False)):
+                                rel = float(diag.get("relRMSE_hazard_fit", np.nan))
+                                rel_str = f"{rel:.6g}" if np.isfinite(rel) else "nan"
+                                dual_print(
+                                    f"[KCOR7_BAD_FIT] enroll={str(sh)}, yob=SA, dose={int(dose_i)}, "
+                                    f"relRMSE_hazard_fit={rel_str} -> theta0_applied=0.0"
                                 )
                             fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
                             if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
@@ -5956,13 +6124,6 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                     relrmse_hspan = np.nan
                             except Exception:
                                 relrmse_hspan = np.nan
-                            try:
-                                total_quiet_deaths = float(
-                                    np.nansum(np.where(fit_mask, np.clip(np.asarray(dead_vals, dtype=float), 0.0, None), 0.0))
-                                )
-                            except Exception:
-                                total_quiet_deaths = np.nan
-                            theta, _, _ = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
                             theta_pre_degenerate = float(theta)
                             theta, sa_deg_flag, _ = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                             if sa_deg_flag:
@@ -6373,6 +6534,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                     quiet_mask,
                     _gcf["k_anchor_weeks"],
                     _gcf["gamma_per_week"],
+                    deaths_arr=dead_vals,
                 )
                 fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
                 if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
@@ -6408,6 +6570,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}"
                     )
                     note = f"{note} | insufficient_signal".strip(" |")
+                if isinstance(diag, dict) and bool(diag.get("insufficient_deaths", False)):
+                    qd = float(diag.get("total_quiet_deaths", np.nan))
+                    qd_str = f"{qd:.1f}" if np.isfinite(qd) else "nan"
+                    dual_print(
+                        f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
+                        f"quiet_deaths={qd_str} -> theta0_applied=0.0"
+                    )
+                    note = f"{note} | insufficient_deaths".strip(" |")
+                if isinstance(diag, dict) and bool(diag.get("bad_fit", False)):
+                    rel = float(diag.get("relRMSE_hazard_fit", np.nan))
+                    rel_str = f"{rel:.6g}" if np.isfinite(rel) else "nan"
+                    dual_print(
+                        f"[KCOR7_BAD_FIT] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
+                        f"relRMSE_hazard_fit={rel_str} -> theta0_applied=0.0"
+                    )
+                    note = f"{note} | bad_fit".strip(" |")
 
                 # Precompute span-relative RMSE for degeneracy guard before inversion
                 try:
@@ -6456,19 +6634,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 theta = 0.0
                 if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                     theta = float(theta_hat)
-                try:
-                    total_quiet_deaths = float(
-                        np.nansum(np.where(fit_mask, np.clip(np.asarray(dead_vals, dtype=float), 0.0, None), 0.0))
-                    )
-                except Exception:
-                    total_quiet_deaths = np.nan
-                theta, lowdeath_flag, lowdeath_reason = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
-                if lowdeath_flag:
-                    note = f"{note} | insufficient_deaths: {lowdeath_reason}".strip(" |")
-                    dual_print(
-                        f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob={int(yob)}, dose={int(dose)}, "
-                        f"quiet_deaths={total_quiet_deaths:.1f} -> theta0_applied=0.0"
-                    )
+                total_quiet_deaths = (
+                    float(diag.get("total_quiet_deaths", np.nan))
+                    if isinstance(diag, dict)
+                    else np.nan
+                )
+                lowdeath_flag = bool(diag.get("insufficient_deaths", False)) if isinstance(diag, dict) else False
                 theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                 if degenerate_flag:
                     note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
@@ -6669,6 +6840,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             quiet_mask,
                             _gcf["k_anchor_weeks"],
                             _gcf["gamma_per_week"],
+                            deaths_arr=dead_vals,
                         )
                         fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
                         if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
@@ -6702,6 +6874,22 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                                 f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}"
                             )
                             note = f"{note} | insufficient_signal".strip(" |")
+                        if isinstance(diag, dict) and bool(diag.get("insufficient_deaths", False)):
+                            qd = float(diag.get("total_quiet_deaths", np.nan))
+                            qd_str = f"{qd:.1f}" if np.isfinite(qd) else "nan"
+                            dual_print(
+                                f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
+                                f"quiet_deaths={qd_str} -> theta0_applied=0.0"
+                            )
+                            note = f"{note} | insufficient_deaths".strip(" |")
+                        if isinstance(diag, dict) and bool(diag.get("bad_fit", False)):
+                            rel = float(diag.get("relRMSE_hazard_fit", np.nan))
+                            rel_str = f"{rel:.6g}" if np.isfinite(rel) else "nan"
+                            dual_print(
+                                f"[KCOR7_BAD_FIT] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
+                                f"relRMSE_hazard_fit={rel_str} -> theta0_applied=0.0"
+                            )
+                            note = f"{note} | bad_fit".strip(" |")
 
                         # Extra diagnostics + degeneracy guard (pre-inversion)
                         try:
@@ -6726,19 +6914,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         theta = 0.0
                         if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
                             theta = float(theta_hat)
-                        try:
-                            total_quiet_deaths = float(
-                                np.nansum(np.where(fit_mask, np.clip(np.asarray(dead_vals, dtype=float), 0.0, None), 0.0))
-                            )
-                        except Exception:
-                            total_quiet_deaths = np.nan
-                        theta, lowdeath_flag, lowdeath_reason = _apply_theta_min_deaths_guard(theta, total_quiet_deaths, theta_degen_cfg)
-                        if lowdeath_flag:
-                            note = f"{note} | insufficient_deaths: {lowdeath_reason}".strip(" |")
-                            dual_print(
-                                f"[KCOR7_INSUFFICIENT_DEATHS] enroll={effective_sheet_name}, yob=-2, dose={int(dose)}, "
-                                f"quiet_deaths={total_quiet_deaths:.1f} -> theta0_applied=0.0"
-                            )
+                        total_quiet_deaths = (
+                            float(diag.get("total_quiet_deaths", np.nan))
+                            if isinstance(diag, dict)
+                            else np.nan
+                        )
+                        lowdeath_flag = bool(diag.get("insufficient_deaths", False)) if isinstance(diag, dict) else False
                         theta, degenerate_flag, degenerate_reason = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
                         if degenerate_flag:
                             note = f"{note} | degenerate_fit: {degenerate_reason}".strip(" |")
@@ -8928,7 +9109,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         yob_label = "All"
                     elif year_of_birth == -2:
                         age_group = "All Ages"
-                        yob_label = "All"
+                        yob_label = -2
                     elif year_of_birth == -1:
                         age_group = "(unknown)"
                         yob_label = "Unknown"
@@ -9018,6 +9199,9 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
             return None
         params = kcor6_params_map.get((enrollment_date, int(yob), int(dose)))
         return params if isinstance(params, dict) else None
+
+    theta_degen_cfg_local = get_theta_degenerate_fit_config()
+    min_quiet_deaths_for_quality = int(theta_degen_cfg_local.get("min_quiet_deaths", 30))
     
     # Write summary file with retry logic
     max_retries = 3
@@ -9049,6 +9233,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     
                     # Compact counts of theta0 status for this enrollment date.
                     theta_counts = {"OK": 0, "INSUFFICIENT_SIGNAL": 0, "INSUFFICIENT_DEATHS": 0, "NOT_IDENTIFIED": 0}
+                    quality_hits = set()
                     if isinstance(kcor6_params_map, dict):
                         for key, params in kcor6_params_map.items():
                             if not isinstance(key, tuple) or len(key) != 3:
@@ -9059,10 +9244,35 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                             if st not in theta_counts:
                                 st = "NOT_IDENTIFIED"
                             theta_counts[st] += 1
+                            if st != "OK":
+                                try:
+                                    yob_val = int(key[1])
+                                    dose_val = int(key[2])
+                                except Exception:
+                                    continue
+                                total_qd = params.get("total_quiet_deaths", np.nan)
+                                try:
+                                    total_qd = float(total_qd)
+                                except Exception:
+                                    total_qd = np.nan
+                                if (
+                                    yob_val > 0
+                                    and yob_val <= 1960
+                                    and dose_val == 0
+                                    and np.isfinite(total_qd)
+                                    and total_qd >= float(min_quiet_deaths_for_quality)
+                                ):
+                                    quality_hits.add((yob_val, dose_val, st))
                     any_non_ok_theta = bool(
                         theta_counts["INSUFFICIENT_SIGNAL"] > 0
                         or theta_counts["INSUFFICIENT_DEATHS"] > 0
                         or theta_counts["NOT_IDENTIFIED"] > 0
+                    )
+                    quality_hits_sorted = sorted(quality_hits)
+                    quality_flag = bool(quality_hits_sorted)
+                    quality_flag_detail = ", ".join(
+                        f"({int(yob_val)},{int(dose_val)},{str(status_val)})"
+                        for yob_val, dose_val, status_val in quality_hits_sorted
                     )
                     theta0_status_summary_rows.append({
                         "enrollment_date": sheet_name,
@@ -9072,6 +9282,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         "INSUFFICIENT_DEATHS": int(theta_counts["INSUFFICIENT_DEATHS"]),
                         "NOT_IDENTIFIED": int(theta_counts["NOT_IDENTIFIED"]),
                         "any_non_ok_status": any_non_ok_theta,
+                        "quality_flag": quality_flag,
+                        "quality_flag_detail": quality_flag_detail,
                     })
 
                     # Create summary format similar to console output
@@ -9201,7 +9413,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     theta0_status_df = pd.DataFrame(theta0_status_summary_rows)
                     status_col_order = [
                         "enrollment_date", "reporting_date", "OK", "INSUFFICIENT_SIGNAL",
-                        "INSUFFICIENT_DEATHS", "NOT_IDENTIFIED", "any_non_ok_status"
+                        "INSUFFICIENT_DEATHS", "NOT_IDENTIFIED", "any_non_ok_status",
+                        "quality_flag", "quality_flag_detail"
                     ]
                     theta0_status_df = theta0_status_df[[c for c in status_col_order if c in theta0_status_df.columns]]
                     theta0_status_df.to_excel(writer, index=False, sheet_name="theta0_status_summary")
@@ -9209,6 +9422,13 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         f"  - theta0_status_summary: {len(theta0_status_df)} enrollment rows "
                         f"(file={summary_path}, sheet=theta0_status_summary)"
                     )
+                    for _, row in theta0_status_df.iterrows():
+                        dual_print(
+                            "    "
+                            f"{row.get('enrollment_date', '')}: any_non_ok_status={bool(row.get('any_non_ok_status', False))}, "
+                            f"quality_flag={bool(row.get('quality_flag', False))}, "
+                            f"quality_flag_detail={str(row.get('quality_flag_detail', '') or '')}"
+                        )
 
                 # Write gamma-frailty fit diagnostics worksheet
                 if gamma_frailty_rows:
