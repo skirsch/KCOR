@@ -1,4 +1,4 @@
-# Did the COVID vaccines save lives? What the data shows.
+# KCOR v7.5 concise full algorithm description
 
 ### Goal
 Our objective is to be able to analyze record-level retrospective data to answer questions related to net mortality  risk/benefit for a vaccine intervention at any point in time.
@@ -60,6 +60,8 @@ Here is a quick comparison table comparing KCOR with traditional methods of anal
 ### Dynamic HVE bias
 Dynamic HVE is the time-varying bias caused by people who are about to die avoiding vaccination — e.g., they are in a hospital or hospice. This is an exponentially decaying effect with a half-life of around 4 days. It causes death rates for approximately two weeks post-vaccination in the vaccinated group to be artificially low.
 
+The graph below is from KCOR_ts_analysis.xlsx file in the KCOR github (see "dynamic HVE" tab)
+
 ![[Pasted image 20260321161030.png]]
 The adjustment here is simple: wait two weeks before cumulating hazards.
 
@@ -71,26 +73,23 @@ Non-proportional hazards (NPH) arise because COVID mortality is more age-sensiti
 
 All-cause mortality follows the Gompertz law, growing at $\gamma = 8.5\%$ per year with age. 
 
-COVID-specific mortality is steeper. [This meta-analysis](https://pmc.ncbi.nlm.nih.gov/articles/PMC7721859/?utm_source=chatgpt.com#Sec7) of 27 studies shows COVID mortality grows at approximately $11.5\%$ per year with age. The ratio of these slopes gives the amplification factor:
-
-$$\text{amplification} = \frac{11.5\%}{8.5\%} = 1.35$$
-
-This means a cohort that is $R$ times frailer on background mortality (i.e., $R$ times more likely to die from non-COVID causes) will be $R^{1.35}$ times more likely to die from COVID — an excess amplification of $R^{0.35}$ over and above the $R$-fold baseline hazard ratio.
+COVID-specific mortality is steeper. [The Levin meta-analysis](https://pmc.ncbi.nlm.nih.gov/articles/PMC7721859/?utm_source=chatgpt.com#Sec7) of the IFR 27 studies shows COVID mortality grows at approximately $12.7\%$ per year with age. The ratio of these slopes gives the amplification factor: $$\text{amplification} = \frac{12.7\%}{8.5\%} = 1.49$$
+This means a cohort that is $R$ times frailer on background mortality (i.e., $R$ times more likely to die from non-COVID causes) will be $R^{1.49}$ times more likely to die from COVID — an excess amplification of $R^{0.49}$ over and above the $R$-fold baseline hazard ratio.
 
 ### Translating amplification into a correction multiplier
 
 The NPH correction factor depends on the assumed static HVE — the mortality ratio between unvaccinated and vaccinated cohorts due to selection alone. Let $R$ be the static HVE ratio (e.g., $R = 2$ means unvaccinated die at twice the rate of vaccinated in the absence of any vaccine effect or COVID). The NPH correction multiplier applied to unvaccinated excess COVID mortality is:
 
-$$f_{\mathrm{NPH}} = R^{(11.5/8.5\,-\,1)} = R^{0.35}$$
+$$f_{\mathrm{NPH}} = R^{(12.7/8.5\,-\,1)} = R^{0.49}$$
 
 For two plausible HVE assumptions:
 
-| Static HVE ($R$) | Multiplier $R^{0.35}$ | Interpretation |
-|---|---|---|
-| 5× (upper bound from Mirror of Erised) | $5^{0.35} \approx 1.75$ | Unvaccinated COVID mortality scaled down by 1.75× during waves |
-| 2× (conservative lower bound) | $2^{0.35} \approx 1.27$ | Unvaccinated COVID mortality scaled down by 1.27× during waves |
+| Static HVE ($R$)                       | Multiplier $R^{0.49}$  | Interpretation                                                |
+| -------------------------------------- | ---------------------- | ------------------------------------------------------------- |
+| 5× (upper bound from Mirror of Erised) | $5^{0.49} \approx 2.2$ | Unvaccinated COVID mortality scaled down by 2.2× during waves |
+| 2× (conservative lower bound)          | $2^{0.49} \approx 1.4$ | Unvaccinated COVID mortality scaled down by 1.4× during waves |
 
-The analyses in this paper use the conservative $R = 2$ estimate, yielding a **1.27× NPH correction factor**.
+The analyses in this paper use the conservative $R = 2$ estimate, yielding a **1.4× NPH correction factor**.
 
 ### How the correction is applied
 
@@ -117,16 +116,22 @@ This bias is readily observable if you are looking for it. It goes unnoticed if 
 For example, in [Palinkas et al.](https://pmc.ncbi.nlm.nih.gov/articles/PMC9319484/) (*Effectiveness of COVID-19 Vaccination in Preventing All-Cause Mortality among Adults during the Third Wave of the Epidemic in Hungary*), the Kaplan-Meier curves in Fig 1 and 2 for the unvaccinated (in red) curve up instead of down.
 ![[Pasted image 20260321162050.png]]
 
-Secondly, for the Czech data, the h(t) for unvaccinated (d0) slopes down over time while the h(t) for the vaccinated (d2) slopes up.
+Secondly, for the Czech data, the h(t) for unvaccinated (d0) slopes down over time while the h(t) for the vaccinated (d2) slopes up. This is from the "primary shots h(t)" tab of the KCOR_v7.5_with_1.27 correction.xlsx in the KCOR github. This is for all ages (value=-2).
 
-![[Pasted image 20260321161158.png]]
+There are 4 things to note in this graph:
+1. The vaccinated h(t) slopes up (minimal theta)
+2. The unvaccinated h(t) slopes down (significant theta)
+3. There is a step increase in the h(t) of the vaccinated cohort (fixed cohort defined on 6/14/2021) that happened during COVID/booster shots, so this is not selection bias since it is the same cohort. This is the mortality signal KCOR picks up on for the booster enrollment date. It's easy to see in the raw data here.
+4. Because these are all ages cohorts and not a single narrow age range, the unvaccinated here have lower h(t) because the age mix is younger. Had we picked a narrow age range, the unvaxxed would have 2x or higher h(t).
+![[Pasted image 20260327100614.png]]
+
+
 To neutralize both the level and slope changes caused by static HVE bias, we use the gamma frailty neutralization built into KCOR.
 
 ## KCOR method full detail
 KCOR (Kirsch Cumulative Outcomes Ratio) is a depletion-neutralized cohort
 comparison framework that removes selection-induced frailty bias before
-computing cumulative outcome ratios. It operates on individual registry records — dates of birth, intervention,
-and death — aggregated into weekly cohort death counts for analysis, without
+computing cumulative outcome ratios. It operates on individual registry records — dates of birth, intervention, and death — aggregated into weekly cohort death counts for analysis, without
 requiring individual-level covariates such as comorbidities or
 socioeconomic status. The method proceeds in eight steps.
 
@@ -149,9 +154,9 @@ For each cohort $d$ and weekly interval $t$, the discrete-time hazard is:
 $$h_{\mathrm{obs},d}(t) = -\ln\!\left(1 - \frac{d_d(t)}{N_d(t)}\right)$$
 
 where $d_d(t)$ is deaths in interval $t$ and $N_d(t)$ is the risk set.
+
 Cumulative hazards are accumulated from the **NPH-corrected effective hazard**
-$h_d^{\mathrm{nph}}(t)$ (defined in steps 4–5) — the observed hazard after
-applying the stabilization skip (step 4) and NPH wave correction (step 5):
+$h_d^{\mathrm{nph}}(t)$ (defined in steps 4–5) — the observed hazard after applying the stabilization skip (step 4) and NPH wave correction (step 5):
 
 $$H_{\mathrm{obs},d}(t) = \sum_{s \le t} h_d^{\mathrm{nph}}(s)$$
 
@@ -250,6 +255,8 @@ the gamma inversion contains an exponential in $H_{\mathrm{obs}}$, so
 inflated wave hazards fed into the inversion are amplified nonlinearly and
 cannot be undone by a simple post-hoc division. The two operations do not
 commute through an exponential.
+
+The correction is only applied for the first COVID wave after the groups are defined (Delta/Omicron). The groups are more similar in COVID frailty after these two depletion waves because the most frail succumbed making it less necessary to use the correction after that point. 
 
 ---
 
@@ -628,3 +635,25 @@ simultaneously on the first complete run of the corrected algorithm. There
 are no hidden model variants, no selective reporting of enrollment dates,
 and no post-hoc rationalization of the findings. The complete development
 history from v6 through v7 is documented in full.
+
+### KCOR Diagnostics
+
+**Theta0 Estimation Status Flags**
+
+The delta-iteration estimator assigns one of four status flags to each cohort's theta estimate, which propagate into the `theta0_diagnostics` sheet and the `dose_pairs` columns `theta0_status_num` and `theta0_status_den`.
+
+**`OK`** — The estimator converged normally. Delta was positive, theta did not hit either bound, and the post-fit relRMSE was below the bad-fit threshold. The fitted `theta_applied` is used for frailty correction.
+
+**`INSUFFICIENT_DEATHS`** — Fewer than `min_quiet_deaths` (default: 30) deaths were observed in the quiet estimation windows. The optimizer is not called. `theta_applied=0`, meaning no frailty correction is applied. This is expected for young cohorts (YOB 1970–2000) and small vaccinated sub-groups at late enrollment dates where the dose=1/2/3 population has dwindled to a few hundred people.
+
+**`INSUFFICIENT_SIGNAL`** — The estimator ran but the result is unreliable. This fires in three distinct situations: (a) delta was negative after the first reconstruction pass, indicating the observed cumulative hazard did not exceed the Gompertz baseline over the wave period; (b) `theta0_raw` hit the optimizer upper bound (`theta0_max * 0.999`), indicating the frailty signal is too weak to constrain the estimate; or (c) post-fit `relRMSE > bad_fit_threshold` (default: 1e5), indicating the Gompertz model cannot fit the observed hazard trajectory regardless of theta. In all cases `theta_applied=0`. This is not an error — it is the correct adaptive response when the data cannot support a reliable frailty estimate. Applying an unreliable theta would introduce more bias than omitting the correction.
+
+**`NOT_IDENTIFIED`** — The cohort fails the identifiability pre-check (insufficient population size, degenerate hazard, or other structural disqualification). No fit is attempted. `theta_applied=0`.
+
+---
+
+**The `quality_flag`**
+
+The summary sheet includes a `quality_flag` boolean per enrollment date. It is `True` only when a well-identified cohort — such as `year_of_birth <= 1960`, `total_quiet_deaths >= min_quiet_deaths`, and `dose=0` — receives a non-OK status. These are cohorts where a non-OK result is scientifically unexpected and warrants investigation. The companion field `quality_flag_detail` lists the specific `(year_of_birth, dose, status)` tuples that triggered the flag.
+
+Importantly, `quality_flag=True` does not necessarily indicate an algorithmic error. In the Czech data, `2021_24` and `2021_30` flag `(1920, 0, INSUFFICIENT_SIGNAL)` because `theta0_raw` collapsed to near zero for the YOB=1920 unvaccinated cohort at those enrollment dates. Investigation reveals this is scientifically correct: the large 2020–2021 winter COVID waves had already selectively eliminated the frailest members of this cohort before enrollment, leaving a survivor pool with genuinely near-zero residual frailty variance. The algorithm correctly detects this and applies no correction. The `quality_flag` surfaces the finding for human review rather than silently accepting or rejecting it.
