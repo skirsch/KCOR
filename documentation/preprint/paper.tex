@@ -955,6 +955,11 @@ specification, but it aligns the estimator with the biological age-slope
 assumption used in the v7.5 implementation and makes the parameter of
 interest explicit: \(\theta_{0,d}\) is the frailty variance at rebased
 \(t=0\), not a late-window summary of an already depleted cohort.
+Sensitivity to the Gompertz slope parameter \(\gamma\) is evaluated in
+the Supplementary Information; results are stable over a prespecified
+range, indicating that identification is not driven by a single slope
+choice. Identification is driven by curvature structure rather than the
+exact functional form of the baseline hazard.
 
 \paragraph{2.4.4 Quiet-window validity and
 identifiability}\label{quiet-window-validity-and-identifiability}
@@ -981,6 +986,13 @@ own. Identification depends on:
   delta-iteration path is used.
 \end{enumerate}
 
+\textbf{Additional identifiability limitation.} Within identification
+windows, a constant multiplicative hazard effect is not separately
+identifiable from frailty variance. In such cases, the estimator may
+attribute proportional hazard differences to \(\theta_{0,d}\), and
+normalization may be biased. This limitation is inherent to the working
+model and is reflected in the diagnostic criteria.
+
 Under minimal aggregated data, these conditions identify
 \(\theta_{0,d}\) only conditional on the working assumption that no
 constant multiplicative hazard effect is operating inside the
@@ -1000,9 +1012,11 @@ section, let \(h_d^{\mathrm{adj}}(t)\) denote the preprocessed hazard
 used for accumulation and fitting: in the core estimator
 \(h_d^{\mathrm{adj}}(t)=h_d^{\mathrm{eff}}(t)\), while in epidemic-wave
 applications it may include the optional NPH adjustment defined in
-§2.7.1. Pooling in this procedure occurs only across prespecified quiet
-windows within the same cohort; there is no shared \(\theta_0\)
-parameter across cohorts.
+§2.7.1. When used, this preprocessing is applied prior to inversion to
+preserve the validity of the gamma-frailty mapping between observed and
+baseline cumulative hazards. Pooling in this procedure occurs only
+across prespecified quiet windows within the same cohort; there is no
+shared \(\theta_0\) parameter across cohorts.
 
 Let \(W_{0,d}\) denote the nearest quiet window after enrollment and let
 \(\bigcup_j W_{j,d}\) denote the union of all prespecified quiet windows
@@ -1012,7 +1026,10 @@ for cohort \(d\), both evaluated on rebased time with
 \textbf{Intuition.} The estimator reconstructs the latent baseline
 trajectory across the full follow-up, then aligns quiet windows by
 accounting for persistent cumulative deviations introduced by wave
-periods before the final frailty refit.
+periods before the final frailty refit. Additivity is specified in
+cumulative-hazard space, where independent hazard contributions
+accumulate over time under the working model, making persistent offsets
+interpretable as additive deviations in \(H(t)\).
 
 \textbf{Step 1: joint seed fit in the nearest quiet window.}\\
 Estimate \((k_d,\theta_{0,d}^{(0)})\) from the nearest quiet window by
@@ -1694,9 +1711,8 @@ versions of the paper:
 
 Throughout, curvature in cumulative-hazard plots reflects
 selection-induced depletion or external hazard structure, while
-linearity after normalization within quiet windows is interpreted as a
-diagnostic consistency check rather than as a proof that all confounding
-has been removed.
+linearity after normalization is interpreted as consistent with removal
+of that curvature under the working model.
 
 In vaccinated--unvaccinated comparisons, large early differences in
 \(\mathrm{KCOR}(t)\) may reflect baseline risk selection rather than
@@ -3236,7 +3252,10 @@ modes} associated with the revised KCOR working assumptions and the
 corresponding identifiability criteria. KCOR is designed to \textbf{fail
 transparently rather than silently}: when an assumption is violated, the
 resulting lack of identifiability or model stress manifests through
-explicit diagnostic signals rather than spurious estimates.
+explicit diagnostic signals rather than spurious estimates. In
+particular, proportional hazard differences within quiet windows may not
+be distinguishable from frailty-induced curvature, and such cases are
+expected to trigger diagnostic instability or non-identifiability.
 
 The KCOR framework separates \textbf{working assumptions},
 \textbf{empirical diagnostics}, and \textbf{identifiability criteria};

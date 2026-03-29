@@ -23,7 +23,7 @@ This SI is organized as follows:
 
 ## S2. Extended diagnostics and failure modes
 
-This section describes the **observable diagnostics and failure modes** associated with the revised KCOR working assumptions and the corresponding identifiability criteria. KCOR is designed to **fail transparently rather than silently**: when an assumption is violated, the resulting lack of identifiability or model stress manifests through explicit diagnostic signals rather than spurious estimates.
+This section describes the **observable diagnostics and failure modes** associated with the revised KCOR working assumptions and the corresponding identifiability criteria. KCOR is designed to **fail transparently rather than silently**: when an assumption is violated, the resulting lack of identifiability or model stress manifests through explicit diagnostic signals rather than spurious estimates. In particular, proportional hazard differences within quiet windows may not be distinguishable from frailty-induced curvature, and such cases are expected to trigger diagnostic instability or non-identifiability.
 
 The KCOR framework separates **working assumptions**, **empirical diagnostics**, and **identifiability criteria**; these are summarized below in Tables @tbl:si_assumptions–@tbl:si_identifiability.
 

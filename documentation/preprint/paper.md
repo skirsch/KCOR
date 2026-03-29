@@ -311,7 +311,7 @@ H_{\mathrm{gom},d}(t_{\mathrm{rebased}})=\frac{k_d}{\gamma}\!\left(e^{\gamma t_{
 $$
 {#eq:baseline-shape-default}
 
-This Gompertz form supplies the structured age-like trend against which depletion-induced curvature is identified. Here $\gamma$ is a fixed Gompertz slope and $k_d$ is a cohort-specific scale parameter. This choice imposes more structure than the earlier flatter-baseline specification, but it aligns the estimator with the biological age-slope assumption used in the v7.5 implementation and makes the parameter of interest explicit: $\theta_{0,d}$ is the frailty variance at rebased $t=0$, not a late-window summary of an already depleted cohort.
+This Gompertz form supplies the structured age-like trend against which depletion-induced curvature is identified. Here $\gamma$ is a fixed Gompertz slope and $k_d$ is a cohort-specific scale parameter. This choice imposes more structure than the earlier flatter-baseline specification, but it aligns the estimator with the biological age-slope assumption used in the v7.5 implementation and makes the parameter of interest explicit: $\theta_{0,d}$ is the frailty variance at rebased $t=0$, not a late-window summary of an already depleted cohort. Sensitivity to the Gompertz slope parameter $\gamma$ is evaluated in the Supplementary Information; results are stable over a prespecified range, indicating that identification is not driven by a single slope choice. Identification is driven by curvature structure rather than the exact functional form of the baseline hazard.
 
 #### 2.4.4 Quiet-window validity and identifiability
 
@@ -322,15 +322,17 @@ Frailty parameters are identified using only bins whose corresponding calendar w
 3. stability to small boundary perturbations, and
 4. plausible reconstruction of persistent wave offsets when the delta-iteration path is used.
 
+**Additional identifiability limitation.** Within identification windows, a constant multiplicative hazard effect is not separately identifiable from frailty variance. In such cases, the estimator may attribute proportional hazard differences to $\theta_{0,d}$, and normalization may be biased. This limitation is inherent to the working model and is reflected in the diagnostic criteria.
+
 Under minimal aggregated data, these conditions identify $\theta_{0,d}$ only conditional on the working assumption that no constant multiplicative hazard effect is operating inside the quiet-window identification regime; such an effect is observationally confounded with frailty-induced curvature over short horizons. If these conditions fail, diagnostics indicate non-identifiability and the analysis is treated as not identified rather than reported as a stable normalized contrast. Full operational diagnostics are summarized in Supplementary Information §S2.
 
 ### 2.5 Estimating $\theta_{0,d}$ by delta iteration
 
-KCOR estimates $(\hat{k}_d,\hat{\theta}_{0,d})$ independently for each cohort $d$ using a structured four-step procedure. Throughout this section, let $h_d^{\mathrm{adj}}(t)$ denote the preprocessed hazard used for accumulation and fitting: in the core estimator $h_d^{\mathrm{adj}}(t)=h_d^{\mathrm{eff}}(t)$, while in epidemic-wave applications it may include the optional NPH adjustment defined in §2.7.1. Pooling in this procedure occurs only across prespecified quiet windows within the same cohort; there is no shared $\theta_0$ parameter across cohorts.
+KCOR estimates $(\hat{k}_d,\hat{\theta}_{0,d})$ independently for each cohort $d$ using a structured four-step procedure. Throughout this section, let $h_d^{\mathrm{adj}}(t)$ denote the preprocessed hazard used for accumulation and fitting: in the core estimator $h_d^{\mathrm{adj}}(t)=h_d^{\mathrm{eff}}(t)$, while in epidemic-wave applications it may include the optional NPH adjustment defined in §2.7.1. When used, this preprocessing is applied prior to inversion to preserve the validity of the gamma-frailty mapping between observed and baseline cumulative hazards. Pooling in this procedure occurs only across prespecified quiet windows within the same cohort; there is no shared $\theta_0$ parameter across cohorts.
 
 Let $W_{0,d}$ denote the nearest quiet window after enrollment and let $\bigcup_j W_{j,d}$ denote the union of all prespecified quiet windows for cohort $d$, both evaluated on rebased time with $t_{\mathrm{rebased}} \ge 0$.
 
-**Intuition.** The estimator reconstructs the latent baseline trajectory across the full follow-up, then aligns quiet windows by accounting for persistent cumulative deviations introduced by wave periods before the final frailty refit.
+**Intuition.** The estimator reconstructs the latent baseline trajectory across the full follow-up, then aligns quiet windows by accounting for persistent cumulative deviations introduced by wave periods before the final frailty refit. Additivity is specified in cumulative-hazard space, where independent hazard contributions accumulate over time under the working model, making persistent offsets interpretable as additive deviations in $H(t)$.
 
 **Step 1: joint seed fit in the nearest quiet window.**  
 Estimate $(k_d,\theta_{0,d}^{(0)})$ from the nearest quiet window by nonlinear least squares in hazard space:
@@ -629,7 +631,7 @@ The central validation claim is therefore broader than in earlier versions of th
 - **Positive-control behavior:** when known harm/benefit is injected, KCOR should deviate in the expected direction after the same normalization pipeline.
 - **Failure signaling:** when key assumptions are violated or the working model is stressed, diagnostics should degrade and the analysis should be treated as not identified rather than reported as a stable contrast.
 
-Throughout, curvature in cumulative-hazard plots reflects selection-induced depletion or external hazard structure, while linearity after normalization within quiet windows is interpreted as a diagnostic consistency check rather than as a proof that all confounding has been removed.
+Throughout, curvature in cumulative-hazard plots reflects selection-induced depletion or external hazard structure, while linearity after normalization is interpreted as consistent with removal of that curvature under the working model.
 
 In vaccinated–unvaccinated comparisons, large early differences in $\mathrm{KCOR}(t)$ may reflect baseline risk selection rather than intervention-attributable effects; in such cases, $\mathrm{KCOR}(t; t_0)$ is emphasized to report deviations relative to an early post-enrollment reference while preserving time-varying divergence.
 
