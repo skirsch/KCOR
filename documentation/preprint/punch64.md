@@ -586,3 +586,40 @@ What it should use:
 * a loop arrow for the iteration between reconstruction, offsets, and pooled refit
 
 That is the safest choice because it is reproducible, already consistent with the paper’s plotting toolchain, and easy to revise later.
+
+## additional
+
+
+# 🟡 Two tiny upgrades (optional)
+
+These are not required, but they would make it *bulletproof*.
+
+---
+
+## 🔧 1) Add one explicit “derivation is model-dependent” sentence
+
+Right now you imply it, but one line would close the loop:
+
+Add to Phase 1 goals:
+
+> Clarify that the inversion relation used in Step 2 follows from the gamma-frailty working model and is not model-free.
+
+Why:
+
+* prevents “this is just algebra” misunderstanding
+* reinforces working-model framing
+
+---
+
+## 🔧 2) Add one guard against symbol drift in SI
+
+In Phase 4 QA, add:
+
+> confirm no reversion from `theta0,d` to `theta` in SI tables, captions, or defaults
+
+Why:
+
+* SI is where notation regressions often happen
+* especially in tables like `tbl:si_defaults`
+
+

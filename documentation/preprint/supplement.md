@@ -33,10 +33,10 @@ Table: KCOR working assumptions. {#tbl:si_assumptions}
 |---|---|---|
 | A1 Cohort stability | Cohorts are fixed at enrollment with no post-enrollment switching or informative censoring. | Ensures cumulative hazards are comparable over follow-up |
 | A2 Shared external hazard environment | Cohorts experience the same background hazard over the comparison window, except for explicitly modeled extensions. | Prevents confounding by cohort-specific shocks |
-| A3 Enrollment-time frailty | Selection operates through time-invariant latent heterogeneity summarized by enrollment-time frailty variance $\theta_0$. | Defines the parameter targeted by the estimator |
+| A3 Enrollment-time frailty | Selection operates through time-invariant latent heterogeneity summarized by cohort-specific enrollment-time frailty variance $\theta_{0,d}$, estimated separately for each cohort. Under minimal aggregated data, this interpretation is conditional on no constant multiplicative hazard effect operating inside the quiet-window identification regime. | Defines the parameter targeted by the estimator |
 | A4 Adequacy of gamma frailty | Gamma frailty provides a reasonable approximation to observed depletion geometry. | Allows tractable inversion and normalization |
-| A5 Adequacy of Gompertz baseline | A fixed Gompertz age slope is a reasonable working approximation over the estimation horizon. | Anchors the structured baseline used to identify $\theta_0$ |
-| A6 Multi-window quiet-period validity | Prespecified quiet windows exist in which depletion can be identified without dominant external shocks. | Permits pooled identification across windows |
+| A5 Adequacy of Gompertz baseline | A fixed Gompertz age slope is a reasonable working approximation over the estimation horizon. | Anchors the structured baseline used to identify $\theta_{0,d}$ |
+| A6 Multi-window quiet-period validity | Prespecified quiet windows exist in which depletion can be identified without dominant external shocks. | Permits pooled identification across windows within each cohort |
 | A7 Structured offset additivity | When the delta path is used, wave effects are additive in cumulative-hazard space and persist forward after the wave ends. | Permits alignment of quiet windows through $\delta_i$ and $\Delta(t)$ |
 | A8 Optional NPH extension plausibility | When the epidemic-wave module is used, the chosen wave-period hazard rescaling is externally justified and specified independently of frailty fitting. | Supports wave-period preprocessing before inversion |
 
@@ -44,13 +44,13 @@ Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnost
 
 | Diagnostic | Description | Observable signal |
 |---|---|---|
-| Skip-week sensitivity | Exclude early post-enrollment weeks subject to dynamic selection. | Stable fitted $\theta_0$ under varying skip weeks |
+| Skip-week sensitivity | Exclude early post-enrollment weeks subject to dynamic selection. | Stable fitted $\theta_{0,d}$ under varying skip weeks |
 | Seed-fit quality | Evaluate the nearest-window Gompertz seed fit. | Small residuals and plausible $\hat{k}_d$ / $\hat{\theta}_{0,d}^{(0)}$ |
-| Multi-window consistency | Refit after omitting or perturbing individual quiet windows. | Stable $\hat{\theta}_0$ and similar normalized trajectories |
+| Multi-window consistency | Refit after omitting or perturbing individual quiet windows. | Stable $\hat{\theta}_{0,d}$ and similar normalized trajectories |
 | Delta plausibility | Check reconstructed offsets and failure flags. | Positive / coherent offsets or transparent fallback |
-| Post-normalization linearity | Assess curvature removal in cumulative-hazard space. | Approximate linearity after normalization within quiet windows |
+| Post-normalization linearity | Assess curvature removal in cumulative-hazard space. | Approximate linearity after normalization within quiet windows as a diagnostic check under the working model |
 | Residual structure | Examine residuals in hazard space. | No systematic time-structure within or across windows |
-| KCOR(t) stability | Inspect KCOR trajectories following anchoring. | Stabilization rather than drift |
+| KCOR(t) stability | Inspect KCOR trajectories following anchoring. | Stabilization rather than drift, interpreted diagnostically rather than as proof |
 | Optional NPH sensitivity | Compare results with and without the epidemic-wave module when relevant. | Limited dependence on arbitrary wave correction choices |
 
 Empirical illustration of the "Quiet-window perturbation" diagnostic is provided in Figure @fig:si_quiet_window_theta_scan, which scans monthly-shifted 12-month windows in Czech registry data.
@@ -60,13 +60,13 @@ Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifi
 | Criterion | Condition | Consequence if violated |
 |---|---|---|
 | I1 Diagnostic sufficiency | All required diagnostics pass. | KCOR interpretable |
-| I2 Curvature sufficiency | Mortality geometry contains enough curvature to distinguish $k_d$ from $\theta_{0,d}$. | $\theta_0$ weakly identified |
+| I2 Curvature sufficiency | Mortality geometry contains enough curvature to distinguish $k_d$ from $\theta_{0,d}$, conditional on no constant multiplicative hazard effect being observationally confounded with that curvature in the quiet-window regime. | $\theta_{0,d}$ weakly identified |
 | I3 Multi-window coherence | Quiet windows remain consistent after alignment. | Interpretation limited |
 | I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identifiable |
 | I5 Anchoring validity | Post-normalization behavior is stable in the reference quiet window. | Anchoring invalid |
 | I6 Conservative failure rule | Any failure → diagnostics indicate non-identifiability. | Analysis treated as not identified; results not reported |
 
-When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself.
+When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself. In minimal aggregated data, a constant multiplicative hazard effect within the quiet-window regime is observationally confounded with frailty-induced curvature over short horizons, so identifiability of $\theta_{0,d}$ remains conditional on the working model rather than assumption-free.
 
 ## S3. Positive controls
 
@@ -102,7 +102,7 @@ Table: Summary of control-test and simulation parameters referenced in Sections 
 | S4.2.2 | Empirical negative control | Data source | Czech admin registry data (KCOR_CMR) | Aggregated cohorts |
 | S4.2.2 | Empirical negative control | Construction | Age strata remapped to pseudo-doses | Preserves a pseudo-null by design |
 | S4.3 | Positive control | Effect multiplier | $r=1.2$ harm; $r=0.8$ benefit | Injected after the same preprocessing pipeline |
-| S4.3 | Positive control | Frailty target | Enrollment-time $\theta_0$ | Estimated, not fixed in the estimator |
+| S4.3 | Positive control | Frailty target | Enrollment-time $\theta_{0,d}$ | Estimated separately within each cohort, not fixed in the estimator |
 | S4.4 | Sensitivity analysis | Perturbations | Skip weeks, quiet-window placement, omitted windows, optional NPH settings | Probes robustness of the revised estimator |
 | S4.5 | Adversarial selection geometry | Frailty distribution | Tail-mixture versus mid-quantile sampling | Tests robustness to non-gamma geometry |
 | S4.6 | Joint frailty + effect | DGP | Frailty heterogeneity plus injected effect | Tests separability of depletion and effect windows |
@@ -117,7 +117,7 @@ Table: Reference implementation and default operational settings. {#tbl:si_defau
 | Quiet-period selection | Quiet windows | Prespecified ISO-week intervals spanning follow-up | Used jointly after alignment, not one at a time |
 | Early-period stabilization (dynamic HVE) | `SKIP_WEEKS` | 2 | Weeks $t < \mathrm{SKIP\_WEEKS}$ are excluded from accumulation; time is then rebased |
 | Gompertz slope | `\gamma` | Fixed implementation value | Same value used throughout the estimator |
-| Frailty estimation | Fit method | Seed Gompertz fit + delta iteration + pooled refit | Estimates $(k_d,\theta_{0,d})$ in the main path |
+| Frailty estimation | Fit method | Seed Gompertz fit + delta iteration + pooled refit | Estimates $(k_d,\theta_{0,d})$ separately within each cohort in the main path |
 | Anchoring | `NORMALIZATION_WEEKS` | 4 | Reference window for anchored KCOR plots |
 | Epidemic-wave module | Optional NPH extension | Off by default | Enabled only in analyses with a justified wave-period correction |
 
@@ -127,7 +127,7 @@ Negative controls are used to evaluate the behavior of KCOR under settings where
 
 #### S4.2.1 Synthetic negative control: gamma-frailty null
 
-The synthetic negative control (Figure @fig:neg_control_synthetic) is a fully specified simulation designed to induce **strong selection-induced depletion curvature under a true null effect**. Under the revised estimator, this synthetic setting is used not only to ask whether KCOR remains near 1, but also whether the estimator recovers the enrollment-time frailty parameter $\theta_0$ and aligns quiet windows coherently.
+The synthetic negative control (Figure @fig:neg_control_synthetic) is a fully specified simulation designed to induce **strong selection-induced depletion curvature under a true null effect**. Under the revised estimator, this synthetic setting is used not only to ask whether KCOR remains near 1, but also whether the estimator recovers the cohort-specific enrollment-time frailty parameters governing the simulated geometry and aligns quiet windows coherently. Near-1 behavior here is interpreted as a diagnostic implication under the working model, not as stand-alone proof that the estimator is correct.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
@@ -135,13 +135,13 @@ Both cohorts share identical per-frailty-group death probabilities; only the mix
 
 Figure @fig:si_kcor_bias_vs_theta provides a compact summary of KCOR bias as a function of frailty variance under the same synthetic-null grid used in Table @tbl:cox_bias_demo.
 
-![Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance $\theta_0$. Bias is defined as $\mathrm{KCOR}_{\mathrm{asymptote}} - 1$ at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
+![Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance $\theta_0$. Bias is defined as $\mathrm{KCOR}_{\mathrm{asymptote}} - 1$ at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
 
-![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, which is consistent with successful depletion-neutralization under the working model. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
+![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, which is the diagnostic behavior expected under the working model rather than proof that all confounding has been removed. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
 
 #### S4.2.2 Empirical negative control: age-shift construction
 
-The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_0$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
+The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_{0,d}$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
@@ -151,7 +151,7 @@ This contrasts with the synthetic negative control (Section S4.2.1), where stron
 
 ### S4.3 Positive control: injected effect
 
-Positive controls are used to verify that KCOR responds appropriately when a true effect is present. Starting from a negative-control simulation with no treatment effect, a known multiplicative hazard shift is injected into one cohort over a prespecified time window. This construction allows direct assessment of whether the same preprocessing and $\theta_0$ estimation pipeline detects both the direction and timing of the injected effect while remaining stable outside the effect window.
+Positive controls are used to verify that KCOR responds appropriately when a true effect is present. Starting from a negative-control simulation with no treatment effect, a known multiplicative hazard shift is injected into one cohort over a prespecified time window. This construction allows direct assessment of whether the same preprocessing and $\theta_{0,d}$ estimation pipeline detects both the direction and timing of the injected effect while remaining stable outside the effect window.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
@@ -169,7 +169,7 @@ Output grids show KCOR(t) values for each parameter combination.
 
 ### S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)
 
-This adversarial simulation evaluates KCOR under extreme but controlled violations of typical cohort-selection geometry. Two cohorts are constructed to share identical mean frailty while differing sharply in how risk is distributed, using mid-quantile sampling versus a low/high-tail mixture. This setting stress-tests whether the revised $\theta_0$ estimator and depletion normalization remain effective when frailty heterogeneity is concentrated in the tails rather than smoothly distributed.
+This adversarial simulation evaluates KCOR under extreme but controlled violations of typical cohort-selection geometry. Two cohorts are constructed to share identical mean frailty while differing sharply in how risk is distributed, using mid-quantile sampling versus a low/high-tail mixture. This setting stress-tests whether the revised $\theta_{0,d}$ estimator and depletion normalization remain effective when frailty heterogeneity is concentrated in the tails rather than smoothly distributed.
 
 - **Mid-sampled cohort**: frailty restricted to central quantiles (e.g., 25th–75th percentile) and renormalized to mean 1.
 - **Tail-sampled cohort**: mixture of low and high tails (e.g., 0–15th and 85th–100th percentiles) with mixture weights chosen to yield mean 1.
@@ -208,7 +208,7 @@ This section provides diagnostic outputs and evaluation criteria for the simulat
 For each cohort $d$, the revised fit produces diagnostic outputs including:
 
 - **RMSE in hazard space**: Root mean squared error between observed and model-predicted hazards over the pooled quiet-window fit set.
-- **Fitted parameters**: baseline scale parameter and enrollment-time frailty variance $\theta_0$.
+- **Fitted parameters**: baseline scale parameter and cohort-specific enrollment-time frailty variance $\theta_{0,d}$.
 - **Number of fit points**: pooled observations across quiet windows.
 - **Offset diagnostics**: number, sign, and stability of reconstructed $\delta_i$ terms when the delta path is used.
 
@@ -239,7 +239,7 @@ $$
 Robustness of fitted parameters is assessed by:
 
 - **Quiet-window perturbation**: Shift the quiet-window start/end by ±4 weeks and re-fit. Stable parameters should vary modestly and preserve the same qualitative interpretation.
-- **Window omission**: Drop one quiet window at a time and verify that $\hat{\theta}_0$ and KCOR remain coherent.
+- **Window omission**: Drop one quiet window at a time and verify that $\hat{\theta}_{0,d}$ and KCOR remain coherent.
 - **Skip-weeks sensitivity**: Vary `SKIP_WEEKS` and verify KCOR trajectories remain qualitatively similar.
 - **Gompertz sensitivity**: Check whether modest perturbations of $\gamma$ materially alter interpretation.
 - **Optional NPH sensitivity**: In epidemic-wave applications, compare results with and without the extension module or under plausible alternative rescaling choices.
@@ -289,7 +289,7 @@ Unless otherwise noted, KCOR curves in the Czech analyses are shown anchored at 
 
 #### S6.1.1 Illustrative empirical context: COVID-19 mortality data
 
-The COVID-19 vaccination period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, making it a useful illustration for the KCOR framework. During this period, vaccine uptake was voluntary, rapidly time-varying, and correlated with baseline health status, creating clear examples of selection-induced non-proportional hazards. The Czech Republic national mortality registry data exemplify this regime: voluntary uptake led to asymmetric selection at enrollment and to visibly different cohort hazard geometry over follow-up. Under the revised estimator, those differences are summarized through fitted $\theta_0$ values, aligned quiet-window behavior, and depletion-normalized cumulative trajectories, but the Czech application remains illustrative rather than validating. While these examples illustrate KCOR's application, the method is general and applies to any retrospective cohort comparison where selection induces differential depletion dynamics.
+The COVID-19 vaccination period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, making it a useful illustration for the KCOR framework. During this period, vaccine uptake was voluntary, rapidly time-varying, and correlated with baseline health status, creating clear examples of selection-induced non-proportional hazards. The Czech Republic national mortality registry data exemplify this regime: voluntary uptake led to asymmetric selection at enrollment and to visibly different cohort hazard geometry over follow-up. Under the revised estimator, those differences are summarized through fitted $\theta_{0,d}$ values, aligned quiet-window behavior, and depletion-normalized cumulative trajectories, but the Czech application remains illustrative rather than validating. While these examples illustrate KCOR's application, the method is general and applies to any retrospective cohort comparison where selection induces differential depletion dynamics.
 
 #### S6.1.2 Descriptive frailty-normalization behavior in the Czech application
 
@@ -336,7 +336,7 @@ $$
 $$
 {#eq:si_theta_near_zero_dose2}
 
-Estimated heterogeneity can appear larger at younger ages because baseline hazards are low, so proportional differences across latent risk strata translate into visibly different short-term hazards before depletion compresses the risk distribution. At older ages, higher baseline hazard and stronger ongoing depletion can reduce the apparent dispersion of remaining risk, yielding smaller fitted $\theta_0$ even if latent heterogeneity is not literally smaller. These descriptive patterns should not be elevated into a validation criterion, and no single dose-ordering pattern is required by the revised estimator. Table @tbl:si_frailty_variance is therefore presented as an empirical summary of fitted parameters rather than as proof that the estimator is correct.
+Estimated heterogeneity can appear larger at younger ages because baseline hazards are low, so proportional differences across latent risk strata translate into visibly different short-term hazards before depletion compresses the risk distribution. At older ages, higher baseline hazard and stronger ongoing depletion can reduce the apparent dispersion of remaining risk, yielding smaller fitted $\theta_{0,d}$ even if latent heterogeneity is not literally smaller. These descriptive patterns should not be elevated into a validation criterion, and no single dose-ordering pattern is required by the revised estimator. Table @tbl:si_frailty_variance is therefore presented as an empirical summary of fitted parameters rather than as proof that the estimator is correct.
 
 These raw contrasts reflect both selection and depletion effects and are not interpreted causally.
 
