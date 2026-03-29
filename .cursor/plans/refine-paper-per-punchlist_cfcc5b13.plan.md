@@ -4,22 +4,22 @@ overview: Refine the already-v7.5-aligned KCOR manuscript into a reviewer-ready 
 todos:
   - id: phase-1-lock-semantics
     content: Lock the core manuscript semantics in the Abstract, conceptual framing, notation/setup, Methods math, and workflow reference before touching downstream interpretation or SI.
-    status: pending
+    status: completed
   - id: phase-2-propagate-meaning
     content: Update downstream interpretation sections so identifiability, limitations, and conclusion language fully reflect the locked Methods semantics and v7.5 framing.
-    status: pending
+    status: completed
   - id: phase-3-validation-interpretation
     content: Reframe validation and simulation interpretation around theta0 recovery, multi-window consistency, full-trajectory reconstruction, and diagnostic/descriptive claims.
-    status: pending
+    status: completed
   - id: phase-4-si-alignment
     content: Align `documentation/preprint/supplement.md` to the finalized main-text semantics in the order notation, diagnostics, simulations, then Czech material, with no stronger claims than the paper.
-    status: pending
+    status: completed
   - id: phase-5-figure-refresh
     content: Regenerate or confirm Figure 1 only after Methods are stable, updating the figure asset, generator, and caption together through the paper’s reproducible toolchain.
-    status: pending
+    status: completed
   - id: phase-6-final-qa
     content: Run a final manuscript-wide QA sweep for notation drift, forbidden legacy phrases, caption/title overclaiming, symbol definitions, and cross-reference mismatches.
-    status: pending
+    status: completed
 isProject: false
 ---
 

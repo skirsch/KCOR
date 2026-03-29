@@ -38,7 +38,7 @@ Table: KCOR working assumptions. {#tbl:si_assumptions}
 | A5 Adequacy of Gompertz baseline | A fixed Gompertz age slope is a reasonable working approximation over the estimation horizon. | Anchors the structured baseline used to identify $\theta_0$ |
 | A6 Multi-window quiet-period validity | Prespecified quiet windows exist in which depletion can be identified without dominant external shocks. | Permits pooled identification across windows |
 | A7 Structured offset additivity | When the delta path is used, wave effects are additive in cumulative-hazard space and persist forward after the wave ends. | Permits alignment of quiet windows through $\delta_i$ and $\Delta(t)$ |
-| A8 Optional NPH extension plausibility | When the epidemic-wave module is used, the chosen wave-period hazard rescaling is externally justified. | Supports wave-period preprocessing before inversion |
+| A8 Optional NPH extension plausibility | When the epidemic-wave module is used, the chosen wave-period hazard rescaling is externally justified and specified independently of frailty fitting. | Supports wave-period preprocessing before inversion |
 
 Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnostics}
 
@@ -62,7 +62,7 @@ Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifi
 | I1 Diagnostic sufficiency | All required diagnostics pass. | KCOR interpretable |
 | I2 Curvature sufficiency | Mortality geometry contains enough curvature to distinguish $k_d$ from $\theta_{0,d}$. | $\theta_0$ weakly identified |
 | I3 Multi-window coherence | Quiet windows remain consistent after alignment. | Interpretation limited |
-| I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identified |
+| I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identifiable |
 | I5 Anchoring validity | Post-normalization behavior is stable in the reference quiet window. | Anchoring invalid |
 | I6 Conservative failure rule | Any failure → diagnostics indicate non-identifiability. | Analysis treated as not identified; results not reported |
 
@@ -83,9 +83,9 @@ $$
 
 with $r>1$ for harm and $0<r<1$ for benefit.
 
-After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude consistent with the injected effect (up to discretization and sampling noise). Figure @fig:pos_control_injected and Table @tbl:pos_control_summary confirm this behavior.
+After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude broadly consistent with the injected effect (up to discretization and sampling noise). Figure @fig:pos_control_injected and Table @tbl:pos_control_summary illustrate this behavior.
 
-![Positive control validation: KCOR correctly detects injected effects. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows $\mathrm{KCOR}(t)$ deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
+![Positive control validation: KCOR tracks injected effects in the expected direction. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows $\mathrm{KCOR}(t)$ deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
 
 ## S4. Control-test specifications and simulation parameters
 
@@ -100,7 +100,7 @@ Table: Summary of control-test and simulation parameters referenced in Sections 
 | S4.2.1 | Synthetic validation | Baseline model in estimator | Gompertz with fixed $\gamma$ | Aligns with main-text estimator |
 | S4.2.1 | Synthetic validation | Time horizon | Multi-year follow-up | Sufficient to probe identifiability |
 | S4.2.2 | Empirical negative control | Data source | Czech admin registry data (KCOR_CMR) | Aggregated cohorts |
-| S4.2.2 | Empirical negative control | Construction | Age strata remapped to pseudo-doses | Preserves a true null by design |
+| S4.2.2 | Empirical negative control | Construction | Age strata remapped to pseudo-doses | Preserves a pseudo-null by design |
 | S4.3 | Positive control | Effect multiplier | $r=1.2$ harm; $r=0.8$ benefit | Injected after the same preprocessing pipeline |
 | S4.3 | Positive control | Frailty target | Enrollment-time $\theta_0$ | Estimated, not fixed in the estimator |
 | S4.4 | Sensitivity analysis | Perturbations | Skip weeks, quiet-window placement, omitted windows, optional NPH settings | Probes robustness of the revised estimator |
@@ -123,7 +123,7 @@ Table: Reference implementation and default operational settings. {#tbl:si_defau
 
 ### S4.2 Negative controls
 
-Negative controls are used to evaluate the behavior of KCOR under settings where the true effect is known to be null, while allowing substantial heterogeneity in baseline risk and selection-induced depletion. Two complementary classes of negative controls are considered: (i) fully synthetic simulations used to assess both $\theta_0$ recovery and null KCOR behavior, and (ii) empirical registry-based constructions that preserve a true null by repurposing age strata as pseudo-exposures without selective sampling. Together, these controls assess whether KCOR remains stable in the presence of non-proportional hazards arising from selection rather than treatment.
+Negative controls are used to evaluate the behavior of KCOR under settings where the true effect is known to be null, while allowing substantial heterogeneity in baseline risk and selection-induced depletion. Two complementary classes of negative controls are considered: (i) fully synthetic simulations used to assess both $\theta_0$ recovery and null KCOR behavior, and (ii) empirical registry-based constructions that preserve a pseudo-null by repurposing age strata as pseudo-exposures without selective sampling. Together, these controls assess whether KCOR remains stable in the presence of non-proportional hazards arising from selection rather than treatment.
 
 #### S4.2.1 Synthetic negative control: gamma-frailty null
 
@@ -137,15 +137,15 @@ Figure @fig:si_kcor_bias_vs_theta provides a compact summary of KCOR bias as a f
 
 ![Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance $\theta_0$. Bias is defined as $\mathrm{KCOR}_{\mathrm{asymptote}} - 1$ at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
 
-![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ remains flat at 1. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, demonstrating successful depletion-neutralization under the null. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
+![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, which is consistent with successful depletion-neutralization under the working model. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
 
 #### S4.2.2 Empirical negative control: age-shift construction
 
-The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) repurposes registry cohorts to create a **true null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_0$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
+The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_0$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
-This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a true null while inducing 10–20 year age differences.
+This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a pseudo-null while inducing 10–20 year age differences.
 
 This contrasts with the synthetic negative control (Section S4.2.1), where strong, deliberately induced frailty heterogeneity requires gamma-frailty normalization to recover the null.
 
@@ -250,9 +250,9 @@ To assess whether diagnostically valid quiet windows are rare or fragile in appl
 
 Specifically, we considered 12-month windows beginning at successive monthly offsets between April 2022 and April 2023 (inclusive). For each window placement, parameters were estimated using the same revised estimator and diagnostic pass/fail criteria used elsewhere in this SI. Results are shown for two birth-decade strata (1940s and 1950s), and for dose groups $d \in \{0,1,2\}$.
 
-Figure @fig:si_quiet_window_theta_scan shows fitted $\hat{\theta}_{0,d}$ as a function of quiet-window midpoint date. The purpose of this scan is technical rather than substantive: it asks whether the estimator remains coherent across nearby quiet-window choices and whether failures are surfaced explicitly. Open markers denote windows failing diagnostics (treated as non-identified and not interpreted).
+Figure @fig:si_quiet_window_theta_scan shows fitted $\hat{\theta}_{0,d}$ as a function of quiet-window midpoint date. The purpose of this scan is technical rather than substantive: it asks whether the estimator remains coherent across nearby quiet-window choices and whether failures are surfaced explicitly. Open markers denote windows failing diagnostics (treated as non-identifiable and not interpreted).
 
-![Quiet-window robustness scan: fitted enrollment-time frailty variance $\hat{\theta}_{0,d}$ vs. quiet-window midpoint date for the Czech 2021–2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Marker shape denotes birth decade (1940s, 1950s). Filled markers indicate diagnostic pass; open markers indicate diagnostic fail. The figure is intended as a technical stability scan of the estimator rather than as substantive evidence for any one cohort narrative.](figures/fig_si_quiet_window_theta_scan_czech_2021_24.png){#fig:si_quiet_window_theta_scan}
+![Quiet-window robustness scan: fitted enrollment-time frailty variance $\hat{\theta}_{0,d}$ vs. quiet-window midpoint date for the Czech 2021–2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Marker shape denotes birth decade (1940s, 1950s). Filled markers indicate diagnostic pass; open markers indicate diagnostic failure. The figure is intended as a technical stability scan of the estimator rather than as substantive evidence for any one cohort narrative.](figures/fig_si_quiet_window_theta_scan_czech_2021_24.png){#fig:si_quiet_window_theta_scan}
 
 ### S5.5 Quiet-window overlay plots
 
@@ -266,7 +266,7 @@ Visual inspection of quiet-window placement relative to mortality dynamics remai
 
 ### S5.6 Robustness to age stratification
 
-This subsection illustrates robustness of $\mathrm{KCOR}(t)$ to narrow age stratification by repeating the same fixed-cohort comparison in three single birth-year cohorts spanning advanced ages (1930, 1940, 1950). Across these strata, the trajectories remain qualitatively stable after depletion normalization, supporting the claim that the observed behavior is not an artifact of age aggregation.
+This subsection examines $\mathrm{KCOR}(t)$ under narrow age stratification by repeating the same fixed-cohort comparison in three single birth-year cohorts spanning advanced ages (1930, 1940, 1950). Across these strata, the trajectories remain qualitatively stable after depletion normalization, which is consistent with the observed behavior not being driven solely by age aggregation.
 
 ![Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.](figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png){#fig:si_yob1930}
 
@@ -277,7 +277,7 @@ This subsection illustrates robustness of $\mathrm{KCOR}(t)$ to narrow age strat
 **Additional empirical negative-control variant (20-year age shift).**  
 For completeness, the more extreme 20-year age-shift negative control referenced in the main text is included:
 
-![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, $\mathrm{KCOR}(t)$ exhibits no systematic drift, consistent with robustness to selection-induced curvature. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
+![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, $\mathrm{KCOR}(t)$ shows little systematic drift, which is consistent with the estimator handling selection-induced curvature in this pseudo-null construction. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
 
 ## S6. Extended Czech empirical application
 
