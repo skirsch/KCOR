@@ -1,0 +1,76 @@
+dataset: Czech
+
+analysis:
+  enrollment_dates:
+    - "2021_13"
+    - "2021_20"
+    - "2021_24"
+    - "2021_30"
+    - "2022_06"
+    - "2022_26"
+    - "2022_47"
+  yob_decades:
+    - 1930
+    - 1940
+    - 1950
+  doses:
+    - 0
+    - 1
+    - 2
+    - 3
+  min_wave_weeks: 4
+  min_wave_deaths: 10
+  min_pairs_per_alpha: 8
+  min_cohorts_per_week: 3
+  primary_anchor: dose0
+  anchor_choices:
+    - dose0
+    - dose1
+    - pooled_median
+  primary_excess_mode: exclude_nonpositive
+  excess_modes:
+    - exclude_nonpositive
+    - truncate_zero
+    - signed_stable
+  weight_mode_pairwise: deaths_min
+  weight_mode_collapse: deaths
+  time_segments:
+    - pooled
+    - early_wave
+    - late_wave
+  age_bands:
+    - pooled
+    - 1930s
+    - 1940s
+    - 1950s
+
+alpha_grid:
+  start: 1.00
+  stop: 1.30
+  step: 0.01
+
+bootstrap:
+  reps: 30
+  seed: 17
+  summary_anchor: dose0
+  summary_excess_mode: exclude_nonpositive
+  summary_estimator: pairwise
+
+synthetic:
+  enabled: true
+  seed: 23
+  alpha_true_values:
+    - 1.05
+    - 1.15
+    - 1.25
+  n_cohorts: 18
+  n_weeks: 20
+  theta_w_values:
+    - 0.15
+    - 0.30
+    - 0.45
+    - 0.60
+    - 0.90
+    - 1.20
+  wave_amplitude_peak: 0.02
+  baseline_weight: 100.0

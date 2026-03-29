@@ -4,19 +4,19 @@ overview: Set up a standalone `test/alpha` experiment plan to estimate a pandemi
 todos:
   - id: alpha-sandbox-layout
     content: Plan the new `test/alpha` directory structure and entry points to match existing Make-based experiment conventions.
-    status: pending
+    status: completed
   - id: alpha-analysis-table
     content: Plan how to build the cohort-week excess-hazard and propagated-theta table from existing KCOR code paths and Czech YAML settings, including a fixed primary theta-propagation scale.
-    status: pending
+    status: completed
   - id: alpha-two-estimators
     content: Plan the primary pairwise estimator and secondary common-wave collapse estimator, including weighting and valid-week/cohort filters.
-    status: pending
+    status: completed
   - id: alpha-diagnostics-bootstrap
     content: Plan the diagnostic outputs, age-band and time-segment stratification, negative-excess sensitivity branches, synthetic alpha-recovery checks, and bootstrap confidence interval workflow needed to judge alpha stability.
-    status: pending
+    status: completed
   - id: alpha-integration-gate
     content: Plan the criteria for deciding whether alpha remains a sandbox analysis or becomes an optional production-path extension later.
-    status: pending
+    status: completed
 isProject: false
 ---
 

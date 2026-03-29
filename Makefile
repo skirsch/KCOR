@@ -24,7 +24,7 @@ PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -347,6 +347,9 @@ clean:
 sensitivity:
 	$(MAKE) -C test/sensitivity all DATASET=$(DATASET)
 
+alpha: $(VENV_PYTHON)
+	$(MAKE) -C test/alpha all DATASET=$(DATASET) PYTHON=$(abspath $(VENV_PYTHON))
+
 # Build methods paper (Pandoc → LaTeX/PDF)
 #
 # Default inputs live in documentation/preprint/:
@@ -576,6 +579,7 @@ help:
 	@echo "  glm-compare     - Compare GLM outputs"
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
+	@echo "  alpha           - Run alpha estimation sandbox (test/alpha)"
 	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid)"
 	@echo "  quiet-window    - Run quiet-window scan (test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py)"
 	@echo "  cox-bias        - Run Cox bias demonstration simulation (test/sim_grid)"
