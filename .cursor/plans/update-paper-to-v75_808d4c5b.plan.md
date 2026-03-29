@@ -4,19 +4,19 @@ overview: Create a phased manuscript rewrite plan that updates the KCOR paper an
 todos:
   - id: rewrite-main-methods
     content: Rewrite the main paper’s Abstract, conceptual framing, methods core, and algorithm summary to match the v7.5 estimator and locked editorial decisions.
-    status: pending
+    status: completed
   - id: rewrite-validation-story
     content: Rewrite the paper’s validation, identifiability, and conclusion sections around theta0 recovery, delta correctness, multi-window consistency, and controlled claims.
-    status: pending
+    status: completed
   - id: rewrite-supplement-methods
     content: Update supplement diagnostics, defaults, simulations, and technical details to support the new estimator, optional NPH module, and SI-only derivations.
-    status: pending
+    status: completed
   - id: cleanup-empirical-si
     content: Replace the old Czech theta evidence framing with revised theta0-consistent descriptive interpretation and remove it as validation support.
-    status: pending
+    status: completed
   - id: run-consistency-sweep
     content: Perform a final cross-file harmonization pass for notation, equations, prose, figures, captions, table headers, forbidden legacy phrases, and cross-references, enforcing the no-partial-edits rule.
-    status: pending
+    status: completed
 isProject: false
 ---
 
