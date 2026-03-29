@@ -59,6 +59,9 @@ bootstrap:
 synthetic:
   enabled: true
   seed: 23
+  noise_models:
+    - lognormal_fixed
+    - heteroskedastic_lognormal
   alpha_true_values:
     - 1.05
     - 1.15
@@ -74,3 +77,5 @@ synthetic:
     - 1.20
   wave_amplitude_peak: 0.02
   baseline_weight: 100.0
+  lognormal_sigma: 0.03
+  heteroskedastic_scale: 0.35

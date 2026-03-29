@@ -1,0 +1,302 @@
+# NPH 7.6 upgrade
+Great—this is exactly the right moment to do this. The paper is already strong; this upgrade will make the NPH section feel like a **real identifiable parameter extension**, not just an optional tweak.
+
+Below is a **Cursor-ready punch list**. It is structured so you can hand it off and get deterministic edits.
+
+---
+
+# 🔧 KCOR NPH UPGRADE — CURSOR PUNCH LIST
+
+## 🎯 Goal
+
+Replace the current **“optional epidemic-wave NPH extension” framing** with:
+
+> A **general cross-cohort NPH exponent model (α)**
+>
+> * clear identification strategy
+> * explicit estimator (pairwise + collapse)
+> * tight caveats
+
+WITHOUT breaking:
+
+* core KCOR flow
+* non-causal positioning
+* diagnostic-first philosophy
+
+---
+
+# 1. 🔁 REFRAME NPH IN ABSTRACT
+
+### 📍 Location
+
+Abstract paragraph (last ~3 sentences)
+
+### 🔧 Change
+
+Replace:
+
+> “optional non-proportional-hazard (NPH) extension rescales wave-period hazards…”
+
+With:
+
+**New language (drop-in):**
+
+```text
+In settings with external shocks or cohort-dependent hazard amplification, KCOR includes an optional non-proportional-hazard (NPH) exponent module. This module models cross-cohort hazard amplification as a function of depletion geometry and estimates a single exponent parameter α from cross-cohort structure. Unlike ad hoc rescaling, α is identified from relative cohort behavior rather than absolute hazard levels, and is therefore invariant to unknown wave amplitudes. This extension remains diagnostic and assumption-dependent, and is not part of the universal KCOR core.
+```
+
+---
+
+# 2. 🔁 REWRITE §2.7.1 (THIS IS THE BIG ONE)
+
+### 📍 Location
+
+Section **2.7.1 Optional epidemic-wave NPH extension**
+
+### ❌ Delete
+
+* current scalar multiplier formulation:
+
+  ```
+  h_adj = c_d(t) * h_eff
+  ```
+
+---
+
+## ✅ Replace with NEW SECTION
+
+### Title:
+
+```text
+2.7.1 Optional non-proportional hazard (NPH) exponent model
+```
+
+---
+
+## 📦 Insert this structure:
+
+### (A) Motivation
+
+```text
+In some settings, external hazards (e.g., epidemic waves) interact with cohort-specific frailty in a non-proportional manner. In such cases, hazards are not related by a simple multiplicative factor across cohorts, and scalar rescaling cannot align trajectories. Instead, amplification may depend on depletion geometry itself.
+```
+
+---
+
+### (B) Model definition
+
+```text
+We model excess hazard during NPH periods as a function of cohort depletion:
+
+    h_excess,d(t) ∝ E[z^{α_d} | t]
+
+Under the gamma-frailty working model, this expectation depends on the cohort’s cumulative hazard and frailty variance. The exponent α governs how strongly hazard amplification depends on latent frailty.
+
+When α = 1, amplification is proportional to baseline risk. When α > 1, higher-frailty individuals contribute disproportionately to excess hazard.
+```
+
+---
+
+### (C) Identification insight (CRITICAL)
+
+```text
+Absolute hazard levels during NPH periods depend on unknown external intensity and are therefore not directly comparable across cohorts. However, ratios across cohorts eliminate this unknown amplitude:
+
+    h_excess,i(t) / h_excess,j(t)
+        = E_i[z^{α}] / E_j[z^{α}]
+
+This cancellation allows α to be identified from cross-cohort structure without requiring knowledge of the external hazard amplitude.
+```
+
+---
+
+### (D) Estimator (brief, defer details)
+
+```text
+Two equivalent estimators are used:
+
+1. Pairwise estimator:
+   minimizes discrepancies between observed cross-cohort excess ratios and model-implied ratios.
+
+2. Collapse estimator:
+   finds α that minimizes cross-cohort dispersion of log(e / F(θ, H, α)).
+
+Both estimators operate on excess hazard derived from observed hazards after baseline removal.
+```
+
+---
+
+### (E) Integration with KCOR
+
+```text
+The NPH exponent is estimated prior to frailty inversion and is used to adjust hazard contributions during NPH periods. The core KCOR pipeline remains unchanged: θ0 is estimated from quiet windows, cumulative hazards are reconstructed, and inversion is applied after preprocessing.
+```
+
+---
+
+### (F) Caveats (IMPORTANT)
+
+```text
+The NPH exponent is not generically identifiable in all settings. Identification requires:
+
+- variation in θ across cohorts,
+- sufficient separation in cumulative hazard trajectories,
+- stable excess hazard measurement.
+
+If these conditions are weak, α may be weakly identified and collapse toward α ≈ 1.
+
+The NPH model is a working approximation. It captures one class of non-proportionality (frailty-dependent amplification) but does not resolve all external time-varying hazards.
+```
+
+---
+
+# 3. ➕ ADD NEW SUBSECTION: “2.7.2 Estimation of α”
+
+### 📍 Place immediately after 2.7.1
+
+---
+
+## Insert:
+
+### (A) Pairwise estimator
+
+```text
+For cohorts i and j, define excess hazard:
+
+    e_d(t) = h_obs,d(t) - h_base,d(t)
+
+The pairwise estimator minimizes:
+
+    Σ_{i<j,t} [ log e_i(t) - log e_j(t)
+                - (log F_i(t; α) - log F_j(t; α)) ]^2
+
+where F_d(t; α) is the gamma-frailty expectation E[z^α].
+```
+
+---
+
+### (B) Collapse estimator
+
+```text
+Alternatively, α can be estimated by minimizing cross-cohort variance:
+
+    α̂ = argmin Var_d [ log(e_d(t)) - log F_d(t; α) ]
+
+This estimator enforces consistency of the excess-hazard scaling across cohorts.
+```
+
+---
+
+### (C) Practical note
+
+```text
+In practice, both estimators yield similar results under adequate signal. Disagreement between estimators is treated as a diagnostic of weak identifiability or model misspecification.
+```
+
+---
+
+# 4. 🔁 UPDATE LIMITATIONS (§5.4)
+
+### 📍 Section 5.4 (NPH discussion)
+
+---
+
+## Replace key paragraph with:
+
+```text
+The NPH exponent model captures one specific class of non-proportional hazards: frailty-dependent amplification of external hazards. It does not represent a general solution to all time-varying hazard structures.
+
+Identification of α depends on cross-cohort variation in depletion geometry. When cohorts are similar in θ or cumulative hazard, α is weakly identified and may collapse toward 1. In such cases, the NPH adjustment should be interpreted as inactive.
+
+The model assumes that excess hazard can be separated from baseline hazard and that amplification depends on frailty through a power-law relationship. Deviations from this structure (e.g., additive shocks, time-varying frailty, or behavioral effects) are not captured and may lead to residual bias.
+
+As with θ0 estimation, failure modes are expected to manifest diagnostically through instability, estimator disagreement, or poor alignment of excess hazard across cohorts.
+```
+
+---
+
+# 5. ➕ ADD ONE PARAGRAPH TO DISCUSSION (§4)
+
+### 📍 Section 4.1 or 4.2
+
+---
+
+```text
+The introduction of the NPH exponent extends KCOR from a pure depletion-normalization framework to a joint geometry-and-amplification framework. While θ0 captures how cohorts are depleted over time, α captures how external hazards interact with that depletion. These parameters are conceptually distinct but jointly determine observed non-proportional hazards.
+```
+
+---
+
+# 6. ➕ ADD SHORT VALIDATION FORWARD REFERENCE
+
+### 📍 End of §2.7.2
+
+```text
+Validation of α recovery under synthetic data and application to registry data are presented in Section 3.X.
+```
+
+(you’ll fill this in later with Czech results)
+
+---
+
+# 7. 🔁 UPDATE TERMINOLOGY THROUGHOUT
+
+Search + replace:
+
+* “NPH rescaling”
+  → replace with:
+* “NPH exponent model”
+* “NPH exponent α”
+
+---
+
+# 8. 🚨 DO NOT TOUCH
+
+Tell Cursor explicitly:
+
+```text
+DO NOT modify:
+- KCOR core equations
+- theta estimation (§2.5)
+- inversion (§2.6)
+- estimand definition
+```
+
+---
+
+# 💡 What this accomplishes
+
+After this change:
+
+### Before
+
+* NPH = ad hoc correction
+* reviewer attack: “this is arbitrary”
+
+### After
+
+* NPH = identifiable parameter (α)
+* estimator defined
+* invariance property (key!)
+* diagnostics + failure modes
+
+---
+
+# 🧠 My take
+
+This upgrade is **huge**.
+
+It turns NPH from:
+
+> “we tweak hazards during waves”
+
+into:
+
+> “we estimate a second structural parameter from cross-cohort geometry”
+
+That’s publishable-level improvement.
+
+---
+
+If you want next:
+I can help you write the **Section 3 validation for α (synthetic + Czech)** — that’s the natural follow-up and will make this extremely compelling.

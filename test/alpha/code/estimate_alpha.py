@@ -352,9 +352,9 @@ def build_real_cohort_table(repo_root: Path, cfg: dict, K) -> tuple[pd.DataFrame
                 }
             )
 
-            for idx, row in cohort_df.iterrows():
-                if idx not in set(wave_idx.tolist()):
-                    continue
+            wave_subset = cohort_df.loc[wave_mask].copy()
+            for row in wave_subset.itertuples(index=True):
+                idx = int(row.Index)
                 delta_gamma = max(float(H_gamma[idx] - H_start_gamma), 0.0)
                 delta_raw = max(float(H_raw[idx] - H_start_raw), 0.0)
                 theta_t_gamma = float(propagate_theta(theta_w_gamma, delta_gamma)) if np.isfinite(theta_w_gamma) else float("nan")
@@ -366,16 +366,16 @@ def build_real_cohort_table(repo_root: Path, cfg: dict, K) -> tuple[pd.DataFrame
                         "enrollment_date": sheet_name,
                         "yob_decade": int(yob_decade),
                         "dose": int(dose),
-                        "iso_year": int(row["iso_year"]),
-                        "iso_week": int(row["iso_week"]),
-                        "iso_int": int(row["iso_int"]),
-                        "week_monday": row["week_monday"],
-                        "t_week": int(row["t_week"]),
-                        "Dead": float(row["Dead"]),
-                        "Alive": float(row["Alive"]),
-                        "hazard_obs": float(row["hazard_obs"]),
-                        "hazard_eff": float(row["hazard_eff"]),
-                        "H_obs": float(row["H_obs"]),
+                        "iso_year": int(row.iso_year),
+                        "iso_week": int(row.iso_week),
+                        "iso_int": int(row.iso_int),
+                        "week_monday": row.week_monday,
+                        "t_week": int(row.t_week),
+                        "Dead": float(row.Dead),
+                        "Alive": float(row.Alive),
+                        "hazard_obs": float(row.hazard_obs),
+                        "hazard_eff": float(row.hazard_eff),
+                        "H_obs": float(row.H_obs),
                         "H_gamma": float(H_gamma[idx]),
                         "theta0_hat": theta_hat,
                         "theta_w_gamma": theta_w_gamma,
@@ -422,15 +422,27 @@ def evaluate_pairwise_objective(
     min_pairs: int,
 ) -> list[dict]:
     floor = build_floor(subset["excess"])
+    grouped_weeks: list[dict[str, np.ndarray]] = []
+    for _, group in subset.groupby("iso_int"):
+        transformed, valid = transform_excess(group["excess"].to_numpy(dtype=float), excess_mode, floor)
+        grouped_weeks.append(
+            {
+                "transformed": transformed,
+                "valid": valid,
+                "theta_vals": group[theta_column].to_numpy(dtype=float),
+                "weights": group["Dead"].to_numpy(dtype=float),
+            }
+        )
     records: list[dict] = []
     for alpha in alpha_values:
         obj = 0.0
         n_pairs = 0
         n_weeks_used = 0
-        for _, group in subset.groupby("iso_int"):
-            transformed, valid = transform_excess(group["excess"].to_numpy(dtype=float), excess_mode, floor)
-            theta_vals = group[theta_column].to_numpy(dtype=float)
-            weights = group["Dead"].to_numpy(dtype=float)
+        for group in grouped_weeks:
+            transformed = group["transformed"]
+            valid = group["valid"]
+            theta_vals = group["theta_vals"]
+            weights = group["weights"]
             log_factor = np.log(np.maximum(gamma_moment_alpha(theta_vals, alpha), floor))
             idx = np.where(valid & np.isfinite(theta_vals))[0]
             if idx.size < 2:
@@ -469,17 +481,26 @@ def evaluate_collapse_objective(
     min_cohorts_per_week: int,
 ) -> list[dict]:
     floor = build_floor(subset["excess"])
+    grouped_weeks: list[dict[str, np.ndarray]] = []
+    for _, group in subset.groupby("iso_int"):
+        grouped_weeks.append(
+            {
+                "excess": group["excess"].to_numpy(dtype=float),
+                "theta_vals": group[theta_column].to_numpy(dtype=float),
+                "weights": collapse_weight(group["Dead"].to_numpy(dtype=float), weight_mode),
+            }
+        )
     records: list[dict] = []
     for alpha in alpha_values:
         obj = 0.0
         n_points = 0
         n_weeks_used = 0
-        for _, group in subset.groupby("iso_int"):
-            theta_vals = group[theta_column].to_numpy(dtype=float)
+        for group in grouped_weeks:
+            theta_vals = group["theta_vals"]
             factors = np.maximum(gamma_moment_alpha(theta_vals, alpha), floor)
-            a_hat = group["excess"].to_numpy(dtype=float) / factors
+            a_hat = group["excess"] / factors
             transformed, valid = transform_excess(a_hat, excess_mode, floor)
-            weights = collapse_weight(group["Dead"].to_numpy(dtype=float), weight_mode)
+            weights = group["weights"]
             mask = valid & np.isfinite(theta_vals)
             if int(np.count_nonzero(mask)) < min_cohorts_per_week:
                 continue
@@ -600,6 +621,32 @@ def build_primary_subset(wave_table: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     return df
 
 
+def build_theta_scale_summary(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    params = cfg["analysis"]
+    summary = best_df[
+        (best_df["anchor_mode"] == params["primary_anchor"])
+        & (best_df["excess_mode"] == params["primary_excess_mode"])
+        & (best_df["age_band"] == "pooled")
+        & (best_df["time_segment"] == "pooled")
+    ].copy()
+    if summary.empty:
+        return summary
+    summary = summary.sort_values(["estimator", "theta_scale"]).reset_index(drop=True)
+    return summary[
+        [
+            "theta_scale",
+            "estimator",
+            "anchor_mode",
+            "excess_mode",
+            "alpha_hat",
+            "objective",
+            "n_pairs",
+            "n_weeks_used",
+            "n_cohorts",
+        ]
+    ]
+
+
 def leave_one_out_analysis(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
     params = cfg["analysis"]
     rows = []
@@ -676,7 +723,7 @@ def bootstrap_alpha(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarra
     return pd.DataFrame(rows)
 
 
-def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int) -> pd.DataFrame:
+def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int, noise_model: str = "lognormal_fixed") -> pd.DataFrame:
     synth_cfg = cfg["synthetic"]
     rng = np.random.default_rng(seed)
     n_cohorts = int(synth_cfg["n_cohorts"])
@@ -684,6 +731,8 @@ def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int) -> pd.Data
     theta_values = np.asarray(synth_cfg["theta_w_values"], dtype=float)
     peak = float(synth_cfg["wave_amplitude_peak"])
     baseline_weight = float(synth_cfg["baseline_weight"])
+    lognormal_sigma = float(synth_cfg.get("lognormal_sigma", 0.03))
+    heteroskedastic_scale = float(synth_cfg.get("heteroskedastic_scale", 0.35))
 
     wave_phase = np.linspace(0.1, 0.95, n_weeks)
     wave_amplitude = peak * np.exp(-((wave_phase - 0.45) ** 2) / 0.03)
@@ -697,8 +746,19 @@ def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int) -> pd.Data
         for week_idx in range(n_weeks):
             theta_t = float(propagate_theta(theta_w, delta_h_path[week_idx] - delta_h_path[0]))
             factor = float(gamma_moment_alpha(theta_t, alpha_true))
-            noise = float(np.exp(rng.normal(0.0, 0.03)))
-            excess = wave_amplitude[week_idx] * factor * noise
+            expected_excess = wave_amplitude[week_idx] * factor
+            deaths_proxy = max(expected_excess * baseline_weight, 1e-6)
+            if noise_model == "lognormal_fixed":
+                sigma = lognormal_sigma
+                noise = float(np.exp(rng.normal(0.0, sigma)))
+                excess = expected_excess * noise
+            elif noise_model == "heteroskedastic_lognormal":
+                sigma = heteroskedastic_scale / math.sqrt(deaths_proxy)
+                sigma = float(np.clip(sigma, 0.02, 0.35))
+                noise = float(np.exp(rng.normal(0.0, sigma)))
+                excess = expected_excess * noise
+            else:
+                raise ValueError(f"Unknown synthetic noise_model: {noise_model}")
             rows.append(
                 {
                     "cohort_id": cohort_id,
@@ -707,6 +767,7 @@ def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int) -> pd.Data
                     "yob_decade": yob_decade,
                     "Dead": baseline_weight * max(excess, 0.001),
                     "excess": excess,
+                    "noise_model": noise_model,
                     "theta_t_gamma": theta_t,
                     "theta_t_raw": theta_t,
                     "eligible": 1,
@@ -722,40 +783,52 @@ def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
     base_seed = int(synth_cfg["seed"])
     reps = int(synth_cfg.get("reps", 8))
     rows = []
-    for alpha_true in synth_cfg["alpha_true_values"]:
-        print(f"[ALPHA] synthetic recovery for alpha_true={float(alpha_true):.3f}", flush=True)
-        for rep in range(reps):
-            table = simulate_synthetic_table(cfg, float(alpha_true), base_seed + rep + int(float(alpha_true) * 1000))
-            pair_curve = pd.DataFrame(
-                evaluate_pairwise_objective(
-                    table,
-                    alpha_values,
-                    "exclude_nonpositive",
-                    "deaths_min",
-                    "theta_t_gamma",
-                    8,
+    noise_models = list(synth_cfg.get("noise_models", ["lognormal_fixed"]))
+    for noise_model in noise_models:
+        for alpha_true in synth_cfg["alpha_true_values"]:
+            print(
+                f"[ALPHA] synthetic recovery for alpha_true={float(alpha_true):.3f} "
+                f"(noise_model={noise_model})",
+                flush=True,
+            )
+            for rep in range(reps):
+                table = simulate_synthetic_table(
+                    cfg,
+                    float(alpha_true),
+                    base_seed + rep + int(float(alpha_true) * 1000),
+                    noise_model=noise_model,
                 )
-            )
-            collapse_curve = pd.DataFrame(
-                evaluate_collapse_objective(
-                    table,
-                    alpha_values,
-                    "exclude_nonpositive",
-                    "deaths",
-                    "theta_t_gamma",
-                    3,
+                pair_curve = pd.DataFrame(
+                    evaluate_pairwise_objective(
+                        table,
+                        alpha_values,
+                        "exclude_nonpositive",
+                        "deaths_min",
+                        "theta_t_gamma",
+                        8,
+                    )
                 )
-            )
-            pair_best = summarize_best_curve(pair_curve)
-            collapse_best = summarize_best_curve(collapse_curve)
-            rows.append(
-                {
-                    "alpha_true": float(alpha_true),
-                    "rep": rep,
-                    "pairwise_alpha_hat": np.nan if pair_best is None else pair_best["alpha_hat"],
-                    "collapse_alpha_hat": np.nan if collapse_best is None else collapse_best["alpha_hat"],
-                }
-            )
+                collapse_curve = pd.DataFrame(
+                    evaluate_collapse_objective(
+                        table,
+                        alpha_values,
+                        "exclude_nonpositive",
+                        "deaths",
+                        "theta_t_gamma",
+                        3,
+                    )
+                )
+                pair_best = summarize_best_curve(pair_curve)
+                collapse_best = summarize_best_curve(collapse_curve)
+                rows.append(
+                    {
+                        "noise_model": noise_model,
+                        "alpha_true": float(alpha_true),
+                        "rep": rep,
+                        "pairwise_alpha_hat": np.nan if pair_best is None else pair_best["alpha_hat"],
+                        "collapse_alpha_hat": np.nan if collapse_best is None else collapse_best["alpha_hat"],
+                    }
+                )
     return pd.DataFrame(rows)
 
 
@@ -832,22 +905,28 @@ def plot_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None:
     if plt is None:
         return
 
-    summary = (
-        df.groupby("alpha_true", as_index=False)
-        .agg(
-            pairwise_mean=("pairwise_alpha_hat", "mean"),
-            collapse_mean=("collapse_alpha_hat", "mean"),
+    noise_models = list(df["noise_model"].dropna().unique()) if "noise_model" in df.columns else ["synthetic"]
+    fig, axes = plt.subplots(1, len(noise_models), figsize=(6 * len(noise_models), 4), sharey=True)
+    if len(noise_models) == 1:
+        axes = [axes]
+    for ax, noise_model in zip(axes, noise_models):
+        part = df[df["noise_model"] == noise_model] if "noise_model" in df.columns else df
+        summary = (
+            part.groupby("alpha_true", as_index=False)
+            .agg(
+                pairwise_mean=("pairwise_alpha_hat", "mean"),
+                collapse_mean=("collapse_alpha_hat", "mean"),
+            )
+            .sort_values("alpha_true")
         )
-        .sort_values("alpha_true")
-    )
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.plot(summary["alpha_true"], summary["pairwise_mean"], "o-", label="pairwise")
-    ax.plot(summary["alpha_true"], summary["collapse_mean"], "s-", label="collapse")
-    ax.plot(summary["alpha_true"], summary["alpha_true"], ls="--", color="black", label="truth")
-    ax.set_xlabel("alpha_true")
-    ax.set_ylabel("recovered alpha")
-    ax.grid(True, ls=":", alpha=0.4)
-    ax.legend()
+        ax.plot(summary["alpha_true"], summary["pairwise_mean"], "o-", label="pairwise")
+        ax.plot(summary["alpha_true"], summary["collapse_mean"], "s-", label="collapse")
+        ax.plot(summary["alpha_true"], summary["alpha_true"], ls="--", color="black", label="truth")
+        ax.set_title(str(noise_model))
+        ax.set_xlabel("alpha_true")
+        ax.set_ylabel("recovered alpha")
+        ax.grid(True, ls=":", alpha=0.4)
+        ax.legend()
     fig.tight_layout()
     _save_figure(fig, out_path)
     plt.close(fig)
@@ -859,6 +938,7 @@ def write_outputs(
     wave_table: pd.DataFrame,
     curves: pd.DataFrame,
     best_df: pd.DataFrame,
+    theta_scale_summary: pd.DataFrame,
     loo_df: pd.DataFrame,
     bootstrap_df: pd.DataFrame,
     synthetic_df: pd.DataFrame,
@@ -868,6 +948,7 @@ def write_outputs(
     wave_table.to_csv(outdir / "alpha_wave_table.csv", index=False)
     curves.to_csv(outdir / "alpha_objective_curves.csv", index=False)
     best_df.to_csv(outdir / "alpha_best_estimates.csv", index=False)
+    theta_scale_summary.to_csv(outdir / "alpha_theta_scale_summary.csv", index=False)
     loo_df.to_csv(outdir / "alpha_leave_one_out.csv", index=False)
     bootstrap_df.to_csv(outdir / "alpha_bootstrap.csv", index=False)
     synthetic_df.to_csv(outdir / "alpha_synthetic_recovery.csv", index=False)
@@ -894,6 +975,8 @@ def main() -> None:
     last_ts = log_milestone("alpha objective sweeps completed", start_ts, last_ts)
     primary_df = build_primary_subset(wave_table, cfg)
     last_ts = log_milestone("primary subset assembled", start_ts, last_ts)
+    theta_scale_summary = build_theta_scale_summary(best_df, cfg)
+    last_ts = log_milestone("theta-scale summary built", start_ts, last_ts)
     loo_df = leave_one_out_analysis(primary_df, cfg, alpha_values)
     last_ts = log_milestone("leave-one-out influence completed", start_ts, last_ts)
     bootstrap_df = bootstrap_alpha(primary_df, cfg, alpha_values)
@@ -901,7 +984,7 @@ def main() -> None:
     synthetic_df = synthetic_recovery(cfg, alpha_values)
     last_ts = log_milestone("synthetic recovery completed", start_ts, last_ts)
 
-    write_outputs(outdir, cohort_diag, wave_table, curves, best_df, loo_df, bootstrap_df, synthetic_df)
+    write_outputs(outdir, cohort_diag, wave_table, curves, best_df, theta_scale_summary, loo_df, bootstrap_df, synthetic_df)
     last_ts = log_milestone("outputs and figures written", start_ts, last_ts)
 
     print(f"Wrote outputs to {outdir}")

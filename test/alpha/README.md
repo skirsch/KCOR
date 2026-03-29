@@ -41,6 +41,7 @@ Outputs are written to `test/alpha/out/` and include:
 - `alpha_wave_table.csv`
 - `alpha_objective_curves.csv`
 - `alpha_best_estimates.csv`
+- `alpha_theta_scale_summary.csv`
 - `alpha_leave_one_out.csv`
 - `alpha_bootstrap.csv`
 - `alpha_synthetic_recovery.csv`
