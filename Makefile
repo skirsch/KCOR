@@ -23,6 +23,7 @@ PAPER_PDF_ENGINE ?= xelatex
 PAPER_PDF_GEOMETRY ?= margin=1in
 PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
+PAPER_GENERATED_FIGURES := $(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png
 
 .PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
 
@@ -376,7 +377,7 @@ paper-tex: $(PAPER_DIR)/$(PAPER_TEX)
 # Optional: include Supplementary Information when building the combined paper outputs.
 PAPER_SUPP_MD ?= supplement.md
 
-$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_GENERATED_FIGURES) $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_TEX)"
 	@cd $(PAPER_DIR) && \
 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(PAPER_MD)" "$(PAPER_SUPP_MD)"; then \
@@ -424,7 +425,7 @@ main-tex: $(PAPER_DIR)/$(MAIN_TEX)
 supplement-pdf: $(PAPER_DIR)/$(SUPP_PDF)
 supplement-tex: $(PAPER_DIR)/$(SUPP_TEX)
 
-$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
+$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_GENERATED_FIGURES) $(wildcard $(PAPER_DIR)/figures/*)
 	@echo "Building LaTeX: $(PAPER_DIR)/$(MAIN_MD) -> $(PAPER_DIR)/$(MAIN_TEX)"
 	@cd $(PAPER_DIR) && \
 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(MAIN_MD)"; then \
@@ -491,6 +492,10 @@ $(PAPER_DIR)/$(MAIN_PDF): $(PAPER_DIR)/$(MAIN_TEX)
 		fi; \
 		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(MAIN_TEX)" >/dev/null; \
 		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(MAIN_TEX)" >/dev/null
+
+$(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png: code/generate_kcor_empirical_intuition_figure.py data/Czech2/kcor_mortality_output/sensitivity/summary_all_configs.csv $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/raw/kcor_hazard_raw.csv) $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/raw/kcor_hazard_adjusted.csv) $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/results/kcor_ratios.csv) | $(VENV_PYTHON)
+	@mkdir -p $(PAPER_DIR)/figures
+	$(abspath $(VENV_PYTHON)) code/generate_kcor_empirical_intuition_figure.py --output "$@"
 
 $(PAPER_DIR)/$(SUPP_PDF): $(PAPER_DIR)/$(SUPP_TEX)
 	@echo "Building PDF: $(PAPER_DIR)/$(SUPP_TEX) -> $(PAPER_DIR)/$(SUPP_PDF)"

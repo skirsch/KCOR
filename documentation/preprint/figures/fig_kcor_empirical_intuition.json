@@ -1,0 +1,29 @@
+{
+  "figure": "fig_kcor_empirical_intuition.png",
+  "selection": {
+    "config_id": "2021-07_quiet9-18_fu24_grouped",
+    "cohort": "dose2",
+    "reference_cohort": "dose0_unvaccinated",
+    "cohorts": [
+      "dose0_unvaccinated",
+      "dose2"
+    ],
+    "sample_size_min": 1549449.0,
+    "final_kcor": 0.8948667744124493,
+    "curvature_drop": 2.1673447713226106e-05,
+    "raw_gap": 9.401990498924359e-05,
+    "adj_gap": 7.234645727601748e-05
+  },
+  "strata": {
+    "grouping": "grouped cohorts",
+    "time_window_label": "2021-07_quiet9-18_fu24_grouped",
+    "event_time_start": 0,
+    "event_time_end": 24,
+    "n_timepoints": 25
+  },
+  "panel_c": {
+    "mode": "kcor",
+    "anchor_t0": null,
+    "reference_level": 1.0
+  }
+}

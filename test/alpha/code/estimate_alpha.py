@@ -17,6 +17,8 @@ from scipy.special import gammaln
 
 
 EPS = 1e-12
+MANUSCRIPT_ALPHA_PAIR = 1.19
+MANUSCRIPT_ALPHA_COLLAPSE = 1.18
 
 
 @dataclass(frozen=True)
@@ -848,11 +850,74 @@ def _import_matplotlib():
 def _save_figure(fig, out_path: Path) -> bool:
     try:
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        fig.savefig(out_path, dpi=180, bbox_inches="tight")
+        fig.savefig(out_path, dpi=300, bbox_inches="tight")
         return True
     except Exception as exc:
         print(f"[ALPHA] Failed to save plot {out_path.name}: {exc}", flush=True)
         return False
+
+
+def _manuscript_figures_dir(repo_root: Path) -> Path:
+    return repo_root / "documentation" / "preprint" / "figures"
+
+
+def _require_files(paths: Iterable[Path]) -> None:
+    missing = [str(path) for path in paths if not path.exists()]
+    if missing:
+        raise FileNotFoundError(f"Missing required alpha figure inputs: {missing}")
+
+
+def _resample_plot_grid(alpha_vals: np.ndarray, objective_vals: np.ndarray, start: float = 1.00, stop: float = 1.30, step: float = 0.005) -> tuple[np.ndarray, np.ndarray]:
+    alpha_arr = np.asarray(alpha_vals, dtype=float)
+    obj_arr = np.asarray(objective_vals, dtype=float)
+    if alpha_arr.size == 0:
+        return alpha_arr, obj_arr
+    order = np.argsort(alpha_arr)
+    alpha_arr = alpha_arr[order]
+    obj_arr = obj_arr[order]
+    diffs = np.diff(alpha_arr)
+    if np.any(diffs <= 0):
+        raise ValueError("Alpha grid must be strictly monotonic for plotting")
+    target = np.arange(start, stop + step * 0.5, step, dtype=float)
+    if np.allclose(alpha_arr[0], start) and np.allclose(alpha_arr[-1], stop) and np.allclose(diffs, diffs[0]):
+        return alpha_arr, obj_arr
+    return target, np.interp(target, alpha_arr, obj_arr)
+
+
+def _filter_best_unique(
+    best_df: pd.DataFrame,
+    *,
+    anchor_mode: str,
+    theta_scale: str,
+    excess_mode: str,
+    age_band: str,
+    time_segment: str,
+    estimator: str,
+) -> pd.Series:
+    subset = best_df[
+        (best_df["anchor_mode"] == anchor_mode)
+        & (best_df["theta_scale"] == theta_scale)
+        & (best_df["excess_mode"] == excess_mode)
+        & (best_df["age_band"] == age_band)
+        & (best_df["time_segment"] == time_segment)
+        & (best_df["estimator"] == estimator)
+    ]
+    if len(subset) != 1:
+        raise ValueError(
+            "Expected exactly one alpha_best_estimates row for "
+            f"anchor={anchor_mode}, theta_scale={theta_scale}, excess_mode={excess_mode}, "
+            f"age_band={age_band}, time_segment={time_segment}, estimator={estimator}; got {len(subset)}"
+        )
+    return subset.iloc[0]
+
+
+def _warn_if_manuscript_mismatch(pair_alpha: float, collapse_alpha: float) -> None:
+    if abs(pair_alpha - MANUSCRIPT_ALPHA_PAIR) > 0.01 or abs(collapse_alpha - MANUSCRIPT_ALPHA_COLLAPSE) > 0.01:
+        print(
+            "[ALPHA] Warning: pooled manuscript alpha values differ from figure source "
+            f"(pair={pair_alpha:.3f}, collapse={collapse_alpha:.3f})",
+            flush=True,
+        )
 
 
 def plot_objectives(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path) -> None:
@@ -897,6 +962,268 @@ def plot_objectives(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path)
     plt.close(fig)
 
 
+def plot_manuscript_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None:
+    if df.empty:
+        print(f"[ALPHA] Skipping {out_path.name}: synthetic recovery is empty", flush=True)
+        return
+    plt = _import_matplotlib()
+    if plt is None:
+        return
+
+    title_map = {
+        "lognormal_fixed": "A. Baseline synthetic branch",
+        "heteroskedastic_lognormal": "B. Heteroskedastic branch",
+    }
+    preferred_order = ["lognormal_fixed", "heteroskedastic_lognormal"]
+    observed_models = list(df["noise_model"].dropna().unique()) if "noise_model" in df.columns else ["synthetic"]
+    noise_models = [name for name in preferred_order if name in observed_models]
+    noise_models.extend(name for name in observed_models if name not in noise_models)
+    fig, axes = plt.subplots(1, len(noise_models), figsize=(6.4 * len(noise_models), 4.8), sharex=True, sharey=True)
+    if len(noise_models) == 1:
+        axes = [axes]
+    panel_summaries: list[pd.DataFrame] = []
+    for ax, noise_model in zip(axes, noise_models):
+        part = df[df["noise_model"] == noise_model] if "noise_model" in df.columns else df
+        summary = (
+            part.groupby("alpha_true", as_index=False)
+            .agg(
+                pairwise_mean=("pairwise_alpha_hat", "mean"),
+                pairwise_sd=("pairwise_alpha_hat", "std"),
+                collapse_mean=("collapse_alpha_hat", "mean"),
+                collapse_sd=("collapse_alpha_hat", "std"),
+            )
+            .sort_values("alpha_true")
+        )
+        summary["pairwise_sd"] = summary["pairwise_sd"].fillna(0.0)
+        summary["collapse_sd"] = summary["collapse_sd"].fillna(0.0)
+        panel_summaries.append(summary.copy())
+        ax.errorbar(
+            summary["alpha_true"],
+            summary["pairwise_mean"],
+            yerr=summary["pairwise_sd"],
+            fmt="o-",
+            color="tab:blue",
+            lw=2,
+            capsize=3,
+            label="Pairwise",
+        )
+        ax.errorbar(
+            summary["alpha_true"],
+            summary["collapse_mean"],
+            yerr=summary["collapse_sd"],
+            fmt="s--",
+            color="tab:orange",
+            lw=2,
+            capsize=3,
+            label="Collapse",
+        )
+        ax.plot(summary["alpha_true"], summary["alpha_true"], color="0.5", lw=1.5, ls=":", label="Identity")
+        pairwise_mae = float(np.mean(np.abs(summary["pairwise_mean"] - summary["alpha_true"])))
+        collapse_mae = float(np.mean(np.abs(summary["collapse_mean"] - summary["alpha_true"])))
+        ax.text(
+            0.03,
+            0.97,
+            f"Pairwise MAE = {pairwise_mae:.3f}\nCollapse MAE = {collapse_mae:.3f}",
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            fontsize=9,
+            bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "0.8", "alpha": 0.9},
+        )
+        ax.set_title(title_map.get(noise_model, str(noise_model)), fontsize=12)
+        ax.set_xlabel("True alpha")
+        ax.grid(True, ls=":", alpha=0.4)
+    x_vals = np.concatenate([summary["alpha_true"].to_numpy(dtype=float) for summary in panel_summaries])
+    y_candidates = []
+    for summary in panel_summaries:
+        y_candidates.extend(summary["pairwise_mean"].to_numpy(dtype=float))
+        y_candidates.extend((summary["pairwise_mean"] + summary["pairwise_sd"]).to_numpy(dtype=float))
+        y_candidates.extend((summary["pairwise_mean"] - summary["pairwise_sd"]).to_numpy(dtype=float))
+        y_candidates.extend(summary["collapse_mean"].to_numpy(dtype=float))
+        y_candidates.extend((summary["collapse_mean"] + summary["collapse_sd"]).to_numpy(dtype=float))
+        y_candidates.extend((summary["collapse_mean"] - summary["collapse_sd"]).to_numpy(dtype=float))
+        y_candidates.extend(summary["alpha_true"].to_numpy(dtype=float))
+    x_pad = 0.02
+    y_vals = np.asarray(y_candidates, dtype=float)
+    y_pad = 0.03
+    for ax in axes:
+        ax.set_xlim(float(np.nanmin(x_vals)) - x_pad, float(np.nanmax(x_vals)) + x_pad)
+        ax.set_ylim(float(np.nanmin(y_vals)) - y_pad, float(np.nanmax(y_vals)) + y_pad)
+    axes[0].set_ylabel("Estimated alpha")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False, fontsize=10, bbox_to_anchor=(0.5, 0.99))
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.92))
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
+def plot_manuscript_czech_objective(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path) -> None:
+    plt = _import_matplotlib()
+    if plt is None:
+        return
+
+    primary = curves[
+        (curves["anchor_mode"] == "dose0")
+        & (curves["theta_scale"] == "gamma_primary")
+        & (curves["excess_mode"] == "exclude_nonpositive")
+        & (curves["age_band"] == "pooled")
+        & (curves["time_segment"] == "pooled")
+    ].copy()
+    if primary.empty:
+        raise ValueError("Primary objective figure rows not found for pooled Czech specification")
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    pair_row = _filter_best_unique(
+        best_df,
+        anchor_mode="dose0",
+        theta_scale="gamma_primary",
+        excess_mode="exclude_nonpositive",
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="pairwise",
+    )
+    collapse_row = _filter_best_unique(
+        best_df,
+        anchor_mode="dose0",
+        theta_scale="gamma_primary",
+        excess_mode="exclude_nonpositive",
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="collapse",
+    )
+    _warn_if_manuscript_mismatch(float(pair_row["alpha_hat"]), float(collapse_row["alpha_hat"]))
+    curve_max = 0.0
+    for estimator, color, linestyle in [("pairwise", "tab:blue", "-"), ("collapse", "tab:orange", "--")]:
+        est_df = primary[primary["estimator"] == estimator].sort_values("alpha")
+        if est_df.empty:
+            raise ValueError(f"Missing objective rows for estimator={estimator}")
+        alpha_grid, obj_grid = _resample_plot_grid(est_df["alpha"].to_numpy(), est_df["objective"].to_numpy())
+        obj_grid = obj_grid - np.nanmin(obj_grid)
+        curve_max = max(curve_max, float(np.nanmax(obj_grid)))
+        ax.plot(alpha_grid, obj_grid, color=color, ls=linestyle, lw=2, label=estimator.capitalize())
+    ax.axvline(float(pair_row["alpha_hat"]), color="tab:blue", ls="-", lw=1.5, alpha=0.7)
+    ax.axvline(float(collapse_row["alpha_hat"]), color="tab:orange", ls="--", lw=1.5, alpha=0.7)
+    y_top = min(25.0, curve_max * 1.03 if curve_max > 0 else 25.0)
+    ax.set_ylim(0.0, y_top)
+    ax.text(
+        float(pair_row["alpha_hat"]) + 0.002,
+        y_top * 0.97,
+        f"alpha_pair = {float(pair_row['alpha_hat']):.2f}",
+        color="tab:blue",
+        rotation=90,
+        va="top",
+        ha="left",
+        fontsize=9,
+    )
+    ax.text(
+        float(collapse_row["alpha_hat"]) - 0.002,
+        y_top * 0.97,
+        f"alpha_coll = {float(collapse_row['alpha_hat']):.2f}",
+        color="tab:orange",
+        rotation=90,
+        va="top",
+        ha="right",
+        fontsize=9,
+    )
+    ax.set_xlabel("alpha")
+    ax.set_ylabel("Normalized objective")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax.legend()
+    fig.tight_layout()
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
+def plot_manuscript_czech_diagnostics(
+    loo_df: pd.DataFrame,
+    bootstrap_df: pd.DataFrame,
+    best_df: pd.DataFrame,
+    out_path: Path,
+) -> None:
+    plt = _import_matplotlib()
+    if plt is None:
+        return
+    if loo_df.empty:
+        raise ValueError("Leave-one-out diagnostics are empty")
+    if bootstrap_df.empty:
+        raise ValueError("Bootstrap diagnostics are empty")
+    pair_row = _filter_best_unique(
+        best_df,
+        anchor_mode="dose0",
+        theta_scale="gamma_primary",
+        excess_mode="exclude_nonpositive",
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="pairwise",
+    )
+    pooled_pair = float(pair_row["alpha_hat"])
+    seg = best_df[
+        (best_df["anchor_mode"] == "dose0")
+        & (best_df["theta_scale"] == "gamma_primary")
+        & (best_df["excess_mode"] == "exclude_nonpositive")
+        & (best_df["age_band"] == "pooled")
+        & (best_df["time_segment"].isin(["pooled", "early_wave", "late_wave"]))
+        & (best_df["estimator"].isin(["pairwise", "collapse"]))
+    ].copy()
+    if len(seg) != 6:
+        raise ValueError(f"Expected 6 segmented diagnostic rows, got {len(seg)}")
+
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.5))
+
+    ax = axes[0]
+    loo_plot = loo_df.dropna(subset=["alpha_hat"]).reset_index(drop=True).copy()
+    loo_plot["idx"] = np.arange(1, len(loo_plot) + 1)
+    influential = np.abs(loo_plot["alpha_hat"] - pooled_pair) > 0.02
+    ax.scatter(loo_plot.loc[~influential, "idx"], loo_plot.loc[~influential, "alpha_hat"], color="tab:blue", s=20)
+    if influential.any():
+        ax.scatter(loo_plot.loc[influential, "idx"], loo_plot.loc[influential, "alpha_hat"], color="tab:red", s=26)
+    ax.axhline(pooled_pair, color="0.4", ls="--", lw=1.5)
+    ax.set_title("A. Leave-one-out")
+    ax.set_xlabel("Omitted cohort index")
+    ax.set_ylabel("Estimated alpha")
+    ax.grid(True, ls=":", alpha=0.4)
+
+    ax = axes[1]
+    boot_plot = bootstrap_df["alpha_hat"].dropna().to_numpy()
+    if boot_plot.size == 0:
+        raise ValueError("No finite bootstrap alpha estimates found")
+    ax.hist(boot_plot, bins=min(12, max(6, boot_plot.size // 2)), color="tab:blue", alpha=0.75, edgecolor="white")
+    ax.axvline(pooled_pair, color="0.4", ls="--", lw=1.5)
+    ymax = ax.get_ylim()[1]
+    ax.text(
+        pooled_pair + 0.003,
+        ymax * 0.95,
+        f"alpha_pooled approx {pooled_pair:.2f}",
+        color="0.35",
+        rotation=90,
+        va="top",
+        ha="left",
+        fontsize=9,
+    )
+    ax.set_title("B. Bootstrap")
+    ax.set_xlabel("alpha")
+    ax.set_ylabel("Count")
+    ax.grid(True, ls=":", alpha=0.4)
+
+    ax = axes[2]
+    seg["time_segment"] = pd.Categorical(seg["time_segment"], categories=["pooled", "early_wave", "late_wave"], ordered=True)
+    seg = seg.sort_values(["time_segment", "estimator"])
+    positions = np.arange(3, dtype=float)
+    for estimator, color, marker, offset in [("pairwise", "tab:blue", "o", -0.08), ("collapse", "tab:orange", "s", 0.08)]:
+        part = seg[seg["estimator"] == estimator].sort_values("time_segment")
+        ax.plot(positions + offset, part["alpha_hat"], color=color, ls="-" if estimator == "pairwise" else "--", marker=marker, lw=2, label=estimator.capitalize())
+    ax.axhline(pooled_pair, color="0.4", ls=":", lw=1.5)
+    ax.set_xticks(positions, ["pooled", "early_wave", "late_wave"])
+    ax.set_title("C. Segmented estimates")
+    ax.set_xlabel("Time segment")
+    ax.set_ylabel("alpha")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax.legend()
+
+    fig.tight_layout()
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
 def plot_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None:
     if df.empty:
         print(f"[ALPHA] Skipping {out_path.name}: synthetic recovery is empty", flush=True)
@@ -932,8 +1259,29 @@ def plot_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
+def generate_manuscript_figures(outdir: Path, repo_root: Path) -> None:
+    manuscript_dir = _manuscript_figures_dir(repo_root)
+    required = [
+        outdir / "alpha_synthetic_recovery.csv",
+        outdir / "alpha_objective_curves.csv",
+        outdir / "alpha_best_estimates.csv",
+        outdir / "alpha_leave_one_out.csv",
+        outdir / "alpha_bootstrap.csv",
+    ]
+    _require_files(required)
+    synthetic_df = pd.read_csv(outdir / "alpha_synthetic_recovery.csv")
+    curves_df = pd.read_csv(outdir / "alpha_objective_curves.csv")
+    best_df = pd.read_csv(outdir / "alpha_best_estimates.csv")
+    loo_df = pd.read_csv(outdir / "alpha_leave_one_out.csv")
+    bootstrap_df = pd.read_csv(outdir / "alpha_bootstrap.csv")
+    plot_manuscript_synthetic_recovery(synthetic_df, manuscript_dir / "fig_alpha_synthetic_recovery.png")
+    plot_manuscript_czech_objective(curves_df, best_df, manuscript_dir / "fig_alpha_czech_objective.png")
+    plot_manuscript_czech_diagnostics(loo_df, bootstrap_df, best_df, manuscript_dir / "fig_alpha_czech_diagnostics.png")
+
+
 def write_outputs(
     outdir: Path,
+    repo_root: Path,
     cohort_diag: pd.DataFrame,
     wave_table: pd.DataFrame,
     curves: pd.DataFrame,
@@ -954,6 +1302,7 @@ def write_outputs(
     synthetic_df.to_csv(outdir / "alpha_synthetic_recovery.csv", index=False)
     plot_objectives(curves, best_df, outdir / "fig_alpha_objectives.png")
     plot_synthetic_recovery(synthetic_df, outdir / "fig_alpha_synthetic_recovery.png")
+    generate_manuscript_figures(outdir, repo_root)
 
 
 def main() -> None:
@@ -984,7 +1333,7 @@ def main() -> None:
     synthetic_df = synthetic_recovery(cfg, alpha_values)
     last_ts = log_milestone("synthetic recovery completed", start_ts, last_ts)
 
-    write_outputs(outdir, cohort_diag, wave_table, curves, best_df, theta_scale_summary, loo_df, bootstrap_df, synthetic_df)
+    write_outputs(outdir, repo_root, cohort_diag, wave_table, curves, best_df, theta_scale_summary, loo_df, bootstrap_df, synthetic_df)
     last_ts = log_milestone("outputs and figures written", start_ts, last_ts)
 
     print(f"Wrote outputs to {outdir}")

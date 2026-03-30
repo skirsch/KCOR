@@ -38,7 +38,7 @@ Table: KCOR working assumptions. {#tbl:si_assumptions}
 | A5 Adequacy of Gompertz baseline | A fixed Gompertz age slope is a reasonable working approximation over the estimation horizon. | Anchors the structured baseline used to identify $\theta_{0,d}$ |
 | A6 Multi-window quiet-period validity | Prespecified quiet windows exist in which depletion can be identified without dominant external shocks. | Permits pooled identification across windows within each cohort |
 | A7 Structured offset additivity | When the delta path is used, wave effects are additive in cumulative-hazard space and persist forward after the wave ends. | Permits alignment of quiet windows through $\delta_i$ and $\Delta(t)$ |
-| A8 Optional NPH extension plausibility | When the epidemic-wave module is used, the chosen wave-period hazard rescaling is externally justified and specified independently of frailty fitting. | Supports wave-period preprocessing before inversion |
+| A8 Optional NPH exponent model identifiability | When the optional NPH module is used, excess hazard is reasonably represented by a shared-amplitude frailty-dependent amplification model with a global exponent $\alpha$, and there is sufficient cross-cohort separation in depletion geometry to identify that exponent from relative structure. | Supports optional NPH preprocessing before inversion |
 
 Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnostics}
 
@@ -51,7 +51,7 @@ Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnost
 | Post-normalization linearity | Assess curvature removal in cumulative-hazard space. | Approximate linearity after normalization within quiet windows as a diagnostic check under the working model |
 | Residual structure | Examine residuals in hazard space. | No systematic time-structure within or across windows |
 | KCOR(t) stability | Inspect KCOR trajectories following anchoring. | Stabilization rather than drift, interpreted diagnostically rather than as proof |
-| Optional NPH sensitivity | Compare results with and without the epidemic-wave module when relevant. | Limited dependence on arbitrary wave correction choices |
+| Optional NPH diagnostics | Compare pairwise and collapse estimators, theta propagation scales, excess-handling choices, and with/without-module results when relevant. | Estimator agreement, non-flat objectives, and limited dependence on reasonable NPH settings |
 
 Empirical illustration of the "Quiet-window perturbation" diagnostic is provided in Figure @fig:si_quiet_window_theta_scan, which scans monthly-shifted 12-month windows in Czech registry data.
 
@@ -64,9 +64,54 @@ Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifi
 | I3 Multi-window coherence | Quiet windows remain consistent after alignment. | Interpretation limited |
 | I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identifiable |
 | I5 Anchoring validity | Post-normalization behavior is stable in the reference quiet window. | Anchoring invalid |
-| I6 Conservative failure rule | Any failure → diagnostics indicate non-identifiability. | Analysis treated as not identified; results not reported |
+| I6 NPH signal sufficiency | When the optional NPH module is used, cross-cohort differences in depletion geometry and excess hazard are strong enough to identify $\alpha$ from relative structure. | $\alpha$ weakly identified; objectives flatten or estimators disagree |
+| I7 Conservative failure rule | Any failure → diagnostics indicate non-identifiability. | Analysis treated as not identified; results not reported |
 
-When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself. In minimal aggregated data, a constant multiplicative hazard effect within the quiet-window regime is observationally confounded with frailty-induced curvature over short horizons, so identifiability of $\theta_{0,d}$ remains conditional on the working model rather than assumption-free.
+When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself. In minimal aggregated data, a constant multiplicative hazard effect within the quiet-window regime is observationally confounded with frailty-induced curvature over short horizons, so identifiability of $\theta_{0,d}$ remains conditional on the working model rather than assumption-free. When the optional NPH module is used, identifiability of $\alpha$ is likewise conditional: it depends on cross-cohort separation in depletion geometry and stable excess-hazard measurement rather than on any direct observation of the common external intensity.
+
+### S2.1 Optional NPH exponent model: estimator and failure signatures
+
+The optional NPH module extends KCOR only for prespecified periods in which an external hazard may interact with frailty in a non-proportional manner. Under the working model, excess hazard for cohort $d$ is represented as
+
+$$
+h_{\mathrm{excess},d}(t)=A(t)\,F_d(t;\alpha),
+\qquad
+F_d(t;\alpha)=E_d[z^{\alpha}\mid t],
+$$
+
+where $A(t)$ is an unknown common amplitude and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. When $\alpha=1$, amplification is proportional to baseline risk and the NPH module is effectively inactive. The exponent $\alpha$ should be interpreted as a model-calibrated summary of frailty-dependent amplification under the working model, not as a uniquely identified biological or mechanistic constant.
+
+Because $A(t)$ is common across cohorts, absolute excess hazards are not directly comparable. However, cross-cohort ratios eliminate the common amplitude:
+
+$$
+\frac{h_{\mathrm{excess},i}(t)}{h_{\mathrm{excess},j}(t)}
+=
+\frac{F_i(t;\alpha)}{F_j(t;\alpha)}.
+$$
+
+This invariance is the core identification logic for $\alpha$: the parameter is identified, if at all, from relative cohort structure rather than from absolute hazard levels. Identification therefore requires sufficient cross-cohort variation in depletion geometry and cumulative hazard. When cohorts are too similar, or when excess hazard is measured unreliably, the objective functions flatten and $\alpha$ becomes weakly identified.
+
+The two operational estimators mirror the main text. The **pairwise estimator** minimizes
+
+$$
+\sum_{i<j,t}
+\left[
+\log e_i(t)-\log e_j(t)
+-\left(\log F_i(t;\alpha)-\log F_j(t;\alpha)\right)
+\right]^2,
+$$
+
+while the **collapse estimator** minimizes
+
+$$
+\operatorname{Var}_d\!\left[
+\log e_d(t)-\log F_d(t;\alpha)
+\right].
+$$
+
+Agreement between the two estimators is treated as supportive of identification under the working model; disagreement is diagnostic rather than something to be averaged away. Additional robustness checks vary the excess-hazard handling rule, baseline anchor choice, and theta propagation scale.
+
+Failure of NPH identification manifests through observable signatures: flat objective curves, boundary-seeking estimates, strong dependence on arbitrary settings, or disagreement between the pairwise and collapse estimators. These patterns are treated as evidence of weak signal or model misspecification rather than as valid estimates of $\alpha$.
 
 ## S3. Positive controls
 
@@ -103,7 +148,7 @@ Table: Summary of control-test and simulation parameters referenced in Sections 
 | S4.2.2 | Empirical negative control | Construction | Age strata remapped to pseudo-doses | Preserves a pseudo-null by design |
 | S4.3 | Positive control | Effect multiplier | $r=1.2$ harm; $r=0.8$ benefit | Injected after the same preprocessing pipeline |
 | S4.3 | Positive control | Frailty target | Enrollment-time $\theta_{0,d}$ | Estimated separately within each cohort, not fixed in the estimator |
-| S4.4 | Sensitivity analysis | Perturbations | Skip weeks, quiet-window placement, omitted windows, optional NPH settings | Probes robustness of the revised estimator |
+| S4.4 | Sensitivity analysis | Perturbations | Skip weeks, quiet-window placement, omitted windows, anchor choice, excess handling, theta propagation scale, optional NPH settings | Probes robustness of the revised estimator |
 | S4.5 | Adversarial selection geometry | Frailty distribution | Tail-mixture versus mid-quantile sampling | Tests robustness to non-gamma geometry |
 | S4.6 | Joint frailty + effect | DGP | Frailty heterogeneity plus injected effect | Tests separability of depletion and effect windows |
 
@@ -119,7 +164,7 @@ Table: Reference implementation and default operational settings. {#tbl:si_defau
 | Gompertz slope | `\gamma` | Fixed implementation value | Same value used throughout the estimator |
 | Frailty estimation | Fit method | Seed Gompertz fit + delta iteration + pooled refit | Estimates $(k_d,\theta_{0,d})$ separately within each cohort in the main path |
 | Anchoring | `NORMALIZATION_WEEKS` | 4 | Reference window for anchored KCOR plots |
-| Epidemic-wave module | Optional NPH extension | Off by default | Enabled only in analyses with a justified wave-period correction |
+| NPH module | Optional NPH exponent model | Off by default | Enabled only when cross-cohort NPH signal is plausible and diagnostics support identification of $\alpha$ |
 
 ### S4.2 Negative controls
 
@@ -159,7 +204,7 @@ The injection multiplies the treatment cohort's baseline hazard by factor $r$ du
 
 ### S4.4 Sensitivity analysis parameters
 
-Sensitivity analyses evaluate the robustness of KCOR estimates to reasonable variation in analysis choices that do not alter the underlying data-generating process. Skip weeks, quiet-window placement, omission of individual quiet windows, and optional epidemic-wave settings are perturbed over a prespecified range while holding all other parameters fixed. These analyses assess whether KCOR behavior is stable to tuning choices that primarily affect identification rather than cohort composition.
+Sensitivity analyses evaluate the robustness of KCOR estimates to reasonable variation in analysis choices that do not alter the underlying data-generating process. Skip weeks, quiet-window placement, omission of individual quiet windows, and optional NPH settings are perturbed over a prespecified range while holding all other parameters fixed. For the optional NPH module, this robustness menu includes baseline anchor choice, excess-hazard handling, theta propagation scale, and agreement between the pairwise and collapse estimators. These analyses assess whether KCOR behavior is stable to tuning choices that primarily affect identification rather than cohort composition.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
@@ -242,7 +287,7 @@ Robustness of fitted parameters is assessed by:
 - **Window omission**: Drop one quiet window at a time and verify that $\hat{\theta}_{0,d}$ and KCOR remain coherent.
 - **Skip-weeks sensitivity**: Vary `SKIP_WEEKS` and verify KCOR trajectories remain qualitatively similar.
 - **Gompertz sensitivity**: Check whether modest perturbations of $\gamma$ materially alter interpretation.
-- **Optional NPH sensitivity**: In epidemic-wave applications, compare results with and without the extension module or under plausible alternative rescaling choices.
+- **Optional NPH sensitivity**: In epidemic-wave applications, compare results with and without the module, across plausible anchor and excess-handling choices, across theta propagation scales, and across the pairwise and collapse estimators.
 
 ### S5.4 Quiet-window perturbation scan (empirical Czech data)
 
@@ -289,7 +334,7 @@ Unless otherwise noted, KCOR curves in the Czech analyses are shown anchored at 
 
 #### S6.1.1 Illustrative empirical context: COVID-19 mortality data
 
-The COVID-19 vaccination period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, making it a useful illustration for the KCOR framework. During this period, vaccine uptake was voluntary, rapidly time-varying, and correlated with baseline health status, creating clear examples of selection-induced non-proportional hazards. The Czech Republic national mortality registry data exemplify this regime: voluntary uptake led to asymmetric selection at enrollment and to visibly different cohort hazard geometry over follow-up. Under the revised estimator, those differences are summarized through fitted $\theta_{0,d}$ values, aligned quiet-window behavior, and depletion-normalized cumulative trajectories, but the Czech application remains illustrative rather than validating. While these examples illustrate KCOR's application, the method is general and applies to any retrospective cohort comparison where selection induces differential depletion dynamics.
+The COVID-19 vaccination period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, making it a useful illustration for the KCOR framework. During this period, vaccine uptake was voluntary, rapidly time-varying, and correlated with baseline health status, creating clear examples of selection-induced non-proportional hazards. The Czech Republic national mortality registry data exemplify this regime: voluntary uptake led to asymmetric selection at enrollment and to visibly different cohort hazard geometry over follow-up. Under the revised estimator, those differences are summarized through fitted $\theta_{0,d}$ values, aligned quiet-window behavior, depletion-normalized cumulative trajectories, and, when invoked, optional NPH diagnostics for the shared amplification exponent $\alpha$. The Czech application remains illustrative rather than validating; any NPH output should be interpreted as descriptive and model-calibrated rather than as direct biological evidence. While these examples illustrate KCOR's application, the method is general and applies to any retrospective cohort comparison where selection induces differential depletion dynamics.
 
 #### S6.1.2 Descriptive frailty-normalization behavior in the Czech application
 
@@ -320,7 +365,7 @@ Table: Diagnostic gate for Czech application: KCOR results reported only where d
 | 90–99            | Yes                | Yes                          | Yes                 | Yes           |
 | All ages         | Yes                | Yes                          | Yes                 | Yes           |
 
-All age strata in the Czech application satisfied the prespecified diagnostic criteria, permitting KCOR computation and reporting. KCOR results are not reported for any age stratum where diagnostics indicate non-identifiability.
+In this application, all examined age strata satisfied the prespecified diagnostic criteria; this indicates internal consistency of the working model in this dataset but does not constitute validation of the estimator. KCOR results are not reported for any age stratum where diagnostics indicate non-identifiability.
 
 **Interpretation:** In this application, some cohorts exhibit larger fitted $\hat{\theta}_{0,d}$ than others, indicating stronger estimated depletion curvature at rebased enrollment time under the working model:
 

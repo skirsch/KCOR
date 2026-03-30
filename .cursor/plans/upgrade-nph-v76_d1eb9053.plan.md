@@ -4,13 +4,13 @@ overview: Upgrade the manuscript and SI from the v7.5-style optional wave rescal
 todos:
   - id: map-paper-nph-updates
     content: Map and rewrite all main-text NPH references, centered on replacing §2.7.1 and adding §2.7.2.
-    status: pending
+    status: completed
   - id: add-si-nph-estimator
     content: Extend the supplement with NPH exponent assumptions, diagnostics, and estimator details aligned to v7.6.
-    status: pending
+    status: completed
   - id: run-terminology-qa
     content: Perform a consistency pass so KCOR core text stays unchanged while NPH wording is upgraded throughout.
-    status: pending
+    status: completed
 isProject: false
 ---
 
