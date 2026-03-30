@@ -4,22 +4,22 @@ overview: Create a staged build plan to bring the repository from the current `c
 todos:
   - id: audit-v75-gap
     content: Audit `code/KCOR.py`, manuscript v7.6 NPH sections, Czech YAML, and alpha sandbox to document the concrete gap between current production code and the manuscript spec.
-    status: pending
+    status: completed
   - id: lock-sandbox-architecture
     content: Lock the staged sandbox-first architecture and identify which alpha components remain sandbox-only, which may become shared helpers, and what must stay out of the KCOR core.
-    status: pending
+    status: completed
   - id: spec-v76-behavior
     content: Define the target v7.6 alpha behavior in plain English, including cohort-week construction, excess hazard, theta propagation, pairwise/collapse estimators, pooled/segmented modes, and required diagnostics.
-    status: pending
+    status: completed
   - id: map-file-changes
     content: Produce the file-level change map for sandbox, optional shared helpers, Czech YAML additions, and later production touchpoints.
-    status: pending
+    status: completed
   - id: phase-build-work
     content: Break execution into phases 0 through 6 with outputs, touched files, risks, and exit criteria, embedding the synthetic → stress → real staged discipline.
-    status: pending
+    status: completed
   - id: define-gates-and-artifacts
     content: Specify the alpha identifiability gate, the production-integration bar, the final artifact set, and explicit non-goals.
-    status: pending
+    status: completed
 isProject: false
 ---
 

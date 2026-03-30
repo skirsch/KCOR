@@ -535,6 +535,30 @@ Both estimators exploit the same identification geometry: the unknown common amp
 
 Observed cumulative hazards are then accumulated from $h_d^{\mathrm{adj}}(t)$ as in §2.3.
 
+#### 2.7.3 NPH estimation procedure summary
+
+1. Construct cohort-week data for fixed cohorts over the target wave period.
+
+2. Estimate baseline depletion geometry using quiet-window data to obtain θ₀ for each cohort.
+
+3. Define excess hazard relative to a reference cohort or baseline:
+   h_excess,d(t) = h_d(t) − h_ref(t)
+
+4. For a grid of α values, compute:
+   F_d(t; α) = E[z^α | t]
+   under the gamma-frailty working model.
+
+5. Evaluate two estimators:
+   (a) pairwise cross-cohort log-ratio fit,
+   (b) common-wave collapse estimator.
+
+6. Select α by minimizing the objective function(s), and assess identifiability using:
+   - objective curvature,
+   - agreement between estimators,
+   - stability diagnostics.
+
+7. If diagnostics fail, report α as not identified rather than estimated.
+
 ### 2.8 KCOR estimator
 
 With depletion-neutralized cumulative hazards in hand, the primary KCOR trajectory is defined as

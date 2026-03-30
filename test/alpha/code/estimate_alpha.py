@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import re
@@ -103,6 +104,21 @@ def expand_alpha_grid(cfg: dict) -> np.ndarray:
         values.append(round(current, 10))
         current += step
     return np.asarray(values, dtype=float)
+
+
+def get_identifiability_cfg(cfg: dict) -> dict:
+    defaults = {
+        "min_normalized_curvature": 0.01,
+        "max_estimator_gap": 0.03,
+        "max_leave_one_out_shift": 0.03,
+        "max_bootstrap_iqr": 0.10,
+        "min_bootstrap_finite_fraction": 0.80,
+        "max_bootstrap_boundary_fraction": 0.20,
+    }
+    user_cfg = cfg.get("identifiability") or {}
+    merged = dict(defaults)
+    merged.update(user_cfg)
+    return merged
 
 
 def gamma_moment_alpha(theta: np.ndarray | float, alpha: float) -> np.ndarray:
@@ -523,16 +539,41 @@ def evaluate_collapse_objective(
     return records
 
 
-def summarize_best_curve(curve_df: pd.DataFrame) -> dict | None:
+def summarize_best_curve(curve_df: pd.DataFrame, cfg: dict) -> dict | None:
     curve_df = curve_df[np.isfinite(curve_df["objective"])].copy()
     if curve_df.empty:
         return None
-    best = curve_df.sort_values(["objective", "alpha"]).iloc[0]
+    curve_df = curve_df.sort_values("alpha").reset_index(drop=True)
+    best_idx = int(curve_df["objective"].idxmin())
+    best = curve_df.iloc[best_idx]
+    obj_vals = curve_df["objective"].to_numpy(dtype=float)
+    alpha_vals = curve_df["alpha"].to_numpy(dtype=float)
+    objective_range = float(np.nanmax(obj_vals) - np.nanmin(obj_vals)) if obj_vals.size else float("nan")
+    at_boundary = best_idx == 0 or best_idx == (len(curve_df) - 1)
+    curvature_metric = float("nan")
+    if not at_boundary and np.isfinite(objective_range) and objective_range > EPS:
+        neighbor_mean = 0.5 * (obj_vals[best_idx - 1] + obj_vals[best_idx + 1])
+        curvature_metric = float((neighbor_mean - obj_vals[best_idx]) / objective_range)
+    ident_cfg = get_identifiability_cfg(cfg)
+    is_identified = (not at_boundary) and np.isfinite(curvature_metric) and curvature_metric >= float(ident_cfg["min_normalized_curvature"])
+    status = "identified"
+    if at_boundary:
+        status = "boundary_seeking"
+    elif not np.isfinite(curvature_metric) or curvature_metric < float(ident_cfg["min_normalized_curvature"]):
+        status = "low_curvature"
     return {
         "alpha_hat": float(best["alpha"]),
+        "alpha_hat_reported": float(best["alpha"]) if is_identified else np.nan,
         "objective": float(best["objective"]),
         "n_pairs": int(best["n_pairs"]),
         "n_weeks_used": int(best["n_weeks_used"]),
+        "curvature_metric": curvature_metric,
+        "objective_range": objective_range,
+        "boundary_optimum": int(at_boundary),
+        "identified_curve": int(is_identified),
+        "identification_status": status,
+        "alpha_min_grid": float(np.nanmin(alpha_vals)),
+        "alpha_max_grid": float(np.nanmax(alpha_vals)),
     }
 
 
@@ -597,7 +638,7 @@ def evaluate_real_data(
                             curve_df["time_segment"] = time_segment
                             curve_df["estimator"] = estimator
                             all_curves.extend(curve_df.to_dict(orient="records"))
-                            best = summarize_best_curve(curve_df)
+                            best = summarize_best_curve(curve_df, cfg)
                             if best is not None:
                                 best.update(
                                     {
@@ -641,10 +682,15 @@ def build_theta_scale_summary(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
             "anchor_mode",
             "excess_mode",
             "alpha_hat",
+            "alpha_hat_reported",
             "objective",
             "n_pairs",
             "n_weeks_used",
             "n_cohorts",
+            "curvature_metric",
+            "boundary_optimum",
+            "identified_curve",
+            "identification_status",
         ]
     ]
 
@@ -665,13 +711,18 @@ def leave_one_out_analysis(primary_df: pd.DataFrame, cfg: dict, alpha_values: np
                 int(params["min_pairs_per_alpha"]),
             )
         )
-        best = summarize_best_curve(curve)
+        best = summarize_best_curve(curve, cfg)
         rows.append(
             {
                 "left_out_cohort": cohort_id,
                 "alpha_hat": np.nan if best is None else best["alpha_hat"],
+                "alpha_hat_reported": np.nan if best is None else best["alpha_hat_reported"],
                 "objective": np.nan if best is None else best["objective"],
                 "n_pairs": 0 if best is None else best["n_pairs"],
+                "curvature_metric": np.nan if best is None else best["curvature_metric"],
+                "boundary_optimum": 0 if best is None else best["boundary_optimum"],
+                "identified_curve": 0 if best is None else best["identified_curve"],
+                "identification_status": "missing" if best is None else best["identification_status"],
             }
         )
     return pd.DataFrame(rows)
@@ -714,12 +765,17 @@ def bootstrap_alpha(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarra
                     int(params["min_cohorts_per_week"]),
                 )
             )
-        best = summarize_best_curve(curve)
+        best = summarize_best_curve(curve, cfg)
         rows.append(
             {
                 "bootstrap_rep": rep,
                 "alpha_hat": np.nan if best is None else best["alpha_hat"],
+                "alpha_hat_reported": np.nan if best is None else best["alpha_hat_reported"],
                 "objective": np.nan if best is None else best["objective"],
+                "curvature_metric": np.nan if best is None else best["curvature_metric"],
+                "boundary_optimum": 0 if best is None else best["boundary_optimum"],
+                "identified_curve": 0 if best is None else best["identified_curve"],
+                "identification_status": "missing" if best is None else best["identification_status"],
             }
         )
     return pd.DataFrame(rows)
@@ -820,8 +876,8 @@ def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
                         3,
                     )
                 )
-                pair_best = summarize_best_curve(pair_curve)
-                collapse_best = summarize_best_curve(collapse_curve)
+                pair_best = summarize_best_curve(pair_curve, cfg)
+                collapse_best = summarize_best_curve(collapse_curve, cfg)
                 rows.append(
                     {
                         "noise_model": noise_model,
@@ -918,6 +974,483 @@ def _warn_if_manuscript_mismatch(pair_alpha: float, collapse_alpha: float) -> No
             f"(pair={pair_alpha:.3f}, collapse={collapse_alpha:.3f})",
             flush=True,
         )
+
+
+def build_alpha_run_artifact(
+    cfg: dict,
+    alpha_values: np.ndarray,
+    cohort_diag: pd.DataFrame,
+    best_df: pd.DataFrame,
+    bootstrap_df: pd.DataFrame,
+    bootstrap_summary: pd.DataFrame,
+    loo_summary: pd.DataFrame,
+) -> dict:
+    ident_cfg = get_identifiability_cfg(cfg)
+    params = cfg["analysis"]
+    primary = best_df[
+        (best_df["anchor_mode"] == params["primary_anchor"])
+        & (best_df["theta_scale"] == "gamma_primary")
+        & (best_df["excess_mode"] == params["primary_excess_mode"])
+        & (best_df["age_band"] == "pooled")
+        & (best_df["time_segment"] == "pooled")
+        & (best_df["estimator"].isin(["pairwise", "collapse"]))
+    ].copy()
+    primary_by_est = {row["estimator"]: row for _, row in primary.iterrows()}
+    pair_row = primary_by_est.get("pairwise")
+    collapse_row = primary_by_est.get("collapse")
+    estimator_gap = (
+        abs(float(pair_row["alpha_hat"]) - float(collapse_row["alpha_hat"]))
+        if pair_row is not None and collapse_row is not None
+        else float("nan")
+    )
+    estimators_agree = bool(np.isfinite(estimator_gap) and estimator_gap <= float(ident_cfg["max_estimator_gap"]))
+    boot_vals = bootstrap_df["alpha_hat"].dropna().to_numpy(dtype=float)
+    finite_fraction = float(np.isfinite(bootstrap_df["alpha_hat"]).mean()) if len(bootstrap_df) else 0.0
+    bootstrap_iqr = float(np.subtract(*np.nanpercentile(boot_vals, [75, 25]))) if boot_vals.size else float("nan")
+    boot_summary_row = bootstrap_summary.iloc[0] if not bootstrap_summary.empty else None
+    bootstrap_boundary_fraction = (
+        float(boot_summary_row["boundary_fraction"]) if boot_summary_row is not None else float("nan")
+    )
+    bootstrap_ok = bool(
+        finite_fraction >= float(ident_cfg["min_bootstrap_finite_fraction"])
+        and (not np.isfinite(bootstrap_iqr) or bootstrap_iqr <= float(ident_cfg["max_bootstrap_iqr"]))
+        and (
+            not np.isfinite(bootstrap_boundary_fraction)
+            or bootstrap_boundary_fraction <= float(ident_cfg["max_bootstrap_boundary_fraction"])
+        )
+    )
+    pair_identified = bool(pair_row is not None and int(pair_row.get("identified_curve", 0)) == 1)
+    collapse_identified = bool(collapse_row is not None and int(collapse_row.get("identified_curve", 0)) == 1)
+    primary_identified = pair_identified and collapse_identified and estimators_agree and bootstrap_ok
+    primary_status = "identified" if primary_identified else "not_identified"
+    failure_reasons = []
+    if not pair_identified:
+        failure_reasons.append("pairwise_curve_failed")
+    if not collapse_identified:
+        failure_reasons.append("collapse_curve_failed")
+    if pair_row is not None and int(pair_row.get("boundary_optimum", 0)) == 1:
+        failure_reasons.append("pairwise_boundary")
+    if collapse_row is not None and int(collapse_row.get("boundary_optimum", 0)) == 1:
+        failure_reasons.append("collapse_boundary")
+    if not estimators_agree:
+        failure_reasons.append("estimator_disagreement")
+    if not bootstrap_ok:
+        failure_reasons.append("bootstrap_instability")
+    if np.isfinite(bootstrap_boundary_fraction) and bootstrap_boundary_fraction > float(ident_cfg["max_bootstrap_boundary_fraction"]):
+        failure_reasons.append("bootstrap_boundary_seeking")
+    loo_summary_row = loo_summary.iloc[0] if not loo_summary.empty else None
+    return {
+        "dataset": cfg["dataset"],
+        "alpha_interpretation_contract": {
+            "alpha_is_not_causal_or_biological": True,
+            "alpha_is_model_calibrated": True,
+            "requires_identifiability_diagnostics": True,
+            "if_diagnostics_fail_report_not_identified": True,
+        },
+        "configuration": {
+            "analysis": cfg["analysis"],
+            "alpha_grid": cfg["alpha_grid"],
+            "alpha_grid_points": [float(x) for x in alpha_values.tolist()],
+            "bootstrap": cfg.get("bootstrap", {}),
+            "synthetic": cfg.get("synthetic", {}),
+            "identifiability": ident_cfg,
+            "excess_definition": "h_excess,d(t) = h_d(t) - h_ref(t)",
+        },
+        "cohort_selection": {
+            "enrollment_dates": cfg["analysis"]["enrollment_dates"],
+            "yob_decades": cfg["analysis"]["yob_decades"],
+            "doses": cfg["analysis"]["doses"],
+            "eligible_cohorts": int(cohort_diag["eligible"].sum()) if not cohort_diag.empty else 0,
+            "total_cohorts": int(len(cohort_diag)),
+        },
+        "seeds": {
+            "bootstrap_seed": cfg.get("bootstrap", {}).get("seed"),
+            "synthetic_seed": cfg.get("synthetic", {}).get("seed"),
+        },
+        "primary_identification": {
+            "status": primary_status,
+            "failure_reasons": failure_reasons,
+            "pairwise_alpha_hat_raw": None if pair_row is None else float(pair_row["alpha_hat"]),
+            "pairwise_alpha_hat_reported": None if pair_row is None or not np.isfinite(pair_row["alpha_hat_reported"]) else float(pair_row["alpha_hat_reported"]),
+            "collapse_alpha_hat_raw": None if collapse_row is None else float(collapse_row["alpha_hat"]),
+            "collapse_alpha_hat_reported": None if collapse_row is None or not np.isfinite(collapse_row["alpha_hat_reported"]) else float(collapse_row["alpha_hat_reported"]),
+            "pairwise_curve_status": None if pair_row is None else str(pair_row["identification_status"]),
+            "collapse_curve_status": None if collapse_row is None else str(collapse_row["identification_status"]),
+            "estimator_gap": None if not np.isfinite(estimator_gap) else estimator_gap,
+            "estimators_agree": estimators_agree,
+            "bootstrap_finite_fraction": finite_fraction,
+            "bootstrap_iqr": None if not np.isfinite(bootstrap_iqr) else bootstrap_iqr,
+            "bootstrap_boundary_fraction": None if not np.isfinite(bootstrap_boundary_fraction) else bootstrap_boundary_fraction,
+            "bootstrap_ok": bootstrap_ok,
+            "leave_one_out_max_abs_shift": None
+            if loo_summary_row is None or not np.isfinite(loo_summary_row["max_abs_shift"])
+            else float(loo_summary_row["max_abs_shift"]),
+            "leave_one_out_large_shift_count": None if loo_summary_row is None else int(loo_summary_row["large_shift_count"]),
+        },
+        "production_integration": {
+            "recommended": primary_identified,
+            "decision": "defer" if not primary_identified else "evaluate_after_phase4",
+        },
+    }
+
+
+def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    ident_cfg = get_identifiability_cfg(cfg)
+    alpha_min = float(cfg["alpha_grid"]["start"])
+    alpha_max = float(cfg["alpha_grid"]["stop"])
+    if bootstrap_df.empty:
+        return pd.DataFrame(
+            [
+                {
+                    "n_reps": 0,
+                    "finite_reps": 0,
+                    "finite_fraction": 0.0,
+                    "median_alpha_hat": np.nan,
+                    "q25_alpha_hat": np.nan,
+                    "q75_alpha_hat": np.nan,
+                    "iqr_alpha_hat": np.nan,
+                    "boundary_low_count": 0,
+                    "boundary_high_count": 0,
+                    "boundary_fraction": np.nan,
+                    "bootstrap_ok": 0,
+                }
+            ]
+        )
+    vals = bootstrap_df["alpha_hat"].to_numpy(dtype=float)
+    finite_mask = np.isfinite(vals)
+    finite_vals = vals[finite_mask]
+    boundary_low = int(np.count_nonzero(np.isclose(finite_vals, alpha_min)))
+    boundary_high = int(np.count_nonzero(np.isclose(finite_vals, alpha_max)))
+    boundary_fraction = (
+        float((boundary_low + boundary_high) / finite_vals.size) if finite_vals.size else float("nan")
+    )
+    iqr = float(np.subtract(*np.nanpercentile(finite_vals, [75, 25]))) if finite_vals.size else float("nan")
+    finite_fraction = float(np.mean(finite_mask)) if vals.size else 0.0
+    bootstrap_ok = bool(
+        finite_fraction >= float(ident_cfg["min_bootstrap_finite_fraction"])
+        and (not np.isfinite(iqr) or iqr <= float(ident_cfg["max_bootstrap_iqr"]))
+        and (
+            not np.isfinite(boundary_fraction)
+            or boundary_fraction <= float(ident_cfg["max_bootstrap_boundary_fraction"])
+        )
+    )
+    return pd.DataFrame(
+        [
+            {
+                "n_reps": int(len(bootstrap_df)),
+                "finite_reps": int(np.count_nonzero(finite_mask)),
+                "finite_fraction": finite_fraction,
+                "median_alpha_hat": float(np.nanmedian(finite_vals)) if finite_vals.size else np.nan,
+                "q25_alpha_hat": float(np.nanpercentile(finite_vals, 25)) if finite_vals.size else np.nan,
+                "q75_alpha_hat": float(np.nanpercentile(finite_vals, 75)) if finite_vals.size else np.nan,
+                "iqr_alpha_hat": iqr,
+                "boundary_low_count": boundary_low,
+                "boundary_high_count": boundary_high,
+                "boundary_fraction": boundary_fraction,
+                "bootstrap_ok": int(bootstrap_ok),
+            }
+        ]
+    )
+
+
+def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    ident_cfg = get_identifiability_cfg(cfg)
+    if loo_df.empty:
+        return pd.DataFrame(
+            [
+                {
+                    "pooled_pairwise_alpha_hat": np.nan,
+                    "n_omissions": 0,
+                    "finite_omissions": 0,
+                    "max_abs_shift": np.nan,
+                    "median_abs_shift": np.nan,
+                    "large_shift_count": 0,
+                    "boundary_count": 0,
+                    "stable_leave_one_out": 0,
+                }
+            ]
+        )
+    pair_row = _filter_best_unique(
+        best_df,
+        anchor_mode=cfg["analysis"]["primary_anchor"],
+        theta_scale="gamma_primary",
+        excess_mode=cfg["analysis"]["primary_excess_mode"],
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="pairwise",
+    )
+    pooled_pair = float(pair_row["alpha_hat"])
+    finite = loo_df[np.isfinite(loo_df["alpha_hat"])].copy()
+    shifts = np.abs(finite["alpha_hat"].to_numpy(dtype=float) - pooled_pair) if not finite.empty else np.asarray([], dtype=float)
+    threshold = float(ident_cfg["max_leave_one_out_shift"])
+    large_shift_count = int(np.count_nonzero(shifts > threshold)) if shifts.size else 0
+    boundary_count = int(finite["boundary_optimum"].fillna(0).astype(int).sum()) if not finite.empty else 0
+    stable = bool(large_shift_count == 0 and boundary_count == 0 and len(finite) == len(loo_df))
+    return pd.DataFrame(
+        [
+            {
+                "pooled_pairwise_alpha_hat": pooled_pair,
+                "n_omissions": int(len(loo_df)),
+                "finite_omissions": int(len(finite)),
+                "max_abs_shift": float(np.max(shifts)) if shifts.size else np.nan,
+                "median_abs_shift": float(np.median(shifts)) if shifts.size else np.nan,
+                "large_shift_count": large_shift_count,
+                "boundary_count": boundary_count,
+                "stable_leave_one_out": int(stable),
+            }
+        ]
+    )
+
+
+def build_primary_sensitivity_slices(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    params = cfg["analysis"]
+    rows: list[dict] = []
+
+    def add_dimension(
+        dimension: str,
+        subset: pd.DataFrame,
+        setting_col: str,
+        primary_setting: str,
+    ) -> None:
+        if subset.empty:
+            return
+        for estimator in sorted(subset["estimator"].unique()):
+            est_subset = subset[subset["estimator"] == estimator].copy()
+            baseline = est_subset[est_subset[setting_col] == primary_setting]
+            baseline_alpha = float(baseline.iloc[0]["alpha_hat"]) if not baseline.empty else float("nan")
+            for _, row in est_subset.sort_values(setting_col).iterrows():
+                rows.append(
+                    {
+                        "dimension": dimension,
+                        "setting": str(row[setting_col]),
+                        "setting_is_primary": int(str(row[setting_col]) == str(primary_setting)),
+                        "estimator": estimator,
+                        "alpha_hat": float(row["alpha_hat"]),
+                        "alpha_hat_reported": np.nan
+                        if not np.isfinite(row["alpha_hat_reported"])
+                        else float(row["alpha_hat_reported"]),
+                        "delta_from_primary": np.nan
+                        if not np.isfinite(baseline_alpha)
+                        else float(row["alpha_hat"] - baseline_alpha),
+                        "curvature_metric": float(row["curvature_metric"]),
+                        "boundary_optimum": int(row["boundary_optimum"]),
+                        "identified_curve": int(row["identified_curve"]),
+                        "identification_status": str(row["identification_status"]),
+                        "n_pairs": int(row["n_pairs"]),
+                        "n_weeks_used": int(row["n_weeks_used"]),
+                        "n_cohorts": int(row["n_cohorts"]),
+                    }
+                )
+
+    anchor_subset = best_df[
+        (best_df["theta_scale"] == "gamma_primary")
+        & (best_df["excess_mode"] == params["primary_excess_mode"])
+        & (best_df["age_band"] == "pooled")
+        & (best_df["time_segment"] == "pooled")
+    ].copy()
+    add_dimension("anchor_mode", anchor_subset, "anchor_mode", params["primary_anchor"])
+
+    theta_subset = best_df[
+        (best_df["anchor_mode"] == params["primary_anchor"])
+        & (best_df["excess_mode"] == params["primary_excess_mode"])
+        & (best_df["age_band"] == "pooled")
+        & (best_df["time_segment"] == "pooled")
+    ].copy()
+    add_dimension("theta_scale", theta_subset, "theta_scale", "gamma_primary")
+
+    excess_subset = best_df[
+        (best_df["anchor_mode"] == params["primary_anchor"])
+        & (best_df["theta_scale"] == "gamma_primary")
+        & (best_df["age_band"] == "pooled")
+        & (best_df["time_segment"] == "pooled")
+    ].copy()
+    add_dimension("excess_mode", excess_subset, "excess_mode", params["primary_excess_mode"])
+
+    segment_subset = best_df[
+        (best_df["anchor_mode"] == params["primary_anchor"])
+        & (best_df["theta_scale"] == "gamma_primary")
+        & (best_df["excess_mode"] == params["primary_excess_mode"])
+        & (best_df["age_band"] == "pooled")
+    ].copy()
+    add_dimension("time_segment", segment_subset, "time_segment", "pooled")
+
+    return pd.DataFrame(rows)
+
+
+def build_decision_summary(
+    best_df: pd.DataFrame,
+    bootstrap_summary: pd.DataFrame,
+    loo_summary: pd.DataFrame,
+    run_artifact: dict,
+    cfg: dict,
+) -> pd.DataFrame:
+    ident_cfg = get_identifiability_cfg(cfg)
+    pair_row = _filter_best_unique(
+        best_df,
+        anchor_mode=cfg["analysis"]["primary_anchor"],
+        theta_scale="gamma_primary",
+        excess_mode=cfg["analysis"]["primary_excess_mode"],
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="pairwise",
+    )
+    collapse_row = _filter_best_unique(
+        best_df,
+        anchor_mode=cfg["analysis"]["primary_anchor"],
+        theta_scale="gamma_primary",
+        excess_mode=cfg["analysis"]["primary_excess_mode"],
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="collapse",
+    )
+    boot = bootstrap_summary.iloc[0]
+    loo = loo_summary.iloc[0]
+    interior_ok = int(pair_row["boundary_optimum"]) == 0 and int(collapse_row["boundary_optimum"]) == 0
+    curvature_ok = (
+        np.isfinite(pair_row["curvature_metric"])
+        and np.isfinite(collapse_row["curvature_metric"])
+        and float(pair_row["curvature_metric"]) >= float(ident_cfg["min_normalized_curvature"])
+        and float(collapse_row["curvature_metric"]) >= float(ident_cfg["min_normalized_curvature"])
+    )
+    stability_ok = bool(
+        run_artifact["primary_identification"]["estimators_agree"]
+        and int(loo["stable_leave_one_out"]) == 1
+    )
+    bootstrap_boundary_ok = bool(
+        int(boot["bootstrap_ok"]) == 1
+        and (
+            not np.isfinite(boot["boundary_fraction"])
+            or float(boot["boundary_fraction"]) <= float(ident_cfg["max_bootstrap_boundary_fraction"])
+        )
+    )
+    verdict = run_artifact["primary_identification"]["status"]
+    return pd.DataFrame(
+        [
+            {
+                "question": "Is the optimum interior?",
+                "answer": "yes" if interior_ok else "no",
+                "status": "pass" if interior_ok else "fail",
+                "observed": f"pairwise_boundary={int(pair_row['boundary_optimum'])}; collapse_boundary={int(collapse_row['boundary_optimum'])}",
+                "threshold": "Both pooled optima must be interior",
+            },
+            {
+                "question": "Is curvature strong enough?",
+                "answer": "yes" if curvature_ok else "no",
+                "status": "pass" if curvature_ok else "fail",
+                "observed": f"pairwise={float(pair_row['curvature_metric']):.6f}; collapse={float(collapse_row['curvature_metric']):.6f}",
+                "threshold": f"Both >= {float(ident_cfg['min_normalized_curvature']):.3f}",
+            },
+            {
+                "question": "Are estimates stable?",
+                "answer": "yes" if stability_ok else "no",
+                "status": "pass" if stability_ok else "fail",
+                "observed": (
+                    f"pair_gap={float(run_artifact['primary_identification']['estimator_gap'] or np.nan):.6f}; "
+                    f"loo_max_shift={float(loo['max_abs_shift']):.6f}"
+                ),
+                "threshold": (
+                    f"pair_gap <= {float(ident_cfg['max_estimator_gap']):.3f}; "
+                    f"loo_max_shift <= {float(ident_cfg['max_leave_one_out_shift']):.3f}"
+                ),
+            },
+            {
+                "question": "Is bootstrap concentrated away from boundaries?",
+                "answer": "yes" if bootstrap_boundary_ok else "no",
+                "status": "pass" if bootstrap_boundary_ok else "fail",
+                "observed": (
+                    f"finite_fraction={float(boot['finite_fraction']):.3f}; "
+                    f"iqr={float(boot['iqr_alpha_hat']):.3f}; boundary_fraction={float(boot['boundary_fraction']):.3f}"
+                ),
+                "threshold": (
+                    f"finite_fraction >= {float(ident_cfg['min_bootstrap_finite_fraction']):.2f}; "
+                    f"iqr <= {float(ident_cfg['max_bootstrap_iqr']):.2f}; "
+                    f"boundary_fraction <= {float(ident_cfg['max_bootstrap_boundary_fraction']):.2f}"
+                ),
+            },
+            {
+                "question": "Final verdict",
+                "answer": verdict,
+                "status": "pass" if verdict == "identified" else "fail",
+                "observed": "; ".join(run_artifact["primary_identification"]["failure_reasons"]) or "identified",
+                "threshold": "Report alpha only if all diagnostics pass",
+            },
+        ]
+    )
+
+
+def render_identifiability_report(
+    run_artifact: dict,
+    bootstrap_summary: pd.DataFrame,
+    loo_summary: pd.DataFrame,
+    sensitivity_df: pd.DataFrame,
+    decision_summary: pd.DataFrame,
+) -> str:
+    primary = run_artifact["primary_identification"]
+    boot = bootstrap_summary.iloc[0]
+    loo = loo_summary.iloc[0]
+
+    def fmt(value: object, digits: int = 3) -> str:
+        if value is None:
+            return "NA"
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        if not np.isfinite(numeric):
+            return "NA"
+        return f"{numeric:.{digits}f}"
+
+    lines = [
+        "# Alpha Identifiability Report",
+        "",
+        "## Primary Czech Run",
+        f"- Pairwise raw estimate: `{fmt(primary['pairwise_alpha_hat_raw'])}`",
+        f"- Collapse raw estimate: `{fmt(primary['collapse_alpha_hat_raw'])}`",
+        f"- Pairwise curvature metric: `{fmt(sensitivity_df[(sensitivity_df['dimension'] == 'theta_scale') & (sensitivity_df['setting'] == 'gamma_primary') & (sensitivity_df['estimator'] == 'pairwise')]['curvature_metric'].iloc[0], 6)}`",
+        f"- Collapse curvature metric: `{fmt(sensitivity_df[(sensitivity_df['dimension'] == 'theta_scale') & (sensitivity_df['setting'] == 'gamma_primary') & (sensitivity_df['estimator'] == 'collapse')]['curvature_metric'].iloc[0], 6)}`",
+        f"- Boundary flag: `pairwise={int(sensitivity_df[(sensitivity_df['dimension'] == 'theta_scale') & (sensitivity_df['setting'] == 'gamma_primary') & (sensitivity_df['estimator'] == 'pairwise')]['boundary_optimum'].iloc[0])}`, `collapse={int(sensitivity_df[(sensitivity_df['dimension'] == 'theta_scale') & (sensitivity_df['setting'] == 'gamma_primary') & (sensitivity_df['estimator'] == 'collapse')]['boundary_optimum'].iloc[0])}`",
+        (
+            "- Bootstrap instability summary: "
+            f"`finite_fraction={fmt(boot['finite_fraction'])}`, "
+            f"`iqr={fmt(boot['iqr_alpha_hat'])}`, "
+            f"`boundary_fraction={fmt(boot['boundary_fraction'])}`"
+        ),
+        f"- Final reported status: `{primary['status']}`",
+        "",
+        "## Why The Gate Failed",
+        f"- Failure reasons: `{', '.join(primary['failure_reasons']) or 'none'}`",
+        f"- Leave-one-out max shift from pooled pairwise alpha: `{fmt(loo['max_abs_shift'])}`",
+        f"- Leave-one-out large-shift omissions: `{int(loo['large_shift_count'])}`",
+        "",
+        "## Sensitivity Slices",
+    ]
+    for dimension in ["anchor_mode", "theta_scale", "excess_mode", "time_segment"]:
+        part = sensitivity_df[sensitivity_df["dimension"] == dimension].copy()
+        if part.empty:
+            continue
+        lines.append(f"- `{dimension}`: see `alpha_primary_sensitivity_slices.csv` for {len(part)} rows covering this axis.")
+    lines.extend(
+        [
+            "",
+            "## Decision Table",
+            "",
+            "| Question | Answer | Observed | Threshold |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for _, row in decision_summary.iterrows():
+        lines.append(
+            f"| {row['question']} | {row['answer']} | {row['observed']} | {row['threshold']} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Production Integration",
+            "",
+            "- Production integration remains deferred until a later gate is justified.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def plot_objectives(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path) -> None:
@@ -1287,9 +1820,15 @@ def write_outputs(
     curves: pd.DataFrame,
     best_df: pd.DataFrame,
     theta_scale_summary: pd.DataFrame,
+    bootstrap_summary: pd.DataFrame,
+    loo_summary: pd.DataFrame,
+    sensitivity_df: pd.DataFrame,
+    decision_summary: pd.DataFrame,
     loo_df: pd.DataFrame,
     bootstrap_df: pd.DataFrame,
     synthetic_df: pd.DataFrame,
+    run_artifact: dict,
+    identifiability_report: str,
 ) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     cohort_diag.to_csv(outdir / "alpha_cohort_diagnostics.csv", index=False)
@@ -1297,9 +1836,15 @@ def write_outputs(
     curves.to_csv(outdir / "alpha_objective_curves.csv", index=False)
     best_df.to_csv(outdir / "alpha_best_estimates.csv", index=False)
     theta_scale_summary.to_csv(outdir / "alpha_theta_scale_summary.csv", index=False)
+    bootstrap_summary.to_csv(outdir / "alpha_bootstrap_summary.csv", index=False)
+    loo_summary.to_csv(outdir / "alpha_leave_one_out_summary.csv", index=False)
+    sensitivity_df.to_csv(outdir / "alpha_primary_sensitivity_slices.csv", index=False)
+    decision_summary.to_csv(outdir / "alpha_decision_summary.csv", index=False)
     loo_df.to_csv(outdir / "alpha_leave_one_out.csv", index=False)
     bootstrap_df.to_csv(outdir / "alpha_bootstrap.csv", index=False)
     synthetic_df.to_csv(outdir / "alpha_synthetic_recovery.csv", index=False)
+    (outdir / "alpha_run_artifact.json").write_text(json.dumps(run_artifact, indent=2) + "\n", encoding="utf-8")
+    (outdir / "alpha_identifiability_report.md").write_text(identifiability_report, encoding="utf-8")
     plot_objectives(curves, best_df, outdir / "fig_alpha_objectives.png")
     plot_synthetic_recovery(synthetic_df, outdir / "fig_alpha_synthetic_recovery.png")
     generate_manuscript_figures(outdir, repo_root)
@@ -1330,24 +1875,61 @@ def main() -> None:
     last_ts = log_milestone("leave-one-out influence completed", start_ts, last_ts)
     bootstrap_df = bootstrap_alpha(primary_df, cfg, alpha_values)
     last_ts = log_milestone("bootstrap completed", start_ts, last_ts)
+    bootstrap_summary = build_bootstrap_summary(bootstrap_df, cfg)
+    loo_summary = build_leave_one_out_summary(loo_df, best_df, cfg)
+    sensitivity_df = build_primary_sensitivity_slices(best_df, cfg)
     synthetic_df = synthetic_recovery(cfg, alpha_values)
     last_ts = log_milestone("synthetic recovery completed", start_ts, last_ts)
+    run_artifact = build_alpha_run_artifact(
+        cfg,
+        alpha_values,
+        cohort_diag,
+        best_df,
+        bootstrap_df,
+        bootstrap_summary,
+        loo_summary,
+    )
+    decision_summary = build_decision_summary(best_df, bootstrap_summary, loo_summary, run_artifact, cfg)
+    identifiability_report = render_identifiability_report(
+        run_artifact,
+        bootstrap_summary,
+        loo_summary,
+        sensitivity_df,
+        decision_summary,
+    )
 
-    write_outputs(outdir, repo_root, cohort_diag, wave_table, curves, best_df, theta_scale_summary, loo_df, bootstrap_df, synthetic_df)
+    write_outputs(
+        outdir,
+        repo_root,
+        cohort_diag,
+        wave_table,
+        curves,
+        best_df,
+        theta_scale_summary,
+        bootstrap_summary,
+        loo_summary,
+        sensitivity_df,
+        decision_summary,
+        loo_df,
+        bootstrap_df,
+        synthetic_df,
+        run_artifact,
+        identifiability_report,
+    )
     last_ts = log_milestone("outputs and figures written", start_ts, last_ts)
 
     print(f"Wrote outputs to {outdir}")
-    if not best_df.empty:
-        primary = best_df[
-            (best_df["anchor_mode"] == cfg["analysis"]["primary_anchor"])
-            & (best_df["theta_scale"] == "gamma_primary")
-            & (best_df["excess_mode"] == cfg["analysis"]["primary_excess_mode"])
-            & (best_df["age_band"] == "pooled")
-            & (best_df["time_segment"] == "pooled")
-            & (best_df["estimator"] == "pairwise")
-        ]
-        if not primary.empty:
-            print(f"Primary pairwise alpha_hat = {float(primary.iloc[0]['alpha_hat']):.4f}")
+    primary_status = run_artifact["primary_identification"]["status"]
+    if primary_status == "identified":
+        pair_alpha = run_artifact["primary_identification"]["pairwise_alpha_hat_reported"]
+        collapse_alpha = run_artifact["primary_identification"]["collapse_alpha_hat_reported"]
+        print(
+            f"Primary alpha identified: pairwise={pair_alpha:.4f}, collapse={collapse_alpha:.4f}",
+            flush=True,
+        )
+    else:
+        reasons = ", ".join(run_artifact["primary_identification"]["failure_reasons"]) or "diagnostics_failed"
+        print(f"[ALPHA] Primary alpha not identified ({reasons})", flush=True)
     log_milestone("alpha run finished", start_ts, last_ts)
 
 

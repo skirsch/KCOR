@@ -47,7 +47,7 @@ analysis:
 alpha_grid:
   start: 1.00
   stop: 1.30
-  step: 0.01
+  step: 0.005
 
 bootstrap:
   reps: 30
@@ -55,6 +55,12 @@ bootstrap:
   summary_anchor: dose0
   summary_excess_mode: exclude_nonpositive
   summary_estimator: pairwise
+
+identifiability:
+  min_normalized_curvature: 0.01
+  max_estimator_gap: 0.03
+  max_bootstrap_iqr: 0.10
+  min_bootstrap_finite_fraction: 0.80
 
 synthetic:
   enabled: true
