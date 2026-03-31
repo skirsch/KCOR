@@ -1,5 +1,11 @@
 dataset: Czech
 
+nph_neutralization_mode:
+  - reference_anchored
+  - symmetric_all_cohorts
+primary_nph_neutralization_mode: reference_anchored
+write_manuscript_figures: false
+
 analysis:
   enrollment_dates:
     - "2021_13"
@@ -15,9 +21,7 @@ analysis:
     - 1950
   doses:
     - 0
-    - 1
     - 2
-    - 3
   min_wave_weeks: 4
   min_wave_deaths: 10
   min_pairs_per_alpha: 8
@@ -25,7 +29,6 @@ analysis:
   primary_anchor: dose0
   anchor_choices:
     - dose0
-    - dose1
     - pooled_median
   primary_excess_mode: exclude_nonpositive
   excess_modes:
@@ -59,8 +62,10 @@ bootstrap:
 identifiability:
   min_normalized_curvature: 0.01
   max_estimator_gap: 0.03
+  max_leave_one_out_shift: 0.03
   max_bootstrap_iqr: 0.10
   min_bootstrap_finite_fraction: 0.80
+  max_bootstrap_boundary_fraction: 0.20
 
 synthetic:
   enabled: true

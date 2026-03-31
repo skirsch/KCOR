@@ -253,6 +253,7 @@ import csv
 import time
 import statsmodels.api as sm
 from scipy.optimize import least_squares, minimize
+from scipy.special import gammaln
 
 # Dependencies: pandas, numpy, openpyxl, statsmodels, scipy
 
@@ -267,6 +268,7 @@ KCOR_NORMALIZATION_WEEKS = 4     # Number of weeks of data to use to compute the
 AGE_RANGE = 10                  # Bucket size for YearOfBirth aggregation (e.g., 10 -> 1920, 1930, ..., 2000)
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
+NPH_IDENTITY_TOL = 1e-12
 # HVE is gone after 2 weeks, so to be safe, start accumulating 
 # hazards/statistics from the 3rd week of cumulated data.
 DYNAMIC_HVE_SKIP_WEEKS = 2      
@@ -989,6 +991,28 @@ def invert_gamma_frailty(H_obs, theta):
     z = theta * H_arr
     z = np.clip(z, -80.0, 80.0)
     return np.expm1(z) / max(theta, KCOR6_THETA_EPS)
+
+
+def gamma_moment_alpha(theta, alpha):
+    """Return E[z**alpha | t] under the gamma-frailty working model."""
+    theta_arr = np.asarray(theta, dtype=float)
+    out = np.ones_like(theta_arr, dtype=float)
+    if abs(float(alpha) - 1.0) <= NPH_IDENTITY_TOL:
+        return out
+    mask = np.isfinite(theta_arr) & (theta_arr > KCOR6_THETA_EPS)
+    if np.any(mask):
+        th = theta_arr[mask]
+        inv = 1.0 / th
+        out[mask] = np.exp(gammaln(alpha + inv) - gammaln(inv) + alpha * np.log(th))
+    return out
+
+
+def propagate_theta(theta_start, delta_h):
+    """Propagate gamma frailty variance after cumulative baseline hazard delta_h."""
+    theta_arr = np.asarray(theta_start, dtype=float)
+    delta_arr = np.asarray(delta_h, dtype=float)
+    denom = 1.0 + np.maximum(theta_arr, 0.0) * np.maximum(delta_arr, 0.0)
+    return np.maximum(theta_arr, 0.0) / np.maximum(denom, EPS)
 
 
 def fit_k_theta_cumhaz(t, H_obs, k0=None, theta0=0.1):
@@ -1803,20 +1827,34 @@ def _load_dataset_dose_pairs_config():
                     if _DATASET_DOSE_PAIRS_CACHE:
                         if DEBUG_VERBOSE:
                             print(f"[DEBUG] Loaded dose pairs config from {_dataset_yaml_path}", flush=True)
-                _covid_config = _dataset_config.get('covidCorrection', {})
+                _covid_config_name = 'NPH_correction'
+                _covid_config = _dataset_config.get('NPH_correction', {})
                 if isinstance(_covid_config, dict):
                     start_date = _covid_config.get('startDate')
                     end_date = _covid_config.get('endDate')
-                    factor = _covid_config.get('factor')
-                    if start_date and end_date and factor is not None:
+                    mode = _covid_config.get('mode')
+                    neutralization = _covid_config.get('neutralization')
+                    forced_alpha = _covid_config.get('forced_alpha')
+                    identified_alpha = _covid_config.get('identified_alpha')
+                    if start_date and end_date:
                         try:
                             _DATASET_COVID_CORRECTION_CACHE = {
                                 "startDate": str(start_date),
                                 "endDate": str(end_date),
-                                "factor": float(factor),
                             }
+                            if mode is not None:
+                                _DATASET_COVID_CORRECTION_CACHE["mode"] = str(mode).strip()
+                            if neutralization is not None:
+                                _DATASET_COVID_CORRECTION_CACHE["neutralization"] = str(neutralization).strip()
+                            if forced_alpha is not None:
+                                _DATASET_COVID_CORRECTION_CACHE["forced_alpha"] = float(forced_alpha)
+                            if identified_alpha is not None:
+                                _DATASET_COVID_CORRECTION_CACHE["identified_alpha"] = float(identified_alpha)
                             if DEBUG_VERBOSE:
-                                print(f"[DEBUG] Loaded COVID correction config from {_dataset_yaml_path}", flush=True)
+                                print(
+                                    f"[DEBUG] Loaded {_covid_config_name} config from {_dataset_yaml_path}",
+                                    flush=True,
+                                )
                         except Exception:
                             _DATASET_COVID_CORRECTION_CACHE = {}
                 _quiet_config = _dataset_config.get('quietWindow', {})
@@ -2062,24 +2100,74 @@ def _parse_iso_year_week(s: str):
     return datetime.fromisocalendar(int(y), int(w), 1)
 
 def get_covid_correction_config():
-    """Return parsed COVID correction config or None."""
+    """Return parsed NPH correction config or None.
+
+    Supported config surface:
+      - `mode`: `off | identified_only | forced_alpha`
+      - `identified_alpha`: optional identified production alpha source
+      - `forced_alpha`: explicit sensitivity alpha
+      - `neutralization`: currently `symmetric_all_cohorts`
+    """
     _load_dataset_dose_pairs_config()
     if not _DATASET_COVID_CORRECTION_CACHE:
         return None
     start_str = _DATASET_COVID_CORRECTION_CACHE.get("startDate")
     end_str = _DATASET_COVID_CORRECTION_CACHE.get("endDate")
-    factor = _DATASET_COVID_CORRECTION_CACHE.get("factor")
-    if not start_str or not end_str or factor is None:
+    correction_mode = str(_DATASET_COVID_CORRECTION_CACHE.get("mode", "identified_only")).strip()
+    neutralization = str(
+        _DATASET_COVID_CORRECTION_CACHE.get("neutralization", "symmetric_all_cohorts")
+    ).strip()
+    forced_alpha = _DATASET_COVID_CORRECTION_CACHE.get("forced_alpha")
+    identified_alpha = _DATASET_COVID_CORRECTION_CACHE.get("identified_alpha")
+    if not start_str or not end_str:
         return None
+    if neutralization != "symmetric_all_cohorts":
+        raise ValueError(f"Unsupported NPH_correction.neutralization: {neutralization!r}")
     try:
         start_dt = _parse_iso_year_week(start_str)
         end_dt = _parse_iso_year_week(end_str)
-        factor_val = float(factor)
     except Exception:
         return None
-    if not np.isfinite(factor_val) or factor_val <= 0.0:
-        return None
-    return {"start_dt": start_dt, "end_dt": end_dt, "factor": factor_val}
+    apply_alpha = None
+    alpha_source = None
+    skip_reason = None
+    if correction_mode == "off":
+        skip_reason = "mode_off"
+    elif correction_mode == "identified_only":
+        if identified_alpha is None:
+            skip_reason = "missing_identified_alpha"
+        else:
+            alpha_val = float(identified_alpha)
+            if not np.isfinite(alpha_val) or alpha_val <= 0.0:
+                skip_reason = "invalid_identified_alpha"
+            else:
+                apply_alpha = alpha_val
+                alpha_source = "identified_alpha"
+    elif correction_mode == "forced_alpha":
+        if forced_alpha is None:
+            skip_reason = "missing_forced_alpha"
+        else:
+            alpha_val = float(forced_alpha)
+            if not np.isfinite(alpha_val) or alpha_val <= 0.0:
+                skip_reason = "invalid_forced_alpha"
+            else:
+                apply_alpha = alpha_val
+                alpha_source = "forced_alpha"
+    else:
+        raise ValueError(f"Unsupported NPH_correction.mode: {correction_mode!r}")
+    return {
+        "start_dt": start_dt,
+        "end_dt": end_dt,
+        "mode": correction_mode,
+        "neutralization": neutralization,
+        "apply_alpha": apply_alpha,
+        "alpha_source": alpha_source,
+        "apply_correction": bool(apply_alpha is not None),
+        "skip_reason": skip_reason,
+        "forced_alpha": None if forced_alpha is None else float(forced_alpha),
+        "identified_alpha": None if identified_alpha is None else float(identified_alpha),
+        "tolerance": NPH_IDENTITY_TOL,
+    }
 
 
 def get_theta_estimation_windows():
@@ -2273,39 +2361,88 @@ def _build_theta_quiet_mask(iso_int, t_vals):
     quiet_mask[valid_iso] = (iso_arr[valid_iso] >= quiet_start_int) & (iso_arr[valid_iso] <= quiet_end_int)
     return quiet_mask, "legacy_quiet_window", f"{KCOR6_QUIET_START_ISO}..{KCOR6_QUIET_END_ISO}"
 
-def apply_covid_correction_in_place(df, covid_cfg):
-    """Adjust hazard_raw in-place for Dose==0 during COVID interval."""
+def apply_covid_correction_in_place(df, covid_cfg, kcor6_params_map=None, sheet_name=None):
+    """Adjust hazard_raw in-place during the configured NPH interval.
+
+    The production path supports only the symmetric all-cohort neutralization form.
+    When enabled, each cohort is adjusted relative to its own wave-start reference
+    hazard using the existing theta-based frailty depletion machinery.
+    """
     if covid_cfg is None:
         return
     if "hazard_raw" not in df.columns:
         return
+    if not bool(covid_cfg.get("apply_correction", False)):
+        return
     start_dt = covid_cfg["start_dt"]
     end_dt = covid_cfg["end_dt"]
-    factor = covid_cfg["factor"]
-    dose0_mask = df["Dose"] == 0
-    if not dose0_mask.any():
+    alpha = float(covid_cfg["apply_alpha"])
+    correction_mode = str(covid_cfg.get("mode", "identified_only"))
+    neutralization = str(covid_cfg.get("neutralization", "symmetric_all_cohorts"))
+    tolerance = float(covid_cfg.get("tolerance", NPH_IDENTITY_TOL))
+    if neutralization != "symmetric_all_cohorts":
+        raise ValueError(f"Unsupported NPH neutralization mode: {neutralization!r}")
+    if sheet_name is None or kcor6_params_map is None:
         return
-    h0_series = (
-        df[dose0_mask & (df["DateDied"] == start_dt)]
-        .groupby("YearOfBirth")["hazard_raw"]
-        .mean()
-    )
-    if h0_series.empty:
+    if not np.isfinite(alpha) or alpha <= 0.0:
         return
-    h0_full = df["YearOfBirth"].map(h0_series)
-    h0_per_row = h0_full.loc[dose0_mask]
-    adjust_mask = (
-        dose0_mask
-        & (df["DateDied"] > start_dt)
-        & (df["DateDied"] <= end_dt)
-        & h0_per_row.notna()
-        & (df["hazard_raw"] > h0_full)
-    )
-    if adjust_mask.any():
-        df.loc[adjust_mask, "hazard_raw"] = (
-            (df.loc[adjust_mask, "hazard_raw"] - h0_per_row.loc[adjust_mask]) / factor
-            + h0_per_row.loc[adjust_mask]
+    hazard_before = df["hazard_raw"].to_numpy(dtype=float).copy()
+    if correction_mode == "forced_alpha" and abs(alpha - 1.0) <= tolerance:
+        max_delta = float(np.max(np.abs(df["hazard_raw"].to_numpy(dtype=float) - hazard_before))) if len(df) else 0.0
+        if max_delta > tolerance:
+            raise RuntimeError(
+                f"NPH forced_alpha identity check failed: max hazard_raw delta {max_delta:.3e} exceeds tolerance {tolerance:.3e}"
+            )
+        return
+
+    group_cols = ["YearOfBirth", "Dose"]
+    if MONTE_CARLO_MODE and "mc_id" in df.columns:
+        group_cols = ["mc_id"] + group_cols
+
+    adjusted_any = False
+    for group_key, group in df.groupby(group_cols, sort=False):
+        if MONTE_CARLO_MODE and "mc_id" in df.columns:
+            mc_id_val, yob_val, dose_val = group_key
+            params = kcor6_params_map.get((sheet_name, int(mc_id_val), int(yob_val), int(dose_val)), None)
+        else:
+            yob_val, dose_val = group_key
+            params = kcor6_params_map.get((sheet_name, int(yob_val), int(dose_val)), None)
+
+        theta = 0.0
+        if isinstance(params, dict):
+            th = params.get("theta_applied", params.get("theta_hat", params.get("theta0_hat", np.nan)))
+            ok = bool(params.get("success", False))
+            if ok and np.isfinite(th) and float(th) >= 0.0:
+                theta = float(th)
+
+        ordered = group.sort_values("DateDied")
+        ref_mask = ordered["DateDied"] == start_dt
+        if not ref_mask.any():
+            continue
+        hazard_ref_component = float(np.nanmean(ordered.loc[ref_mask, "hazard_raw"].to_numpy(dtype=float)))
+        if not np.isfinite(hazard_ref_component):
+            continue
+        h_raw = ordered["hazard_raw"].to_numpy(dtype=float)
+        t_vals = ordered["t"].to_numpy(dtype=float) if "t" in ordered.columns else np.arange(len(ordered), dtype=float)
+        h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+        H_obs = np.cumsum(h_eff_obs)
+        H0 = invert_gamma_frailty(H_obs, theta)
+        theta_t = propagate_theta(theta, H0)
+        f_vals = gamma_moment_alpha(theta_t, alpha)
+        group_adjust_mask = (
+            (ordered["DateDied"] >= start_dt)
+            & (ordered["DateDied"] <= end_dt)
+            & np.isfinite(f_vals)
+            & (f_vals > EPS)
         )
+        adjust_mask_arr = group_adjust_mask.to_numpy(dtype=bool)
+        if not np.any(adjust_mask_arr):
+            continue
+        excess = h_raw - hazard_ref_component
+        adjusted = hazard_ref_component + (excess / np.asarray(f_vals, dtype=float))
+        df.loc[ordered.index[adjust_mask_arr], "hazard_raw"] = np.clip(adjusted[adjust_mask_arr], 0.0, None)
+        adjusted_any = True
+    if adjusted_any:
         df["hazard_raw"] = np.clip(df["hazard_raw"], 0.0, None)
 
 def select_dynamic_anchor_offsets(enrollment_date, df_dates):
@@ -5834,11 +5971,31 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     )
     covid_cfg = get_covid_correction_config()
     if covid_cfg is None:
-        dual_print("  COVID_CORRECTION      = disabled")
+        dual_print("  NPH_CORRECTION        = disabled")
     else:
         start_iso = covid_cfg["start_dt"].strftime("%G-%V")
         end_iso = covid_cfg["end_dt"].strftime("%G-%V")
-        dual_print(f"  COVID_CORRECTION      = {start_iso}..{end_iso}, factor={covid_cfg['factor']}")
+        correction_mode = str(covid_cfg.get("mode", "identified_only"))
+        neutralization = str(covid_cfg.get("neutralization", "symmetric_all_cohorts"))
+        if not bool(covid_cfg.get("apply_correction", False)):
+            dual_print(
+                f"  NPH_CORRECTION        = {start_iso}..{end_iso}, "
+                f"{correction_mode} skipped ({covid_cfg.get('skip_reason', 'no_alpha')}), "
+                f"neutralization={neutralization}"
+            )
+        elif correction_mode == "forced_alpha":
+            dual_print(
+                f"  NPH_CORRECTION        = {start_iso}..{end_iso}, "
+                f"forced_alpha sensitivity={covid_cfg['apply_alpha']:.3f}, "
+                f"neutralization={neutralization}"
+            )
+        else:
+            dual_print(
+                f"  NPH_CORRECTION        = {start_iso}..{end_iso}, "
+                f"{correction_mode} alpha={covid_cfg['apply_alpha']:.3f}, "
+                f"source={covid_cfg.get('alpha_source', 'unknown')}, "
+                f"neutralization={neutralization}"
+            )
     dual_print("  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)")
     dual_print("="*80)
     dual_print("")
@@ -7300,9 +7457,14 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Clip to avoid log(0) and ensure numerical stability
         df["hazard_raw"] = hazard_from_mr(np.clip(mr_used, 0.0, 0.999))
         
-        # Optional COVID correction: apply only to unvaccinated (Dose == 0)
+        # Optional NPH correction: apply configured wave preprocessing before inversion
         covid_cfg = get_covid_correction_config()
-        apply_covid_correction_in_place(df, covid_cfg)
+        apply_covid_correction_in_place(
+            df,
+            covid_cfg,
+            kcor6_params_map=kcor6_params_map,
+            sheet_name=effective_sheet_name_for_processing,
+        )
         
         # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing
         if -2 not in df["YearOfBirth"].values:
@@ -7336,7 +7498,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 all_ages_agg["scale_factor"] = 1.0
                 if "MR_smooth" in df.columns:
                     all_ages_agg["MR_smooth"] = all_ages_agg["MR"]
-                apply_covid_correction_in_place(all_ages_agg, covid_cfg)
+                apply_covid_correction_in_place(
+                    all_ages_agg,
+                    covid_cfg,
+                    kcor6_params_map=kcor6_params_map,
+                    sheet_name=effective_sheet_name_for_processing,
+                )
                 df = pd.concat([df, all_ages_agg], ignore_index=True)
 
         # Initialize adjusted hazard equal to raw

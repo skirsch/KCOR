@@ -20,6 +20,13 @@ from scipy.special import gammaln
 EPS = 1e-12
 MANUSCRIPT_ALPHA_PAIR = 1.19
 MANUSCRIPT_ALPHA_COLLAPSE = 1.18
+NEUTRALIZATION_REFERENCE = "reference_anchored"
+NEUTRALIZATION_SYMMETRIC = "symmetric_all_cohorts"
+SUPPORTED_NEUTRALIZATION_MODES = {
+    NEUTRALIZATION_REFERENCE,
+    NEUTRALIZATION_SYMMETRIC,
+}
+INVARIANCE_TOL = 1e-10
 
 
 @dataclass(frozen=True)
@@ -124,6 +131,8 @@ def get_identifiability_cfg(cfg: dict) -> dict:
 def gamma_moment_alpha(theta: np.ndarray | float, alpha: float) -> np.ndarray:
     theta_arr = np.asarray(theta, dtype=float)
     out = np.ones_like(theta_arr, dtype=float)
+    if abs(float(alpha) - 1.0) <= INVARIANCE_TOL:
+        return out
     mask = np.isfinite(theta_arr) & (theta_arr > 1e-8)
     if np.any(mask):
         th = theta_arr[mask]
@@ -217,7 +226,7 @@ def prepare_imports(repo_root: Path, dataset: str):
 
 
 def build_wave_window(dataset_cfg: dict) -> WaveWindow:
-    covid_cfg = dataset_cfg.get("covidCorrection") or {}
+    covid_cfg = dataset_cfg.get("NPH_correction") or {}
     start_label = str(covid_cfg["startDate"]).replace("_", "-")
     end_label = str(covid_cfg["endDate"]).replace("_", "-")
     return WaveWindow(
@@ -226,6 +235,108 @@ def build_wave_window(dataset_cfg: dict) -> WaveWindow:
         start_monday=iso_label_to_monday(start_label),
         end_monday=iso_label_to_monday(end_label),
     )
+
+
+def get_dataset_default_alpha(dataset_cfg: dict) -> float | None:
+    cfg = dataset_cfg.get("NPH_correction") or {}
+    value = cfg.get("default_alpha")
+    if value is None:
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if np.isfinite(parsed) else None
+
+
+def get_nph_neutralization_modes(cfg: dict) -> list[str]:
+    raw_modes = cfg.get("nph_neutralization_mode")
+    if raw_modes is None:
+        return [NEUTRALIZATION_REFERENCE]
+    if isinstance(raw_modes, str):
+        modes = [raw_modes]
+    else:
+        modes = [str(mode) for mode in raw_modes]
+    if not modes:
+        raise ValueError("nph_neutralization_mode must contain at least one mode")
+    invalid = [mode for mode in modes if mode not in SUPPORTED_NEUTRALIZATION_MODES]
+    if invalid:
+        raise ValueError(f"Unsupported nph_neutralization_mode values: {invalid}")
+    deduped = list(dict.fromkeys(modes))
+    return deduped
+
+
+def get_primary_nph_neutralization_mode(cfg: dict) -> str:
+    modes = get_nph_neutralization_modes(cfg)
+    requested = str(cfg.get("primary_nph_neutralization_mode", NEUTRALIZATION_REFERENCE))
+    if requested not in modes:
+        raise ValueError(
+            "primary_nph_neutralization_mode must be included in nph_neutralization_mode; "
+            f"got {requested!r} not in {modes!r}"
+        )
+    return requested
+
+
+def should_write_manuscript_figures(cfg: dict) -> bool:
+    return bool(cfg.get("write_manuscript_figures", False))
+
+
+def neutralize_excess(
+    excess: np.ndarray | float,
+    theta_vals: np.ndarray | float,
+    alpha: float,
+    neutralization_mode: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    factors = np.maximum(gamma_moment_alpha(theta_vals, alpha), EPS)
+    excess_arr = np.asarray(excess, dtype=float)
+    if neutralization_mode == NEUTRALIZATION_REFERENCE:
+        return excess_arr.copy(), factors
+    if neutralization_mode == NEUTRALIZATION_SYMMETRIC:
+        return excess_arr / factors, factors
+    raise ValueError(f"Unknown neutralization mode: {neutralization_mode}")
+
+
+def build_neutralized_frame(
+    df: pd.DataFrame,
+    alpha: float,
+    *,
+    theta_column: str,
+    neutralization_mode: str,
+) -> pd.DataFrame:
+    out = df.copy()
+    neutralized_excess, factors = neutralize_excess(
+        out["excess"].to_numpy(dtype=float),
+        out[theta_column].to_numpy(dtype=float),
+        alpha,
+        neutralization_mode,
+    )
+    out["frailty_factor"] = factors
+    out["excess_neutralized"] = neutralized_excess
+    out["hazard_adjusted"] = out["href"].to_numpy(dtype=float) + neutralized_excess
+    return out
+
+
+def _nanmax_abs(values: np.ndarray) -> float:
+    finite = np.asarray(values, dtype=float)
+    finite = finite[np.isfinite(finite)]
+    if finite.size == 0:
+        return 0.0
+    return float(np.max(np.abs(finite)))
+
+
+def _weighted_variance(values: np.ndarray, weights: np.ndarray) -> float:
+    vals = np.asarray(values, dtype=float)
+    w = np.asarray(weights, dtype=float)
+    mask = np.isfinite(vals) & np.isfinite(w) & (w > 0)
+    if int(np.count_nonzero(mask)) < 2:
+        return float("nan")
+    vals = vals[mask]
+    w = w[mask]
+    mu = weighted_mean(vals, w)
+    total = np.sum(w)
+    if total <= 0:
+        return float("nan")
+    return float(np.sum(w * (vals - mu) ** 2) / total)
 
 
 def fit_cohort_theta(
@@ -438,15 +549,14 @@ def evaluate_pairwise_objective(
     weight_mode: str,
     theta_column: str,
     min_pairs: int,
+    neutralization_mode: str,
 ) -> list[dict]:
     floor = build_floor(subset["excess"])
     grouped_weeks: list[dict[str, np.ndarray]] = []
     for _, group in subset.groupby("iso_int"):
-        transformed, valid = transform_excess(group["excess"].to_numpy(dtype=float), excess_mode, floor)
         grouped_weeks.append(
             {
-                "transformed": transformed,
-                "valid": valid,
+                "excess": group["excess"].to_numpy(dtype=float),
                 "theta_vals": group[theta_column].to_numpy(dtype=float),
                 "weights": group["Dead"].to_numpy(dtype=float),
             }
@@ -457,11 +567,16 @@ def evaluate_pairwise_objective(
         n_pairs = 0
         n_weeks_used = 0
         for group in grouped_weeks:
-            transformed = group["transformed"]
-            valid = group["valid"]
+            theta_vals = group["theta_vals"]
+            if neutralization_mode == NEUTRALIZATION_REFERENCE:
+                transformed, valid = transform_excess(group["excess"], excess_mode, floor)
+                log_factor = np.log(np.maximum(gamma_moment_alpha(theta_vals, alpha), floor))
+            else:
+                neutralized_excess, _ = neutralize_excess(group["excess"], theta_vals, alpha, neutralization_mode)
+                transformed, valid = transform_excess(neutralized_excess, excess_mode, floor)
+                log_factor = np.zeros_like(theta_vals, dtype=float)
             theta_vals = group["theta_vals"]
             weights = group["weights"]
-            log_factor = np.log(np.maximum(gamma_moment_alpha(theta_vals, alpha), floor))
             idx = np.where(valid & np.isfinite(theta_vals))[0]
             if idx.size < 2:
                 continue
@@ -497,6 +612,7 @@ def evaluate_collapse_objective(
     weight_mode: str,
     theta_column: str,
     min_cohorts_per_week: int,
+    neutralization_mode: str,
 ) -> list[dict]:
     floor = build_floor(subset["excess"])
     grouped_weeks: list[dict[str, np.ndarray]] = []
@@ -515,9 +631,8 @@ def evaluate_collapse_objective(
         n_weeks_used = 0
         for group in grouped_weeks:
             theta_vals = group["theta_vals"]
-            factors = np.maximum(gamma_moment_alpha(theta_vals, alpha), floor)
-            a_hat = group["excess"] / factors
-            transformed, valid = transform_excess(a_hat, excess_mode, floor)
+            neutralized_excess, _ = neutralize_excess(group["excess"], theta_vals, alpha, neutralization_mode)
+            transformed, valid = transform_excess(neutralized_excess, excess_mode, floor)
             weights = group["weights"]
             mask = valid & np.isfinite(theta_vals)
             if int(np.count_nonzero(mask)) < min_cohorts_per_week:
@@ -583,6 +698,7 @@ def evaluate_real_data(
     alpha_values: np.ndarray,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     params = cfg["analysis"]
+    neutralization_modes = get_nph_neutralization_modes(cfg)
     time_map = build_time_segment_map(wave_table)
     theta_scales = {
         "gamma_primary": "theta_t_gamma",
@@ -592,82 +708,90 @@ def evaluate_real_data(
     all_curves: list[dict] = []
     best_rows: list[dict] = []
 
-    for anchor in params["anchor_choices"]:
-        anchored = add_reference_excess(wave_table, anchor)
-        anchored = anchored[np.isfinite(anchored["href"])].copy()
-        anchored["weight_deaths"] = anchored["Dead"].clip(lower=0.0)
-        for theta_scale, theta_column in theta_scales.items():
-            scale_df = anchored[np.isfinite(anchored[theta_column])].copy()
-            scale_df = scale_df[scale_df["eligible"] == 1].copy()
-            for excess_mode in params["excess_modes"]:
-                for age_band in params["age_bands"]:
-                    age_df = scale_df[age_band_mask(scale_df, age_band)].copy()
-                    if age_df.empty:
-                        continue
-                    for time_segment in params["time_segments"]:
-                        week_set = time_map.get(time_segment, set())
-                        segment_df = age_df[age_df["iso_int"].isin(week_set)] if time_segment != "pooled" else age_df
-                        if segment_df.empty:
+    for neutralization_mode in neutralization_modes:
+        for anchor in params["anchor_choices"]:
+            anchored = add_reference_excess(wave_table, anchor)
+            anchored = anchored[np.isfinite(anchored["href"])].copy()
+            anchored["weight_deaths"] = anchored["Dead"].clip(lower=0.0)
+            for theta_scale, theta_column in theta_scales.items():
+                scale_df = anchored[np.isfinite(anchored[theta_column])].copy()
+                scale_df = scale_df[scale_df["eligible"] == 1].copy()
+                for excess_mode in params["excess_modes"]:
+                    for age_band in params["age_bands"]:
+                        age_df = scale_df[age_band_mask(scale_df, age_band)].copy()
+                        if age_df.empty:
                             continue
-                        for estimator in ("pairwise", "collapse"):
-                            if estimator == "pairwise":
-                                curve = evaluate_pairwise_objective(
-                                    segment_df,
-                                    alpha_values,
-                                    excess_mode,
-                                    params["weight_mode_pairwise"],
-                                    theta_column,
-                                    int(params["min_pairs_per_alpha"]),
-                                )
-                            else:
-                                curve = evaluate_collapse_objective(
-                                    segment_df,
-                                    alpha_values,
-                                    excess_mode,
-                                    params["weight_mode_collapse"],
-                                    theta_column,
-                                    int(params["min_cohorts_per_week"]),
-                                )
-                            curve_df = pd.DataFrame(curve)
-                            if curve_df.empty:
+                        for time_segment in params["time_segments"]:
+                            week_set = time_map.get(time_segment, set())
+                            segment_df = age_df[age_df["iso_int"].isin(week_set)] if time_segment != "pooled" else age_df
+                            if segment_df.empty:
                                 continue
-                            curve_df["anchor_mode"] = anchor
-                            curve_df["theta_scale"] = theta_scale
-                            curve_df["excess_mode"] = excess_mode
-                            curve_df["age_band"] = age_band
-                            curve_df["time_segment"] = time_segment
-                            curve_df["estimator"] = estimator
-                            all_curves.extend(curve_df.to_dict(orient="records"))
-                            best = summarize_best_curve(curve_df, cfg)
-                            if best is not None:
-                                best.update(
-                                    {
-                                        "anchor_mode": anchor,
-                                        "theta_scale": theta_scale,
-                                        "excess_mode": excess_mode,
-                                        "age_band": age_band,
-                                        "time_segment": time_segment,
-                                        "estimator": estimator,
-                                        "n_cohorts": int(segment_df["cohort_id"].nunique()),
-                                    }
-                                )
-                                best_rows.append(best)
+                            for estimator in ("pairwise", "collapse"):
+                                if estimator == "pairwise":
+                                    curve = evaluate_pairwise_objective(
+                                        segment_df,
+                                        alpha_values,
+                                        excess_mode,
+                                        params["weight_mode_pairwise"],
+                                        theta_column,
+                                        int(params["min_pairs_per_alpha"]),
+                                        neutralization_mode,
+                                    )
+                                else:
+                                    curve = evaluate_collapse_objective(
+                                        segment_df,
+                                        alpha_values,
+                                        excess_mode,
+                                        params["weight_mode_collapse"],
+                                        theta_column,
+                                        int(params["min_cohorts_per_week"]),
+                                        neutralization_mode,
+                                    )
+                                curve_df = pd.DataFrame(curve)
+                                if curve_df.empty:
+                                    continue
+                                curve_df["neutralization_mode"] = neutralization_mode
+                                curve_df["anchor_mode"] = anchor
+                                curve_df["theta_scale"] = theta_scale
+                                curve_df["excess_mode"] = excess_mode
+                                curve_df["age_band"] = age_band
+                                curve_df["time_segment"] = time_segment
+                                curve_df["estimator"] = estimator
+                                all_curves.extend(curve_df.to_dict(orient="records"))
+                                best = summarize_best_curve(curve_df, cfg)
+                                if best is not None:
+                                    best.update(
+                                        {
+                                            "neutralization_mode": neutralization_mode,
+                                            "anchor_mode": anchor,
+                                            "theta_scale": theta_scale,
+                                            "excess_mode": excess_mode,
+                                            "age_band": age_band,
+                                            "time_segment": time_segment,
+                                            "estimator": estimator,
+                                            "n_cohorts": int(segment_df["cohort_id"].nunique()),
+                                        }
+                                    )
+                                    best_rows.append(best)
 
     return pd.DataFrame(all_curves), pd.DataFrame(best_rows)
 
 
-def build_primary_subset(wave_table: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+def build_primary_subset(wave_table: pd.DataFrame, cfg: dict, neutralization_mode: str) -> pd.DataFrame:
     params = cfg["analysis"]
     df = add_reference_excess(wave_table, params["primary_anchor"])
     df = df[df["eligible"] == 1].copy()
     df = df[np.isfinite(df["href"]) & np.isfinite(df["theta_t_gamma"])].copy()
+    df["neutralization_mode"] = neutralization_mode
     return df
 
 
 def build_theta_scale_summary(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     params = cfg["analysis"]
+    primary_mode = get_primary_nph_neutralization_mode(cfg)
     summary = best_df[
-        (best_df["anchor_mode"] == params["primary_anchor"])
+        (best_df["neutralization_mode"] == primary_mode)
+        & (best_df["anchor_mode"] == params["primary_anchor"])
         & (best_df["excess_mode"] == params["primary_excess_mode"])
         & (best_df["age_band"] == "pooled")
         & (best_df["time_segment"] == "pooled")
@@ -677,6 +801,7 @@ def build_theta_scale_summary(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     summary = summary.sort_values(["estimator", "theta_scale"]).reset_index(drop=True)
     return summary[
         [
+            "neutralization_mode",
             "theta_scale",
             "estimator",
             "anchor_mode",
@@ -695,7 +820,12 @@ def build_theta_scale_summary(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     ]
 
 
-def leave_one_out_analysis(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
+def leave_one_out_analysis(
+    primary_df: pd.DataFrame,
+    cfg: dict,
+    alpha_values: np.ndarray,
+    neutralization_mode: str,
+) -> pd.DataFrame:
     params = cfg["analysis"]
     rows = []
     eligible_ids = sorted(primary_df["cohort_id"].dropna().unique())
@@ -709,11 +839,13 @@ def leave_one_out_analysis(primary_df: pd.DataFrame, cfg: dict, alpha_values: np
                 params["weight_mode_pairwise"],
                 "theta_t_gamma",
                 int(params["min_pairs_per_alpha"]),
+                neutralization_mode,
             )
         )
         best = summarize_best_curve(curve, cfg)
         rows.append(
             {
+                "neutralization_mode": neutralization_mode,
                 "left_out_cohort": cohort_id,
                 "alpha_hat": np.nan if best is None else best["alpha_hat"],
                 "alpha_hat_reported": np.nan if best is None else best["alpha_hat_reported"],
@@ -728,7 +860,12 @@ def leave_one_out_analysis(primary_df: pd.DataFrame, cfg: dict, alpha_values: np
     return pd.DataFrame(rows)
 
 
-def bootstrap_alpha(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
+def bootstrap_alpha(
+    primary_df: pd.DataFrame,
+    cfg: dict,
+    alpha_values: np.ndarray,
+    neutralization_mode: str,
+) -> pd.DataFrame:
     params = cfg["analysis"]
     boot_cfg = cfg["bootstrap"]
     estimator = str(boot_cfg["summary_estimator"])
@@ -752,6 +889,7 @@ def bootstrap_alpha(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarra
                     params["weight_mode_pairwise"],
                     "theta_t_gamma",
                     int(params["min_pairs_per_alpha"]),
+                    neutralization_mode,
                 )
             )
         else:
@@ -763,11 +901,13 @@ def bootstrap_alpha(primary_df: pd.DataFrame, cfg: dict, alpha_values: np.ndarra
                     params["weight_mode_collapse"],
                     "theta_t_gamma",
                     int(params["min_cohorts_per_week"]),
+                    neutralization_mode,
                 )
             )
         best = summarize_best_curve(curve, cfg)
         rows.append(
             {
+                "neutralization_mode": neutralization_mode,
                 "bootstrap_rep": rep,
                 "alpha_hat": np.nan if best is None else best["alpha_hat"],
                 "alpha_hat_reported": np.nan if best is None else best["alpha_hat_reported"],
@@ -864,6 +1004,7 @@ def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
                         "deaths_min",
                         "theta_t_gamma",
                         8,
+                        NEUTRALIZATION_REFERENCE,
                     )
                 )
                 collapse_curve = pd.DataFrame(
@@ -874,6 +1015,7 @@ def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
                         "deaths",
                         "theta_t_gamma",
                         3,
+                        NEUTRALIZATION_REFERENCE,
                     )
                 )
                 pair_best = summarize_best_curve(pair_curve, cfg)
@@ -943,6 +1085,7 @@ def _resample_plot_grid(alpha_vals: np.ndarray, objective_vals: np.ndarray, star
 def _filter_best_unique(
     best_df: pd.DataFrame,
     *,
+    neutralization_mode: str,
     anchor_mode: str,
     theta_scale: str,
     excess_mode: str,
@@ -951,7 +1094,8 @@ def _filter_best_unique(
     estimator: str,
 ) -> pd.Series:
     subset = best_df[
-        (best_df["anchor_mode"] == anchor_mode)
+        (best_df["neutralization_mode"] == neutralization_mode)
+        & (best_df["anchor_mode"] == anchor_mode)
         & (best_df["theta_scale"] == theta_scale)
         & (best_df["excess_mode"] == excess_mode)
         & (best_df["age_band"] == age_band)
@@ -961,7 +1105,8 @@ def _filter_best_unique(
     if len(subset) != 1:
         raise ValueError(
             "Expected exactly one alpha_best_estimates row for "
-            f"anchor={anchor_mode}, theta_scale={theta_scale}, excess_mode={excess_mode}, "
+            f"neutralization_mode={neutralization_mode}, anchor={anchor_mode}, "
+            f"theta_scale={theta_scale}, excess_mode={excess_mode}, "
             f"age_band={age_band}, time_segment={time_segment}, estimator={estimator}; got {len(subset)}"
         )
     return subset.iloc[0]
@@ -978,17 +1123,20 @@ def _warn_if_manuscript_mismatch(pair_alpha: float, collapse_alpha: float) -> No
 
 def build_alpha_run_artifact(
     cfg: dict,
+    dataset_cfg: dict,
     alpha_values: np.ndarray,
     cohort_diag: pd.DataFrame,
     best_df: pd.DataFrame,
     bootstrap_df: pd.DataFrame,
     bootstrap_summary: pd.DataFrame,
     loo_summary: pd.DataFrame,
+    neutralization_mode: str,
 ) -> dict:
     ident_cfg = get_identifiability_cfg(cfg)
     params = cfg["analysis"]
     primary = best_df[
-        (best_df["anchor_mode"] == params["primary_anchor"])
+        (best_df["neutralization_mode"] == neutralization_mode)
+        & (best_df["anchor_mode"] == params["primary_anchor"])
         & (best_df["theta_scale"] == "gamma_primary")
         & (best_df["excess_mode"] == params["primary_excess_mode"])
         & (best_df["age_band"] == "pooled")
@@ -1039,6 +1187,21 @@ def build_alpha_run_artifact(
     if np.isfinite(bootstrap_boundary_fraction) and bootstrap_boundary_fraction > float(ident_cfg["max_bootstrap_boundary_fraction"]):
         failure_reasons.append("bootstrap_boundary_seeking")
     loo_summary_row = loo_summary.iloc[0] if not loo_summary.empty else None
+    default_alpha = get_dataset_default_alpha(dataset_cfg)
+    pair_reported = None if pair_row is None or not np.isfinite(pair_row["alpha_hat_reported"]) else float(pair_row["alpha_hat_reported"])
+    collapse_reported = None if collapse_row is None or not np.isfinite(collapse_row["alpha_hat_reported"]) else float(collapse_row["alpha_hat_reported"])
+    if primary_identified and pair_reported is not None and collapse_reported is not None:
+        chosen_alpha = float(0.5 * (pair_reported + collapse_reported))
+        chosen_source = "identified_dose0_vs_dose2"
+        chosen_status = "identified"
+    elif default_alpha is not None:
+        chosen_alpha = float(default_alpha)
+        chosen_source = "dataset_default_alpha"
+        chosen_status = "external_calibration"
+    else:
+        chosen_alpha = None
+        chosen_source = "none"
+        chosen_status = "unavailable"
     return {
         "dataset": cfg["dataset"],
         "alpha_interpretation_contract": {
@@ -1049,6 +1212,9 @@ def build_alpha_run_artifact(
         },
         "configuration": {
             "analysis": cfg["analysis"],
+            "neutralization_mode": neutralization_mode,
+            "neutralization_modes": get_nph_neutralization_modes(cfg),
+            "primary_nph_neutralization_mode": get_primary_nph_neutralization_mode(cfg),
             "alpha_grid": cfg["alpha_grid"],
             "alpha_grid_points": [float(x) for x in alpha_values.tolist()],
             "bootstrap": cfg.get("bootstrap", {}),
@@ -1062,6 +1228,11 @@ def build_alpha_run_artifact(
             "doses": cfg["analysis"]["doses"],
             "eligible_cohorts": int(cohort_diag["eligible"].sum()) if not cohort_diag.empty else 0,
             "total_cohorts": int(len(cohort_diag)),
+        },
+        "nph_window": {
+            "startDate": (dataset_cfg.get("NPH_correction") or {}).get("startDate"),
+            "endDate": (dataset_cfg.get("NPH_correction") or {}).get("endDate"),
+            "default_alpha": default_alpha,
         },
         "seeds": {
             "bootstrap_seed": cfg.get("bootstrap", {}).get("seed"),
@@ -1091,7 +1262,35 @@ def build_alpha_run_artifact(
             "recommended": primary_identified,
             "decision": "defer" if not primary_identified else "evaluate_after_phase4",
         },
+        "calibration_choice": {
+            "status": chosen_status,
+            "alpha_value": chosen_alpha,
+            "source": chosen_source,
+            "uses_external_default_alpha": bool((not primary_identified) and default_alpha is not None),
+            "identified_alpha_required_diagnostics_passed": bool(primary_identified),
+        },
     }
+
+
+def build_calibration_choice_summary(run_artifact: dict) -> pd.DataFrame:
+    calibration = run_artifact["calibration_choice"]
+    nph_window = run_artifact.get("nph_window", {})
+    primary = run_artifact["primary_identification"]
+    return pd.DataFrame(
+        [
+            {
+                "neutralization_mode": run_artifact["configuration"]["neutralization_mode"],
+                "calibration_status": calibration["status"],
+                "alpha_value": calibration["alpha_value"],
+                "alpha_source": calibration["source"],
+                "default_alpha": nph_window.get("default_alpha"),
+                "nph_startDate": nph_window.get("startDate"),
+                "nph_endDate": nph_window.get("endDate"),
+                "primary_identification_status": primary["status"],
+                "primary_failure_reasons": "; ".join(primary["failure_reasons"]) if primary["failure_reasons"] else "",
+            }
+        ]
+    )
 
 
 def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
@@ -1102,6 +1301,7 @@ def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFra
         return pd.DataFrame(
             [
                 {
+                    "neutralization_mode": bootstrap_df["neutralization_mode"].iloc[0] if "neutralization_mode" in bootstrap_df.columns and not bootstrap_df.empty else None,
                     "n_reps": 0,
                     "finite_reps": 0,
                     "finite_fraction": 0.0,
@@ -1137,6 +1337,7 @@ def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFra
     return pd.DataFrame(
         [
             {
+                "neutralization_mode": bootstrap_df["neutralization_mode"].iloc[0] if "neutralization_mode" in bootstrap_df.columns else None,
                 "n_reps": int(len(bootstrap_df)),
                 "finite_reps": int(np.count_nonzero(finite_mask)),
                 "finite_fraction": finite_fraction,
@@ -1155,10 +1356,16 @@ def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFra
 
 def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     ident_cfg = get_identifiability_cfg(cfg)
+    neutralization_mode = (
+        str(loo_df["neutralization_mode"].iloc[0])
+        if "neutralization_mode" in loo_df.columns and not loo_df.empty
+        else get_primary_nph_neutralization_mode(cfg)
+    )
     if loo_df.empty:
         return pd.DataFrame(
             [
                 {
+                    "neutralization_mode": neutralization_mode,
                     "pooled_pairwise_alpha_hat": np.nan,
                     "n_omissions": 0,
                     "finite_omissions": 0,
@@ -1172,6 +1379,7 @@ def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg
         )
     pair_row = _filter_best_unique(
         best_df,
+        neutralization_mode=neutralization_mode,
         anchor_mode=cfg["analysis"]["primary_anchor"],
         theta_scale="gamma_primary",
         excess_mode=cfg["analysis"]["primary_excess_mode"],
@@ -1189,6 +1397,7 @@ def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg
     return pd.DataFrame(
         [
             {
+                "neutralization_mode": neutralization_mode,
                 "pooled_pairwise_alpha_hat": pooled_pair,
                 "n_omissions": int(len(loo_df)),
                 "finite_omissions": int(len(finite)),
@@ -1204,6 +1413,7 @@ def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg
 
 def build_primary_sensitivity_slices(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     params = cfg["analysis"]
+    primary_mode = get_primary_nph_neutralization_mode(cfg)
     rows: list[dict] = []
 
     def add_dimension(
@@ -1243,7 +1453,8 @@ def build_primary_sensitivity_slices(best_df: pd.DataFrame, cfg: dict) -> pd.Dat
                 )
 
     anchor_subset = best_df[
-        (best_df["theta_scale"] == "gamma_primary")
+        (best_df["neutralization_mode"] == primary_mode)
+        & (best_df["theta_scale"] == "gamma_primary")
         & (best_df["excess_mode"] == params["primary_excess_mode"])
         & (best_df["age_band"] == "pooled")
         & (best_df["time_segment"] == "pooled")
@@ -1251,7 +1462,8 @@ def build_primary_sensitivity_slices(best_df: pd.DataFrame, cfg: dict) -> pd.Dat
     add_dimension("anchor_mode", anchor_subset, "anchor_mode", params["primary_anchor"])
 
     theta_subset = best_df[
-        (best_df["anchor_mode"] == params["primary_anchor"])
+        (best_df["neutralization_mode"] == primary_mode)
+        & (best_df["anchor_mode"] == params["primary_anchor"])
         & (best_df["excess_mode"] == params["primary_excess_mode"])
         & (best_df["age_band"] == "pooled")
         & (best_df["time_segment"] == "pooled")
@@ -1259,7 +1471,8 @@ def build_primary_sensitivity_slices(best_df: pd.DataFrame, cfg: dict) -> pd.Dat
     add_dimension("theta_scale", theta_subset, "theta_scale", "gamma_primary")
 
     excess_subset = best_df[
-        (best_df["anchor_mode"] == params["primary_anchor"])
+        (best_df["neutralization_mode"] == primary_mode)
+        & (best_df["anchor_mode"] == params["primary_anchor"])
         & (best_df["theta_scale"] == "gamma_primary")
         & (best_df["age_band"] == "pooled")
         & (best_df["time_segment"] == "pooled")
@@ -1267,7 +1480,8 @@ def build_primary_sensitivity_slices(best_df: pd.DataFrame, cfg: dict) -> pd.Dat
     add_dimension("excess_mode", excess_subset, "excess_mode", params["primary_excess_mode"])
 
     segment_subset = best_df[
-        (best_df["anchor_mode"] == params["primary_anchor"])
+        (best_df["neutralization_mode"] == primary_mode)
+        & (best_df["anchor_mode"] == params["primary_anchor"])
         & (best_df["theta_scale"] == "gamma_primary")
         & (best_df["excess_mode"] == params["primary_excess_mode"])
         & (best_df["age_band"] == "pooled")
@@ -1285,8 +1499,10 @@ def build_decision_summary(
     cfg: dict,
 ) -> pd.DataFrame:
     ident_cfg = get_identifiability_cfg(cfg)
+    neutralization_mode = str(run_artifact["configuration"]["neutralization_mode"])
     pair_row = _filter_best_unique(
         best_df,
+        neutralization_mode=neutralization_mode,
         anchor_mode=cfg["analysis"]["primary_anchor"],
         theta_scale="gamma_primary",
         excess_mode=cfg["analysis"]["primary_excess_mode"],
@@ -1296,6 +1512,7 @@ def build_decision_summary(
     )
     collapse_row = _filter_best_unique(
         best_df,
+        neutralization_mode=neutralization_mode,
         anchor_mode=cfg["analysis"]["primary_anchor"],
         theta_scale="gamma_primary",
         excess_mode=cfg["analysis"]["primary_excess_mode"],
@@ -1327,6 +1544,7 @@ def build_decision_summary(
     return pd.DataFrame(
         [
             {
+                "neutralization_mode": neutralization_mode,
                 "question": "Is the optimum interior?",
                 "answer": "yes" if interior_ok else "no",
                 "status": "pass" if interior_ok else "fail",
@@ -1334,6 +1552,7 @@ def build_decision_summary(
                 "threshold": "Both pooled optima must be interior",
             },
             {
+                "neutralization_mode": neutralization_mode,
                 "question": "Is curvature strong enough?",
                 "answer": "yes" if curvature_ok else "no",
                 "status": "pass" if curvature_ok else "fail",
@@ -1341,6 +1560,7 @@ def build_decision_summary(
                 "threshold": f"Both >= {float(ident_cfg['min_normalized_curvature']):.3f}",
             },
             {
+                "neutralization_mode": neutralization_mode,
                 "question": "Are estimates stable?",
                 "answer": "yes" if stability_ok else "no",
                 "status": "pass" if stability_ok else "fail",
@@ -1354,6 +1574,7 @@ def build_decision_summary(
                 ),
             },
             {
+                "neutralization_mode": neutralization_mode,
                 "question": "Is bootstrap concentrated away from boundaries?",
                 "answer": "yes" if bootstrap_boundary_ok else "no",
                 "status": "pass" if bootstrap_boundary_ok else "fail",
@@ -1368,6 +1589,7 @@ def build_decision_summary(
                 ),
             },
             {
+                "neutralization_mode": neutralization_mode,
                 "question": "Final verdict",
                 "answer": verdict,
                 "status": "pass" if verdict == "identified" else "fail",
@@ -1386,6 +1608,8 @@ def render_identifiability_report(
     decision_summary: pd.DataFrame,
 ) -> str:
     primary = run_artifact["primary_identification"]
+    calibration = run_artifact["calibration_choice"]
+    neutralization_mode = run_artifact["configuration"]["neutralization_mode"]
     boot = bootstrap_summary.iloc[0]
     loo = loo_summary.iloc[0]
 
@@ -1402,6 +1626,8 @@ def render_identifiability_report(
 
     lines = [
         "# Alpha Identifiability Report",
+        "",
+        f"- Neutralization mode: `{neutralization_mode}`",
         "",
         "## Primary Czech Run",
         f"- Pairwise raw estimate: `{fmt(primary['pairwise_alpha_hat_raw'])}`",
@@ -1421,6 +1647,11 @@ def render_identifiability_report(
         f"- Failure reasons: `{', '.join(primary['failure_reasons']) or 'none'}`",
         f"- Leave-one-out max shift from pooled pairwise alpha: `{fmt(loo['max_abs_shift'])}`",
         f"- Leave-one-out large-shift omissions: `{int(loo['large_shift_count'])}`",
+        "",
+        "## Calibration Choice",
+        f"- Calibration status: `{calibration['status']}`",
+        f"- Alpha used for correction branch: `{fmt(calibration['alpha_value'])}`",
+        f"- Alpha source: `{calibration['source']}`",
         "",
         "## Sensitivity Slices",
     ]
@@ -1453,13 +1684,472 @@ def render_identifiability_report(
     return "\n".join(lines) + "\n"
 
 
-def plot_objectives(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path) -> None:
+def _primary_best_rows_for_mode(best_df: pd.DataFrame, cfg: dict, neutralization_mode: str) -> tuple[pd.Series, pd.Series]:
+    params = cfg["analysis"]
+    pair_row = _filter_best_unique(
+        best_df,
+        neutralization_mode=neutralization_mode,
+        anchor_mode=params["primary_anchor"],
+        theta_scale="gamma_primary",
+        excess_mode=params["primary_excess_mode"],
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="pairwise",
+    )
+    collapse_row = _filter_best_unique(
+        best_df,
+        neutralization_mode=neutralization_mode,
+        anchor_mode=params["primary_anchor"],
+        theta_scale="gamma_primary",
+        excess_mode=params["primary_excess_mode"],
+        age_band="pooled",
+        time_segment="pooled",
+        estimator="collapse",
+    )
+    return pair_row, collapse_row
+
+
+def _mode_contract_signature(df: pd.DataFrame) -> pd.DataFrame:
+    cols = [
+        "cohort_id",
+        "iso_int",
+        "week_monday",
+        "dose",
+        "Dead",
+        "Alive",
+        "hazard_obs",
+        "href",
+        "excess",
+        "theta_t_gamma",
+        "theta_t_raw",
+    ]
+    available = [col for col in cols if col in df.columns]
+    return df[available].sort_values(["cohort_id", "iso_int"]).reset_index(drop=True)
+
+
+def validate_mode_contract(primary_frames: dict[str, pd.DataFrame], cfg: dict) -> dict:
+    modes = list(primary_frames)
+    if not modes:
+        raise ValueError("No neutralization modes available for contract validation")
+    base_mode = modes[0]
+    base_sig = _mode_contract_signature(primary_frames[base_mode])
+    checks = {
+        "primary_anchor": cfg["analysis"]["primary_anchor"],
+        "primary_excess_mode": cfg["analysis"]["primary_excess_mode"],
+        "alpha_grid": cfg["alpha_grid"],
+        "cohort_week_rows_by_mode": {},
+        "contract_ok": True,
+    }
+    for mode, df in primary_frames.items():
+        checks["cohort_week_rows_by_mode"][mode] = int(len(df))
+        sig = _mode_contract_signature(df)
+        if list(sig.columns) != list(base_sig.columns) or len(sig) != len(base_sig):
+            raise ValueError(f"Neutralization mode contract drifted for {mode}: cohort-week row shape changed")
+        if not base_sig.equals(sig):
+            raise ValueError(f"Neutralization mode contract drifted for {mode}: cohort-week rows changed")
+    return checks
+
+
+def validate_alpha_one_invariance(
+    curves: pd.DataFrame,
+    primary_frames: dict[str, pd.DataFrame],
+    cfg: dict,
+) -> dict:
+    if not np.any(np.isclose(curves["alpha"].to_numpy(dtype=float), 1.0)):
+        raise ValueError("Alpha=1.0 is missing from the configured alpha grid; invariance check cannot run")
+    reference_df = primary_frames[NEUTRALIZATION_REFERENCE]
+    symmetric_df = primary_frames.get(NEUTRALIZATION_SYMMETRIC)
+    if symmetric_df is None:
+        return {"checked": False, "reason": "symmetric mode not configured"}
+    ref_at_one = build_neutralized_frame(
+        reference_df,
+        1.0,
+        theta_column="theta_t_gamma",
+        neutralization_mode=NEUTRALIZATION_REFERENCE,
+    )
+    sym_at_one = build_neutralized_frame(
+        symmetric_df,
+        1.0,
+        theta_column="theta_t_gamma",
+        neutralization_mode=NEUTRALIZATION_SYMMETRIC,
+    )
+    neutralized_delta = _nanmax_abs(
+        sym_at_one["excess_neutralized"].to_numpy(dtype=float) - symmetric_df["excess"].to_numpy(dtype=float)
+    )
+    hazard_delta = _nanmax_abs(
+        sym_at_one["hazard_adjusted"].to_numpy(dtype=float) - symmetric_df["hazard_obs"].to_numpy(dtype=float)
+    )
+    ref_delta = _nanmax_abs(
+        ref_at_one["hazard_adjusted"].to_numpy(dtype=float) - reference_df["hazard_obs"].to_numpy(dtype=float)
+    )
+    shared_cols = [
+        "anchor_mode",
+        "theta_scale",
+        "excess_mode",
+        "age_band",
+        "time_segment",
+        "estimator",
+    ]
+    alpha_one = curves[np.isclose(curves["alpha"], 1.0)].copy()
+    ref_curves = alpha_one[alpha_one["neutralization_mode"] == NEUTRALIZATION_REFERENCE].sort_values(shared_cols)
+    sym_curves = alpha_one[alpha_one["neutralization_mode"] == NEUTRALIZATION_SYMMETRIC].sort_values(shared_cols)
+    if len(ref_curves) != len(sym_curves):
+        raise ValueError("Alpha=1 invariance failed: mode objective slices are not aligned")
+    if not ref_curves[shared_cols].reset_index(drop=True).equals(sym_curves[shared_cols].reset_index(drop=True)):
+        raise ValueError("Alpha=1 invariance failed: mode objective slice labels differ")
+    objective_delta = _nanmax_abs(
+        ref_curves["objective"].to_numpy(dtype=float) - sym_curves["objective"].to_numpy(dtype=float)
+    )
+    pair_count_delta = _nanmax_abs(
+        ref_curves["n_pairs"].to_numpy(dtype=float) - sym_curves["n_pairs"].to_numpy(dtype=float)
+    )
+    weeks_delta = _nanmax_abs(
+        ref_curves["n_weeks_used"].to_numpy(dtype=float) - sym_curves["n_weeks_used"].to_numpy(dtype=float)
+    )
+    invariance_ok = (
+        neutralized_delta <= INVARIANCE_TOL
+        and hazard_delta <= INVARIANCE_TOL
+        and ref_delta <= INVARIANCE_TOL
+        and objective_delta <= INVARIANCE_TOL
+        and pair_count_delta <= INVARIANCE_TOL
+        and weeks_delta <= INVARIANCE_TOL
+    )
+    if not invariance_ok:
+        raise ValueError(
+            "Alpha=1 invariance failed: "
+            f"neutralized_delta={neutralized_delta:.3e}, hazard_delta={hazard_delta:.3e}, "
+            f"objective_delta={objective_delta:.3e}, pair_count_delta={pair_count_delta:.3e}, "
+            f"weeks_delta={weeks_delta:.3e}"
+        )
+    return {
+        "checked": True,
+        "neutralized_excess_max_abs_delta": neutralized_delta,
+        "hazard_adjusted_max_abs_delta": hazard_delta,
+        "reference_hazard_identity_delta": ref_delta,
+        "objective_max_abs_delta": objective_delta,
+        "n_pairs_max_abs_delta": pair_count_delta,
+        "n_weeks_used_max_abs_delta": weeks_delta,
+        "tolerance": INVARIANCE_TOL,
+        "passed": True,
+    }
+
+
+def compute_mode_downstream_metrics(
+    primary_df: pd.DataFrame,
+    cfg: dict,
+    neutralization_mode: str,
+    pair_alpha: float | None,
+    collapse_alpha: float | None,
+) -> dict:
+    params = cfg["analysis"]
+    alpha_for_adjustment = pair_alpha if pair_alpha is not None and np.isfinite(pair_alpha) else collapse_alpha
+    if alpha_for_adjustment is None or not np.isfinite(alpha_for_adjustment):
+        return {
+            "cross_cohort_coherence_metric": np.nan,
+            "post_neutralization_dispersion": np.nan,
+            "raw_hazard_dispersion": np.nan,
+            "dispersion_reduction_ratio": np.nan,
+        }
+    adjusted = build_neutralized_frame(
+        primary_df,
+        float(alpha_for_adjustment),
+        theta_column="theta_t_gamma",
+        neutralization_mode=neutralization_mode,
+    )
+    floor = build_floor(adjusted["excess"])
+    coherence_terms = []
+    hazard_dispersion_terms = []
+    raw_dispersion_terms = []
+    for _, group in adjusted.groupby("iso_int"):
+        weights = collapse_weight(group["Dead"].to_numpy(dtype=float), params["weight_mode_collapse"])
+        neutralized_vals = group["excess_neutralized"].to_numpy(dtype=float)
+        transformed, valid = transform_excess(neutralized_vals, params["primary_excess_mode"], floor)
+        mask = valid & np.isfinite(group["theta_t_gamma"].to_numpy(dtype=float))
+        if int(np.count_nonzero(mask)) >= int(params["min_cohorts_per_week"]):
+            coherence_terms.append(_weighted_variance(transformed[mask], weights[mask]))
+            hazard_dispersion_terms.append(
+                _weighted_variance(group["hazard_adjusted"].to_numpy(dtype=float)[mask], weights[mask])
+            )
+            raw_dispersion_terms.append(
+                _weighted_variance(group["hazard_obs"].to_numpy(dtype=float)[mask], weights[mask])
+            )
+    coherence = float(np.nanmean(coherence_terms)) if coherence_terms else float("nan")
+    hazard_dispersion = float(np.nanmean(hazard_dispersion_terms)) if hazard_dispersion_terms else float("nan")
+    raw_dispersion = float(np.nanmean(raw_dispersion_terms)) if raw_dispersion_terms else float("nan")
+    reduction_ratio = (
+        float(hazard_dispersion / raw_dispersion)
+        if np.isfinite(hazard_dispersion) and np.isfinite(raw_dispersion) and raw_dispersion > 0
+        else float("nan")
+    )
+    return {
+        "cross_cohort_coherence_metric": coherence,
+        "post_neutralization_dispersion": hazard_dispersion,
+        "raw_hazard_dispersion": raw_dispersion,
+        "dispersion_reduction_ratio": reduction_ratio,
+    }
+
+
+def summarize_neutralization_mode(
+    mode: str,
+    cfg: dict,
+    best_df: pd.DataFrame,
+    bootstrap_summary: pd.DataFrame,
+    loo_summary: pd.DataFrame,
+    run_artifact: dict,
+    primary_df: pd.DataFrame,
+) -> dict:
+    pair_row, collapse_row = _primary_best_rows_for_mode(best_df, cfg, mode)
+    pair_alpha = float(pair_row["alpha_hat"]) if np.isfinite(pair_row["alpha_hat"]) else None
+    collapse_alpha = float(collapse_row["alpha_hat"]) if np.isfinite(collapse_row["alpha_hat"]) else None
+    downstream = compute_mode_downstream_metrics(primary_df, cfg, mode, pair_alpha, collapse_alpha)
+    sensitivity_part = best_df[best_df["neutralization_mode"] == mode].copy()
+    sensitivity_identified_fraction = (
+        float(np.nanmean(sensitivity_part["identified_curve"].to_numpy(dtype=float))) if not sensitivity_part.empty else float("nan")
+    )
+    sensitivity_boundary_fraction = (
+        float(np.nanmean(sensitivity_part["boundary_optimum"].to_numpy(dtype=float))) if not sensitivity_part.empty else float("nan")
+    )
+    boot = bootstrap_summary.iloc[0]
+    loo = loo_summary.iloc[0]
+    primary = run_artifact["primary_identification"]
+    row = {
+        "mode": mode,
+        "pairwise_alpha_raw": float(pair_row["alpha_hat"]),
+        "collapse_alpha_raw": float(collapse_row["alpha_hat"]),
+        "pairwise_alpha_reported": np.nan if not np.isfinite(pair_row["alpha_hat_reported"]) else float(pair_row["alpha_hat_reported"]),
+        "collapse_alpha_reported": np.nan if not np.isfinite(collapse_row["alpha_hat_reported"]) else float(collapse_row["alpha_hat_reported"]),
+        "pairwise_curvature": float(pair_row["curvature_metric"]),
+        "collapse_curvature": float(collapse_row["curvature_metric"]),
+        "pairwise_boundary_optimum": int(pair_row["boundary_optimum"]),
+        "collapse_boundary_optimum": int(collapse_row["boundary_optimum"]),
+        "estimator_gap": np.nan if primary["estimator_gap"] is None else float(primary["estimator_gap"]),
+        "bootstrap_finite_fraction": float(boot["finite_fraction"]),
+        "bootstrap_iqr": float(boot["iqr_alpha_hat"]),
+        "bootstrap_boundary_fraction": float(boot["boundary_fraction"]),
+        "leave_one_out_max_shift": float(loo["max_abs_shift"]),
+        "leave_one_out_large_shift_count": int(loo["large_shift_count"]),
+        "cross_cohort_coherence_metric": downstream["cross_cohort_coherence_metric"],
+        "post_neutralization_dispersion": downstream["post_neutralization_dispersion"],
+        "raw_hazard_dispersion": downstream["raw_hazard_dispersion"],
+        "dispersion_reduction_ratio": downstream["dispersion_reduction_ratio"],
+        "sensitivity_identified_fraction": sensitivity_identified_fraction,
+        "sensitivity_boundary_fraction": sensitivity_boundary_fraction,
+        "final_status": str(primary["status"]),
+        "failure_reasons": "; ".join(primary["failure_reasons"]) if primary["failure_reasons"] else "",
+    }
+    return row
+
+
+def determine_neutralization_recommendation(comparison_df: pd.DataFrame) -> tuple[str, dict]:
+    if comparison_df.empty:
+        return "keep_reference_anchored_baseline", {"reason": "comparison table is empty"}
+    ref = comparison_df[comparison_df["mode"] == NEUTRALIZATION_REFERENCE]
+    sym = comparison_df[comparison_df["mode"] == NEUTRALIZATION_SYMMETRIC]
+    if ref.empty or sym.empty:
+        return "keep_reference_anchored_baseline", {"reason": "both comparison modes were not available"}
+    ref_row = ref.iloc[0]
+    sym_row = sym.iloc[0]
+    status_rank = {"not_identified": 0, "identified": 1}
+
+    def safe_le(lhs: float, rhs: float) -> bool:
+        if np.isfinite(lhs) and np.isfinite(rhs):
+            return bool(lhs <= rhs + 1e-12)
+        return not np.isfinite(lhs) and not np.isfinite(rhs)
+
+    def safe_ge(lhs: float, rhs: float) -> bool:
+        if np.isfinite(lhs) and np.isfinite(rhs):
+            return bool(lhs + 1e-12 >= rhs)
+        return not np.isfinite(lhs) and not np.isfinite(rhs)
+
+    ident_not_worse = all(
+        [
+            safe_ge(float(sym_row["pairwise_curvature"]), float(ref_row["pairwise_curvature"])),
+            safe_ge(float(sym_row["collapse_curvature"]), float(ref_row["collapse_curvature"])),
+            safe_ge(float(sym_row["bootstrap_finite_fraction"]), float(ref_row["bootstrap_finite_fraction"])),
+            safe_le(float(sym_row["bootstrap_iqr"]), float(ref_row["bootstrap_iqr"])),
+            safe_le(float(sym_row["bootstrap_boundary_fraction"]), float(ref_row["bootstrap_boundary_fraction"])),
+            safe_le(float(sym_row["leave_one_out_max_shift"]), float(ref_row["leave_one_out_max_shift"])),
+            safe_le(float(sym_row["estimator_gap"]), float(ref_row["estimator_gap"])),
+            safe_ge(float(sym_row["sensitivity_identified_fraction"]), float(ref_row["sensitivity_identified_fraction"])),
+            safe_le(float(sym_row["sensitivity_boundary_fraction"]), float(ref_row["sensitivity_boundary_fraction"])),
+        ]
+    )
+    coherence_improves = all(
+        [
+            safe_le(float(sym_row["cross_cohort_coherence_metric"]), float(ref_row["cross_cohort_coherence_metric"])),
+            safe_le(float(sym_row["post_neutralization_dispersion"]), float(ref_row["post_neutralization_dispersion"])),
+            safe_le(float(sym_row["dispersion_reduction_ratio"]), float(ref_row["dispersion_reduction_ratio"])),
+        ]
+    )
+    no_new_instability = all(
+        [
+            safe_le(float(sym_row["pairwise_boundary_optimum"]), float(ref_row["pairwise_boundary_optimum"])),
+            safe_le(float(sym_row["collapse_boundary_optimum"]), float(ref_row["collapse_boundary_optimum"])),
+            safe_le(float(sym_row["bootstrap_boundary_fraction"]), float(ref_row["bootstrap_boundary_fraction"])),
+            safe_le(float(sym_row["leave_one_out_large_shift_count"]), float(ref_row["leave_one_out_large_shift_count"])),
+        ]
+    )
+    status_improves = status_rank.get(str(sym_row["final_status"]), -1) > status_rank.get(str(ref_row["final_status"]), -1)
+    recommend_symmetric = ident_not_worse and coherence_improves and no_new_instability and status_improves
+    detail = {
+        "identifiability_not_worse": ident_not_worse,
+        "coherence_improves": coherence_improves,
+        "no_new_instability": no_new_instability,
+        "status_improves": status_improves,
+    }
+    return (
+        "recommend_symmetric_all_cohorts" if recommend_symmetric else "keep_reference_anchored_baseline",
+        detail,
+    )
+
+
+def render_neutralization_comparison_report(
+    comparison_df: pd.DataFrame,
+    recommendation: str,
+    recommendation_detail: dict,
+    contract_check: dict,
+    invariance_check: dict,
+) -> str:
+    def fmt(value: object, digits: int = 3) -> str:
+        if value is None:
+            return "NA"
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        if not np.isfinite(numeric):
+            return "NA"
+        return f"{numeric:.{digits}f}"
+
+    lines = [
+        "# Sandbox-only NPH neutralization comparison",
+        "Not integrated into production KCOR.py",
+        "",
+        "## Contract checks",
+        f"- Neutralization modes compared: `{', '.join(comparison_df['mode'].tolist())}`",
+        f"- Shared cohort-week rows by mode: `{contract_check['cohort_week_rows_by_mode']}`",
+        f"- Alpha=1 invariance check: `{'passed' if invariance_check.get('passed') else 'not_run'}`",
+    ]
+    if invariance_check.get("checked"):
+        lines.extend(
+            [
+                f"- Alpha=1 neutralized-excess max delta: `{fmt(invariance_check.get('neutralized_excess_max_abs_delta'), 6)}`",
+                f"- Alpha=1 objective max delta: `{fmt(invariance_check.get('objective_max_abs_delta'), 6)}`",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## Mode comparison",
+            "",
+            "| Mode | Pair raw | Collapse raw | Pair curv | Collapse curv | Bootstrap boundary | LOO max shift | Coherence | Dispersion ratio | Status |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for _, row in comparison_df.iterrows():
+        lines.append(
+            f"| {row['mode']} | {fmt(row['pairwise_alpha_raw'])} | {fmt(row['collapse_alpha_raw'])} | "
+            f"{fmt(row['pairwise_curvature'], 6)} | {fmt(row['collapse_curvature'], 6)} | "
+            f"{fmt(row['bootstrap_boundary_fraction'])} | {fmt(row['leave_one_out_max_shift'])} | "
+            f"{fmt(row['cross_cohort_coherence_metric'], 6)} | {fmt(row['dispersion_reduction_ratio'], 6)} | {row['final_status']} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Interpretation",
+            f"- Downstream coherence improves under symmetric mode: `{recommendation_detail.get('coherence_improves')}`",
+            f"- Identifiability is not worse under symmetric mode: `{recommendation_detail.get('identifiability_not_worse')}`",
+            f"- Symmetric mode avoids new instability: `{recommendation_detail.get('no_new_instability')}`",
+            f"- Symmetric mode improves the pooled final status: `{recommendation_detail.get('status_improves')}`",
+            "",
+            "## Recommendation",
+            f"- Recommendation: `{recommendation}`",
+        ]
+    )
+    if recommendation == "recommend_symmetric_all_cohorts":
+        lines.append("- Symmetric all-cohort neutralization is the stronger sandbox formulation on the current diagnostics.")
+    else:
+        lines.append("- Keep `reference_anchored` as the sandbox baseline; treat the symmetric path as exploratory unless later runs improve the diagnostics.")
+    if np.allclose(
+        comparison_df["collapse_alpha_raw"].to_numpy(dtype=float),
+        comparison_df["collapse_alpha_raw"].iloc[0],
+        equal_nan=True,
+    ):
+        lines.append("- The collapse estimator was effectively invariant across modes in this run, so the comparison signal comes mainly from pairwise and downstream coherence diagnostics.")
+    return "\n".join(lines) + "\n"
+
+
+def plot_neutralization_mode_comparison(
+    curves: pd.DataFrame,
+    best_df: pd.DataFrame,
+    comparison_df: pd.DataFrame,
+    out_path: Path,
+    cfg: dict,
+) -> None:
+    plt = _import_matplotlib()
+    if plt is None or comparison_df.empty:
+        return
+    params = cfg["analysis"]
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.5))
+    for ax, mode, title in zip(
+        axes[:2],
+        [NEUTRALIZATION_REFERENCE, NEUTRALIZATION_SYMMETRIC],
+        ["A. reference_anchored", "B. symmetric_all_cohorts"],
+    ):
+        subset = curves[
+            (curves["neutralization_mode"] == mode)
+            & (curves["anchor_mode"] == params["primary_anchor"])
+            & (curves["theta_scale"] == "gamma_primary")
+            & (curves["excess_mode"] == params["primary_excess_mode"])
+            & (curves["age_band"] == "pooled")
+            & (curves["time_segment"] == "pooled")
+        ].copy()
+        for estimator, color, linestyle in [("pairwise", "tab:blue", "-"), ("collapse", "tab:orange", "--")]:
+            est_df = subset[subset["estimator"] == estimator].sort_values("alpha")
+            if est_df.empty:
+                continue
+            alpha_grid, obj_grid = _resample_plot_grid(est_df["alpha"].to_numpy(), est_df["objective"].to_numpy())
+            obj_grid = obj_grid - np.nanmin(obj_grid)
+            ax.plot(alpha_grid, obj_grid, color=color, ls=linestyle, lw=2, label=estimator.capitalize())
+            best = _filter_best_unique(
+                best_df,
+                neutralization_mode=mode,
+                anchor_mode=params["primary_anchor"],
+                theta_scale="gamma_primary",
+                excess_mode=params["primary_excess_mode"],
+                age_band="pooled",
+                time_segment="pooled",
+                estimator=estimator,
+            )
+            ax.axvline(float(best["alpha_hat"]), color=color, ls=linestyle, lw=1.2, alpha=0.8)
+        ax.set_title(title)
+        ax.set_xlabel("alpha")
+        ax.set_ylabel("Normalized objective")
+        ax.grid(True, ls=":", alpha=0.4)
+    axes[0].legend()
+    ax = axes[2]
+    plot_df = comparison_df.set_index("mode")
+    x_pos = np.arange(len(plot_df.index), dtype=float)
+    ax.bar(x_pos - 0.18, plot_df["cross_cohort_coherence_metric"], width=0.36, label="Coherence metric")
+    ax.bar(x_pos + 0.18, plot_df["dispersion_reduction_ratio"], width=0.36, label="Dispersion ratio")
+    ax.set_xticks(x_pos, plot_df.index.tolist(), rotation=10)
+    ax.set_title("C. Downstream coherence")
+    ax.grid(True, axis="y", ls=":", alpha=0.4)
+    ax.legend()
+    fig.tight_layout()
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
+def plot_objectives(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path, cfg: dict) -> None:
     plt = _import_matplotlib()
     if plt is None:
         return
 
+    primary_mode = get_primary_nph_neutralization_mode(cfg)
     primary = curves[
-        (curves["anchor_mode"] == "dose0")
+        (curves["neutralization_mode"] == primary_mode)
+        & (curves["anchor_mode"] == "dose0")
         & (curves["theta_scale"] == "gamma_primary")
         & (curves["excess_mode"] == "exclude_nonpositive")
         & (curves["age_band"] == "pooled")
@@ -1476,7 +2166,8 @@ def plot_objectives(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path)
             continue
         ax.plot(est_df["alpha"], est_df["objective"], lw=2)
         best = best_df[
-            (best_df["anchor_mode"] == "dose0")
+            (best_df["neutralization_mode"] == primary_mode)
+            & (best_df["anchor_mode"] == "dose0")
             & (best_df["theta_scale"] == "gamma_primary")
             & (best_df["excess_mode"] == "exclude_nonpositive")
             & (best_df["age_band"] == "pooled")
@@ -1590,13 +2281,15 @@ def plot_manuscript_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None
     plt.close(fig)
 
 
-def plot_manuscript_czech_objective(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path) -> None:
+def plot_manuscript_czech_objective(curves: pd.DataFrame, best_df: pd.DataFrame, out_path: Path, cfg: dict) -> None:
     plt = _import_matplotlib()
     if plt is None:
         return
 
+    primary_mode = get_primary_nph_neutralization_mode(cfg)
     primary = curves[
-        (curves["anchor_mode"] == "dose0")
+        (curves["neutralization_mode"] == primary_mode)
+        & (curves["anchor_mode"] == "dose0")
         & (curves["theta_scale"] == "gamma_primary")
         & (curves["excess_mode"] == "exclude_nonpositive")
         & (curves["age_band"] == "pooled")
@@ -1607,6 +2300,7 @@ def plot_manuscript_czech_objective(curves: pd.DataFrame, best_df: pd.DataFrame,
     fig, ax = plt.subplots(figsize=(7, 4.5))
     pair_row = _filter_best_unique(
         best_df,
+        neutralization_mode=primary_mode,
         anchor_mode="dose0",
         theta_scale="gamma_primary",
         excess_mode="exclude_nonpositive",
@@ -1616,6 +2310,7 @@ def plot_manuscript_czech_objective(curves: pd.DataFrame, best_df: pd.DataFrame,
     )
     collapse_row = _filter_best_unique(
         best_df,
+        neutralization_mode=primary_mode,
         anchor_mode="dose0",
         theta_scale="gamma_primary",
         excess_mode="exclude_nonpositive",
@@ -1671,6 +2366,7 @@ def plot_manuscript_czech_diagnostics(
     bootstrap_df: pd.DataFrame,
     best_df: pd.DataFrame,
     out_path: Path,
+    cfg: dict,
 ) -> None:
     plt = _import_matplotlib()
     if plt is None:
@@ -1679,8 +2375,14 @@ def plot_manuscript_czech_diagnostics(
         raise ValueError("Leave-one-out diagnostics are empty")
     if bootstrap_df.empty:
         raise ValueError("Bootstrap diagnostics are empty")
+    primary_mode = get_primary_nph_neutralization_mode(cfg)
+    if "neutralization_mode" in loo_df.columns:
+        loo_df = loo_df[loo_df["neutralization_mode"] == primary_mode].copy()
+    if "neutralization_mode" in bootstrap_df.columns:
+        bootstrap_df = bootstrap_df[bootstrap_df["neutralization_mode"] == primary_mode].copy()
     pair_row = _filter_best_unique(
         best_df,
+        neutralization_mode=primary_mode,
         anchor_mode="dose0",
         theta_scale="gamma_primary",
         excess_mode="exclude_nonpositive",
@@ -1690,15 +2392,14 @@ def plot_manuscript_czech_diagnostics(
     )
     pooled_pair = float(pair_row["alpha_hat"])
     seg = best_df[
-        (best_df["anchor_mode"] == "dose0")
+        (best_df["neutralization_mode"] == primary_mode)
+        & (best_df["anchor_mode"] == "dose0")
         & (best_df["theta_scale"] == "gamma_primary")
         & (best_df["excess_mode"] == "exclude_nonpositive")
         & (best_df["age_band"] == "pooled")
         & (best_df["time_segment"].isin(["pooled", "early_wave", "late_wave"]))
         & (best_df["estimator"].isin(["pairwise", "collapse"]))
     ].copy()
-    if len(seg) != 6:
-        raise ValueError(f"Expected 6 segmented diagnostic rows, got {len(seg)}")
 
     fig, axes = plt.subplots(1, 3, figsize=(14, 4.5))
 
@@ -1741,9 +2442,13 @@ def plot_manuscript_czech_diagnostics(
     seg["time_segment"] = pd.Categorical(seg["time_segment"], categories=["pooled", "early_wave", "late_wave"], ordered=True)
     seg = seg.sort_values(["time_segment", "estimator"])
     positions = np.arange(3, dtype=float)
+    position_map = {"pooled": 0.0, "early_wave": 1.0, "late_wave": 2.0}
     for estimator, color, marker, offset in [("pairwise", "tab:blue", "o", -0.08), ("collapse", "tab:orange", "s", 0.08)]:
         part = seg[seg["estimator"] == estimator].sort_values("time_segment")
-        ax.plot(positions + offset, part["alpha_hat"], color=color, ls="-" if estimator == "pairwise" else "--", marker=marker, lw=2, label=estimator.capitalize())
+        if part.empty:
+            continue
+        x_vals = [position_map[str(name)] + offset for name in part["time_segment"].astype(str)]
+        ax.plot(x_vals, part["alpha_hat"], color=color, ls="-" if estimator == "pairwise" else "--", marker=marker, lw=2, label=estimator.capitalize())
     ax.axhline(pooled_pair, color="0.4", ls=":", lw=1.5)
     ax.set_xticks(positions, ["pooled", "early_wave", "late_wave"])
     ax.set_title("C. Segmented estimates")
@@ -1792,7 +2497,7 @@ def plot_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
-def generate_manuscript_figures(outdir: Path, repo_root: Path) -> None:
+def generate_manuscript_figures(outdir: Path, repo_root: Path, cfg: dict) -> None:
     manuscript_dir = _manuscript_figures_dir(repo_root)
     required = [
         outdir / "alpha_synthetic_recovery.csv",
@@ -1808,13 +2513,14 @@ def generate_manuscript_figures(outdir: Path, repo_root: Path) -> None:
     loo_df = pd.read_csv(outdir / "alpha_leave_one_out.csv")
     bootstrap_df = pd.read_csv(outdir / "alpha_bootstrap.csv")
     plot_manuscript_synthetic_recovery(synthetic_df, manuscript_dir / "fig_alpha_synthetic_recovery.png")
-    plot_manuscript_czech_objective(curves_df, best_df, manuscript_dir / "fig_alpha_czech_objective.png")
-    plot_manuscript_czech_diagnostics(loo_df, bootstrap_df, best_df, manuscript_dir / "fig_alpha_czech_diagnostics.png")
+    plot_manuscript_czech_objective(curves_df, best_df, manuscript_dir / "fig_alpha_czech_objective.png", cfg)
+    plot_manuscript_czech_diagnostics(loo_df, bootstrap_df, best_df, manuscript_dir / "fig_alpha_czech_diagnostics.png", cfg)
 
 
 def write_outputs(
     outdir: Path,
     repo_root: Path,
+    cfg: dict,
     cohort_diag: pd.DataFrame,
     wave_table: pd.DataFrame,
     curves: pd.DataFrame,
@@ -1824,11 +2530,15 @@ def write_outputs(
     loo_summary: pd.DataFrame,
     sensitivity_df: pd.DataFrame,
     decision_summary: pd.DataFrame,
+    calibration_choice_summary: pd.DataFrame,
     loo_df: pd.DataFrame,
     bootstrap_df: pd.DataFrame,
     synthetic_df: pd.DataFrame,
     run_artifact: dict,
     identifiability_report: str,
+    neutralization_comparison_df: pd.DataFrame,
+    neutralization_comparison_report: str,
+    neutralization_comparison_artifact: dict,
 ) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     cohort_diag.to_csv(outdir / "alpha_cohort_diagnostics.csv", index=False)
@@ -1840,14 +2550,32 @@ def write_outputs(
     loo_summary.to_csv(outdir / "alpha_leave_one_out_summary.csv", index=False)
     sensitivity_df.to_csv(outdir / "alpha_primary_sensitivity_slices.csv", index=False)
     decision_summary.to_csv(outdir / "alpha_decision_summary.csv", index=False)
+    calibration_choice_summary.to_csv(outdir / "alpha_calibration_choice.csv", index=False)
     loo_df.to_csv(outdir / "alpha_leave_one_out.csv", index=False)
     bootstrap_df.to_csv(outdir / "alpha_bootstrap.csv", index=False)
     synthetic_df.to_csv(outdir / "alpha_synthetic_recovery.csv", index=False)
     (outdir / "alpha_run_artifact.json").write_text(json.dumps(run_artifact, indent=2) + "\n", encoding="utf-8")
     (outdir / "alpha_identifiability_report.md").write_text(identifiability_report, encoding="utf-8")
-    plot_objectives(curves, best_df, outdir / "fig_alpha_objectives.png")
+    neutralization_comparison_df.to_csv(outdir / "alpha_neutralization_mode_comparison.csv", index=False)
+    (outdir / "alpha_neutralization_comparison_report.md").write_text(
+        neutralization_comparison_report,
+        encoding="utf-8",
+    )
+    (outdir / "alpha_neutralization_run_artifact.json").write_text(
+        json.dumps(neutralization_comparison_artifact, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    plot_objectives(curves, best_df, outdir / "fig_alpha_objectives.png", cfg)
     plot_synthetic_recovery(synthetic_df, outdir / "fig_alpha_synthetic_recovery.png")
-    generate_manuscript_figures(outdir, repo_root)
+    plot_neutralization_mode_comparison(
+        curves,
+        best_df,
+        neutralization_comparison_df,
+        outdir / "fig_alpha_neutralization_mode_comparison.png",
+        cfg,
+    )
+    if should_write_manuscript_figures(cfg):
+        generate_manuscript_figures(outdir, repo_root, cfg)
 
 
 def main() -> None:
@@ -1858,6 +2586,7 @@ def main() -> None:
     config_path = Path(args.config).resolve()
     outdir = Path(args.outdir).resolve()
     cfg = load_yaml(config_path)
+    dataset_cfg = load_yaml(repo_root / "data" / str(cfg["dataset"]) / f"{cfg['dataset']}.yaml")
     alpha_values = expand_alpha_grid(cfg["alpha_grid"])
     last_ts = log_milestone("config loaded", start_ts, last_ts)
 
@@ -1867,29 +2596,52 @@ def main() -> None:
     last_ts = log_milestone("real cohort-wave table built", start_ts, last_ts)
     curves, best_df = evaluate_real_data(wave_table, cfg, alpha_values)
     last_ts = log_milestone("alpha objective sweeps completed", start_ts, last_ts)
-    primary_df = build_primary_subset(wave_table, cfg)
-    last_ts = log_milestone("primary subset assembled", start_ts, last_ts)
+    neutralization_modes = get_nph_neutralization_modes(cfg)
+    primary_mode = get_primary_nph_neutralization_mode(cfg)
+    primary_frames = {mode: build_primary_subset(wave_table, cfg, mode) for mode in neutralization_modes}
+    contract_check = validate_mode_contract(primary_frames, cfg)
+    invariance_check = validate_alpha_one_invariance(curves, primary_frames, cfg)
+    last_ts = log_milestone("primary subsets and contract checks built", start_ts, last_ts)
     theta_scale_summary = build_theta_scale_summary(best_df, cfg)
     last_ts = log_milestone("theta-scale summary built", start_ts, last_ts)
-    loo_df = leave_one_out_analysis(primary_df, cfg, alpha_values)
-    last_ts = log_milestone("leave-one-out influence completed", start_ts, last_ts)
-    bootstrap_df = bootstrap_alpha(primary_df, cfg, alpha_values)
-    last_ts = log_milestone("bootstrap completed", start_ts, last_ts)
-    bootstrap_summary = build_bootstrap_summary(bootstrap_df, cfg)
-    loo_summary = build_leave_one_out_summary(loo_df, best_df, cfg)
+    mode_results: dict[str, dict] = {}
+    for mode in neutralization_modes:
+        mode_primary_df = primary_frames[mode]
+        mode_loo_df = leave_one_out_analysis(mode_primary_df, cfg, alpha_values, mode)
+        mode_bootstrap_df = bootstrap_alpha(mode_primary_df, cfg, alpha_values, mode)
+        mode_bootstrap_summary = build_bootstrap_summary(mode_bootstrap_df, cfg)
+        mode_loo_summary = build_leave_one_out_summary(mode_loo_df, best_df, cfg)
+        mode_run_artifact = build_alpha_run_artifact(
+            cfg,
+            dataset_cfg,
+            alpha_values,
+            cohort_diag,
+            best_df,
+            mode_bootstrap_df,
+            mode_bootstrap_summary,
+            mode_loo_summary,
+            mode,
+        )
+        mode_results[mode] = {
+            "primary_df": mode_primary_df,
+            "loo_df": mode_loo_df,
+            "bootstrap_df": mode_bootstrap_df,
+            "bootstrap_summary": mode_bootstrap_summary,
+            "loo_summary": mode_loo_summary,
+            "run_artifact": mode_run_artifact,
+        }
+    last_ts = log_milestone("leave-one-out and bootstrap completed", start_ts, last_ts)
+    primary_df = mode_results[primary_mode]["primary_df"]
+    loo_df = mode_results[primary_mode]["loo_df"]
+    bootstrap_df = mode_results[primary_mode]["bootstrap_df"]
+    bootstrap_summary = mode_results[primary_mode]["bootstrap_summary"]
+    loo_summary = mode_results[primary_mode]["loo_summary"]
     sensitivity_df = build_primary_sensitivity_slices(best_df, cfg)
     synthetic_df = synthetic_recovery(cfg, alpha_values)
     last_ts = log_milestone("synthetic recovery completed", start_ts, last_ts)
-    run_artifact = build_alpha_run_artifact(
-        cfg,
-        alpha_values,
-        cohort_diag,
-        best_df,
-        bootstrap_df,
-        bootstrap_summary,
-        loo_summary,
-    )
+    run_artifact = mode_results[primary_mode]["run_artifact"]
     decision_summary = build_decision_summary(best_df, bootstrap_summary, loo_summary, run_artifact, cfg)
+    calibration_choice_summary = build_calibration_choice_summary(run_artifact)
     identifiability_report = render_identifiability_report(
         run_artifact,
         bootstrap_summary,
@@ -1897,10 +2649,70 @@ def main() -> None:
         sensitivity_df,
         decision_summary,
     )
+    comparison_rows = [
+        summarize_neutralization_mode(
+            mode,
+            cfg,
+            best_df,
+            mode_results[mode]["bootstrap_summary"],
+            mode_results[mode]["loo_summary"],
+            mode_results[mode]["run_artifact"],
+            mode_results[mode]["primary_df"],
+        )
+        for mode in neutralization_modes
+    ]
+    neutralization_comparison_df = pd.DataFrame(comparison_rows).sort_values("mode").reset_index(drop=True)
+    recommendation, recommendation_detail = determine_neutralization_recommendation(neutralization_comparison_df)
+    neutralization_comparison_df["recommendation"] = recommendation
+    neutralization_comparison_report = render_neutralization_comparison_report(
+        neutralization_comparison_df,
+        recommendation,
+        recommendation_detail,
+        contract_check,
+        invariance_check,
+    )
+    comparison_output_files = [
+        "alpha_neutralization_mode_comparison.csv",
+        "alpha_neutralization_comparison_report.md",
+        "alpha_neutralization_run_artifact.json",
+        "fig_alpha_neutralization_mode_comparison.png",
+    ]
+    neutralization_comparison_artifact = {
+        "dataset": cfg["dataset"],
+        "config": {
+            "analysis": cfg["analysis"],
+            "alpha_grid": cfg["alpha_grid"],
+            "neutralization_modes": neutralization_modes,
+            "primary_nph_neutralization_mode": primary_mode,
+            "write_manuscript_figures": should_write_manuscript_figures(cfg),
+            "excess_definition": "h_excess,d(t) = h_d(t) - h_ref(t)",
+        },
+        "cohort_selection": run_artifact["cohort_selection"],
+        "seeds": run_artifact["seeds"],
+        "alpha_grid": [float(x) for x in alpha_values.tolist()],
+        "contract_check": contract_check,
+        "alpha_one_invariance": invariance_check,
+        "neutralization_modes": [
+            {
+                "mode": mode,
+                "summary": json.loads(
+                    neutralization_comparison_df[neutralization_comparison_df["mode"] == mode].to_json(orient="records")
+                )[0],
+                "primary_identification": mode_results[mode]["run_artifact"]["primary_identification"],
+            }
+            for mode in neutralization_modes
+        ],
+        "recommendation": {
+            "decision": recommendation,
+            "detail": recommendation_detail,
+        },
+        "output_file_set": comparison_output_files,
+    }
 
     write_outputs(
         outdir,
         repo_root,
+        cfg,
         cohort_diag,
         wave_table,
         curves,
@@ -1910,11 +2722,15 @@ def main() -> None:
         loo_summary,
         sensitivity_df,
         decision_summary,
+        calibration_choice_summary,
         loo_df,
         bootstrap_df,
         synthetic_df,
         run_artifact,
         identifiability_report,
+        neutralization_comparison_df,
+        neutralization_comparison_report,
+        neutralization_comparison_artifact,
     )
     last_ts = log_milestone("outputs and figures written", start_ts, last_ts)
 
@@ -1930,6 +2746,22 @@ def main() -> None:
     else:
         reasons = ", ".join(run_artifact["primary_identification"]["failure_reasons"]) or "diagnostics_failed"
         print(f"[ALPHA] Primary alpha not identified ({reasons})", flush=True)
+        calibration = run_artifact["calibration_choice"]
+        if calibration["status"] == "external_calibration":
+            print(
+                f"[ALPHA] Using external default alpha = {float(calibration['alpha_value']):.4f} "
+                f"(source={calibration['source']})",
+                flush=True,
+            )
+    print("NPH NEUTRALIZATION COMPARISON", flush=True)
+    for _, row in neutralization_comparison_df.iterrows():
+        print(
+            f"{row['mode']}: status={row['final_status']}, "
+            f"pair={row['pairwise_alpha_raw']:.4f}, coll={row['collapse_alpha_raw']:.4f}, "
+            f"boundary={row['bootstrap_boundary_fraction']:.3f}",
+            flush=True,
+        )
+    print(f"recommendation={recommendation}", flush=True)
     log_milestone("alpha run finished", start_ts, last_ts)
 
 

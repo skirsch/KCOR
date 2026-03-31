@@ -11,11 +11,13 @@ observationEndDate: '2025-12-31'    # not used for the Czech dataset because it 
 birthBandYears: 5                   # 5 years age bands for the cohorts.
 
 # see figure 3 in https://pmc.ncbi.nlm.nih.gov/articles/PMC7721859/
-# the COVID correction ONLY will scale values ABOVE the value of the start date until the end date.
-covidCorrection:
+NPH_correction:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  factor: 1.4           # 1.4 is the adjustment factor for a 2X mortality difference between cohorts because it is 2**.49
+  mode: identified_only   # options are off, identified_only, forced_alpha
+  identified_alpha: null   # set only when an audited production-readable identified alpha exists
+  forced_alpha: null       # sensitivity-only override used only when mode = forced_alpha
+  neutralization: symmetric_all_cohorts
 
 # The quiet window is used to estimate the theta parameter for the gamma frailty model.
 # Generally, larger windows are better if there are no major epidemic waves or policy shocks.
