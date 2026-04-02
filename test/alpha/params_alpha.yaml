@@ -70,9 +70,24 @@ identifiability:
 synthetic:
   enabled: true
   seed: 23
+  conditional_VE_enabled: true
+  conditional_VE_values:
+    - 1.0
+    - 0.75
+    - 0.5
+  conditional_VE_target_multiplier: 0.5
   noise_models:
     - lognormal_fixed
     - heteroskedastic_lognormal
+  synthetic_vaccine_effect:
+    enabled: true
+    modes:
+      - none
+      - vaccinated_half_hazard
+  synthetic_vaccine_effect_values:
+    - 1.0
+    - 0.75
+    - 0.5
   alpha_true_values:
     - 1.05
     - 1.15
@@ -90,3 +105,9 @@ synthetic:
   baseline_weight: 100.0
   lognormal_sigma: 0.03
   heteroskedastic_scale: 0.35
+  wave_forcing_multipliers:
+    - 1.0
+  theta_strength_multipliers:
+    - 1.0
+  wave_identifiability_experiment:
+    enabled: false

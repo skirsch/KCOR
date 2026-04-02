@@ -27,6 +27,8 @@ SUPPORTED_NEUTRALIZATION_MODES = {
     NEUTRALIZATION_SYMMETRIC,
 }
 INVARIANCE_TOL = 1e-10
+SYNTHETIC_DOSE_REFERENCE = 0
+SYNTHETIC_DOSE_VACCINATED = 2
 
 
 @dataclass(frozen=True)
@@ -126,6 +128,155 @@ def get_identifiability_cfg(cfg: dict) -> dict:
     merged = dict(defaults)
     merged.update(user_cfg)
     return merged
+
+
+def get_wave_forcing_multipliers(cfg: dict) -> list[float]:
+    synth_cfg = cfg.get("synthetic") or {}
+    raw = synth_cfg.get("wave_forcing_multipliers", [1.0])
+    if not raw:
+        return [1.0]
+    return [float(x) for x in raw]
+
+
+def get_theta_strength_multipliers(cfg: dict) -> list[float]:
+    synth_cfg = cfg.get("synthetic") or {}
+    raw = synth_cfg.get("theta_strength_multipliers", [1.0])
+    if not raw:
+        return [1.0]
+    return [float(x) for x in raw]
+
+
+def wave_identifiability_experiment_enabled(cfg: dict) -> bool:
+    synth_cfg = cfg.get("synthetic") or {}
+    block = synth_cfg.get("wave_identifiability_experiment") or {}
+    return bool(block.get("enabled", False))
+
+
+def strict_synthetic_identified(
+    cfg: dict,
+    identified_curve: int,
+    alpha_hat_reported: float,
+    bootstrap_finite_fraction: float,
+    bootstrap_iqr: float,
+    bootstrap_boundary_fraction: float,
+) -> int:
+    """1 iff curve reports alpha_hat_reported and bootstrap stability gates pass (per estimator)."""
+    ident_cfg = get_identifiability_cfg(cfg)
+    reported_ok = int(identified_curve) == 1 and np.isfinite(alpha_hat_reported)
+    bootstrap_ok = bool(
+        float(bootstrap_finite_fraction) >= float(ident_cfg["min_bootstrap_finite_fraction"])
+        and (not np.isfinite(bootstrap_iqr) or float(bootstrap_iqr) <= float(ident_cfg["max_bootstrap_iqr"]))
+        and (
+            not np.isfinite(bootstrap_boundary_fraction)
+            or float(bootstrap_boundary_fraction) <= float(ident_cfg["max_bootstrap_boundary_fraction"])
+        )
+    )
+    return int(reported_ok and bootstrap_ok)
+
+
+def assert_wave_identifiability_config_clean(cfg: dict) -> None:
+    synth = cfg.get("synthetic") or {}
+    ve_cfg = synth.get("synthetic_vaccine_effect") or {}
+    if bool(ve_cfg.get("enabled", False)):
+        raise AssertionError("wave identifiability experiment: set synthetic.synthetic_vaccine_effect.enabled to false")
+    if bool(synth.get("conditional_VE_enabled", False)):
+        raise AssertionError("wave identifiability experiment: set synthetic.conditional_VE_enabled to false")
+
+
+def synthetic_wave_amplitude_and_delta_h(cfg: dict, wave_multiplier: float) -> tuple[np.ndarray, np.ndarray]:
+    synth_cfg = cfg["synthetic"]
+    n_weeks = int(synth_cfg["n_weeks"])
+    peak = float(synth_cfg["wave_amplitude_peak"])
+    wave_phase = np.linspace(0.1, 0.95, n_weeks)
+    wave_amplitude = peak * np.exp(-((wave_phase - 0.45) ** 2) / 0.03) * float(wave_multiplier)
+    delta_h_path = np.cumsum(0.5 * wave_amplitude + 0.002)
+    return wave_amplitude, delta_h_path
+
+
+def assert_synthetic_wave_theta_defaults_match_table(cfg: dict) -> None:
+    """Regression: explicit wave_multiplier=1 and theta_multiplier=1 match default simulate_synthetic_table."""
+    synth_cfg = cfg.get("synthetic") or {}
+    if not bool(synth_cfg.get("enabled", True)):
+        return
+    alpha_true = float(synth_cfg["alpha_true_values"][0])
+    seed = int(synth_cfg["seed"])
+    noise_model = str(synth_cfg.get("noise_models", ["lognormal_fixed"])[0])
+    base = simulate_synthetic_table(cfg, alpha_true, seed, noise_model=noise_model, ve_multiplier=1.0)
+    explicit = simulate_synthetic_table(
+        cfg,
+        alpha_true,
+        seed,
+        noise_model=noise_model,
+        ve_multiplier=1.0,
+        wave_multiplier=1.0,
+        theta_multiplier=1.0,
+    )
+    if not np.allclose(base["excess"].to_numpy(dtype=float), explicit["excess"].to_numpy(dtype=float), rtol=0.0, atol=1e-9):
+        raise AssertionError("wave/theta default multipliers changed synthetic excess vs baseline")
+
+
+def _append_unique_float(values: list[float], candidate: object) -> None:
+    try:
+        numeric = float(candidate)
+    except (TypeError, ValueError):
+        return
+    for existing in values:
+        if math.isclose(existing, numeric, rel_tol=0.0, abs_tol=1e-12):
+            return
+    values.append(numeric)
+
+
+def get_synthetic_ve_multipliers(cfg: dict) -> list[float]:
+    synth_cfg = cfg.get("synthetic") or {}
+    ve_cfg = synth_cfg.get("synthetic_vaccine_effect") or {}
+    if not bool(ve_cfg.get("enabled", False)):
+        return [1.0]
+    values: list[float] = []
+    mode_map = {
+        "none": 1.0,
+        "vaccinated_half_hazard": 0.5,
+    }
+    for mode in ve_cfg.get("modes", []):
+        if mode not in mode_map:
+            raise ValueError(f"Unknown synthetic vaccine-effect mode: {mode}")
+        _append_unique_float(values, mode_map[mode])
+    for item in synth_cfg.get("synthetic_vaccine_effect_values", []):
+        _append_unique_float(values, item)
+    if not values:
+        values.append(1.0)
+    return values
+
+
+def conditional_ve_enabled(cfg: dict) -> bool:
+    synth_cfg = cfg.get("synthetic") or {}
+    return bool(synth_cfg.get("conditional_VE_enabled", False))
+
+
+def get_conditional_ve_values(cfg: dict) -> list[float]:
+    synth_cfg = cfg.get("synthetic") or {}
+    values_cfg = synth_cfg.get("conditional_VE_values", [])
+    values: list[float] = []
+    for item in values_cfg:
+        _append_unique_float(values, item)
+    if not values:
+        values.append(1.0)
+    return values
+
+
+def get_conditional_ve_target_multiplier(cfg: dict) -> float:
+    synth_cfg = cfg.get("synthetic") or {}
+    target = synth_cfg.get("conditional_VE_target_multiplier", 0.5)
+    try:
+        numeric = float(target)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Bad conditional_VE_target_multiplier: {target!r}") from exc
+    if not np.isfinite(numeric) or numeric <= 0.0:
+        raise ValueError(f"conditional_VE_target_multiplier must be positive finite, got {target!r}")
+    return numeric
+
+
+def synthetic_week_monday(week_idx: int) -> pd.Timestamp:
+    return pd.Timestamp("2021-01-04") + pd.to_timedelta(int(week_idx) * 7, unit="D")
 
 
 def gamma_moment_alpha(theta: np.ndarray | float, alpha: float) -> np.ndarray:
@@ -820,20 +971,18 @@ def build_theta_scale_summary(best_df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     ]
 
 
-def leave_one_out_analysis(
+def evaluate_single_estimator_curve(
     primary_df: pd.DataFrame,
     cfg: dict,
     alpha_values: np.ndarray,
     neutralization_mode: str,
+    estimator: str,
 ) -> pd.DataFrame:
     params = cfg["analysis"]
-    rows = []
-    eligible_ids = sorted(primary_df["cohort_id"].dropna().unique())
-    for cohort_id in eligible_ids:
-        subset = primary_df[primary_df["cohort_id"] != cohort_id].copy()
-        curve = pd.DataFrame(
+    if estimator == "pairwise":
+        return pd.DataFrame(
             evaluate_pairwise_objective(
-                subset,
+                primary_df,
                 alpha_values,
                 params["primary_excess_mode"],
                 params["weight_mode_pairwise"],
@@ -842,10 +991,38 @@ def leave_one_out_analysis(
                 neutralization_mode,
             )
         )
+    if estimator == "collapse":
+        return pd.DataFrame(
+            evaluate_collapse_objective(
+                primary_df,
+                alpha_values,
+                params["primary_excess_mode"],
+                params["weight_mode_collapse"],
+                "theta_t_gamma",
+                int(params["min_cohorts_per_week"]),
+                neutralization_mode,
+            )
+        )
+    raise ValueError(f"Unknown estimator: {estimator}")
+
+
+def leave_one_out_analysis(
+    primary_df: pd.DataFrame,
+    cfg: dict,
+    alpha_values: np.ndarray,
+    neutralization_mode: str,
+    estimator: str = "pairwise",
+) -> pd.DataFrame:
+    rows = []
+    eligible_ids = sorted(primary_df["cohort_id"].dropna().unique())
+    for cohort_id in eligible_ids:
+        subset = primary_df[primary_df["cohort_id"] != cohort_id].copy()
+        curve = evaluate_single_estimator_curve(subset, cfg, alpha_values, neutralization_mode, estimator)
         best = summarize_best_curve(curve, cfg)
         rows.append(
             {
                 "neutralization_mode": neutralization_mode,
+                "estimator": estimator,
                 "left_out_cohort": cohort_id,
                 "alpha_hat": np.nan if best is None else best["alpha_hat"],
                 "alpha_hat_reported": np.nan if best is None else best["alpha_hat_reported"],
@@ -865,11 +1042,12 @@ def bootstrap_alpha(
     cfg: dict,
     alpha_values: np.ndarray,
     neutralization_mode: str,
+    estimator: str | None = None,
+    seed: int | None = None,
 ) -> pd.DataFrame:
-    params = cfg["analysis"]
     boot_cfg = cfg["bootstrap"]
-    estimator = str(boot_cfg["summary_estimator"])
-    rng = np.random.default_rng(int(boot_cfg["seed"]))
+    estimator_name = str(estimator or boot_cfg["summary_estimator"])
+    rng = np.random.default_rng(int(boot_cfg["seed"] if seed is None else seed))
     cohort_ids = np.asarray(sorted(primary_df["cohort_id"].unique()))
     rows = []
     for rep in range(int(boot_cfg["reps"])):
@@ -880,34 +1058,12 @@ def bootstrap_alpha(
             part["cohort_id"] = f"{cohort_id}#b{rep}_{idx}"
             pieces.append(part)
         subset = pd.concat(pieces, ignore_index=True) if pieces else primary_df.iloc[0:0].copy()
-        if estimator == "pairwise":
-            curve = pd.DataFrame(
-                evaluate_pairwise_objective(
-                    subset,
-                    alpha_values,
-                    params["primary_excess_mode"],
-                    params["weight_mode_pairwise"],
-                    "theta_t_gamma",
-                    int(params["min_pairs_per_alpha"]),
-                    neutralization_mode,
-                )
-            )
-        else:
-            curve = pd.DataFrame(
-                evaluate_collapse_objective(
-                    subset,
-                    alpha_values,
-                    params["primary_excess_mode"],
-                    params["weight_mode_collapse"],
-                    "theta_t_gamma",
-                    int(params["min_cohorts_per_week"]),
-                    neutralization_mode,
-                )
-            )
+        curve = evaluate_single_estimator_curve(subset, cfg, alpha_values, neutralization_mode, estimator_name)
         best = summarize_best_curve(curve, cfg)
         rows.append(
             {
                 "neutralization_mode": neutralization_mode,
+                "estimator": estimator_name,
                 "bootstrap_rep": rep,
                 "alpha_hat": np.nan if best is None else best["alpha_hat"],
                 "alpha_hat_reported": np.nan if best is None else best["alpha_hat_reported"],
@@ -921,7 +1077,15 @@ def bootstrap_alpha(
     return pd.DataFrame(rows)
 
 
-def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int, noise_model: str = "lognormal_fixed") -> pd.DataFrame:
+def simulate_synthetic_table(
+    cfg: dict,
+    alpha_true: float,
+    seed: int,
+    noise_model: str = "lognormal_fixed",
+    ve_multiplier: float = 1.0,
+    wave_multiplier: float = 1.0,
+    theta_multiplier: float = 1.0,
+) -> pd.DataFrame:
     synth_cfg = cfg["synthetic"]
     rng = np.random.default_rng(seed)
     n_cohorts = int(synth_cfg["n_cohorts"])
@@ -932,16 +1096,28 @@ def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int, noise_mode
     lognormal_sigma = float(synth_cfg.get("lognormal_sigma", 0.03))
     heteroskedastic_scale = float(synth_cfg.get("heteroskedastic_scale", 0.35))
 
-    wave_phase = np.linspace(0.1, 0.95, n_weeks)
-    wave_amplitude = peak * np.exp(-((wave_phase - 0.45) ** 2) / 0.03)
-    delta_h_path = np.cumsum(0.5 * wave_amplitude + 0.002)
+    wave_amplitude, delta_h_path = synthetic_wave_amplitude_and_delta_h(cfg, wave_multiplier)
+    baseline_hazard = peak * 0.10
+    cohort_strata = [
+        (1930, SYNTHETIC_DOSE_REFERENCE),
+        (1930, SYNTHETIC_DOSE_VACCINATED),
+        (1940, SYNTHETIC_DOSE_REFERENCE),
+        (1940, SYNTHETIC_DOSE_VACCINATED),
+        (1950, SYNTHETIC_DOSE_REFERENCE),
+        (1950, SYNTHETIC_DOSE_VACCINATED),
+    ]
 
     rows = []
     for cohort_idx in range(n_cohorts):
-        theta_w = float(theta_values[cohort_idx % len(theta_values)])
-        cohort_id = f"synthetic_{cohort_idx:02d}"
-        yob_decade = [1930, 1940, 1950][cohort_idx % 3]
+        theta_w = float(theta_values[cohort_idx % len(theta_values)]) * float(theta_multiplier)
+        yob_decade, dose = cohort_strata[cohort_idx % len(cohort_strata)]
+        enrollment_group = cohort_idx // len(cohort_strata)
+        cohort_id = f"synthetic_{yob_decade}_{dose}_{enrollment_group:02d}"
+        enrollment_date = f"synthetic_{enrollment_group:02d}"
+        dose_multiplier = 1.0 if int(dose) == SYNTHETIC_DOSE_REFERENCE else float(ve_multiplier)
         for week_idx in range(n_weeks):
+            week_monday = synthetic_week_monday(week_idx)
+            iso = week_monday.isocalendar()
             theta_t = float(propagate_theta(theta_w, delta_h_path[week_idx] - delta_h_path[0]))
             factor = float(gamma_moment_alpha(theta_t, alpha_true))
             expected_excess = wave_amplitude[week_idx] * factor
@@ -949,23 +1125,34 @@ def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int, noise_mode
             if noise_model == "lognormal_fixed":
                 sigma = lognormal_sigma
                 noise = float(np.exp(rng.normal(0.0, sigma)))
-                excess = expected_excess * noise
+                observed_excess = expected_excess * noise
             elif noise_model == "heteroskedastic_lognormal":
                 sigma = heteroskedastic_scale / math.sqrt(deaths_proxy)
                 sigma = float(np.clip(sigma, 0.02, 0.35))
                 noise = float(np.exp(rng.normal(0.0, sigma)))
-                excess = expected_excess * noise
+                observed_excess = expected_excess * noise
             else:
                 raise ValueError(f"Unknown synthetic noise_model: {noise_model}")
+            excess = observed_excess * dose_multiplier
+            hazard_obs = baseline_hazard + excess
             rows.append(
                 {
                     "cohort_id": cohort_id,
+                    "enrollment_date": enrollment_date,
+                    "dose": int(dose),
                     "iso_int": week_idx,
+                    "iso_year": int(iso.year),
+                    "iso_week": int(iso.week),
+                    "week_monday": week_monday,
+                    "t_week": week_idx,
                     "time_segment": "early_wave" if week_idx < (n_weeks // 2) else "late_wave",
                     "yob_decade": yob_decade,
                     "Dead": baseline_weight * max(excess, 0.001),
+                    "Alive": baseline_weight,
+                    "hazard_obs": hazard_obs,
                     "excess": excess,
                     "noise_model": noise_model,
+                    "ve_multiplier": float(ve_multiplier),
                     "theta_t_gamma": theta_t,
                     "theta_t_raw": theta_t,
                     "eligible": 1,
@@ -974,62 +1161,714 @@ def simulate_synthetic_table(cfg: dict, alpha_true: float, seed: int, noise_mode
     return pd.DataFrame(rows)
 
 
-def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> pd.DataFrame:
+def build_synthetic_primary_subset(table: pd.DataFrame, neutralization_mode: str) -> pd.DataFrame:
+    df = table.copy()
+    df = df[df["eligible"] == 1].copy()
+    df = df[np.isfinite(df["theta_t_gamma"]) & np.isfinite(df["excess"])].copy()
+    df["neutralization_mode"] = neutralization_mode
+    return df
+
+
+def apply_conditional_ve_adjustment(primary_df: pd.DataFrame, ve_assumed: float) -> pd.DataFrame:
+    assumed = float(ve_assumed)
+    if not np.isfinite(assumed) or assumed <= 0.0:
+        raise ValueError(f"VE_assumed must be positive finite, got {ve_assumed!r}")
+    adjusted = primary_df.copy()
+    adjusted["excess_observed"] = adjusted["excess"].to_numpy(dtype=float)
+    adjusted["VE_assumed"] = assumed
+    vaccinated_mask = adjusted["dose"].to_numpy(dtype=float) > 0.0 if "dose" in adjusted.columns else np.zeros(len(adjusted), dtype=bool)
+    adjusted["conditional_ve_adjusted"] = vaccinated_mask.astype(int)
+    if np.any(vaccinated_mask):
+        adjusted.loc[vaccinated_mask, "excess"] = adjusted.loc[vaccinated_mask, "excess_observed"] / assumed
+    return adjusted
+
+
+def validate_conditional_ve_adjustment(original_df: pd.DataFrame, adjusted_df: pd.DataFrame, ve_assumed: float) -> None:
+    if len(original_df) != len(adjusted_df):
+        raise ValueError("Conditional VE adjustment changed row count")
+    ref_mask = original_df["dose"].to_numpy(dtype=float) <= 0.0 if "dose" in original_df.columns else np.ones(len(original_df), dtype=bool)
+    vacc_mask = ~ref_mask
+    orig_excess = original_df["excess"].to_numpy(dtype=float)
+    adj_excess = adjusted_df["excess"].to_numpy(dtype=float)
+    if np.any(ref_mask) and not np.allclose(orig_excess[ref_mask], adj_excess[ref_mask], equal_nan=True):
+        raise ValueError("Conditional VE adjustment modified non-vaccinated cohorts")
+    if np.any(vacc_mask):
+        expected = orig_excess[vacc_mask] / float(ve_assumed)
+        if not np.allclose(expected, adj_excess[vacc_mask], equal_nan=True):
+            raise ValueError("Conditional VE adjustment did not match expected vaccinated-cohort scaling")
+
+
+def evaluate_synthetic_primary(
+    primary_df: pd.DataFrame,
+    cfg: dict,
+    alpha_values: np.ndarray,
+    neutralization_mode: str,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    common = {
+        "neutralization_mode": neutralization_mode,
+        "anchor_mode": "synthetic_direct",
+        "theta_scale": "gamma_primary",
+        "excess_mode": cfg["analysis"]["primary_excess_mode"],
+        "age_band": "pooled",
+        "time_segment": "pooled",
+        "n_cohorts": int(primary_df["cohort_id"].nunique()),
+    }
+    curve_rows: list[dict] = []
+    best_rows: list[dict] = []
+    for estimator in ("pairwise", "collapse"):
+        curve_df = evaluate_single_estimator_curve(primary_df, cfg, alpha_values, neutralization_mode, estimator)
+        curve_df["estimator"] = estimator
+        for key, value in common.items():
+            curve_df[key] = value
+        curve_rows.extend(curve_df.to_dict(orient="records"))
+        best = summarize_best_curve(curve_df, cfg)
+        if best is None:
+            continue
+        best.update(common)
+        best["estimator"] = estimator
+        best_rows.append(best)
+    return pd.DataFrame(curve_rows), pd.DataFrame(best_rows)
+
+
+def evaluate_synthetic_best_with_diagnostics(
+    primary_df: pd.DataFrame,
+    cfg: dict,
+    alpha_values: np.ndarray,
+    neutralization_mode: str,
+    seed_base: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    _, best_df = evaluate_synthetic_primary(primary_df, cfg, alpha_values, neutralization_mode)
+    if best_df.empty or set(best_df["estimator"]) != {"pairwise", "collapse"}:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+    pair_row = best_df[best_df["estimator"] == "pairwise"].iloc[0]
+    collapse_row = best_df[best_df["estimator"] == "collapse"].iloc[0]
+    estimator_gap = abs(float(pair_row["alpha_hat"]) - float(collapse_row["alpha_hat"]))
+    metric_rows: list[dict] = []
+    regression_rows: list[dict] = []
+    for estimator in ("pairwise", "collapse"):
+        boot_df = bootstrap_alpha(
+            primary_df,
+            cfg,
+            alpha_values,
+            neutralization_mode,
+            estimator=estimator,
+            seed=seed_base + (17 if estimator == "pairwise" else 29),
+        )
+        for column, value in {
+            "anchor_mode": "synthetic_direct",
+            "theta_scale": "gamma_primary",
+            "excess_mode": cfg["analysis"]["primary_excess_mode"],
+            "age_band": "pooled",
+            "time_segment": "pooled",
+        }.items():
+            boot_df[column] = value
+        boot_summary = build_bootstrap_summary(boot_df, cfg)
+        loo_df = leave_one_out_analysis(
+            primary_df,
+            cfg,
+            alpha_values,
+            neutralization_mode,
+            estimator=estimator,
+        )
+        for column, value in {
+            "anchor_mode": "synthetic_direct",
+            "theta_scale": "gamma_primary",
+            "excess_mode": cfg["analysis"]["primary_excess_mode"],
+            "age_band": "pooled",
+            "time_segment": "pooled",
+        }.items():
+            loo_df[column] = value
+        loo_summary = build_leave_one_out_summary(loo_df, best_df, cfg)
+        best_row = pair_row if estimator == "pairwise" else collapse_row
+        boot_row = boot_summary.iloc[0]
+        loo_row = loo_summary.iloc[0]
+        metric_rows.append(
+            {
+                "estimator": estimator,
+                "alpha_hat_raw": float(best_row["alpha_hat"]),
+                "alpha_hat_reported": np.nan if not np.isfinite(best_row["alpha_hat_reported"]) else float(best_row["alpha_hat_reported"]),
+                "identified": int(best_row["identified_curve"]),
+                "identification_status": str(best_row["identification_status"]),
+                "curvature_metric": float(best_row["curvature_metric"]),
+                "boundary_optimum": int(best_row["boundary_optimum"]),
+                "objective": float(best_row["objective"]),
+                "estimator_gap": float(estimator_gap),
+                "bootstrap_iqr": float(boot_row["iqr_alpha_hat"]),
+                "bootstrap_boundary_fraction": float(boot_row["boundary_fraction"]),
+                "bootstrap_finite_fraction": float(boot_row["finite_fraction"]),
+                "leave_one_out_max_shift": float(loo_row["max_abs_shift"]),
+                "leave_one_out_boundary_count": int(loo_row["boundary_count"]),
+            }
+        )
+        regression_rows.append(
+            {
+                "estimator": estimator,
+                "alpha_hat_raw": float(best_row["alpha_hat"]),
+            }
+        )
+    return best_df, pd.DataFrame(metric_rows), pd.DataFrame(regression_rows)
+
+
+def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]:
     synth_cfg = cfg["synthetic"]
     if not bool(synth_cfg.get("enabled", True)):
-        return pd.DataFrame()
+        return {
+            "legacy_df": pd.DataFrame(),
+            "ve_recovery_df": pd.DataFrame(),
+            "ve_summary_df": pd.DataFrame(),
+            "ve_report": "",
+        }
     base_seed = int(synth_cfg["seed"])
     reps = int(synth_cfg.get("reps", 8))
-    rows = []
     noise_models = list(synth_cfg.get("noise_models", ["lognormal_fixed"]))
-    for noise_model in noise_models:
-        for alpha_true in synth_cfg["alpha_true_values"]:
+    ve_recovery_rows: list[dict] = []
+    ve_multipliers = get_synthetic_ve_multipliers(cfg)
+    regression_summary = []
+    regression_check_rows = []
+    for noise_idx, noise_model in enumerate(noise_models):
+        for alpha_idx, alpha_true in enumerate(synth_cfg["alpha_true_values"]):
             print(
                 f"[ALPHA] synthetic recovery for alpha_true={float(alpha_true):.3f} "
                 f"(noise_model={noise_model})",
                 flush=True,
             )
+            for ve_idx, ve_multiplier in enumerate(ve_multipliers):
+                for rep in range(reps):
+                    combo_seed = (
+                        base_seed
+                        + rep
+                        + 1000 * alpha_idx
+                        + 10000 * noise_idx
+                        + 100000 * ve_idx
+                    )
+                    table = simulate_synthetic_table(
+                        cfg,
+                        float(alpha_true),
+                        combo_seed,
+                        noise_model=noise_model,
+                        ve_multiplier=float(ve_multiplier),
+                    )
+                    if math.isclose(float(ve_multiplier), 1.0, rel_tol=0.0, abs_tol=1e-12):
+                        legacy_pair_curve = pd.DataFrame(
+                            evaluate_pairwise_objective(
+                                table,
+                                alpha_values,
+                                "exclude_nonpositive",
+                                "deaths_min",
+                                "theta_t_gamma",
+                                8,
+                                NEUTRALIZATION_REFERENCE,
+                            )
+                        )
+                        legacy_collapse_curve = pd.DataFrame(
+                            evaluate_collapse_objective(
+                                table,
+                                alpha_values,
+                                "exclude_nonpositive",
+                                "deaths",
+                                "theta_t_gamma",
+                                3,
+                                NEUTRALIZATION_REFERENCE,
+                            )
+                        )
+                        legacy_pair_best = summarize_best_curve(legacy_pair_curve, cfg)
+                        legacy_collapse_best = summarize_best_curve(legacy_collapse_curve, cfg)
+                    primary_df = build_synthetic_primary_subset(table, NEUTRALIZATION_REFERENCE)
+                    _, best_df = evaluate_synthetic_primary(primary_df, cfg, alpha_values, NEUTRALIZATION_REFERENCE)
+                    if best_df.empty or set(best_df["estimator"]) != {"pairwise", "collapse"}:
+                        continue
+                    pair_row = best_df[best_df["estimator"] == "pairwise"].iloc[0]
+                    collapse_row = best_df[best_df["estimator"] == "collapse"].iloc[0]
+                    estimator_gap = abs(float(pair_row["alpha_hat"]) - float(collapse_row["alpha_hat"]))
+                    for estimator in ("pairwise", "collapse"):
+                        boot_df = bootstrap_alpha(
+                            primary_df,
+                            cfg,
+                            alpha_values,
+                            NEUTRALIZATION_REFERENCE,
+                            estimator=estimator,
+                            seed=combo_seed + (17 if estimator == "pairwise" else 29),
+                        )
+                        for column, value in {
+                            "anchor_mode": "synthetic_direct",
+                            "theta_scale": "gamma_primary",
+                            "excess_mode": cfg["analysis"]["primary_excess_mode"],
+                            "age_band": "pooled",
+                            "time_segment": "pooled",
+                        }.items():
+                            boot_df[column] = value
+                        boot_summary = build_bootstrap_summary(boot_df, cfg)
+                        loo_df = leave_one_out_analysis(
+                            primary_df,
+                            cfg,
+                            alpha_values,
+                            NEUTRALIZATION_REFERENCE,
+                            estimator=estimator,
+                        )
+                        for column, value in {
+                            "anchor_mode": "synthetic_direct",
+                            "theta_scale": "gamma_primary",
+                            "excess_mode": cfg["analysis"]["primary_excess_mode"],
+                            "age_band": "pooled",
+                            "time_segment": "pooled",
+                        }.items():
+                            loo_df[column] = value
+                        loo_summary = build_leave_one_out_summary(loo_df, best_df, cfg)
+                        best_row = pair_row if estimator == "pairwise" else collapse_row
+                        boot_row = boot_summary.iloc[0]
+                        loo_row = loo_summary.iloc[0]
+                        ve_recovery_rows.append(
+                            {
+                                "noise_model": noise_model,
+                                "alpha_true": float(alpha_true),
+                                "ve_multiplier": float(ve_multiplier),
+                                "rep": rep,
+                                "estimator": estimator,
+                                "alpha_hat_raw": float(best_row["alpha_hat"]),
+                                "alpha_hat_reported": (
+                                    np.nan
+                                    if not np.isfinite(best_row["alpha_hat_reported"])
+                                    else float(best_row["alpha_hat_reported"])
+                                ),
+                                "bias": float(best_row["alpha_hat"] - float(alpha_true)),
+                                "absolute_error": float(abs(best_row["alpha_hat"] - float(alpha_true))),
+                                "identified": int(best_row["identified_curve"]),
+                                "identification_status": str(best_row["identification_status"]),
+                                "curvature_metric": float(best_row["curvature_metric"]),
+                                "boundary_optimum": int(best_row["boundary_optimum"]),
+                                "objective": float(best_row["objective"]),
+                                "estimator_gap": float(estimator_gap),
+                                "bootstrap_iqr": float(boot_row["iqr_alpha_hat"]),
+                                "bootstrap_boundary_fraction": float(boot_row["boundary_fraction"]),
+                                "bootstrap_finite_fraction": float(boot_row["finite_fraction"]),
+                                "leave_one_out_max_shift": float(loo_row["max_abs_shift"]),
+                                "leave_one_out_boundary_count": int(loo_row["boundary_count"]),
+                            }
+                        )
+                    if math.isclose(float(ve_multiplier), 1.0, rel_tol=0.0, abs_tol=1e-12):
+                        regression_summary.append(
+                            {
+                                "noise_model": noise_model,
+                                "alpha_true": float(alpha_true),
+                                "rep": rep,
+                                "pairwise_alpha_hat": float(pair_row["alpha_hat"]),
+                                "collapse_alpha_hat": float(collapse_row["alpha_hat"]),
+                            }
+                        )
+                        regression_check_rows.append(
+                            {
+                                "noise_model": noise_model,
+                                "alpha_true": float(alpha_true),
+                                "rep": rep,
+                                "pairwise_delta": (
+                                    np.nan
+                                    if legacy_pair_best is None
+                                    else float(pair_row["alpha_hat"] - legacy_pair_best["alpha_hat"])
+                                ),
+                                "collapse_delta": (
+                                    np.nan
+                                    if legacy_collapse_best is None
+                                    else float(collapse_row["alpha_hat"] - legacy_collapse_best["alpha_hat"])
+                                ),
+                            }
+                        )
+    ve_recovery_df = pd.DataFrame(ve_recovery_rows)
+    legacy_df = pd.DataFrame(regression_summary)
+    regression_check_df = pd.DataFrame(regression_check_rows)
+    ve_summary_df = summarize_synthetic_vaccine_effect(ve_recovery_df)
+    ve_report = render_synthetic_vaccine_effect_report(ve_recovery_df, ve_summary_df)
+    validate_synthetic_ve_regression(regression_check_df)
+    return {
+        "legacy_df": legacy_df,
+        "ve_recovery_df": ve_recovery_df,
+        "ve_summary_df": ve_summary_df,
+        "ve_report": ve_report,
+    }
+
+
+def conditional_ve_alpha_identification(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]:
+    synth_cfg = cfg["synthetic"]
+    if not bool(synth_cfg.get("enabled", True)) or not conditional_ve_enabled(cfg):
+        return {
+            "estimates_df": pd.DataFrame(),
+            "summary_df": pd.DataFrame(),
+            "report": "",
+            "identity_df": pd.DataFrame(),
+        }
+    base_seed = int(synth_cfg["seed"])
+    reps = int(synth_cfg.get("reps", 8))
+    noise_models = list(synth_cfg.get("noise_models", ["lognormal_fixed"]))
+    target_multiplier = get_conditional_ve_target_multiplier(cfg)
+    assumed_values = get_conditional_ve_values(cfg)
+    estimate_rows: list[dict] = []
+    identity_rows: list[dict] = []
+    neutralization_mode = NEUTRALIZATION_REFERENCE
+    for noise_idx, noise_model in enumerate(noise_models):
+        for alpha_idx, alpha_true in enumerate(synth_cfg["alpha_true_values"]):
+            print(
+                f"[ALPHA] conditional VE fit for alpha_true={float(alpha_true):.3f} "
+                f"(noise_model={noise_model}, dgp_ve={target_multiplier:.2f})",
+                flush=True,
+            )
             for rep in range(reps):
+                combo_seed = base_seed + rep + 1000 * alpha_idx + 10000 * noise_idx + 500000
                 table = simulate_synthetic_table(
                     cfg,
                     float(alpha_true),
-                    base_seed + rep + int(float(alpha_true) * 1000),
+                    combo_seed,
                     noise_model=noise_model,
+                    ve_multiplier=target_multiplier,
                 )
-                pair_curve = pd.DataFrame(
-                    evaluate_pairwise_objective(
-                        table,
+                primary_df = build_synthetic_primary_subset(table, neutralization_mode)
+                _, base_metrics_df, _ = evaluate_synthetic_best_with_diagnostics(
+                    primary_df,
+                    cfg,
+                    alpha_values,
+                    neutralization_mode,
+                    combo_seed + 7000,
+                )
+                if base_metrics_df.empty:
+                    continue
+                for assumed_idx, ve_assumed in enumerate(assumed_values):
+                    adjusted_df = apply_conditional_ve_adjustment(primary_df, float(ve_assumed))
+                    validate_conditional_ve_adjustment(primary_df, adjusted_df, float(ve_assumed))
+                    seed_offset = combo_seed + 7000 if math.isclose(float(ve_assumed), 1.0, rel_tol=0.0, abs_tol=1e-12) else combo_seed + 7000 + 1000 * (assumed_idx + 1)
+                    _, metrics_df, _ = evaluate_synthetic_best_with_diagnostics(
+                        adjusted_df,
+                        cfg,
                         alpha_values,
-                        "exclude_nonpositive",
-                        "deaths_min",
-                        "theta_t_gamma",
-                        8,
-                        NEUTRALIZATION_REFERENCE,
+                        neutralization_mode,
+                        seed_offset,
                     )
-                )
-                collapse_curve = pd.DataFrame(
-                    evaluate_collapse_objective(
-                        table,
-                        alpha_values,
-                        "exclude_nonpositive",
-                        "deaths",
-                        "theta_t_gamma",
-                        3,
-                        NEUTRALIZATION_REFERENCE,
-                    )
-                )
-                pair_best = summarize_best_curve(pair_curve, cfg)
-                collapse_best = summarize_best_curve(collapse_curve, cfg)
-                rows.append(
-                    {
-                        "noise_model": noise_model,
-                        "alpha_true": float(alpha_true),
-                        "rep": rep,
-                        "pairwise_alpha_hat": np.nan if pair_best is None else pair_best["alpha_hat"],
-                        "collapse_alpha_hat": np.nan if collapse_best is None else collapse_best["alpha_hat"],
-                    }
-                )
-    return pd.DataFrame(rows)
+                    if metrics_df.empty:
+                        continue
+                    for _, row in metrics_df.iterrows():
+                        estimate_rows.append(
+                            {
+                                "noise_model": noise_model,
+                                "alpha_true": float(alpha_true),
+                                "dgp_ve_multiplier": float(target_multiplier),
+                                "VE_assumed": float(ve_assumed),
+                                "rep": rep,
+                                "estimator": str(row["estimator"]),
+                                "alpha_hat_raw": float(row["alpha_hat_raw"]),
+                                "alpha_hat_reported": np.nan if not np.isfinite(row["alpha_hat_reported"]) else float(row["alpha_hat_reported"]),
+                                "bias": float(row["alpha_hat_raw"] - float(alpha_true)),
+                                "absolute_error": float(abs(row["alpha_hat_raw"] - float(alpha_true))),
+                                "identified": int(row["identified"]),
+                                "identification_status": str(row["identification_status"]),
+                                "curvature_metric": float(row["curvature_metric"]),
+                                "bootstrap_iqr": float(row["bootstrap_iqr"]),
+                                "bootstrap_boundary_fraction": float(row["bootstrap_boundary_fraction"]),
+                                "leave_one_out_max_shift": float(row["leave_one_out_max_shift"]),
+                                "estimator_gap": float(row["estimator_gap"]),
+                                "boundary_optimum": int(row["boundary_optimum"]),
+                            }
+                        )
+                    if math.isclose(float(ve_assumed), 1.0, rel_tol=0.0, abs_tol=1e-12):
+                        base_by_est = {str(row["estimator"]): row for _, row in base_metrics_df.iterrows()}
+                        cond_by_est = {str(row["estimator"]): row for _, row in metrics_df.iterrows()}
+                        for estimator in ("pairwise", "collapse"):
+                            base_row = base_by_est[estimator]
+                            cond_row = cond_by_est[estimator]
+                            identity_rows.append(
+                                {
+                                    "noise_model": noise_model,
+                                    "alpha_true": float(alpha_true),
+                                    "rep": rep,
+                                    "estimator": estimator,
+                                    "alpha_hat_delta": float(cond_row["alpha_hat_raw"] - base_row["alpha_hat_raw"]),
+                                    "curvature_delta": float(cond_row["curvature_metric"] - base_row["curvature_metric"]),
+                                    "bootstrap_boundary_delta": float(
+                                        cond_row["bootstrap_boundary_fraction"] - base_row["bootstrap_boundary_fraction"]
+                                    ),
+                                    "leave_one_out_shift_delta": float(
+                                        cond_row["leave_one_out_max_shift"] - base_row["leave_one_out_max_shift"]
+                                    ),
+                                }
+                            )
+    estimates_df = pd.DataFrame(estimate_rows)
+    identity_df = pd.DataFrame(identity_rows)
+    summary_df = summarize_conditional_ve_estimates(estimates_df, target_multiplier)
+    report = render_conditional_ve_report(estimates_df, summary_df, target_multiplier)
+    validate_conditional_ve_identity(identity_df)
+    return {
+        "estimates_df": estimates_df,
+        "summary_df": summary_df,
+        "report": report,
+        "identity_df": identity_df,
+    }
+
+
+THETA_EFFECTIVE_WARN_THRESHOLD = 3.5
+
+
+def run_wave_identifiability_experiment(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]:
+    if not wave_identifiability_experiment_enabled(cfg):
+        return {"df": pd.DataFrame(), "report": ""}
+    synth_cfg = cfg["synthetic"]
+    if not bool(synth_cfg.get("enabled", True)):
+        return {"df": pd.DataFrame(), "report": ""}
+    assert_wave_identifiability_config_clean(cfg)
+    assert_synthetic_wave_theta_defaults_match_table(cfg)
+
+    base_seed = int(synth_cfg["seed"])
+    reps = int(synth_cfg.get("reps", 8))
+    noise_models = list(synth_cfg.get("noise_models", ["lognormal_fixed"]))
+    wave_mults = get_wave_forcing_multipliers(cfg)
+    theta_mults = get_theta_strength_multipliers(cfg)
+    theta_base_max = float(np.max(np.asarray(synth_cfg["theta_w_values"], dtype=float)))
+    for tm in theta_mults:
+        eff = theta_base_max * float(tm)
+        if eff > THETA_EFFECTIVE_WARN_THRESHOLD:
+            print(
+                f"[WAVE-ID] warning: large effective baseline theta "
+                f"(max theta_w * theta_mult = {eff:.3f}, theta_mult={float(tm):g})",
+                flush=True,
+            )
+
+    neutralization_mode = NEUTRALIZATION_REFERENCE
+    rows: list[dict] = []
+    signal_logged: set[tuple[float, float]] = set()
+
+    for noise_idx, noise_model in enumerate(noise_models):
+        for alpha_idx, alpha_true in enumerate(synth_cfg["alpha_true_values"]):
+            for wave_idx, wave_mult in enumerate(wave_mults):
+                for theta_idx, theta_mult in enumerate(theta_mults):
+                    for rep in range(reps):
+                        combo_seed = (
+                            base_seed
+                            + rep
+                            + 1000 * alpha_idx
+                            + 10000 * noise_idx
+                            + 100000 * wave_idx
+                            + 1000000 * theta_idx
+                        )
+                        table = simulate_synthetic_table(
+                            cfg,
+                            float(alpha_true),
+                            combo_seed,
+                            noise_model=noise_model,
+                            ve_multiplier=1.0,
+                            wave_multiplier=float(wave_mult),
+                            theta_multiplier=float(theta_mult),
+                        )
+                        wkey = (float(wave_mult), float(theta_mult))
+                        if rep == 0 and noise_idx == 0 and alpha_idx == 0 and wkey not in signal_logged:
+                            _, delta_h = synthetic_wave_amplitude_and_delta_h(cfg, float(wave_mult))
+                            max_dh = float(np.max(delta_h))
+                            max_ex = float(table["excess"].abs().max())
+                            print(
+                                f"[WAVE-ID] wave_mult={float(wave_mult):.4f} theta_mult={float(theta_mult):.4f} "
+                                f"max_delta_h_path={max_dh:.6f} max_abs_excess={max_ex:.6f}",
+                                flush=True,
+                            )
+                            signal_logged.add(wkey)
+
+                        primary_df = build_synthetic_primary_subset(table, neutralization_mode)
+                        _, metrics_df, _ = evaluate_synthetic_best_with_diagnostics(
+                            primary_df,
+                            cfg,
+                            alpha_values,
+                            neutralization_mode,
+                            combo_seed + 1_200_000,
+                        )
+                        if metrics_df.empty:
+                            continue
+                        for _, mrow in metrics_df.iterrows():
+                            identified_curve = int(mrow["identified"])
+                            alpha_rep = float(mrow["alpha_hat_reported"])
+                            ident_strict = strict_synthetic_identified(
+                                cfg,
+                                identified_curve,
+                                alpha_rep,
+                                float(mrow["bootstrap_finite_fraction"]),
+                                float(mrow["bootstrap_iqr"]),
+                                float(mrow["bootstrap_boundary_fraction"]),
+                            )
+                            rows.append(
+                                {
+                                    "noise_model": noise_model,
+                                    "alpha_true": float(alpha_true),
+                                    "wave_multiplier": float(wave_mult),
+                                    "theta_multiplier": float(theta_mult),
+                                    "rep": rep,
+                                    "estimator": str(mrow["estimator"]),
+                                    "alpha_hat_raw": float(mrow["alpha_hat_raw"]),
+                                    "alpha_hat_reported": alpha_rep,
+                                    "identified": int(ident_strict),
+                                    "identified_curve": identified_curve,
+                                    "identification_status": str(mrow["identification_status"]),
+                                    "curvature_metric": float(mrow["curvature_metric"]),
+                                    "bootstrap_boundary_fraction": float(mrow["bootstrap_boundary_fraction"]),
+                                    "bootstrap_finite_fraction": float(mrow["bootstrap_finite_fraction"]),
+                                    "bootstrap_iqr": float(mrow["bootstrap_iqr"]),
+                                    "boundary_optimum": int(mrow["boundary_optimum"]),
+                                }
+                            )
+
+    out_df = pd.DataFrame(rows)
+    report = render_wave_identifiability_report(out_df)
+    return {"df": out_df, "report": report}
+
+
+def render_wave_identifiability_report(df: pd.DataFrame) -> str:
+    if df.empty:
+        return "# Wave vs theta alpha identifiability\n\nNo experiment rows were produced.\n"
+    lines = [
+        "# Wave vs theta alpha identifiability",
+        "",
+        "Synthetic experiment: epidemic forcing multiplier (wave) vs frailty-strength multiplier (theta), "
+        "VE off, same estimator and identifiability gates as the main alpha sandbox.",
+        "",
+        "## Key tests",
+        "",
+        "- Does **increasing wave magnitude alone** improve pairwise identification rate (strict: reported alpha + bootstrap gates)?",
+        "- Does **increasing theta** (cross-cohort frailty spread) improve identification?",
+        "",
+        "## Expected outcome",
+        "",
+        "- Increasing `wave_multiplier` alone should have **limited** effect on pairwise identification rate.",
+        "- Increasing `theta_multiplier` should **increase** identification rate and curvature.",
+        "- If that pattern holds, alpha identifiability is driven by **cross-cohort divergence** (frailty spread), "
+        "not absolute wave magnitude.",
+        "",
+        "## Definition of `identified` in CSV",
+        "",
+        "- `identified` = 1 iff `alpha_hat_reported` is finite and bootstrap stability gates pass "
+        "(finite fraction, IQR, boundary fraction), per estimator row.",
+        "- `identified_curve` is the objective-curve gate only (before bootstrap).",
+        "",
+        "## Run summary",
+        "",
+        f"- Rows: {len(df)}",
+        f"- Noise models: {', '.join(sorted(df['noise_model'].astype(str).unique()))}",
+        f"- Wave multipliers: {sorted(df['wave_multiplier'].unique().tolist())}",
+        f"- Theta multipliers: {sorted(df['theta_multiplier'].unique().tolist())}",
+        "",
+    ]
+    pair = df[df["estimator"] == "pairwise"].copy()
+    if not pair.empty:
+        g = (
+            pair.groupby(["wave_multiplier", "theta_multiplier"], as_index=False)
+            .agg(identification_rate=("identified", "mean"), mean_curvature=("curvature_metric", "mean"))
+            .sort_values(["wave_multiplier", "theta_multiplier"])
+        )
+        lines.append("### Pairwise identification rate by (wave, theta)")
+        lines.append("")
+        lines.append("```text")
+        lines.append(g.to_string(index=False))
+        lines.append("```")
+        lines.append("")
+    lines.append(
+        "## Conclusion template\n\nIf wave increases without improved identification, but theta increases do improve "
+        "identification, then alpha is driven by cross-cohort differential scaling, not absolute wave size.\n"
+    )
+    return "\n".join(lines) + "\n"
+
+
+def plot_wave_identifiability(df: pd.DataFrame, out_path: Path) -> None:
+    pair = df[df["estimator"] == "pairwise"].copy()
+    if pair.empty:
+        print(f"[ALPHA] Skipping {out_path.name}: no pairwise wave-identifiability rows", flush=True)
+        return
+    plt = _import_matplotlib()
+    if plt is None:
+        return
+
+    def _close_mask(series: pd.Series, target: float, rtol: float = 0.0, atol: float = 1e-6) -> pd.Series:
+        return np.isclose(series.to_numpy(dtype=float), float(target), rtol=rtol, atol=atol)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8))
+
+    ax = axes[0]
+    base_theta = 1.0
+    part_a = pair[_close_mask(pair["theta_multiplier"], base_theta)].copy()
+    if not part_a.empty:
+        agg_a = (
+            part_a.groupby(["wave_multiplier", "alpha_true"], as_index=False)
+            .agg(identification_rate=("identified", "mean"))
+            .sort_values(["alpha_true", "wave_multiplier"])
+        )
+        for alpha_val, sub in agg_a.groupby("alpha_true"):
+            sub = sub.sort_values("wave_multiplier")
+            ax.plot(
+                sub["wave_multiplier"],
+                sub["identification_rate"],
+                marker="o",
+                lw=2,
+                label=f"alpha_true={float(alpha_val):.2f}",
+            )
+    ax.set_title("A. Identification rate vs wave (theta_mult = 1)")
+    ax.set_xlabel("wave_multiplier")
+    ax.set_ylabel("Mean identified (pairwise, strict)")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax.legend()
+    ax.set_ylim(-0.05, 1.05)
+
+    ax = axes[1]
+    target_wave = 2.0
+    part_b = pair[_close_mask(pair["wave_multiplier"], target_wave)].copy()
+    if part_b.empty:
+        wmax = float(pair["wave_multiplier"].max())
+        part_b = pair[np.isclose(pair["wave_multiplier"].to_numpy(dtype=float), wmax)].copy()
+        ax.set_title(f"B. Identification rate vs theta (wave_mult = {wmax:g}, fallback max)")
+    else:
+        ax.set_title("B. Identification rate vs theta (wave_mult = 2)")
+    if not part_b.empty:
+        agg_b = (
+            part_b.groupby(["theta_multiplier", "alpha_true"], as_index=False)
+            .agg(identification_rate=("identified", "mean"))
+            .sort_values(["alpha_true", "theta_multiplier"])
+        )
+        for alpha_val, sub in agg_b.groupby("alpha_true"):
+            sub = sub.sort_values("theta_multiplier")
+            ax.plot(
+                sub["theta_multiplier"],
+                sub["identification_rate"],
+                marker="s",
+                lw=2,
+                label=f"alpha_true={float(alpha_val):.2f}",
+            )
+    ax.set_xlabel("theta_multiplier")
+    ax.set_ylabel("Mean identified (pairwise, strict)")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax.legend()
+    ax.set_ylim(-0.05, 1.05)
+
+    fig.tight_layout()
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
+def print_wave_identifiability_summary(df: pd.DataFrame) -> None:
+    print("WAVE IDENTIFIABILITY TEST", flush=True)
+    if df.empty:
+        print("no wave identifiability rows", flush=True)
+        return
+    pair = df[df["estimator"] == "pairwise"].copy()
+    if pair.empty:
+        print("no pairwise rows", flush=True)
+        return
+
+    def _rate(sub: pd.DataFrame) -> float:
+        return float(sub["identified"].mean()) if len(sub) else float("nan")
+
+    scenarios = [
+        (1.25, 1.0),
+        (2.0, 1.0),
+        (2.0, 0.5),
+        (2.0, 2.0),
+    ]
+    for wm, tm in scenarios:
+        mask = np.isclose(pair["wave_multiplier"].to_numpy(dtype=float), wm) & np.isclose(
+            pair["theta_multiplier"].to_numpy(dtype=float), tm
+        )
+        sub = pair.loc[mask]
+        print(
+            f"wave={wm:.2f} theta={tm:.1f} identified_rate={_rate(sub):.3f} n={len(sub)}",
+            flush=True,
+        )
 
 
 def _import_matplotlib():
@@ -1297,11 +2136,13 @@ def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFra
     ident_cfg = get_identifiability_cfg(cfg)
     alpha_min = float(cfg["alpha_grid"]["start"])
     alpha_max = float(cfg["alpha_grid"]["stop"])
+    estimator = bootstrap_df["estimator"].iloc[0] if "estimator" in bootstrap_df.columns and not bootstrap_df.empty else None
     if bootstrap_df.empty:
         return pd.DataFrame(
             [
                 {
                     "neutralization_mode": bootstrap_df["neutralization_mode"].iloc[0] if "neutralization_mode" in bootstrap_df.columns and not bootstrap_df.empty else None,
+                    "estimator": estimator,
                     "n_reps": 0,
                     "finite_reps": 0,
                     "finite_fraction": 0.0,
@@ -1338,6 +2179,7 @@ def build_bootstrap_summary(bootstrap_df: pd.DataFrame, cfg: dict) -> pd.DataFra
         [
             {
                 "neutralization_mode": bootstrap_df["neutralization_mode"].iloc[0] if "neutralization_mode" in bootstrap_df.columns else None,
+                "estimator": estimator,
                 "n_reps": int(len(bootstrap_df)),
                 "finite_reps": int(np.count_nonzero(finite_mask)),
                 "finite_fraction": finite_fraction,
@@ -1361,12 +2203,23 @@ def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg
         if "neutralization_mode" in loo_df.columns and not loo_df.empty
         else get_primary_nph_neutralization_mode(cfg)
     )
+    estimator = (
+        str(loo_df["estimator"].iloc[0])
+        if "estimator" in loo_df.columns and not loo_df.empty
+        else "pairwise"
+    )
+    anchor_mode = str(loo_df["anchor_mode"].iloc[0]) if "anchor_mode" in loo_df.columns and not loo_df.empty else cfg["analysis"]["primary_anchor"]
+    theta_scale = str(loo_df["theta_scale"].iloc[0]) if "theta_scale" in loo_df.columns and not loo_df.empty else "gamma_primary"
+    excess_mode = str(loo_df["excess_mode"].iloc[0]) if "excess_mode" in loo_df.columns and not loo_df.empty else cfg["analysis"]["primary_excess_mode"]
+    age_band = str(loo_df["age_band"].iloc[0]) if "age_band" in loo_df.columns and not loo_df.empty else "pooled"
+    time_segment = str(loo_df["time_segment"].iloc[0]) if "time_segment" in loo_df.columns and not loo_df.empty else "pooled"
     if loo_df.empty:
         return pd.DataFrame(
             [
                 {
                     "neutralization_mode": neutralization_mode,
-                    "pooled_pairwise_alpha_hat": np.nan,
+                    "estimator": estimator,
+                    "pooled_alpha_hat": np.nan,
                     "n_omissions": 0,
                     "finite_omissions": 0,
                     "max_abs_shift": np.nan,
@@ -1380,16 +2233,16 @@ def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg
     pair_row = _filter_best_unique(
         best_df,
         neutralization_mode=neutralization_mode,
-        anchor_mode=cfg["analysis"]["primary_anchor"],
-        theta_scale="gamma_primary",
-        excess_mode=cfg["analysis"]["primary_excess_mode"],
-        age_band="pooled",
-        time_segment="pooled",
-        estimator="pairwise",
+        anchor_mode=anchor_mode,
+        theta_scale=theta_scale,
+        excess_mode=excess_mode,
+        age_band=age_band,
+        time_segment=time_segment,
+        estimator=estimator,
     )
-    pooled_pair = float(pair_row["alpha_hat"])
+    pooled_alpha = float(pair_row["alpha_hat"])
     finite = loo_df[np.isfinite(loo_df["alpha_hat"])].copy()
-    shifts = np.abs(finite["alpha_hat"].to_numpy(dtype=float) - pooled_pair) if not finite.empty else np.asarray([], dtype=float)
+    shifts = np.abs(finite["alpha_hat"].to_numpy(dtype=float) - pooled_alpha) if not finite.empty else np.asarray([], dtype=float)
     threshold = float(ident_cfg["max_leave_one_out_shift"])
     large_shift_count = int(np.count_nonzero(shifts > threshold)) if shifts.size else 0
     boundary_count = int(finite["boundary_optimum"].fillna(0).astype(int).sum()) if not finite.empty else 0
@@ -1398,7 +2251,8 @@ def build_leave_one_out_summary(loo_df: pd.DataFrame, best_df: pd.DataFrame, cfg
         [
             {
                 "neutralization_mode": neutralization_mode,
-                "pooled_pairwise_alpha_hat": pooled_pair,
+                "estimator": estimator,
+                "pooled_alpha_hat": pooled_alpha,
                 "n_omissions": int(len(loo_df)),
                 "finite_omissions": int(len(finite)),
                 "max_abs_shift": float(np.max(shifts)) if shifts.size else np.nan,
@@ -1682,6 +2536,267 @@ def render_identifiability_report(
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def summarize_synthetic_vaccine_effect(recovery_df: pd.DataFrame) -> pd.DataFrame:
+    if recovery_df.empty:
+        return pd.DataFrame()
+
+    def safe_nanmean(series: pd.Series) -> float:
+        values = series.to_numpy(dtype=float)
+        finite = values[np.isfinite(values)]
+        return float(np.mean(finite)) if finite.size else float("nan")
+
+    rows: list[dict] = []
+    for ve_multiplier in sorted(recovery_df["ve_multiplier"].dropna().unique(), reverse=True):
+        ve_part = recovery_df[recovery_df["ve_multiplier"] == ve_multiplier].copy()
+        for estimator, est_part in [("overall", ve_part), *[(name, ve_part[ve_part["estimator"] == name].copy()) for name in ("pairwise", "collapse")]]:
+            if est_part.empty:
+                continue
+            reported_mask = np.isfinite(est_part["alpha_hat_reported"].to_numpy(dtype=float))
+            rows.append(
+                {
+                    "ve_multiplier": float(ve_multiplier),
+                    "estimator": estimator,
+                    "n_rows": int(len(est_part)),
+                    "mean_bias": safe_nanmean(est_part["bias"]),
+                    "mean_absolute_error": safe_nanmean(est_part["absolute_error"]),
+                    "identification_rate": float(np.mean(reported_mask)) if reported_mask.size else np.nan,
+                    "non_identification_rate": float(1.0 - np.mean(reported_mask)) if reported_mask.size else np.nan,
+                    "mean_curvature": safe_nanmean(est_part["curvature_metric"]),
+                    "mean_bootstrap_boundary_fraction": safe_nanmean(est_part["bootstrap_boundary_fraction"]),
+                    "mean_boundary_optimum_rate": safe_nanmean(est_part["boundary_optimum"]),
+                    "mean_estimator_gap": safe_nanmean(est_part["estimator_gap"]),
+                }
+            )
+    return pd.DataFrame(rows).sort_values(["ve_multiplier", "estimator"], ascending=[False, True]).reset_index(drop=True)
+
+
+def classify_synthetic_ve_severity(summary_df: pd.DataFrame, ve_multiplier: float) -> str:
+    if summary_df.empty:
+        return "unknown"
+    baseline = summary_df[
+        np.isclose(summary_df["ve_multiplier"].to_numpy(dtype=float), 1.0)
+        & (summary_df["estimator"] == "overall")
+    ]
+    current = summary_df[
+        np.isclose(summary_df["ve_multiplier"].to_numpy(dtype=float), float(ve_multiplier))
+        & (summary_df["estimator"] == "overall")
+    ]
+    if baseline.empty or current.empty:
+        return "unknown"
+    base = baseline.iloc[0]
+    cur = current.iloc[0]
+    ident_drop = float(base["identification_rate"] - cur["identification_rate"])
+    curvature_ratio = (
+        float(cur["mean_curvature"] / base["mean_curvature"])
+        if np.isfinite(base["mean_curvature"]) and abs(float(base["mean_curvature"])) > EPS and np.isfinite(cur["mean_curvature"])
+        else np.nan
+    )
+    boundary_increase = float(cur["mean_bootstrap_boundary_fraction"] - base["mean_bootstrap_boundary_fraction"])
+    if ident_drop >= 0.25 or (np.isfinite(curvature_ratio) and curvature_ratio <= 0.50) or boundary_increase >= 0.20:
+        return "severe"
+    if ident_drop >= 0.10 or (np.isfinite(curvature_ratio) and curvature_ratio <= 0.75) or boundary_increase >= 0.10:
+        return "moderate"
+    return "mild"
+
+
+def render_synthetic_vaccine_effect_report(recovery_df: pd.DataFrame, summary_df: pd.DataFrame) -> str:
+    if recovery_df.empty or summary_df.empty:
+        return "# Synthetic vaccine-effect stress test\n\nNo synthetic VE recovery rows were produced.\n"
+
+    def fmt(value: object, digits: int = 3) -> str:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        if not np.isfinite(numeric):
+            return "NA"
+        return f"{numeric:.{digits}f}"
+
+    overall = summary_df[summary_df["estimator"] == "overall"].copy().sort_values("ve_multiplier", ascending=False)
+    baseline = overall[np.isclose(overall["ve_multiplier"].to_numpy(dtype=float), 1.0)].iloc[0]
+    strongest = overall.sort_values("ve_multiplier", ascending=True).iloc[0]
+    bias_remains_small = bool(abs(float(strongest["mean_bias"])) <= max(0.02, abs(float(baseline["mean_bias"])) + 0.01))
+    curvature_weakens = bool(float(strongest["mean_curvature"]) + 1e-12 < float(baseline["mean_curvature"]))
+    non_ident_more_common = bool(float(strongest["identification_rate"]) + 1e-12 < float(baseline["identification_rate"]))
+    boundary_increases = bool(
+        float(strongest["mean_bootstrap_boundary_fraction"]) > float(baseline["mean_bootstrap_boundary_fraction"]) + 1e-12
+    )
+
+    lines = [
+        "# Synthetic vaccine-effect stress test",
+        "",
+        "## Summary Table",
+        "",
+        "| VE | Severity | Mean bias | Mean absolute error | Identification rate | Mean curvature | Mean bootstrap boundary fraction |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for _, row in overall.iterrows():
+        lines.append(
+            f"| {fmt(row['ve_multiplier'], 2)} | {classify_synthetic_ve_severity(summary_df, float(row['ve_multiplier']))} | "
+            f"{fmt(row['mean_bias'])} | {fmt(row['mean_absolute_error'])} | {fmt(row['identification_rate'])} | "
+            f"{fmt(row['mean_curvature'], 6)} | {fmt(row['mean_bootstrap_boundary_fraction'])} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Direct Answers",
+            f"- Does alpha recovery remain unbiased? `{ 'mostly yes' if bias_remains_small else 'no, bias grows under stronger VE contamination' }`",
+            f"- Does curvature weaken? `{ 'yes' if curvature_weakens else 'no clear weakening' }`",
+            f"- Does non-identification become more common? `{ 'yes' if non_ident_more_common else 'no clear increase' }`",
+            f"- Does boundary-seeking behavior increase? `{ 'yes' if boundary_increases else 'no clear increase' }`",
+            "",
+            "## Estimator Detail",
+        ]
+    )
+    for estimator in ("pairwise", "collapse"):
+        part = summary_df[summary_df["estimator"] == estimator].copy().sort_values("ve_multiplier", ascending=False)
+        if part.empty:
+            continue
+        strongest_est = part.sort_values("ve_multiplier", ascending=True).iloc[0]
+        lines.append(
+            f"- `{estimator}`: strongest VE gives `mean_abs_error={fmt(strongest_est['mean_absolute_error'])}`, "
+            f"`identification_rate={fmt(strongest_est['identification_rate'])}`, "
+            f"`mean_curvature={fmt(strongest_est['mean_curvature'], 6)}`."
+        )
+    lines.extend(
+        [
+            "",
+            "## Contamination Severity Conclusion",
+            f"- Relative to `VE=1.0`, the strongest contamination level (`VE={fmt(strongest['ve_multiplier'], 2)}`) is classified as "
+            f"`{classify_synthetic_ve_severity(summary_df, float(strongest['ve_multiplier']))}`.",
+            "",
+            "Interpretation:",
+            "If stronger vaccine effects flatten objectives, increase boundary-seeking, or reduce identification rates, this supports the hypothesis that real cohort-specific treatment effects can make alpha harder to identify under the alpha-only working model.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def validate_synthetic_ve_regression(regression_check_df: pd.DataFrame, tolerance: float = 1e-9) -> None:
+    if regression_check_df.empty:
+        raise ValueError("Synthetic VE regression check produced no VE=1.0 rows")
+    pair_max = float(np.nanmax(np.abs(regression_check_df["pairwise_delta"].to_numpy(dtype=float))))
+    collapse_max = float(np.nanmax(np.abs(regression_check_df["collapse_delta"].to_numpy(dtype=float))))
+    if pair_max > tolerance or collapse_max > tolerance:
+        raise ValueError(
+            "Synthetic VE regression gate failed: "
+            f"pairwise_delta={pair_max:.6g}, collapse_delta={collapse_max:.6g}"
+        )
+
+
+def summarize_conditional_ve_estimates(estimates_df: pd.DataFrame, target_multiplier: float) -> pd.DataFrame:
+    if estimates_df.empty:
+        return pd.DataFrame()
+
+    def safe_nanmean(series: pd.Series) -> float:
+        values = series.to_numpy(dtype=float)
+        finite = values[np.isfinite(values)]
+        return float(np.mean(finite)) if finite.size else float("nan")
+
+    rows: list[dict] = []
+    for ve_assumed in sorted(estimates_df["VE_assumed"].dropna().unique(), reverse=True):
+        ve_part = estimates_df[estimates_df["VE_assumed"] == ve_assumed].copy()
+        grouped_parts = [("overall", ve_part), *[(name, ve_part[ve_part["estimator"] == name].copy()) for name in ("pairwise", "collapse")]]
+        for estimator, est_part in grouped_parts:
+            if est_part.empty:
+                continue
+            reported_mask = np.isfinite(est_part["alpha_hat_reported"].to_numpy(dtype=float))
+            rows.append(
+                {
+                    "dgp_ve_multiplier": float(target_multiplier),
+                    "VE_assumed": float(ve_assumed),
+                    "estimator": estimator,
+                    "n_rows": int(len(est_part)),
+                    "mean_alpha_hat_raw": safe_nanmean(est_part["alpha_hat_raw"]),
+                    "mean_bias": safe_nanmean(est_part["bias"]),
+                    "mean_absolute_error": safe_nanmean(est_part["absolute_error"]),
+                    "identification_rate": float(np.mean(reported_mask)) if reported_mask.size else np.nan,
+                    "mean_curvature": safe_nanmean(est_part["curvature_metric"]),
+                    "mean_bootstrap_boundary_fraction": safe_nanmean(est_part["bootstrap_boundary_fraction"]),
+                    "mean_leave_one_out_max_shift": safe_nanmean(est_part["leave_one_out_max_shift"]),
+                }
+            )
+    return pd.DataFrame(rows).sort_values(["VE_assumed", "estimator"], ascending=[False, True]).reset_index(drop=True)
+
+
+def render_conditional_ve_report(estimates_df: pd.DataFrame, summary_df: pd.DataFrame, target_multiplier: float) -> str:
+    if estimates_df.empty or summary_df.empty:
+        return "# Conditional VE alpha fit\n\nNo conditional-VE estimate rows were produced.\n"
+
+    def fmt(value: object, digits: int = 3) -> str:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        if not np.isfinite(numeric):
+            return "NA"
+        return f"{numeric:.{digits}f}"
+
+    overall = summary_df[summary_df["estimator"] == "overall"].copy().sort_values("VE_assumed", ascending=False)
+    baseline = overall[np.isclose(overall["VE_assumed"].to_numpy(dtype=float), 1.0)].iloc[0]
+    target = overall[np.isclose(overall["VE_assumed"].to_numpy(dtype=float), float(target_multiplier))].iloc[0]
+    improves_mae = float(target["mean_absolute_error"]) + 1e-12 < float(baseline["mean_absolute_error"])
+    improves_curvature = float(target["mean_curvature"]) > float(baseline["mean_curvature"]) + 1e-12
+    improves_identification = float(target["identification_rate"]) > float(baseline["identification_rate"]) + 1e-12
+    improves_boundary = float(target["mean_bootstrap_boundary_fraction"]) + 1e-12 < float(baseline["mean_bootstrap_boundary_fraction"])
+
+    lines = [
+        "# Conditional VE alpha fit",
+        "",
+        f"- Primary DGP VE multiplier: `{fmt(target_multiplier, 2)}`",
+        "",
+        "## Summary Table",
+        "",
+        "| VE_assumed | Mean alpha | Mean absolute error | Identification rate | Mean curvature | Mean bootstrap boundary fraction | Mean leave-one-out max shift |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for _, row in overall.iterrows():
+        lines.append(
+            f"| {fmt(row['VE_assumed'], 2)} | {fmt(row['mean_alpha_hat_raw'])} | {fmt(row['mean_absolute_error'])} | "
+            f"{fmt(row['identification_rate'])} | {fmt(row['mean_curvature'], 6)} | "
+            f"{fmt(row['mean_bootstrap_boundary_fraction'])} | {fmt(row['mean_leave_one_out_max_shift'])} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Direct Answers",
+            f"- Does fixing VE enable identification? `{ 'yes, identification improves for some assumed VE values' if overall['identification_rate'].max() > baseline['identification_rate'] + 1e-12 else 'no clear identification gain' }`",
+            f"- How does alpha change with VE? `See the VE-alpha profile in the summary CSV and figure; mean alpha at VE={fmt(target_multiplier, 2)} is {fmt(target['mean_alpha_hat_raw'])}.`",
+            f"- Is there a stable region? `{ 'yes, the target VE branch improves stability metrics' if improves_boundary or improves_curvature else 'no clearly stable VE region' }`",
+            "",
+            "## Primary Recovery Criterion",
+            f"- Relative to `VE_assumed=1.0`, does `VE_assumed={fmt(target_multiplier, 2)}` improve mean absolute error? `{str(improves_mae).lower()}`",
+            f"- Relative to `VE_assumed=1.0`, does `VE_assumed={fmt(target_multiplier, 2)}` improve curvature? `{str(improves_curvature).lower()}`",
+            f"- Relative to `VE_assumed=1.0`, does `VE_assumed={fmt(target_multiplier, 2)}` improve identification rate? `{str(improves_identification).lower()}`",
+            f"- Relative to `VE_assumed=1.0`, does `VE_assumed={fmt(target_multiplier, 2)}` improve bootstrap boundary fraction? `{str(improves_boundary).lower()}`",
+            "",
+            "## Interpretation",
+            "- This conditional fit tests whether externally fixing VE makes alpha recoverable under the existing alpha-only estimator.",
+            "- If the exact-match branch improves recovery and identifiability, VE was a major confounder.",
+            "- If alpha still follows a broad VE-alpha tradeoff or remains non-identified, the structure is not separable without stronger external information.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def validate_conditional_ve_identity(identity_df: pd.DataFrame, tolerance: float = 1e-9) -> None:
+    if identity_df.empty:
+        raise ValueError("Conditional VE identity check produced no VE_assumed=1.0 rows")
+    def finite_abs_max(series: pd.Series) -> float:
+        values = np.abs(series.to_numpy(dtype=float))
+        finite = values[np.isfinite(values)]
+        return float(np.max(finite)) if finite.size else 0.0
+    checks = {
+        "alpha_hat_delta": finite_abs_max(identity_df["alpha_hat_delta"]),
+        "curvature_delta": finite_abs_max(identity_df["curvature_delta"]),
+        "bootstrap_boundary_delta": finite_abs_max(identity_df["bootstrap_boundary_delta"]),
+        "leave_one_out_shift_delta": finite_abs_max(identity_df["leave_one_out_shift_delta"]),
+    }
+    failures = {name: value for name, value in checks.items() if value > tolerance}
+    if failures:
+        raise ValueError(f"Conditional VE identity check failed: {failures}")
 
 
 def _primary_best_rows_for_mode(best_df: pd.DataFrame, cfg: dict, neutralization_mode: str) -> tuple[pd.Series, pd.Series]:
@@ -2497,6 +3612,137 @@ def plot_synthetic_recovery(df: pd.DataFrame, out_path: Path) -> None:
     plt.close(fig)
 
 
+def plot_synthetic_vaccine_effect(recovery_df: pd.DataFrame, summary_df: pd.DataFrame, out_path: Path) -> None:
+    if recovery_df.empty or summary_df.empty:
+        print(f"[ALPHA] Skipping {out_path.name}: synthetic VE recovery is empty", flush=True)
+        return
+    plt = _import_matplotlib()
+    if plt is None:
+        return
+
+    ve_levels = sorted(recovery_df["ve_multiplier"].dropna().unique(), reverse=True)
+    cmap = plt.get_cmap("viridis")
+    colors = {ve: cmap(idx / max(len(ve_levels) - 1, 1)) for idx, ve in enumerate(ve_levels)}
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 4.8))
+
+    ax = axes[0]
+    for ve in ve_levels:
+        part = recovery_df[recovery_df["ve_multiplier"] == ve].copy()
+        if part.empty:
+            continue
+        for estimator, ls, marker in [("pairwise", "-", "o"), ("collapse", "--", "s")]:
+            est = part[part["estimator"] == estimator].copy()
+            if est.empty:
+                continue
+            summary = (
+                est.groupby("alpha_true", as_index=False)
+                .agg(alpha_hat_mean=("alpha_hat_raw", "mean"))
+                .sort_values("alpha_true")
+            )
+            ax.plot(
+                summary["alpha_true"],
+                summary["alpha_hat_mean"],
+                linestyle=ls,
+                marker=marker,
+                color=colors[ve],
+                label=f"{estimator} VE={ve:.2f}",
+            )
+    truth = (
+        recovery_df.groupby("alpha_true", as_index=False)
+        .agg(alpha_true=("alpha_true", "first"))
+        .sort_values("alpha_true")
+    )
+    ax.plot(truth["alpha_true"], truth["alpha_true"], color="0.35", ls=":", lw=1.5, label="truth")
+    ax.set_title("A. Recovery vs true alpha")
+    ax.set_xlabel("True alpha")
+    ax.set_ylabel("Estimated alpha")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax.legend(fontsize=8, ncol=2)
+
+    ax = axes[1]
+    overall = summary_df[summary_df["estimator"] == "overall"].copy().sort_values("ve_multiplier", ascending=False)
+    ax.plot(overall["ve_multiplier"], overall["identification_rate"], "o-", color="tab:blue", label="identification_rate")
+    ax.set_title("B. Identifiability degradation")
+    ax.set_xlabel("VE multiplier")
+    ax.set_ylabel("Identification rate", color="tab:blue")
+    ax.tick_params(axis="y", labelcolor="tab:blue")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax2 = ax.twinx()
+    ax2.plot(overall["ve_multiplier"], overall["mean_curvature"], "s--", color="tab:orange", label="mean_curvature")
+    ax2.set_ylabel("Mean curvature", color="tab:orange")
+    ax2.tick_params(axis="y", labelcolor="tab:orange")
+
+    ax = axes[2]
+    ax.plot(
+        overall["ve_multiplier"],
+        overall["mean_bootstrap_boundary_fraction"],
+        "o-",
+        color="tab:red",
+        label="boundary_fraction",
+    )
+    ax.set_title("C. Boundary-seeking")
+    ax.set_xlabel("VE multiplier")
+    ax.set_ylabel("Mean bootstrap boundary fraction")
+    ax.grid(True, ls=":", alpha=0.4)
+
+    fig.tight_layout()
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
+def plot_conditional_ve_alpha(summary_df: pd.DataFrame, out_path: Path) -> None:
+    if summary_df.empty:
+        print(f"[ALPHA] Skipping {out_path.name}: conditional VE summary is empty", flush=True)
+        return
+    plt = _import_matplotlib()
+    if plt is None:
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8))
+    estimator_rows = summary_df[summary_df["estimator"].isin(["pairwise", "collapse"])].copy()
+
+    ax = axes[0]
+    for estimator, color, marker in [("pairwise", "tab:blue", "o"), ("collapse", "tab:orange", "s")]:
+        part = estimator_rows[estimator_rows["estimator"] == estimator].copy().sort_values("VE_assumed", ascending=False)
+        if part.empty:
+            continue
+        ax.plot(part["VE_assumed"], part["mean_alpha_hat_raw"], color=color, lw=2, label=estimator)
+        identified_mask = part["identification_rate"].to_numpy(dtype=float) > 0.0
+        ax.scatter(
+            part.loc[identified_mask, "VE_assumed"],
+            part.loc[identified_mask, "mean_alpha_hat_raw"],
+            color=color,
+            marker=marker,
+            s=55,
+        )
+        ax.scatter(
+            part.loc[~identified_mask, "VE_assumed"],
+            part.loc[~identified_mask, "mean_alpha_hat_raw"],
+            facecolors="white",
+            edgecolors=color,
+            marker=marker,
+            s=55,
+        )
+    ax.set_title("A. Alpha vs assumed VE")
+    ax.set_xlabel("VE_assumed")
+    ax.set_ylabel("Mean alpha_hat_raw")
+    ax.grid(True, ls=":", alpha=0.4)
+    ax.legend()
+
+    ax = axes[1]
+    overall = summary_df[summary_df["estimator"] == "overall"].copy().sort_values("VE_assumed", ascending=False)
+    ax.plot(overall["VE_assumed"], overall["mean_curvature"], "o-", color="tab:green", label="mean_curvature")
+    ax.set_title("B. Curvature vs assumed VE")
+    ax.set_xlabel("VE_assumed")
+    ax.set_ylabel("Mean curvature")
+    ax.grid(True, ls=":", alpha=0.4)
+
+    fig.tight_layout()
+    _save_figure(fig, out_path)
+    plt.close(fig)
+
+
 def generate_manuscript_figures(outdir: Path, repo_root: Path, cfg: dict) -> None:
     manuscript_dir = _manuscript_figures_dir(repo_root)
     required = [
@@ -2534,11 +3780,19 @@ def write_outputs(
     loo_df: pd.DataFrame,
     bootstrap_df: pd.DataFrame,
     synthetic_df: pd.DataFrame,
+    synthetic_ve_recovery_df: pd.DataFrame,
+    synthetic_ve_summary_df: pd.DataFrame,
+    synthetic_ve_report: str,
+    conditional_ve_estimates_df: pd.DataFrame,
+    conditional_ve_summary_df: pd.DataFrame,
+    conditional_ve_report: str,
     run_artifact: dict,
     identifiability_report: str,
     neutralization_comparison_df: pd.DataFrame,
     neutralization_comparison_report: str,
     neutralization_comparison_artifact: dict,
+    wave_identifiability_df: pd.DataFrame,
+    wave_identifiability_report: str,
 ) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     cohort_diag.to_csv(outdir / "alpha_cohort_diagnostics.csv", index=False)
@@ -2554,6 +3808,12 @@ def write_outputs(
     loo_df.to_csv(outdir / "alpha_leave_one_out.csv", index=False)
     bootstrap_df.to_csv(outdir / "alpha_bootstrap.csv", index=False)
     synthetic_df.to_csv(outdir / "alpha_synthetic_recovery.csv", index=False)
+    synthetic_ve_recovery_df.to_csv(outdir / "alpha_synthetic_vaccine_effect_recovery.csv", index=False)
+    synthetic_ve_summary_df.to_csv(outdir / "alpha_synthetic_vaccine_effect_summary.csv", index=False)
+    (outdir / "alpha_synthetic_vaccine_effect_report.md").write_text(synthetic_ve_report, encoding="utf-8")
+    conditional_ve_estimates_df.to_csv(outdir / "alpha_conditional_VE_estimates.csv", index=False)
+    conditional_ve_summary_df.to_csv(outdir / "alpha_conditional_VE_summary.csv", index=False)
+    (outdir / "alpha_conditional_VE_report.md").write_text(conditional_ve_report, encoding="utf-8")
     (outdir / "alpha_run_artifact.json").write_text(json.dumps(run_artifact, indent=2) + "\n", encoding="utf-8")
     (outdir / "alpha_identifiability_report.md").write_text(identifiability_report, encoding="utf-8")
     neutralization_comparison_df.to_csv(outdir / "alpha_neutralization_mode_comparison.csv", index=False)
@@ -2567,6 +3827,15 @@ def write_outputs(
     )
     plot_objectives(curves, best_df, outdir / "fig_alpha_objectives.png", cfg)
     plot_synthetic_recovery(synthetic_df, outdir / "fig_alpha_synthetic_recovery.png")
+    plot_synthetic_vaccine_effect(
+        synthetic_ve_recovery_df,
+        synthetic_ve_summary_df,
+        outdir / "fig_alpha_synthetic_vaccine_effect.png",
+    )
+    plot_conditional_ve_alpha(
+        conditional_ve_summary_df,
+        outdir / "fig_alpha_vs_assumed_VE.png",
+    )
     plot_neutralization_mode_comparison(
         curves,
         best_df,
@@ -2574,8 +3843,46 @@ def write_outputs(
         outdir / "fig_alpha_neutralization_mode_comparison.png",
         cfg,
     )
+    if not wave_identifiability_df.empty:
+        wave_identifiability_df.to_csv(outdir / "alpha_wave_identifiability.csv", index=False)
+        (outdir / "alpha_wave_identifiability_report.md").write_text(wave_identifiability_report, encoding="utf-8")
+        plot_wave_identifiability(wave_identifiability_df, outdir / "fig_wave_vs_identifiability.png")
     if should_write_manuscript_figures(cfg):
         generate_manuscript_figures(outdir, repo_root, cfg)
+
+
+def print_synthetic_vaccine_effect_summary(summary_df: pd.DataFrame) -> None:
+    if summary_df.empty:
+        print("SYNTHETIC VE STRESS TEST", flush=True)
+        print("no synthetic VE summary rows", flush=True)
+        return
+    overall = summary_df[summary_df["estimator"] == "overall"].copy().sort_values("ve_multiplier", ascending=False)
+    print("SYNTHETIC VE STRESS TEST", flush=True)
+    for _, row in overall.iterrows():
+        print(
+            f"VE={float(row['ve_multiplier']):.2f} "
+            f"identified_rate={float(row['identification_rate']):.3f} "
+            f"mean_abs_error={float(row['mean_absolute_error']):.3f} "
+            f"boundary_fraction={float(row['mean_bootstrap_boundary_fraction']):.3f}",
+            flush=True,
+        )
+
+
+def print_conditional_ve_summary(summary_df: pd.DataFrame) -> None:
+    if summary_df.empty:
+        print("CONDITIONAL ALPHA FIT", flush=True)
+        print("no conditional VE summary rows", flush=True)
+        return
+    overall = summary_df[summary_df["estimator"] == "overall"].copy().sort_values("VE_assumed", ascending=False)
+    print("CONDITIONAL ALPHA FIT", flush=True)
+    for _, row in overall.iterrows():
+        print(
+            f"VE={float(row['VE_assumed']):.2f} "
+            f"alpha={float(row['mean_alpha_hat_raw']):.3f} "
+            f"identified={float(row['identification_rate']):.3f} "
+            f"curvature={float(row['mean_curvature']):.6f}",
+            flush=True,
+        )
 
 
 def main() -> None:
@@ -2637,7 +3944,18 @@ def main() -> None:
     bootstrap_summary = mode_results[primary_mode]["bootstrap_summary"]
     loo_summary = mode_results[primary_mode]["loo_summary"]
     sensitivity_df = build_primary_sensitivity_slices(best_df, cfg)
-    synthetic_df = synthetic_recovery(cfg, alpha_values)
+    synthetic_results = synthetic_recovery(cfg, alpha_values)
+    synthetic_df = synthetic_results["legacy_df"]
+    synthetic_ve_recovery_df = synthetic_results["ve_recovery_df"]
+    synthetic_ve_summary_df = synthetic_results["ve_summary_df"]
+    synthetic_ve_report = synthetic_results["ve_report"]
+    conditional_ve_results = conditional_ve_alpha_identification(cfg, alpha_values)
+    conditional_ve_estimates_df = conditional_ve_results["estimates_df"]
+    conditional_ve_summary_df = conditional_ve_results["summary_df"]
+    conditional_ve_report = conditional_ve_results["report"]
+    wave_ident_results = run_wave_identifiability_experiment(cfg, alpha_values)
+    wave_identifiability_df = wave_ident_results["df"]
+    wave_identifiability_report = str(wave_ident_results["report"])
     last_ts = log_milestone("synthetic recovery completed", start_ts, last_ts)
     run_artifact = mode_results[primary_mode]["run_artifact"]
     decision_summary = build_decision_summary(best_df, bootstrap_summary, loo_summary, run_artifact, cfg)
@@ -2726,11 +4044,19 @@ def main() -> None:
         loo_df,
         bootstrap_df,
         synthetic_df,
+        synthetic_ve_recovery_df,
+        synthetic_ve_summary_df,
+        synthetic_ve_report,
+        conditional_ve_estimates_df,
+        conditional_ve_summary_df,
+        conditional_ve_report,
         run_artifact,
         identifiability_report,
         neutralization_comparison_df,
         neutralization_comparison_report,
         neutralization_comparison_artifact,
+        wave_identifiability_df,
+        wave_identifiability_report,
     )
     last_ts = log_milestone("outputs and figures written", start_ts, last_ts)
 
@@ -2762,6 +4088,9 @@ def main() -> None:
             flush=True,
         )
     print(f"recommendation={recommendation}", flush=True)
+    print_synthetic_vaccine_effect_summary(synthetic_ve_summary_df)
+    print_conditional_ve_summary(conditional_ve_summary_df)
+    print_wave_identifiability_summary(wave_identifiability_df)
     log_milestone("alpha run finished", start_ts, last_ts)
 
 

@@ -47,6 +47,12 @@ Outputs are written to `test/alpha/out/` and include:
 - `alpha_bootstrap.csv`
 - `alpha_bootstrap_summary.csv`
 - `alpha_synthetic_recovery.csv`
+- `alpha_synthetic_vaccine_effect_recovery.csv`
+- `alpha_synthetic_vaccine_effect_summary.csv`
+- `alpha_synthetic_vaccine_effect_report.md`
+- `alpha_conditional_VE_estimates.csv`
+- `alpha_conditional_VE_summary.csv`
+- `alpha_conditional_VE_report.md`
 - `alpha_run_artifact.json`
 - `alpha_primary_sensitivity_slices.csv`
 - `alpha_decision_summary.csv`
@@ -58,6 +64,8 @@ Outputs are written to `test/alpha/out/` and include:
 - `fig_alpha_objectives.png`
 - `fig_alpha_neutralization_mode_comparison.png`
 - `fig_alpha_synthetic_recovery.png`
+- `fig_alpha_synthetic_vaccine_effect.png`
+- `fig_alpha_vs_assumed_VE.png`
 
 ## Interpretation
 
