@@ -219,7 +219,8 @@ frailty}\label{kcor-a-depletion-neutralized-framework-for-retrospective-cohort-c
 \item
   \textbf{Corresponding author}: stk@alum.mit.edu
 \item
-  \textbf{Word count}: 10,909 (excluding Abstract and References)
+  \textbf{Word count}: 11,200 (excluding Abstract and References;
+  approximate after identifiability revisions)
 \item
   \textbf{Keywords}: selection bias; frailty model; gamma mixture model;
   frailty inversion; frailty heterogeneity; selection-induced depletion;
@@ -247,18 +248,23 @@ gamma-frailty inversion. In epidemic-wave applications, KCOR also
 includes an optional non-proportional-hazard (NPH) exponent module that
 models cross-cohort hazard amplification as a function of depletion
 geometry and estimates a single shared exponent \(\alpha\) from
-cross-cohort structure. Because identification comes from relative
-cohort behavior rather than absolute hazard levels, \(\alpha\) is
-invariant to unknown common wave amplitudes under the working model.
-This extension remains optional, diagnostic, and assumption-dependent
-rather than part of the universal KCOR core. Across \(\theta_0\)
-recovery simulations, negative and positive controls, and Cox comparison
-exercises, KCOR remains a diagnostic and descriptive framework: it
-targets cumulative contrasts after depletion normalization rather than
-counterfactual effects. This revised architecture replaces the earlier
-quiet-window fit under a flatter baseline specification with a more
-explicit identification strategy for retrospective cohort comparisons
-under selection-induced hazard curvature.
+cross-cohort structure. Identification of depletion geometry is
+curvature-based and invariant to constant multiplicative hazard effects
+when scaling is common or approximately common across cohorts, while the
+optional NPH exponent is not separately identifiable from
+cohort-specific multiplicative effects under minimal aggregated data.
+Because identification comes from relative cohort behavior rather than
+absolute hazard levels, \(\alpha\) is invariant to unknown common wave
+amplitudes under the working model. This extension remains optional,
+diagnostic, and assumption-dependent rather than part of the universal
+KCOR core. Across \(\theta_0\) recovery simulations, negative and
+positive controls, and Cox comparison exercises, KCOR remains a
+diagnostic and descriptive framework: it targets cumulative contrasts
+after depletion normalization rather than counterfactual effects. This
+revised architecture replaces the earlier quiet-window fit under a
+flatter baseline specification with a more explicit identification
+strategy for retrospective cohort comparisons under selection-induced
+hazard curvature.
 
 \subsection{1. Introduction}\label{introduction}
 
@@ -472,12 +478,15 @@ cohorts, interpretability depends not on any one quiet window alone but
 on a coherent combination of Gompertz curvature, rebased enrollment-time
 anchoring, consistency across quiet windows, and diagnostics that
 indicate structured depletion geometry has been identified rather than
-absorbed into residual time-varying effects. Under such minimal
-aggregated data, however, \(\theta_{0,d}\) is identifiable only
-conditional on the working assumption that no constant multiplicative
-hazard effect operates within the quiet-window identification regime,
-because such an effect is observationally confounded with
-frailty-induced curvature over short horizons.
+absorbed into residual time-varying effects. Under minimal aggregated
+data, \(\theta_{0,d}\) is identified from curvature when multiplicative
+hazard scaling is common or approximately common across cohorts;
+heterogeneous multiplicative effects can induce second-order curvature
+differences through differential depletion and are assessed via
+diagnostics, while additive or time-varying hazards remain primary
+threats to curvature interpretation. The optional NPH exponent
+\(\alpha\) is not separately identifiable from cohort-specific
+multiplicative structure in minimal aggregated data (Limitations §5.4).
 
 Together, these contributions position KCOR not as a replacement for
 existing survival estimands, but as a prerequisite normalization step
@@ -595,17 +604,18 @@ evolving risk set.
 KCOR does not assert a causal interpretation of the resulting contrast;
 rather, it isolates residual differences that cannot be attributed to
 frailty-driven selection, thereby identifying regimes that demand
-substantive explanation beyond selection artifacts. KCOR cannot
-distinguish depletion-induced heterogeneity from a constant proportional
-hazard shift within a quiet window without additional information. Under
-minimal aggregated data, the cohort-specific frailty variance
-\(\theta_{0,d}\) is therefore identifiable only conditional on the
-working assumption that no constant multiplicative hazard effect
-operates within the quiet-window identification regime; otherwise the
-two mechanisms are observationally confounded over short horizons.
-Interpretation is therefore conditional on the adequacy of the
-gamma-frailty working model, the Gompertz structure, and the associated
-diagnostics.
+substantive explanation beyond selection artifacts. KCOR does not
+identify constant multiplicative hazard effects as separate parameters;
+they are not separately identifiable from baseline scale. Under minimal
+aggregated data, \(\theta_{0,d}\) is nonetheless identifiable from
+curvature structure when multiplicative scaling is common or
+approximately common across cohorts, and such scaling does not alter
+that curvature-based identification under the working model (§2.4.4 for
+heterogeneous multiplicative scaling and diagnostics).
+Non-multiplicative effects (additive or time-varying) may distort
+curvature and reduce identifiability. Interpretation is therefore
+conditional on the adequacy of the gamma-frailty working model, the
+Gompertz structure, and the associated diagnostics.
 
 The strategy is therefore:
 
@@ -1027,22 +1037,36 @@ own. Identification depends on:
   delta-iteration path is used.
 \end{enumerate}
 
-\textbf{Additional identifiability limitation.} Within identification
-windows, a constant multiplicative hazard effect is not separately
-identifiable from frailty variance. In such cases, the estimator may
-attribute proportional hazard differences to \(\theta_{0,d}\), and
-normalization may be biased. This limitation is inherent to the working
-model and is reflected in the diagnostic criteria.
+\textbf{Refinement: effect-scale invariance of curvature-based
+identification.}\\
+Identification of \(\theta_{0,d}\) relies on curvature in
+cumulative-hazard space rather than absolute hazard levels. A constant
+multiplicative hazard effect (i.e.,
+\(h_{\mathrm{obs}}(t)=c \cdot h_{\mathrm{true}}(t)\)) rescales
+cumulative hazards without altering their curvature and therefore does
+not alter curvature-based identification of \(\theta_{0,d}\) under the
+working model when multiplicative scaling is \textbf{common or
+approximately common across cohorts} within the identification regime.
+Constant multiplicative effects are not separately identifiable from
+baseline scale.
 
-Under minimal aggregated data, these conditions identify
-\(\theta_{0,d}\) only conditional on the working assumption that no
-constant multiplicative hazard effect is operating inside the
-quiet-window identification regime; such an effect is observationally
-confounded with frailty-induced curvature over short horizons. If these
-conditions fail, diagnostics indicate non-identifiability and the
-analysis is treated as not identified rather than reported as a stable
-normalized contrast. Full operational diagnostics are summarized in
-Supplementary Information §S2.
+In contrast, additive or time-varying effects can alter curvature and
+may be absorbed into \(\theta_{0,d}\), leading to confounding.
+Accordingly, \(\theta_{0,d}\) should be interpreted as capturing
+curvature attributable to depletion geometry plus any non-multiplicative
+residual effects present within the identification window.
+
+Heterogeneous multiplicative effects across cohorts may introduce
+second-order curvature differences through differential depletion, but
+these are typically small relative to primary depletion geometry and are
+assessed via diagnostics.
+
+When any of the conditions in items 1--4 fails, when non-multiplicative
+contamination or Gompertz misspecification dominates, or when
+diagnostics indicate material breakdown of the common-scale
+approximation, the analysis is treated as not identified rather than
+reported as a stable normalized contrast. Full operational diagnostics
+are summarized in Supplementary Information §S2.
 
 \subsubsection{\texorpdfstring{2.5 Estimating \(\theta_{0,d}\) by delta
 iteration}{2.5 Estimating \textbackslash theta\_\{0,d\} by delta iteration}}\label{estimating-theta_0d-by-delta-iteration}
@@ -2197,6 +2221,10 @@ data do not contain sufficient information to support a stable estimate,
 and in such cases the appropriate conclusion is non-identification
 rather than point estimation.
 
+This non-identification is consistent with the structural confounding
+between \(\alpha\) and cohort-specific multiplicative effects described
+in §5.4.
+
 Future work may explore whether alternative cohort constructions or
 stronger cross-cohort variation yield identifiable estimates of
 \(\alpha\) in empirical settings.
@@ -2228,26 +2256,43 @@ adequacy is evaluated through diagnostics and negative controls rather
 than assumed as a substantive truth. KCOR's estimand is whether a
 cumulative outcome contrast persists after removal of curvature
 consistent with that working model, not attribution of the curvature to
-a specific mechanism. \textbf{Identifiability under the revised
-estimator.}\\
+a specific mechanism.
+
+\textbf{Separation of curvature and level effects.}\\
+KCOR distinguishes between curvature (depletion geometry) and level
+(multiplicative hazard) effects. The estimator identifies
+curvature-driven structure through \(\theta_{0,d}\) while remaining
+agnostic to constant multiplicative shifts as separately estimated
+parameters when scaling is common or approximately common across cohorts
+(§2.4.4 for heterogeneous scaling and diagnostics). Consequently, KCOR
+normalization removes selection-induced curvature consistent with the
+working model but does not, by design, isolate or estimate proportional
+hazard intervention effects.
+
+\textbf{Identifiability under the revised estimator.}\\
 Even under ideal data quality, KCOR does not identify \(\theta_{0,d}\)
 from an arbitrary mortality trajectory. Identification depends on a
 joint regime: a plausible Gompertz baseline, a well-defined rebased
 origin after the stabilization skip, sufficient curvature to distinguish
 \(k_d\) from \(\theta_{0,d}\), quiet windows that remain coherent after
 alignment, and a structured cumulative-hazard offset model when the
-delta path is used. Under minimal aggregated data, \(\theta_{0,d}\) is
-identifiable only conditional on the working assumption that no constant
-multiplicative hazard effect operates within the quiet-window
-identification regime; over short horizons, such an effect is
-observationally confounded with frailty-induced curvature. If any of
-these conditions fails, the estimator is weakly identified or
-non-identified.
+delta path is used. Curvature-based identification of \(\theta_{0,d}\)
+is invariant to constant multiplicative rescaling of hazards when
+scaling is common or approximately common across cohorts; heterogeneous
+multiplicative effects across cohorts may perturb depletion paths and
+are evaluated with diagnostics, while additive or sharply time-varying
+components can alter curvature and contaminate \(\theta_{0,d}\). The
+optional exponent \(\alpha\) can alias with cohort-specific
+multiplicative effects in minimal aggregated data (§5.4). If any of
+these joint regime conditions fails, the estimator is weakly identified
+or non-identified.
 
 This ambiguity remains structural rather than cosmetic. In minimal
-aggregated data, depletion-induced curvature, constant proportional
-hazard shifts, and external time-varying hazards are not generically
-separable over short horizons. The revised estimator improves internal
+aggregated data, depletion-induced curvature is not generically
+separable from additive or sharply time-varying hazard components that
+distort curvature over short horizons, and differential multiplicative
+effects across cohorts can resemble cross-cohort structure targeted by
+the optional NPH module. The revised estimator improves internal
 coherence by aligning the parameter target with enrollment time and by
 pooling information across quiet windows, but it does not eliminate the
 need for diagnostics or transform the method into a causal effect
@@ -2654,6 +2699,21 @@ boundary-seeking estimates, or disagreement between the pairwise and
 collapse estimators. These patterns are treated as evidence of weak
 signal or misspecification rather than as valid parameter estimates, and
 the NPH module should be considered inactive or unreliable.
+
+\textbf{Non-identifiability under simultaneous multiplicative
+effects.}\\
+In minimal aggregated data, the NPH exponent \(\alpha\) is not
+separately identifiable from cohort-specific multiplicative effects
+(e.g., intervention-associated hazard reduction). Both mechanisms can
+produce similar cross-cohort excess-hazard ratios, leading to flat
+objective functions and boundary-seeking behavior.
+
+Simulation results confirm that even when \(\alpha\) is identifiable
+under a correctly specified synthetic data-generating process, the
+addition of multiplicative effects rapidly degrades identifiability.
+This explains why \(\alpha\) may be recoverable in controlled
+simulations but not in real-world data where multiplicative effects and
+depletion geometry coexist.
 
 The optional NPH model does \textbf{not} eliminate all epidemic-wave
 uncertainty. It assumes that excess hazard can be separated from
@@ -3606,9 +3666,11 @@ corresponding identifiability criteria. KCOR is designed to \textbf{fail
 transparently rather than silently}: when an assumption is violated, the
 resulting lack of identifiability or model stress manifests through
 explicit diagnostic signals rather than spurious estimates. In
-particular, proportional hazard differences within quiet windows may not
-be distinguishable from frailty-induced curvature, and such cases are
-expected to trigger diagnostic instability or non-identifiability.
+particular, non-multiplicative or strongly time-varying components
+within quiet windows can distort curvature and obscure depletion
+geometry, and heterogeneous multiplicative effects across cohorts can
+perturb depletion dynamics; such cases are expected to trigger
+diagnostic instability or non-identifiability.
 
 The KCOR framework separates \textbf{working assumptions},
 \textbf{empirical diagnostics}, and \textbf{identifiability criteria};
@@ -3652,9 +3714,13 @@ modeled extensions. & Prevents confounding by cohort-specific shocks \\
 A3 Enrollment-time frailty & Selection operates through time-invariant
 latent heterogeneity summarized by cohort-specific enrollment-time
 frailty variance \(\theta_{0,d}\), estimated separately for each cohort.
-Under minimal aggregated data, this interpretation is conditional on no
-constant multiplicative hazard effect operating inside the quiet-window
-identification regime. & Defines the parameter targeted by the
+Under minimal aggregated data, \(\theta_{0,d}\) is interpreted via
+curvature in cumulative-hazard space; constant multiplicative effects
+are not separately identifiable from baseline scale. Curvature-based
+identification is invariant to multiplicative scaling that is common or
+approximately common across cohorts, while heterogeneous multiplicative
+effects and non-multiplicative contamination are assessed via
+diagnostics (main text §2.4.4). & Defines the parameter targeted by the
 estimator \\
 A4 Adequacy of gamma frailty & Gamma frailty provides a reasonable
 approximation to observed depletion geometry. & Allows tractable
@@ -3766,10 +3832,11 @@ Consequence if violated
 I1 Diagnostic sufficiency & All required diagnostics pass. & KCOR
 interpretable \\
 I2 Curvature sufficiency & Mortality geometry contains enough curvature
-to distinguish \(k_d\) from \(\theta_{0,d}\), conditional on no constant
-multiplicative hazard effect being observationally confounded with that
-curvature in the quiet-window regime. & \(\theta_{0,d}\) weakly
-identified \\
+to distinguish \(k_d\) from \(\theta_{0,d}\), with diagnostics
+supporting curvature-based identification (including adequacy of common
+multiplicative scaling across cohorts where relevant and absence of
+dominant non-multiplicative contamination in the quiet-window regime). &
+\(\theta_{0,d}\) weakly identified \\
 I3 Multi-window coherence & Quiet windows remain consistent after
 alignment. & Interpretation limited \\
 I4 Delta applicability & Offset reconstruction is coherent when the
@@ -3788,15 +3855,17 @@ reported \\
 
 When diagnostics indicate non-identifiability, the analysis is treated
 as not identified and results are not reported; this does not invalidate
-the KCOR estimator itself. In minimal aggregated data, a constant
-multiplicative hazard effect within the quiet-window regime is
-observationally confounded with frailty-induced curvature over short
-horizons, so identifiability of \(\theta_{0,d}\) remains conditional on
-the working model rather than assumption-free. When the optional NPH
-module is used, identifiability of \(\alpha\) is likewise conditional:
-it depends on cross-cohort separation in depletion geometry and stable
-excess-hazard measurement rather than on any direct observation of the
-common external intensity.
+the KCOR estimator itself. In minimal aggregated data, identifiability
+of \(\theta_{0,d}\) from curvature remains conditional on the working
+model rather than assumption-free: additive or sharply time-varying
+components can distort curvature, and heterogeneous multiplicative
+effects across cohorts can perturb depletion paths, with diagnostics
+intended to surface these failure modes. When the optional NPH module is
+used, identifiability of \(\alpha\) is likewise conditional: it depends
+on cross-cohort separation in depletion geometry and stable
+excess-hazard measurement, and \(\alpha\) is not separately identifiable
+from cohort-specific multiplicative effects under minimal data (main
+text §5.4). The common external intensity is not directly observed.
 
 \subsubsection{S2.1 Optional NPH exponent model: estimator and failure
 signatures}\label{s2.1-optional-nph-exponent-model-estimator-and-failure-signatures}

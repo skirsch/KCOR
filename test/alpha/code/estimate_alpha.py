@@ -1107,8 +1107,18 @@ def simulate_synthetic_table(
         (1950, SYNTHETIC_DOSE_VACCINATED),
     ]
 
+    n_strata = len(cohort_strata)
+    n_effective = (n_cohorts // n_strata) * n_strata
+    if n_effective != n_cohorts:
+        print(
+            f"[ALPHA] simulate_synthetic_table: n_cohorts={n_cohorts} is not divisible by "
+            f"n_strata={n_strata}; truncating to {n_effective} so every enrollment block is a "
+            f"complete Cartesian product of {n_strata // 2} YOB decades × 2 doses.",
+            flush=True,
+        )
+
     rows = []
-    for cohort_idx in range(n_cohorts):
+    for cohort_idx in range(n_effective):
         theta_w = float(theta_values[cohort_idx % len(theta_values)]) * float(theta_multiplier)
         yob_decade, dose = cohort_strata[cohort_idx % len(cohort_strata)]
         enrollment_group = cohort_idx // len(cohort_strata)
@@ -1167,6 +1177,31 @@ def build_synthetic_primary_subset(table: pd.DataFrame, neutralization_mode: str
     df = df[np.isfinite(df["theta_t_gamma"]) & np.isfinite(df["excess"])].copy()
     df["neutralization_mode"] = neutralization_mode
     return df
+
+
+def filter_synthetic_primary_cross_dose_pairs(primary_df: pd.DataFrame) -> pd.DataFrame:
+    """Keep only rows where both SYNTHETIC_DOSE_REFERENCE and SYNTHETIC_DOSE_VACCINATED are
+    present within each (enrollment_date, yob_decade, iso_int) cell.
+
+    # TODO: This filter guarantees ref+vacc balance within each stratum cell, but
+    # evaluate_pairwise_objective still groups by iso_int alone — so cross-YOB pairs
+    # (e.g. ref@1930 vs vacc@1940) still enter the pairwise objective and can contaminate
+    # θ geometry unrelated to VE. If test_ve_alpha_recovery fails, follow up with either
+    # (a) restricting evaluation to a single yob_decade, or (b) a pairwise mode that groups
+    # by (enrollment_date, yob_decade, iso_int) and only uses the ref-vs-vacc contrast.
+    """
+    if primary_df.empty:
+        return primary_df.copy()
+    required_doses = {int(SYNTHETIC_DOSE_REFERENCE), int(SYNTHETIC_DOSE_VACCINATED)}
+    group_cols = ["enrollment_date", "yob_decade", "iso_int"]
+    present = (
+        primary_df.groupby(group_cols)["dose"]
+        .apply(lambda s: required_doses.issubset(set(s.astype(int).tolist())))
+        .reset_index()
+        .rename(columns={"dose": "_both_doses"})
+    )
+    merged = primary_df.merge(present, on=group_cols, how="left")
+    return merged[merged["_both_doses"] == True].drop(columns=["_both_doses"]).copy()  # noqa: E712
 
 
 def apply_conditional_ve_adjustment(primary_df: pd.DataFrame, ve_assumed: float) -> pd.DataFrame:
@@ -1309,6 +1344,131 @@ def evaluate_synthetic_best_with_diagnostics(
     return best_df, pd.DataFrame(metric_rows), pd.DataFrame(regression_rows)
 
 
+def test_ve_alpha_recovery(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]:
+    """Focused recoverability test: fix alpha_true=1.2, ve_multiplier=0.5, ve_assumed=0.5,
+    run 10 reps, and assert that mean alpha_hat_raw is within 0.05 of 1.2 for both
+    pairwise and collapse estimators across at least 8 successful reps.
+
+    Uses a single yob_decade (1940) so each iso_int group contains exactly 2 cohorts —
+    one ref and one vacc — giving both pairwise and collapse the minimal clean cross-dose
+    geometry. This eliminates cross-YOB contamination of the pairwise objective and gives
+    the collapse estimator a clean 2-cohort within-week contrast.
+
+    Raises AssertionError (uncaught) if either assertion fails.
+    Returns a dict with 'rows' (per-rep records), 'report' (markdown string), and 'passed' (bool).
+    """
+    alpha_true = 1.2
+    ve_multiplier = 0.5
+    ve_assumed = 0.5
+    noise_model = "lognormal_fixed"
+    n_reps = 10
+    tolerance = 0.05
+    min_successful = 8
+    neutralization_mode = NEUTRALIZATION_REFERENCE
+    test_yob_decade = 1940
+
+    base_seed = int(cfg["synthetic"]["seed"])
+    rep_rows: list[dict] = []
+
+    for rep in range(n_reps):
+        seed = base_seed + 900_000 + rep
+        table = simulate_synthetic_table(
+            cfg, alpha_true, seed, noise_model=noise_model, ve_multiplier=ve_multiplier
+        )
+        primary_df = filter_synthetic_primary_cross_dose_pairs(
+            build_synthetic_primary_subset(table, neutralization_mode)
+        )
+        primary_df = primary_df[primary_df["yob_decade"] == test_yob_decade].copy()
+        adjusted_df = apply_conditional_ve_adjustment(primary_df, ve_assumed)
+        validate_conditional_ve_adjustment(primary_df, adjusted_df, ve_assumed)
+        _, metrics_df, _ = evaluate_synthetic_best_with_diagnostics(
+            adjusted_df,
+            cfg,
+            alpha_values,
+            neutralization_mode,
+            seed_base=seed + 7_000,
+        )
+        successful = (
+            not metrics_df.empty
+            and set(metrics_df["estimator"]) == {"pairwise", "collapse"}
+            and metrics_df["alpha_hat_raw"].apply(np.isfinite).all()
+        )
+        if successful:
+            for _, row in metrics_df.iterrows():
+                rep_rows.append(
+                    {
+                        "rep": rep,
+                        "estimator": str(row["estimator"]),
+                        "alpha_hat_raw": float(row["alpha_hat_raw"]),
+                        "bias": float(row["alpha_hat_raw"]) - alpha_true,
+                        "successful": True,
+                    }
+                )
+        else:
+            for estimator in ("pairwise", "collapse"):
+                rep_rows.append(
+                    {
+                        "rep": rep,
+                        "estimator": estimator,
+                        "alpha_hat_raw": float("nan"),
+                        "bias": float("nan"),
+                        "successful": False,
+                    }
+                )
+
+    rows_df = pd.DataFrame(rep_rows)
+    successful_df = rows_df[rows_df["successful"]].copy()
+    n_successful = int(successful_df["rep"].nunique()) if not successful_df.empty else 0
+
+    assert n_successful >= min_successful, (
+        f"test_ve_alpha_recovery: only {n_successful}/{n_reps} reps produced valid diagnostics "
+        f"(need >= {min_successful}). Empty metrics_df from evaluate_synthetic_best_with_diagnostics "
+        f"indicates the filtered primary_df may be too small for the estimators to converge. "
+        f"alpha_true={alpha_true}, ve_multiplier={ve_multiplier}, ve_assumed={ve_assumed}."
+    )
+
+    mean_pair = float(np.nanmean(successful_df.loc[successful_df["estimator"] == "pairwise", "alpha_hat_raw"]))
+    mean_collapse = float(np.nanmean(successful_df.loc[successful_df["estimator"] == "collapse", "alpha_hat_raw"]))
+    bias_pair = mean_pair - alpha_true
+    bias_collapse = mean_collapse - alpha_true
+
+    assert abs(bias_pair) <= tolerance, (
+        f"test_ve_alpha_recovery FAILED (pairwise): mean alpha_hat_raw={mean_pair:.4f}, "
+        f"alpha_true={alpha_true}, bias={bias_pair:+.4f}, tolerance=±{tolerance}. "
+        f"Successful reps: {n_successful}/{n_reps}. "
+        f"Collapse mean={mean_collapse:.4f} (bias={bias_collapse:+.4f})."
+    )
+    assert abs(bias_collapse) <= tolerance, (
+        f"test_ve_alpha_recovery FAILED (collapse): mean alpha_hat_raw={mean_collapse:.4f}, "
+        f"alpha_true={alpha_true}, bias={bias_collapse:+.4f}, tolerance=±{tolerance}. "
+        f"Successful reps: {n_successful}/{n_reps}. "
+        f"Pairwise mean={mean_pair:.4f} (bias={bias_pair:+.4f})."
+    )
+
+    lines = [
+        "# Conditional VE alpha recoverability test",
+        "",
+        f"Fixed: alpha_true={alpha_true}, ve_multiplier={ve_multiplier}, "
+        f"ve_assumed={ve_assumed}, noise_model={noise_model}, reps={n_reps}, "
+        f"yob_decade={test_yob_decade} (single-YOB: 2 cohorts per iso_int, one ref + one vacc)",
+        f"Result: **PASS** — {n_successful}/{n_reps} reps successful",
+        f"Pairwise: mean alpha_hat_raw={mean_pair:.4f}, bias={bias_pair:+.4f}",
+        f"Collapse: mean alpha_hat_raw={mean_collapse:.4f}, bias={bias_collapse:+.4f}",
+        "",
+        "| rep | estimator | alpha_hat_raw | bias |",
+        "| --- | --- | --- | --- |",
+    ]
+    for _, row in rows_df.sort_values(["rep", "estimator"]).iterrows():
+        ahv = f"{row['alpha_hat_raw']:.4f}" if np.isfinite(row["alpha_hat_raw"]) else "NA"
+        bv = f"{row['bias']:+.4f}" if np.isfinite(row["bias"]) else "NA"
+        lines.append(f"| {int(row['rep'])} | {row['estimator']} | {ahv} | {bv} |")
+    lines.append("")
+
+    report = "\n".join(lines)
+    print(f"[ALPHA] test_ve_alpha_recovery PASS: pairwise bias={bias_pair:+.4f}, collapse bias={bias_collapse:+.4f} ({n_successful}/{n_reps} reps)", flush=True)
+    return {"rows": rows_df, "report": report, "passed": True}
+
+
 def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]:
     synth_cfg = cfg["synthetic"]
     if not bool(synth_cfg.get("enabled", True)):
@@ -1317,6 +1477,7 @@ def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]
             "ve_recovery_df": pd.DataFrame(),
             "ve_summary_df": pd.DataFrame(),
             "ve_report": "",
+            "ve_alpha_recovery_report": "",
         }
     base_seed = int(synth_cfg["seed"])
     reps = int(synth_cfg.get("reps", 8))
@@ -1478,11 +1639,14 @@ def synthetic_recovery(cfg: dict, alpha_values: np.ndarray) -> dict[str, object]
     ve_summary_df = summarize_synthetic_vaccine_effect(ve_recovery_df)
     ve_report = render_synthetic_vaccine_effect_report(ve_recovery_df, ve_summary_df)
     validate_synthetic_ve_regression(regression_check_df)
+    recovery_test_result = test_ve_alpha_recovery(cfg, alpha_values)
+    ve_report = ve_report + "\n---\n\n" + recovery_test_result["report"]
     return {
         "legacy_df": legacy_df,
         "ve_recovery_df": ve_recovery_df,
         "ve_summary_df": ve_summary_df,
         "ve_report": ve_report,
+        "ve_alpha_recovery_report": recovery_test_result["report"],
     }
 
 
@@ -1520,6 +1684,15 @@ def conditional_ve_alpha_identification(cfg: dict, alpha_values: np.ndarray) -> 
                     ve_multiplier=target_multiplier,
                 )
                 primary_df = build_synthetic_primary_subset(table, neutralization_mode)
+                # TODO: filter_synthetic_primary_cross_dose_pairs guarantees ref+vacc balance
+                # within each (enrollment_date, yob_decade, iso_int) cell, but
+                # evaluate_pairwise_objective still groups by iso_int alone — so cross-YOB
+                # pairs (e.g. ref@1930 vs vacc@1940) still enter the objective and can
+                # contaminate θ geometry unrelated to VE. If test_ve_alpha_recovery fails,
+                # follow up with single-yob_decade evaluation or a pairwise mode that groups
+                # by (enrollment_date, yob_decade, iso_int) and uses only the ref-vs-vacc
+                # contrast.
+                primary_df = filter_synthetic_primary_cross_dose_pairs(primary_df)
                 _, base_metrics_df, _ = evaluate_synthetic_best_with_diagnostics(
                     primary_df,
                     cfg,
