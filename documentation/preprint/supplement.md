@@ -38,7 +38,7 @@ Table: KCOR working assumptions. {#tbl:si_assumptions}
 | A5 Adequacy of Gompertz baseline | A fixed Gompertz age slope is a reasonable working approximation over the estimation horizon. | Anchors the structured baseline used to identify $\theta_{0,d}$ |
 | A6 Multi-window quiet-period validity | Prespecified quiet windows exist in which depletion can be identified without dominant external shocks. | Permits pooled identification across windows within each cohort |
 | A7 Structured offset additivity | When the delta path is used, wave effects are additive in cumulative-hazard space and persist forward after the wave ends. | Permits alignment of quiet windows through $\delta_i$ and $\Delta(t)$ |
-| A8 Optional NPH exponent model identifiability | When the optional NPH module is used, excess hazard is reasonably represented by a shared-amplitude frailty-dependent amplification model with a global exponent $\alpha$, and there is sufficient cross-cohort separation in depletion geometry to identify that exponent from relative structure. | Supports optional NPH preprocessing before inversion |
+| A8 Optional NPH exponent model identifiability | When the optional NPH module is used, excess hazard is reasonably represented by a shared-amplitude frailty-dependent amplification model with a global exponent $\alpha$; $\alpha$ is localized using cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale** not learned from the same wave-period contrasts; and the cumulative correction is applied **after** gamma-frailty inversion (main text §2.7). | Supports optional post-inversion NPH correction |
 
 Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnostics}
 
@@ -51,7 +51,7 @@ Table: Empirical diagnostics associated with KCOR assumptions. {#tbl:si_diagnost
 | Post-normalization linearity | Assess curvature removal in cumulative-hazard space. | Approximate linearity after normalization within quiet windows as a diagnostic check under the working model |
 | Residual structure | Examine residuals in hazard space. | No systematic time-structure within or across windows |
 | KCOR(t) stability | Inspect KCOR trajectories following anchoring. | Stabilization rather than drift, interpreted diagnostically rather than as proof |
-| Optional NPH diagnostics | Compare pairwise and collapse estimators, theta propagation scales, excess-handling choices, and with/without-module results when relevant. | Estimator agreement, non-flat objectives, and limited dependence on reasonable NPH settings |
+| Optional NPH diagnostics | Compare pairwise and collapse estimators, theta propagation scales, excess-handling choices, post-inversion correction diagnostics, and with/without-module results when relevant. | Estimator agreement, non-flat objectives, and limited dependence on reasonable NPH settings |
 
 Empirical illustration of the "Quiet-window perturbation" diagnostic is provided in Figure @fig:si_quiet_window_theta_scan, which scans monthly-shifted 12-month windows in Czech registry data.
 
@@ -64,10 +64,10 @@ Table: Identifiability criteria governing KCOR interpretation. {#tbl:si_identifi
 | I3 Multi-window coherence | Quiet windows remain consistent after alignment. | Interpretation limited |
 | I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identifiable |
 | I5 Anchoring validity | Post-normalization behavior is stable in the reference quiet window. | Anchoring invalid |
-| I6 NPH signal sufficiency | When the optional NPH module is used, cross-cohort differences in depletion geometry and excess hazard are strong enough to identify $\alpha$ from relative structure. | $\alpha$ weakly identified; objectives flatten or estimators disagree |
+| I6 NPH signal sufficiency | When the optional NPH module is used, cross-cohort differences in depletion geometry and excess hazard are strong enough to localize $\alpha$ jointly with a prespecified **externally supplied VE or other prespecified intervention-effect scale**. | $\alpha$ weakly identified; objectives flatten or estimators disagree |
 | I7 Conservative failure rule | Any failure → diagnostics indicate non-identifiability. | Analysis treated as not identified; results not reported |
 
-When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself. In minimal aggregated data, identifiability of $\theta_{0,d}$ from curvature remains conditional on the working model rather than assumption-free: additive or sharply time-varying components can distort curvature, and heterogeneous multiplicative effects across cohorts can perturb depletion paths, with diagnostics intended to surface these failure modes. When the optional NPH module is used, identifiability of $\alpha$ is likewise conditional: it depends on cross-cohort separation in depletion geometry and stable excess-hazard measurement, and $\alpha$ is not separately identifiable from cohort-specific multiplicative effects under minimal data (main text §5.4). The common external intensity is not directly observed.
+When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself. In minimal aggregated data, identifiability of $\theta_{0,d}$ from curvature remains conditional on the working model rather than assumption-free: additive or sharply time-varying components can distort curvature, and heterogeneous multiplicative effects across cohorts can perturb depletion paths, with diagnostics intended to surface these failure modes. When the optional NPH module is used, identifiability of $\alpha$ is likewise conditional: it depends on cross-cohort separation in depletion geometry, stable excess-hazard measurement, and a prespecified **externally supplied VE or other prespecified intervention-effect scale** (main text §2.7.2); $\alpha$ is not separately identifiable from cohort-specific multiplicative effects under minimal data if that scale is not fixed externally (main text §5.4). The common external intensity is not directly observed.
 
 ### S2.1 Optional NPH exponent model: estimator and failure signatures
 
@@ -81,7 +81,7 @@ $$
 
 where $A(t)$ is an unknown common amplitude and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. When $\alpha=1$, amplification is proportional to baseline risk and the NPH module is effectively inactive. The exponent $\alpha$ should be interpreted as a model-calibrated summary of frailty-dependent amplification under the working model, not as a uniquely identified biological or mechanistic constant.
 
-Because $A(t)$ is common across cohorts, absolute excess hazards are not directly comparable. However, cross-cohort ratios eliminate the common amplitude:
+Because $A(t)$ is common across cohorts, absolute excess hazards are not directly comparable. However, cross-cohort ratios eliminate the unknown common amplitude:
 
 $$
 \frac{h_{\mathrm{excess},i}(t)}{h_{\mathrm{excess},j}(t)}
@@ -89,9 +89,17 @@ $$
 \frac{F_i(t;\alpha)}{F_j(t;\alpha)}.
 $$
 
-This invariance is the core identification logic for $\alpha$: the parameter is identified, if at all, from relative cohort structure rather than from absolute hazard levels. Identification therefore requires sufficient cross-cohort variation in depletion geometry and cumulative hazard. When cohorts are too similar, or when excess hazard is measured unreliably, the objective functions flatten and $\alpha$ becomes weakly identified.
+**Post-inversion correction.** Applying the NPH correction after gamma-frailty inversion ensures wave-period excess is measured relative to a frailty-neutral baseline in cumulative-hazard space; correcting raw hazards would confound depletion geometry with amplification (main text §2.7.3). In discrete weekly bins, a Gompertz reference path is anchored at wave entry, only strictly positive excess above that path is divided by $F_d(t;\alpha)$, and the corrected cumulative hazard is enforced to be non-decreasing.
 
-The two operational estimators mirror the main text. The **pairwise estimator** minimizes
+**Identification with fixed external scale.** Under minimal aggregated data, $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects unless **externally supplied VE or other prespecified intervention-effect scale** is fixed and not estimated from the same wave-period contrasts used to localize $\alpha$ (main text §2.7.2). Given a fixed scale $x$ relating frailty-neutral excess hazards between cohorts $A$ and $B$,
+
+$$
+\frac{\Delta h_A^{\mathrm{obs}}(t)}{\Delta h_B^{\mathrm{obs}}(t)}
+=
+(1-x)\,\frac{F_A(t;\alpha)}{F_B(t;\alpha)}.
+$$
+
+With **externally supplied VE or other prespecified intervention-effect scale** fixed as in main text §2.7.2, the operational **pairwise estimator** minimizes discrepancies between observed log excess-hazard ratios and $\log(1-x)+\log F_i(t;\alpha)-\log F_j(t;\alpha)$, in the same spirit as
 
 $$
 \sum_{i<j,t}
@@ -101,13 +109,15 @@ $$
 \right]^2,
 $$
 
-while the **collapse estimator** minimizes
+but with the appropriate $\log(1-x)$ offset absorbed into the target or the residual as implemented in the reference code. The **collapse estimator** minimizes
 
 $$
 \operatorname{Var}_d\!\left[
 \log e_d(t)-\log F_d(t;\alpha)
-\right].
+\right]
 $$
+
+under the same fixed-scale restriction.
 
 Agreement between the two estimators is treated as supportive of identification under the working model; disagreement is diagnostic rather than something to be averaged away. Additional robustness checks vary the excess-hazard handling rule, baseline anchor choice, and theta propagation scale.
 
