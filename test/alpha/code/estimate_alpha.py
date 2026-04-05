@@ -3647,6 +3647,8 @@ def plot_manuscript_czech_objective(curves: pd.DataFrame, best_df: pd.DataFrame,
     if primary.empty:
         raise ValueError("Primary objective figure rows not found for pooled Czech specification")
     fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     pair_row = _filter_best_unique(
         best_df,
         neutralization_mode=primary_mode,
