@@ -4,19 +4,19 @@ overview: "Implement empirical bootstrap coverage per [test/sim_grid/code/comput
 todos:
   - id: refactor-coverage-loop
     content: Replace compute_coverage_for_scenario_simple with plan’s full reference listing; adapt _bootstrap_one_dataset to scenario_data["cohorts"]; use copy.deepcopy per cohort dict, then overwrite weeks/alive/dead; never collapse to one cross-replicate CI.
-    status: in_progress
+    status: completed
   - id: wire-bootstrap-fn
     content: Call bootstrap_resample_cohort_data per cohort on boot copies; refactor RNG to default_rng / per-draw seeds; document in bootstrap_resample docstring that Poisson deaths are an approximation, not exact discrete survival resampling.
-    status: pending
+    status: completed
   - id: cli-and-csv
     content: Add --n-bootstrap/-b default 200; pass n_bootstrap into compute_coverage_for_scenario_simple; fix module Usage; extend CSV with n_failed, median_point_estimate, mean_ci_width, coverage_percent, coverage_se=sqrt(p*(1-p)/n_valid) for Table 11.
-    status: pending
+    status: completed
   - id: optional-theta-coverage
     content: Separate θ₀ bootstrap coverage function; match theta_hat to theta_true by cohort dose (not list index); per-arm where theta_true is finite; scenario 4 N/A.
-    status: pending
+    status: completed
   - id: regen-paper-table
     content: Rerun with current estimator; refresh Table 11 / tbl:bootstrap_coverage and narrative percentages; consider appendix or second table for θ₀ coverage.
-    status: pending
+    status: completed
 isProject: false
 ---
 

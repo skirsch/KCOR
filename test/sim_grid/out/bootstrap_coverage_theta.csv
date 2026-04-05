@@ -1,0 +1,6 @@
+scenario,coverage_theta_d0,coverage_theta_d0_percent,coverage_theta_d0_se,n_valid_theta_d0,coverage_theta_d1,coverage_theta_d1_percent,coverage_theta_d1_se,n_valid_theta_d1,n_failed_simulations
+Gamma-frailty null,0.0,0.0,0.0,2,0.0,0.0,0.0,2,0
+Injected effect (harm),0.0,0.0,0.0,2,0.0,0.0,0.0,2,0
+Injected effect (benefit),0.0,0.0,0.0,2,0.0,0.0,0.0,2,0
+Non-gamma frailty,,,,0,,,,0,0
+Sparse events,0.5,50.0,0.3535533905932738,2,1.0,100.0,0.0,2,0
