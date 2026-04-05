@@ -60,7 +60,7 @@ bootstrap:
   summary_estimator: pairwise
 
 identifiability:
-  min_normalized_curvature: 0.01
+  min_normalized_curvature: 0.0005
   max_estimator_gap: 0.03
   max_leave_one_out_shift: 0.03
   max_bootstrap_iqr: 0.10

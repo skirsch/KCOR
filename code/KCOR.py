@@ -2364,10 +2364,11 @@ def _build_theta_quiet_mask(iso_int, t_vals):
 def apply_covid_correction_in_place(df, covid_cfg, kcor6_params_map=None, sheet_name=None):
     """Adjust hazard_raw in-place during the configured NPH interval.
 
-    The production path supports only the symmetric all-cohort neutralization form.
-    When enabled, each cohort is adjusted relative to its own wave-start reference
-    hazard using the existing theta-based frailty depletion machinery.
+    DEPRECATED: pre-inversion raw-hazard correction replaced by
+    apply_nph_correction_post_inversion() called after invert_gamma_frailty().
+    This function is now a no-op; body preserved for audit.
     """
+    return
     if covid_cfg is None:
         return
     if "hazard_raw" not in df.columns:
@@ -2444,6 +2445,161 @@ def apply_covid_correction_in_place(df, covid_cfg, kcor6_params_map=None, sheet_
         adjusted_any = True
     if adjusted_any:
         df["hazard_raw"] = np.clip(df["hazard_raw"], 0.0, None)
+
+def apply_nph_correction_post_inversion(
+    H0,
+    t_vals,
+    dates,
+    theta_applied,
+    alpha,
+    start_dt,
+    end_dt,
+    k_hat,
+    gamma_per_week,
+    t_rebased=None,
+):
+    """Apply NPH alpha correction to frailty-neutral cumulative hazard H0(t).
+
+    This is the post-inversion replacement for apply_covid_correction_in_place.
+    It operates entirely in cumulative-hazard space after gamma-frailty inversion,
+    using the cohort's fitted Gompertz baseline path as the wave-excess reference.
+
+    The correction divides only the strictly positive wave excess above the Gompertz
+    baseline by the frailty-depletion factor F_d(t, alpha).  Points where H0 is at or
+    below the baseline (delta <= 0) are left unchanged (H_corr = H0 there), since
+    negative delta is a valid signal that H0 is below the baseline and should not be
+    corrected.
+
+    The H_ref path is anchored to H0 at the first wave point (H_ref[i0] = H0[i0]),
+    ensuring continuity at wave entry, then accumulates forward using the Gompertz
+    per-week hazard h_base(t) = k_hat * exp(gamma_per_week * t_rebased).
+
+    Parameters
+    ----------
+    H0 : np.ndarray, shape (n,)
+        Frailty-neutral cumulative hazard from invert_gamma_frailty.
+    t_vals : np.ndarray, shape (n,)
+        Cohort time index (same convention as KCOR pipeline).
+    dates : np.ndarray, shape (n,)
+        DateDied array aligned with H0.
+    theta_applied : float
+        Cohort theta used in invert_gamma_frailty.
+    alpha : float
+        NPH alpha parameter.
+    start_dt : datetime-like
+        Wave window start date.
+    end_dt : datetime-like
+        Wave window end date.
+    k_hat : float
+        Gompertz k from kcor6_params_map["k_hat"].
+    gamma_per_week : float
+        Gompertz slope from get_gompertz_theta_fit_config()["gamma_per_week"].
+    t_rebased : np.ndarray or None
+        t - DYNAMIC_HVE_SKIP_WEEKS; derived from t_vals if None.
+
+    Returns
+    -------
+    H_corr : np.ndarray, shape (n,)
+        NPH-corrected cumulative hazard (monotone non-decreasing).
+    diagnostics : dict
+        Keys: correction_mode, max_abs_change, wave_points, corrected_points,
+        skipped_nonpositive_excess, f_min, f_max, any_nonmonotone_fixed.
+    """
+    diag = {
+        "correction_mode": "forced_alpha",
+        "max_abs_change": 0.0,
+        "wave_points": 0,
+        "corrected_points": 0,
+        "skipped_nonpositive_excess": 0,
+        "f_min": float("nan"),
+        "f_max": float("nan"),
+        "any_nonmonotone_fixed": False,
+    }
+
+    # Guard: identity shortcut
+    if abs(alpha - 1.0) <= NPH_IDENTITY_TOL:
+        diag["correction_mode"] = "identity"
+        return H0.copy(), diag
+
+    # Guard: missing / non-finite Gompertz parameters
+    if not (np.isfinite(k_hat) and np.isfinite(gamma_per_week) and k_hat > 0.0):
+        diag["correction_mode"] = "skipped_missing_params"
+        return H0.copy(), diag
+
+    n = len(H0)
+    if n == 0:
+        return H0.copy(), diag
+
+    # Wave mask — convert bounds to numpy.datetime64 so the comparison works
+    # whether dates is an array of numpy.datetime64 (from pd.to_datetime().to_numpy())
+    # or of Python datetime objects.
+    start_np = np.datetime64(start_dt, "ns")
+    end_np = np.datetime64(end_dt, "ns")
+    dates_arr = np.asarray(dates, dtype="datetime64[ns]")
+    wave_mask = (dates_arr >= start_np) & (dates_arr <= end_np)
+    wave_indices = np.where(wave_mask)[0]
+    diag["wave_points"] = int(wave_indices.size)
+
+    if wave_indices.size == 0:
+        diag["correction_mode"] = "no_wave_points"
+        return H0.copy(), diag
+
+    # t_rebased
+    if t_rebased is None:
+        t_reb = t_vals - float(DYNAMIC_HVE_SKIP_WEEKS)
+    else:
+        t_reb = np.asarray(t_rebased, dtype=float)
+
+    # F_d values: theta_t propagated from H0, then gamma_moment_alpha
+    theta_t = propagate_theta(float(theta_applied), H0)
+    f_vals = gamma_moment_alpha(theta_t, alpha)
+
+    f_wave = f_vals[wave_mask]
+    finite_f = f_wave[np.isfinite(f_wave) & (f_wave > EPS)]
+    if finite_f.size > 0:
+        diag["f_min"] = float(finite_f.min())
+        diag["f_max"] = float(finite_f.max())
+
+    # Gompertz baseline path H_ref (only computed over wave window)
+    h_base = k_hat * safe_exp(gamma_per_week * t_reb)
+    H_ref = np.full(n, np.nan, dtype=float)
+
+    i0 = int(wave_indices[0])
+    # Anchor H_ref to H0 at wave entry for continuity (delta[i0] = 0 by construction)
+    H_ref[i0] = H0[i0]
+    for i in wave_indices[1:]:
+        H_ref[i] = H_ref[i - 1] + h_base[i]
+
+    # Apply correction: only strictly positive excess above Gompertz baseline
+    H_corr = H0.copy()
+    delta = H0 - H_ref
+
+    positive_excess = delta > EPS
+    valid = (
+        wave_mask
+        & positive_excess
+        & np.isfinite(f_vals)
+        & (f_vals > EPS)
+        & np.isfinite(H_ref)
+    )
+
+    skipped = int(np.sum(wave_mask & ~positive_excess))
+    diag["skipped_nonpositive_excess"] = skipped
+
+    if np.any(valid):
+        H_corr[valid] = H_ref[valid] + delta[valid] / f_vals[valid]
+    diag["corrected_points"] = int(np.sum(valid))
+
+    # Monotonicity repair
+    H_corr_mono = np.maximum.accumulate(H_corr)
+    if not np.array_equal(H_corr_mono, H_corr):
+        diag["any_nonmonotone_fixed"] = True
+    H_corr = H_corr_mono
+
+    diag["max_abs_change"] = float(np.max(np.abs(H_corr - H0)))
+
+    return H_corr, diag
+
 
 def select_dynamic_anchor_offsets(enrollment_date, df_dates):
     """Deprecated; dynamic anchors removed. Return (None, None)."""
@@ -7459,6 +7615,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Optional NPH correction: apply configured wave preprocessing before inversion
         covid_cfg = get_covid_correction_config()
+        # Fetch Gompertz config once here so it is always available for the post-inversion
+        # NPH correction below, even if the Gompertz fitting block was skipped.
+        _gcf_nph = get_gompertz_theta_fit_config()
         apply_covid_correction_in_place(
             df,
             covid_cfg,
@@ -7795,6 +7954,39 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
                     # Depletion-neutralized cumulative hazard + increments
                     H0 = invert_gamma_frailty(H_obs, theta)
+
+                    # NPH correction is applied after gamma-frailty inversion in
+                    # cumulative-hazard space, relative to the fitted no-wave Gompertz
+                    # baseline path.  Only cohorts with a valid k_hat are corrected.
+                    if covid_cfg is not None and bool(covid_cfg.get("apply_correction", False)):
+                        alpha_nph = float(covid_cfg["apply_alpha"])
+                        nph_k_hat = float(params.get("k_hat", np.nan)) if isinstance(params, dict) else np.nan
+                        nph_gamma = _gcf_nph["gamma_per_week"]
+                        t_reb = t_vals - float(DYNAMIC_HVE_SKIP_WEEKS)
+                        H0, _nph_diag = apply_nph_correction_post_inversion(
+                            H0,
+                            t_vals,
+                            g_sorted["DateDied"].to_numpy(),
+                            theta,
+                            alpha_nph,
+                            covid_cfg["start_dt"],
+                            covid_cfg["end_dt"],
+                            nph_k_hat,
+                            nph_gamma,
+                            t_rebased=t_reb,
+                        )
+                        if _nph_diag.get("correction_mode") not in ("identity", "skipped_missing_params", "no_wave_points"):
+                            dual_print(
+                                f"[NPH_POST_INV] enroll={sh} yob={yob} dose={dose} "
+                                f"alpha={alpha_nph:.4f} k_hat={nph_k_hat:.6g} "
+                                f"f_min={_nph_diag.get('f_min', float('nan')):.4f} "
+                                f"f_max={_nph_diag.get('f_max', float('nan')):.4f} "
+                                f"max_abs_H_change={_nph_diag.get('max_abs_change', float('nan')):.6g} "
+                                f"wave_points={_nph_diag.get('wave_points', 0)} "
+                                f"corrected={_nph_diag.get('corrected_points', 0)} "
+                                f"skipped_nonpos={_nph_diag.get('skipped_nonpositive_excess', 0)}"
+                            )
+
                     h0_inc = np.diff(H0, prepend=0.0)
                     # Enforce skip-week rule and numeric safety
                     h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)

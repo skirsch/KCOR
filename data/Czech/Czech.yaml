@@ -14,9 +14,9 @@ birthBandYears: 5                   # 5 years age bands for the cohorts.
 NPH_correction:
   startDate: '2021-41'   # this is 10/11/2021
   endDate: '2022-12'     # COVID extends into 3/21/2022
-  mode: identified_only   # options are off, identified_only, forced_alpha
-  identified_alpha: null   # set only when an audited production-readable identified alpha exists
-  forced_alpha: null       # sensitivity-only override used only when mode = forced_alpha
+  mode: forced_alpha   # options are off, identified_only, forced_alpha
+  identified_alpha: 1.18   # set only when an audited production-readable identified alpha exists
+  forced_alpha: 1.18       # sensitivity-only override used only when mode = forced_alpha
   neutralization: symmetric_all_cohorts
 
 # The quiet window is used to estimate the theta parameter for the gamma frailty model.
