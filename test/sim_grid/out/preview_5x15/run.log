@@ -1,0 +1,135 @@
+============================================================
+KCOR empirical bootstrap coverage
+============================================================
+Simulation replicates per scenario: 5
+Bootstrap replicates per simulation: 15
+Target week: 80
+Truth seed (reference DGP draw): 0
+
+  DGP true_kcor [Gamma-frailty null]: 1.00943851579404
+  DGP true_kcor [Injected effect (harm)]: 1.1511348305379185
+  DGP true_kcor [Injected effect (benefit)]: 0.9625549099317127
+  DGP true_kcor [Non-gamma frailty]: 0.91715715041386
+  DGP true_kcor [Sparse events]: 1.0127308718663242
+
+Computing empirical bootstrap coverage for Gamma-frailty null...
+  True KCOR (DGP at target week, truth seed): 1.00943851579404
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  Target week: 80
+  Simulation 1/5
+  Valid simulations: 5/5
+  Failed simulations: 0
+  Median point estimate: 1.0094
+  Mean CI: [0.9499, 1.0773]
+  Mean CI width: 0.1274
+  Empirical coverage: 100.0% (SE ~ 0.00%)
+
+Computing theta bootstrap coverage for Gamma-frailty null...
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  target_week (metadata column): 80
+  Simulation 1/5
+  Theta coverage dose 0: 20.0% (n_valid=5)
+  Theta coverage dose 1: 20.0% (n_valid=5)
+  (checkpoint) wrote partial outputs: 1 scenario(s) complete
+
+Computing empirical bootstrap coverage for Injected effect (harm)...
+  True KCOR (DGP at target week, truth seed): 1.1511348305379185
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  Target week: 80
+  Simulation 1/5
+  Valid simulations: 5/5
+  Failed simulations: 0
+  Median point estimate: 1.1511
+  Mean CI: [1.0631, 1.2147]
+  Mean CI width: 0.1517
+  Empirical coverage: 100.0% (SE ~ 0.00%)
+
+Computing theta bootstrap coverage for Injected effect (harm)...
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  target_week (metadata column): 80
+  Simulation 1/5
+  Theta coverage dose 0: 20.0% (n_valid=5)
+  Theta coverage dose 1: 0.0% (n_valid=5)
+  (checkpoint) wrote partial outputs: 2 scenario(s) complete
+
+Computing empirical bootstrap coverage for Injected effect (benefit)...
+  True KCOR (DGP at target week, truth seed): 0.9625549099317127
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  Target week: 80
+  Simulation 1/5
+  Valid simulations: 5/5
+  Failed simulations: 0
+  Median point estimate: 0.9626
+  Mean CI: [0.8866, 1.0245]
+  Mean CI width: 0.1379
+  Empirical coverage: 100.0% (SE ~ 0.00%)
+
+Computing theta bootstrap coverage for Injected effect (benefit)...
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  target_week (metadata column): 80
+  Simulation 1/5
+  Theta coverage dose 0: 20.0% (n_valid=5)
+  Theta coverage dose 1: 0.0% (n_valid=5)
+  (checkpoint) wrote partial outputs: 3 scenario(s) complete
+
+Computing empirical bootstrap coverage for Non-gamma frailty...
+  True KCOR (DGP at target week, truth seed): 0.91715715041386
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  Target week: 80
+  Simulation 1/5
+  Valid simulations: 5/5
+  Failed simulations: 0
+  Median point estimate: 0.9977
+  Mean CI: [0.9437, 1.0733]
+  Mean CI width: 0.1296
+  Empirical coverage: 40.0% (SE ~ 21.91%)
+
+Computing theta bootstrap coverage for Non-gamma frailty...
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  target_week (metadata column): 80
+  Simulation 1/5
+  Theta coverage dose 0: nan% (n_valid=0)
+  Theta coverage dose 1: nan% (n_valid=0)
+  (checkpoint) wrote partial outputs: 4 scenario(s) complete
+
+Computing empirical bootstrap coverage for Sparse events...
+  True KCOR (DGP at target week, truth seed): 1.0127308718663242
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  Target week: 80
+  Simulation 1/5
+  Valid simulations: 5/5
+  Failed simulations: 0
+  Median point estimate: 1.0127
+  Mean CI: [0.3800, 3.7201]
+  Mean CI width: 3.3401
+  Empirical coverage: 100.0% (SE ~ 0.00%)
+
+Computing theta bootstrap coverage for Sparse events...
+  Simulation replicates: 5
+  Bootstrap replicates per simulation: 15
+  target_week (metadata column): 80
+  Simulation 1/5
+  Theta coverage dose 0: 80.0% (n_valid=5)
+  Theta coverage dose 1: 100.0% (n_valid=5)
+  (checkpoint) wrote partial outputs: 5 scenario(s) complete
+  WARNING (QA): n_simulations=5 or n_bootstrap=15 < 100; results are not publication-grade.
+  WARNING (QA): Scenario 'Injected effect (harm)' dose 0: collapsed theta CI on 20.0% of simulations (threshold 5.0%).
+  WARNING (QA): Scenario 'Injected effect (harm)' dose 1: collapsed theta CI on 100.0% of simulations (threshold 5.0%).
+  WARNING (QA): Scenario 'Injected effect (benefit)' dose 0: collapsed theta CI on 20.0% of simulations (threshold 5.0%).
+
+Saved KCOR coverage results to: test/sim_grid/out/preview_5x15/bootstrap_coverage.csv
+Saved KCOR replicate table to: test/sim_grid/out/preview_5x15/bootstrap_coverage_replicates.csv
+Saved theta coverage results to: test/sim_grid/out/preview_5x15/bootstrap_coverage_theta.csv
+Saved theta replicate table to: test/sim_grid/out/preview_5x15/bootstrap_coverage_theta_replicates.csv
+Wrote run manifest: test/sim_grid/out/preview_5x15/bootstrap_coverage_run.json
+
+Done. QA warnings (if any) are listed above.

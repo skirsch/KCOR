@@ -1,6 +1,2 @@
-scenario,coverage_theta_d0,coverage_theta_d0_percent,coverage_theta_d0_se,n_valid_theta_d0,coverage_theta_d1,coverage_theta_d1_percent,coverage_theta_d1_se,n_valid_theta_d1,n_failed_simulations
-Gamma-frailty null,0.0,0.0,0.0,2,0.0,0.0,0.0,2,0
-Injected effect (harm),0.0,0.0,0.0,2,0.0,0.0,0.0,2,0
-Injected effect (benefit),0.0,0.0,0.0,2,0.0,0.0,0.0,2,0
-Non-gamma frailty,,,,0,,,,0,0
-Sparse events,0.5,50.0,0.3535533905932738,2,1.0,100.0,0.0,2,0
+scenario,coverage_theta_d0,coverage_theta_d0_percent,coverage_theta_d0_se,n_valid_theta_d0,mean_ci_width_theta_d0,coverage_theta_d1,coverage_theta_d1_percent,coverage_theta_d1_se,n_valid_theta_d1,mean_ci_width_theta_d1,n_failed_simulations,truth_seed,target_week,ci_method,n_simulations,n_bootstrap,base_mc_seed
+Gamma-frailty null,0.2,20.0,0.1788854381999832,5,0.5449376730009154,0.0,0.0,0.0,5,0.2122773187238176,0,0,80,percentile_2.5_97.5,5,10,42

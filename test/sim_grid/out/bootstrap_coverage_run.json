@@ -1,0 +1,27 @@
+{
+  "script_version": "2.1",
+  "timestamp_utc": "2026-04-06T22:34:56.617771+00:00",
+  "git_commit": "00604a7",
+  "truth_definition": "dgp_kcor_at_target_week(scenario_fn, SimConfig, target_week, truth_seed); BOOTSTRAP_COVERAGE_TRUTH_SEED default=0",
+  "truth_seed": 0,
+  "target_week": 80,
+  "n_simulations": 5,
+  "n_bootstrap": 10,
+  "ci_method": "percentile_2.5_97.5",
+  "base_mc_seed": 42,
+  "true_kcor_by_scenario": {
+    "Gamma-frailty null": 1.00943851579404
+  },
+  "theta_true_by_scenario": {
+    "Gamma-frailty null": {
+      "theta_true_d0": 1.0,
+      "theta_true_d1": 0.3
+    }
+  },
+  "outputs": {
+    "kcor_summary": "test/sim_grid/out/bootstrap_coverage.csv",
+    "kcor_replicates": "test/sim_grid/out/bootstrap_coverage_replicates.csv",
+    "theta_summary": "test/sim_grid/out/bootstrap_coverage_theta.csv",
+    "theta_replicates": "test/sim_grid/out/bootstrap_coverage_theta_replicates.csv"
+  }
+}

@@ -1306,11 +1306,12 @@ sampling variability of the aggregated counting process, not uncertainty
 in individual-level causal effects.
 
 Bootstrap intervals are calibrated under the working gamma frailty
-model. Simulation studies (Table \ref{tbl:bootstrap_coverage}) indicate
-that coverage remains near nominal when diagnostic criteria are
-satisfied, but becomes mildly anti-conservative under frailty
-misspecification or sparse-event regimes. Estimates are therefore
-intended to be interpreted conditionally on diagnostic pass status.
+model. A Monte Carlo coverage pipeline is implemented (Table
+\ref{tbl:bootstrap_coverage}); stable empirical coverage estimates require
+large \(n_{\mathrm{sim}}\) and \(n_{\mathrm{boot}}\), and pilot outputs in
+the repository are not treated as definitive calibration numbers. Estimates
+are therefore intended to be interpreted conditionally on diagnostic pass
+status.
 
 \subsubsection{2.10 Algorithm summary and reproducibility
 checklist}\label{algorithm-summary-and-reproducibility-checklist}
@@ -1776,8 +1777,37 @@ or when the structured offset model fails to align windows coherently,
 diagnostics (poor fit, residual structure, offset instability, or weak
 identification) correctly signal that the working approximation is
 inadequate. The pathological/non-gamma frailty mixture simulation in the
-Supplement provides a concrete stress test of this regime. Additional
-validation results---including full simulation grids, quiet-window
+Supplement provides a concrete stress test of this regime.
+
+\paragraph{3.3.2 Quiet-window contamination stress
+test}\label{quiet-window-contamination-stress-test}
+
+Positive controls inject multiplicative hazard shifts in an effect window
+to test whether KCOR detects a true contrast. A distinct concern is
+whether non-frailty curvature confined to a quiet window could bias
+\(\hat\theta_{0}\) enough to shift anchored KCOR away from a true null.
+We therefore ran a synthetic experiment with known \(\theta_{0}\)
+(Gompertz-plus-gamma-frailty DGP, two cohorts with the same baseline scale
+\(k\) calibrated to Czech KCOR\_CMR weekly hazard for 1940--1960, dose 0
+reference) and additive contamination applied only to the lower-frailty
+cohort during rebased weeks 4--56. Types tested: decaying dynamic-style
+hazard, constant comorbidity-style hazard, and their joint \(4\times4\)
+grid on strictly positive amplitudes. Each setting used 20 stochastic
+replicates; the production pipeline (\texttt{fit\_theta0\_gompertz},
+inversion, anchored KCOR as in the simulation grid) was applied per
+replicate. Key outputs:
+\texttt{test/quiet\_window\_contamination/out/quiet\_contamination\_agg.csv},
+\texttt{fig\_quiet\_contam\_theta\_error.png} (mean
+\(\hat\theta_{0,A}\) error vs.\ \(\epsilon\) for the 1D sweeps; the
+\textbf{combined} panel is a heatmap of the fraction of replicates with
+anchored \(\mathrm{KCOR}_\infty>1\) on the \(4\times4\) joint grid),
+\texttt{fig\_quiet\_contam\_kcor\_asymptote.png}; the script prints a
+one-line combined sign-reversal summary for the joint grid. Full
+per-replicate rows are in \texttt{quiet\_contamination\_long.csv}.
+Interpret contamination magnitudes alongside \(h_{\mathrm{ref}}\) and
+\(\epsilon/h_{\mathrm{ref}}\) reported in those tables.
+
+Additional validation results---including full simulation grids, quiet-window
 robustness catalogs, dynamic-selection checks, and extended comparator
 analyses---are provided in the Supplementary Information (SI).
 
@@ -3056,19 +3086,23 @@ geometry; inherits depletion structure \\
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3208}}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3585}}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1321}}@{}}
-\caption{Bootstrap coverage for KCOR uncertainty intervals. For each
-independent simulated dataset, a 95\% percentile interval for
-$\mathrm{KCOR}(t)$ at the evaluation week is formed from bootstrap
-replicates of \emph{that} dataset; empirical coverage is the Monte Carlo
-fraction of datasets whose interval contains the true $\mathrm{KCOR}(t)$
-at the same week (values in \texttt{test/sim\_grid/out/bootstrap\_coverage.csv};
-pilot run shown used $n_{\mathrm{sim}}=2$, $n_{\mathrm{boot}}=12$; defaults in
-the script are $500 \times 200$). Nominal 95\% is compared to this empirical
-fraction. Stress-test regimes (non-gamma frailty, sparse events) are expected
-to show sub-nominal coverage at sufficient Monte Carlo replication when
-diagnostics fail, because working-model intervals can be anti-conservative;
-coverage is \textbf{not} claimed to be universally valid outside
-diagnostic-pass settings.}\label{tbl:bootstrap_coverage}\tabularnewline
+\caption{Bootstrap coverage for KCOR uncertainty intervals (\textbf{pilot /
+implementation table}). For each independent simulated dataset, a 95\%
+percentile interval for $\mathrm{KCOR}(t)$ at the evaluation week is formed
+from bootstrap replicates of \emph{that} dataset; empirical coverage is the
+Monte Carlo fraction of datasets whose interval contains the DGP
+$\mathrm{KCOR}(t)$ at that week (truth from a fixed reference draw; see
+\texttt{test/sim\_grid/code/compute\_bootstrap\_coverage.py} and
+\texttt{test/sim\_grid/out/bootstrap\_coverage\_run.json}). Summaries are
+written to \texttt{test/sim\_grid/out/bootstrap\_coverage.csv}; figures may be
+regenerated with \texttt{test/sim\_grid/code/plot\_bootstrap\_coverage.py}.
+\textbf{Empirical coverage cells are left blank until a full run is
+committed.} Defaults use $n_{\mathrm{sim}}=500$, $n_{\mathrm{boot}}=200$.
+Stress-test regimes (non-gamma frailty, sparse events) are expected to show
+sub-nominal coverage at sufficient Monte Carlo replication when diagnostics
+fail, because working-model intervals can be anti-conservative; coverage is
+\textbf{not} claimed to be universally valid outside diagnostic-pass
+settings.}\label{tbl:bootstrap_coverage}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Scenario
@@ -3095,15 +3129,11 @@ Notes
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Gamma-frailty null & 95\% & 100.0\% & Coverage evaluated under
-selection-only conditions \\
-Injected effect (harm) & 95\% & 100.0\% & Coverage evaluated under known
-treatment effect (true $\mathrm{KCOR}$ at evaluation week from DGP) \\
-Injected effect (benefit) & 95\% & 100.0\% & Coverage evaluated under known
-treatment effect (true $\mathrm{KCOR}$ at evaluation week from DGP) \\
-Non-gamma frailty & 95\% & 100.0\% & Coverage under frailty
-misspecification \\
-Sparse events & 95\% & 100.0\% & Coverage under reduced event counts \\
+Gamma-frailty null & 95\% & \textemdash{} & Populate after full Monte Carlo run \\
+Injected effect (harm) & 95\% & \textemdash{} & DGP truth at evaluation week (not raw hazard multiplier) \\
+Injected effect (benefit) & 95\% & \textemdash{} & DGP truth at evaluation week (not raw hazard multiplier) \\
+Non-gamma frailty & 95\% & \textemdash{} & Populate after full Monte Carlo run \\
+Sparse events & 95\% & \textemdash{} & Populate after full Monte Carlo run \\
 \end{longtable}
 
 \newpage

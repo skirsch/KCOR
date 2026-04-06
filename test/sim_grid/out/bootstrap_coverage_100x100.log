@@ -1,0 +1,40 @@
+============================================================
+KCOR empirical bootstrap coverage
+============================================================
+Simulation replicates per scenario: 100
+Bootstrap replicates per simulation: 100
+Target week: 80
+Truth seed (reference DGP draw): 0
+
+  DGP true_kcor [Gamma-frailty null]: 1.00943851579404
+  DGP true_kcor [Injected effect (harm)]: 1.1511348305379185
+  DGP true_kcor [Injected effect (benefit)]: 0.9625549099317127
+  DGP true_kcor [Non-gamma frailty]: 0.91715715041386
+  DGP true_kcor [Sparse events]: 1.0127308718663242
+
+Computing empirical bootstrap coverage for Gamma-frailty null...
+  True KCOR (DGP at target week, truth seed): 1.00943851579404
+  Simulation replicates: 100
+  Bootstrap replicates per simulation: 100
+  Target week: 80
+  Simulation 1/100
+============================================================
+KCOR empirical bootstrap coverage
+============================================================
+Simulation replicates per scenario: 100
+Bootstrap replicates per simulation: 100
+Target week: 80
+Truth seed (reference DGP draw): 0
+
+  DGP true_kcor [Gamma-frailty null]: 1.00943851579404
+  DGP true_kcor [Injected effect (harm)]: 1.1511348305379185
+  DGP true_kcor [Injected effect (benefit)]: 0.9625549099317127
+  DGP true_kcor [Non-gamma frailty]: 0.91715715041386
+  DGP true_kcor [Sparse events]: 1.0127308718663242
+
+Computing empirical bootstrap coverage for Gamma-frailty null...
+  True KCOR (DGP at target week, truth seed): 1.00943851579404
+  Simulation replicates: 100
+  Bootstrap replicates per simulation: 100
+  Target week: 80
+  Simulation 1/100

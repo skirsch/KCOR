@@ -25,7 +25,7 @@ PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 PAPER_GENERATED_FIGURES := $(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -34,6 +34,10 @@ DATASET ?= Czech
 MC_ITERATIONS ?= 4
 # Monte Carlo enrollment cohort (ISO week label; accepts YYYY_WW or YYYY-WW)
 MC_ENROLLMENT_DATE ?= 2021_24
+
+# Quiet-window contamination synthetic experiment (test/quiet_window_contamination/run_contamination_test.py)
+QUIET_SIM_ENROLLMENT ?= 2021_24
+QUIET_SIM_OUT ?= test/quiet_window_contamination/out
 
 # Virtual environment path
 VENV_DIR := .venv
@@ -309,6 +313,15 @@ quiet-window: $(VENV_PYTHON)
 	@echo "Running quiet-window scan (Czech 2021_24)..."
 	$(abspath $(VENV_PYTHON)) test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py
 	@echo "Quiet-window scan complete!"
+
+# Quiet-window contamination stress-test simulation (calibrates k from KCOR_CMR; writes CSV + figures)
+quiet_sim: $(VENV_PYTHON)
+	@echo "Running quiet-window contamination experiment (enrollment sheet $(QUIET_SIM_ENROLLMENT), DATASET=$(DATASET))..."
+	$(abspath $(VENV_PYTHON)) test/quiet_window_contamination/run_contamination_test.py \
+		--outdir $(QUIET_SIM_OUT) \
+		--enrollment-sheet $(QUIET_SIM_ENROLLMENT) \
+		--cmr-xlsx data/$(DATASET)/KCOR_CMR.xlsx
+	@echo "quiet_sim complete; outputs under $(QUIET_SIM_OUT)/"
 
 # Simulation grid (operating characteristics and failure-mode diagnostics)
 sim_grid: $(VENV_PYTHON)
@@ -587,6 +600,7 @@ help:
 	@echo "  alpha           - Run alpha estimation sandbox (test/alpha)"
 	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid)"
 	@echo "  quiet-window    - Run quiet-window scan (test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py)"
+	@echo "  quiet_sim       - Run quiet-window *contamination* synthetic experiment (test/quiet_window_contamination/)"
 	@echo "  cox-bias        - Run Cox bias demonstration simulation (test/sim_grid)"
 	@echo "  cox-bias-figures - Generate Cox bias demonstration figures"
 	@echo "  copy-cox-bias-figures - Copy Cox bias figures to preprint directory"

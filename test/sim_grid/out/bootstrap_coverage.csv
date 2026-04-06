@@ -1,6 +1,2 @@
-scenario,true_kcor,target_week,n_bootstrap,n_simulations,coverage_proportion,coverage_percent,coverage_se,n_valid,n_failed,median_point_estimate,mean_ci_lower,mean_ci_upper,mean_ci_width
-Gamma-frailty null,1.0,80,12,2,1.0,100.0,0.0,2,0,1.00943851579404,0.9509420696424675,1.062447743064155,0.11150567342168755
-Injected effect (harm),1.1511348305379185,80,12,2,1.0,100.0,0.0,2,0,1.1511348305379185,1.0619090004405995,1.210673687231298,0.14876468679069832
-Injected effect (benefit),0.9625549099317127,80,12,2,1.0,100.0,0.0,2,0,0.9625549099317127,0.8805292194467189,1.023750599236306,0.1432213797895872
-Non-gamma frailty,1.0,80,12,2,1.0,100.0,0.0,2,0,0.993092841392325,0.9331658801171296,1.0302146049412437,0.09704872482411425
-Sparse events,1.0,80,12,2,1.0,100.0,0.0,2,0,1.0127308718663242,0.5019237561185299,3.928614696627063,3.4266909405085335
+scenario,true_kcor,target_week,truth_seed,ci_method,n_bootstrap,n_simulations,coverage_proportion,coverage_percent,coverage_se,n_valid,n_failed,median_point_estimate,mean_ci_lower,mean_ci_upper,mean_ci_width,base_mc_seed
+Gamma-frailty null,1.00943851579404,80,0,percentile_2.5_97.5,10,5,1.0,100.0,0.0,5,0,1.00943851579404,0.9519872325007649,1.0714061486929396,0.1194189161921747,42

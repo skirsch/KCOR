@@ -1,0 +1,13 @@
+,value
+h_ref,0.00045616902672594684
+cmr_path,data/Czech/KCOR_CMR.xlsx
+sheet_name,2021_24
+yob_min,1940
+yob_max,1960
+dose_ref,0
+n_rows_used,240
+rule,"median(hazard_from_mr(Dead/Alive)) over t_week in [skip, skip+k_anchor), Dose=0"
+k_simulator,0.00045616902672594684
+gamma_per_week,0.0016346153846153847
+n_weeks,130
+N,50000

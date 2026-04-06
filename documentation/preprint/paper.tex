@@ -371,7 +371,10 @@ distinguished here:
   distributions at cohort entry (e.g., vaccinated cohorts are healthier
   on average). In the KCOR framework, this manifests as differing
   enrollment-time frailty variance \(\theta_{0,d}\) and is the primary
-  target of frailty normalization.
+  target of frailty normalization. In practice, this adjustment is not
+  limited to one named bias mechanism; it absorbs any enrollment-time
+  baseline difference that enters the cohort comparison through the same
+  depletion / frailty geometry.
 \item
   \textbf{Dynamic HVE:} short-horizon, time-local selection processes
   around enrollment that create transient hazard suppression immediately
@@ -552,6 +555,10 @@ retrospective cohort studies.
   instantaneous hazard ratio. It should be read as a \textbf{diagnostic}
   signal about persistent contrasts after working-model depletion
   adjustment, not---by itself---as evidence of causal harm or benefit.
+  In particular, baseline differences that operate through depletion
+  geometry are adjusted out; residual differences should be interpreted
+  as what remains after that depletion-based normalization, not as
+  automatically causal.
 \item
   \textbf{What it is not}: KCOR is \textbf{not} a causal effect
   estimator (no ATE/ATT) and does not recover counterfactual outcomes
@@ -637,6 +644,16 @@ Accordingly, KCOR should be interpreted as a \textbf{diagnostic signal}
 indicating whether outcome differences persist after adjusting for
 depletion geometry under the assumed frailty structure, not as evidence
 of causality.
+
+KCOR's static HVE adjustment targets baseline differences between
+cohorts insofar as they manifest through selection-induced depletion of
+susceptible individuals. This includes a broad class of baseline
+imbalances---whether due to health status, care-seeking, eligibility, or
+other enrollment-time selection factors---to the extent that they induce
+cohort-specific curvature in cumulative hazard trajectories under the
+working model. The resulting contrast therefore accounts for baseline
+differences that are explainable by depletion geometry, while remaining
+agnostic about mechanisms that do not act through that geometry.
 
 This framework targets the second failure mode. Under latent frailty
 heterogeneity, high-risk individuals die earlier, so the surviving risk
@@ -1801,11 +1818,15 @@ sampling variability of the aggregated counting process, not uncertainty
 in individual-level causal effects.
 
 Bootstrap intervals are calibrated under the working gamma frailty
-model. Simulation studies (Table \ref{tbl:bootstrap_coverage}) indicate
-that coverage remains near nominal when diagnostic criteria are
-satisfied, but becomes mildly anti-conservative under frailty
-misspecification or sparse-event regimes. Estimates are therefore
-intended to be interpreted conditionally on diagnostic pass status.
+model. An end-to-end simulation pipeline now evaluates empirical
+bootstrap coverage by forming a percentile interval for each simulated
+dataset and computing the Monte Carlo fraction of intervals that contain
+the scenario truth (KCOR at the evaluation week from the data-generating
+process). \textbf{Stable numerical coverage estimates require large
+numbers of simulated datasets and bootstrap replicates; final coverage
+claims for the manuscript are deferred until that full validation run is
+completed.} Estimates are intended to be interpreted conditionally on
+diagnostic pass status.
 
 The bootstrap is used as a \textbf{variance-propagation} device for the
 aggregated process rather than a universally calibrated inferential
@@ -1814,12 +1835,13 @@ assumptions are violated or curvature is insufficient for
 identification. In those regimes, KCOR diagnostics explicitly flag
 non-identifiability and results are not interpreted. Reported percentile
 intervals are \textbf{conditional on passing identifiability
-diagnostics}. Sub-nominal coverage occurs \textbf{primarily} in
-weak-identification regimes (e.g., low curvature or model
-misspecification), which are flagged by KCOR's diagnostic criteria;
-\textbf{in well-identified settings, empirical coverage is near nominal}
-(Table \ref{tbl:bootstrap_coverage}; §5). \textbf{Inference is therefore
-interpreted conditional on diagnostic acceptance.}
+diagnostics}. \textbf{Whether empirical coverage is close to nominal in
+well-identified settings is assessed with the Monte Carlo pipeline
+summarized in Table \ref{tbl:bootstrap_coverage}; stable numerical
+estimates require large \(n_{\mathrm{sim}}\) and \(n_{\mathrm{boot}}\),
+and the manuscript does not treat pilot outputs as definitive
+calibration.} \textbf{Inference is therefore interpreted conditional on
+diagnostic acceptance.}
 
 \subsubsection{2.10 Algorithm summary and reproducibility
 checklist}\label{algorithm-summary-and-reproducibility-checklist}
@@ -2357,10 +2379,187 @@ the structured offset model fails to align windows coherently,
 diagnostics such as poor fit, residual structure, offset instability, or
 weak identification signal that the working approximation is inadequate.
 The pathological/non-gamma frailty mixture simulation in the Supplement
-provides a concrete stress test of this regime. Additional validation
-results---including full simulation grids, quiet-window robustness
-catalogs, dynamic-selection checks, and extended comparator
-analyses---are provided in the Supplementary Information (SI).
+provides a concrete stress test of this regime.
+
+\paragraph{3.3.2 Quiet-window contamination stress
+test}\label{quiet-window-contamination-stress-test}
+
+Positive controls in §3.2 inject multiplicative hazard shifts in an
+\textbf{effect} window to test whether KCOR detects a true contrast. A
+distinct and important concern is whether \textbf{non-frailty} additive
+curvature confined to the \textbf{quiet} window itself could bias
+\(\hat\theta_{0,d}\) sufficiently to shift anchored KCOR away from a
+true null---and in particular whether it could produce sign reversal
+(KCOR \(>1\) when the true contrast is null). We ran a synthetic
+experiment to bound this empirically.
+
+\textbf{Design.} Two cohorts were simulated under the
+Gompertz-plus-gamma-frailty DGP with known ground-truth parameters:
+cohort A (lower frailty, \(\theta_{0,A}=0.5\)) and cohort B (higher
+frailty, \(\theta_{0,B}=4.0\)), with shared baseline scale \(k\)
+calibrated to Czech KCOR\_CMR weekly hazard for YoB 1940--1960, dose 0
+reference (\(h_{\mathrm{ref}}=0.000456\) per week). The true cumulative
+contrast is null by construction (identical baseline hazard). Additive
+non-frailty contamination was applied \textbf{only} to cohort A during
+rebased quiet-window weeks 4--56. Three contamination types were tested:
+\textbf{Type 1} (decaying dynamic-HVE-style hazard:
+\(g(t)=\epsilon_{\mathrm{dyn}}\exp(-0.05\,t_{\mathrm{rebased}})\));
+\textbf{Type 2} (constant comorbidity-direction hazard:
+\(g(t)=\epsilon_{\mathrm{comorb}}\)); and \textbf{Type 3} (combined,
+full \(4\times4\) outer product of positive \(\epsilon_{\mathrm{dyn}}\)
+and \(\epsilon_{\mathrm{comorb}}\) values, 16 cells). Each cell used 20
+stochastic replicates with the production pipeline
+(\texttt{fit\_theta0\_gompertz}, inversion, anchored KCOR).
+
+\textbf{Results.} Figure \ref{fig:quiet_contam_kcor} shows mean anchored
+KCOR asymptote and Figure \ref{fig:quiet_contam_theta} shows
+\(\hat\theta_{0,A}\) error and combined sign-reversal frequency.
+
+\emph{Type 1 (dynamic):} Contamination drove \(\hat\theta_{0,A}\) to the
+floor (error \(\approx -0.5\), i.e., \(\hat\theta_{0,A}\to0\)) and KCOR
+\textbf{below} null in the mean as \(\epsilon_{\mathrm{dyn}}\)
+increases---reaching mean KCOR \(\approx0.78\) at
+\(\epsilon_{\mathrm{dyn}}=5\times10^{-3}\), with all replicates at or
+below 1 at that amplitude. For smaller positive
+\(\epsilon_{\mathrm{dyn}}\), a minority of replicates can still exceed 1
+even though the \textbf{mean} asymptote stays below 1 (Table
+\ref{tbl:quiet_contam} and \texttt{quiet\_contamination\_agg.csv}).
+Dynamic HVE-style contamination under-corrects cohort A, biasing KCOR
+toward apparent benefit, not harm.
+
+\emph{Type 2 (comorbidity):} KCOR increased monotonically with
+\(\epsilon_{\mathrm{comorb}}\). Sign reversal (mean KCOR \(>1\)) first
+occurred at \(\epsilon_{\mathrm{comorb}}\approx3\times10^{-4}\), which
+equals \(66\%\) of \(h_{\mathrm{ref}}\)---a constant additive weekly
+hazard two-thirds the size of baseline all-cause mortality for this age
+stratum. The comorbidity-direction contrasts documented for Czech
+vaccination cohorts (e.g.~Šmíd et al., 2024) do not support a hazard
+increment of that magnitude from measured comorbidity imbalance alone.
+
+\emph{Type 3 (combined):} The joint reversal-frequency heatmap (Figure
+\ref{fig:quiet_contam_theta}, right panel) shows cross-cell variation.
+At \(\epsilon_{\mathrm{comorb}}=3\times10^{-4}\) (\(66\%\) of
+\(h_{\mathrm{ref}}\)), mean KCOR and reversal fractions can already be
+elevated for some dynamic levels
+(e.g.~\(\epsilon_{\mathrm{dyn}}=5\times10^{-4}\): mean KCOR \(1.02\),
+\(60\%\) of replicates with \(\mathrm{KCOR}_\infty>1\); Table
+\ref{tbl:quiet_contam}). At \(\epsilon_{\mathrm{comorb}}=10^{-4}\)
+(\(22\%\) of \(h_{\mathrm{ref}}\)), reversal fractions stay at or below
+\(40\%\) across the tested \(\epsilon_{\mathrm{dyn}}\) grid. Nearly
+universal reversal within the joint grid requires larger
+comorbidity-style increments---notably
+\(\epsilon_{\mathrm{comorb}}\ge10^{-3}\) (\(219\%\) of
+\(h_{\mathrm{ref}}\)) in the illustrative cells in Table
+\ref{tbl:quiet_contam}. Positive dynamic amplitudes on the Type 1 sweep
+yield mean KCOR below 1 in the aggregated file (with replicate-level
+exceedances possible at small \(\epsilon_{\mathrm{dyn}}\)).
+
+\textbf{Interpretation.} Substantial apparent harm on the anchored scale
+requires additive quiet-window perturbations on the order of a large
+fraction of---or multiples of---baseline weekly mortality, well above
+plausible magnitudes for the mechanisms often cited as residual
+confounders. The dynamic-HVE mechanism biases KCOR in the
+\emph{opposite} direction (toward apparent benefit). Because the
+dynamic-HVE and comorbidity contamination components act in opposite
+directions, the net bias direction is an empirical question; neither
+universal conservatism nor universal overstatement can be assumed
+without empirically bounding the magnitude of both components
+independently. These results bound the contamination hypothesis
+empirically and support the adequacy of the working model for the
+reported Czech cohorts.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Mean anchored KCOR asymptote versus contamination magnitude. Left: Type 1 (dynamic HVE style)---mean KCOR falls as \textbackslash epsilon\_\{\textbackslash mathrm\{dyn\}\} increases among positive amplitudes (largest tested: mean \textbackslash approx0.78); small \textbackslash epsilon\_\{\textbackslash mathrm\{dyn\}\} can still leave a minority of replicates above 1. Center: Type 2 (comorbidity style)---KCOR increases; sign reversal threshold at \textbackslash epsilon\_\{\textbackslash mathrm\{comorb\}\}\textbackslash approx3\textbackslash times10\^{}\{-4\}=66\textbackslash\% of h\_\{\textbackslash mathrm\{ref\}\}. Right: Type 3 combined heatmap---mean KCOR asymptote on the 4\textbackslash times4 joint grid. Error bars are \textbackslash pm1 SD across 20 replicates. Baseline hazard scale h\_\{\textbackslash mathrm\{ref\}\}=0.000456/week (Czech YoB 1940--1960, dose 0).}]{figures/fig_quiet_contam_kcor_asymptote.png}}
+\caption{Mean anchored KCOR asymptote versus contamination magnitude.
+Left: Type 1 (dynamic HVE style)---mean KCOR falls as
+\(\epsilon_{\mathrm{dyn}}\) increases among positive amplitudes (largest
+tested: mean \(\approx0.78\)); small \(\epsilon_{\mathrm{dyn}}\) can
+still leave a minority of replicates above 1. Center: Type 2
+(comorbidity style)---KCOR increases; sign reversal threshold at
+\(\epsilon_{\mathrm{comorb}}\approx3\times10^{-4}=66\%\) of
+\(h_{\mathrm{ref}}\). Right: Type 3 combined heatmap---mean KCOR
+asymptote on the \(4\times4\) joint grid. Error bars are \(\pm1\) SD
+across 20 replicates. Baseline hazard scale
+\(h_{\mathrm{ref}}=0.000456\)/week (Czech YoB 1940--1960, dose
+0).}\label{fig:quiet_contam_kcor}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Left and center: mean \textbackslash hat\textbackslash theta\_\{0,A\} error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored \textbackslash mathrm\{KCOR\}\_\textbackslash infty\textgreater1 on the combined 4\textbackslash times4 grid (joint contamination).}]{figures/fig_quiet_contam_theta_error.png}}
+\caption{Left and center: mean \(\hat\theta_{0,A}\) error versus
+contamination magnitude for Types 1 and 2. Right: fraction of replicates
+with anchored \(\mathrm{KCOR}_\infty>1\) on the combined \(4\times4\)
+grid (joint contamination).}\label{fig:quiet_contam_theta}
+\end{figure}
+
+\newpage
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}@{}}
+\caption{Selected cells from quiet-window contamination experiment.
+\(h_{\mathrm{ref}}=0.000456\)/week (Czech YoB 1940--1960, enrollment
+sheet \protect\texttt{2021\_24}). For positive
+\(\epsilon_{\mathrm{dyn}}\) on the Type 1 sweep, mean KCOR stays below 1
+in the aggregated runs; comorbidity-only \textbf{mean} reversal first
+appears near \(\epsilon_{\mathrm{comorb}}=3\times10^{-4}\). Full grid in
+\protect\texttt{test/quiet\_window\_contamination/out/quiet\_contamination\_agg.csv}.}\label{tbl:quiet_contam}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Contamination type
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\epsilon_{\mathrm{dyn}}\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\epsilon_{\mathrm{comorb}}\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\epsilon/h_{\mathrm{ref}}\) (comorb)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mean KCOR\(_\infty\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Frac. reps KCOR\(>1\)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Contamination type
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\epsilon_{\mathrm{dyn}}\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\epsilon_{\mathrm{comorb}}\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\epsilon/h_{\mathrm{ref}}\) (comorb)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Mean KCOR\(_\infty\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Frac. reps KCOR\(>1\)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Dynamic only & \(5\times10^{-3}\) & 0 & --- & 0.782 & 0.00 \\
+Comorbidity only & 0 & \(1\times10^{-4}\) & 22\% & 0.989 & 0.40 \\
+Comorbidity only & 0 & \(3\times10^{-4}\) & 66\% & 1.062 & 0.65 \\
+Comorbidity only & 0 & \(1\times10^{-3}\) & 219\% & 1.194 & 1.00 \\
+Combined & \(5\times10^{-4}\) & \(3\times10^{-4}\) & 66\% & 1.016 &
+0.60 \\
+Combined & \(1\times10^{-3}\) & \(3\times10^{-4}\) & 66\% & 0.992 &
+0.50 \\
+Combined & \(5\times10^{-4}\) & \(1\times10^{-3}\) & 219\% & 1.188 &
+1.00 \\
+\end{longtable}
+
+Additional validation results---including full simulation grids,
+quiet-window robustness catalogs, dynamic-selection checks, and extended
+comparator analyses---are provided in the Supplementary Information
+(SI).
 
 Additional derivations, simulation studies, robustness analyses, and
 implementation details are provided in the Supplementary Information.
@@ -2557,6 +2756,15 @@ interpreted as a \textbf{diagnostic normalization} step. Differences
 observed after normalization may reflect causal effects, residual
 confounding, or other mechanisms and require additional evidence for
 causal interpretation.
+
+At the same time, the static HVE correction is broader than a correction
+for one specific epidemiologic label. To the extent that baseline cohort
+differences operate through differential depletion of susceptible
+individuals, they are absorbed into the estimated depletion geometry and
+accounted for in the comparison. Residual differences therefore
+represent contrasts that are not explained by depletion alone, although
+they may still arise from time-varying confounding, external shocks,
+misspecification, or other non-depletive mechanisms.
 
 KCOR does not uniquely identify the biological, behavioral, or clinical
 mechanisms responsible for observed hazard heterogeneity. In particular,
@@ -2806,6 +3014,22 @@ interpreted.
   curvature removal rather than on the literal truth of the gamma
   family; alternative frailty distributions that generate similar
   depletion geometry may yield similar normalization.
+\item
+  \textbf{Frailty exogeneity assumption}: KCOR assumes that frailty
+  differences between cohorts are pre-treatment in origin, reflecting
+  selection into cohorts rather than biological or behavioral response
+  to the intervention. This assumption is standard in frailty-corrected
+  observational analysis and is not directly testable from mortality
+  data alone. To the extent that frailty is partly endogenous to
+  treatment---for example, through intervention-induced immune
+  modulation or differential post-treatment behavioral change---the
+  estimated frailty ratio would absorb a mixture of selection and causal
+  signal, and KCOR's normalization would be conservative with respect to
+  the true effect. The 2022\_06 enrollment cohort (Table
+  \ref{tbl:neg_control_summary}) provides partial empirical evidence
+  against large post-treatment frailty shifts, as flat KCOR curves in
+  that period are inconsistent with systematic treatment-induced frailty
+  changes detectable at the population level.
 \end{itemize}
 
 Sensitivity analyses in this work are intentionally embedded alongside
@@ -2821,25 +3045,27 @@ pass, not by tuning parameters to stabilize point estimates.
 \textbf{Interpretation of sub-nominal bootstrap coverage}
 
 Table \ref{tbl:bootstrap_coverage} reports empirical coverage using the
-per-dataset bootstrap design described in the table caption (each simulated
-dataset yields its own percentile interval; coverage is the fraction of
-datasets for which the true $\mathrm{KCOR}(t)$ at the evaluation week lies
-inside that interval). \textbf{Under frailty misspecification or sparse-event
-regimes, one generally expects sub-nominal empirical coverage for
-working-model percentile intervals at sufficient Monte Carlo replication,
-because intervals can be too narrow relative to genuine sampling
-variability; such settings coincide with low curvature and diagnostic
-flags, indicating weak identifiability rather than a generic bootstrap
-implementation error.} Under non-gamma frailty, the working gamma-frailty
-approximation no longer captures depletion geometry exactly; under sparse
-events, limited information in cumulative-hazard space can lead to
-underestimated variability. These regimes coincide with degraded KCOR
-diagnostics (poor fit, residual structure, or parameter instability), and
-analyses are therefore flagged as weakly identified or not reported in
-practice. Pilot Monte Carlo outputs committed with the code are not
-intended as definitive calibration numbers; re-run
+per-dataset bootstrap design described in the table caption (each
+simulated dataset yields its own percentile interval; coverage is the
+fraction of datasets for which the true \(\mathrm{KCOR}(t)\) at the
+evaluation week lies inside that interval). \textbf{Under frailty
+misspecification or sparse-event regimes, one generally expects
+sub-nominal empirical coverage for working-model percentile intervals at
+sufficient Monte Carlo replication, because intervals can be too narrow
+relative to genuine sampling variability; such settings coincide with
+low curvature and diagnostic flags, indicating weak identifiability
+rather than a generic bootstrap implementation error.} Under non-gamma
+frailty, the working gamma-frailty approximation no longer captures
+depletion geometry exactly; under sparse events, limited information in
+cumulative-hazard space can lead to underestimated variability. These
+regimes coincide with degraded KCOR diagnostics (poor fit, residual
+structure, or parameter instability), and analyses are therefore flagged
+as weakly identified or not reported in practice. Pilot Monte Carlo
+outputs committed with the code
+(\texttt{test/sim\_grid/out/bootstrap\_coverage.csv}) are not intended
+as definitive calibration numbers; re-run
 \texttt{test/sim\_grid/code/compute\_bootstrap\_coverage.py} with larger
-$n_{\mathrm{sim}}$ and $n_{\mathrm{boot}}$ for stable estimates. The
+\(n_{\mathrm{sim}}\) and \(n_{\mathrm{boot}}\) for stable estimates. The
 pattern of interest is alignment between sub-nominal coverage and
 diagnostic failure, supporting diagnostic gating for inference.
 
@@ -3925,19 +4151,27 @@ geometry; inherits depletion structure \\
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3208}}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.3585}}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.1321}}@{}}
-\caption{Bootstrap coverage for KCOR uncertainty intervals. For each
-independent simulated dataset, a 95\% percentile interval for
-$\mathrm{KCOR}(t)$ at the evaluation week is formed from bootstrap
-replicates of \emph{that} dataset; empirical coverage is the Monte Carlo
-fraction of datasets whose interval contains the true $\mathrm{KCOR}(t)$
-at the same week (values in \texttt{test/sim\_grid/out/bootstrap\_coverage.csv};
-pilot run shown used $n_{\mathrm{sim}}=2$, $n_{\mathrm{boot}}=12$; defaults in
-the script are $500 \times 200$). Nominal 95\% is compared to this empirical
-fraction. Stress-test regimes (non-gamma frailty, sparse events) are expected
-to show sub-nominal coverage at sufficient Monte Carlo replication when
-diagnostics fail, because working-model intervals can be anti-conservative;
-coverage is \textbf{not} claimed to be universally valid outside
-diagnostic-pass settings.}\label{tbl:bootstrap_coverage}\tabularnewline
+\caption{Bootstrap coverage for KCOR uncertainty intervals
+(\textbf{pilot / implementation table}). For each independent simulated
+dataset, a 95\% percentile interval for \(\mathrm{KCOR}(t)\) at the
+evaluation week is formed from bootstrap replicates of \emph{that}
+dataset; empirical coverage is the Monte Carlo fraction of datasets
+whose interval contains the DGP \(\mathrm{KCOR}(t)\) at that week (truth
+from a fixed reference draw; see
+\protect\texttt{compute\_bootstrap\_coverage.py} and run manifest
+\protect\texttt{test/sim\_grid/out/bootstrap\_coverage\_run.json}).
+Summaries are written to
+\protect\texttt{test/sim\_grid/out/bootstrap\_coverage.csv}; figures may
+be regenerated with
+\protect\texttt{test/sim\_grid/code/plot\_bootstrap\_coverage.py}.
+\textbf{Empirical coverage cells are left blank until a full run is
+committed; do not treat small-\(n\) smoke values as final.} Script
+defaults use \(n_{\mathrm{sim}}=500\), \(n_{\mathrm{boot}}=200\).
+Stress-test regimes (non-gamma frailty, sparse events) are expected to
+show sub-nominal coverage at sufficient Monte Carlo replication when
+diagnostics fail. Coverage is \textbf{not} claimed to be universally
+valid outside diagnostic-pass
+settings.}\label{tbl:bootstrap_coverage}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Scenario
@@ -3964,15 +4198,13 @@ Notes
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Gamma-frailty null & 95\% & 100.0\% & Coverage evaluated under
-selection-only conditions \\
-Injected effect (harm) & 95\% & 100.0\% & Coverage evaluated under known
-treatment effect (true $\mathrm{KCOR}$ at evaluation week from DGP) \\
-Injected effect (benefit) & 95\% & 100.0\% & Coverage evaluated under known
-treatment effect (true $\mathrm{KCOR}$ at evaluation week from DGP) \\
-Non-gamma frailty & 95\% & 100.0\% & Coverage under frailty
-misspecification \\
-Sparse events & 95\% & 100.0\% & Coverage under reduced event counts \\
+Gamma-frailty null & 95\% & --- & Populate after full Monte Carlo run \\
+Injected effect (harm) & 95\% & --- & DGP truth at evaluation week (not
+raw hazard multiplier) \\
+Injected effect (benefit) & 95\% & --- & DGP truth at evaluation week
+(not raw hazard multiplier) \\
+Non-gamma frailty & 95\% & --- & Populate after full Monte Carlo run \\
+Sparse events & 95\% & --- & Populate after full Monte Carlo run \\
 \end{longtable}
 
 \newpage
