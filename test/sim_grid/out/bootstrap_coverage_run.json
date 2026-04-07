@@ -1,27 +1,111 @@
 {
-  "script_version": "2.1",
-  "timestamp_utc": "2026-04-06T22:34:56.617771+00:00",
-  "git_commit": "00604a7",
+  "script_version": "3.0",
+  "timestamp_utc": "2026-04-07T06:07:44.870576+00:00",
+  "git_commit": "4bae92d",
   "truth_definition": "dgp_kcor_at_target_week(scenario_fn, SimConfig, target_week, truth_seed); BOOTSTRAP_COVERAGE_TRUTH_SEED default=0",
   "truth_seed": 0,
   "target_week": 80,
-  "n_simulations": 5,
-  "n_bootstrap": 10,
+  "n_simulations": 500,
+  "n_bootstrap": 200,
   "ci_method": "percentile_2.5_97.5",
   "base_mc_seed": 42,
+  "truncate": false,
+  "max_workers": 20,
   "true_kcor_by_scenario": {
-    "Gamma-frailty null": 1.00943851579404
+    "Gamma-frailty null": 1.00943851579404,
+    "Injected effect (harm)": 1.1511348305379185,
+    "Injected effect (benefit)": 0.9625549099317127,
+    "Non-gamma frailty": 0.91715715041386,
+    "Sparse events": 1.0127308718663242
+  },
+  "seconds_truth_parent": 1.012832200009143,
+  "timing_seconds": {
+    "by_scenario": {
+      "Gamma-frailty null": {
+        "n_timing_samples": 500.0,
+        "mean_seconds_scenario_generation": 0.0030766297808731908,
+        "mean_seconds_point_compute_kcor": 0.011943623343366199,
+        "mean_seconds_bootstrap_total_per_sim": 2.7150758397271857,
+        "mean_seconds_bootstrap_resample_and_build_per_sim": 0.17634147566696629,
+        "mean_seconds_bootstrap_compute_kcor_per_sim": 2.5346186752754147,
+        "mean_seconds_sim_total": 2.7317395496334647,
+        "mean_seconds_per_bootstrap_draw_wall": 0.01357537919863593,
+        "mean_compute_kcor_fraction_of_sim_wall": 0.9322126990329183,
+        "total_seconds_sim_wall_sum": 1365.8697748167324
+      },
+      "Injected effect (harm)": {
+        "n_timing_samples": 500.0,
+        "mean_seconds_scenario_generation": 0.003156093930127099,
+        "mean_seconds_point_compute_kcor": 0.014983349163085222,
+        "mean_seconds_bootstrap_total_per_sim": 3.297697296648577,
+        "mean_seconds_bootstrap_resample_and_build_per_sim": 0.1756767129502259,
+        "mean_seconds_bootstrap_compute_kcor_per_sim": 3.1180403834179744,
+        "mean_seconds_sim_total": 3.3174865596802556,
+        "mean_seconds_per_bootstrap_draw_wall": 0.016488486483242887,
+        "mean_compute_kcor_fraction_of_sim_wall": 0.9443968125323845,
+        "total_seconds_sim_wall_sum": 1658.7432798401278
+      },
+      "Injected effect (benefit)": {
+        "n_timing_samples": 500.0,
+        "mean_seconds_scenario_generation": 0.0028512778263539078,
+        "mean_seconds_point_compute_kcor": 0.013396006701979785,
+        "mean_seconds_bootstrap_total_per_sim": 3.0144713151229663,
+        "mean_seconds_bootstrap_resample_and_build_per_sim": 0.16184531722060638,
+        "mean_seconds_bootstrap_compute_kcor_per_sim": 2.848949963843275,
+        "mean_seconds_sim_total": 3.032216613470402,
+        "mean_seconds_per_bootstrap_draw_wall": 0.01507235657561483,
+        "mean_compute_kcor_fraction_of_sim_wall": 0.9439780647033893,
+        "total_seconds_sim_wall_sum": 1516.108306735201
+      },
+      "Non-gamma frailty": {
+        "n_timing_samples": 500.0,
+        "mean_seconds_scenario_generation": 1.1470796853079228,
+        "mean_seconds_point_compute_kcor": 0.014319667310104705,
+        "mean_seconds_bootstrap_total_per_sim": 2.8752782666802523,
+        "mean_seconds_bootstrap_resample_and_build_per_sim": 0.17999829369800863,
+        "mean_seconds_bootstrap_compute_kcor_per_sim": 2.69104435088404,
+        "mean_seconds_sim_total": 4.037483394284384,
+        "mean_seconds_per_bootstrap_draw_wall": 0.014376391333401262,
+        "mean_compute_kcor_fraction_of_sim_wall": 0.6700619554309404,
+        "total_seconds_sim_wall_sum": 2018.7416971421917
+      },
+      "Sparse events": {
+        "n_timing_samples": 500.0,
+        "mean_seconds_scenario_generation": 0.002973174739978276,
+        "mean_seconds_point_compute_kcor": 0.017374776751094032,
+        "mean_seconds_bootstrap_total_per_sim": 3.4376588390776304,
+        "mean_seconds_bootstrap_resample_and_build_per_sim": 0.1690058842836297,
+        "mean_seconds_bootstrap_compute_kcor_per_sim": 3.2647175670359285,
+        "mean_seconds_sim_total": 3.4595406872438614,
+        "mean_seconds_per_bootstrap_draw_wall": 0.017188294195388153,
+        "mean_compute_kcor_fraction_of_sim_wall": 0.9487075425616086,
+        "total_seconds_sim_wall_sum": 1729.7703436219308
+      }
+    }
+  },
+  "outputs": {
+    "kcor_summary": "../../test/sim_grid/out/bootstrap_coverage.csv",
+    "kcor_replicates": "../../test/sim_grid/out/bootstrap_coverage_replicates.csv",
+    "theta_summary": "../../test/sim_grid/out/bootstrap_coverage_theta.csv",
+    "theta_replicates": "../../test/sim_grid/out/bootstrap_coverage_theta_replicates.csv"
   },
   "theta_true_by_scenario": {
     "Gamma-frailty null": {
       "theta_true_d0": 1.0,
       "theta_true_d1": 0.3
+    },
+    "Injected effect (harm)": {
+      "theta_true_d0": 0.3,
+      "theta_true_d1": 0.3
+    },
+    "Injected effect (benefit)": {
+      "theta_true_d0": 0.3,
+      "theta_true_d1": 0.3
+    },
+    "Non-gamma frailty": {},
+    "Sparse events": {
+      "theta_true_d0": 1.0,
+      "theta_true_d1": 0.3
     }
-  },
-  "outputs": {
-    "kcor_summary": "test/sim_grid/out/bootstrap_coverage.csv",
-    "kcor_replicates": "test/sim_grid/out/bootstrap_coverage_replicates.csv",
-    "theta_summary": "test/sim_grid/out/bootstrap_coverage_theta.csv",
-    "theta_replicates": "test/sim_grid/out/bootstrap_coverage_theta_replicates.csv"
   }
 }

@@ -577,7 +577,7 @@ $$
 H_{\mathrm{ref},d}(t)=H_{\mathrm{ref},d}(t-1)+\hat{k}_d\,\exp\!\left(\gamma\, t_{\mathrm{rebased}}(t)\right),
 $$
 
-where $t_{\mathrm{rebased}}(t)$ is the rebased time index at week $t$ and $\hat{k}_d,\gamma$ are the fitted quiet-window Gompertz parameters. Outside the prespecified NPH window, no NPH correction is applied.
+where $t_{\mathrm{rebased}}(t)$ is the rebased time index at week $t$ and $\hat{k}_d,\gamma$ are the fitted quiet-window Gompertz parameters. The reference path is only used for weeks whose calendar dates fall inside the prespecified NPH date window.
 
 The wave-induced excess in cumulative-hazard space is $\Delta H_{\mathrm{wave},d}(t)=\tilde H_{0,d}(t)-H_{\mathrm{ref},d}(t)$. Only **wave-attributable** excess strictly above the frailty-neutral Gompertz baseline path is rescaled: when $\Delta H_{\mathrm{wave},d}(t)>0$,
 
@@ -586,6 +586,14 @@ H_{\mathrm{corr},d}(t)=H_{\mathrm{ref},d}(t)+\frac{\Delta H_{\mathrm{wave},d}(t)
 $$
 
 and when $\Delta H_{\mathrm{wave},d}(t)\le 0$ the corrected path equals $\tilde H_{0,d}(t)$ at that week. The implementation enforces that $H_{\mathrm{corr},d}(t)$ is **non-decreasing** in event time (cumulative maximum repair) so corrected trajectories remain valid cumulative-hazard geometry.
+
+For weeks **after** the last in-window date $t_{\mathrm{end},d}$, no wave-excess rescaling is applied, but the corrected cumulative hazard must not snap back to $\tilde H_{0,d}(t)$ at the pre-inversion level without adjustment: that would concentrate the entire in-window level offset into a single post-window weekly increment. Instead, for all $t>t_{\mathrm{end},d}$,
+
+$$
+H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)+\Bigl(H_{\mathrm{corr},d}(t_{\mathrm{end},d})-\tilde H_{0,d}(t_{\mathrm{end},d})\Bigr),
+$$
+
+so the path is **continuous** at $t_{\mathrm{end},d}$ and post-window weekly increments coincide with those of $\tilde H_{0,d}$.
 
 Weekly corrected hazard increments are obtained by differencing $H_{\mathrm{corr},d}(t)$ if a hazard stream is required; the downstream KCOR contrast uses $H_{\mathrm{corr},d}(t)$ in place of $\tilde H_{0,d}(t)$ when the module is active (§2.8). Thus the optional module adjusts only positive wave excess above the fitted frailty-neutral baseline path; it does not replace the core KCOR estimator.
 

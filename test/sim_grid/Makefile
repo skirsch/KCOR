@@ -20,6 +20,13 @@ ROOT := ../..
 # Use passed PYTHON if provided, otherwise default to python3
 PYTHON ?= python3
 PY := $(PYTHON)
+# Parallel scenario runs in generate_sim_grid.py (capped at number of scenarios; 6 = all scenarios at once)
+SIM_GRID_MAX_WORKERS ?= 6
+
+# Bootstrap coverage Monte Carlo (separate from the six-scenario operating-characteristics grid)
+BOOTSTRAP_MAX_WORKERS ?= 20
+BOOTSTRAP_N_SIM ?= 500
+BOOTSTRAP_N_BOOT ?= 200
 
 # Paths
 CODE_DIR := $(ROOT)/test/sim_grid/code
@@ -47,7 +54,7 @@ FIG_COX_BIAS_HR := $(OUT_DIR)/fig_cox_bias_hr_vs_theta.png
 FIG_COX_BIAS_KCOR := $(OUT_DIR)/fig_cox_bias_kcor_vs_theta.png
 FIG_KCOR_BIAS := $(OUT_DIR)/fig_si_kcor_bias_vs_theta.png
 
-.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout
+.PHONY: all clean generate run figures copy-figures s7 s7-figures copy-s7-figures cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout bootstrap_coverage bootstrap
 
 all: copy-figures copy-s7-figures copy-cox-bias-figures skip-weeks cohort-size rollout
 
@@ -57,7 +64,8 @@ $(SIM_RESULTS) $(SIM_DIAGNOSTICS): $(CODE_DIR)/generate_sim_grid.py
 	$(PY) $(CODE_DIR)/generate_sim_grid.py \
 		--output-data $(SIM_DATA) \
 		--output-results $(SIM_RESULTS) \
-		--output-diagnostics $(SIM_DIAGNOSTICS)
+		--output-diagnostics $(SIM_DIAGNOSTICS) \
+		--max-workers $(SIM_GRID_MAX_WORKERS)
 
 # Generate figures from results
 $(FIG_OVERVIEW) $(FIG_DIAGNOSTICS): $(SIM_RESULTS) $(SIM_DIAGNOSTICS) $(CODE_DIR)/plot_sim_grid.py
@@ -162,6 +170,23 @@ $(ROLLOUT_RESULTS): $(CODE_DIR)/generate_rollout_sim.py
 
 rollout: $(ROLLOUT_RESULTS)
 	@echo "Generated rollout design-mimic simulation"
+
+# Empirical bootstrap coverage (large MC) + figures under $(OUT_DIR)/
+bootstrap_coverage:
+	@mkdir -p $(OUT_DIR)
+	$(PY) $(CODE_DIR)/compute_bootstrap_coverage.py \
+		--max-workers $(BOOTSTRAP_MAX_WORKERS) \
+		--n-simulations $(BOOTSTRAP_N_SIM) \
+		--n-bootstrap $(BOOTSTRAP_N_BOOT) \
+		--output $(OUT_DIR)/bootstrap_coverage.csv \
+		--output-theta $(OUT_DIR)/bootstrap_coverage_theta.csv \
+		--output-replicates $(OUT_DIR)/bootstrap_coverage_replicates.csv \
+		--output-theta-replicates $(OUT_DIR)/bootstrap_coverage_theta_replicates.csv \
+		--manifest $(OUT_DIR)/bootstrap_coverage_run.json
+	$(PY) $(CODE_DIR)/plot_bootstrap_coverage.py --out-dir $(OUT_DIR) --pdf
+	@echo "Bootstrap coverage complete; CSV + fig_bootstrap_*.png/.pdf under $(OUT_DIR)/"
+
+bootstrap: bootstrap_coverage
 
 generate: $(SIM_RESULTS)
 	@echo "Generated simulation data and results"

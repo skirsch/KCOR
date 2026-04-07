@@ -2497,13 +2497,18 @@ def apply_nph_correction_post_inversion(
     t_rebased : np.ndarray or None
         t - DYNAMIC_HVE_SKIP_WEEKS; derived from t_vals if None.
 
+    After the last in-window date, the returned cumulative path continues as
+    H0 plus a constant offset chosen so the level matches at that week (no
+    artificial step in differenced weekly hazards).
+
     Returns
     -------
     H_corr : np.ndarray, shape (n,)
         NPH-corrected cumulative hazard (monotone non-decreasing).
     diagnostics : dict
         Keys: correction_mode, max_abs_change, wave_points, corrected_points,
-        skipped_nonpositive_excess, f_min, f_max, any_nonmonotone_fixed.
+        skipped_nonpositive_excess, f_min, f_max, any_nonmonotone_fixed,
+        post_wave_level_shift (constant added to H0 after last in-window week).
     """
     diag = {
         "correction_mode": "forced_alpha",
@@ -2514,6 +2519,7 @@ def apply_nph_correction_post_inversion(
         "f_min": float("nan"),
         "f_max": float("nan"),
         "any_nonmonotone_fixed": False,
+        "post_wave_level_shift": 0.0,
     }
 
     # Guard: identity shortcut
@@ -2595,6 +2601,19 @@ def apply_nph_correction_post_inversion(
     if not np.array_equal(H_corr_mono, H_corr):
         diag["any_nonmonotone_fixed"] = True
     H_corr = H_corr_mono
+
+    # Post-window level continuity: outside the date window we do not rescale wave
+    # excess, but leaving H_corr == H0 on the tail makes diff(H_corr) deposit the
+    # entire in-window level gap into the first post-window increment. Shift the
+    # tail by a constant so H_corr matches at the last in-window week and weekly
+    # increments after that match uncorrected H0 (§2.7.3, paper).
+    i_end = int(wave_indices[-1])
+    tail_offset = 0.0
+    if i_end < n - 1:
+        tail_offset = float(H_corr[i_end] - H0[i_end])
+        if tail_offset != 0.0:
+            H_corr[i_end + 1 :] = np.asarray(H0[i_end + 1 :], dtype=float) + tail_offset
+    diag["post_wave_level_shift"] = tail_offset
 
     diag["max_abs_change"] = float(np.max(np.abs(H_corr - H0)))
 

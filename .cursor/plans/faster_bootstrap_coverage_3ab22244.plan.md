@@ -3,23 +3,23 @@ name: Faster bootstrap coverage
 overview: Refactor [compute_bootstrap_coverage.py](test/sim_grid/code/compute_bootstrap_coverage.py) for large speedups via one shared KCOR/θ bootstrap loop, include_cox=False (control-flow only), no deepcopy in bootstrap loops, optional MP with parent-only truth and worker timing payloads, truncation W cached per scenario, guardrails (call counter, abort-if-slow, compute_kcor % time)—without changing mathematical internals of the KCOR estimator or Poisson resampling.
 todos:
   - id: stage-a-merge
-    content: "(a) Merge loops; include_cox=False; 1×compute_kcor/boot + debug counter; shallow copy; call-time %; scope no math changes"
-    status: pending
+    content: (a) Merge loops; include_cox=False; 1×compute_kcor/boot + debug counter; shallow copy; call-time %; scope no math changes
+    status: completed
   - id: stage-b-mp
-    content: "(b) MP; truth parent-only; workers return timing dict; parent aggregates; no worker file I/O"
-    status: pending
+    content: (b) MP; truth parent-only; workers return timing dict; parent aggregates; no worker file I/O
+    status: completed
   - id: stage-c-residual
-    content: "(c) Any residual micro-opts not covered in (a), or fold into (a) if empty"
-    status: pending
+    content: (c) Any residual micro-opts not covered in (a), or fold into (a) if empty
+    status: completed
   - id: stage-d-truncate
-    content: "(d) Truncation after regression; cache W per scenario; assert cohort arrays bounded by W"
-    status: pending
+    content: (d) Truncation after regression; cache W per scenario; assert cohort arrays bounded by W
+    status: completed
   - id: benchmark-checkpoint
     content: "--benchmark default skip-theta + --benchmark-with-theta; --abort-if-slow; checkpoint-every; smoke; slow warning"
-    status: pending
+    status: completed
   - id: ordering-outputs
-    content: "Row order; invariance checks; manifest timing; no theta outputs when --skip-theta"
-    status: pending
+    content: Row order; invariance checks; manifest timing; no theta outputs when --skip-theta
+    status: completed
 isProject: false
 ---
 

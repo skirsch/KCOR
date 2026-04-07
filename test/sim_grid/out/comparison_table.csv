@@ -1,0 +1,18 @@
+scenario,label,method,target_estimand,bias_deviation,variance_instability,interpretability_notes
+gamma_null,Gamma-Frailty Null,KCOR,Cumulative hazard ratio (depletion-normalized),0.007110465349758899,Low (stable trajectory),Stable under selection-induced depletion
+gamma_null,Gamma-Frailty Null,RMST,Restricted mean survival time,0.0038754105969356356,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+gamma_null,Gamma-Frailty Null,Cox (time-varying),Time-varying hazard ratio,0.008459121248126866,HR instability: 0.0009,Time-varying HR improves fit but does not normalize selection geometry
+hazard_increase,Injected Hazard Increase,KCOR,Cumulative hazard ratio (depletion-normalized),N/A,Low (stable trajectory),Detects injected effects
+hazard_increase,Injected Hazard Increase,RMST,Restricted mean survival time,N/A,Moderate (depends on depletion strength),Summarizes survival but does not normalize selection geometry
+hazard_increase,Injected Hazard Increase,Cox (time-varying),Time-varying hazard ratio,N/A,HR instability: 0.0013,Non-PH Cox captures time-varying hazards but inherits depletion structure
+hazard_decrease,Injected Hazard Decrease,KCOR,Cumulative hazard ratio (depletion-normalized),N/A,Low (stable trajectory),Detects injected effects
+hazard_decrease,Injected Hazard Decrease,RMST,Restricted mean survival time,N/A,Moderate (depends on depletion strength),Summarizes survival but does not normalize selection geometry
+hazard_decrease,Injected Hazard Decrease,Cox (time-varying),Time-varying hazard ratio,N/A,HR instability: 0.0018,Non-PH Cox captures time-varying hazards but inherits depletion structure
+nongamma_null,Non-Gamma Frailty (Lognormal),KCOR,Cumulative hazard ratio (depletion-normalized),0.012601114365844102,Low (stable trajectory),Stable under selection-induced depletion
+nongamma_null,Non-Gamma Frailty (Lognormal),RMST,Restricted mean survival time,0.0006143486444775137,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+nongamma_null,Non-Gamma Frailty (Lognormal),Cox (time-varying),Time-varying hazard ratio,0.00041051171276151877,HR instability: 0.0160,Time-varying HR improves fit but does not normalize selection geometry
+contamination,Quiet-Window Contamination,KCOR,Cumulative hazard ratio (depletion-normalized),0.03891069740578268,Low (stable trajectory),Stable under selection-induced depletion
+contamination,Quiet-Window Contamination,RMST,Restricted mean survival time,0.004942291914169172,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+contamination,Quiet-Window Contamination,Cox (time-varying),Time-varying hazard ratio,0.007925329949472704,HR instability: 0.0006,Time-varying HR improves fit but does not normalize selection geometry
+sparse,Sparse Events,KCOR,Cumulative hazard ratio (depletion-normalized),0.009323500584045075,Low (stable trajectory),Stable under selection-induced depletion
+sparse,Sparse Events,RMST,Restricted mean survival time,0.00027485246938763197,Moderate (depends on depletion strength),Inherits depletion bias from survival curves

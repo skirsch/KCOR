@@ -25,9 +25,10 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -801,10 +802,20 @@ def fit_time_varying_cox(
 def compute_kcor_for_scenario(
     scenario_data: Dict,
     config: SimConfig,
+    *,
+    include_cox: bool = True,
+    max_week_index: Optional[int] = None,
 ) -> Dict:
     """
     Compute KCOR and diagnostics for a scenario.
-    
+
+    Args:
+        scenario_data: Scenario dict with cohorts.
+        config: Simulation configuration.
+        include_cox: If False, skip time-varying Cox comparator (KCOR/theta path unchanged).
+        max_week_index: If set, use only week indices 0..max_week_index inclusive for each
+            cohort (slice arrays). Does not alter frailty/KCOR math—only shortens input data.
+
     Returns:
         Dictionary with KCOR trajectory and diagnostic metrics
     """
@@ -817,15 +828,24 @@ def compute_kcor_for_scenario(
         "rmst_difference": np.nan,
         "rmst_ratio": np.nan,
     }
-    
+
     # Process each cohort
     H0_trajectories = {}
     rmst_by_dose = {}
     for cohort in scenario_data["cohorts"]:
         dose = cohort["dose"]
-        weeks = cohort["weeks"]
-        alive = cohort["alive"]
-        dead = cohort["dead"]
+        weeks = np.asarray(cohort["weeks"])
+        alive = np.asarray(cohort["alive"], dtype=float)
+        dead = np.asarray(cohort["dead"], dtype=float)
+        if max_week_index is not None:
+            m = int(max_week_index) + 1
+            weeks = weeks[:m]
+            alive = alive[:m]
+            dead = dead[:m]
+            assert len(weeks) == m, "truncation slice length mismatch"
+            assert weeks.size == 0 or int(np.max(weeks)) <= int(max_week_index), (
+                "cohort weeks exceed max_week_index"
+            )
         
         # Compute hazard from mortality rate
         MR = np.where(alive > 0, dead / alive, 0)
@@ -933,9 +953,10 @@ def compute_kcor_for_scenario(
             results["rmst_ratio"] = float(rmst_B / rmst_A)
     
     # Compute time-varying Cox comparator (optional)
-    cox_results = fit_time_varying_cox(scenario_data, config)
-    results.update(cox_results)
-    
+    if include_cox:
+        cox_results = fit_time_varying_cox(scenario_data, config)
+        results.update(cox_results)
+
     return results
 
 
@@ -1226,6 +1247,28 @@ def generate_comparison_table(
 # Main Entry Point
 # ============================================================================
 
+_SIM_GRID_SCENARIO_SPECS: List[Tuple[str, Any]] = [
+    ("Scenario 1: Gamma-Frailty Null", run_scenario_1_gamma_null),
+    ("Scenario 2: Injected Hazard Increase", run_scenario_2_hazard_increase),
+    ("Scenario 3: Injected Hazard Decrease", run_scenario_3_hazard_decrease),
+    ("Scenario 4: Non-Gamma Frailty", run_scenario_4_nongamma_null),
+    ("Scenario 5: Quiet-Window Contamination", run_scenario_5_contamination),
+    ("Scenario 6: Sparse Events", run_scenario_6_sparse),
+]
+
+
+def _sim_grid_scenario_worker(payload: Tuple[int, int]) -> Tuple[int, str, Dict[str, Any]]:
+    """Run one scenario in a child process. ``payload`` is ``(scenario_index, seed)``."""
+    idx, seed = int(payload[0]), int(payload[1])
+    name, scenario_fn = _SIM_GRID_SCENARIO_SPECS[idx]
+    config = SimConfig(seed=seed)
+    scenario_data = scenario_fn(config)
+    cmr_df = generate_kcor_cmr_format(scenario_data, config)
+    result = compute_kcor_for_scenario(scenario_data, config)
+    result["cmr_data"] = cmr_df
+    return idx, name, result
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate KCOR simulation grid for methods paper"
@@ -1249,7 +1292,13 @@ def main():
         "--seed", type=int, default=42,
         help="Random seed for reproducibility"
     )
-    
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=6,
+        help="Process pool size for running scenarios in parallel (default 6; capped by number of scenarios)",
+    )
+
     args = parser.parse_args()
     
     # Initialize configuration
@@ -1264,36 +1313,47 @@ def main():
     print(f"Random seed: {config.seed}")
     print()
     
-    # Run all scenarios
-    scenarios = [
-        ("Scenario 1: Gamma-Frailty Null", run_scenario_1_gamma_null),
-        ("Scenario 2: Injected Hazard Increase", run_scenario_2_hazard_increase),
-        ("Scenario 3: Injected Hazard Decrease", run_scenario_3_hazard_decrease),
-        ("Scenario 4: Non-Gamma Frailty", run_scenario_4_nongamma_null),
-        ("Scenario 5: Quiet-Window Contamination", run_scenario_5_contamination),
-        ("Scenario 6: Sparse Events", run_scenario_6_sparse),
-    ]
-    
-    all_results = []
-    
-    for name, scenario_fn in scenarios:
-        print(f"Running {name}...")
-        scenario_data = scenario_fn(config)
-        
-        # Generate KCOR_CMR format
-        cmr_df = generate_kcor_cmr_format(scenario_data, config)
-        
-        # Compute KCOR and diagnostics
-        result = compute_kcor_for_scenario(scenario_data, config)
-        result["cmr_data"] = cmr_df
-        
-        # Print summary
-        print(f"  KCOR median (weeks 20-100): {result.get('kcor_median', np.nan):.4f}")
-        for cr in result.get("cohort_results", []):
-            print(f"  Dose {cr['dose']}: θ̂={cr['theta_hat']:.4f}, RMSE={cr['rmse']:.6f}, R²={cr['r_squared']:.4f}")
-        print()
-        
-        all_results.append(result)
+    scenarios = _SIM_GRID_SCENARIO_SPECS
+    n_sc = len(scenarios)
+    max_workers = max(1, min(int(args.max_workers), n_sc))
+
+    all_results: List[Dict[str, Any]]
+
+    if max_workers == 1:
+        all_results = []
+        for name, scenario_fn in scenarios:
+            print(f"Running {name}...")
+            scenario_data = scenario_fn(config)
+            cmr_df = generate_kcor_cmr_format(scenario_data, config)
+            result = compute_kcor_for_scenario(scenario_data, config)
+            result["cmr_data"] = cmr_df
+            print(f"  KCOR median (weeks 20-100): {result.get('kcor_median', np.nan):.4f}")
+            for cr in result.get("cohort_results", []):
+                print(
+                    f"  Dose {cr['dose']}: θ̂={cr['theta_hat']:.4f}, "
+                    f"RMSE={cr['rmse']:.6f}, R²={cr['r_squared']:.4f}"
+                )
+            print()
+            all_results.append(result)
+    else:
+        print(f"Running {n_sc} scenarios with up to {max_workers} worker processes...")
+        payloads = [(i, int(config.seed)) for i in range(n_sc)]
+        completed: List[Tuple[int, str, Dict[str, Any]]] = []
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            future_map = {executor.submit(_sim_grid_scenario_worker, p): p[0] for p in payloads}
+            for fut in as_completed(future_map):
+                completed.append(fut.result())
+        completed.sort(key=lambda x: x[0])
+        all_results = [r for _, _, r in completed]
+        for _idx, name, result in completed:
+            print(f"Completed {name}")
+            print(f"  KCOR median (weeks 20-100): {result.get('kcor_median', np.nan):.4f}")
+            for cr in result.get("cohort_results", []):
+                print(
+                    f"  Dose {cr['dose']}: θ̂={cr['theta_hat']:.4f}, "
+                    f"RMSE={cr['rmse']:.6f}, R²={cr['r_squared']:.4f}"
+                )
+            print()
     
     # Save all results
     save_results(

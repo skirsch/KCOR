@@ -102,7 +102,7 @@ H_{\mathrm{ref},d}(t)
 \qquad \text{for } \Delta H_{\mathrm{wave},d}(t)>0,
 $$
 
-and is left unchanged when $\Delta H_{\mathrm{wave},d}(t)\le 0$. Outside the prespecified NPH window, no NPH correction is applied and $H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)$.
+and is left unchanged when $\Delta H_{\mathrm{wave},d}(t)\le 0$. For weeks after the last in-window date $t_{\mathrm{end},d}$, wave-excess rescaling is not applied; the implementation continues $\tilde H_{0,d}(t)$ with a constant level shift so that $H_{\mathrm{corr},d}$ is continuous at $t_{\mathrm{end},d}$ and post-window weekly increments match $\tilde H_{0,d}$ (same as §2.7.3 in `paper.md`).
 
 Weekly corrected hazard increments are then obtained by differencing the corrected cumulative hazard, and the downstream KCOR pipeline proceeds unchanged on that corrected cumulative-hazard scale. Thus, the optional NPH module modifies only the wave-period excess above the fitted frailty-neutral baseline path; it does not replace the core KCOR estimator.
 

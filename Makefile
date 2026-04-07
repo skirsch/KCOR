@@ -25,7 +25,7 @@ PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 PAPER_GENERATED_FIGURES := $(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-tex paper-pdf sim_grid cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-tex paper-pdf sim_grid bootstrap_coverage bootstrap cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -324,8 +324,22 @@ quiet_sim: $(VENV_PYTHON)
 	@echo "quiet_sim complete; outputs under $(QUIET_SIM_OUT)/"
 
 # Simulation grid (operating characteristics and failure-mode diagnostics)
+SIM_GRID_MAX_WORKERS ?= 6
 sim_grid: $(VENV_PYTHON)
-	$(MAKE) -C test/sim_grid all PYTHON=$(abspath $(VENV_PYTHON))
+	$(MAKE) -C test/sim_grid all PYTHON=$(abspath $(VENV_PYTHON)) SIM_GRID_MAX_WORKERS=$(SIM_GRID_MAX_WORKERS)
+
+# Bootstrap coverage Monte Carlo + figures (Table tbl:bootstrap_coverage; long run)
+BOOTSTRAP_MAX_WORKERS ?= 20
+BOOTSTRAP_N_SIM ?= 500
+BOOTSTRAP_N_BOOT ?= 200
+bootstrap_coverage: $(VENV_PYTHON)
+	$(MAKE) -C test/sim_grid bootstrap_coverage \
+		PYTHON=$(abspath $(VENV_PYTHON)) \
+		BOOTSTRAP_MAX_WORKERS=$(BOOTSTRAP_MAX_WORKERS) \
+		BOOTSTRAP_N_SIM=$(BOOTSTRAP_N_SIM) \
+		BOOTSTRAP_N_BOOT=$(BOOTSTRAP_N_BOOT)
+
+bootstrap: bootstrap_coverage
 
 # Cox bias demonstration (Cox regression bias under frailty heterogeneity)
 cox-bias: $(VENV_PYTHON)
@@ -598,7 +612,8 @@ help:
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
 	@echo "  alpha           - Run alpha estimation sandbox (test/alpha)"
-	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid)"
+	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid; 6 scenario workers by default)"
+	@echo "  bootstrap_coverage / bootstrap - Run empirical bootstrap coverage MC + figures (20 workers by default; long)"
 	@echo "  quiet-window    - Run quiet-window scan (test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py)"
 	@echo "  quiet_sim       - Run quiet-window *contamination* synthetic experiment (test/quiet_window_contamination/)"
 	@echo "  cox-bias        - Run Cox bias demonstration simulation (test/sim_grid)"
@@ -637,6 +652,10 @@ help:
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
 	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 4)"
 	@echo "  MC_ENROLLMENT_DATE=<YYYY_WW> - (Monte Carlo) Enrollment cohort used for MC CMR + analysis (default: 2021_24)"
+	@echo "  SIM_GRID_MAX_WORKERS=<n> - Parallel processes for make sim_grid (default: 6; capped at scenario count)"
+	@echo "  BOOTSTRAP_MAX_WORKERS=<n> - Parallel processes for make bootstrap_coverage (default: 20)"
+	@echo "  BOOTSTRAP_N_SIM=<n>       - Simulations per scenario for bootstrap_coverage (default: 500)"
+	@echo "  BOOTSTRAP_N_BOOT=<n>     - Bootstrap draws per simulation for bootstrap_coverage (default: 200)"
 	@echo "  SA_COHORTS=<list>     - (Sensitivity) Restrict cohorts, e.g. 2022_06 or 2021_24,2022_06"
 	@echo "  SA_DOSE_PAIRS=<pairs> - (Sensitivity) Restrict dose pairs, e.g. 1,0 or 1,0;2,0"
 	@echo "  SA_BASELINE_WEEKS=<vals> - (Sensitivity) Baseline weeks list/range, e.g. 4,6,8 or 2,8,1"

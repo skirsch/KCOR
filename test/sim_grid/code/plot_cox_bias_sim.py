@@ -15,6 +15,9 @@ import argparse
 import os
 import sys
 
+import matplotlib
+
+matplotlib.use("Agg")  # headless / WSL / CI — avoid TkAgg requiring $DISPLAY
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd

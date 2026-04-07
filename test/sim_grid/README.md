@@ -31,13 +31,24 @@ For each scenario and cohort, we compute:
 
 ## Usage
 
+**Recommended order from the repository root:** run the operating-characteristics bundle first, then the bootstrap coverage run (they are separate pipelines; this order matches how most people refresh paper artifacts).
+
+1. **`make sim_grid`** — six-scenario grid, S7, Cox-bias, skip-weeks, cohort-size, rollout, and related figures (up to 6 parallel scenario workers by default).
+2. **`make bootstrap`** — empirical bootstrap coverage Monte Carlo plus KCOR/theta figures under `out/` (`make bootstrap_coverage` is the same target; 20 workers by default). This step is long.
+
 ```bash
 # From repository root
 make sim_grid
+make bootstrap
 
-# Or from this directory
+# Serial scenarios only (optional)
+make sim_grid SIM_GRID_MAX_WORKERS=1
+
+# Or build only the sim_grid bundle from this directory (no bootstrap)
 make all
 ```
+
+After `make bootstrap`, see `out/fig_bootstrap_coverage_*.png` (and `.pdf` from the plot step).
 
 ## Output Files
 
@@ -45,6 +56,11 @@ make all
 - `out/sim_grid_diagnostics.csv` - Per-cohort diagnostic metrics
 - `out/fig_sim_grid_overview.png` - KCOR(t) trajectories
 - `out/fig_sim_grid_diagnostics.png` - Diagnostic summaries
+
+After **`make bootstrap_coverage`** (from repo root or this directory with `PYTHON` set):
+
+- `out/bootstrap_coverage.csv`, `out/bootstrap_coverage_theta.csv`, replicate CSVs, `out/bootstrap_coverage_run.json`
+- `out/fig_bootstrap_coverage_kcor.png` / `.pdf`, `fig_bootstrap_coverage_kcor_ciwidth.*`, and theta figures when theta CSV is present
 
 ## Acceptance Criteria
 
