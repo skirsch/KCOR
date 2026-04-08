@@ -568,7 +568,36 @@ print("Computing H(t) by dose, enrolled Mar 1 2023...")
 plot_hazard_by_dose(df, pd.Timestamp('2023-03-01'), [0, 2, 3, 4, 5],
                     'timeseries_hazard_mar2023.png')
 
-# ── 20. STATISTICAL TESTS ─────────────────────────────────────────────────────
+# ── 20. H(t) FULL COHORT — ENROLLED JAN 1 2021 ───────────────────────────────
+# Single curve: everyone born BIRTH_YEAR_MIN-BIRTH_YEAR_MAX, vacc and unvacc combined
+print("\nComputing H(t) for full cohort enrolled Jan 1 2021...")
+
+FULL_ENROLL = pd.Timestamp('2021-01-01')
+full_enroll_cohort = df[
+    df['BirthYearMin'].notna() &
+    (df['BirthYearMin'] >= BIRTH_YEAR_MIN) &
+    (df['BirthYearMin'] <= BIRTH_YEAR_MAX) &
+    (df['DateOfDeath'].isna() | (df['DateOfDeath'] > FULL_ENROLL))
+].copy()
+
+H_full = km_cumulative_hazard(full_enroll_cohort, FULL_ENROLL, MAX_WEEKS)
+
+fig, ax = plt.subplots(figsize=(16, 7))
+ax.plot(H_full.index, H_full.values, color='tab:blue', linewidth=2,
+        label=f'Full cohort (n={len(full_enroll_cohort):,})')
+ax.set_title(
+    f'Cumulative hazard H(t) — full cohort born {BIRTH_YEAR_MIN}-{BIRTH_YEAR_MAX}, '
+    f'enrolled Jan 1 2021 (vaccinated + unvaccinated)',
+    fontsize=12)
+ax.set_xlabel('Weeks since Jan 1 2021')
+ax.set_ylabel('H(t) = −log(S(t))')
+ax.legend()
+plt.tight_layout()
+plt.savefig('timeseries_hazard_full_cohort.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("Chart saved: timeseries_hazard_full_cohort.png")
+
+# ── 21. STATISTICAL TESTS ─────────────────────────────────────────────────────
 print("\n" + "="*60)
 print("STATISTICAL ANALYSIS")
 print("="*60)

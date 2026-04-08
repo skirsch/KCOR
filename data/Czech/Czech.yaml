@@ -22,11 +22,7 @@ NPH_correction:
 # The quiet window is used to estimate the theta parameter for the gamma frailty model.
 # Generally, larger windows are better if there are no major epidemic waves or policy shocks.
 # to be conservative, we use the CY 2023 because it showed the least vaccine harm.
-quietWindow:
-  startDate: '2023-01'
-  endDate: '2023-52'
-  # startDate: '2022-24'
-  #endDate: '2024-16'
+
 
 # KCOR v7: estimate theta(0) from points within these quiet windows (no COVID, no excess mortality)
 theta_estimation_windows:

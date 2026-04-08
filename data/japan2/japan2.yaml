@@ -1,10 +1,12 @@
 # Japan2 dataset yaml file
 # Using https://medicalfacts.info/kcor.html, we determine:
-# 8-1-21 primary
-# 3-1-22 booster
-# 9-1-22 4th dose
-# 1-1-23 5th dose
-# 7-1-23 6th dose
+
+# these are when rollouts have flattened out
+# 11-1-21 primary
+# 5-1-22 booster
+# 11-1-22 4th dose
+# 2-1-23 5th dose
+# 8-1-23 6th dose
 
 # To make the japan2 dataset, use:
 #            make KCOR dataset=japan2
@@ -27,13 +29,34 @@ startDate: 2021-01-01
 endDate: 2025-12-31
 
 # Analysis parameters (used by KCOR_CMR.py and KCOR.py)
+#
+# KCOR v7: theta(0) is estimated from weeks inside these windows (low mortality / troughs on
+# the national weekly mortality-rate curve for cohort born 1930–1960; see project notes / figure).
+# ISO week format YYYY-WW (same as Czech.yaml). Order is not special; all listed windows are OR'd.
+#
+# Do not use legacy quietWindow here: if theta_estimation_windows is present, KCOR ignores
+# quietWindow for theta masking (quietWindow is only a fallback when this list is absent).
+theta_estimation_windows:
+  - ['2023-18', '2023-24', 'mid-2023 mortality trough']
+  - ['2022-17', '2022-24', 'mid-2022 mortality trough']
+  - ['2021-22', '2021-28', 'mid-2021 mortality trough']
+# - ['2023-41', '2023-47', 'late-2023 mortality trough']
+# - ['2022-37', '2022-46', 'late-2022 mortality trough']
+#  - ['2021-41', '2021-48', 'late-2021 mortality trough']
+
+# Gompertz + frailty-depletion theta0 fit (defaults match Czech if omitted; listed for clarity)
+time_varying_theta:
+  gompertz_gamma: 0.085
+  k_anchor_weeks: 4
+  k_anchor_tolerance: 0.20
+
 # Enrollment dates for cohort analysis (ISO week format: YYYY-WW)
 enrollmentDates:
-  - '2021-30'
-  - '2022-09'
-  - '2022-35'
-  - '2023-01'
-  - '2023-26'
+  - '2021-44'
+  - '2022-17'
+  - '2022-44'
+  - '2023-05'
+  - '2023-31'
   
 # Dose pairs configuration
 # Maps enrollment date to list of (numerator, denominator) dose pairs
@@ -44,22 +67,22 @@ dosePairs:
     - [1, 0]
     - [2, 0]
     - [2, 1]
-  '2021-30':
+  '2021-44':
     - [1, 0]
     - [2, 1]
     - [2, 0]
-  '2022-09':
+  '2022-17':
     - [2, 0]
     - [2, 1]
     - [3, 2]
     - [3, 0]
-  '2022-35':
+  '2022-44':
     - [2, 0]
     - [3, 2]
     - [3, 0]
     - [4, 3]
     - [4, 0]
-  '2023-01':
+  '2023-05':
     - [2, 0]
     - [3, 0]
     - [3, 2]
@@ -67,7 +90,7 @@ dosePairs:
     - [4, 0]
     - [5, 4]
     - [5, 0]
-  '2023-26':
+  '2023-31':
     - [2, 0]
     - [3, 0]
     - [3, 2]
