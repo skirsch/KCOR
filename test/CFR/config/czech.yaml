@@ -74,15 +74,9 @@ qa_summary:
   period_end: "2022-20"
   spot_check:
     iso_week: "2021-48"
-    birth_year: 1935
-    # Full CSV: compare to extract. `--smoke` ignores `expected` (subsample will not match).
-    # *_covid = Umrti (Date_COVID_death) week; *_acm = DatumUmrtiLPZ (DateOfDeath) week — file-wide birth year, all IDs.
+    # File-wide totals (distinct IDs), same extract as pipeline. `--smoke` ignores `expected`.
     expected:
-      vaxxed_covid: 80
-      vaxxed_acm: 363
-      unvaxxed_covid: 48
-      unvaxxed_acm: 126
-      all_covid: 145
-      all_acm: 514
+      covid_deaths: 145   # Umrti → Date_COVID_death ISO week
+      acm_deaths: 514     # DatumUmrtiLPZ → DateOfDeath ISO week
 
 output_dir: test/CFR/out

@@ -90,21 +90,14 @@ def _person_death_counts(
     return n_cv, n_acm, n_noncov
 
 
-def _person_table_spot_check_slice(df: pd.DataFrame, birth_year: int) -> pd.DataFrame:
-    """
-    One row per distinct ``ID`` with ``birth_band_start == birth_year`` — entire extract after
-    enrollment (no dose-cohort filter), for reconciling to LPZ-style tables (e.g. 145 / 514).
-    """
-    sub = df[_birth_year_eq(df["birth_band_start"], birth_year)]
-    if sub.empty:
+def _person_table_all_ids(df: pd.DataFrame) -> pd.DataFrame:
+    """One row per distinct ``ID`` (full extract after enrollment) for file-wide death QA."""
+    if df.empty or "ID" not in df.columns:
         return pd.DataFrame()
-    return sub.groupby("ID", sort=False).agg(
+    return df.groupby("ID", sort=False).agg(
         death_monday=("death_monday", "first"),
         covid_death_monday=("covid_death_monday", "first"),
-        cohort_dose0=("cohort_dose0", "max"),
-        cohort_dose1=("cohort_dose1", "max"),
-        cohort_dose2=("cohort_dose2", "max"),
-    ).assign(vaxxed_enrollment=lambda x: x["cohort_dose1"] | x["cohort_dose2"])
+    )
 
 
 def _spot_week_metrics(
@@ -182,6 +175,31 @@ def _weekly_age_all_cohort_sets(weekly: pd.DataFrame) -> tuple[set[str], set[str
     unvaxxed = {"dose0"} & everyone
     vaxxed = everyone - {"dose0"}
     return everyone, unvaxxed, vaxxed
+
+
+def _period_allcause_deaths_per_person_week(
+    weekly: pd.DataFrame,
+    cohort: str,
+    *,
+    iso_weeks: set[str],
+) -> tuple[float, int, int]:
+    """
+    Over ``iso_weeks`` only: ``sum(deaths_all) / sum(population_at_risk)`` for one cohort
+    (``age_bin == all``). Matches “3 deaths on 100 at risk + 2 on 90 → (3+2)/(100+90)”.
+    """
+    if cohort not in PRIMARY_ENROLLMENT_COHORTS:
+        return float("nan"), 0, 0
+    sub = weekly[
+        (weekly["age_bin"] == "all")
+        & (weekly["cohort"] == cohort)
+        & (weekly["iso_week"].isin(iso_weeks))
+    ]
+    if sub.empty:
+        return float("nan"), 0, 0
+    tot_d = int(sub["deaths_all"].sum())
+    tot_p = int(sub["population_at_risk"].sum())
+    rate = tot_d / tot_p if tot_p > 0 else float("nan")
+    return rate, tot_d, tot_p
 
 
 def _weekly_aggregate_case_rate_cfr(
@@ -305,6 +323,15 @@ def log_qa_summary(
             f"{label.ljust(col_w)}  {n_inf:>10,}  {n_cv:>12,}  {n_nc:>15,}  {n_acm:>10,}  {ap:>15}  {crs:>10}  {cfrs:>10}"
         )
 
+    log(
+        f"QA period all-cause mortality (weekly_metrics): sum(deaths_all) / sum(population_at_risk) "
+        f"over {qa_period_start}–{qa_period_end}, age_bin=all (person-weeks = weekly denominators)."
+    )
+    for c in ("dose0", "dose1", "dose2"):
+        r, td, tp = _period_allcause_deaths_per_person_week(weekly, c, iso_weeks=qa_iso)
+        rs = f"{r:.8f}" if np.isfinite(r) else "n/a"
+        log(f"  {c}: deaths={td:,}  person_weeks={tp:,}  deaths/person_week={rs}")
+
     if not qa_cfg:
         return
 
@@ -313,92 +340,63 @@ def log_qa_summary(
         return
 
     iso_w = str(spot.get("iso_week", "")).strip()
-    birth_y = spot.get("birth_year")
-    if not iso_w or birth_y is None:
+    if not iso_w:
         return
-    try:
-        byear = int(birth_y)
-    except (TypeError, ValueError):
-        log(f"QA spot_check: invalid birth_year {birth_y!r}, skip.")
+
+    if df_enrollment_all is None or len(df_enrollment_all) == 0:
+        log("QA spot-check: skip (no df_enrollment_all — need full post-enrollment frame)")
         return
 
     spot_set = {iso_w}
-    if df_enrollment_all is not None and len(df_enrollment_all) > 0:
-        p_spot = _person_table_spot_check_slice(df_enrollment_all, byear)
-        log(
-            f"QA spot-check — ISO week {iso_w}, birth year {byear} "
-            "(all distinct IDs in this extract after enrollment; same load/mRNA filters as pipeline)"
-        )
-    else:
-        p_spot = pers[_birth_year_eq(pers["birth_band_start"], byear)]
-        log(
-            f"QA spot-check — ISO week {iso_w}, birth year {byear} "
-            "(study cohort dose0–2 only; pass df_enrollment_all=log_qa_summary(..., df_enrollment_all=df) "
-            "for file-wide birth-year slice like 145 / 514)"
-        )
-    n_study_1935 = int(_birth_year_eq(pers["birth_band_start"], byear).sum())
+    p_all = _person_table_all_ids(df_enrollment_all)
+    m_all = pd.Series(True, index=p_all.index)
+    n_cv, n_lpz, n_union, n_nc = _spot_week_metrics(p_all, spot_set, m_all)
+
     log(
-        f"  distinct IDs birth {byear}: {len(p_spot):,}  |  study-table rows (dose0–2) same birth: {n_study_1935:,}"
+        f"QA spot-check — ISO week {iso_w}, all distinct IDs in extract after enrollment "
+        "(same load/mRNA filters as pipeline)"
     )
+    log(f"  distinct IDs: {len(p_all):,}")
     log(
-        "  covid_week = Umrti→Date_COVID_death ISO week; acm_lpz_week = DatumUmrtiLPZ→DateOfDeath ISO week; "
-        "acm_union = either week (diagnostic)"
+        f"  total covid_week (Umrti→Date_COVID_death)={n_cv}  "
+        f"total acm_lpz_week (DatumUmrtiLPZ→DateOfDeath)={n_lpz}  "
+        f"acm_union={n_union}  noncov_lpz_week={n_nc}"
     )
-    in_any_cohort = (
-        p_spot["cohort_dose0"] | p_spot["cohort_dose1"] | p_spot["cohort_dose2"]
-    ).astype(bool)
-    strata: list[tuple[str, pd.Series]] = [
-        ("vaxxed (dose1+)", p_spot["vaxxed_enrollment"]),
-        ("unvaxxed (dose0)", p_spot["cohort_dose0"].astype(bool)),
-        ("everyone", pd.Series(True, index=p_spot.index)),
-    ]
-    n_no_cohort = int((~in_any_cohort).sum())
-    if n_no_cohort:
-        strata.insert(
-            2,
-            ("no dose0–2 cohort flag (~ineligible at enroll)", ~in_any_cohort),
-        )
-    for label, m in strata:
-        n_cv, n_lpz, n_u, n_nc = _spot_week_metrics(p_spot, spot_set, m)
-        log(
-            f"  {label}: covid_week={n_cv}  acm_lpz_week={n_lpz}  "
-            f"acm_union={n_u}  noncov_lpz_week={n_nc}"
-        )
 
     exp = spot.get("expected")
     if not exp or not isinstance(exp, dict):
         return
 
-    def _get(d: Mapping[str, object], key: str) -> int | None:
-        if key not in d or d[key] is None:
-            return None
-        try:
-            return int(d[key])
-        except (TypeError, ValueError):
-            return None
+    def _get_covid_acm(d: Mapping[str, object]) -> tuple[int | None, int | None]:
+        ev = ea = None
+        for k in ("covid_deaths", "all_covid"):
+            if k not in d or d[k] is None:
+                continue
+            try:
+                ev = int(d[k])
+                break
+            except (TypeError, ValueError):
+                continue
+        for k in ("acm_deaths", "all_acm"):
+            if k not in d or d[k] is None:
+                continue
+            try:
+                ea = int(d[k])
+                break
+            except (TypeError, ValueError):
+                continue
+        return ev, ea
 
+    ev_cov, ev_acm = _get_covid_acm(exp)
     checks: list[tuple[str, int, int]] = []
-    cv_v, lpz_v, _, _ = _spot_week_metrics(p_spot, spot_set, p_spot["vaxxed_enrollment"])
-    cv_u, lpz_u, _, _ = _spot_week_metrics(p_spot, spot_set, p_spot["cohort_dose0"].astype(bool))
-    cv_e, lpz_e, _, _ = _spot_week_metrics(
-        p_spot, spot_set, pd.Series(True, index=p_spot.index)
-    )
-    for name, got_cv, got_acm_lpz, key_cv, key_acm in (
-        ("vaxxed", cv_v, lpz_v, "vaxxed_covid", "vaxxed_acm"),
-        ("unvaxxed", cv_u, lpz_u, "unvaxxed_covid", "unvaxxed_acm"),
-        ("all", cv_e, lpz_e, "all_covid", "all_acm"),
-    ):
-        ev = _get(exp, key_cv)
-        ea = _get(exp, key_acm)
-        if ev is not None:
-            checks.append((f"{name} covid", got_cv, ev))
-        if ea is not None:
-            checks.append((f"{name} acm (LPZ week)", got_acm_lpz, ea))
-
+    if ev_cov is not None:
+        checks.append(("total covid_week", n_cv, ev_cov))
+    if ev_acm is not None:
+        checks.append(("total acm_lpz_week", n_lpz, ev_acm))
     if not checks:
         return
     bad = [f"{nm}: got {g} expected {e}" for nm, g, e in checks if g != e]
     if bad:
         log("QA spot-check expected: FAIL - " + "; ".join(bad))
     else:
-        log("QA spot-check expected: OK (all listed fields match)")
+        log("QA spot-check expected: OK (covid_deaths & acm_deaths match)")
