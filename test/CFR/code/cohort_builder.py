@@ -118,6 +118,12 @@ def build_enrollment_table(
     first_dose_monday, second_dose_monday, third_dose_monday, infection_monday, death_monday,
     covid_death_monday, death_monday_allcause, etc.
 
+    **Age / birth:** There is no fixed reference year (e.g. not 2020). ``birth_band_start`` is the
+    four-digit year from ``YearOfBirth``. ``age_at_enrollment`` is integer completed years:
+    ``calendar_year(enrollment Monday) - birth_band_start``, where the enrollment Monday comes from
+    ``enrollment_week`` in config (e.g. 2021-24 → June 2021 → year 2021). So binning is driven by
+    **year of birth** plus the **enrollment date** anchor, not a single global census year.
+
     progress_log: optional ``print``-like callback for long runs (flush in caller).
     """
     log = progress_log or (lambda _m: None)
@@ -134,9 +140,11 @@ def build_enrollment_table(
     enroll_ts = pd.Timestamp(enroll_d).normalize()
 
     _p(f"enrollment: birth year + age bins ({len(out):,} rows) …")
+    # Birth: first 4-digit year in YearOfBirth (source has no full DOB in this pipeline).
     out["birth_band_start"] = (
         out["YearOfBirth"].astype(str).str.extract(r"(\d{4})", expand=False).astype(float)
     )
+    # Age for YAML bins: enrollment week's calendar year minus birth year (not a fixed year like 2020).
     out["age_at_enrollment"] = enroll_iso_year - out["birth_band_start"]
     out["age_bin"] = _assign_age_bin_vectorized(out["age_at_enrollment"], age_bins)
 

@@ -42,7 +42,7 @@ from metrics import (  # noqa: E402
     build_weekly_metrics,
     parallel_stratum_pool_available,
 )
-from qa_summary import log_qa_summary  # noqa: E402
+from qa_summary import log_qa_summary, write_debug_birth_cohort_weekly_csv  # noqa: E402
 from plots import (  # noqa: E402
     plot_case_rate,
     plot_cfr,
@@ -290,6 +290,34 @@ def main() -> None:
         qa_cfg=qa_cfg,
         df_enrollment_all=df,
     )
+
+    _dbg_csv = _qs_dict.get("debug_enrollment_weekly_csv")
+    _dbg_on = False
+    _dbg_lo = _dbg_hi = 1930
+    _dbg_fn = "debug_193x_enrollment_weekly.csv"
+    if _dbg_csv is True:
+        _dbg_on = True
+        _dbg_lo, _dbg_hi = 1930, 1939
+    elif isinstance(_dbg_csv, dict) and _dbg_csv.get("enabled"):
+        _dbg_on = True
+        try:
+            _dbg_lo = int(_dbg_csv["birth_year_min"])
+            _dbg_hi = int(_dbg_csv["birth_year_max"])
+        except (KeyError, TypeError, ValueError):
+            _dbg_on = False
+            _log("debug_enrollment_weekly_csv: enabled but invalid birth_year_min/max — skip")
+        _dbg_fn = str(_dbg_csv.get("filename", _dbg_fn))
+    if _dbg_on:
+        write_debug_birth_cohort_weekly_csv(
+            df_model,
+            followup_start=followup_start,
+            followup_end=followup_end,
+            birth_year_min=_dbg_lo,
+            birth_year_max=_dbg_hi,
+            cohorts=cohorts,
+            out_path=out_dir / _dbg_fn,
+            log=_log,
+        )
 
     baseline_week_dates = set(
         iter_followup_mondays(str(baseline["start"]), str(baseline["end"]))

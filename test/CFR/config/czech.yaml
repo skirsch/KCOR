@@ -23,6 +23,7 @@ cohorts:
   - dose1
   - dose2
 
+# Applied to age_at_enrollment = (calendar year of enrollment_week Monday) − YearOfBirth (4-digit); not a fixed 2020 anchor.
 age_bins:
   - [40, 49]
   - [50, 59]
@@ -72,11 +73,22 @@ extensions:
 qa_summary:
   period_start: "2021-40"
   period_end: "2022-20"
+  # QA period table + weekly-derived rates: only YearOfBirth → birth_band_start in this range.
+  period_birth_year_min: 1940
+  period_birth_year_max: 1949
   spot_check:
+    # Single ISO week only (not a range). Counts = that week × 1930–1939 birth cohort (birth_band_start).
     iso_week: "2021-48"
-    # File-wide totals (distinct IDs), same extract as pipeline. `--smoke` ignores `expected`.
+    birth_year_min: 1930
+    birth_year_max: 1939
     expected:
-      covid_deaths: 145   # Umrti → Date_COVID_death ISO week
-      acm_deaths: 514     # DatumUmrtiLPZ → DateOfDeath ISO week
+      covid_deaths: 242   # Umrti → Date_COVID_death ISO week
+      acm_deaths: 947    # DatumUmrtiLPZ → DateOfDeath ISO week
+  # Weekly panel for birth slice: date, dose, alive_at_week_start, died_in_week (all-cause, enrollment follow-up).
+  debug_enrollment_weekly_csv:
+    enabled: true
+    birth_year_min: 1930
+    birth_year_max: 1939
+    filename: debug_193x_enrollment_weekly.csv
 
 output_dir: test/CFR/out

@@ -4,15 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from cohort_builder import (
     PRIMARY_ENROLLMENT_COHORTS,
+    iso_week_str_to_monday,
     iter_followup_mondays,
     monday_to_iso_week,
 )
+
+from metrics import _compute_weekly_stratum_rows, _week_index_map
 
 
 def _death_monday_iso(d: object) -> str | None:
@@ -51,16 +55,16 @@ def _followup_iso_weeks(followup_start: str, followup_end: str) -> set[str]:
     return {monday_to_iso_week(w) for w in iter_followup_mondays(followup_start, followup_end)}
 
 
-def _infection_episode_counts(df: pd.DataFrame, follow_iso: set[str]) -> tuple[int, int, int]:
-    """(all, unvaxxed, vaxxed) = rows with infection_monday in follow-up ISO weeks (dose0–2 only)."""
+def _infection_episode_counts_dose012(df: pd.DataFrame, follow_iso: set[str]) -> tuple[int, int, int, int]:
+    """(all, dose0, dose1, dose2) = infection rows in window (enrollment strata only)."""
     m_study = df["cohort_dose0"] | df["cohort_dose1"] | df["cohort_dose2"]
     sub = df[m_study]
     iso = sub["infection_monday"].map(_death_monday_iso)
     in_p = iso.isin(follow_iso)
-    n_all = int(in_p.sum())
-    n_u = int((in_p & sub["cohort_dose0"]).sum())
-    n_v = int((in_p & (sub["cohort_dose1"] | sub["cohort_dose2"])).sum())
-    return n_all, n_u, n_v
+    n0 = int((in_p & sub["cohort_dose0"]).sum())
+    n1 = int((in_p & sub["cohort_dose1"]).sum())
+    n2 = int((in_p & sub["cohort_dose2"]).sum())
+    return int(in_p.sum()), n0, n1, n2
 
 
 def _person_death_counts(
@@ -91,13 +95,36 @@ def _person_death_counts(
 
 
 def _person_table_all_ids(df: pd.DataFrame) -> pd.DataFrame:
-    """One row per distinct ``ID`` (full extract after enrollment) for file-wide death QA."""
+    """One row per distinct ``ID`` (full extract after enrollment) for death QA / spot-check."""
     if df.empty or "ID" not in df.columns:
         return pd.DataFrame()
-    return df.groupby("ID", sort=False).agg(
-        death_monday=("death_monday", "first"),
-        covid_death_monday=("covid_death_monday", "first"),
-    )
+    agg: dict[str, tuple[str, str]] = {
+        "death_monday": ("death_monday", "first"),
+        "covid_death_monday": ("covid_death_monday", "first"),
+    }
+    if "birth_band_start" in df.columns:
+        agg["birth_band_start"] = ("birth_band_start", "first")
+    return df.groupby("ID", sort=False).agg(**agg)
+
+
+def _birth_year_range_mask(series: pd.Series, lo: int, hi: int) -> pd.Series:
+    """True where ``birth_band_start`` parses to an integer year in ``[lo, hi]``; NaN / bad → False."""
+
+    def _ok(v: object) -> bool:
+        if v is None:
+            return False
+        try:
+            if pd.isna(v):
+                return False
+        except (ValueError, TypeError):
+            return False
+        try:
+            y = int(float(v))
+        except (TypeError, ValueError):
+            return False
+        return lo <= y <= hi
+
+    return series.map(_ok)
 
 
 def _spot_week_metrics(
@@ -147,6 +174,13 @@ def _avg_pop_at_risk_stratum(
     w = weekly[weekly["age_bin"] == "all"]
     if w.empty:
         return float("nan")
+    if stratum in PRIMARY_ENROLLMENT_COHORTS:
+        wc = w[w["cohort"] == stratum].groupby("iso_week", sort=True)["population_at_risk"].sum()
+        if iso_weeks is not None:
+            wc = wc[wc.index.isin(iso_weeks)]
+        if wc.empty:
+            return float("nan")
+        return float(wc.mean())
     by_iso = _weekly_total_pop_by_iso(weekly)
     if by_iso.empty:
         return float("nan")
@@ -177,15 +211,15 @@ def _weekly_age_all_cohort_sets(weekly: pd.DataFrame) -> tuple[set[str], set[str
     return everyone, unvaxxed, vaxxed
 
 
-def _period_allcause_deaths_per_person_week(
+def _period_covid_deaths_per_person_week(
     weekly: pd.DataFrame,
     cohort: str,
     *,
     iso_weeks: set[str],
 ) -> tuple[float, int, int]:
     """
-    Over ``iso_weeks`` only: ``sum(deaths_all) / sum(population_at_risk)`` for one cohort
-    (``age_bin == all``). Matches “3 deaths on 100 at risk + 2 on 90 → (3+2)/(100+90)”.
+    Over ``iso_weeks`` only: ``sum(deaths_covid) / sum(population_at_risk)`` for one cohort
+    (``age_bin == all``; weekly ``deaths_covid`` from ``covid_death_monday``).
     """
     if cohort not in PRIMARY_ENROLLMENT_COHORTS:
         return float("nan"), 0, 0
@@ -196,7 +230,7 @@ def _period_allcause_deaths_per_person_week(
     ]
     if sub.empty:
         return float("nan"), 0, 0
-    tot_d = int(sub["deaths_all"].sum())
+    tot_d = int(sub["deaths_covid"].sum())
     tot_p = int(sub["population_at_risk"].sum())
     rate = tot_d / tot_p if tot_p > 0 else float("nan")
     return rate, tot_d, tot_p
@@ -231,6 +265,90 @@ def _weekly_aggregate_case_rate_cfr(
     return case_rate, cfr
 
 
+def _mini_weekly_all_cohorts(
+    df_slice: pd.DataFrame,
+    *,
+    followup_start: str,
+    followup_end: str,
+    cohorts: list[str],
+) -> pd.DataFrame:
+    """Rebuild ``age_bin == all`` weekly rows for ``cohorts`` on a person subset (e.g. birth-year slice)."""
+    weeks = list(iter_followup_mondays(followup_start, followup_end))
+    wmap = _week_index_map(weeks)
+    iso_labels = [monday_to_iso_week(w) for w in weeks]
+    parts: list[dict] = []
+    for co in cohorts:
+        parts.extend(
+            _compute_weekly_stratum_rows(
+                df_slice,
+                co,
+                "all",
+                weeks=weeks,
+                wmap=wmap,
+                iso_labels=iso_labels,
+                cohort_masks=None,
+            )
+        )
+    return pd.DataFrame(parts)
+
+
+def write_debug_birth_cohort_weekly_csv(
+    df_model: pd.DataFrame,
+    *,
+    followup_start: str,
+    followup_end: str,
+    birth_year_min: int,
+    birth_year_max: int,
+    cohorts: list[str],
+    out_path: Path,
+    log: Callable[[str], None] | None = None,
+) -> bool:
+    """
+    One row per ISO week × enrollment dose: week-start date, dose, alive count, all-cause deaths
+    in week (``death_monday_allcause`` histogram), for a birth-year slice — for reconciling QA vs
+    external death tables.
+    """
+    _lg = log or (lambda _m: None)
+    if "birth_band_start" not in df_model.columns:
+        _lg("debug enrollment weekly CSV: skip (no birth_band_start)")
+        return False
+    m_birth = _birth_year_range_mask(df_model["birth_band_start"], birth_year_min, birth_year_max)
+    df_slice = df_model.loc[m_birth]
+    if df_slice.empty:
+        _lg(
+            f"debug enrollment weekly CSV: skip (no rows with birth {birth_year_min}–{birth_year_max})"
+        )
+        return False
+    use_cohorts = [c for c in ("dose0", "dose1", "dose2") if c in cohorts and c in PRIMARY_ENROLLMENT_COHORTS]
+    if not use_cohorts:
+        _lg("debug enrollment weekly CSV: skip (no dose0–2 cohorts in cfg)")
+        return False
+    mini = _mini_weekly_all_cohorts(
+        df_slice,
+        followup_start=followup_start,
+        followup_end=followup_end,
+        cohorts=use_cohorts,
+    )
+    if mini.empty:
+        _lg("debug enrollment weekly CSV: skip (empty weekly slice)")
+        return False
+    out = mini.assign(
+        date=mini["week_monday"],
+        dose=mini["cohort"],
+        alive_at_week_start=mini["population_at_risk"],
+        died_in_week=mini["deaths_all"],
+    )[["date", "dose", "alive_at_week_start", "died_in_week"]]
+    out = out.sort_values(["date", "dose"], kind="mergesort").reset_index(drop=True)
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(out_path, index=False)
+    _lg(
+        f"debug enrollment weekly CSV: wrote {len(out):,} rows "
+        f"(birth {birth_year_min}–{birth_year_max}, follow-up {followup_start}–{followup_end}) → {out_path}"
+    )
+    return True
+
+
 def _birth_year_eq(series: pd.Series, year: int) -> pd.Series:
     def _one(v: object) -> bool:
         if pd.isna(v):
@@ -262,52 +380,79 @@ def log_qa_summary(
     (``cohort_followup_start``–``cohort_followup_end``); the table below aggregates infections
     and deaths only over the QA ISO-week window.
 
-    * Unvaxxed = enrollment ``dose0``; vaxxed = ``dose1`` | ``dose2`` (dose3 stratum not used).
+    * Table strata: ``everyone`` then ``dose0`` / ``dose1`` / ``dose2`` at enrollment (dose3 not used).
     * Deaths: distinct ``ID``; ACM-in-window = LPZ or COVID week union for period totals.
     * Avg pop / case_rate / CFR = mean or sums over **QA period weeks** only (``age_bin == all``).
+
+    If ``qa_cfg`` sets ``period_birth_year_min`` / ``period_birth_year_max``, the QA table and
+    weekly-derived columns use only rows with ``birth_band_start`` in that inclusive range; the
+    spot-check block is unchanged (its own birth window).
     """
     qa_iso = _followup_iso_weeks(qa_period_start, qa_period_end)
     n_qa = len(qa_iso)
 
+    p_lo = qa_cfg.get("period_birth_year_min") if qa_cfg else None
+    p_hi = qa_cfg.get("period_birth_year_max") if qa_cfg else None
+    use_period_birth = p_lo is not None and p_hi is not None
+    if use_period_birth:
+        try:
+            pb_lo, pb_hi = int(p_lo), int(p_hi)
+        except (TypeError, ValueError):
+            use_period_birth = False
+            log("QA summary: invalid period_birth_year_min/max — using all birth years for QA table")
+    if use_period_birth and "birth_band_start" not in df.columns:
+        use_period_birth = False
+        log("QA summary: no birth_band_start column — using all birth years for QA table")
+
+    if use_period_birth:
+        df_period = df.loc[_birth_year_range_mask(df["birth_band_start"], pb_lo, pb_hi)].copy()
+        birth_note = f"birth years {pb_lo}–{pb_hi} only (birth_band_start)"
+    else:
+        df_period = df
+        birth_note = "all birth years"
+
     log(
-        f"QA summary — period of interest {qa_period_start}–{qa_period_end} ({n_qa} ISO weeks): "
-        "infections, COVID/ACM deaths, avg_pop_at_risk, case_rate, cfr_covid use this window only. "
+        f"QA summary — period of interest {qa_period_start}–{qa_period_end} ({n_qa} ISO weeks), "
+        f"{birth_note}: infections, COVID/ACM deaths, avg_pop_at_risk, case_rate, cfr_covid use this window only. "
         f"Weekly cohort tracking (alive per week) runs from enrollment follow-up "
         f"{cohort_followup_start}–{cohort_followup_end}."
     )
     log(
         "  infections=positive-test rows in window; deaths=distinct persons; "
         "non-COVID=died in window (LPZ or COVID week) but COVID week not in window; "
-        "unvaxxed=dose0, vaxxed=dose1|dose2."
+        "strata=dose0|dose1|dose2 at enrollment."
     )
 
-    inf_a, inf_u, inf_v = _infection_episode_counts(df, qa_iso)
-    pers = _person_table(df)
-    ev_coh, u_coh, v_coh = _weekly_age_all_cohort_sets(weekly)
+    inf_all, inf_d0, inf_d1, inf_d2 = _infection_episode_counts_dose012(df_period, qa_iso)
+    pers = _person_table(df_period)
+    ev_coh, _, _ = _weekly_age_all_cohort_sets(weekly)
+    cohorts_for_slice = [c for c in ("dose0", "dose1", "dose2") if c in ev_coh]
+    if use_period_birth and len(cohorts_for_slice):
+        weekly_for_qa = _mini_weekly_all_cohorts(
+            df_period,
+            followup_start=cohort_followup_start,
+            followup_end=cohort_followup_end,
+            cohorts=cohorts_for_slice,
+        )
+    else:
+        weekly_for_qa = weekly
 
     rows: list[tuple[str, int, int, int, int, float, float, float]] = []
     if len(pers) == 0:
-        log("QA summary: no persons in enrollment cohorts (unexpected).")
+        log("QA summary: no persons in enrollment cohorts for this slice (unexpected).")
         return
 
     m_all = pd.Series(True, index=pers.index)
-    m_u = pers["cohort_dose0"].astype(bool)
-    m_v = pers["vaxxed_enrollment"].astype(bool)
 
-    for label, m, pop_key, cset in (
-        ("everyone", m_all, "everyone", ev_coh),
-        ("unvaxxed (dose0)", m_u, "unvaxxed", u_coh),
-        ("vaxxed (dose1+)", m_v, "vaxxed", v_coh),
+    for label, m, pop_key, cset, n_inf in (
+        ("everyone", m_all, "everyone", ev_coh, inf_all),
+        ("dose0", pers["cohort_dose0"].astype(bool), "dose0", {"dose0"}, inf_d0),
+        ("dose1", pers["cohort_dose1"].astype(bool), "dose1", {"dose1"}, inf_d1),
+        ("dose2", pers["cohort_dose2"].astype(bool), "dose2", {"dose2"}, inf_d2),
     ):
         n_cv, n_acm, n_nc = _person_death_counts(pers, qa_iso, m)
-        if label == "everyone":
-            n_inf = inf_a
-        elif label == "unvaxxed (dose0)":
-            n_inf = inf_u
-        else:
-            n_inf = inf_v
-        avg_pop = _avg_pop_at_risk_stratum(weekly, pop_key, iso_weeks=qa_iso)
-        cr, cfr = _weekly_aggregate_case_rate_cfr(weekly, cset, iso_weeks=qa_iso)
+        avg_pop = _avg_pop_at_risk_stratum(weekly_for_qa, pop_key, iso_weeks=qa_iso)
+        cr, cfr = _weekly_aggregate_case_rate_cfr(weekly_for_qa, cset, iso_weeks=qa_iso)
         rows.append((label, n_inf, n_cv, n_nc, n_acm, avg_pop, cr, cfr))
 
     col_w = max(len(r[0]) for r in rows)
@@ -324,13 +469,13 @@ def log_qa_summary(
         )
 
     log(
-        f"QA period all-cause mortality (weekly_metrics): sum(deaths_all) / sum(population_at_risk) "
+        f"QA period COVID mortality ({birth_note}): sum(deaths_covid) / sum(population_at_risk) "
         f"over {qa_period_start}–{qa_period_end}, age_bin=all (person-weeks = weekly denominators)."
     )
     for c in ("dose0", "dose1", "dose2"):
-        r, td, tp = _period_allcause_deaths_per_person_week(weekly, c, iso_weeks=qa_iso)
+        r, td, tp = _period_covid_deaths_per_person_week(weekly_for_qa, c, iso_weeks=qa_iso)
         rs = f"{r:.8f}" if np.isfinite(r) else "n/a"
-        log(f"  {c}: deaths={td:,}  person_weeks={tp:,}  deaths/person_week={rs}")
+        log(f"  {c}: covid_deaths={td:,}  person_weeks={tp:,}  covid_deaths/person_week={rs}")
 
     if not qa_cfg:
         return
@@ -339,24 +484,53 @@ def log_qa_summary(
     if not spot or not isinstance(spot, dict):
         return
 
-    iso_w = str(spot.get("iso_week", "")).strip()
-    if not iso_w:
+    iso_w_raw = str(spot.get("iso_week", "")).strip()
+    if not iso_w_raw:
+        return
+
+    # Anchored QA: exactly one ISO calendar week (e.g. 2021-48), not a range.
+    ts_spot = iso_week_str_to_monday(iso_w_raw)
+    if pd.isna(ts_spot):
+        log(
+            f"QA spot-check: skip (iso_week {iso_w_raw!r} must be a single ISO week label, e.g. 2021-48)"
+        )
+        return
+    spot_monday = ts_spot.date()
+    iso_w = monday_to_iso_week(spot_monday)
+    spot_set = {iso_w}
+
+    y_lo = spot.get("birth_year_min")
+    y_hi = spot.get("birth_year_max")
+    if y_lo is None or y_hi is None:
+        log(
+            "QA spot-check: skip (requires birth_year_min and birth_year_max with iso_week — "
+            "one ISO week × birth-year slice only, e.g. 1930–1939 for 193x)"
+        )
+        return
+    try:
+        y_lo_i, y_hi_i = int(y_lo), int(y_hi)
+    except (TypeError, ValueError):
+        log("QA spot-check: skip (invalid birth_year_min / birth_year_max)")
         return
 
     if df_enrollment_all is None or len(df_enrollment_all) == 0:
         log("QA spot-check: skip (no df_enrollment_all — need full post-enrollment frame)")
         return
 
-    spot_set = {iso_w}
     p_all = _person_table_all_ids(df_enrollment_all)
-    m_all = pd.Series(True, index=p_all.index)
-    n_cv, n_lpz, n_union, n_nc = _spot_week_metrics(p_all, spot_set, m_all)
+    if "birth_band_start" not in p_all.columns:
+        log("QA spot-check: skip (no birth_band_start on frame; cannot apply birth cohort filter)")
+        return
+    m_cohort = _birth_year_range_mask(p_all["birth_band_start"], y_lo_i, y_hi_i)
+
+    n_cv, n_lpz, n_union, n_nc = _spot_week_metrics(p_all, spot_set, m_cohort)
 
     log(
-        f"QA spot-check — ISO week {iso_w}, all distinct IDs in extract after enrollment "
-        "(same load/mRNA filters as pipeline)"
+        f"QA spot-check — scope: exactly ISO week {iso_w} (week starting {spot_monday.isoformat()}), "
+        f"birth years {y_lo_i}–{y_hi_i} inclusive (distinct IDs in that slice only); "
+        "same load/mRNA filters as pipeline"
     )
-    log(f"  distinct IDs: {len(p_all):,}")
+    log(f"  distinct IDs in birth×week slice: {int(m_cohort.sum()):,}  (all IDs in table: {len(p_all):,})")
     log(
         f"  total covid_week (Umrti→Date_COVID_death)={n_cv}  "
         f"total acm_lpz_week (DatumUmrtiLPZ→DateOfDeath)={n_lpz}  "
@@ -389,14 +563,15 @@ def log_qa_summary(
 
     ev_cov, ev_acm = _get_covid_acm(exp)
     checks: list[tuple[str, int, int]] = []
+    scope = f"ISO {iso_w}, birth {y_lo_i}–{y_hi_i}"
     if ev_cov is not None:
-        checks.append(("total covid_week", n_cv, ev_cov))
+        checks.append((f"covid_week [{scope}]", n_cv, ev_cov))
     if ev_acm is not None:
-        checks.append(("total acm_lpz_week", n_lpz, ev_acm))
+        checks.append((f"acm_lpz_week [{scope}]", n_lpz, ev_acm))
     if not checks:
         return
     bad = [f"{nm}: got {g} expected {e}" for nm, g, e in checks if g != e]
     if bad:
         log("QA spot-check expected: FAIL - " + "; ".join(bad))
     else:
-        log("QA spot-check expected: OK (covid_deaths & acm_deaths match)")
+        log(f"QA spot-check expected: OK for {scope} (covid_deaths & acm_deaths)")
