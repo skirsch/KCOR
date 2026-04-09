@@ -25,7 +25,7 @@ PAPER_PDF_MAINFONT ?= TeX Gyre Termes
 PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
 PAPER_GENERATED_FIGURES := $(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png
 
-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-tex paper-pdf sim_grid bootstrap_coverage bootstrap cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability
+.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-tex paper-pdf sim_grid bootstrap_coverage bootstrap cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability CFR CFR-smoke
 
 # Dataset namespace (override on CLI: make DATASET=USA)
 DATASET ?= Czech
@@ -378,6 +378,25 @@ sensitivity:
 alpha: $(VENV_PYTHON)
 	$(MAKE) -C test/alpha all DATASET=$(DATASET) PYTHON=$(abspath $(VENV_PYTHON))
 
+# Czech CFR / infection / mortality (record-level; writes test/CFR/out/)
+#   make CFR
+#   make CFR DATASET=Czech CFR_INPUT=data/Czech/records_100k.csv
+#   Parallel weekly metrics: export CFR_METRICS_WORKERS=20 (or set cfr.metrics_workers in YAML); 0 = all CPUs.
+CFR_CONFIG ?= test/CFR/config/czech.yaml
+CFR_INPUT ?= data/$(DATASET)/records.csv
+
+CFR: $(VENV_PYTHON)
+	@echo "Running Czech CFR analysis..."
+	@echo "  Config: $(CFR_CONFIG)"
+	@echo "  Input:  $(CFR_INPUT)"
+	@$(abspath $(VENV_PYTHON)) test/CFR/run_cfr_analysis.py --config $(CFR_CONFIG) --input $(CFR_INPUT)
+	@echo "CFR complete; outputs under test/CFR/out/"
+
+# Quick smoke test (~100k-row sample; same as run_cfr_analysis.py --smoke)
+CFR-smoke: $(VENV_PYTHON)
+	@$(abspath $(VENV_PYTHON)) test/CFR/run_cfr_analysis.py --config $(CFR_CONFIG) --smoke
+	@echo "CFR-smoke complete; outputs under test/CFR/out/"
+
 # Build methods paper (Pandoc → LaTeX/PDF)
 #
 # Default inputs live in documentation/preprint/:
@@ -612,6 +631,8 @@ help:
 	@echo "  test            - Run negative-control and sensitivity tests (test/)"
 	@echo "  sensitivity     - Run parameter sweep (test/sensitivity)"
 	@echo "  alpha           - Run alpha estimation sandbox (test/alpha)"
+	@echo "  CFR             - Run Czech CFR / case / mortality pipeline (test/CFR; override CFR_INPUT, CFR_CONFIG)"
+	@echo "  CFR-smoke       - Same as CFR but --smoke (data/Czech/records_100k.csv)"
 	@echo "  sim_grid        - Run simulation grid for operating characteristics (test/sim_grid; 6 scenario workers by default)"
 	@echo "  bootstrap_coverage / bootstrap - Run empirical bootstrap coverage MC + figures (20 workers by default; long)"
 	@echo "  quiet-window    - Run quiet-window scan (test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py)"
@@ -650,6 +671,9 @@ help:
 	@echo ""
 	@echo "Variables:"
 	@echo "  DATASET=<name>        - Dataset namespace (default: Czech)"
+	@echo "  CFR_CONFIG=<path>     - YAML for make CFR (default: test/CFR/config/czech.yaml)"
+	@echo "  CFR_INPUT=<path>      - CSV for make CFR (default: data/$(DATASET)/records.csv)"
+	@echo "  CFR_METRICS_WORKERS=<n> - Fork pool for weekly strata (Linux/WSL); 0=all CPUs (see cfr.metrics_workers in YAML)"
 	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 4)"
 	@echo "  MC_ENROLLMENT_DATE=<YYYY_WW> - (Monte Carlo) Enrollment cohort used for MC CMR + analysis (default: 2021_24)"
 	@echo "  SIM_GRID_MAX_WORKERS=<n> - Parallel processes for make sim_grid (default: 6; capped at scenario count)"

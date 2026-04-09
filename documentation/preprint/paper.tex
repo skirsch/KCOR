@@ -1655,20 +1655,19 @@ that \(H_{\mathrm{corr},d}(t)\) is \textbf{non-decreasing} in event time
 (cumulative maximum repair) so corrected trajectories remain valid
 cumulative-hazard geometry.
 
-For weeks \textbf{after} the last in-window date
-\(t_{\mathrm{end},d}\), no wave-excess rescaling is applied, but the
-corrected cumulative hazard must not snap back to
-\(\tilde H_{0,d}(t)\) at the pre-inversion level without adjustment:
-that would concentrate the entire in-window level offset into a single
-post-window weekly increment. Instead, for all \(t>t_{\mathrm{end},d}\),
+For weeks \textbf{after} the last in-window date \(t_{\mathrm{end},d}\),
+no wave-excess rescaling is applied, but the corrected cumulative hazard
+must not snap back to \(\tilde H_{0,d}(t)\) at the pre-inversion level
+without adjustment: that would concentrate the entire in-window level
+offset into a single post-window weekly increment. Instead, for all
+\(t>t_{\mathrm{end},d}\),
 
 \[
 H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)+\Bigl(H_{\mathrm{corr},d}(t_{\mathrm{end},d})-\tilde H_{0,d}(t_{\mathrm{end},d})\Bigr),
 \]
 
 so the path is \textbf{continuous} at \(t_{\mathrm{end},d}\) and
-post-window weekly increments coincide with those of
-\(\tilde H_{0,d}\).
+post-window weekly increments coincide with those of \(\tilde H_{0,d}\).
 
 Weekly corrected hazard increments are obtained by differencing
 \(H_{\mathrm{corr},d}(t)\) if a hazard stream is required; the

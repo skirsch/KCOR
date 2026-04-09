@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
+from scipy.signal import find_peaks
 
 # ── CONFIGURATION ─────────────────────────────────────────────────────────────
 # Pre-specify ALL analytical choices before running
@@ -15,6 +16,35 @@ QUIET_PERIODS = [
     ('2021-06-14', '2021-10-01'),  # 2021 quiet period
     ('2023-05-08', '2023-10-01'),  # 2023 quiet period
 ]
+
+# Calendar rollout-flow / event-study (§15b): align with §15 mortality on cal_weeks
+# Use "full_cohort" (same birth-year band as weekly_deaths_cal) or "df" (full file).
+WEEKLY_ROLLOUT_POPULATION = 'full_cohort'
+MANUAL_EVENT_DATES = []  # e.g. ['2021-06-07']; if non-empty, overrides auto peak detection
+EVENT_REL_PRE = 6
+EVENT_REL_POST = 8
+BASELINE_REL_START = -6
+BASELINE_REL_END = -2
+POST_REL_START = 1
+POST_REL_END = 4
+ROLL_PEAK_MIN_SEPARATION_WEEKS = 8
+ROLL_PEAK_HEIGHT_FRAC = 0.1
+SMOOTH_WINDOW = 3
+PLACELOW_ROLLOUT_QUANTILE = 0.25
+PLACELOW_RANDOM_SEED = 42
+MIN_PEARSON_N = 3
+
+# Summary placeholders (filled in §15b for end-of-script print)
+_FLOW_SUMMARY = {
+    'event_dates': [],
+    'best_lag_raw': None,
+    'best_r_raw': np.nan,
+    'best_lag_smooth': None,
+    'best_r_smooth': np.nan,
+    'mean_abs_diff_real': np.nan,
+    'mean_abs_diff_placebo': np.nan,
+    'real_stronger_than_placebo': None,
+}
 
 # ── 1. LOAD ───────────────────────────────────────────────────────────────────
 print("Loading data...")
@@ -396,6 +426,432 @@ plt.savefig('timeseries_calendar.png', dpi=150, bbox_inches='tight')
 plt.close()
 print("Chart saved: timeseries_calendar.png")
 
+# ── 15b. WEEKLY ROLLOUT FLOW, EVENT STUDY, LAGGED CORRELATIONS, PLACEBO ─────
+# Flow on the same Monday-based cal_weeks as §15 (not cumulative §13 curves).
+print("\nComputing weekly rollout flow vs calendar mortality...")
+
+if WEEKLY_ROLLOUT_POPULATION == 'df':
+    _rollout_src = df
+else:
+    _rollout_src = full_cohort
+
+_weekly_by_dose = {}
+for i, col in enumerate(dose_cols, 1):
+    dd = _rollout_src[col].dropna()
+    vc = dd.value_counts().sort_index()
+    _weeks = vc.reindex(cal_weeks, fill_value=0).astype(float)
+    _weekly_by_dose[i] = _weeks
+
+weekly_rollout_by_dose = pd.DataFrame(_weekly_by_dose)
+weekly_rollout_by_dose.columns = [f'dose_{j}' for j in weekly_rollout_by_dose.columns]
+weekly_rollout_total = weekly_rollout_by_dose.sum(axis=1)
+weekly_rollout_by_dose.to_csv('weekly_rollout_by_dose.csv', index=True)
+weekly_rollout_total.to_csv('weekly_rollout_total.csv', header=['weekly_rollout_total'])
+
+# Centered moving averages (exploratory only; raw series unchanged for tests)
+weekly_deaths_cal_ma = weekly_deaths_cal.rolling(
+    SMOOTH_WINDOW, center=True, min_periods=1).mean()
+mortality_rate_cal_ma = mortality_rate_cal.rolling(
+    SMOOTH_WINDOW, center=True, min_periods=1).mean()
+weekly_rollout_total_ma = weekly_rollout_total.rolling(
+    SMOOTH_WINDOW, center=True, min_periods=1).mean()
+weekly_rollout_by_dose_ma = weekly_rollout_by_dose.apply(
+    lambda s: s.rolling(SMOOTH_WINDOW, center=True, min_periods=1).mean())
+
+_cal_xtick_kw = dict(
+    major_locator=plt.matplotlib.dates.MonthLocator(interval=3),
+    major_formatter=plt.matplotlib.dates.DateFormatter('%Y-%m'),
+    rotation=45,
+)
+
+# Combined calendar plot: deaths, mortality rate, rollout flow
+fig, axes = plt.subplots(3, 1, figsize=(16, 14), sharex=True)
+axes[0].bar(weekly_deaths_cal.index, weekly_deaths_cal.values,
+            width=5, color='steelblue', alpha=0.7)
+axes[0].set_title(
+    f'Weekly deaths vs rollout flow — cohort born {BIRTH_YEAR_MIN}-{BIRTH_YEAR_MAX} '
+    f'(rollout source: {WEEKLY_ROLLOUT_POPULATION})',
+    fontsize=12)
+axes[0].set_ylabel('Deaths per week')
+
+axes[1].plot(mortality_rate_cal.index, mortality_rate_cal.values,
+             color='darkorange', linewidth=1.5)
+axes[1].set_title('Weekly crude mortality rate (deaths / alive at week start)', fontsize=12)
+axes[1].set_ylabel('Deaths per person per week')
+
+_colors_r = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+for j, cname in enumerate(weekly_rollout_by_dose.columns):
+    axes[2].plot(weekly_rollout_by_dose.index, weekly_rollout_by_dose[cname].values,
+                 label=cname.replace('dose_', 'Dose '), linewidth=1.2, color=_colors_r[j])
+axes[2].plot(weekly_rollout_total.index, weekly_rollout_total.values,
+             color='black', linewidth=2.5, label='Total flow')
+axes[2].set_title('Weekly new doses administered (flow, not cumulative)', fontsize=12)
+axes[2].set_xlabel('Calendar date')
+axes[2].set_ylabel('Dose administrations / week')
+axes[2].legend(loc='upper left', fontsize=8, ncol=2)
+
+for ax in axes:
+    ax.xaxis.set_major_locator(_cal_xtick_kw['major_locator'])
+    ax.xaxis.set_major_formatter(_cal_xtick_kw['major_formatter'])
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=_cal_xtick_kw['rotation'])
+plt.tight_layout()
+plt.savefig('timeseries_calendar_vs_rollout.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("Chart saved: timeseries_calendar_vs_rollout.png")
+
+# Smoothed exploratory figure only
+fig, axes = plt.subplots(3, 1, figsize=(16, 14), sharex=True)
+axes[0].plot(weekly_deaths_cal_ma.index, weekly_deaths_cal_ma.values,
+             color='steelblue', linewidth=1.5)
+axes[0].set_title(f'Weekly deaths ({SMOOTH_WINDOW}-wk centered MA)', fontsize=12)
+axes[0].set_ylabel('Deaths (smoothed)')
+
+axes[1].plot(mortality_rate_cal_ma.index, mortality_rate_cal_ma.values,
+             color='darkorange', linewidth=1.5)
+axes[1].set_title(f'Mortality rate ({SMOOTH_WINDOW}-wk centered MA)', fontsize=12)
+axes[1].set_ylabel('Rate (smoothed)')
+
+for j, cname in enumerate(weekly_rollout_by_dose_ma.columns):
+    axes[2].plot(weekly_rollout_by_dose_ma.index, weekly_rollout_by_dose_ma[cname].values,
+                 label=cname.replace('dose_', 'Dose '), linewidth=1.2, color=_colors_r[j])
+axes[2].plot(weekly_rollout_total_ma.index, weekly_rollout_total_ma.values,
+             color='black', linewidth=2.5, label='Total flow (smoothed)')
+axes[2].set_title(f'Weekly rollout flow by dose ({SMOOTH_WINDOW}-wk centered MA)', fontsize=12)
+axes[2].set_xlabel('Calendar date')
+axes[2].set_ylabel('Doses / week (smoothed)')
+axes[2].legend(loc='upper left', fontsize=8, ncol=2)
+
+for ax in axes:
+    ax.xaxis.set_major_locator(_cal_xtick_kw['major_locator'])
+    ax.xaxis.set_major_formatter(_cal_xtick_kw['major_formatter'])
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=_cal_xtick_kw['rotation'])
+plt.tight_layout()
+plt.savefig('timeseries_calendar_vs_rollout_smoothed.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("Chart saved: timeseries_calendar_vs_rollout_smoothed.png")
+
+# Rollout events: manual dates or peaks on smoothed total flow
+_n_cal = len(cal_weeks)
+_rollout_events_rows = []
+
+if MANUAL_EVENT_DATES:
+    for _k, _ds in enumerate(MANUAL_EVENT_DATES):
+        _ts = pd.Timestamp(_ds)
+        _idx = int(cal_weeks.get_indexer([_ts], method='nearest')[0])
+        _rollout_events_rows.append({
+            'event_id': _k,
+            'event_date': cal_weeks[_idx],
+            'event_week_index': _idx,
+            'peak_rollout': float(weekly_rollout_total.iloc[_idx]),
+        })
+else:
+    _ma_arr = np.asarray(weekly_rollout_total_ma, dtype=float)
+    _ma_clean = np.nan_to_num(_ma_arr, nan=0.0)
+    _h = ROLL_PEAK_HEIGHT_FRAC * np.nanmax(_ma_arr) if np.any(np.isfinite(_ma_arr)) else 0.0
+    _peaks, _ = find_peaks(
+        _ma_clean,
+        distance=ROLL_PEAK_MIN_SEPARATION_WEEKS,
+        height=_h,
+    )
+    for _k, _idx in enumerate(_peaks):
+        _rollout_events_rows.append({
+            'event_id': _k,
+            'event_date': cal_weeks[_idx],
+            'event_week_index': int(_idx),
+            'peak_rollout': float(weekly_rollout_total.iloc[_idx]),
+        })
+
+rollout_events_df = pd.DataFrame(_rollout_events_rows)
+rollout_events_df.to_csv('rollout_events.csv', index=False)
+
+rel_weeks = np.arange(-EVENT_REL_PRE, EVENT_REL_POST + 1, dtype=int)
+n_rel = len(rel_weeks)
+
+
+def _event_window_ok(center_idx):
+    return (center_idx - EVENT_REL_PRE >= 0 and
+            center_idx + EVENT_REL_POST < _n_cal)
+
+
+def _extract_event_series(center_idx, series_by_pos):
+    """series_by_pos: list/array aligned to integer positions 0..n_cal-1."""
+    out = np.full(n_rel, np.nan, dtype=float)
+    for _ri, rel in enumerate(rel_weeks):
+        out[_ri] = series_by_pos[center_idx + rel]
+    return out
+
+
+# Valid events with full windows
+_valid_evt = []
+for _, row in rollout_events_df.iterrows():
+    _ci = int(row['event_week_index'])
+    if not _event_window_ok(_ci):
+        print(f"  Skipping event at {row['event_date']}: incomplete window on calendar grid")
+        continue
+    _valid_evt.append({
+        'event_id': int(row['event_id']),
+        'event_date': row['event_date'],
+        'week_idx': _ci,
+        'peak_rollout': row['peak_rollout'],
+    })
+
+# Position-aligned numpy arrays for fast slicing
+_pos_mort = mortality_rate_cal.values.astype(float)
+_pos_roll = weekly_rollout_total.values.astype(float)
+
+_mat_mort_raw = []
+_mat_mort_adj = []
+_mat_roll = []
+for ev in _valid_evt:
+    _c = ev['week_idx']
+    _mr = _extract_event_series(_c, _pos_mort)
+    _baseline_vals = _mr[(rel_weeks >= BASELINE_REL_START) & (rel_weeks <= BASELINE_REL_END)]
+    _base_mean = np.nanmean(_baseline_vals)
+    _mat_mort_raw.append(_mr)
+    _mat_mort_adj.append(_mr - _base_mean)
+    _mat_roll.append(_extract_event_series(_c, _pos_roll))
+
+if _mat_mort_raw:
+    _mat_mort_raw = np.vstack(_mat_mort_raw)
+    _mat_mort_adj = np.vstack(_mat_mort_adj)
+    _mat_roll = np.vstack(_mat_roll)
+    _cols = [f"event_{ev['event_id']}" for ev in _valid_evt]
+    _mean_raw = np.nanmean(_mat_mort_raw, axis=0)
+    _mean_adj = np.nanmean(_mat_mort_adj, axis=0)
+    _mean_roll = np.nanmean(_mat_roll, axis=0)
+
+    es_mort_raw = pd.DataFrame(_mat_mort_raw.T, index=rel_weeks, columns=_cols)
+    es_mort_raw['mean_across_events'] = _mean_raw
+    es_mort_adj = pd.DataFrame(_mat_mort_adj.T, index=rel_weeks, columns=_cols)
+    es_mort_adj['mean_across_events'] = _mean_adj
+    es_roll = pd.DataFrame(_mat_roll.T, index=rel_weeks, columns=_cols)
+    es_roll['mean_across_events'] = _mean_roll
+    es_mort_raw.index.name = 'rel_week'
+    es_mort_adj.index.name = 'rel_week'
+    es_roll.index.name = 'rel_week'
+else:
+    es_mort_raw = pd.DataFrame(index=rel_weeks)
+    es_mort_adj = pd.DataFrame(index=rel_weeks)
+    es_roll = pd.DataFrame(index=rel_weeks)
+    es_mort_raw.index.name = 'rel_week'
+    es_mort_adj.index.name = 'rel_week'
+    es_roll.index.name = 'rel_week'
+    _mat_mort_raw = np.empty((0, n_rel))
+    _mat_mort_adj = np.empty((0, n_rel))
+    _mat_roll = np.empty((0, n_rel))
+
+es_mort_raw.to_csv('event_study_mortality_rate_raw.csv')
+es_mort_adj.to_csv('event_study_mortality_rate_baseline_adjusted.csv')
+es_roll.to_csv('event_study_rollout_total.csv')
+
+# Event-study plots
+if _mat_mort_adj.shape[0] > 0:
+    fig, ax = plt.subplots(figsize=(12, 6))
+    for _i in range(_mat_mort_adj.shape[0]):
+        ax.plot(rel_weeks, _mat_mort_adj[_i], color='lightgray', linewidth=0.8, alpha=0.9)
+    ax.plot(rel_weeks, np.nanmean(_mat_mort_adj, axis=0), color='red', linewidth=2.5,
+            label='Mean across events')
+    ax.axvline(0, color='black', linestyle='--', linewidth=1)
+    ax.set_xlabel('Weeks relative to rollout peak')
+    ax.set_ylabel('Mortality rate − baseline (weeks −6..−2)')
+    ax.set_title('Event study: baseline-adjusted mortality rate')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig('event_study_mortality_rate.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print("Chart saved: event_study_mortality_rate.png")
+
+    fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+    _m_roll = np.nanmean(_mat_roll, axis=0)
+    _m_adj = np.nanmean(_mat_mort_adj, axis=0)
+    axes[0].plot(rel_weeks, _m_roll, color='tab:blue', linewidth=2)
+    axes[0].axvline(0, color='black', linestyle='--', linewidth=1)
+    axes[0].set_ylabel('Mean rollout flow')
+    axes[0].set_title('Mean weekly rollout total (raw) by relative week')
+
+    axes[1].plot(rel_weeks, _m_adj, color='red', linewidth=2)
+    axes[1].axvline(0, color='black', linestyle='--', linewidth=1)
+    axes[1].set_xlabel('Weeks relative to rollout peak')
+    axes[1].set_ylabel('Mean baseline-adjusted mortality')
+    axes[1].set_title('Mean baseline-adjusted mortality rate by relative week')
+    plt.tight_layout()
+    plt.savefig('event_study_rollout_and_mortality.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print("Chart saved: event_study_rollout_and_mortality.png")
+
+# Lagged Pearson: rollout at t vs mortality at t+lag (lag 0..8)
+_lag_rows = []
+_xr = np.asarray(weekly_rollout_total, dtype=float)
+_yr = np.asarray(mortality_rate_cal, dtype=float)
+_xs = np.asarray(weekly_rollout_total_ma, dtype=float)
+_ys = np.asarray(mortality_rate_cal_ma, dtype=float)
+
+for lag in range(0, 9):
+    if lag == 0:
+        xa, ya = _xr, _yr
+        xb, yb = _xs, _ys
+    else:
+        xa, ya = _xr[:-lag], _yr[lag:]
+        xb, yb = _xs[:-lag], _ys[lag:]
+    _mk = np.isfinite(xa) & np.isfinite(ya)
+    _mks = np.isfinite(xb) & np.isfinite(yb)
+    n_raw = int(_mk.sum())
+    n_sm = int(_mks.sum())
+    r_raw, p_raw = (np.nan, np.nan)
+    r_sm, p_sm = (np.nan, np.nan)
+    if n_raw >= MIN_PEARSON_N:
+        r_raw, p_raw = stats.pearsonr(xa[_mk], ya[_mk])
+    if n_sm >= MIN_PEARSON_N:
+        r_sm, p_sm = stats.pearsonr(xb[_mks], yb[_mks])
+    _lag_rows.append({
+        'lag': lag,
+        'r_raw': r_raw,
+        'p_raw': p_raw,
+        'n_raw': n_raw,
+        'r_smooth': r_sm,
+        'p_smooth': p_sm,
+        'n_smooth': n_sm,
+    })
+
+lagged_corr_df = pd.DataFrame(_lag_rows)
+lagged_corr_df.to_csv('lagged_correlations.csv', index=False)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(lagged_corr_df['lag'], lagged_corr_df['r_raw'], 'o-', label='Raw', color='tab:blue')
+ax.plot(lagged_corr_df['lag'], lagged_corr_df['r_smooth'], 's-', label='Smoothed', color='tab:orange')
+ax.axhline(0, color='gray', linewidth=0.8)
+ax.set_xlabel('Lag (weeks; rollout leads mortality)')
+ax.set_ylabel('Pearson r')
+ax.set_title('Lagged correlation: weekly rollout total vs mortality rate')
+ax.legend()
+ax.set_xticks(range(0, 9))
+plt.tight_layout()
+plt.savefig('lagged_correlations.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("Chart saved: lagged_correlations.png")
+
+# Excess mortality windows: post (+1..+4) vs baseline (−6..−2)
+_ews = []
+for ev in _valid_evt:
+    _c = ev['week_idx']
+    _mr = _extract_event_series(_c, _pos_mort)
+    _bl = _mr[(rel_weeks >= BASELINE_REL_START) & (rel_weeks <= BASELINE_REL_END)]
+    _po = _mr[(rel_weeks >= POST_REL_START) & (rel_weeks <= POST_REL_END)]
+    _bm = float(np.nanmean(_bl))
+    _pm = float(np.nanmean(_po))
+    _ratio = (_pm / _bm) if _bm and np.isfinite(_bm) else np.nan
+    _ews.append({
+        'event_id': ev['event_id'],
+        'event_date': ev['event_date'],
+        'baseline_mortality_mean': _bm,
+        'post_mortality_mean': _pm,
+        'abs_diff': _pm - _bm,
+        'ratio': _ratio,
+    })
+event_window_summary_df = pd.DataFrame(_ews)
+event_window_summary_df.to_csv('event_window_summary.csv', index=False)
+
+# Placebo: low smoothed-flow weeks, exclude real event centers and ±EVENT_REL_POST proximity
+_real_idx = {ev['week_idx'] for ev in _valid_evt}
+_low_thr = float(np.nanquantile(np.asarray(weekly_rollout_total_ma, dtype=float),
+                                PLACELOW_ROLLOUT_QUANTILE))
+_placebo_cand = []
+for _idx in range(EVENT_REL_PRE, _n_cal - EVENT_REL_POST):
+    if _idx in _real_idx:
+        continue
+    if any(abs(_idx - r) <= EVENT_REL_POST for r in _real_idx):
+        continue
+    if weekly_rollout_total_ma.iloc[_idx] > _low_thr:
+        continue
+    _placebo_cand.append(_idx)
+
+_rng = np.random.default_rng(PLACELOW_RANDOM_SEED)
+_n_pb = len(_valid_evt)
+if _n_pb == 0:
+    _placebo_idx = []
+elif len(_placebo_cand) >= _n_pb:
+    _placebo_idx = list(_rng.choice(_placebo_cand, size=_n_pb, replace=False))
+else:
+    print(f"  Warning: only {len(_placebo_cand)} placebo candidates; sampling with replacement")
+    _placebo_idx = list(_rng.choice(_placebo_cand, size=_n_pb, replace=True))
+
+_mat_pb_adj = []
+_pb_ews = []
+for _pi, _idx in enumerate(_placebo_idx):
+    if not _event_window_ok(_idx):
+        continue
+    _mr = _extract_event_series(_idx, _pos_mort)
+    _baseline_vals = _mr[(rel_weeks >= BASELINE_REL_START) & (rel_weeks <= BASELINE_REL_END)]
+    _base_mean = np.nanmean(_baseline_vals)
+    _mat_pb_adj.append(_mr - _base_mean)
+    _bl = _mr[(rel_weeks >= BASELINE_REL_START) & (rel_weeks <= BASELINE_REL_END)]
+    _po = _mr[(rel_weeks >= POST_REL_START) & (rel_weeks <= POST_REL_END)]
+    _bm = float(np.nanmean(_bl))
+    _pm = float(np.nanmean(_po))
+    _ratio = (_pm / _bm) if _bm and np.isfinite(_bm) else np.nan
+    _pb_ews.append({
+        'placebo_id': _pi,
+        'placebo_week_index': _idx,
+        'placebo_date': cal_weeks[_idx],
+        'baseline_mortality_mean': _bm,
+        'post_mortality_mean': _pm,
+        'abs_diff': _pm - _bm,
+        'ratio': _ratio,
+    })
+
+if _mat_pb_adj:
+    _mat_pb_adj = np.vstack(_mat_pb_adj)
+    _pb_cols = [f"placebo_{i}" for i in range(_mat_pb_adj.shape[0])]
+    _pb_df = pd.DataFrame(_mat_pb_adj.T, index=rel_weeks, columns=_pb_cols)
+    _pb_df['mean_across_placebos'] = np.nanmean(_mat_pb_adj, axis=0)
+    _pb_df.index.name = 'rel_week'
+else:
+    _mat_pb_adj = np.empty((0, n_rel))
+    _pb_df = pd.DataFrame(index=rel_weeks)
+    _pb_df.index.name = 'rel_week'
+
+_pb_df.to_csv('placebo_event_study_mortality_rate_baseline_adjusted.csv')
+placebo_event_window_summary_df = pd.DataFrame(_pb_ews)
+placebo_event_window_summary_df.to_csv('placebo_event_window_summary.csv', index=False)
+
+# Real vs placebo mean curves
+fig, ax = plt.subplots(figsize=(10, 5))
+if _mat_mort_adj.size > 0:
+    ax.plot(rel_weeks, np.nanmean(_mat_mort_adj, axis=0), color='red', linewidth=2,
+            label='Real events (mean)')
+if _mat_pb_adj.size > 0:
+    ax.plot(rel_weeks, np.nanmean(_mat_pb_adj, axis=0), color='tab:blue', linewidth=2,
+            linestyle='--', label='Placebo (mean)')
+ax.axvline(0, color='black', linestyle='--', linewidth=1)
+ax.set_xlabel('Weeks relative to peak / placebo anchor')
+ax.set_ylabel('Baseline-adjusted mortality rate')
+ax.set_title('Event study: real rollout peaks vs placebo (low-flow weeks)')
+ax.legend()
+plt.tight_layout()
+plt.savefig('event_study_real_vs_placebo.png', dpi=150, bbox_inches='tight')
+plt.close()
+print("Chart saved: event_study_real_vs_placebo.png")
+
+# Fill end-of-script summary structure
+_FLOW_SUMMARY['event_dates'] = [str(row['event_date']) for _, row in rollout_events_df.iterrows()]
+if not lagged_corr_df.empty and lagged_corr_df['r_raw'].notna().any():
+    _i_raw = lagged_corr_df['r_raw'].abs().idxmax()
+    _i_sm = lagged_corr_df['r_smooth'].abs().idxmax()
+    _FLOW_SUMMARY['best_lag_raw'] = int(lagged_corr_df.loc[_i_raw, 'lag'])
+    _FLOW_SUMMARY['best_r_raw'] = float(lagged_corr_df.loc[_i_raw, 'r_raw'])
+    if lagged_corr_df['r_smooth'].notna().any():
+        _FLOW_SUMMARY['best_lag_smooth'] = int(lagged_corr_df.loc[_i_sm, 'lag'])
+        _FLOW_SUMMARY['best_r_smooth'] = float(lagged_corr_df.loc[_i_sm, 'r_smooth'])
+if len(event_window_summary_df):
+    _FLOW_SUMMARY['mean_abs_diff_real'] = float(event_window_summary_df['abs_diff'].mean())
+if len(placebo_event_window_summary_df):
+    _FLOW_SUMMARY['mean_abs_diff_placebo'] = float(
+        placebo_event_window_summary_df['abs_diff'].mean())
+if (np.isfinite(_FLOW_SUMMARY['mean_abs_diff_real']) and
+        np.isfinite(_FLOW_SUMMARY['mean_abs_diff_placebo'])):
+    _FLOW_SUMMARY['real_stronger_than_placebo'] = (
+        _FLOW_SUMMARY['mean_abs_diff_real'] > _FLOW_SUMMARY['mean_abs_diff_placebo'])
+
 # ── 16. CUMULATIVE HAZARD — UNVACCINATED, EVERY OTHER MONTH ──────────────────
 # H(t) = -log(S(t)), S(t) = KM product Π(1 - d_w/n_w)
 # 6 reference dates: Jan, Mar, May, Jul, Sep, Nov 2021
@@ -649,4 +1105,45 @@ print(deceased['LastDoseNum'].value_counts().sort_index())
 weekly_rate.to_csv('weekly_mortality_rate.csv', header=['rate'])
 weekly_by_dose.to_csv('weekly_by_dose.csv')
 print("\nResults saved to CSV files")
+
+# ── ROLLOUT FLOW / EVENT-STUDY SUMMARY (§15b) ────────────────────────────────
+print("\n" + "=" * 60)
+print("ROLLOUT FLOW & EVENT-STUDY SUMMARY (calendar grid)")
+print("=" * 60)
+print(f"Rollout flow population: {WEEKLY_ROLLOUT_POPULATION}")
+print(f"Detected / manual event dates: {_FLOW_SUMMARY['event_dates'] or '(none)'}")
+if len(event_window_summary_df):
+    print("\nPer-event post (+1..+4) vs baseline (−6..−2) mortality rate:")
+    for _, _r in event_window_summary_df.iterrows():
+        print(
+            f"  event {_r['event_id']} @ {_r['event_date']}: "
+            f"baseline={_r['baseline_mortality_mean']:.6g}, post={_r['post_mortality_mean']:.6g}, "
+            f"Δ={_r['abs_diff']:.6g}, ratio={_r['ratio']:.4g}"
+        )
+else:
+    print("\nNo valid events with full windows (event_window_summary empty).")
+if _FLOW_SUMMARY['best_lag_raw'] is not None:
+    print(
+        f"\nStrongest |r| (raw): lag={_FLOW_SUMMARY['best_lag_raw']} wk, "
+        f"r={_FLOW_SUMMARY['best_r_raw']:.4f}"
+    )
+if _FLOW_SUMMARY['best_lag_smooth'] is not None:
+    print(
+        f"Strongest |r| (smoothed): lag={_FLOW_SUMMARY['best_lag_smooth']} wk, "
+        f"r={_FLOW_SUMMARY['best_r_smooth']:.4f}"
+    )
+_madr = _FLOW_SUMMARY['mean_abs_diff_real']
+_madp = _FLOW_SUMMARY['mean_abs_diff_placebo']
+if np.isfinite(_madr) and np.isfinite(_madp):
+    print(
+        f"\nMean post−baseline mortality (abs_diff) across events: real={_madr:.6g}, "
+        f"placebo={_madp:.6g}"
+    )
+    if _FLOW_SUMMARY['real_stronger_than_placebo'] is True:
+        print("Real events show a larger mean post−baseline rise than placebo anchors.")
+    elif _FLOW_SUMMARY['real_stronger_than_placebo'] is False:
+        print("Real events do not show a larger mean post−baseline rise than placebo anchors.")
+else:
+    print("\nCould not compare real vs placebo mean post−baseline (insufficient data).")
+print("=" * 60)
 print("\nDone.")

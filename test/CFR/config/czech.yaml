@@ -1,0 +1,70 @@
+# Czech CFR / infection / mortality pipeline — paths relative to repository root
+dataset:
+  path: data/Czech/records.csv
+  # Override for smoke tests: data/Czech/records_100k.csv
+
+cohort:
+  enrollment_week: "2021-24"
+  followup_start: "2021-24"
+  followup_end: "2022-20"
+
+baseline:
+  start: "2021-24"
+  end: "2021-40"
+
+wave:
+  start: "2021-41"
+  end: "2022-20"
+
+# Non-overlapping at enrollment: dose0 (no dose1) | dose1 (1st only) | dose2 | dose3 (dose3 ⊆ dose2 in data)
+cohorts:
+  - dose0
+  - dose1
+  - dose2
+  # - dose3
+
+age_bins:
+  - [40, 49]
+  - [50, 59]
+  - [60, 69]
+  - [70, 120]
+
+cfr:
+  # Episode CFR: COVID deaths from Date_COVID_death (admin/Umrti); denominator = all infection rows per week.
+  # Parallel cohort×age strata (fork; Linux/WSL). 0 = all CPUs. Ignored on Windows.
+  metrics_workers: 20
+
+filters:
+  # If true: drop rows with AstraZeneca, J&J, Novavax, etc. on any of doses 1–4 (same as KCOR_ts).
+  # Unvaccinated rows (empty manufacturer fields) are kept. This is Pfizer+Moderna-only for vaccinated people.
+  restrict_to_pfizer_moderna: true
+  # Legacy alias (same meaning): non_mrna_only: true
+  # Default pipeline keeps all Infection episodes (1,2,3,…). Set true to drop Infection>1 (legacy).
+  single_infection_only: false
+  reinfection_sensitivity: false  # if true, forces single_infection_only off (alias)
+
+# Backward compat: top-level reinfection_sensitivity also honored by run_cfr_analysis.py
+reinfection_sensitivity: false
+
+expected_deaths:
+  reference_cohort: dose0
+  vaccinated_cohort: dose2
+  ve_death: 0.9
+  # cfr_reference: "same_week" uses dose0 CFR that week; "baseline_mean" uses mean weekly CFR over baseline window
+  cfr_reference: same_week
+  # Reference CFR column on weekly_metrics (default: cfr_covid if use_covid_cfr else cfr_allcause)
+  # cfr_column: cfr_covid
+  # Which death type for expected COVID-death track
+  use_covid_cfr: true
+
+plots:
+  save_age_stratified_ts: true
+  dpi: 120
+
+# Optional: Kaplan–Meier from first infection; time-since-2nd-dose weeks bins for dose2-only table
+extensions:
+  km_post_infection: true
+  time_since_dose2_weeks_bins: [[0, 4], [5, 12], [13, 999]]
+  time_since_dose2_plots: true
+
+output_dir: test/CFR/out
