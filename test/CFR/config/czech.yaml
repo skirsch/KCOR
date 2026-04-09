@@ -16,12 +16,12 @@ wave:
   start: "2021-41"
   end: "2022-20"
 
-# Non-overlapping at enrollment: dose0 (no dose1) | dose1 (1st only) | dose2 | dose3 (dose3 ⊆ dose2 in data)
+# Enrollment ~mid-June 2021 (2021-24): strata are dose0 | dose1 | dose2 only (third dose by enrollment is negligible).
+# Do not add dose3 here — run_cfr_analysis restricts to PRIMARY_ENROLLMENT_COHORTS.
 cohorts:
   - dose0
   - dose1
   - dose2
-  # - dose3
 
 age_bins:
   - [40, 49]
@@ -66,5 +66,23 @@ extensions:
   km_post_infection: true
   time_since_dose2_weeks_bins: [[0, 4], [5, 12], [13, 999]]
   time_since_dose2_plots: true
+
+# Console QA: infection/death totals + rates use period_of_interest only (not enrollment start).
+# Cohort population_at_risk in weekly_metrics still follows cohort.followup_start–followup_end from enrollment.
+qa_summary:
+  period_start: "2021-40"
+  period_end: "2022-20"
+  spot_check:
+    iso_week: "2021-48"
+    birth_year: 1935
+    # Full CSV: compare to extract. `--smoke` ignores `expected` (subsample will not match).
+    # *_covid = Umrti (Date_COVID_death) week; *_acm = DatumUmrtiLPZ (DateOfDeath) week — file-wide birth year, all IDs.
+    expected:
+      vaxxed_covid: 80
+      vaxxed_acm: 363
+      unvaxxed_covid: 48
+      unvaxxed_acm: 126
+      all_covid: 145
+      all_acm: 514
 
 output_dir: test/CFR/out

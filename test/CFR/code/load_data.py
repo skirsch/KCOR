@@ -39,6 +39,7 @@ REQUIRED_COLUMNS_AFTER_ENROLLMENT = [
     "infection_monday",
     "death_monday",
     "covid_death_monday",
+    "death_monday_allcause",
     "first_dose_monday",
     "second_dose_monday",
     "third_dose_monday",

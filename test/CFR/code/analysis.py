@@ -70,7 +70,7 @@ def build_km_post_infection_table(
         e_obs = []
         for _, row in sub.iterrows():
             inf = row["infection_monday"]
-            dth = row["death_monday"]
+            dth = row["death_monday_allcause"]
             if pd.isna(inf):
                 continue
             if pd.notna(dth) and dth >= inf:

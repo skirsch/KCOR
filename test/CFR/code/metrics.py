@@ -73,7 +73,7 @@ def _pop_counts_vectorized(sub: pd.DataFrame, weeks: list[date], wmap: dict[date
     if len(sub) == 0:
         return np.zeros(n_weeks, dtype=np.int64)
     last_idx = np.empty(len(sub), dtype=np.int32)
-    dm = sub["death_monday"]
+    dm = sub["death_monday_allcause"]
     for i in range(len(sub)):
         d = dm.iloc[i]
         if pd.isna(d):
@@ -265,12 +265,12 @@ def _compute_weekly_stratum_rows(
     sub = _slice_for_stratum(df, cohort, age_key, cohort_masks=cohort_masks)
     pop = _pop_counts_vectorized(sub, weeks, wmap)
     cases = _hist_event(sub, "infection_monday", weeks, wmap)
-    deaths_all = _hist_event(sub, "death_monday", weeks, wmap)
+    deaths_all = _hist_event(sub, "death_monday_allcause", weeks, wmap)
     deaths_covid = _hist_event(sub, "covid_death_monday", weeks, wmap)
     deaths_non_covid = np.maximum(deaths_all - deaths_covid, 0)
 
     covid_ep = _episode_death_numerators(sub, weeks, wmap, "covid_death_monday")
-    all_ep = _episode_death_numerators(sub, weeks, wmap, "death_monday")
+    all_ep = _episode_death_numerators(sub, weeks, wmap, "death_monday_allcause")
 
     rows: list[dict] = []
     for t, w in enumerate(weeks):
@@ -446,7 +446,7 @@ def build_weekly_metrics(
             sl = _slice_for_stratum(df, cohort, age_key, cohort_masks=cohort_masks)
             enroll_n = len(sl)
             tot_cases = int(sl["infection_monday"].notna().sum())
-            tot_deaths = int(sl["death_monday"].notna().sum())
+            tot_deaths = int(sl["death_monday_allcause"].notna().sum())
 
             br = mean_safe(base["case_rate"])
             wr = mean_safe(wav["case_rate"])

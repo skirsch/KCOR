@@ -30,6 +30,7 @@ from analysis import (  # noqa: E402
     stability_check_quiet_period,
 )
 from cohort_builder import (  # noqa: E402
+    PRIMARY_ENROLLMENT_COHORTS,
     build_enrollment_table,
     cohort_mask,
     iter_followup_mondays,
@@ -41,6 +42,7 @@ from metrics import (  # noqa: E402
     build_weekly_metrics,
     parallel_stratum_pool_available,
 )
+from qa_summary import log_qa_summary  # noqa: E402
 from plots import (  # noqa: E402
     plot_case_rate,
     plot_cfr,
@@ -159,6 +161,18 @@ def main() -> None:
     followup_start = str(cohort_cfg["followup_start"])
     followup_end = str(cohort_cfg["followup_end"])
     cohorts = list(cfg["cohorts"])
+    _extra_cohorts = [c for c in cohorts if c not in PRIMARY_ENROLLMENT_COHORTS]
+    if _extra_cohorts:
+        _log(
+            f"note: enrollment-era design uses {sorted(PRIMARY_ENROLLMENT_COHORTS)} only; "
+            f"ignoring cfg cohorts {_extra_cohorts}"
+        )
+    cohorts = [c for c in cohorts if c in PRIMARY_ENROLLMENT_COHORTS]
+    if not cohorts:
+        raise ValueError(
+            "cfg['cohorts'] must include at least one of dose0, dose1, dose2 "
+            f"(got {cfg['cohorts']!r})"
+        )
     age_bins_config = [list(x) for x in cfg["age_bins"]]
     age_labels = [f"{lo}-{hi}" for lo, hi in age_bins_config]
 
@@ -249,6 +263,32 @@ def main() -> None:
     _log(
         f"weekly population_at_risk min={weekly['population_at_risk'].min()} "
         f"max={weekly['population_at_risk'].max()}"
+    )
+
+    _qs_full = cfg.get("qa_summary")
+    _qs_dict = _qs_full if isinstance(_qs_full, dict) else {}
+    wave_cfg = cfg.get("wave") or {}
+    qa_period_start = str(
+        _qs_dict.get("period_start", wave_cfg.get("start", followup_start))
+    )
+    qa_period_end = str(_qs_dict.get("period_end", wave_cfg.get("end", followup_end)))
+    qa_cfg = _qs_full if isinstance(_qs_full, dict) else None
+    if args.smoke and qa_cfg and isinstance(qa_cfg.get("spot_check"), dict):
+        # Subsample will not match full-population LPZ expected counts
+        qa_cfg = {
+            **qa_cfg,
+            "spot_check": {k: v for k, v in qa_cfg["spot_check"].items() if k != "expected"},
+        }
+    log_qa_summary(
+        df_model,
+        weekly,
+        cohort_followup_start=followup_start,
+        cohort_followup_end=followup_end,
+        qa_period_start=qa_period_start,
+        qa_period_end=qa_period_end,
+        log=_log,
+        qa_cfg=qa_cfg,
+        df_enrollment_all=df,
     )
 
     baseline_week_dates = set(
@@ -438,7 +478,7 @@ def main() -> None:
 
     _log(f"done; outputs under {out_dir}")
     elapsed = time.monotonic() - t0
-    _log(f"elapsed {elapsed:.1f}s")
+    _log(f"elapsed {elapsed / 60:.2f} minutes")
 
 
 if __name__ == "__main__":

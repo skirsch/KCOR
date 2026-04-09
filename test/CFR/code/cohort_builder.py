@@ -13,6 +13,11 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+# Enrollment ~mid-2021 (e.g. ISO 2021-24): analyses use dose0 | dose1 | dose2 only.
+# A third dose by enrollment is negligible; ``cohort_dose3`` is still stored but must not be
+# listed in ``cfg["cohorts"]`` for this design (avoids overlapping dose2/dose3 strata).
+PRIMARY_ENROLLMENT_COHORTS: frozenset[str] = frozenset({"dose0", "dose1", "dose2"})
+
 
 def iso_week_str_to_monday(s: str | float | None) -> pd.Timestamp | pd.NaT:
     """Scalar ISO week YYYY-WW → Monday Timestamp (for config strings, small loops)."""
@@ -111,7 +116,7 @@ def build_enrollment_table(
     Add columns: enrollment_monday, birth_band_start, age_at_enrollment, age_bin,
     cohort_dose0, cohort_dose1, cohort_dose2, cohort_dose3,
     first_dose_monday, second_dose_monday, third_dose_monday, infection_monday, death_monday,
-    covid_death_monday, etc.
+    covid_death_monday, death_monday_allcause, etc.
 
     progress_log: optional ``print``-like callback for long runs (flush in caller).
     """
@@ -151,20 +156,30 @@ def build_enrollment_table(
     covid_ts = _covid_death_series_to_timestamp(out["Date_COVID_death"]).dt.normalize()
     out["covid_death_monday"] = covid_ts.dt.date
 
+    # All-cause mortality timing: prefer LPZ DateOfDeath; if missing, use Date_COVID_death when present.
+    # Registry rows often have COVID week filled while DateOfDeath is empty — without this, ACM=0 but COVID>0 in QA.
+    _dm = pd.to_datetime(out["death_monday"], errors="coerce")
+    _cdm = pd.to_datetime(out["covid_death_monday"], errors="coerce")
+    out["death_monday_allcause"] = _dm.fillna(_cdm).dt.date
+
     _p("enrollment: DateOfPositiveTest …")
     inf_ts = _iso_week_str_series_to_timestamp(out["DateOfPositiveTest"]).dt.normalize()
     out["infection_monday"] = inf_ts.dt.date
 
     out["enrollment_monday"] = enroll_d
 
-    alive_enroll = death_ts.isna() | (death_ts <= enroll_ts)
+    # Alive at start of enrollment week: no LPZ death, or death in that week or later.
+    # Must match KCOR_CMR.py (alive_at_enroll): DateOfDeath.isna() | (DateOfDeath >= enrollment_date).
+    # BUG was death_ts <= enroll_ts, which excluded everyone who died after enrollment and included pre-enrollment deaths.
+    alive_enroll = death_ts.isna() | (death_ts >= enroll_ts)
     out["eligible_enrollment"] = alive_enroll
 
     has_first = dose1_ts.notna() & (dose1_ts <= enroll_ts)
     has_second = dose2_ts.notna() & (dose2_ts <= enroll_ts)
     has_third = dose3_ts.notna() & (dose3_ts <= enroll_ts)
 
-    # Mutually exclusive at enrollment: unvaccinated | partial (1 dose) | 2+ | 3+
+    # Mutually exclusive for main strata: unvaccinated | 1 dose | 2+ doses (primary course).
+    # ``cohort_dose3`` flags third dose by enrollment (rare in 2021-24); CFR runs use PRIMARY_ENROLLMENT_COHORTS only.
     out["cohort_dose0"] = out["eligible_enrollment"] & ~has_first
     out["cohort_dose1"] = out["eligible_enrollment"] & has_first & ~has_second
     out["cohort_dose2"] = out["eligible_enrollment"] & has_second
@@ -172,7 +187,7 @@ def build_enrollment_table(
 
     _p("enrollment: ISO week string columns for infection/death …")
     out["infection_iso_week"] = inf_ts.dt.strftime("%G-%V").fillna("")
-    out["death_iso_week"] = death_ts.dt.strftime("%G-%V").fillna("")
+    out["death_iso_week"] = _dm.fillna(_cdm).dt.strftime("%G-%V").fillna("")
 
     _p("enrollment: weeks second dose → enrollment …")
     valid_w = has_second
