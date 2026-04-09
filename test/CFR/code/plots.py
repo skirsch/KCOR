@@ -299,6 +299,55 @@ def plot_cumulative_cases_deaths(
     plt.close(fig)
 
 
+def plot_wave_ve_summary(
+    wave_ve_summary: pd.DataFrame,
+    out_path: Path,
+    *,
+    compare_cohort: str = "dose2",
+    reference_cohort: str = "dose0",
+    dpi: int = 120,
+) -> None:
+    """Grouped bars: four implied VEs vs reference by age_bin (decomposition)."""
+    if wave_ve_summary.empty:
+        return
+    sub = wave_ve_summary[wave_ve_summary["cohort"] == compare_cohort].copy()
+    if sub.empty:
+        return
+    metrics = [
+        "ve_case_rate",
+        "ve_cfr_covid",
+        "ve_covid_death_rate",
+        "ve_allcause_death_rate",
+    ]
+    if not all(m in sub.columns for m in metrics):
+        return
+    age_bins = sorted(sub["age_bin"].unique(), key=lambda x: (x != "all", str(x)))
+
+    def _ve(ab: str, col: str) -> float:
+        r = sub[sub["age_bin"] == ab]
+        if r.empty:
+            return float("nan")
+        v = r.iloc[0][col]
+        return float(v) if pd.notna(v) else float("nan")
+
+    x = np.arange(len(age_bins))
+    width = 0.18
+    fig, ax = plt.subplots(figsize=(11, 5))
+    for i, m in enumerate(metrics):
+        vals = np.array([_ve(ab, m) for ab in age_bins], dtype=float)
+        ax.bar(x + (i - 1.5) * width, vals, width, label=m.replace("ve_", "VE ").replace("_", " "))
+    ax.axhline(0.0, color="gray", lw=0.8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(age_bins, rotation=25, ha="right")
+    ax.set_ylabel("implied VE (1 − RR)")
+    ax.set_title(f"Wave implied VE: {compare_cohort} vs {reference_cohort}")
+    ax.legend(loc="best", fontsize=8)
+    ax.grid(True, axis="y", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
 def plot_km_post_infection(
     km_summary: pd.DataFrame,
     out_path: Path,

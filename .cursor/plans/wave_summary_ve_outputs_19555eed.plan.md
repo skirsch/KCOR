@@ -1,31 +1,22 @@
 ---
 name: Wave summary VE outputs
-overview: >-
-  Period-aggregated wave and baseline summaries from weekly_metrics (summed person-weeks and events),
-  wave_ve_summary and baseline_ve_summary (RR, VE, absolute diffs), expanded console logging for
-  age_bin=all, sanity warnings with explicit negative-VE threshold, optional VE decomposition plot
-  (four VE metrics), and required docstrings on why VE measures differ. Debug CSV dose/COVID column
-  tweaks are unrelated housekeeping (appendix only).
+overview: Period-aggregated wave and baseline summaries from weekly_metrics (summed person-weeks and events), wave_ve_summary and baseline_ve_summary (RR, VE, absolute diffs), expanded console logging for age_bin=all, sanity warnings with explicit negative-VE threshold, optional VE decomposition plot (four VE metrics), and required docstrings on why VE measures differ. Debug CSV dose/COVID column tweaks are unrelated housekeeping (appendix only).
 todos:
   - id: metrics-period-summary
-    content: >-
-      metrics.py: ISO period helper, build_period_aggregate_summary (incl. expected_weeks, total_rows,
-      optional unique people), build_period_ve_summary (RR, VE, diff_*), warn_period_summary_sanity
-    status: pending
+    content: "metrics.py: ISO period helper, build_period_aggregate_summary (incl. expected_weeks, total_rows, optional unique people), build_period_ve_summary (RR, VE, diff_*), warn_period_summary_sanity"
+    status: completed
   - id: wire-run-cfr
-    content: >-
-      run_cfr_analysis: write wave_summary, baseline_summary, wave_ve_summary, baseline_ve_summary;
-      expanded log for wave age_bin=all; sanity calls; optional plot flag
-    status: pending
+    content: "run_cfr_analysis: write wave_summary, baseline_summary, wave_ve_summary, baseline_ve_summary; expanded log for wave age_bin=all; sanity calls; optional plot flag"
+    status: completed
   - id: plot-wave-ve
     content: plots.py — plot_wave_ve_summary with ve_case_rate + three other VEs (four series)
-    status: pending
+    status: completed
   - id: tests-wave-summary
     content: pytest synthetic weekly — sums, rates, RR, VE, diff_*
-    status: pending
+    status: completed
   - id: yaml-optional-plot
     content: Document plots.save_wave_ve_plot in czech.yaml if added
-    status: pending
+    status: completed
 isProject: false
 ---
 

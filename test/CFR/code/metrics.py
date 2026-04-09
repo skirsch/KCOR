@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import multiprocessing as mp
 import sys
+from collections.abc import Callable
 from datetime import date
 
 import numpy as np
@@ -484,3 +485,409 @@ def build_weekly_metrics(
     cohort_summary = pd.DataFrame(summary_rows)
 
     return weekly, cohort_summary
+
+
+# --- Period-integrated summaries (sum person-weeks and events; VE vs reference) -----------------
+
+VE_STRONGLY_NEGATIVE_THRESHOLD = -1.0
+# CFR ratios are unstable at low case counts; do not flag strongly negative CFR-VE as suspicious then.
+MIN_REF_CASES_FOR_CFR_VE_STRONG_WARN = 80
+MIN_COHORT_CASES_FOR_CFR_VE_STRONG_WARN = 25
+
+
+def iso_weeks_in_period(period_start_iso: str, period_end_iso: str) -> set[str]:
+    """ISO week labels (YYYY-WW) inclusive from config strings."""
+    return {monday_to_iso_week(d) for d in iter_followup_mondays(period_start_iso, period_end_iso)}
+
+
+def expected_weeks_in_period(period_start_iso: str, period_end_iso: str) -> int:
+    return len(list(iter_followup_mondays(period_start_iso, period_end_iso)))
+
+
+def build_period_aggregate_summary(
+    weekly: pd.DataFrame,
+    *,
+    period_start: str,
+    period_end: str,
+    period_name: str,
+    rate_suffix: str,
+) -> pd.DataFrame:
+    """
+    Sum ``population_at_risk``, cases, and deaths over all ISO weeks in ``period_start``–``period_end``.
+
+    Rate columns are named with ``rate_suffix`` (e.g. ``_wave`` → ``case_rate_wave``).
+    ``total_rows`` = number of weekly rows summed per stratum (equals ``weeks_in_period`` when
+    exactly one row per ISO week). ``expected_weeks_in_period`` is the calendar week count for the
+    configured window (sanity vs ``weeks_in_period``).
+
+    **Estimands:** ``case_rate*`` is infections per person-week; ``cfr_*`` is deaths per **case**
+    (severity conditional on infection); ``*_death_rate*`` is deaths per person-week (population
+    burden). These are not interchangeable when comparing strata or periods.
+    """
+    iso_set = iso_weeks_in_period(period_start, period_end)
+    exp_w = expected_weeks_in_period(period_start, period_end)
+    sub = weekly[weekly["iso_week"].isin(iso_set)]
+    if sub.empty:
+        return pd.DataFrame()
+
+    agg_kw: dict = {
+        "weeks_in_period": ("iso_week", "nunique"),
+        "total_rows": ("iso_week", "count"),
+        "total_person_weeks": ("population_at_risk", "sum"),
+        "total_cases": ("cases", "sum"),
+        "total_covid_deaths": ("deaths_covid", "sum"),
+        "total_allcause_deaths": ("deaths_all", "sum"),
+    }
+    if "deaths_non_covid" in sub.columns:
+        agg_kw["total_noncovid_deaths"] = ("deaths_non_covid", "sum")
+
+    out = sub.groupby(["cohort", "age_bin"], sort=False, as_index=False).agg(**agg_kw)
+    out["expected_weeks_in_period"] = exp_w
+    out["period_start"] = period_start
+    out["period_end"] = period_end
+    out["period_name"] = period_name
+
+    tpw = out["total_person_weeks"].to_numpy(dtype=float)
+    tc = out["total_cases"].to_numpy(dtype=float)
+    tcd = out["total_covid_deaths"].to_numpy(dtype=float)
+    tad = out["total_allcause_deaths"].to_numpy(dtype=float)
+
+    def _div(num: np.ndarray, den: np.ndarray) -> np.ndarray:
+        return np.where(den > 0, num / den, np.nan)
+
+    sfx = rate_suffix if rate_suffix.startswith("_") else f"_{rate_suffix}"
+    out[f"case_rate{sfx}"] = _div(tc, tpw)
+    out[f"covid_death_rate{sfx}"] = _div(tcd, tpw)
+    out[f"allcause_death_rate{sfx}"] = _div(tad, tpw)
+    out[f"cfr_covid{sfx}"] = _div(tcd, tc)
+    out[f"cfr_allcause{sfx}"] = _div(tad, tc)
+    if "total_noncovid_deaths" in out.columns:
+        tnc = out["total_noncovid_deaths"].to_numpy(dtype=float)
+        out[f"noncovid_death_rate{sfx}"] = _div(tnc, tpw)
+
+    return out
+
+
+def merge_period_unique_people(summary: pd.DataFrame, df_model: pd.DataFrame) -> pd.DataFrame:
+    """Add ``total_unique_people`` per (cohort, age_bin) from row-level ``df_model``."""
+    if summary.empty:
+        return summary
+    out = summary.copy()
+    if df_model.empty or "ID" not in df_model.columns:
+        out["total_unique_people"] = np.nan
+        return out
+    rows: list[dict] = []
+    for _, crow in out[["cohort", "age_bin"]].drop_duplicates().iterrows():
+        cohort, ab = crow["cohort"], crow["age_bin"]
+        try:
+            m = cohort_mask(df_model, str(cohort))
+        except (KeyError, ValueError):
+            rows.append(
+                {"cohort": cohort, "age_bin": ab, "total_unique_people": np.nan}
+            )
+            continue
+        s = df_model.loc[m]
+        if str(ab) != "all":
+            s = s.loc[s["age_bin"] == ab]
+        n = int(s["ID"].nunique()) if len(s) else 0
+        rows.append({"cohort": cohort, "age_bin": ab, "total_unique_people": n})
+    uc = pd.DataFrame(rows)
+    if "total_unique_people" in out.columns:
+        out = out.drop(columns=["total_unique_people"])
+    return out.merge(uc, on=["cohort", "age_bin"], how="left")
+
+
+def build_period_ve_summary(
+    period_summary: pd.DataFrame,
+    *,
+    reference_cohort: str,
+    rate_suffix: str,
+) -> pd.DataFrame:
+    """
+    RR, VE (= 1 − RR), and absolute rate differences vs ``reference_cohort`` within each ``age_bin``.
+
+    **Interpretation (do not conflate estimands):** ``ve_case_rate``, ``ve_cfr_covid``, and
+    ``ve_covid_death_rate`` are **not expected to match**, because:
+
+    - **Case-rate VE** (``ve_case_rate``) measures **infection incidence reduction** (per person-week).
+    - **CFR VE** (``ve_cfr_covid``, ``ve_cfr_allcause``) measures **severity conditional on
+      infection** (deaths per case).
+    - **COVID death-rate VE** (``ve_covid_death_rate``) **combines** incidence and severity
+      (deaths per person-week).
+
+    CFR-type rates answer severity given a positive test; all-cause death rate per person-week
+    answers population mortality burden.
+    """
+    if period_summary.empty:
+        return pd.DataFrame()
+
+    sfx = rate_suffix if rate_suffix.startswith("_") else f"_{rate_suffix}"
+    rate_keys = [
+        (f"case_rate{sfx}", "case_rate"),
+        (f"covid_death_rate{sfx}", "covid_death_rate"),
+        (f"allcause_death_rate{sfx}", "allcause_death_rate"),
+        (f"cfr_covid{sfx}", "cfr_covid"),
+        (f"cfr_allcause{sfx}", "cfr_allcause"),
+    ]
+    nc_col = f"noncovid_death_rate{sfx}"
+    if nc_col in period_summary.columns:
+        rate_keys.append((nc_col, "noncovid_death_rate"))
+
+    ref = period_summary[period_summary["cohort"] == reference_cohort].copy()
+    if ref.empty:
+        return pd.DataFrame()
+    ref_idx = ref.set_index("age_bin")
+
+    out_rows: list[dict] = []
+    for _, row in period_summary.iterrows():
+        co = row["cohort"]
+        if co == reference_cohort:
+            continue
+        ab = row["age_bin"]
+        if ab not in ref_idx.index:
+            continue
+        r0 = ref_idx.loc[ab]
+        if isinstance(r0, pd.DataFrame):
+            r0 = r0.iloc[0]
+
+        def _i(x: object) -> int:
+            try:
+                if pd.isna(x):
+                    return 0
+            except (TypeError, ValueError):
+                pass
+            return int(x)
+
+        rec: dict = {
+            "cohort": co,
+            "age_bin": ab,
+            "reference_cohort": reference_cohort,
+            "ref_total_person_weeks": _i(r0["total_person_weeks"]),
+            "ref_total_cases": _i(r0["total_cases"]),
+            "ref_total_covid_deaths": _i(r0["total_covid_deaths"]),
+            "ref_total_allcause_deaths": _i(r0["total_allcause_deaths"]),
+            "cohort_total_person_weeks": _i(row["total_person_weeks"]),
+            "cohort_total_cases": _i(row["total_cases"]),
+            "cohort_total_covid_deaths": _i(row["total_covid_deaths"]),
+            "cohort_total_allcause_deaths": _i(row["total_allcause_deaths"]),
+        }
+        if "total_noncovid_deaths" in row.index and "total_noncovid_deaths" in r0.index:
+            rec["ref_total_noncovid_deaths"] = _i(r0["total_noncovid_deaths"])
+            rec["cohort_total_noncovid_deaths"] = _i(row["total_noncovid_deaths"])
+
+        for col, short in rate_keys:
+            v, v0 = row.get(col), r0.get(col)
+            try:
+                fv = float(v) if pd.notna(v) else np.nan
+                fv0 = float(v0) if pd.notna(v0) else np.nan
+            except (TypeError, ValueError):
+                fv = fv0 = np.nan
+            rr = fv / fv0 if pd.notna(fv) and pd.notna(fv0) and fv0 > 0 else np.nan
+            ve = 1.0 - rr if pd.notna(rr) else np.nan
+            diff = fv - fv0 if pd.notna(fv) and pd.notna(fv0) else np.nan
+            rec[f"rr_{short}"] = rr
+            rec[f"ve_{short}"] = ve
+            rec[f"diff_{short}"] = diff
+
+        out_rows.append(rec)
+
+    return pd.DataFrame(out_rows)
+
+
+def warn_period_summary_sanity(
+    period_summary: pd.DataFrame,
+    weekly: pd.DataFrame,
+    *,
+    reference_cohort: str,
+    period_iso_weeks: set[str],
+    rate_suffix: str,
+    period_label: str,
+    log: Callable[[str], None],
+) -> None:
+    """
+    Non-fatal checks: missing ref, bad denominators, pathological RR/VE, integrated vs mean rate.
+
+    * **RR:** warn only if **RR < 0** (impossible for non-negative rates). **RR = 0** is allowed
+      (cohort rate zero vs positive reference).
+    * **Strongly negative VE** (below ``VE_STRONGLY_NEGATIVE_THRESHOLD``): for **CFR** VEs only,
+      skip the warning unless reference and comparator have enough cases (stable CFR); sparse
+      strata often produce extreme values without indicating a pipeline bug.
+    """
+    if period_summary.empty:
+        log(f"[{period_label}] period summary sanity: empty table")
+        return
+
+    sfx = rate_suffix if rate_suffix.startswith("_") else f"_{rate_suffix}"
+    ref = period_summary[period_summary["cohort"] == reference_cohort]
+    for ab in period_summary["age_bin"].unique():
+        if ab not in ref["age_bin"].values:
+            log(f"[{period_label}] sanity WARNING: missing reference cohort {reference_cohort!r} age_bin={ab!r}")
+
+    for _, row in period_summary.iterrows():
+        tpw = row["total_person_weeks"]
+        if tpw == 0 and (row["total_cases"] > 0 or row["total_covid_deaths"] > 0 or row["total_allcause_deaths"] > 0):
+            log(
+                f"[{period_label}] sanity WARNING: {row['cohort']} {row['age_bin']}: "
+                "total_person_weeks=0 but cases or deaths > 0"
+            )
+        wk = row["weeks_in_period"]
+        exp = row["expected_weeks_in_period"]
+        if pd.notna(wk) and pd.notna(exp) and int(wk) != int(exp):
+            log(
+                f"[{period_label}] sanity WARNING: {row['cohort']} {row['age_bin']}: "
+                f"weeks_in_period={int(wk)} != expected_weeks_in_period={int(exp)} (truncation?)"
+            )
+
+    ve_summary = build_period_ve_summary(
+        period_summary, reference_cohort=reference_cohort, rate_suffix=rate_suffix
+    )
+    for _, vr in ve_summary.iterrows():
+        ref_cases = int(vr.get("ref_total_cases", 0) or 0)
+        co_cases = int(vr.get("cohort_total_cases", 0) or 0)
+        for c in vr.index:
+            if c.startswith("rr_"):
+                val = vr[c]
+                # RR == 0 is valid (zero cohort rate vs positive reference), not pathological.
+                if pd.notna(val) and float(val) < 0:
+                    log(
+                        f"[{period_label}] sanity WARNING: {vr['cohort']} {vr['age_bin']} {c}={float(val):.4f} (<0)"
+                    )
+                continue
+            if not c.startswith("ve_"):
+                continue
+            val = vr[c]
+            if not pd.notna(val):
+                continue
+            val = float(val)
+            if val > 1.0:
+                log(
+                    f"[{period_label}] sanity WARNING: {vr['cohort']} {vr['age_bin']} {c}={val:.4f} (>1)"
+                )
+            elif val < VE_STRONGLY_NEGATIVE_THRESHOLD:
+                if c in ("ve_cfr_covid", "ve_cfr_allcause"):
+                    if (
+                        ref_cases < MIN_REF_CASES_FOR_CFR_VE_STRONG_WARN
+                        or co_cases < MIN_COHORT_CASES_FOR_CFR_VE_STRONG_WARN
+                    ):
+                        continue
+                log(
+                    f"[{period_label}] sanity WARNING: {vr['cohort']} {vr['age_bin']} {c}={val:.4f} "
+                    f"(strongly negative < {VE_STRONGLY_NEGATIVE_THRESHOLD})"
+                )
+
+    wsub = weekly[weekly["iso_week"].isin(period_iso_weeks)]
+    for (co, ab), grp in wsub.groupby(["cohort", "age_bin"], sort=False):
+        if grp.empty:
+            continue
+        mean_m = float(grp["mortality_rate_all_cause"].mean())
+        ps = period_summary[(period_summary["cohort"] == co) & (period_summary["age_bin"] == ab)]
+        if ps.empty:
+            continue
+        tpw = float(ps["total_person_weeks"].iloc[0])
+        tad = float(ps["total_allcause_deaths"].iloc[0])
+        integ = tad / tpw if tpw > 0 else np.nan
+        if pd.notna(mean_m) and pd.notna(integ) and mean_m > 0:
+            rel = abs(mean_m - integ) / mean_m
+            if rel > 0.01:
+                log(
+                    f"[{period_label}] sanity NOTE: {co} {ab}: mean weekly mortality_rate_all_cause "
+                    f"({mean_m:.6f}) vs total_allcause_deaths/total_person_weeks ({integ:.6f}) "
+                    f"rel_diff={rel:.4f} (Jensen / varying denominators; not necessarily an error)"
+                )
+
+
+def log_period_aggregate_for_console(
+    period_summary: pd.DataFrame,
+    log: Callable[[str], None],
+    *,
+    title: str,
+    rate_suffix: str,
+    wave_ve_summary: pd.DataFrame | None = None,
+    reference_cohort: str = "dose0",
+    compare_cohort: str = "dose2",
+    include_age_strata: bool = True,
+) -> None:
+    """
+    Print integrated totals and rates for ``age_bin=='all'``; optional VE line for compare vs ref.
+
+    If ``include_age_strata`` and ``wave_ve_summary`` are set, logs one compact VE line per
+    ``age_bin`` other than ``all`` for ``compare_cohort`` vs ``reference_cohort``.
+    """
+    if period_summary.empty:
+        return
+    sfx = rate_suffix if rate_suffix.startswith("_") else f"_{rate_suffix}"
+    sub = period_summary[period_summary["age_bin"] == "all"].sort_values("cohort")
+    log(f"Period integrated summary — {title} (age_bin=all)")
+
+    def _fmt8(x: object) -> str:
+        try:
+            if x is None or (isinstance(x, float) and np.isnan(x)):
+                return "nan"
+            if pd.isna(x):
+                return "nan"
+        except (TypeError, ValueError):
+            return "nan"
+        return f"{float(x):.8f}"
+
+    for _, r in sub.iterrows():
+        log(
+            f"  {r['cohort']}: total_cases={int(r['total_cases']):,} "
+            f"total_covid_deaths={int(r['total_covid_deaths']):,} "
+            f"total_allcause_deaths={int(r['total_allcause_deaths']):,} "
+            f"total_person_weeks={int(r['total_person_weeks']):,} "
+            f"cfr_covid{sfx}={_fmt8(r.get(f'cfr_covid{sfx}'))} "
+            f"covid_death_rate{sfx}={_fmt8(r.get(f'covid_death_rate{sfx}'))} "
+            f"allcause_death_rate{sfx}={_fmt8(r.get(f'allcause_death_rate{sfx}'))}"
+        )
+
+    if wave_ve_summary is None or wave_ve_summary.empty:
+        return
+    wv = wave_ve_summary[
+        (wave_ve_summary["age_bin"] == "all") & (wave_ve_summary["cohort"] == compare_cohort)
+    ]
+    if wv.empty:
+        return
+    w = wv.iloc[0]
+
+    def _fmt6(k: str) -> str:
+        v = w.get(k, np.nan)
+        return f"{float(v):.6f}" if pd.notna(v) else "nan"
+
+    log(
+        f"  implied VE vs {reference_cohort} ({compare_cohort}, age_bin=all): "
+        f"ve_case_rate={_fmt6('ve_case_rate')} "
+        f"ve_cfr_covid={_fmt6('ve_cfr_covid')} "
+        f"ve_covid_death_rate={_fmt6('ve_covid_death_rate')} "
+        f"ve_allcause_death_rate={_fmt6('ve_allcause_death_rate')} "
+        f"ve_cfr_allcause={_fmt6('ve_cfr_allcause')}"
+    )
+
+    if not include_age_strata:
+        return
+
+    def _fmt6_row(row: pd.Series, k: str) -> str:
+        v = row.get(k, np.nan)
+        return f"{float(v):.6f}" if pd.notna(v) else "nan"
+
+    ages = sorted(
+        wave_ve_summary["age_bin"].unique(),
+        key=lambda x: (str(x) == "all", str(x)),
+    )
+    for ab in ages:
+        if ab == "all":
+            continue
+        wrows = wave_ve_summary[
+            (wave_ve_summary["age_bin"] == ab)
+            & (wave_ve_summary["cohort"] == compare_cohort)
+        ]
+        if wrows.empty:
+            continue
+        rw = wrows.iloc[0]
+        log(
+            f"  implied VE vs {reference_cohort} ({compare_cohort}, age_bin={ab}): "
+            f"ve_case_rate={_fmt6_row(rw, 've_case_rate')} "
+            f"ve_cfr_covid={_fmt6_row(rw, 've_cfr_covid')} "
+            f"ve_covid_death_rate={_fmt6_row(rw, 've_covid_death_rate')} "
+            f"ve_allcause_death_rate={_fmt6_row(rw, 've_allcause_death_rate')} "
+            f"ve_cfr_allcause={_fmt6_row(rw, 've_cfr_allcause')}"
+        )

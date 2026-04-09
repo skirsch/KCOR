@@ -39,8 +39,14 @@ from cohort_builder import (  # noqa: E402
 from load_data import load_czech_records, validate_loaded_schema  # noqa: E402
 from metrics import (  # noqa: E402
     build_implied_ve_long_summary,
+    build_period_aggregate_summary,
+    build_period_ve_summary,
     build_weekly_metrics,
+    iso_weeks_in_period,
+    log_period_aggregate_for_console,
+    merge_period_unique_people,
     parallel_stratum_pool_available,
+    warn_period_summary_sanity,
 )
 from qa_summary import log_qa_summary, write_debug_birth_cohort_weekly_csv  # noqa: E402
 from plots import (  # noqa: E402
@@ -52,6 +58,7 @@ from plots import (  # noqa: E402
     plot_expected_vs_observed_cumulative_only,
     plot_km_post_infection,
     plot_mortality_rate,
+    plot_wave_ve_summary,
 )
 from simulate_expected import compute_expected_vs_observed  # noqa: E402
 
@@ -331,10 +338,83 @@ def main() -> None:
         reference_cohort=ref_cohort,
     )
 
+    wave_iso_set = iso_weeks_in_period(str(wave["start"]), str(wave["end"]))
+    baseline_iso_set = iso_weeks_in_period(str(baseline["start"]), str(baseline["end"]))
+
+    _log("period-integrated wave / baseline summaries …")
+    wave_summary = build_period_aggregate_summary(
+        weekly,
+        period_start=str(wave["start"]),
+        period_end=str(wave["end"]),
+        period_name="wave",
+        rate_suffix="_wave",
+    )
+    wave_summary = merge_period_unique_people(wave_summary, df_model)
+    baseline_summary = build_period_aggregate_summary(
+        weekly,
+        period_start=str(baseline["start"]),
+        period_end=str(baseline["end"]),
+        period_name="baseline",
+        rate_suffix="_baseline",
+    )
+    baseline_summary = merge_period_unique_people(baseline_summary, df_model)
+
+    wave_ve_summary = build_period_ve_summary(
+        wave_summary, reference_cohort=ref_cohort, rate_suffix="_wave"
+    )
+    baseline_ve_summary = build_period_ve_summary(
+        baseline_summary, reference_cohort=ref_cohort, rate_suffix="_baseline"
+    )
+
+    warn_period_summary_sanity(
+        wave_summary,
+        weekly,
+        reference_cohort=ref_cohort,
+        period_iso_weeks=wave_iso_set,
+        rate_suffix="_wave",
+        period_label="wave",
+        log=_log,
+    )
+    warn_period_summary_sanity(
+        baseline_summary,
+        weekly,
+        reference_cohort=ref_cohort,
+        period_iso_weeks=baseline_iso_set,
+        rate_suffix="_baseline",
+        period_label="baseline",
+        log=_log,
+    )
+
+    _log_period_ve_by_age = bool(cfr_cfg.get("log_period_summary_ve_by_age_bin", True))
+    log_period_aggregate_for_console(
+        wave_summary,
+        _log,
+        title=f"{wave['start']} to {wave['end']} (wave)",
+        rate_suffix="_wave",
+        wave_ve_summary=wave_ve_summary,
+        reference_cohort=ref_cohort,
+        compare_cohort=vax_cohort,
+        include_age_strata=_log_period_ve_by_age,
+    )
+    log_period_aggregate_for_console(
+        baseline_summary,
+        _log,
+        title=f"{baseline['start']} to {baseline['end']} (baseline)",
+        rate_suffix="_baseline",
+        wave_ve_summary=baseline_ve_summary,
+        reference_cohort=ref_cohort,
+        compare_cohort=vax_cohort,
+        include_age_strata=_log_period_ve_by_age,
+    )
+
     _log("writing CSVs …")
     weekly.to_csv(out_dir / "weekly_metrics.csv", index=False)
     cohort_summary.to_csv(out_dir / "cohort_summary.csv", index=False)
     implied_ve_long.to_csv(out_dir / "implied_ve_summary.csv", index=False)
+    wave_summary.to_csv(out_dir / "wave_summary.csv", index=False)
+    baseline_summary.to_csv(out_dir / "baseline_summary.csv", index=False)
+    wave_ve_summary.to_csv(out_dir / "wave_ve_summary.csv", index=False)
+    baseline_ve_summary.to_csv(out_dir / "baseline_ve_summary.csv", index=False)
 
     age_only = weekly[weekly["age_bin"] != "all"].copy()
     age_only.to_csv(out_dir / "age_stratified_metrics.csv", index=False)
@@ -385,6 +465,16 @@ def main() -> None:
         dpi=dpi,
     )
     plot_mortality_rate(weekly, out_dir / "mortality_rate.png", age_bin="all", wave_start=ws, wave_end=we, dpi=dpi)
+
+    if cfg.get("plots", {}).get("save_wave_ve_plot", True):
+        _log("plot wave_ve_summary (decomposition) …")
+        plot_wave_ve_summary(
+            wave_ve_summary,
+            out_dir / "wave_ve_summary.png",
+            compare_cohort=vax_cohort,
+            reference_cohort=ref_cohort,
+            dpi=dpi,
+        )
 
     # Same cohorts as main TS plots (config order), not only ref/vax — e.g. dose1 on decomposition.
     present = set(weekly["cohort"].unique())

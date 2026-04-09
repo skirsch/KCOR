@@ -15,6 +15,7 @@ sys.path.insert(0, str(CFR_DIR / "code"))
 
 from cohort_builder import iso_week_str_to_monday, monday_to_iso_week  # noqa: E402
 from qa_summary import (  # noqa: E402
+    _DOSE_STR_TO_INT,
     _birth_year_range_mask,
     _period_covid_deaths_per_person_week,
     _person_table_all_ids,
@@ -94,6 +95,11 @@ def test_person_table_all_ids_includes_birth_when_present() -> None:
     p = _person_table_all_ids(df)
     assert "birth_band_start" in p.columns
     assert p.loc["a", "birth_band_start"] == 1935.0
+
+
+def test_debug_enrollment_csv_column_spec() -> None:
+    """Debug CSV: 5 columns; dose is int 0–3 (see write_debug_birth_cohort_weekly_csv)."""
+    assert _DOSE_STR_TO_INT == {"dose0": 0, "dose1": 1, "dose2": 2, "dose3": 3}
 
 
 def test_period_covid_deaths_per_person_week() -> None:

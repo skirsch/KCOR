@@ -292,6 +292,9 @@ def _mini_weekly_all_cohorts(
     return pd.DataFrame(parts)
 
 
+_DOSE_STR_TO_INT = {"dose0": 0, "dose1": 1, "dose2": 2, "dose3": 3}
+
+
 def write_debug_birth_cohort_weekly_csv(
     df_model: pd.DataFrame,
     *,
@@ -304,9 +307,10 @@ def write_debug_birth_cohort_weekly_csv(
     log: Callable[[str], None] | None = None,
 ) -> bool:
     """
-    One row per ISO week × enrollment dose: week-start date, dose, alive count, all-cause deaths
-    in week (``death_monday_allcause`` histogram), for a birth-year slice — for reconciling QA vs
-    external death tables.
+    One row per ISO week × enrollment stratum: week-start **date**, numeric **dose** (0–3),
+    **alive_at_week_start**, **died_in_week** (all-cause / ``deaths_all``),
+    **covid_deaths_in_week** (``deaths_covid`` / ``covid_death_monday`` histogram).
+    Birth-year slice only — for reconciling QA vs external death tables.
     """
     _lg = log or (lambda _m: None)
     if "birth_band_start" not in df_model.columns:
@@ -332,12 +336,22 @@ def write_debug_birth_cohort_weekly_csv(
     if mini.empty:
         _lg("debug enrollment weekly CSV: skip (empty weekly slice)")
         return False
+    dose_num = mini["cohort"].map(lambda c: _DOSE_STR_TO_INT.get(str(c), pd.NA))
     out = mini.assign(
         date=mini["week_monday"],
-        dose=mini["cohort"],
+        dose=dose_num,
         alive_at_week_start=mini["population_at_risk"],
         died_in_week=mini["deaths_all"],
-    )[["date", "dose", "alive_at_week_start", "died_in_week"]]
+        covid_deaths_in_week=mini["deaths_covid"],
+    )[
+        [
+            "date",
+            "dose",
+            "alive_at_week_start",
+            "died_in_week",
+            "covid_deaths_in_week",
+        ]
+    ]
     out = out.sort_values(["date", "dose"], kind="mergesort").reset_index(drop=True)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

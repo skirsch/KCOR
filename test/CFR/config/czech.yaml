@@ -34,6 +34,8 @@ cfr:
   # Episode CFR: COVID deaths from Date_COVID_death (admin/Umrti); denominator = all infection rows per week.
   # Parallel cohort×age strata (fork; Linux/WSL). 0 = all CPUs. Ignored on Windows.
   metrics_workers: 20
+  # Console: after age_bin=all block, one implied-VE line per finer age_bin (wave + baseline).
+  log_period_summary_ve_by_age_bin: true
 
 filters:
   # If true: drop rows with AstraZeneca, J&J, Novavax, etc. on any of doses 1–4 (same as KCOR_ts).
@@ -61,6 +63,8 @@ expected_deaths:
 plots:
   save_age_stratified_ts: true
   dpi: 120
+  # Grouped bars: implied VE (case rate, CFR COVID, COVID / all-cause death rate) wave vs reference cohort
+  save_wave_ve_plot: true
 
 # Optional: Kaplan–Meier from first infection; time-since-2nd-dose weeks bins for dose2-only table
 extensions:
