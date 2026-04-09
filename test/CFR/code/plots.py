@@ -348,6 +348,70 @@ def plot_wave_ve_summary(
     plt.close(fig)
 
 
+def plot_vaccine_coverage_by_age(
+    coverage_df: pd.DataFrame,
+    out_path: Path,
+    *,
+    dpi: int = 120,
+) -> None:
+    """Time series: ``coverage_ge1`` vs ISO week, one line per fine ``age_bin`` (excludes ``all``)."""
+    if coverage_df.empty or "coverage_ge1" not in coverage_df.columns:
+        return
+    sub = coverage_df[coverage_df["age_bin"] != "all"].copy()
+    if sub.empty:
+        return
+    wk = sorted(sub["iso_week"].unique())
+    fig, ax = plt.subplots(figsize=(11, 5))
+    x = np.arange(len(wk))
+    age_bins = sorted(sub["age_bin"].unique(), key=lambda z: str(z))
+    for ab in age_bins:
+        s = sub[sub["age_bin"] == ab].set_index("iso_week").reindex(wk)
+        y = s["coverage_ge1"].to_numpy(dtype=float)
+        ax.plot(x, y, marker="o", ms=2, label=ab)
+    step = max(1, len(x) // 12)
+    ax.set_xticks(x[::step])
+    ax.set_xticklabels([wk[i] for i in x[::step]], rotation=45, ha="right")
+    ax.set_ylabel("coverage_ge1 (≥1 dose)")
+    ax.set_xlabel("ISO week")
+    ax.set_title("Vaccine coverage by enrollment age bin (descriptive)")
+    ax.set_ylim(-0.02, 1.02)
+    ax.legend(loc="best", fontsize=8)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_vaccine_coverage_all(
+    coverage_df: pd.DataFrame,
+    out_path: Path,
+    *,
+    dpi: int = 120,
+) -> None:
+    """``coverage_ge1`` for ``age_bin == 'all'`` only."""
+    if coverage_df.empty:
+        return
+    sub = coverage_df[coverage_df["age_bin"] == "all"].sort_values("iso_week", kind="mergesort")
+    if sub.empty:
+        return
+    wk = sub["iso_week"].tolist()
+    fig, ax = plt.subplots(figsize=(10, 4))
+    x = np.arange(len(wk))
+    ax.plot(x, sub["coverage_ge1"].to_numpy(dtype=float), marker="o", ms=2, color="C0", label="all")
+    step = max(1, len(x) // 12)
+    ax.set_xticks(x[::step])
+    ax.set_xticklabels([wk[i] for i in x[::step]], rotation=45, ha="right")
+    ax.set_ylabel("coverage_ge1 (≥1 dose)")
+    ax.set_xlabel("ISO week")
+    ax.set_title("Vaccine coverage — full population (age_bin=all)")
+    ax.set_ylim(-0.02, 1.02)
+    ax.legend(loc="best")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
 def plot_km_post_infection(
     km_summary: pd.DataFrame,
     out_path: Path,
@@ -366,6 +430,85 @@ def plot_km_post_infection(
     ax.legend()
     ax.grid(True, alpha=0.3)
     ax.set_ylim(0, 1.02)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_old_young_difference(
+    diff_weekly: pd.DataFrame,
+    out_path: Path,
+    *,
+    break_iso_week: str,
+    dpi: int = 120,
+) -> None:
+    """Old-minus-young weekly rate differences for COVID and non-COVID mortality."""
+    if diff_weekly.empty:
+        return
+    wk = diff_weekly["iso_week"].tolist()
+    x = np.arange(len(wk))
+    fig, axes = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
+    series = [
+        ("mortality_rate_covid_diff_old_minus_young", "COVID mortality rate diff"),
+        ("mortality_rate_non_covid_diff_old_minus_young", "Non-COVID mortality rate diff"),
+    ]
+    for ax, (col, title) in zip(axes, series):
+        if col not in diff_weekly.columns:
+            continue
+        y = diff_weekly[col].to_numpy(dtype=float)
+        ax.plot(x, y, lw=2)
+        ax.axhline(0.0, color="gray", lw=0.8)
+        _wave_shade(ax, wk, break_iso_week, break_iso_week, alpha=0.20, color="orange")
+        ax.set_ylabel("old - young")
+        ax.set_title(title)
+        ax.grid(True, alpha=0.3)
+    step = max(1, len(x) // 12)
+    axes[-1].set_xticks(x[::step])
+    axes[-1].set_xticklabels([wk[i] for i in x[::step]], rotation=45, ha="right")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_placebo_break_scan(
+    placebo_scan: pd.DataFrame,
+    out_path: Path,
+    *,
+    actual_break_iso_week: str,
+    dpi: int = 120,
+) -> None:
+    """Absolute slope change by placebo break week for old-minus-young differences."""
+    if placebo_scan.empty:
+        return
+    outcomes = [
+        "mortality_rate_covid_diff_old_minus_young",
+        "mortality_rate_non_covid_diff_old_minus_young",
+    ]
+    sub = placebo_scan[placebo_scan["outcome"].isin(outcomes)].copy()
+    if sub.empty:
+        return
+    wk = sorted(sub["break_iso_week"].unique())
+    x = np.arange(len(wk))
+    fig, ax = plt.subplots(figsize=(11, 4.5))
+    for outcome in outcomes:
+        s = sub[sub["outcome"] == outcome].set_index("break_iso_week").reindex(wk)
+        ax.plot(
+            x,
+            s["slope_change"].abs().to_numpy(dtype=float),
+            marker="o",
+            ms=3,
+            lw=1.5,
+            label=outcome.replace("_diff_old_minus_young", "").replace("_", " "),
+        )
+    if actual_break_iso_week in wk:
+        ax.axvline(wk.index(actual_break_iso_week), color="orange", lw=1.2, linestyle="--", label="actual break")
+    step = max(1, len(x) // 12)
+    ax.set_xticks(x[::step])
+    ax.set_xticklabels([wk[i] for i in x[::step]], rotation=45, ha="right")
+    ax.set_ylabel("|slope change|")
+    ax.set_title("Placebo breakpoint scan")
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="best", fontsize=8)
     fig.tight_layout()
     fig.savefig(out_path, dpi=dpi)
     plt.close(fig)

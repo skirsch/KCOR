@@ -36,6 +36,11 @@ from cohort_builder import (  # noqa: E402
     iter_followup_mondays,
     monday_to_iso_week,
 )
+from coverage import (  # noqa: E402
+    build_vaccine_coverage_summary,
+    build_weekly_vaccine_coverage,
+    log_vaccine_coverage_console,
+)
 from load_data import load_czech_records, validate_loaded_schema  # noqa: E402
 from metrics import (  # noqa: E402
     build_implied_ve_long_summary,
@@ -58,6 +63,8 @@ from plots import (  # noqa: E402
     plot_expected_vs_observed_cumulative_only,
     plot_km_post_infection,
     plot_mortality_rate,
+    plot_vaccine_coverage_all,
+    plot_vaccine_coverage_by_age,
     plot_wave_ve_summary,
 )
 from simulate_expected import compute_expected_vs_observed  # noqa: E402
@@ -230,6 +237,38 @@ def main() -> None:
             "warning: no parseable COVID death dates (Date_COVID_death); "
             "COVID CFR / expected-deaths COVID track may be sparse or NaN"
         )
+
+    cov_cfg = cfg.get("coverage") or {}
+    if cov_cfg.get("enabled", True):
+        _log("build_weekly_vaccine_coverage …")
+        cov_df = build_weekly_vaccine_coverage(
+            df_model,
+            followup_start=followup_start,
+            followup_end=followup_end,
+            age_bins_config=age_bins_config,
+        )
+        if cov_df.empty:
+            _log("vaccine coverage: empty (no follow-up weeks or no rows) — skip CSV/plots")
+        else:
+            cov_df.to_csv(out_dir / "vaccine_coverage_weekly.csv", index=False)
+            cov_sum = build_vaccine_coverage_summary(
+                cov_df, wave=wave, baseline=baseline
+            )
+            cov_sum.to_csv(out_dir / "vaccine_coverage_summary.csv", index=False)
+            plot_dpi = int(cfg.get("plots", {}).get("dpi", 120))
+            if cov_cfg.get("save_plots", True):
+                plot_vaccine_coverage_by_age(
+                    cov_df, out_dir / "vaccine_coverage_by_age.png", dpi=plot_dpi
+                )
+                plot_vaccine_coverage_all(
+                    cov_df, out_dir / "vaccine_coverage_all.png", dpi=plot_dpi
+                )
+            log_vaccine_coverage_console(
+                cov_df,
+                _log,
+                wave_start=str(wave["start"]),
+                baseline_start=str(baseline["start"]),
+            )
 
     if metrics_workers > 1:
         if parallel_stratum_pool_available():

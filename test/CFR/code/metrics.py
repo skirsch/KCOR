@@ -68,8 +68,28 @@ def _last_alive_week_index(death_monday: date | float, weeks: list[date], wmap: 
     return -1
 
 
+def _sub_one_row_per_person(sub: pd.DataFrame) -> pd.DataFrame:
+    """
+    One row per ``ID`` for person-week denominators and death-week numerators.
+
+    With ``single_infection_only: false``, the frame still has one row per infection episode; those
+    extra rows must not multiply ``population_at_risk`` or duplicate the same death date. When
+    ``Infection`` is present, keep the lowest episode index per ID (stable ``mergesort``).
+    """
+    if sub.empty or "ID" not in sub.columns:
+        return sub
+    s = sub
+    if "Infection" in s.columns:
+        inv = pd.to_numeric(s["Infection"], errors="coerce")
+        s = s.assign(
+            _inv_ord=inv.fillna(10**9).astype(np.int64),
+        )
+        s = s.sort_values(["ID", "_inv_ord"], kind="mergesort").drop(columns=["_inv_ord"])
+    return s.drop_duplicates(subset=["ID"], keep="first")
+
+
 def _pop_counts_vectorized(sub: pd.DataFrame, weeks: list[date], wmap: dict[date, int]) -> np.ndarray:
-    """Population at start of each week for cohort-age subset."""
+    """Population at start of each week; ``sub`` must be one row per person (see ``_sub_one_row_per_person``)."""
     n_weeks = len(weeks)
     if len(sub) == 0:
         return np.zeros(n_weeks, dtype=np.int64)
@@ -264,10 +284,11 @@ def _compute_weekly_stratum_rows(
 ) -> list[dict]:
     """One (cohort × age_bin) slice: episode CFR (no infection→death lag window)."""
     sub = _slice_for_stratum(df, cohort, age_key, cohort_masks=cohort_masks)
-    pop = _pop_counts_vectorized(sub, weeks, wmap)
+    sub_p = _sub_one_row_per_person(sub)
+    pop = _pop_counts_vectorized(sub_p, weeks, wmap)
     cases = _hist_event(sub, "infection_monday", weeks, wmap)
-    deaths_all = _hist_event(sub, "death_monday_allcause", weeks, wmap)
-    deaths_covid = _hist_event(sub, "covid_death_monday", weeks, wmap)
+    deaths_all = _hist_event(sub_p, "death_monday_allcause", weeks, wmap)
+    deaths_covid = _hist_event(sub_p, "covid_death_monday", weeks, wmap)
     deaths_non_covid = np.maximum(deaths_all - deaths_covid, 0)
 
     covid_ep = _episode_death_numerators(sub, weeks, wmap, "covid_death_monday")

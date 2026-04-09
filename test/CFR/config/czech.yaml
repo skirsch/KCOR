@@ -60,6 +60,11 @@ expected_deaths:
   # Which death type for expected COVID-death track
   use_covid_cfr: true
 
+# Descriptive weekly share with ≥1 / ≥2 / ≥3 doses by enrollment age_bin (not a VE metric).
+coverage:
+  enabled: true
+  save_plots: true
+
 plots:
   save_age_stratified_ts: true
   dpi: 120
