@@ -206,6 +206,30 @@ def build_enrollment_table(
     return out
 
 
+def add_prior_infection_before_enrollment_flag(
+    df: pd.DataFrame,
+    *,
+    progress_log: Optional[Callable[[str], None]] = None,
+) -> pd.DataFrame:
+    """
+    Add row-level ``prior_infection_before_enrollment`` based on any earlier positive-test week for the same ``ID``.
+
+    A person is flagged True if their earliest non-missing ``infection_monday`` is strictly before
+    ``enrollment_monday``. The flag is then broadcast to all rows for that person.
+    """
+    log = progress_log or (lambda _m: None)
+    out = df.copy()
+    if out.empty or "ID" not in out.columns or "infection_monday" not in out.columns:
+        out["prior_infection_before_enrollment"] = False
+        return out
+    log("enrollment: prior infection before enrollment flag …")
+    min_inf = out.groupby("ID", sort=False)["infection_monday"].min()
+    enroll = out.groupby("ID", sort=False)["enrollment_monday"].first()
+    prior = (pd.to_datetime(min_inf, errors="coerce") < pd.to_datetime(enroll, errors="coerce")).fillna(False)
+    out["prior_infection_before_enrollment"] = out["ID"].map(prior).fillna(False).astype(bool)
+    return out
+
+
 def cohort_mask(df: pd.DataFrame, name: str) -> pd.Series:
     if name == "dose0":
         return df["cohort_dose0"]

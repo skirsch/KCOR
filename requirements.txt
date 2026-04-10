@@ -23,3 +23,5 @@ seaborn>=0.11.0
 # Configuration file parsing
 pyyaml>=6.0
 
+# Testing
+pytest>=7.0.0

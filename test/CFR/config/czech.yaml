@@ -71,6 +71,27 @@ plots:
   # Grouped bars: implied VE (case rate, CFR COVID, COVID / all-cause death rate) wave vs reference cohort
   save_wave_ve_plot: true
 
+falsification:
+  younger_group_name: younger
+  older_group_name: older
+  age_groups:
+    younger: ["40-49", "50-59", "60-69"]
+    older: ["70-120"]
+  split_definitions:
+    - name: "70plus_vs_under70"
+      younger: ["40-49", "50-59", "60-69"]
+      older: ["70-120"]
+    - name: "60plus_vs_under60"
+      younger: ["40-49", "50-59"]
+      older: ["60-69", "70-120"]
+    - name: "50plus_vs_under50"
+      younger: ["40-49"]
+      older: ["50-59", "60-69", "70-120"]
+  break_iso_week: "2021-41"
+  placebo_start: "2021-30"
+  placebo_end: "2021-40"
+  ve_assumptions: [0.3, 0.5, 0.7, 0.9]
+
 # Optional: Kaplan–Meier from first infection; time-since-2nd-dose weeks bins for dose2-only table
 extensions:
   km_post_infection: true
@@ -90,9 +111,6 @@ qa_summary:
     iso_week: "2021-48"
     birth_year_min: 1930
     birth_year_max: 1939
-    expected:
-      covid_deaths: 242   # Umrti → Date_COVID_death ISO week
-      acm_deaths: 947    # DatumUmrtiLPZ → DateOfDeath ISO week
   # Weekly panel for birth slice: date, dose, alive_at_week_start, died_in_week (all-cause, enrollment follow-up).
   debug_enrollment_weekly_csv:
     enabled: true

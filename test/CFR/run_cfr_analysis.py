@@ -31,6 +31,7 @@ from analysis import (  # noqa: E402
 )
 from cohort_builder import (  # noqa: E402
     PRIMARY_ENROLLMENT_COHORTS,
+    add_prior_infection_before_enrollment_flag,
     build_enrollment_table,
     cohort_mask,
     iter_followup_mondays,
@@ -40,6 +41,19 @@ from coverage import (  # noqa: E402
     build_vaccine_coverage_summary,
     build_weekly_vaccine_coverage,
     log_vaccine_coverage_console,
+)
+from falsification import (  # noqa: E402
+    build_age_group_weekly,
+    build_breakpoint_tests,
+    build_coverage_dilution_summary,
+    build_difference_breakpoint_tests,
+    build_incidence_severity_decomposition_summary,
+    build_multi_split_falsification_summary,
+    build_negative_control_rank_summary,
+    build_old_young_difference_weekly,
+    build_placebo_break_scan,
+    build_quantitative_scenario_bounds,
+    build_ve_death_signal_bounds,
 )
 from load_data import load_czech_records, validate_loaded_schema  # noqa: E402
 from metrics import (  # noqa: E402
@@ -63,6 +77,8 @@ from plots import (  # noqa: E402
     plot_expected_vs_observed_cumulative_only,
     plot_km_post_infection,
     plot_mortality_rate,
+    plot_old_young_difference,
+    plot_placebo_break_scan,
     plot_vaccine_coverage_all,
     plot_vaccine_coverage_by_age,
     plot_wave_ve_summary,
@@ -215,6 +231,7 @@ def main() -> None:
         age_bins=age_bins_config,
         progress_log=_log,
     )
+    df = add_prior_infection_before_enrollment_flag(df, progress_log=_log)
     validate_loaded_schema(df, stage="enrollment")
 
     n_total = len(df)
@@ -269,6 +286,8 @@ def main() -> None:
                 wave_start=str(wave["start"]),
                 baseline_start=str(baseline["start"]),
             )
+    else:
+        cov_df = pd.DataFrame()
 
     if metrics_workers > 1:
         if parallel_stratum_pool_available():
@@ -458,6 +477,194 @@ def main() -> None:
     age_only = weekly[weekly["age_bin"] != "all"].copy()
     age_only.to_csv(out_dir / "age_stratified_metrics.csv", index=False)
 
+    fals_cfg = cfg.get("falsification") or {}
+    older_group = str(fals_cfg.get("older_group_name", "older"))
+    younger_group = str(fals_cfg.get("younger_group_name", "younger"))
+    fals_age_groups = fals_cfg.get(
+        "age_groups",
+        {
+            younger_group: ["40-49", "50-59", "60-69"],
+            older_group: ["70-120"],
+        },
+    )
+    break_iso_week = str(fals_cfg.get("break_iso_week", wave["start"]))
+    placebo_start = str(fals_cfg.get("placebo_start", baseline["start"]))
+    placebo_end = str(fals_cfg.get("placebo_end", baseline["end"]))
+    ve_assumptions = fals_cfg.get("ve_assumptions", [0.3, 0.5, 0.7, 0.9])
+    split_definitions = fals_cfg.get(
+        "split_definitions",
+        [
+            {"name": "70plus_vs_under70", "older": ["70-120"], "younger": ["40-49", "50-59", "60-69"]},
+            {"name": "60plus_vs_under60", "older": ["60-69", "70-120"], "younger": ["40-49", "50-59"]},
+            {"name": "50plus_vs_under50", "older": ["50-59", "60-69", "70-120"], "younger": ["40-49"]},
+        ],
+    )
+    _log(
+        f"falsification checks (break={break_iso_week}, placebo={placebo_start}–{placebo_end}, "
+        f"groups={list(fals_age_groups.keys())}) …"
+    )
+    fals_group_weekly = build_age_group_weekly(
+        weekly,
+        age_groups=fals_age_groups,
+        coverage_weekly=cov_df,
+    )
+    fals_diff_weekly = build_old_young_difference_weekly(
+        fals_group_weekly,
+        older_group=older_group,
+        younger_group=younger_group,
+    )
+    fals_break_tests = build_breakpoint_tests(
+        fals_group_weekly,
+        break_iso_week=break_iso_week,
+    )
+    fals_diff_tests = build_difference_breakpoint_tests(
+        fals_diff_weekly,
+        break_iso_week=break_iso_week,
+    )
+    placebo_weeks = [
+        w
+        for w in sorted(fals_diff_weekly["iso_week"].unique())
+        if placebo_start <= str(w) <= placebo_end
+    ] if len(fals_diff_weekly) else []
+    fals_placebo = build_placebo_break_scan(
+        fals_diff_weekly,
+        candidate_weeks=placebo_weeks,
+    )
+    fals_cov = build_coverage_dilution_summary(
+        weekly,
+        cov_df,
+        age_groups=fals_age_groups,
+        ve_assumptions=ve_assumptions,
+        reference_cohort=ref_cohort,
+        wave_start=str(wave["start"]),
+        wave_end=str(wave["end"]),
+    )
+    fals_multi = build_multi_split_falsification_summary(
+        weekly,
+        coverage_weekly=cov_df,
+        split_definitions=split_definitions,
+        break_iso_week=break_iso_week,
+        placebo_start=placebo_start,
+        placebo_end=placebo_end,
+        ve_assumptions=ve_assumptions,
+        reference_cohort=ref_cohort,
+        wave_start=str(wave["start"]),
+        wave_end=str(wave["end"]),
+    )
+    fals_group_weekly.to_csv(out_dir / "falsification_group_weekly.csv", index=False)
+    fals_diff_weekly.to_csv(out_dir / "falsification_old_young_diff_weekly.csv", index=False)
+    fals_break_tests.to_csv(out_dir / "falsification_break_tests.csv", index=False)
+    fals_diff_tests.to_csv(out_dir / "falsification_diff_break_tests.csv", index=False)
+    fals_placebo.to_csv(out_dir / "falsification_placebo_scan.csv", index=False)
+    fals_cov.to_csv(out_dir / "falsification_coverage_dilution.csv", index=False)
+    fals_multi.to_csv(out_dir / "falsification_multi_split_summary.csv", index=False)
+    fals_neg = build_negative_control_rank_summary(fals_multi)
+    fals_neg.to_csv(out_dir / "falsification_negative_control_summary.csv", index=False)
+    fals_decomp = build_incidence_severity_decomposition_summary(fals_multi)
+    fals_decomp.to_csv(out_dir / "falsification_incidence_severity_summary.csv", index=False)
+    fals_bounds = build_ve_death_signal_bounds(
+        wave_ve_summary,
+        multi_split_summary=fals_multi,
+        split_definitions=split_definitions,
+        compare_cohort=vax_cohort,
+    )
+    fals_bounds.to_csv(out_dir / "falsification_ve_death_bounds.csv", index=False)
+    fals_quant = build_quantitative_scenario_bounds(fals_bounds, fals_multi)
+    fals_quant.to_csv(out_dir / "falsification_quantitative_scenario_bounds.csv", index=False)
+
+    _log("falsification checks (infection-naive at enrollment only) …")
+    naive_mask = ~df_model["prior_infection_before_enrollment"].fillna(False)
+    naive_rows = int(naive_mask.sum())
+    naive_people = int(df_model.loc[naive_mask, "ID"].nunique()) if "ID" in df_model.columns else naive_rows
+    _log(f"  infection-naive rows={naive_rows:,}; infection-naive unique IDs={naive_people:,}")
+    naive_cohort_masks = {
+        c: cohort_mask(df_model, c) & naive_mask
+        for c in cohorts
+    }
+    weekly_naive, _ = build_weekly_metrics(
+        df_model,
+        followup_start=followup_start,
+        followup_end=followup_end,
+        cohorts=cohorts,
+        age_bins_config=age_bins_config,
+        baseline_start=str(baseline["start"]),
+        baseline_end=str(baseline["end"]),
+        wave_start=str(wave["start"]),
+        wave_end=str(wave["end"]),
+        cohort_masks=naive_cohort_masks,
+        reference_cohort=ref_cohort,
+        metrics_workers=metrics_workers,
+    )
+    fals_group_weekly_naive = build_age_group_weekly(
+        weekly_naive,
+        age_groups=fals_age_groups,
+        coverage_weekly=cov_df,
+    )
+    fals_diff_weekly_naive = build_old_young_difference_weekly(
+        fals_group_weekly_naive,
+        older_group=older_group,
+        younger_group=younger_group,
+    )
+    fals_break_tests_naive = build_breakpoint_tests(
+        fals_group_weekly_naive,
+        break_iso_week=break_iso_week,
+    )
+    fals_diff_tests_naive = build_difference_breakpoint_tests(
+        fals_diff_weekly_naive,
+        break_iso_week=break_iso_week,
+    )
+    placebo_weeks_naive = [
+        w
+        for w in sorted(fals_diff_weekly_naive["iso_week"].unique())
+        if placebo_start <= str(w) <= placebo_end
+    ] if len(fals_diff_weekly_naive) else []
+    fals_placebo_naive = build_placebo_break_scan(
+        fals_diff_weekly_naive,
+        candidate_weeks=placebo_weeks_naive,
+    )
+    fals_cov_naive = build_coverage_dilution_summary(
+        weekly_naive,
+        cov_df,
+        age_groups=fals_age_groups,
+        ve_assumptions=ve_assumptions,
+        reference_cohort=ref_cohort,
+        wave_start=str(wave["start"]),
+        wave_end=str(wave["end"]),
+    )
+    fals_multi_naive = build_multi_split_falsification_summary(
+        weekly_naive,
+        coverage_weekly=cov_df,
+        split_definitions=split_definitions,
+        break_iso_week=break_iso_week,
+        placebo_start=placebo_start,
+        placebo_end=placebo_end,
+        ve_assumptions=ve_assumptions,
+        reference_cohort=ref_cohort,
+        wave_start=str(wave["start"]),
+        wave_end=str(wave["end"]),
+    )
+    weekly_naive.to_csv(out_dir / "weekly_metrics_naive_at_enrollment.csv", index=False)
+    fals_group_weekly_naive.to_csv(out_dir / "falsification_naive_group_weekly.csv", index=False)
+    fals_diff_weekly_naive.to_csv(out_dir / "falsification_naive_old_young_diff_weekly.csv", index=False)
+    fals_break_tests_naive.to_csv(out_dir / "falsification_naive_break_tests.csv", index=False)
+    fals_diff_tests_naive.to_csv(out_dir / "falsification_naive_diff_break_tests.csv", index=False)
+    fals_placebo_naive.to_csv(out_dir / "falsification_naive_placebo_scan.csv", index=False)
+    fals_cov_naive.to_csv(out_dir / "falsification_naive_coverage_dilution.csv", index=False)
+    fals_multi_naive.to_csv(out_dir / "falsification_naive_multi_split_summary.csv", index=False)
+    fals_neg_naive = build_negative_control_rank_summary(fals_multi_naive)
+    fals_neg_naive.to_csv(out_dir / "falsification_naive_negative_control_summary.csv", index=False)
+    fals_decomp_naive = build_incidence_severity_decomposition_summary(fals_multi_naive)
+    fals_decomp_naive.to_csv(out_dir / "falsification_naive_incidence_severity_summary.csv", index=False)
+    fals_bounds_naive = build_ve_death_signal_bounds(
+        wave_ve_summary,
+        multi_split_summary=fals_multi_naive,
+        split_definitions=split_definitions,
+        compare_cohort=vax_cohort,
+    )
+    fals_bounds_naive.to_csv(out_dir / "falsification_naive_ve_death_bounds.csv", index=False)
+    fals_quant_naive = build_quantitative_scenario_bounds(fals_bounds_naive, fals_multi_naive)
+    fals_quant_naive.to_csv(out_dir / "falsification_naive_quantitative_scenario_bounds.csv", index=False)
+
     ve = float(exp_cfg.get("ve_death", 0.9))
     cfr_ref_mode = str(exp_cfg.get("cfr_reference", "same_week"))
     use_covid = bool(exp_cfg.get("use_covid_cfr", True))
@@ -540,6 +747,24 @@ def main() -> None:
 
     plot_cumulative_cases_deaths(
         weekly, out_dir / "cumulative_cases_deaths.png", age_bin="all", wave_start=ws, wave_end=we, dpi=dpi
+    )
+    plot_old_young_difference(
+        fals_diff_weekly,
+        out_dir / "falsification_old_young_diff.png",
+        break_iso_week=break_iso_week,
+        dpi=dpi,
+    )
+    plot_old_young_difference(
+        fals_diff_weekly_naive,
+        out_dir / "falsification_naive_old_young_diff.png",
+        break_iso_week=break_iso_week,
+        dpi=dpi,
+    )
+    plot_placebo_break_scan(
+        fals_placebo,
+        out_dir / "falsification_placebo_scan.png",
+        actual_break_iso_week=break_iso_week,
+        dpi=dpi,
     )
 
     if cfg.get("plots", {}).get("save_age_stratified_ts"):

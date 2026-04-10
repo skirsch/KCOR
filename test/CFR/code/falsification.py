@@ -61,11 +61,33 @@ def build_age_group_weekly(
             )
             .assign(age_group=group_name)
         )
+        # Rebuild episode-style deaths from row-level CFR × cases so broad-group CFR stays aligned to the pipeline's episode logic.
+        if "cfr_covid" in g.columns and "cfr_allcause" in g.columns:
+            gtmp = g.copy()
+            gtmp["covid_episode_deaths_component"] = (
+                pd.to_numeric(gtmp["cfr_covid"], errors="coerce").fillna(0.0)
+                * pd.to_numeric(gtmp["cases"], errors="coerce").fillna(0.0)
+            )
+            gtmp["allcause_episode_deaths_component"] = (
+                pd.to_numeric(gtmp["cfr_allcause"], errors="coerce").fillna(0.0)
+                * pd.to_numeric(gtmp["cases"], errors="coerce").fillna(0.0)
+            )
+            epi = gtmp.groupby(["iso_week", "week_monday"], as_index=False).agg(
+                covid_episode_deaths_implied=("covid_episode_deaths_component", "sum"),
+                allcause_episode_deaths_implied=("allcause_episode_deaths_component", "sum"),
+            )
+            agg = agg.merge(epi, on=["iso_week", "week_monday"], how="left")
+        else:
+            agg["covid_episode_deaths_implied"] = np.nan
+            agg["allcause_episode_deaths_implied"] = np.nan
         pop = agg["population_at_risk"].astype(float)
         agg["case_rate"] = np.where(pop > 0, agg["cases"] / pop, np.nan)
         agg["mortality_rate_all_cause"] = np.where(pop > 0, agg["deaths_all"] / pop, np.nan)
         agg["mortality_rate_covid"] = np.where(pop > 0, agg["deaths_covid"] / pop, np.nan)
         agg["mortality_rate_non_covid"] = np.where(pop > 0, agg["deaths_non_covid"] / pop, np.nan)
+        cases = agg["cases"].astype(float)
+        agg["cfr_covid_episode"] = np.where(cases > 0, agg["covid_episode_deaths_implied"] / cases, np.nan)
+        agg["cfr_allcause_episode"] = np.where(cases > 0, agg["allcause_episode_deaths_implied"] / cases, np.nan)
         agg = agg.sort_values("iso_week", kind="mergesort")
         agg["cumulative_deaths_covid"] = agg["deaths_covid"].cumsum()
         agg["cumulative_deaths_all"] = agg["deaths_all"].cumsum()
@@ -185,6 +207,8 @@ def build_old_young_difference_weekly(
         "deaths_non_covid",
         "population_at_risk",
         "case_rate",
+        "cfr_covid_episode",
+        "cfr_allcause_episode",
         "mortality_rate_all_cause",
         "mortality_rate_covid",
         "mortality_rate_non_covid",
@@ -197,6 +221,11 @@ def build_old_young_difference_weekly(
     young = young[keep].rename(columns={c: f"{c}_young" for c in keep if c not in {"iso_week", "week_monday"}})
     out = old.merge(young, on=["iso_week", "week_monday"], how="inner").sort_values("iso_week", kind="mergesort")
     for metric in ("case_rate", "mortality_rate_all_cause", "mortality_rate_covid", "mortality_rate_non_covid", "coverage_ge1", "coverage_ge2", "coverage_ge3"):
+        old_col = f"{metric}_old"
+        young_col = f"{metric}_young"
+        if old_col in out.columns and young_col in out.columns:
+            out[f"{metric}_diff_old_minus_young"] = out[old_col] - out[young_col]
+    for metric in ("cfr_covid_episode", "cfr_allcause_episode"):
         old_col = f"{metric}_old"
         young_col = f"{metric}_young"
         if old_col in out.columns and young_col in out.columns:
@@ -252,6 +281,8 @@ def build_difference_breakpoint_tests(
     outcomes = list(
         outcomes
         or (
+            "case_rate_diff_old_minus_young",
+            "cfr_covid_episode_diff_old_minus_young",
             "mortality_rate_covid_diff_old_minus_young",
             "mortality_rate_non_covid_diff_old_minus_young",
             "mortality_rate_all_cause_diff_old_minus_young",
@@ -295,6 +326,8 @@ def build_placebo_break_scan(
     outcomes = list(
         outcomes
         or (
+            "case_rate_diff_old_minus_young",
+            "cfr_covid_episode_diff_old_minus_young",
             "mortality_rate_covid_diff_old_minus_young",
             "mortality_rate_non_covid_diff_old_minus_young",
             "mortality_rate_all_cause_diff_old_minus_young",
@@ -421,3 +454,346 @@ def build_coverage_dilution_summary(
         f"expected_pop_reduction_ve_{ve:.1f}" for ve in ve_assumptions
     ]
     return pd.concat([weekly_out, summary[cols]], ignore_index=True, sort=False)
+
+
+def build_multi_split_falsification_summary(
+    weekly: pd.DataFrame,
+    *,
+    coverage_weekly: pd.DataFrame | None,
+    split_definitions: Sequence[Mapping[str, object]],
+    break_iso_week: str,
+    placebo_start: str,
+    placebo_end: str,
+    ve_assumptions: Sequence[float] | None = None,
+    reference_cohort: str = "dose0",
+    wave_start: str | None = None,
+    wave_end: str | None = None,
+) -> pd.DataFrame:
+    """Compare several broad age splits on the same breakpoint and dilution checks."""
+    rows: list[dict] = []
+    for split in split_definitions:
+        split_name = str(split.get("name", "")).strip()
+        younger = split.get("younger")
+        older = split.get("older")
+        if not split_name or not younger or not older:
+            continue
+        age_groups = {
+            "younger": [str(x) for x in younger],
+            "older": [str(x) for x in older],
+        }
+        group_weekly = build_age_group_weekly(
+            weekly,
+            age_groups=age_groups,
+            coverage_weekly=coverage_weekly,
+        )
+        if group_weekly.empty:
+            continue
+        diff_weekly = build_old_young_difference_weekly(
+            group_weekly,
+            older_group="older",
+            younger_group="younger",
+        )
+        diff_break = build_difference_breakpoint_tests(
+            diff_weekly,
+            break_iso_week=break_iso_week,
+        )
+        placebo_weeks = [
+            w
+            for w in sorted(diff_weekly["iso_week"].unique())
+            if placebo_start <= str(w) <= placebo_end
+        ]
+        placebo = build_placebo_break_scan(
+            diff_weekly,
+            candidate_weeks=placebo_weeks,
+        )
+        cov = build_coverage_dilution_summary(
+            weekly,
+            coverage_weekly if coverage_weekly is not None else pd.DataFrame(),
+            age_groups=age_groups,
+            ve_assumptions=ve_assumptions,
+            reference_cohort=reference_cohort,
+            wave_start=wave_start,
+            wave_end=wave_end,
+        )
+
+        for outcome in (
+            "case_rate_diff_old_minus_young",
+            "cfr_covid_episode_diff_old_minus_young",
+            "mortality_rate_covid_diff_old_minus_young",
+            "mortality_rate_non_covid_diff_old_minus_young",
+            "mortality_rate_all_cause_diff_old_minus_young",
+        ):
+            dsub = diff_break[diff_break["outcome"] == outcome]
+            if dsub.empty:
+                continue
+            row = dsub.iloc[0].to_dict()
+            row["split_name"] = split_name
+            if not placebo.empty and "outcome" in placebo.columns:
+                psub = placebo[placebo["outcome"] == outcome]
+                prow = psub[psub["break_iso_week"] == placebo_end]
+                if not prow.empty:
+                    row["placebo_rank_slope"] = prow.iloc[0].get("slope_change_abs_rank")
+                    row["placebo_rank_level"] = prow.iloc[0].get("level_jump_at_break_abs_rank")
+            rows.append(row)
+
+        if not cov.empty:
+            for _, crow in cov[cov["iso_week"] == "wave_mean"].iterrows():
+                rows.append(
+                    {
+                        "split_name": split_name,
+                        "series_kind": "coverage_dilution",
+                        "series_name": crow.get("age_group"),
+                        "break_iso_week": break_iso_week,
+                        "outcome": "coverage_dilution_wave_mean",
+                        "pre_mean": np.nan,
+                        "post_mean": np.nan,
+                        "pre_slope_per_week": np.nan,
+                        "post_slope_per_week": np.nan,
+                        "slope_change": np.nan,
+                        "level_jump_at_break": np.nan,
+                        "placebo_rank_slope": np.nan,
+                        "placebo_rank_level": np.nan,
+                        **{
+                            k: crow.get(k)
+                            for k in crow.index
+                            if str(k).startswith("expected_pop_reduction_ve_")
+                            or str(k) in {"mean_wave_coverage_ge1", "age_group"}
+                        },
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def build_negative_control_rank_summary(
+    multi_split_summary: pd.DataFrame,
+) -> pd.DataFrame:
+    """One row per split with COVID, case-rate, and non-COVID breakpoint contrasts."""
+    if multi_split_summary.empty:
+        return pd.DataFrame()
+    sub = multi_split_summary[
+        multi_split_summary["series_kind"] == "old_minus_young"
+    ].copy()
+    if sub.empty:
+        return pd.DataFrame()
+    rows: list[dict] = []
+    for split_name, grp in sub.groupby("split_name", sort=False):
+        row: dict[str, object] = {"split_name": split_name}
+        for outcome in (
+            "case_rate_diff_old_minus_young",
+            "mortality_rate_covid_diff_old_minus_young",
+            "mortality_rate_non_covid_diff_old_minus_young",
+            "mortality_rate_all_cause_diff_old_minus_young",
+        ):
+            s = grp[grp["outcome"] == outcome]
+            if s.empty:
+                continue
+            r = s.iloc[0]
+            prefix = outcome.replace("_diff_old_minus_young", "")
+            for col in (
+                "pre_mean",
+                "post_mean",
+                "slope_change",
+                "level_jump_at_break",
+                "placebo_rank_slope",
+                "placebo_rank_level",
+            ):
+                row[f"{prefix}_{col}"] = r.get(col)
+        covid_jump = pd.to_numeric(pd.Series([row.get("mortality_rate_covid_level_jump_at_break")]), errors="coerce").iloc[0]
+        noncov_jump = pd.to_numeric(pd.Series([row.get("mortality_rate_non_covid_level_jump_at_break")]), errors="coerce").iloc[0]
+        case_jump = pd.to_numeric(pd.Series([row.get("case_rate_level_jump_at_break")]), errors="coerce").iloc[0]
+        row["covid_minus_noncovid_level_jump"] = (
+            covid_jump - noncov_jump if pd.notna(covid_jump) and pd.notna(noncov_jump) else np.nan
+        )
+        row["covid_to_noncovid_level_jump_ratio"] = (
+            covid_jump / noncov_jump if pd.notna(covid_jump) and pd.notna(noncov_jump) and noncov_jump != 0 else np.nan
+        )
+        row["covid_minus_case_level_jump"] = (
+            covid_jump - case_jump if pd.notna(covid_jump) and pd.notna(case_jump) else np.nan
+        )
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def build_ve_death_signal_bounds(
+    wave_ve_summary: pd.DataFrame,
+    *,
+    multi_split_summary: pd.DataFrame,
+    split_definitions: Sequence[Mapping[str, object]],
+    compare_cohort: str = "dose2",
+) -> pd.DataFrame:
+    """
+    Heuristic VE-death signal summary combining age-stratified cohort VE with ecological attenuation.
+
+    This is not a formal causal bound. It is a compact consistency table:
+    raw cohort VE in older ages, the share of the ecological old-young jump that looks COVID-specific
+    after subtracting the non-COVID jump, and the implied attenuated VE signal from that combination.
+    """
+    if wave_ve_summary.empty or multi_split_summary.empty:
+        return pd.DataFrame()
+    neg = build_negative_control_rank_summary(multi_split_summary)
+    if neg.empty:
+        return pd.DataFrame()
+    rows: list[dict] = []
+    for split in split_definitions:
+        split_name = str(split.get("name", "")).strip()
+        older = [str(x) for x in split.get("older", [])]
+        if not split_name or not older:
+            continue
+        sub = wave_ve_summary[
+            (wave_ve_summary["cohort"] == compare_cohort) & (wave_ve_summary["age_bin"].isin(older))
+        ].copy()
+        nsub = neg[neg["split_name"] == split_name]
+        if sub.empty or nsub.empty:
+            continue
+        nr = nsub.iloc[0]
+        w = pd.to_numeric(sub["cohort_total_person_weeks"], errors="coerce").fillna(0.0)
+        ve = pd.to_numeric(sub["ve_covid_death_rate"], errors="coerce")
+        ok = w.gt(0) & ve.notna()
+        weighted_ve = float(np.average(ve[ok], weights=w[ok])) if ok.any() else np.nan
+        min_ve = float(ve[ok].min()) if ok.any() else np.nan
+        max_ve = float(ve[ok].max()) if ok.any() else np.nan
+        covid_jump = pd.to_numeric(pd.Series([nr.get("mortality_rate_covid_level_jump_at_break")]), errors="coerce").iloc[0]
+        noncov_jump = pd.to_numeric(pd.Series([nr.get("mortality_rate_non_covid_level_jump_at_break")]), errors="coerce").iloc[0]
+        covid_specific_share = (
+            max(float(covid_jump - noncov_jump), 0.0) / float(covid_jump)
+            if pd.notna(covid_jump) and pd.notna(noncov_jump) and covid_jump > 0
+            else np.nan
+        )
+        attenuated_signal = (
+            weighted_ve * covid_specific_share
+            if pd.notna(weighted_ve) and pd.notna(covid_specific_share)
+            else np.nan
+        )
+        rows.append(
+            {
+                "split_name": split_name,
+                "older_bins": ",".join(older),
+                "older_weighted_wave_ve_covid_death_rate": weighted_ve,
+                "older_min_wave_ve_covid_death_rate": min_ve,
+                "older_max_wave_ve_covid_death_rate": max_ve,
+                "covid_level_jump_at_break": covid_jump,
+                "noncovid_level_jump_at_break": noncov_jump,
+                "covid_specific_jump_share_after_noncovid_subtraction": covid_specific_share,
+                "attenuated_ve_death_signal": attenuated_signal,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def build_incidence_severity_decomposition_summary(
+    multi_split_summary: pd.DataFrame,
+) -> pd.DataFrame:
+    """Side-by-side case-rate, CFR, and death-rate break summary for each split."""
+    if multi_split_summary.empty:
+        return pd.DataFrame()
+    sub = multi_split_summary[
+        multi_split_summary["series_kind"] == "old_minus_young"
+    ].copy()
+    if sub.empty:
+        return pd.DataFrame()
+    rows: list[dict] = []
+    mapping = {
+        "case_rate_diff_old_minus_young": "case_rate",
+        "cfr_covid_episode_diff_old_minus_young": "cfr_covid_episode",
+        "mortality_rate_covid_diff_old_minus_young": "mortality_rate_covid",
+    }
+    for split_name, grp in sub.groupby("split_name", sort=False):
+        row: dict[str, object] = {"split_name": split_name}
+        for outcome, prefix in mapping.items():
+            s = grp[grp["outcome"] == outcome]
+            if s.empty:
+                continue
+            r = s.iloc[0]
+            for col in (
+                "pre_mean",
+                "post_mean",
+                "slope_change",
+                "level_jump_at_break",
+                "placebo_rank_slope",
+                "placebo_rank_level",
+            ):
+                row[f"{prefix}_{col}"] = r.get(col)
+        case_jump = pd.to_numeric(pd.Series([row.get("case_rate_level_jump_at_break")]), errors="coerce").iloc[0]
+        cfr_jump = pd.to_numeric(pd.Series([row.get("cfr_covid_episode_level_jump_at_break")]), errors="coerce").iloc[0]
+        death_jump = pd.to_numeric(pd.Series([row.get("mortality_rate_covid_level_jump_at_break")]), errors="coerce").iloc[0]
+        row["case_jump_abs"] = abs(case_jump) if pd.notna(case_jump) else np.nan
+        row["cfr_jump_abs"] = abs(cfr_jump) if pd.notna(cfr_jump) else np.nan
+        row["death_jump_abs"] = abs(death_jump) if pd.notna(death_jump) else np.nan
+        if pd.notna(row["case_jump_abs"]) and pd.notna(row["cfr_jump_abs"]):
+            if row["case_jump_abs"] > 3 * row["cfr_jump_abs"]:
+                row["dominant_component"] = "incidence"
+            elif row["cfr_jump_abs"] > 3 * row["case_jump_abs"]:
+                row["dominant_component"] = "severity"
+            else:
+                row["dominant_component"] = "mixed"
+        else:
+            row["dominant_component"] = ""
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def build_quantitative_scenario_bounds(
+    ve_death_bounds: pd.DataFrame,
+    multi_split_summary: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Transparent scenario-based VE-death summary.
+
+    Columns are intentionally interpretable rather than "fully identified":
+    - ``strict_null_floor``: conservative floor compatible with the ecological design
+    - ``negative_control_adjusted_point``: attenuated signal after subtracting non-COVID jump share
+    - ``coverage_calibrated_point``: COVID-specific jump share divided by older-group mean coverage
+    - ``cohort_ceiling``: older-group weighted cohort VE on COVID death rate
+    """
+    if ve_death_bounds.empty or multi_split_summary.empty:
+        return pd.DataFrame()
+    cov = multi_split_summary[
+        (multi_split_summary["series_kind"] == "coverage_dilution")
+        & (multi_split_summary["series_name"] == "older")
+    ].copy()
+    if cov.empty:
+        return pd.DataFrame()
+    cols = [
+        "split_name",
+        "age_group",
+        "mean_wave_coverage_ge1",
+    ]
+    cov = cov[[c for c in cols if c in cov.columns]].rename(columns={"age_group": "coverage_group"})
+    merged = ve_death_bounds.merge(cov, on="split_name", how="left")
+    if merged.empty:
+        return merged
+    coverage = pd.to_numeric(merged.get("mean_wave_coverage_ge1"), errors="coerce")
+    share = pd.to_numeric(
+        merged.get("covid_specific_jump_share_after_noncovid_subtraction"),
+        errors="coerce",
+    )
+    ceiling = pd.to_numeric(merged.get("older_weighted_wave_ve_covid_death_rate"), errors="coerce")
+    merged["strict_null_floor"] = 0.0
+    merged["negative_control_adjusted_point"] = pd.to_numeric(
+        merged.get("attenuated_ve_death_signal"),
+        errors="coerce",
+    )
+    merged["coverage_calibrated_point"] = np.where(
+        pd.notna(coverage) & (coverage > 0) & pd.notna(share),
+        share / coverage,
+        np.nan,
+    )
+    merged["cohort_ceiling"] = ceiling
+    merged["scenario_range_lo"] = merged["strict_null_floor"]
+    merged["scenario_range_hi"] = np.fmin(
+        pd.to_numeric(merged["coverage_calibrated_point"], errors="coerce"),
+        pd.to_numeric(merged["cohort_ceiling"], errors="coerce"),
+    )
+    return merged[
+        [
+            "split_name",
+            "older_bins",
+            "mean_wave_coverage_ge1",
+            "strict_null_floor",
+            "negative_control_adjusted_point",
+            "coverage_calibrated_point",
+            "cohort_ceiling",
+            "scenario_range_lo",
+            "scenario_range_hi",
+        ]
+    ].copy()
