@@ -951,10 +951,13 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - The claim is not that every harm signal is individually dispositive; it is that the combined signal makes it unreasonable to rule out significant vaccine contribution.
 - Pillar 3: net direction looked worse, not better.
   - This pillar addresses the net question even when exact lives saved and lives lost cannot be measured with precision.
+  - This is a more-likely-than-not / net-direction argument, not a claim to prove vaccine causation for every excess death.
   - If a major life-saving intervention were rolled out across many countries, one would expect clearer aggregate improvement or at least heterogeneous country outcomes after rollout.
   - Instead, broad excess mortality persisted across many countries during and after the rollout period.
   - This is not proof that vaccines caused all excess mortality, but it is directionally inconsistent with a large net life-saving effect.
   - Aarstad's ecological and ONS-reanalysis work is supporting evidence here: it should not be used as one-paper proof, but it adds to the convergence that post-rollout ACM did not behave like a clean large-net-benefit intervention.
+  - Pillar 3 phrasing: "On balance, the real-world ACM / excess-mortality record is more consistent with little/no net benefit or net harm than with large net lives saved."
+  - Debate line: "If a population-wide intervention was supposed to save many lives, but aggregate mortality moved the wrong way across the US and many comparator countries, then the large-net-benefit claim bears the burden of proof."
 - Mostert as pillar 3 anchor:
   - Mostert et al. are useful because they treat persistent excess mortality across many Western countries as a real empirical phenomenon.
   - Across many countries, idiosyncratic confounders should vary in direction and magnitude.
@@ -1101,6 +1104,47 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - If SW predicts "down," reveal the plot: all OWID countries, all auto-identified high-linearity segments, `R^2 >= 0.99`, n=512; fitted `log10(slope)` trend goes up, fitted end/start = 1.68x.
   - If SW predicts "flat" or "up," ask whether he is conceding that even large VE death would leave no visible downward fingerprint in the global slope record.
   - If SW refuses to make a prediction, note that a model that cannot make even a directional prediction before looking at the result is hard to use as evidence of large lives saved.
+
+### South Korea: not just "no harm"; also a population-level benefit problem
+
+- Why this matters:
+  - SW used South Korea as part of the zero-COVID / low-COVID set to argue that vaccination rollout did not produce obvious excess mortality.
+  - But South Korea is also highly relevant on the benefit side: after very high vaccination and boosting, South Korea still experienced a very large mortality/COVID wave in early 2022.
+- Local figures:
+  - ![South Korea crude excess mortality](figures/mortality_watch/south_korea.png)
+  - ![South Korea weekly deaths and vaccine doses](figures/weekly_deaths/weekly_deaths_vaccine_doses_south_korea.png)
+- OWID vaccination context:
+  - South Korea was approximately 81.67% fully vaccinated by 2021-12-31, with boosters at about 35.68 per hundred.
+  - By 2022-03-31, South Korea was approximately 85.24% fully vaccinated, with boosters at about 63.78 per hundred.
+- Mortality Watch visual:
+  - South Korea crude excess mortality was strongly positive in 2022, including about +33.9% in 2022 Q1 and +29.0% in 2022 Q2 in the saved chart.
+  - This is difficult to use as a "vaccines caused no excess mortality" proof.
+- Benefit-side interpretation:
+  - The stronger use is not to claim the South Korea spike proves vaccine harm.
+  - The stronger use is to say that South Korea is a major problem for the claim that vaccination produced a large, durable, population-level COVID-death benefit.
+  - If a country is highly vaccinated and boosted, yet experiences one of its largest COVID/excess-mortality waves weeks/months after rollout, the measured population-level benefit is not obvious.
+- Caveat:
+  - This does not prove individual-level VE was zero.
+  - South Korea's 2022 wave may reflect Omicron immune escape, enormous infection pressure, waning, age structure, reporting, policy changes, and prior low infection / low natural immunity.
+  - But those are exactly the factors SW must quantify if he claims large lives saved despite the observed mortality spike.
+- Debate line:
+  - "South Korea cannot be used simply as a no-harm example. It is also a benefit-side problem: after very high vaccination and boosting, the country still had a massive mortality/COVID wave. If SW says vaccination saved large numbers of lives there, show the counterfactual quantitatively."
+- Counterfactual peak stress test:
+  - The weekly-deaths/vaccine-doses plot is useful because the black all-cause mortality line rises dramatically after the blue vaccine rollout spikes.
+  - A clean way to use this is to ask what no-vaccine peak is implied by a high-VE model.
+  - Do not use a simple "10x total mortality" claim unless assuming 100% coverage and applying the 10x only to the COVID-excess component.
+  - Correct coverage-adjusted formula:
+    - If coverage is `p` and VE against COVID death is `VE`, then observed COVID-excess deaths are approximately `(1 - p * VE)` of the no-vaccine COVID-excess counterfactual, assuming equal infection pressure and no vaccine harm.
+    - Therefore, no-vaccine COVID-excess counterfactual is approximately `observed_excess / (1 - p * VE)`.
+  - For South Korea:
+    - If coverage was about 80% and VE death was 90%, the no-vaccine COVID-excess counterfactual would be about `1 / (1 - 0.80 * 0.90) = 3.57x` the observed COVID-excess component.
+    - If coverage was about 85% and VE death was 90%, the no-vaccine COVID-excess counterfactual would be about `1 / (1 - 0.85 * 0.90) = 4.26x` the observed COVID-excess component.
+    - If observed all-cause mortality at the peak was roughly double baseline, then the implied no-vaccine all-cause peak under the high-VE model would be several-fold baseline, not merely slightly higher.
+  - Proposed exhibit:
+    - Plot the observed South Korea weekly death peak against implied no-vaccine counterfactual peaks under 50%, 70%, and 90% VE assumptions at observed coverage.
+    - Then compare those implied peaks with observed peaks in largely unvaccinated countries such as South Africa and Bulgaria.
+  - Debate line:
+    - "If South Korea was highly vaccinated and still had a roughly doubled all-cause mortality peak, what no-vaccine peak is implied by the claimed 90% VE death model? If the implied peak is far beyond what we see even in largely unvaccinated countries, the model is not credible without a quantitative explanation."
 
 ### Aarstad papers as Pillar 3 support
 
