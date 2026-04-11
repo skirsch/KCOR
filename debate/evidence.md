@@ -954,11 +954,23 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - If a major life-saving intervention were rolled out across many countries, one would expect clearer aggregate improvement or at least heterogeneous country outcomes after rollout.
   - Instead, broad excess mortality persisted across many countries during and after the rollout period.
   - This is not proof that vaccines caused all excess mortality, but it is directionally inconsistent with a large net life-saving effect.
+  - Aarstad's ecological and ONS-reanalysis work is supporting evidence here: it should not be used as one-paper proof, but it adds to the convergence that post-rollout ACM did not behave like a clean large-net-benefit intervention.
 - Mostert as pillar 3 anchor:
   - Mostert et al. are useful because they treat persistent excess mortality across many Western countries as a real empirical phenomenon.
   - Across many countries, idiosyncratic confounders should vary in direction and magnitude.
   - The observation that excess mortality persisted broadly is more consistent with "benefit was small and/or offset by harms" than with "large net lives saved."
   - Debate line: "Mostert does not prove mechanism, but it is net-direction evidence. The observed world did not look like a world in which the intervention strongly saved lives."
+- Burden-shift framing:
+  - If a population-wide intervention is claimed to have saved many lives, the aggregate mortality record should at least be directionally consistent with that claim.
+  - Instead, after rollout, broad ACM / excess mortality moved the wrong way across many countries.
+  - This does not prove vaccine causation.
+  - But it does shift the burden onto the defender of large net benefit to explain why the mortality record worsened despite the intervention.
+  - That explanation must be quantitative, not just a list of possible confounders.
+  - COVID cannot be used as a free explanatory variable without accounting for the claimed vaccine effect: if vaccines substantially reduced COVID death, then COVID-related ACM should have been reduced relative to the no-vaccine counterfactual.
+  - The defender therefore must show both:
+    - what COVID would have done without vaccination, and
+    - why the actual post-rollout ACM still rose across many places at the same time.
+  - Debate line: "The burden is on the large-net-benefit claim to reconcile its model with the real-world ACM direction. A life-saving intervention should not require an invisible counterfactual to explain why mortality moved the wrong way."
 
 ### CFR definitions and NCACM caution
 
@@ -1014,3 +1026,170 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - Therefore, the ratio is best used as a falsification / burden-shifting test against huge 90% VE-death claims, not as our preferred point estimate of true VE.
 - Debate line:
   - "Show the 90% VE death in Czechia after normalizing COVID deaths by non-COVID deaths in the same age/week strata. If the effect collapses from 90% to roughly ~2x, then the headline VE-death literature is not measuring a clean causal effect."
+
+### OWID cumulative COVID-death slope screen
+
+- Purpose:
+  - Use OWID cumulative confirmed COVID deaths per million as a simple population-level falsification screen.
+  - If very large VE-death effects were obvious at population scale, highly vaccinated countries should tend to show visibly flatter post-rollout COVID-death slopes during later waves, unless wave intensity, prior infection, reporting, or other factors quantitatively offset the vaccine effect.
+  - This is not a stand-alone causal estimate, but it is a direct challenge to model-based "large lives saved" narratives.
+- Data:
+  - Local OWID cumulative deaths per million file: `debate/data/OWID_total_deaths_per_million.csv`.
+  - Local combined slope file: `debate/data/owid_wave_cumulative_slopes.csv`.
+  - Per-country auto-fit slope CSVs are in `debate/data/owid_*_wave_slopes.csv`.
+- Important observation from the sample:
+  - From the cumulative death slope plots alone, it is difficult to tell which countries were highly vaccinated and which were not.
+  - The slope shapes look heterogeneous and do not show a simple visual mapping from high vaccination to clearly flattened post-rollout COVID-death slopes.
+  - Israel is especially awkward for a simple high-VE population story: in the plotted window, its final fitted slope is the highest in its chart, after broad vaccination and boosting.
+- End-2021 full-vaccination coverage and fitted slopes from the sample:
+  - Portugal: 83.15% fully vaccinated; slopes 52.21, 151.18, 10.81, 26.70 deaths/million/week.
+  - France: 73.21%; slopes 45.06, 48.66, 28.63, 24.67.
+  - Germany: 70.96%; slopes 61.72, 17.92, 29.41, 19.56.
+  - United Kingdom: 70.26%; slopes 114.19, 48.67, 113.05, 15.66.
+  - Greece: 67.80%; slopes 1.78, 56.21, 42.26, 23.56, 53.25.
+  - Israel: 62.89%; slopes 5.77, 23.63, 34.24, 18.47, 41.91.
+  - Albania: 36.28%; slopes 9.91, 31.02, 39.13, 15.31, 11.99.
+  - South Africa: 26.44%; slopes 23.48, 52.84, 36.98, 14.44.
+  - Africa: 8.74%; slopes 1.56, 1.59, 3.89, 1.56, 4.11, 1.65, 1.72.
+- Local plots:
+  - ![OWID Albania cumulative COVID death slope fits](data/owid_albania_wave_fits.png)
+  - ![OWID Greece cumulative COVID death slope fits](data/owid_greece_wave_fits.png)
+  - ![OWID United Kingdom cumulative COVID death slope fits](data/owid_united_kingdom_wave_fits.png)
+  - ![OWID Germany cumulative COVID death slope fits](data/owid_germany_wave_fits.png)
+  - ![OWID France cumulative COVID death slope fits](data/owid_france_wave_fits.png)
+  - ![OWID Portugal cumulative COVID death slope fits](data/owid_portugal_wave_fits.png)
+  - ![OWID Africa cumulative COVID death slope fits](data/owid_africa_wave_fits.png)
+  - ![OWID Israel cumulative COVID death slope fits](data/owid_israel_wave_fits.png)
+  - ![OWID South Africa cumulative COVID death slope fits](data/owid_south_africa_wave_fits.png)
+- All-location dot plot:
+  - ![OWID wave segment slopes by midpoint, R squared at least 0.99](figures/owid_wave_slopes_midpoint_r2ge99_dotplot.png)
+  - The dot plot shows 512 identified high-linearity wave segments with `R^2 >= 0.99`.
+  - The y-axis is cumulative COVID-death slope in deaths per million per week on a log scale; the x-axis is segment calendar midpoint.
+  - The plot does not show an obvious post-rollout collapse of wave slopes after vaccination became widespread.
+  - Visual takeaway: you cannot tell from this plot when the COVID shots were rolled out.
+  - Regression note: the plotted regression is `log10(slope)` vs segment midpoint; the fitted trend is weak but upward (`R^2 = 0.014`, fitted end/start = 1.68x).
+  - This is one of the cleanest non-cherry-picked visuals because it uses all OWID countries and all auto-identified high-linearity wave segments, not selected country examples.
+  - Underlying CSV: `debate/data/owid_all_locations_wave_slopes.csv`.
+  - Quick quarter summary from the underlying CSV:
+    - 2020Q4: n=65, median slope 30.48, p75 57.58, max 154.09 deaths/million/week.
+    - 2021Q1: n=69, median 26.91, p75 54.48, max 151.18.
+    - 2021Q2: n=74, median 22.73, p75 39.40, max 152.23.
+    - 2021Q3: n=79, median 17.02, p75 34.83, max 338.46.
+    - 2021Q4: n=62, median 28.45, p75 64.23, max 193.29.
+    - 2022Q1: n=79, median 27.34, p75 38.97, max 86.23.
+  - Interpretation: this is not causal proof, because country mix, variant timing, infection intensity, reporting, and age structure vary; but it is a useful falsification screen against the claim that large population-level VE death is obvious in the global slope record.
+- Debate line:
+  - "You cannot tell from the global COVID-death slope plot when the shots were rolled out. That is not what a large, durable, population-level death-prevention effect should look like."
+  - "No cherry picking: all OWID countries, all auto-identified wave segments, `R^2 >= 0.99`; the fitted log-slope trend goes up, not down."
+  - "From the slope shapes alone, you cannot reliably infer vaccine coverage. That is a serious visual challenge to claims that large population-level VE death should be obvious in cumulative COVID mortality."
+  - "If the explanation is that wave intensity or other factors exactly offset the vaccine effect, show the country-by-country counterfactual model and validate it against the measured slopes."
+- Major exhibit framing:
+  - This may be one of the strongest visual points in the debate because it is not a selected-country example.
+  - If vaccine-induced protection and accumulating natural immunity both materially reduced population-level COVID death risk, the broad expectation would be downward pressure on later wave slopes.
+  - Instead, across all high-fit OWID country wave segments, the fitted log-slope trend is slightly upward rather than downward.
+  - This does not prove vaccine harm or prove exactly zero benefit, because variant severity, infection pressure, country mix, reporting, age structure, and timing changed.
+  - But it is a serious problem for a confident large-net-benefit claim: if the benefit was large at population scale, it should be visible somewhere in a broad all-country slope screen.
+  - If the benefit is not visible, the defender must quantify the counterfactual forces that allegedly hid it.
+  - Debate line: "If there was large COVID-death benefit, where is it in the all-country slope record? Natural immunity and vaccination should both push later slopes down, yet the fitted trend goes up."
+
+### Aarstad papers as Pillar 3 support
+
+- Role in the argument:
+  - Aarstad's work is best used as corroborating Pillar 3 evidence, not as the central proof.
+  - The strongest use is to show that multiple independent ecological / population-level analyses find that excess mortality after rollout did not behave like a clean large-net-benefit story.
+  - The limitation is that these are mostly ecological or reanalysis designs, so they remain vulnerable to ecological confounding, age structure, country-level health differences, COVID intensity, reporting quality, and vaccine uptake being correlated with many other variables.
+- Aarstad & Kvitastein European analysis:
+  - Paper/preprint: "Is There a Link between the 2021 COVID-19 Vaccination Uptake in Europe and 2022 Excess All-Cause Mortality?"
+  - Reported finding: in 31 European countries, higher 2021 vaccination uptake was positively associated with higher monthly 2022 excess all-cause mortality; the preprint reports a one percentage point increase in 2021 vaccine uptake associated with a 0.105% monthly 2022 mortality increase.
+  - A peer-reviewed article is linked from the preprint page: https://doi.org/10.21276/apjhs.2023.10.1.6
+  - Preprint page: https://www.preprints.org/manuscript/202302.0350
+- Aarstad update / long-term mortality work:
+  - Aarstad later updates argue that vaccine effects may have changed over time, with possible temporary mortality reduction followed by higher later mortality, especially around boosters.
+  - These are useful because they fit our warning that "vaccine benefit" cannot be treated as static, durable, and homogeneous.
+  - But they should be cited as suggestive unless peer-review status and methods are checked carefully.
+- Aarstad US county paper:
+  - F1000Research 2026 paper: "Why COVID-19 vaccination cannot be ruled out as an explanation for all-cause excess mortality in the pandemic's aftermath: A population-level study of over 3,000 US counties with over 320 million people."
+  - Status: F1000Research version 1, peer review awaiting peer review as of the page checked.
+  - Reported finding: US county-level vaccine uptake at the end of 2021/2022 was significantly positively associated with 2022/2023 all-cause excess mortality after including lagged dependent variables.
+  - Link: https://f1000research.com/articles/15-244/v1
+- Aarstad young England / ONS reanalysis:
+  - EXCLI Journal 2024 letter: "Deaths among young people in England increased significantly in 10 of 11 weeks after COVID-19 vaccination and doubled in three."
+  - The letter critiques using later post-vaccination time windows as a reference period if longer-term post-vaccination risk is possible.
+  - This is relevant to our broader point that self-controlled designs can be biased if the chosen control window is not a true no-risk period.
+  - Link: https://www.excli.de/vol23/2024-7498/2024-7498.htm
+- Heatwave rebuttal:
+  - Aarstad's 2024 Climate article argues against heatwaves being a strong explanation for European 2022 summer excess mortality, pointing for example to high excess mortality in places less plausibly explained by heat.
+  - This can be used as a rebuttal to one competing explanation for excess mortality, not as proof of vaccine causation.
+  - Link: https://www.mdpi.com/2225-1154/12/5/69
+- Debate line:
+  - "Aarstad should not be used as a one-paper proof. Use it with Mostert, OWID slopes, US UCOD, Japan H(t), and Florida brand-matched NCACM as convergence: the aggregate mortality record does not look like a clean large-net-benefit intervention."
+
+### Pillar placement: VAERS, FDA/Prasad memo, and Japan
+
+- VAERS:
+  - Best placement: Pillar 2, "harm likely nonzero or significant."
+  - Rationale: VAERS is the official US vaccine adverse-event reporting system, and an unprecedented death / serious-adverse-event reporting pattern is a safety signal that requires competent public adjudication.
+  - Limitation: VAERS is passive surveillance and cannot estimate incidence or causality by itself; it is signal evidence, not a stand-alone death-count estimate.
+  - Debate line: "VAERS cannot estimate vaccine deaths by itself, but it is the official US safety-signal system. An unprecedented signal in the official system cannot be dismissed without a transparent adjudication."
+  - Add to Pillar 2 evidence list:
+    - COVID-19 vaccines produced an unprecedented volume of VAERS death reports relative to prior vaccine products and the prior history of the system.
+    - This should be described as an official safety signal, not as a direct proof that all reported deaths were caused by vaccination.
+    - The key institutional challenge is: what was the adjudication process, what fraction was medically reviewed, what causal categories were assigned, and why were the full results not transparently released?
+    - If the response is "VAERS is unreliable," that does not solve the problem; VAERS is the system the US government chose for vaccine safety signal detection.
+    - Debate line: "The official US safety-signal system produced an unprecedented death-report signal. If that signal is non-causal, show the adjudication, don't just dismiss the system."
+  - Pillar 3 connection:
+    - VAERS is not a net-mortality estimate, but it belongs in the Pillar 3 convergence picture.
+    - At the same time aggregate mortality moved the wrong way, the official US vaccine safety system produced an unprecedented death-report signal.
+    - This is not proof of net harm, but it is directionally inconsistent with an uncomplicated "large net lives saved and no meaningful harm" story.
+- FDA/Prasad memo:
+  - Best placement: Pillar 2, with implications for rebutting SW's institutional-detection argument.
+  - Rationale: the memo undermines the claim that, if vaccines had caused deaths, agencies would necessarily have detected and publicly admitted it in real time.
+  - It also shows that official actors can acknowledge vaccine-caused deaths and unresolved risk-benefit questions after the fact, rather than as timely public warnings.
+  - Debate line: "The FDA/Prasad memo is not a full adult net-mortality estimate; it is evidence that institutional silence is not proof of no deaths."
+- Japan:
+  - Japan OWID excess mortality graph: best placement is Pillar 3, "net direction looked worse, not better."
+  - Japan full-population H(t): can support both Pillar 2 and Pillar 3, because it is closer to individual/cohort data and less exposed to simple vaccinated-vs-unvaccinated HVE.
+  - Japan Factors paper: primarily Pillar 3, with cautious Pillar 2 support where later-dose associations are discussed.
+  - Debate line: "Japan is not one-paper proof of vaccine harm, but it is difficult to reconcile Japan's sharp post-rollout excess mortality with a simple large-net-benefit narrative unless the counterfactual is shown quantitatively."
+
+### Judging strategy for Claude or another AI judge
+
+- Recommended decision rule:
+  - Use a preponderance-style threshold, not a beyond-reasonable-doubt threshold.
+  - Suggested instruction: "Judge the debate by preponderance of evidence. If one side is more likely correct by at least 55%, name that side the winner. If neither side reaches 55%, conclude that the evidence is too uncertain and no side wins."
+- Why not 95%:
+  - A 95% threshold will likely force an "unknowable / no winner" result because the question is observationally confounded and neither side can prove the full counterfactual at that level.
+  - The debate is about which side made the more likely case, not whether either side can establish near-certainty.
+- Claude-specific notes:
+  - Claude is likely to reward careful causal language, caveats, and direct engagement with the strongest opposing evidence.
+  - Claude is likely to penalize overclaiming from VAERS, anecdotes, autopsy series, ecological charts, or country slopes.
+  - Claude is also likely to penalize SW if he handwaves confounding, says "ecological fallacy" as a magic phrase, relies on observational VE studies without NCACM negative controls, or uses lives-saved models without validating them against observed population slopes.
+- Best final framing:
+  - "I am not claiming each signal is definitive alone. I am claiming SW's large-net-benefit case is not established because his strongest VE evidence does not survive HVE/NCACM concerns, his models are not validated against the measured slope record, and the aggregate ACM/safety record moved in the wrong direction. If he says all of that is coincidental or confounded, he needs to show the quantitative reconciliation."
+- Practical implication:
+  - The best path to winning is disciplined burden-shifting, not overclaiming.
+  - The likely fallback if the judge is very cautious is "unknowable / not established," which is still far better than conceding the official large-net-benefit story.
+
+### Scope discipline: the debate is about the United States
+
+- Debate question:
+  - "In the US, did the mRNA COVID vaccines likely net save lives or cost lives through the end of 2022?"
+- Important implication:
+  - Worldwide and OWID country-slope evidence should be used as falsification/context evidence against large universal VE-death claims.
+  - But the final net-impact argument must return to US evidence.
+- US-centered points to foreground:
+  - US mortality remained elevated after rollout.
+  - The US UCOD analysis did not make the elevation disappear after removing obvious "unrelated" categories such as drug/alcohol/external causes; the residual elevation remained.
+  - This matters because SW cannot use "COVID" as a free explanation without also accounting for the claimed COVID-death reduction from vaccination.
+  - If vaccines strongly reduced US COVID mortality and had no meaningful harm, the US ACM / residual NCACM record should not require an invisible counterfactual to explain why mortality remained elevated.
+  - Florida Levi/Ladapo is especially relevant because it is US data, mRNA-specific, and active-comparator brand-vs-brand rather than simple vaccinated-vs-unvaccinated.
+- Debate line:
+  - "The worldwide slope exhibit is not the target estimand; it is a falsification screen. The debate is US net lives through end-2022. For that, the key facts are that US mortality stayed elevated, removing obvious non-vaccine categories did not eliminate the elevation, and the Florida mRNA brand comparison gives a US active-comparator NCACM harm signal."
+- US harm-side burden shift:
+  - The Florida Levi/Ladapo study is especially important because it is not a generic vaccinated-vs-unvaccinated comparison.
+  - It is a US mRNA active-comparator brand comparison: Pfizer vs Moderna.
+  - If the products were equally safe, strictly matched Pfizer and Moderna recipients should have similar NCACM.
+  - Levi/Ladapo reports a large NCACM difference between the brands.
+  - If SW says the difference is residual confounding, he should produce a comparable or stronger brand-comparison study showing NCACM equality between strictly matched mRNA cohorts.
+  - Generic vaccinated-vs-unvaccinated VE studies do not answer this brand-safety question.
+  - Debate line: "If the products are equally safe, matched Pfizer and Moderna recipients should have similar NCACM. Levi/Ladapo says they do not. Where is SW's equally strict matched brand-comparison study showing the opposite?"
