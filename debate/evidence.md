@@ -539,11 +539,11 @@ Stored file:
 - Relevance: indirect, potentially important
 - Supports: hypothesis-generating evidence for possible product-, rollout-, or country-specific mortality effects
 - Sources:
-  - ![Australia weekly deaths and vaccine doses](figures/weekly_deaths_vaccine_doses_australia.png)
-  - ![Czechia weekly deaths and vaccine doses](figures/weekly_deaths_vaccine_doses_czechia.png)
-  - ![Germany weekly deaths and vaccine doses](figures/weekly_deaths_vaccine_doses_germany.png)
-  - ![South Korea weekly deaths and vaccine doses](figures/weekly_deaths_vaccine_doses_south_korea.png)
-  - ![United States weekly deaths and vaccine doses](figures/weekly_deaths_vaccine_doses_united_states.png)
+  - ![Australia weekly deaths and vaccine doses](figures/weekly_deaths/weekly_deaths_vaccine_doses_australia.png)
+  - ![Czechia weekly deaths and vaccine doses](figures/weekly_deaths/weekly_deaths_vaccine_doses_czechia.png)
+  - ![Germany weekly deaths and vaccine doses](figures/weekly_deaths/weekly_deaths_vaccine_doses_germany.png)
+  - ![South Korea weekly deaths and vaccine doses](figures/weekly_deaths/weekly_deaths_vaccine_doses_south_korea.png)
+  - ![United States weekly deaths and vaccine doses](figures/weekly_deaths/weekly_deaths_vaccine_doses_united_states.png)
 - Claim to test:
   - Several countries appear to show an elevated post-rollout baseline in weekly deaths, while Czechia looks more like large acute COVID-wave spikes followed by reversion toward its prior baseline.
   - If true after age-standardization and non-COVID sensitivity checks, that pattern is hard to explain using "COVID infection alone" as a universal explanation.
@@ -615,8 +615,8 @@ Stored file:
 - Relevance: indirect but useful for magnitude
 - Supports: the Florida brand-study signal is not obviously too large to be visible at population level
 - Sources:
-  - ![Florida age-standardized excess mortality](figures/florida_age_standardized_excess_mortality_mortality_watch.png)
-  - ![Florida age-standardized mortality rate](figures/florida_age_standardized_mortality_rate_mortality_watch.png)
+  - ![Florida age-standardized excess mortality](figures/mortality_watch/florida_age_standardized_excess_mortality_mortality_watch.png)
+  - ![Florida age-standardized mortality rate](figures/mortality_watch/florida_age_standardized_mortality_rate_mortality_watch.png)
 - Summary:
   - Mortality Watch Florida charts show age-standardized excess mortality rising above the 2017-2019 baseline during 2020-2022, with a large Delta-era peak in 2021.
   - This is directionally consistent with the Florida Pfizer-vs-Moderna preprint if a brand-specific NCACM signal existed and was diluted at the population level.
@@ -662,8 +662,8 @@ Stored file:
 - Type: methodological note
 - Relevance: high
 - Source:
-  - ![Japan full-cohort cumulative hazard H(t) with slope annotation](figures/japanHt.png)
-  - ![Japan full-cohort cumulative hazard H(t)](figures/timeseries_hazard_full_cohort_japan2_shows_discontinuity.png)
+  - ![Japan full-cohort cumulative hazard H(t) with slope annotation](figures/japan/japanHt.png)
+  - ![Japan full-cohort cumulative hazard H(t)](figures/japan/timeseries_hazard_full_cohort_japan2_shows_discontinuity.png)
 - Summary:
   - Full-population mortality or cumulative-hazard-style curves avoid the worst individual-level vaccinated-vs-unvaccinated selection bias because the denominator is the whole population rather than self-selected vaccine-status groups.
   - In this framing, a deviation above baseline, reversion toward baseline, and then renewed elevation is a population-level event-timing pattern, not a direct comparison of healthier vaccinated people with less healthy unvaccinated people.
