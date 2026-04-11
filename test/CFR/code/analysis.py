@@ -44,6 +44,7 @@ def build_km_post_infection_table(
     *,
     followup_end: str,
     cohorts: list[str],
+    age_bin: str | None = None,
 ) -> tuple[pd.DataFrame, str]:
     """
     Per cohort KM from first infection to all-cause death; censored at follow-up end.
@@ -62,6 +63,8 @@ def build_km_post_infection_table(
     any_infected = False
     for cohort in cohorts:
         m = cohort_mask(df, cohort) & df["infection_monday"].notna()
+        if age_bin is not None:
+            m = m & (df["age_bin"] == age_bin)
         sub = df[m].copy()
         if len(sub) == 0:
             continue
@@ -92,7 +95,10 @@ def build_km_post_infection_table(
                 s = float(kmf.predict(tw))
             except Exception:
                 s = np.nan
-            rows.append({"cohort": cohort, "timeline": tw, "KM_estimate": s})
+            row = {"cohort": cohort, "timeline": tw, "KM_estimate": s}
+            if age_bin is not None:
+                row["age_bin"] = age_bin
+            rows.append(row)
     if not rows:
         if not any_infected:
             return (
@@ -101,6 +107,82 @@ def build_km_post_infection_table(
             )
         return pd.DataFrame(), "KM fit produced no rows (no valid event/censor times)"
     return pd.DataFrame(rows), ""
+
+
+def build_km_post_infection_age_bin_table(
+    df: pd.DataFrame,
+    *,
+    followup_end: str,
+    cohorts: list[str],
+    age_bins: list[str],
+) -> tuple[pd.DataFrame, str]:
+    """Stack per-age-bin KM curves from first infection to all-cause death."""
+    frames: list[pd.DataFrame] = []
+    reasons: list[str] = []
+    for age_bin in age_bins:
+        tbl, reason = build_km_post_infection_table(
+            df,
+            followup_end=followup_end,
+            cohorts=cohorts,
+            age_bin=age_bin,
+        )
+        if len(tbl):
+            frames.append(tbl)
+        elif reason:
+            reasons.append(f"{age_bin}: {reason}")
+    if not frames:
+        return pd.DataFrame(), "; ".join(reasons)
+    return pd.concat(frames, ignore_index=True), ""
+
+
+def build_infected_cohort_age_composition_table(
+    df: pd.DataFrame,
+    *,
+    cohorts: list[str],
+) -> pd.DataFrame:
+    """Describe the age mix of the infected subset within each cohort."""
+    rows: list[dict[str, object]] = []
+    infected = df[df["infection_monday"].notna()].copy()
+    if infected.empty:
+        return pd.DataFrame()
+    for cohort in cohorts:
+        sub = infected[cohort_mask(infected, cohort)].copy()
+        if sub.empty:
+            continue
+        total = int(len(sub))
+        age_summary = (
+            sub.groupby("age_bin", dropna=False)
+            .size()
+            .rename("infected_n")
+            .reset_index()
+            .sort_values("age_bin", kind="mergesort")
+        )
+        for _, row in age_summary.iterrows():
+            age_bin = row["age_bin"]
+            age_sub = sub[sub["age_bin"] == age_bin]
+            rows.append(
+                {
+                    "cohort": cohort,
+                    "age_bin": age_bin,
+                    "infected_n": int(row["infected_n"]),
+                    "infected_share_within_cohort": float(row["infected_n"]) / float(total),
+                    "cohort_infected_total": total,
+                    "mean_age_at_enrollment": float(age_sub["age_at_enrollment"].mean()),
+                    "median_age_at_enrollment": float(age_sub["age_at_enrollment"].median()),
+                }
+            )
+        rows.append(
+            {
+                "cohort": cohort,
+                "age_bin": "all",
+                "infected_n": total,
+                "infected_share_within_cohort": 1.0,
+                "cohort_infected_total": total,
+                "mean_age_at_enrollment": float(sub["age_at_enrollment"].mean()),
+                "median_age_at_enrollment": float(sub["age_at_enrollment"].median()),
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def run_time_since_dose2_analysis(

@@ -44,6 +44,8 @@ def plot_case_rate(
     ax.set_ylabel("cases / population at risk")
     ax.set_title(f"Case rate (age_bin={age_bin})")
     ax.legend()
+    if age_bin is not None:
+        ax.set_title(f"Kaplan-Meier survival post first infection (all-cause death) - age_bin={age_bin}")
     ax.grid(True, alpha=0.3)
     _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
     fig.tight_layout()
@@ -73,6 +75,8 @@ def plot_cfr(
     ax.set_ylabel(cfr_col)
     ax.set_title(f"CFR ({cfr_col}, age_bin={age_bin})")
     ax.legend()
+    if age_bin is not None:
+        ax.set_title(f"Kaplan-Meier survival post first infection (all-cause death) - age_bin={age_bin}")
     ax.grid(True, alpha=0.3)
     _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
     fig.tight_layout()
@@ -352,6 +356,7 @@ def plot_vaccine_coverage_by_age(
     coverage_df: pd.DataFrame,
     out_path: Path,
     *,
+    age_bin: str | None = None,
     dpi: int = 120,
 ) -> None:
     """Time series: ``coverage_ge1`` vs ISO week, one line per fine ``age_bin`` (excludes ``all``)."""
@@ -416,13 +421,19 @@ def plot_km_post_infection(
     km_summary: pd.DataFrame,
     out_path: Path,
     *,
+    age_bin: str | None = None,
     dpi: int = 120,
 ) -> None:
     if km_summary.empty:
         return
+    sub = km_summary.copy()
+    if age_bin is not None and "age_bin" in sub.columns:
+        sub = sub[sub["age_bin"] == age_bin].copy()
+    if sub.empty:
+        return
     fig, ax = plt.subplots(figsize=(8, 5))
-    for cohort in km_summary["cohort"].unique():
-        s = km_summary[km_summary["cohort"] == cohort].sort_values("timeline")
+    for cohort in sub["cohort"].unique():
+        s = sub[sub["cohort"] == cohort].sort_values("timeline")
         ax.step(s["timeline"], s["KM_estimate"], where="post", label=cohort)
     ax.set_xlabel("weeks since infection")
     ax.set_ylabel("survival")

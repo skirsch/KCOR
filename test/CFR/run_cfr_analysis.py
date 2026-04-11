@@ -25,6 +25,8 @@ CODE_DIR = CFR_ROOT / "code"
 sys.path.insert(0, str(CODE_DIR))
 
 from analysis import (  # noqa: E402
+    build_infected_cohort_age_composition_table,
+    build_km_post_infection_age_bin_table,
     build_km_post_infection_table,
     run_time_since_dose2_analysis,
     stability_check_quiet_period,
@@ -828,7 +830,27 @@ def main() -> None:
         if len(km_tbl):
             km_tbl.to_csv(out_dir / "km_post_infection.csv", index=False)
             plot_km_post_infection(km_tbl, out_dir / "km_post_infection.png", dpi=dpi)
-            _log("KM table and plot written")
+            km_age_tbl, km_age_reason = build_km_post_infection_age_bin_table(
+                df_model,
+                followup_end=followup_end,
+                cohorts=cohorts,
+                age_bins=age_labels,
+            )
+            if len(km_age_tbl):
+                km_age_tbl.to_csv(out_dir / "km_post_infection_by_age_bin.csv", index=False)
+                for ab in age_labels:
+                    plot_km_post_infection(
+                        km_age_tbl,
+                        out_dir / f"km_post_infection_age_{ab}.png",
+                        age_bin=ab,
+                        dpi=dpi,
+                    )
+            elif km_age_reason:
+                _log(f"age-banded Kaplan-Meier skipped: {km_age_reason}")
+            infected_comp = build_infected_cohort_age_composition_table(df_model, cohorts=cohorts)
+            if len(infected_comp):
+                infected_comp.to_csv(out_dir / "infected_cohort_age_composition.csv", index=False)
+            _log("KM tables/plots and infected cohort composition written")
         else:
             _log(f"Kaplan–Meier skipped: {km_reason}")
 

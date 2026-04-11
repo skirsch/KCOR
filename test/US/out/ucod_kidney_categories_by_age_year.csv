@@ -1,0 +1,220 @@
+Year,broad_age_group,ICD-10 113 Cause List,Deaths,Population,Crude_Rate_per_100k
+2018,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",133.0,88668574.0,0.14999677337767944
+2019,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",144.0,88627831.0,0.16247717943136844
+2020,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",172.0,88625330.0,0.19407544096027624
+2021,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",195.0,88583768.0,0.22013062257636185
+2022,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",199.0,89842871.0,0.2214978192315337
+2023,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",159.0,89429168.0,0.1777943411035648
+2024,0-34,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",161.0,91251625.0,0.17643521416741895
+2018,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",2033.0,82909587.0,2.4520686612514426
+2019,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",1981.0,82534046.0,2.4002216006713155
+2020,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",2406.0,82502325.0,2.9162814502500383
+2021,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",2633.0,84092290.0,3.131083717663058
+2022,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",2529.0,84127010.0,3.0061688867820218
+2023,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",2349.0,84884474.0,2.767290517698207
+2024,35-54,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",2372.0,86319580.0,2.7479281062303595
+2018,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",10274.0,72764952.0,14.119434861992351
+2019,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",10726.0,73931970.0,14.507932089460082
+2020,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",12749.0,74953075.0,17.00930882422102
+2021,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",13556.0,76469186.0,17.72740198908355
+2022,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",13297.0,75873876.0,17.525136056051757
+2023,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",12884.0,76539695.0,16.83309555910825
+2024,55-74,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",12758.0,77106687.0,16.545906063893007
+2018,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",8375.0,15394374.0,54.40299163837386
+2019,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",8670.0,15969872.0,54.28972755698982
+2020,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",9915.0,16451547.0,60.267888484894456
+2021,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",10244.0,16206075.0,63.21086382729933
+2022,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",10790.0,17520545.0,61.58484225233861
+2023,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",10860.0,18368097.0,59.12425222928646
+2024,75+,"#Essential hypertension and hypertensive renal disease (I10,I12,I15)",11151.0,19299813.0,57.777761888159226
+2018,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",13.0,45697774.0,0.02844777515858869
+2019,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",14.0,45940321.0,0.03047431906276841
+2020,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",22.0,46069646.0,0.047753785648797904
+2021,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",12.0,45495105.0,0.026376464017392638
+2022,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",15.0,45501300.0,0.03296609107871643
+2023,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",19.0,45542516.0,0.041719258549527655
+2024,0-34,"#Infections of kidney (N10-N12,N13.6,N15.1)",19.0,46453864.0,0.04090079567977381
+2018,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",95.0,82909587.0,0.11458264772203003
+2019,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",101.0,82534046.0,0.12237374137698277
+2020,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",123.0,82502325.0,0.14908670755642342
+2021,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",138.0,84092290.0,0.16410541323110597
+2022,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",115.0,84127010.0,0.13669807116644225
+2023,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",120.0,84884474.0,0.14136860882238605
+2024,35-54,"#Infections of kidney (N10-N12,N13.6,N15.1)",112.0,86319580.0,0.12975039961964596
+2018,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",288.0,72764952.0,0.3957949425981893
+2019,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",315.0,73931970.0,0.4260673697725084
+2020,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",410.0,74953075.0,0.5470089119092179
+2021,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",499.0,76469186.0,0.6525504273054509
+2022,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",427.0,75873876.0,0.5627760469229224
+2023,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",471.0,76539695.0,0.6153669674278164
+2024,55-74,"#Infections of kidney (N10-N12,N13.6,N15.1)",501.0,77106687.0,0.6497490937459159
+2018,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",219.0,15394374.0,1.4225976320959852
+2019,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",253.0,15969872.0,1.5842331109479149
+2020,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",268.0,16451547.0,1.6290261335301779
+2021,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",322.0,16206075.0,1.9869092300263944
+2022,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",356.0,17520545.0,2.03190026337651
+2023,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",346.0,18368097.0,1.8837008537139148
+2024,75+,"#Infections of kidney (N10-N12,N13.6,N15.1)",378.0,19299813.0,1.9585681995986177
+2018,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",418.0,149554018.0,0.2794976728742921
+2019,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",443.0,133405046.0,0.33207139705944855
+2020,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",455.0,148918756.0,0.30553572445904664
+2021,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",471.0,92148261.0,0.511132814541123
+2022,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",471.0,134425018.0,0.3503812065697473
+2023,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",476.0,148927649.0,0.3196182865949895
+2024,0-34,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",435.0,150949765.0,0.2881753409818161
+2018,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",2993.0,82909587.0,3.6099564698109035
+2019,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",3030.0,82534046.0,3.6712122413094836
+2020,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",3203.0,82502325.0,3.88231483173353
+2021,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",3488.0,84092290.0,4.147823777899258
+2022,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",3708.0,84127010.0,4.4076212859579815
+2023,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",3381.0,84884474.0,3.9830605535707275
+2024,35-54,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",3224.0,86319580.0,3.7349579319083803
+2018,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",16581.0,72764952.0,22.78706924729367
+2019,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",16795.0,73931970.0,22.71683008041041
+2020,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",17674.0,74953075.0,23.58008660752077
+2021,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",18619.0,76469186.0,24.348369551102586
+2022,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",19616.0,75873876.0,25.853430764496597
+2023,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",18461.0,76539695.0,24.119510797632525
+2024,55-74,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",17872.0,77106687.0,23.17827505674054
+2018,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",14514.0,15394374.0,94.28119649425173
+2019,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",14720.0,15969872.0,92.17356281878779
+2020,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",14696.0,16451547.0,89.32898529238618
+2021,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",15569.0,16206075.0,96.0689124294439
+2022,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",17003.0,17520545.0,97.0460679162663
+2023,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",16505.0,18368097.0,89.8568860998502
+2024,75+,"#Nephritis, nephrotic syndrome and nephrosis (N00-N07,N17-N19,N25-N27)",17055.0,19299813.0,88.3687318628424
+2021,0-34,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",10.0,45495105.0,0.021980386681160532
+2018,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",21.0,41631699.0,0.050442332415979466
+2019,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",16.0,40874902.0,0.039143824736264814
+2020,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",43.0,82502325.0,0.052119743292082986
+2021,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",34.0,40688436.0,0.0835618257728068
+2022,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",42.0,84127010.0,0.04992451294774413
+2023,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",33.0,84884474.0,0.03887636742615616
+2024,35-54,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",23.0,40780356.0,0.056399703818181476
+2018,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",199.0,72764952.0,0.27348331103138773
+2019,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",163.0,73931970.0,0.2204729564219647
+2020,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",214.0,74953075.0,0.2855119686550552
+2021,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",227.0,76469186.0,0.2968515971910568
+2022,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",215.0,75873876.0,0.28336498849749026
+2023,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",205.0,76539695.0,0.2678348796660347
+2024,55-74,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",200.0,77106687.0,0.25938087574687263
+2018,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",195.0,15394374.0,1.266696521729302
+2019,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",204.0,15969872.0,1.277405354282113
+2020,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",203.0,16451547.0,1.2339265115918887
+2021,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",235.0,16206075.0,1.4500735063857226
+2022,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",255.0,17520545.0,1.4554341774185677
+2023,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",240.0,18368097.0,1.3066133089345076
+2024,75+,"Acute and rapidly progressive nephritic and nephrotic syndrome (N00-N01,N04)",239.0,19299813.0,1.2383539674710837
+2019,0-34,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",19.0,45940321.0,0.04135800444232856
+2020,0-34,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",10.0,46069646.0,0.02170626620399905
+2021,0-34,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",14.0,45495105.0,0.030772541353624745
+2022,0-34,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",14.0,45501300.0,0.03076835167346867
+2023,0-34,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",13.0,45542516.0,0.02854475584967682
+2024,0-34,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",13.0,46453864.0,0.027984754938792607
+2018,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",47.0,82909587.0,0.05668825729405695
+2019,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",42.0,82534046.0,0.0508880904735968
+2020,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",48.0,82502325.0,0.05818017855860426
+2021,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",44.0,84092290.0,0.052323465088178714
+2022,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",58.0,84127010.0,0.06894337502307522
+2023,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",50.0,84884474.0,0.058903587009327525
+2024,35-54,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",48.0,86319580.0,0.05560731412270542
+2018,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",87.0,72764952.0,0.11956305557653635
+2019,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",119.0,73931970.0,0.16095878413628098
+2020,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",109.0,74953075.0,0.14542432048318232
+2021,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",114.0,76469186.0,0.14907965673912105
+2022,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",132.0,75873876.0,0.17397292317055213
+2023,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",124.0,76539695.0,0.16200743940774784
+2024,55-74,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",125.0,77106687.0,0.16211304734179538
+2018,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",71.0,15394374.0,0.4612074515014381
+2019,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",66.0,15969872.0,0.41327820285597777
+2020,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",88.0,16451547.0,0.5349041035472226
+2021,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",76.0,16206075.0,0.4689599424907018
+2022,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",75.0,17520545.0,0.4280688757113435
+2023,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",101.0,18368097.0,0.5498664341766052
+2024,75+,"Chronic glomerulonephritis, nephritis and nephropathy not specified as acute or chronic, and renal sclerosis unspecified (N02-N03,N05-N07,N26)",84.0,19299813.0,0.43523737768858173
+2018,0-34,Hypertensive heart and renal disease (I13),36.0,45697774.0,0.07877845428532253
+2019,0-34,Hypertensive heart and renal disease (I13),33.0,45940321.0,0.07183232350509698
+2020,0-34,Hypertensive heart and renal disease (I13),33.0,46069646.0,0.07163067847319687
+2021,0-34,Hypertensive heart and renal disease (I13),51.0,45495105.0,0.11209997207391872
+2022,0-34,Hypertensive heart and renal disease (I13),45.0,45501300.0,0.09889827323614929
+2023,0-34,Hypertensive heart and renal disease (I13),49.0,45542516.0,0.10759177204878184
+2024,0-34,Hypertensive heart and renal disease (I13),49.0,46453864.0,0.10548099938467981
+2018,35-54,Hypertensive heart and renal disease (I13),408.0,82909587.0,0.49210231863777104
+2019,35-54,Hypertensive heart and renal disease (I13),481.0,82534046.0,0.5827897980428586
+2020,35-54,Hypertensive heart and renal disease (I13),486.0,82502325.0,0.5890743079058681
+2021,35-54,Hypertensive heart and renal disease (I13),562.0,84092290.0,0.6683133495353736
+2022,35-54,Hypertensive heart and renal disease (I13),614.0,84127010.0,0.7298488321408308
+2023,35-54,Hypertensive heart and renal disease (I13),583.0,84884474.0,0.686815824528759
+2024,35-54,Hypertensive heart and renal disease (I13),634.0,86319580.0,0.7344799407040674
+2018,55-74,Hypertensive heart and renal disease (I13),2001.0,72764952.0,2.7499502782603362
+2019,55-74,Hypertensive heart and renal disease (I13),2252.0,73931970.0,3.0460435451672665
+2020,55-74,Hypertensive heart and renal disease (I13),2850.0,74953075.0,3.802379021807978
+2021,55-74,Hypertensive heart and renal disease (I13),3076.0,76469186.0,4.0225352993818975
+2022,55-74,Hypertensive heart and renal disease (I13),3329.0,75873876.0,4.387544403293697
+2023,55-74,Hypertensive heart and renal disease (I13),3487.0,76539695.0,4.555805977538844
+2024,55-74,Hypertensive heart and renal disease (I13),3693.0,77106687.0,4.789467870666003
+2018,75+,Hypertensive heart and renal disease (I13),2025.0,15394374.0,13.154156187188905
+2019,75+,Hypertensive heart and renal disease (I13),2446.0,15969872.0,15.316340669480633
+2020,75+,Hypertensive heart and renal disease (I13),3047.0,16451547.0,18.521054585322585
+2021,75+,Hypertensive heart and renal disease (I13),3505.0,16206075.0,21.627692084604075
+2022,75+,Hypertensive heart and renal disease (I13),4288.0,17520545.0,24.47412452066988
+2023,75+,Hypertensive heart and renal disease (I13),4773.0,18368097.0,25.98527218143502
+2024,75+,Hypertensive heart and renal disease (I13),5158.0,19299813.0,26.725647549020294
+2018,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),129.0,145705810.0,0.08853456152503458
+2019,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),124.0,145415625.0,0.08527281714052393
+2020,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),123.0,145183746.0,0.0847202275659701
+2021,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),116.0,145585945.0,0.07967802111666755
+2022,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),120.0,145597145.0,0.08241919853579546
+2023,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),111.0,130416489.0,0.085111937034281
+2024,0-34,Malignant neoplasms of kidney and renal pelvis (C64-C65),122.0,132350451.0,0.09217951210457152
+2018,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1179.0,82909587.0,1.4220309648870884
+2019,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1075.0,82534046.0,1.3024927918837275
+2020,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1103.0,82502325.0,1.3369320197945938
+2021,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1050.0,84092290.0,1.2486281441497193
+2022,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1117.0,84127010.0,1.3277543086340522
+2023,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1070.0,84884474.0,1.260536761999609
+2024,35-54,Malignant neoplasms of kidney and renal pelvis (C64-C65),1047.0,86319580.0,1.2129345393015118
+2018,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),6719.0,72764952.0,9.233841039295951
+2019,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),6713.0,73931970.0,9.07996905804079
+2020,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),6992.0,74953075.0,9.328503200168905
+2021,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),6796.0,76469186.0,8.887239887711111
+2022,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),6847.0,75873876.0,9.02418640112705
+2023,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),6968.0,76539695.0,9.103772885428926
+2024,55-74,Malignant neoplasms of kidney and renal pelvis (C64-C65),7002.0,77106687.0,9.08092445989801
+2018,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),3691.0,15394374.0,23.97629159847617
+2019,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),3679.0,15969872.0,23.03712891374458
+2020,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),3828.0,16451547.0,23.268328504304183
+2021,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),3791.0,16206075.0,23.392462394503294
+2022,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),4012.0,17520545.0,22.89883105805213
+2023,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),4230.0,18368097.0,23.029059569970695
+2024,75+,Malignant neoplasms of kidney and renal pelvis (C64-C65),4415.0,19299813.0,22.87586931541772
+2022,55-74,"Other disorders of kidney (N25,N27)",10.0,33788439.0,0.02959592184770655
+2022,75+,"Other disorders of kidney (N25,N27)",12.0,17520545.0,0.06849102011381496
+2018,0-34,Renal failure (N17-N19),379.0,133591951.0,0.28369972678967764
+2019,0-34,Renal failure (N17-N19),393.0,92410883.0,0.42527458589482364
+2020,0-34,Renal failure (N17-N19),408.0,92360340.0,0.4417480490002527
+2021,0-34,Renal failure (N17-N19),434.0,92148261.0,0.47098013059627897
+2022,0-34,Renal failure (N17-N19),433.0,93525984.0,0.46297294236433806
+2023,0-34,Renal failure (N17-N19),435.0,134065143.0,0.32446912766877817
+2024,0-34,Renal failure (N17-N19),392.0,135966049.0,0.2883072670589994
+2018,35-54,Renal failure (N17-N19),2912.0,82909587.0,3.512259685963699
+2019,35-54,Renal failure (N17-N19),2965.0,82534046.0,3.5924568631955838
+2020,35-54,Renal failure (N17-N19),3109.0,82502325.0,3.76837864872293
+2021,35-54,Renal failure (N17-N19),3399.0,84092290.0,4.041987678061806
+2022,35-54,Renal failure (N17-N19),3603.0,84127010.0,4.282810003588621
+2023,35-54,Renal failure (N17-N19),3298.0,84884474.0,3.8852805991352435
+2024,35-54,Renal failure (N17-N19),3142.0,86319580.0,3.6399621036154253
+2018,55-74,Renal failure (N17-N19),16285.0,72764952.0,22.38028000073442
+2019,55-74,Renal failure (N17-N19),16502.0,73931970.0,22.320519796780744
+2020,55-74,Renal failure (N17-N19),17339.0,74953075.0,23.133140301448606
+2021,55-74,Renal failure (N17-N19),18269.0,76469186.0,23.890668850587737
+2022,55-74,Renal failure (N17-N19),19253.0,75873876.0,25.37500522577758
+2023,55-74,Renal failure (N17-N19),18122.0,76539695.0,23.67660336247747
+2024,55-74,Renal failure (N17-N19),17534.0,77106687.0,22.739921376728322
+2018,75+,Renal failure (N17-N19),14240.0,15394374.0,92.5013254842321
+2019,75+,Renal failure (N17-N19),14441.0,15969872.0,90.42652314307841
+2020,75+,Renal failure (N17-N19),14401.0,16451547.0,87.53584085435855
+2021,75+,Renal failure (N17-N19),15252.0,16206075.0,94.11285582721294
+2022,75+,Renal failure (N17-N19),16661.0,17520545.0,95.09407384302257
+2023,75+,Renal failure (N17-N19),16157.0,18368097.0,87.96229680189516
+2024,75+,Renal failure (N17-N19),16724.0,19299813.0,86.65368933885524
