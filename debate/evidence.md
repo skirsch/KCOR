@@ -1311,6 +1311,227 @@ These are provisional stream-of-consciousness notes after a first pass through t
 - Operational note:
   - Only run subagents / mock debate roles when explicitly requested, because background agents can keep running after an interrupted turn.
 
+### Mock debate result: first advocate + judge run
+
+- Setup:
+  - Saar advocate used `debate/sw/` materials: `Evidence for VE.pdf`, `SW argument v5.pdf`, `SW argument 6-16  full.pdf`, and `SW kirsch rebuttal.pdf`.
+  - Kirsch advocate used `debate/evidence.md` and five primary exhibits:
+    - `figures/owid_slopes/owid_wave_slopes_midpoint_r2ge99_dotplot.png`
+    - `figures/owid_slopes/owid_wave_slopes_vaccination_top25_bottom25.png`
+    - `docs/levi_ladapo_florida_pfizer_moderna_12_month_mortality_preprint.pdf`
+    - `docs/FDA_Prasad_memo.pdf`
+    - `docs/Mostert BMJ.pdf`
+  - Neutral Claude-style judge applied the 55% preponderance threshold.
+- Judge verdict:
+  - Result: insufficient certainty / no winner.
+  - Confidence: about 68% that neither side clears the 55% threshold.
+  - Judge's lean: Kirsch has the slightly stronger burden-shifting case, but not enough to prove that vaccines likely cost lives rather than only that large net lives saved is not established.
+- Judge scorecard:
+  - Benefit visible in measurements: Saar 4/10, Kirsch 6/10, edge Kirsch.
+  - Harm likely nonzero/significant: Saar 4.5/10, Kirsch 5.5/10, edge Kirsch.
+  - Net direction looked worse in the US: Saar 4.5/10, Kirsch 5.5/10, edge Kirsch.
+- Judge's key diagnosis:
+  - Kirsch advantage: points to missing population-level fingerprint: OWID slope screens, top25/bottom25 exposure split, US mortality elevation, and Florida active-comparator signal.
+  - Saar advantage: has more direct efficacy evidence, especially early RCT severe-COVID protection and observational death-endpoint studies.
+  - Saar weakness: does not close the gap between biologic efficacy and the actual US net-mortality question through end-2022 after HVE, NCACM, and observed mortality trends.
+  - Kirsch weakness: strongest evidence is still mostly falsification/signal evidence, not a clean causal estimate of net deaths.
+- Judge's top questions:
+  - To Saar: What exact counterfactual model reproduces the observed US mortality record while still preserving large net lives saved?
+  - To Saar: Why accept high VE-death claims when key studies often lack a clean NCACM negative control?
+  - To Kirsch: Why treat ecological slope screens as more than falsification checks given variants, prior infection, and country mix?
+  - To Kirsch: Why treat VAERS and FDA/Prasad memo as proof of net harm rather than unresolved signal and institutional failure?
+  - To both: What specific observation would falsify your side, and have you shown it transparently?
+- Tactical lesson:
+  - Keep Kirsch's claim narrower and disciplined: "large net benefit is not established" / "large net lives saved is not visible in the measurements."
+  - Do not overstate ecological screens, VAERS, FDA/Prasad, or Florida as direct proof of net harm.
+  - Put US-specific evidence first.
+  - Treat OWID slope work as a powerful falsification screen.
+  - Explicitly ask Saar to produce a quantitative counterfactual before relying on lives-saved models.
+
+### Evidence / exhibit backlog before next formal run
+
+- Evidence / exhibits to build:
+  - Clean US-specific mortality-elevation exhibit after exclusions.
+    - Goal: show persistent US mortality elevation after removing obvious categories such as drug/alcohol/external causes, and state what SW must quantitatively explain.
+  - One-page Florida Levi/Ladapo summary.
+    - Include effect sizes, matching variables, NCACM outcome definition, why active comparator matters, and the main caveat that it is a preprint and not a no-vaccine counterfactual.
+  - Compact OWID slope exhibit explanation.
+    - State expected fingerprint: if vaccination plus accumulating natural immunity materially reduced population-level COVID death risk, later wave slopes should face downward pressure, especially in high-vax countries.
+    - Then show all-country slope plot and top25/bottom25 split.
+  - Direct "SW must answer" checklist.
+    - US mortality decomposition.
+    - Florida matched brand NCACM.
+    - NCACM-negative-control VE study.
+    - Quantitative counterfactual explaining no downward slope fingerprint.
+- Argument-order improvement for Round 1:
+  - Start with the US debate question.
+  - Propose fair judge scoring categories before arguing facts.
+  - Concede that early clinical efficacy is SW's strongest category.
+  - Then argue that early clinical efficacy does not settle US net mortality through end-2022.
+  - Focus the judge on categories that determine net lives, not just biologic efficacy.
+- Proposed fair judge scoring categories:
+  - Clinical / biologic efficacy:
+    - Did mRNA vaccination reduce severe COVID risk in at least some periods and populations?
+    - This likely favors SW.
+  - Causal validity of VE-death estimates:
+    - Do death-benefit studies survive HVE, NCACM, prior infection, timing, and negative-control concerns?
+  - Population-level benefit fingerprint:
+    - Is large death benefit visible in measured mortality slopes, wave comparisons, or high-vax vs low-vax contrasts?
+  - US-specific harm evidence:
+    - Is there serious evidence of nonzero vaccine harm in US-relevant data?
+  - US net mortality record:
+    - Does US ACM / residual mortality look more consistent with large net lives saved, no clear net effect, or possible net harm?
+  - Counterfactual completeness:
+    - Which side better explains the observed US record under a transparent counterfactual?
+- Suggested opening framing:
+  - "I propose the judge score this debate across six categories: clinical efficacy, causal validity of VE-death estimates, population-level benefit fingerprint, US-specific harm evidence, US net mortality record, and counterfactual completeness. I do not claim all categories favor me. SW likely has his strongest case on early clinical efficacy. My argument is that early efficacy does not settle US net mortality through end-2022, and on the categories that determine net lives, his case is not established."
+- OWID slope rhetorical framing:
+  - Do not need to hide that the plot is known.
+  - State the hypothesis openly: if vaccination and accumulating natural immunity materially reduced COVID death risk, later slopes should show downward pressure, especially among high-vax countries.
+  - Ask the judge rhetorically: "Wouldn't that be the expected fingerprint of a large, durable population-level death benefit?"
+  - Then show that the all-country and high-vax/low-vax slope screens do not show that fingerprint.
+- Immediate improvement before rerun:
+  - The first mock judge did not say the evidence was weak; it said the evidence is strongest as a burden-shift / falsification case, not yet as direct proof of net harm.
+  - The next Kirsch advocate prompt should force the improved order:
+    - Start with the US debate question.
+    - Show US mortality stayed elevated and UCOD decomposition did not eliminate it.
+    - Present Florida Levi/Ladapo as the US mRNA active-comparator harm signal.
+    - Present OWID slope screens as the benefit-side falsification screen.
+    - Demand Saar's quantitative counterfactual.
+  - Suggested improved Kirsch prompt language:
+    - "Argue that the large net-benefit claim is not established; net harm is more consistent with the US evidence, but the argument is preponderance / burden-shift, not proof beyond doubt. Put US-specific evidence first, use OWID slope screens as falsification/context evidence, and repeatedly ask Saar for the quantitative counterfactual that reconciles large lives saved with observed US mortality and the Florida mRNA brand NCACM signal."
+- Research / exhibit gaps that could improve the next run:
+  - A clean US chart/table showing persistent excess mortality after excluding COVID, drug/alcohol, homicide/suicide/accidents, and other obvious categories.
+  - A one-page Florida Levi/Ladapo summary table with effect sizes, matching variables, outcome definitions, and why active comparator matters.
+  - A compact OWID slope exhibit explanation including the pre-prediction question.
+  - A direct "Saar must answer" checklist: US mortality decomposition, Florida matched brand NCACM, NCACM-negative-control VE study, and slope counterfactual.
+
+### Proposed real debate structure: AI lawyers with human coaching
+
+- Proposed format:
+  - Each human side educates / coaches its own AI lawyer.
+  - The AI lawyers argue the case to the neutral AI judge.
+  - Humans do not directly argue with the judge during the formal round; they coach their lawyer between rounds.
+- Suggested rounds:
+  - Round 1: initial AI-lawyer debate and judge feedback.
+  - Human coaching / evidence refinement period: 10 days.
+  - Round 2: improved AI-lawyer debate and judge feedback.
+  - Human coaching / evidence refinement period: 10 days.
+  - Round 3: final AI-lawyer debate and final verdict.
+- Why this may be better:
+  - It creates closure and avoids endless live back-and-forth with the judge.
+  - It gives both sides a fair chance to correct weak arguments and provide missing evidence.
+  - It prevents the debate from being decided by who is better at real-time prompting or rhetorical improvisation.
+  - It mirrors litigation: humans prepare the case, the AI lawyers argue, and the judge evaluates the refined record.
+- Debate-line framing:
+  - "Let each side coach its AI lawyer. The lawyers argue before the judge. After two 10-day refinement cycles, the third round is final."
+
+### Straw-man final debate protocol
+
+- Debate question:
+  - "In the US, did the mRNA COVID vaccines likely net save lives or cost lives through the end of 2022?"
+- Roles:
+  - Human side A: coaches the pro-net-benefit AI lawyer.
+  - Human side B: coaches the negative-benefit / net-harm AI lawyer.
+  - AI lawyer A and AI lawyer B: argue the case to the judge.
+  - Neutral AI judge: evaluates the arguments under the agreed standard.
+- Decision standard:
+  - Use a 55% preponderance threshold.
+  - The judge may return one of three outcomes:
+    - pro-net-benefit side wins
+    - negative-benefit / net-harm side wins
+    - insufficient certainty / no winner
+- Three-round structure:
+  - Round 1: initial AI-lawyer debate.
+  - Judge provides provisional decision, scorecard, questions, and weaknesses for both sides.
+  - 10-day coaching and evidence refinement period.
+  - Round 2: revised AI-lawyer debate.
+  - Judge provides provisional decision, scorecard, questions, and weaknesses for both sides.
+  - 10-day coaching and evidence refinement period.
+  - Round 3: final AI-lawyer debate.
+  - Judge issues final decision.
+- Per-round argument limits:
+  - Each side gets exactly 3 core claims.
+  - Each core claim must state:
+    - evidence
+    - causal interpretation
+    - main caveat
+    - what would falsify or weaken it
+  - Each side gets exactly 3 rebuttals to the other side's core claims.
+  - Each side may use no more than 5 primary exhibits in the main round.
+  - Appendices are allowed, but the judge should not rely on appendix material unless it is cited and summarized in the main argument.
+  - Each side gets a short final reply focused only on judge questions and the opponent's strongest point.
+- Evidence rules:
+  - New evidence may be added only before Round 2.
+  - Round 2 is the final evidence-submission round.
+  - Round 3 is limited to argument, synthesis, rebuttal, and polishing based on the evidence already submitted.
+  - No new evidence may be introduced in Round 3 unless both sides explicitly agree or the judge requests a narrow clarification.
+  - New Round 2 evidence must be disclosed before Round 2 begins.
+  - Each side should maintain a dated evidence binder or exhibit list.
+  - Every primary exhibit must have:
+    - file/link
+    - one-sentence relevance statement
+    - one-sentence limitation/caveat
+  - No surprise exhibits during the formal AI-lawyer exchange unless both sides agree.
+  - The purpose of the Round 3 evidence freeze is to prevent one side from blindsiding the other with new material too late to answer.
+  - The judge may penalize evidence dumping.
+- AI lawyer conduct:
+  - AI lawyers argue to the judge, not to each other.
+  - AI lawyers must steelman the opposing side's strongest point before rebutting it.
+  - AI lawyers must separate signal, causal inference, and proof.
+  - AI lawyers must identify assumptions and counterfactuals.
+  - AI lawyers may not claim certainty where the evidence is observational or confounded.
+  - AI lawyers should explicitly answer the judge's questions.
+- Judge conduct:
+  - Judge must keep the target estimand fixed: US mRNA net lives through end-2022.
+  - Judge must penalize:
+    - unsupported causal leaps
+    - cherry-picking without disclosure
+    - missing counterfactuals
+    - failure to address NCACM / HVE concerns
+    - treating passive surveillance as incidence proof
+    - treating model outputs as direct measurements without validation
+  - Judge may ask up to 5 clarification questions after the main claims and rebuttals in Rounds 1 and 2.
+  - In the final round, judge may ask clarifications only if a claim is ambiguous, not to invite new evidence.
+- Rules for answering judge questions:
+  - Each side must answer only the judge's questions.
+  - The answer period is not a new speech.
+  - Responses may introduce new evidence in Rounds 1 and 2 only if the evidence directly answers the judge's question.
+  - Responses may not introduce unrelated new topics or evidence dumps.
+  - Responses may rebut the other side only to the extent necessary to answer the question asked.
+  - In Round 3, responses to judge clarifications may not introduce new evidence unless both sides agree or the judge requests a narrow factual clarification.
+- Round flow:
+  - Each AI lawyer submits its best case document under the claim/exhibit limits.
+  - Judge reviews both submissions and asks up to 5 total questions.
+  - Each AI lawyer answers only the questions directed to it.
+  - Judge issues round decision, confidence, scorecard, and what would change the result in the next round.
+- Why this format is fair:
+  - Humans coach and refine strategy, but AI lawyers present the formal case.
+  - Both sides get equal rounds, equal exhibit limits, and equal opportunity to respond to judge feedback.
+  - The 10-day intervals reduce real-time prompting advantage and allow evidence checking.
+  - The third round creates closure.
+- Implementation options:
+  - Option A: single shared orchestration environment.
+    - Both sides agree on one platform/session that can run three AI roles: lawyer A, lawyer B, and judge.
+    - Advantage: easiest to keep one record.
+    - Risk: requires trust in the operator and prompt visibility.
+  - Option B: separate human-coached lawyers plus shared judge.
+    - Each side uses its own AI lawyer locally to prepare the argument.
+    - The final lawyer submissions are pasted into a mutually selected judge model/session.
+    - Advantage: easiest for opposing parties to implement without sharing private coaching.
+    - Risk: less interactive unless the judge's questions are relayed back to each side.
+  - Option C: fully asynchronous written submissions.
+    - Each side submits structured markdown/PDF under the agreed rules.
+    - The judge receives both packages, asks written questions, receives final replies, and scores.
+    - Advantage: most auditable and least prone to live-prompt manipulation.
+    - Risk: less dynamic, slower.
+  - Recommended practical approach:
+    - Use Option C or a hybrid of B and C.
+    - Each side privately coaches its AI lawyer.
+    - Each side submits a structured markdown/PDF for each round.
+    - A mutually selected judge model/session evaluates the written submissions under the agreed prompt.
+    - Judge questions are distributed to both sides, each side has a fixed reply window, and all materials are archived.
+
 ### Current strongest arguments by pillar
 
 - Pillar 1: lives saved was likely small or unproven.
@@ -1384,3 +1605,93 @@ These are provisional stream-of-consciousness notes after a first pass through t
     - Levi/Ladapo is US, mRNA-specific, and brand-vs-brand among vaccinated people, so generic healthy-vaccinee explanations are much less responsive.
     - If SW claims residual confounding, he should produce a comparable or stronger Pfizer-vs-Moderna matched study showing no NCACM difference.
   - Debate line: "My US case is not just global ecological suspicion. It is persistent US mortality elevation plus a US mRNA brand-comparison harm signal. If SW says the vaccines net saved lives, he needs to reconcile both."
+
+### Round 1 judge-facing submission artifact
+
+- Created a dedicated Round 1 submission in the argument section:
+  - [round1_kirsch_submission.md](arguments/round1_kirsch_submission.md)
+- Purpose:
+  - This is the document to submit to a neutral Claude-style judge under the newly documented format.
+  - It is deliberately structured as a judge-facing brief rather than a raw evidence dump.
+- It proposes fair judge categories up front:
+  - Direct efficacy evidence.
+  - Causal validity of observational VE-death estimates.
+  - Population-level benefit fingerprint.
+  - US-specific harm evidence.
+  - US net-mortality reconciliation.
+  - Counterfactual completeness.
+- The submission uses three core claims:
+  - Claim 1: the US mortality record does not look like large net lives saved.
+  - Claim 2: there is a serious US mRNA harm signal that SW must answer.
+  - Claim 3: large durable benefit is not visible in population-level COVID-death measurements.
+- Primary exhibits in that submission:
+  - [US UCOD year-over-year divergence summary](../test/US/out/ucod_year_over_year_divergence_summary.csv)
+  - [US UCOD excluding selected causes summary](../test/US/out/ucod_icd_excluding_selected_causes_summary.csv)
+  - [Florida Levi/Ladapo Pfizer-Moderna mortality preprint](docs/levi_ladapo_florida_pfizer_moderna_12_month_mortality_preprint.pdf)
+  - [FDA Prasad memo](docs/FDA_Prasad_memo.pdf)
+  - OWID slope screen figure set: [all-country slope screen](figures/owid_slopes/owid_wave_slopes_midpoint_r2ge99_dotplot.png) and [top25/bottom25 vaccination-contrast screen](figures/owid_slopes/owid_wave_slopes_vaccination_top25_bottom25.png)
+- Strategic point:
+  - The brief pre-empts Saar's likely strongest claims rather than only presenting our positive case.
+  - It concedes that RCTs and severe-COVID evidence can support short-term biologic efficacy, but argues that this does not settle US net mortality through the end of 2022.
+  - It frames observational VE-death papers as vulnerable when they lack strong NCACM / negative-control handling.
+  - It asks the pro-net-benefit side to quantitatively reconcile the US mortality record, the Florida active-comparator mRNA brand signal, and the OWID population-level slope screens.
+
+### Round 1 mock using the documented judge process
+
+- Round 1 artifacts now saved in the argument section:
+  - [Kirsch initial submission](arguments/round1_kirsch_submission.md)
+  - [Saar initial submission, mock](arguments/round1_saar_submission_mock.md)
+  - [Kirsch judge responses](arguments/round1_kirsch_judge_responses.md)
+  - [Saar judge responses, mock](arguments/round1_saar_judge_responses_mock.md)
+  - [Round 1 mock verdict](arguments/round1_mock_verdict.md)
+- Judge-question phase:
+  - The judge asked Saar for the single strongest US age-stratified lives-saved estimate, the assumptions, and what would weaken it.
+  - The judge asked Saar to reconcile that estimate with the US UCOD record showing all-age mortality +19.9% in 2021 and +13.1% in 2022 versus 2019.
+  - The judge asked Kirsch for the smallest plausible ACM / NCACM harm claim surviving worst-case confounding from the Florida active-comparator evidence.
+  - The judge asked both sides to state the exact population-level fingerprint expected if large net benefit were real.
+  - The judge asked Saar to name the single best observational VE-death paper that directly addresses HVE/NCACM.
+- Saar response:
+  - Used a Medicare-beneficiary model as the strongest US lives-saved estimate.
+  - Acknowledged that it is model-based and not a direct ACM measurement.
+  - Acknowledged that the US UCOD record remains a large residual elevation even after the claimed benefit.
+  - Named Hong Kong as the strongest observational VE-death paper, while acknowledging the missing negative-control limitation.
+- Kirsch response:
+  - Did not overclaim a precise death count from Levi/Ladapo.
+  - Framed the conservative claim as nonzero NCACM harm rather than zero harm, plausibly in a single-digit to low-double-digit excess range but unresolved in exact magnitude.
+  - Stated the pre-specified population fingerprint: high-vaccination settings should show a visibly lower cumulative COVID-death slope than low-vaccination settings after rollout, and that separation should widen over time.
+- Round 1 judge verdict:
+  - No winner / unresolved at the 55% civil-standard threshold.
+  - Scorecard:
+    - Direct efficacy evidence: Saar.
+    - Causal validity of observational VE-death estimates: Kirsch.
+    - Population-level benefit fingerprint: Kirsch.
+    - US-specific harm evidence: Kirsch.
+    - US net-mortality reconciliation: Kirsch.
+    - Counterfactual completeness: mixed / unresolved.
+  - Key reason:
+    - Saar has the stronger short-term severe-COVID efficacy story, but still has not converted that into a convincing US net-mortality advantage through end-2022.
+    - Kirsch has the stronger reconciliation and burden-shift story, but has not yet cleanly quantified total US net harm.
+- Strategic implication:
+  - The documented category framing worked well.
+  - The next improvement is not more rhetoric; it is a tighter Round 1 Kirsch package that quantifies the minimum plausible US harm / residual NCACM effect and further sharpens the population-fingerprint expectation.
+
+### Official judge instruction refinement: category lock and numeric scorecard
+
+- Add this to the official debate instructions for the neutral judge:
+  - After reading both Round 1 submissions, the judge should identify the final evaluation categories that best fit the dispute.
+  - The judge may adopt one side's proposed categories, merge categories, rename categories, or add a missing category, but must explain the final list briefly.
+  - Once the judge identifies the Round 1 categories, those categories are locked for the rest of the debate unless both parties agree to a change or the judge identifies a severe category defect.
+  - The same locked categories should be used in Rounds 1, 2, and 3 so that the debate does not drift and the participants know what they are trying to satisfy.
+- At the end of each round, the judge should issue a category scorecard:
+  - Use a numeric score such as `0/10` to `10/10` for each side in each locked category.
+  - Include a short one-sentence explanation for each category score.
+  - Identify which side has the edge in each category.
+  - Identify whether either side clears the agreed confidence threshold for winning the round.
+  - If neither side clears the threshold, the judge should say "unresolved / no winner this round" and list the specific evidence gaps that prevented a decision.
+- Rationale:
+  - A stable category scorecard makes progress visible across rounds.
+  - It prevents the judge from moving the goalposts between rounds.
+  - It helps both sides focus follow-up evidence on the true unresolved issues rather than adding broad new material.
+  - It also allows the final verdict to explain not just who won, but why the category balance changed or stayed the same over time.
+- Suggested judge prompt language:
+  - "After reading both Round 1 submissions, define the final evaluation categories you will use for all rounds. You may revise the parties' proposed categories, but explain why. Once defined, use these same categories in every later round unless both parties agree to a change or you identify a severe defect. At the end of every round, provide a numeric 0-10 score for each side in each category, a one-sentence explanation for each score, the category edge, and whether either side clears the agreed confidence threshold. If no side clears the threshold, say unresolved/no winner and specify the evidence gaps blocking a decision."
