@@ -1193,3 +1193,12 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - If SW says the difference is residual confounding, he should produce a comparable or stronger brand-comparison study showing NCACM equality between strictly matched mRNA cohorts.
   - Generic vaccinated-vs-unvaccinated VE studies do not answer this brand-safety question.
   - Debate line: "If the products are equally safe, matched Pfizer and Moderna recipients should have similar NCACM. Levi/Ladapo says they do not. Where is SW's equally strict matched brand-comparison study showing the opposite?"
+- Two concrete US burdens for SW:
+  - Burden 1: explain persistent US mortality elevation.
+    - If mRNA vaccines produced large net lives saved and no meaningful harm, why did US mortality remain elevated after rollout?
+    - The US UCOD decomposition did not make the elevation disappear after removing obvious categories such as drug/alcohol/external causes.
+    - SW needs a quantitative decomposition, not a list of possible causes.
+  - Burden 2: answer the Florida active-comparator NCACM signal.
+    - Levi/Ladapo is US, mRNA-specific, and brand-vs-brand among vaccinated people, so generic healthy-vaccinee explanations are much less responsive.
+    - If SW claims residual confounding, he should produce a comparable or stronger Pfizer-vs-Moderna matched study showing no NCACM difference.
+  - Debate line: "My US case is not just global ecological suspicion. It is persistent US mortality elevation plus a US mRNA brand-comparison harm signal. If SW says the vaccines net saved lives, he needs to reconcile both."
