@@ -1091,6 +1091,16 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - But it is a serious problem for a confident large-net-benefit claim: if the benefit was large at population scale, it should be visible somewhere in a broad all-country slope screen.
   - If the benefit is not visible, the defender must quantify the counterfactual forces that allegedly hid it.
   - Debate line: "If there was large COVID-death benefit, where is it in the all-country slope record? Natural immunity and vaccination should both push later slopes down, yet the fitted trend goes up."
+- Presentation tactic:
+  - Before showing the plot, ask SW and/or the AI judge for the directional prediction.
+  - Do not imply ignorance of the result; simply frame it as a model-prediction question.
+  - Suggested question:
+    - "As a model-prediction question: if vaccines were producing large durable population-level COVID-death protection, and natural immunity was accumulating, what directional trend should we expect in an all-country OWID wave-slope plot over time?"
+  - More specific version:
+    - "What should happen if we take all OWID countries, identify all high-linearity cumulative COVID-death wave segments, and plot each segment's slope against calendar midpoint? Under a large durable vaccine death-benefit model, especially with accumulating natural immunity, should the fitted trend go down, stay flat, or go up?"
+  - If SW predicts "down," reveal the plot: all OWID countries, all auto-identified high-linearity segments, `R^2 >= 0.99`, n=512; fitted `log10(slope)` trend goes up, fitted end/start = 1.68x.
+  - If SW predicts "flat" or "up," ask whether he is conceding that even large VE death would leave no visible downward fingerprint in the global slope record.
+  - If SW refuses to make a prediction, note that a model that cannot make even a directional prediction before looking at the result is hard to use as evidence of large lives saved.
 
 ### Aarstad papers as Pillar 3 support
 
