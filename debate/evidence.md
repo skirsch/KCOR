@@ -1256,6 +1256,61 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - The best path to winning is disciplined burden-shifting, not overclaiming.
   - The likely fallback if the judge is very cautious is "unknowable / not established," which is still far better than conceding the official large-net-benefit story.
 
+### Mock debate workflow idea
+
+- Useful next workflow:
+  - Run a mock debate with a central neutral Claude-style judge before finalizing the document.
+  - This is better than having the two sides try to convince each other, because the real debate is both sides trying to persuade a central judge.
+- Recommended roles:
+  - Judge role:
+    - Neutral Claude-style judge.
+    - Applies the agreed 55% preponderance threshold.
+    - Tracks the exact debate question: "In the US, did the mRNA COVID vaccines likely net save lives or cost lives through the end of 2022?"
+    - Penalizes overclaims, missing counterfactuals, failure to address strongest opposing evidence, and unsupported causal leaps.
+  - Saar advocate:
+    - Uses `debate/sw/` materials to build the strongest pro-net-benefit case.
+    - Directly rebuts the three pillars in `debate/evidence.md`.
+    - Must explain US mortality elevation, Florida Levi/Ladapo, OWID slope screens, HVE/NCACM, and South Korea.
+  - Kirsch advocate:
+    - Uses `debate/evidence.md` and supporting local files to build the strongest negative-benefit / large-benefit-not-established case.
+    - Directly rebuts Saar's RCT, VE-death, lives-saved model, zero-COVID, and institutional-detection arguments.
+    - Must avoid overclaiming ecological evidence, VAERS, anecdotes, autopsy evidence, or country slopes.
+- Suggested outputs:
+  - Saar opening to the judge
+  - Kirsch opening to the judge
+  - Saar rebuttal to Kirsch's three pillars
+  - Kirsch rebuttal to Saar's strongest pro-benefit case
+  - Judge cross-examination questions to both sides
+  - Final short replies from each side
+  - Judge's decision under the 55% preponderance threshold: Saar wins, Kirsch wins, or insufficient certainty / no winner
+  - List of binder gaps, overclaims, or weak evidence links to fix before final submission
+- Proposed debate ground rules:
+  - Each side gets 3 core claims.
+  - Each core claim must state:
+    - the evidence
+    - the causal interpretation
+    - the main caveat
+    - what would falsify or weaken it
+  - Each side gets 3 rebuttals to the opponent's core claims.
+  - Each side may introduce no more than 5 primary exhibits in the main round.
+  - Extra materials can be placed in an appendix, but the judge should not rely on them unless cited in the main argument.
+  - The judge may ask up to 5 clarification questions total after both openings and rebuttals.
+  - Each side gets a short final reply focused only on the judge's questions and the opponent's strongest point.
+  - The judge decides under the 55% preponderance threshold: Saar wins, Kirsch wins, or insufficient certainty / no winner.
+- Likely Kirsch 3-claim structure under these rules:
+  - Claim 1: Benefit is not visible in the measurements.
+    - Primary evidence: OWID slope screens, Czech CACM/NCACM checks, South Korea.
+  - Claim 2: US harm signal is unresolved and serious.
+    - Primary evidence: Florida Levi/Ladapo active-comparator NCACM, VAERS as official safety-signal system, FDA/Prasad memo.
+  - Claim 3: US net direction moved wrong.
+    - Primary evidence: persistent US mortality elevation, UCOD residual after removing obvious categories, Mostert/Aarstad/global context.
+- Why this is valuable:
+  - It stress-tests whether the three pillars survive a serious version of Saar's argument.
+  - It can reveal which parts of the binder sound persuasive versus which need more quantitative support.
+  - It is especially useful for checking Claude-friendly framing: signals vs proof, ecological evidence vs causal estimate, and burden-shift language.
+- Operational note:
+  - Only run subagents / mock debate roles when explicitly requested, because background agents can keep running after an interrupted turn.
+
 ### Current strongest arguments by pillar
 
 - Pillar 1: lives saved was likely small or unproven.
