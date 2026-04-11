@@ -1088,6 +1088,7 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - "If the explanation is that wave intensity or other factors exactly offset the vaccine effect, show the country-by-country counterfactual model and validate it against the measured slopes."
 - Major exhibit framing:
   - This may be one of the strongest visual points in the debate because it is not a selected-country example.
+  - Summary phrase: "This is one of the best arguments that large net lives saved is not visible in the measurements."
   - If vaccine-induced protection and accumulating natural immunity both materially reduced population-level COVID death risk, the broad expectation would be downward pressure on later wave slopes.
   - Instead, across all high-fit OWID country wave segments, the fitted log-slope trend is slightly upward rather than downward.
   - This does not prove vaccine harm or prove exactly zero benefit, because variant severity, infection pressure, country mix, reporting, age structure, and timing changed.
