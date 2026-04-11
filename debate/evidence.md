@@ -1037,9 +1037,9 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - If very large VE-death effects were obvious at population scale, highly vaccinated countries should tend to show visibly flatter post-rollout COVID-death slopes during later waves, unless wave intensity, prior infection, reporting, or other factors quantitatively offset the vaccine effect.
   - This is not a stand-alone causal estimate, but it is a direct challenge to model-based "large lives saved" narratives.
 - Data:
-  - Local OWID cumulative deaths per million file: `debate/data/OWID_total_deaths_per_million.csv`.
-  - Local combined slope file: `debate/data/owid_wave_cumulative_slopes.csv`.
-  - Per-country auto-fit slope CSVs are in `debate/data/owid_*_wave_slopes.csv`.
+  - Local OWID cumulative deaths per million file: `debate/data/owid_source/OWID_total_deaths_per_million.csv`.
+  - Local combined slope file: `debate/data/owid_slope/owid_wave_cumulative_slopes.csv`.
+  - Per-country auto-fit slope CSVs are in `debate/data/owid_slope/owid_*_wave_slopes.csv`.
 - Important observation from the sample:
   - From the cumulative death slope plots alone, it is difficult to tell which countries were highly vaccinated and which were not.
   - The slope shapes look heterogeneous and do not show a simple visual mapping from high vaccination to clearly flattened post-rollout COVID-death slopes.
@@ -1055,24 +1055,24 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - South Africa: 26.44%; slopes 23.48, 52.84, 36.98, 14.44.
   - Africa: 8.74%; slopes 1.56, 1.59, 3.89, 1.56, 4.11, 1.65, 1.72.
 - Local plots:
-  - ![OWID Albania cumulative COVID death slope fits](data/owid_albania_wave_fits.png)
-  - ![OWID Greece cumulative COVID death slope fits](data/owid_greece_wave_fits.png)
-  - ![OWID United Kingdom cumulative COVID death slope fits](data/owid_united_kingdom_wave_fits.png)
-  - ![OWID Germany cumulative COVID death slope fits](data/owid_germany_wave_fits.png)
-  - ![OWID France cumulative COVID death slope fits](data/owid_france_wave_fits.png)
-  - ![OWID Portugal cumulative COVID death slope fits](data/owid_portugal_wave_fits.png)
-  - ![OWID Africa cumulative COVID death slope fits](data/owid_africa_wave_fits.png)
-  - ![OWID Israel cumulative COVID death slope fits](data/owid_israel_wave_fits.png)
-  - ![OWID South Africa cumulative COVID death slope fits](data/owid_south_africa_wave_fits.png)
+  - ![OWID Albania cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_albania_wave_fits.png)
+  - ![OWID Greece cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_greece_wave_fits.png)
+  - ![OWID United Kingdom cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_united_kingdom_wave_fits.png)
+  - ![OWID Germany cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_germany_wave_fits.png)
+  - ![OWID France cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_france_wave_fits.png)
+  - ![OWID Portugal cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_portugal_wave_fits.png)
+  - ![OWID Africa cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_africa_wave_fits.png)
+  - ![OWID Israel cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_israel_wave_fits.png)
+  - ![OWID South Africa cumulative COVID death slope fits](figures/owid_slopes/per_country/owid_south_africa_wave_fits.png)
 - All-location dot plot:
-  - ![OWID wave segment slopes by midpoint, R squared at least 0.99](figures/owid_wave_slopes_midpoint_r2ge99_dotplot.png)
+  - ![OWID wave segment slopes by midpoint, R squared at least 0.99](figures/owid_slopes/owid_wave_slopes_midpoint_r2ge99_dotplot.png)
   - The dot plot shows 512 identified high-linearity wave segments with `R^2 >= 0.99`.
   - The y-axis is cumulative COVID-death slope in deaths per million per week on a log scale; the x-axis is segment calendar midpoint.
   - The plot does not show an obvious post-rollout collapse of wave slopes after vaccination became widespread.
   - Visual takeaway: you cannot tell from this plot when the COVID shots were rolled out.
   - Regression note: the plotted regression is `log10(slope)` vs segment midpoint; the fitted trend is weak but upward (`R^2 = 0.014`, fitted end/start = 1.68x).
   - This is one of the cleanest non-cherry-picked visuals because it uses all OWID countries and all auto-identified high-linearity wave segments, not selected country examples.
-  - Underlying CSV: `debate/data/owid_all_locations_wave_slopes.csv`.
+  - Underlying CSV: `debate/data/owid_slope/owid_all_locations_wave_slopes.csv`.
   - Quick quarter summary from the underlying CSV:
     - 2020Q4: n=65, median slope 30.48, p75 57.58, max 154.09 deaths/million/week.
     - 2021Q1: n=69, median 26.91, p75 54.48, max 151.18.
@@ -1104,6 +1104,37 @@ These are provisional stream-of-consciousness notes after a first pass through t
   - If SW predicts "down," reveal the plot: all OWID countries, all auto-identified high-linearity segments, `R^2 >= 0.99`, n=512; fitted `log10(slope)` trend goes up, fitted end/start = 1.68x.
   - If SW predicts "flat" or "up," ask whether he is conceding that even large VE death would leave no visible downward fingerprint in the global slope record.
   - If SW refuses to make a prediction, note that a model that cannot make even a directional prediction before looking at the result is hard to use as evidence of large lives saved.
+
+### OWID high-vax vs low-vax slope split
+
+- Purpose:
+  - Reduce the "all countries mixed together" critique by comparing countries with high versus low vaccination exposure.
+  - Metric used by the script: OWID total doses per million as of 2022-01-01, among locations with at least one auto-identified wave segment.
+  - Segment filter: auto-identified cumulative COVID-death wave segments with `R^2 >= 0.99`.
+- Top 25 vs bottom 25:
+  - Local figure: ![OWID wave slopes top 25 versus bottom 25 by vaccination](figures/owid_slopes/owid_wave_slopes_vaccination_top25_bottom25.png)
+  - High-vax cohort mean: 1,988,772 doses per million.
+  - Low-vax cohort mean: 154,312 doses per million.
+  - Dose separation: about 12.9x.
+  - High-vax fitted log-slope trend: `R^2 = 0.021`, fitted end/start = 0.66x.
+  - Low-vax fitted log-slope trend: `R^2 = 0.010`, fitted end/start = 0.68x.
+  - Interpretation: despite about a 13x dose exposure difference, the fitted trend over time is nearly the same. The absolute slope levels are not the same, so do not describe this as identical mortality levels; describe it as no obvious differential downward trend in the high-vax group.
+- Top 70 vs bottom 70:
+  - Local figure: ![OWID wave slopes top 70 versus bottom 70 by vaccination](figures/owid_slopes/owid_wave_slopes_vaccination_top70_bottom70.png)
+  - High-vax cohort mean: 1,666,587 doses per million.
+  - Low-vax cohort mean: 509,561 doses per million.
+  - Dose separation: about 3.27x.
+  - High-vax fitted log-slope trend: `R^2 = 0.014`, fitted end/start = 1.48x.
+  - Low-vax fitted log-slope trend: `R^2 = 0.008`, fitted end/start = 1.65x.
+  - Interpretation: with a broader country set, both high- and low-vax groups slope upward over time, with no clear high-vax downward fingerprint.
+- Why keep all three slope charts:
+  - The all-country chart asks the broadest question: is there a visible downward rollout fingerprint across all high-linearity COVID-death wave segments? The answer is no; the fitted trend goes upward.
+  - The top 25 / bottom 25 chart asks the high-contrast question: with about a 13x dose exposure difference, does the high-vax group show a much stronger downward trend? The fitted trends are nearly the same: 0.66x vs 0.68x.
+  - The top 70 / bottom 70 chart asks the broader-sample question: if the 25-country split is too narrow, does a larger split reveal the expected high-vax advantage? It still does not; both groups slope upward with similar fitted end/start ratios: 1.48x vs 1.65x.
+  - Taken together, these charts suggest that the apparent trend is sensitive to grouping choices and probably close to flat-to-upward, not a robust downward vaccine-benefit fingerprint.
+- Debate line:
+  - "Top 25 vs bottom 25 countries differ by roughly 13x in dose exposure, yet their fitted COVID-death wave-slope time trends are nearly the same. That is not what a large, durable, population-level death-prevention effect should look like."
+  - "The 70-country split trades some exposure contrast for a larger sample, and the same basic point remains: there is still no clear high-vax downward fingerprint."
 
 ### South Korea: not just "no harm"; also a population-level benefit problem
 
@@ -1223,6 +1254,47 @@ These are provisional stream-of-consciousness notes after a first pass through t
 - Practical implication:
   - The best path to winning is disciplined burden-shifting, not overclaiming.
   - The likely fallback if the judge is very cautious is "unknowable / not established," which is still far better than conceding the official large-net-benefit story.
+
+### Current strongest arguments by pillar
+
+- Pillar 1: lives saved was likely small or unproven.
+  - Strongest current evidence:
+    - OWID all-country slope screen: all high-linearity cumulative COVID-death wave segments (`R^2 >= 0.99`, n=512) show no obvious downward rollout fingerprint; fitted log-slope trend goes upward, not downward.
+    - OWID top25/bottom25 split: countries differ by about 13x in dose exposure, yet fitted COVID-death wave-slope trends are nearly identical (0.66x vs 0.68x).
+    - OWID top70/bottom70 split: broader sample with about 3.27x exposure contrast still does not show a high-vax downward fingerprint; both groups trend upward (1.48x vs 1.65x).
+    - Czech CACM/NCACM checks: high COVID-signal weeks show apparent COVID/non-COVID ratios around ~2.1x to ~2.3x in older/all-age groups, not 10x to 30x, and even that ~2x is not necessarily causal.
+    - South Korea: after high vaccination and boosting, South Korea still experienced a large 2022 mortality/COVID wave, creating a benefit-side counterfactual problem.
+  - Burden on SW:
+    - Show the large VE-death effect in transparent data after NCACM / negative-control checks.
+    - Show a quantitative model explaining why high vaccination plus natural immunity did not create a visible downward slope fingerprint in all-country and high-vax vs low-vax slope screens.
+  - Caveat:
+    - These are population-level falsification screens, not direct individual-level VE estimates; wave intensity, variant mix, prior infection, reporting, and age structure remain possible explanations if quantified.
+- Pillar 2: harm was likely nonzero or significant.
+  - Strongest current evidence:
+    - Florida Levi/Ladapo Pfizer-vs-Moderna: US mRNA active-comparator, brand-vs-brand, exact-matched NCACM signal; generic HVE is less responsive because both cohorts chose vaccination.
+    - VAERS: the official US vaccine safety-signal system produced an unprecedented death / serious-adverse-event reporting signal; this is not a death-count estimate but requires transparent adjudication.
+    - FDA/Prasad memo: undermines "agency silence means no deaths" and supports the claim that institutional detection/admission cannot be assumed.
+    - Japan full-population H(t): possible post-rollout mortality deviations in a full cohort rather than a simple vaccinated-vs-unvaccinated comparison.
+    - Autopsy/pathology, EMS/insurance/disability, and mechanistic material remain supporting signals, but should be used cautiously and not as stand-alone proof.
+  - Burden on SW:
+    - Produce a comparable or stronger US mRNA brand-comparison study showing no NCACM difference between strictly matched Pfizer and Moderna cohorts.
+    - Explain why the official VAERS signal was non-causal with transparent adjudication rather than dismissing VAERS as unreliable.
+  - Caveat:
+    - Individual harm signals vary in strength; the argument is convergence and burden-shift, not that every signal independently proves net harm.
+- Pillar 3: net direction looked worse, not better.
+  - Strongest current evidence:
+    - US mortality remained elevated after rollout; the US UCOD decomposition did not eliminate the elevation after removing obvious categories such as drug/alcohol/external causes.
+    - Mostert: persistent excess mortality across many Western countries is a real empirical phenomenon that must be reconciled with large-net-benefit claims.
+    - Aarstad: ecological / ONS-reanalysis work supports the broader observation that post-rollout ACM did not behave like a clean large-net-benefit intervention.
+    - Japan excess mortality and Japan Factors paper: Japan's sharp post-rollout excess mortality is difficult to reconcile with a simple large-net-benefit narrative without a quantitative counterfactual.
+    - OWID slope screens provide global falsification/context evidence even though the debate target is US net lives.
+  - Burden on SW:
+    - Provide a quantitative decomposition showing why US and comparator-country mortality moved the wrong way despite large claimed vaccine benefit and no meaningful harm.
+    - Explain both the persistent US mortality elevation and the Florida active-comparator mRNA brand signal.
+  - Caveat:
+    - Pillar 3 is a more-likely-than-not net-direction argument, not proof that vaccines caused every excess death.
+  - Current thesis:
+    - "On balance, the real-world ACM / excess-mortality record is more consistent with little/no net benefit or net harm than with large net lives saved."
 
 ### Scope discipline: the debate is about the United States
 

@@ -2,6 +2,10 @@
 OWID cumulative COVID deaths (per million): detect wave intervals from weekly
 mortality dynamics and fit OLS slope of cumulative vs week index.
 
+Default paths:
+  --input  debate/data/owid_source/OWID_total_deaths_per_million.csv
+  --output debate/data/owid_slope/owid_wave_cumulative_slopes.csv
+
 Alpha-era winter surge: searched in 2020-10-01 .. 2021-05-31 (B.1.1.7 dominant
 in many Northern countries in early 2021; same window captures that mortality
 pulse even when labeling is imperfect).
@@ -17,8 +21,10 @@ import pandas as pd
 
 # Repo root = parent of debate/
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CSV = REPO_ROOT / "debate" / "data" / "OWID_total_deaths_per_million.csv"
-DEFAULT_OUT = REPO_ROOT / "debate" / "data" / "owid_wave_cumulative_slopes.csv"
+OWID_SOURCE_DIR = REPO_ROOT / "debate" / "data" / "owid_source"
+OWID_SLOPE_DATA_DIR = REPO_ROOT / "debate" / "data" / "owid_slope"
+DEFAULT_CSV = OWID_SOURCE_DIR / "OWID_total_deaths_per_million.csv"
+DEFAULT_OUT = OWID_SLOPE_DATA_DIR / "owid_wave_cumulative_slopes.csv"
 
 AGGREGATE_COLUMNS = {
     "World",
@@ -209,8 +215,18 @@ def process_country(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, default=DEFAULT_CSV)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUT)
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=DEFAULT_CSV,
+        help="Wide OWID deaths CSV (default: debate/data/owid_source/OWID_total_deaths_per_million.csv)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUT,
+        help="Output slopes CSV (default: debate/data/owid_slope/owid_wave_cumulative_slopes.csv)",
+    )
     args = parser.parse_args()
 
     # (wave_id, search_start, search_end) — wide windows; edges refined per country.

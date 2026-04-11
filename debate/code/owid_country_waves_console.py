@@ -2,6 +2,11 @@
 One country: waves = contiguous weekly windows where cumulative deaths vs week
 index are nearly linear (R² ≥ R2_MIN), on OWID cumulative deaths per million.
 
+Paths (defaults):
+  - Input CSV:  debate/data/owid_source/OWID_total_deaths_per_million.csv
+  - Output CSV: debate/data/owid_slope/owid_*_wave_slopes.csv (or owid_all_locations_wave_slopes.csv)
+  - Output PNG: debate/figures/owid_slopes/per_country/owid_*_wave_fits.png
+
 Activity islands: smoothed weekly new deaths (3w MA) g > G_ACTIVE. Before the first
 such week, optional prefix islands use g > G_PREFIX so the small spring-2020 stair
 (israel-style) is not missed; prefix pieces that end the week before main activity
@@ -15,7 +20,7 @@ Daily rows through STOP_DATE (inclusive); weekly series built from that range.
 Default country: Israel. Override with --country \"Czechia\" etc.
 
 For a single-country run, writes a PNG of cumulative deaths with each wave’s OLS fit
-overlaid (default path next to the CSV). Use --no-plot to skip.
+overlaid (default: debate/figures/owid_slopes/per_country/). Use --no-plot to skip.
 
 Use --all-countries to process every OWID column (except date) into one CSV; no PNGs.
 """
@@ -30,8 +35,12 @@ import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CSV = REPO_ROOT / "debate" / "data" / "OWID_total_deaths_per_million.csv"
+OWID_SOURCE_DIR = REPO_ROOT / "debate" / "data" / "owid_source"
+OWID_SLOPE_DATA_DIR = REPO_ROOT / "debate" / "data" / "owid_slope"
+DEFAULT_CSV = OWID_SOURCE_DIR / "OWID_total_deaths_per_million.csv"
 DEFAULT_COUNTRY = "Israel"
+# Figures only here; derived CSVs go to OWID_SLOPE_DATA_DIR (not under figures/).
+OWID_SLOPES_PER_COUNTRY_FIG_DIR = REPO_ROOT / "debate" / "figures" / "owid_slopes" / "per_country"
 
 # Include all daily observations on or before this date (waves detected through this cutoff).
 STOP_DATE = pd.Timestamp("2022-04-01")
@@ -61,14 +70,14 @@ def slug_country(name: str) -> str:
 
 
 def default_output_csv(country: str) -> Path:
-    return REPO_ROOT / "debate" / "data" / f"owid_{slug_country(country)}_wave_slopes.csv"
+    return OWID_SLOPE_DATA_DIR / f"owid_{slug_country(country)}_wave_slopes.csv"
 
 
 def default_plot_png(country: str) -> Path:
-    return REPO_ROOT / "debate" / "data" / f"owid_{slug_country(country)}_wave_fits.png"
+    return OWID_SLOPES_PER_COUNTRY_FIG_DIR / f"owid_{slug_country(country)}_wave_fits.png"
 
 
-DEFAULT_ALL_COUNTRIES_CSV = REPO_ROOT / "debate" / "data" / "owid_all_locations_wave_slopes.csv"
+DEFAULT_ALL_COUNTRIES_CSV = OWID_SLOPE_DATA_DIR / "owid_all_locations_wave_slopes.csv"
 
 
 def country_wave_analysis(
@@ -410,8 +419,8 @@ def main() -> None:
         type=Path,
         default=None,
         help=(
-            "CSV path (default: owid_<country>_wave_slopes.csv, or "
-            "owid_all_locations_wave_slopes.csv with --all-countries)"
+            "CSV path (default under debate/data/owid_slope/: "
+            "owid_<country>_wave_slopes.csv, or owid_all_locations_wave_slopes.csv with --all-countries)"
         ),
     )
     parser.add_argument(
@@ -428,7 +437,7 @@ def main() -> None:
         "--plot-output",
         type=Path,
         default=None,
-        help="PNG path (default: debate/data/owid_<country>_wave_fits.png)",
+        help="PNG path (default: debate/figures/owid_slopes/per_country/owid_<country>_wave_fits.png)",
     )
     args = parser.parse_args()
     path = DEFAULT_CSV
