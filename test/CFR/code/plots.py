@@ -598,6 +598,58 @@ def plot_vaccine_coverage_all(
     plt.close(fig)
 
 
+def plot_km_survival_curves(
+    km_summary: pd.DataFrame,
+    out_path: Path,
+    *,
+    title: str,
+    xlabel: str,
+    dpi: int = 120,
+    cohort_order: tuple[str, ...] | list[str] | None = None,
+) -> None:
+    """Shared KM step plot with dynamic survival y-limits."""
+    if km_summary.empty:
+        return
+    sub = km_summary.copy()
+    if sub.empty:
+        return
+    fig, ax = plt.subplots(figsize=(8, 5))
+    seen = set(sub["cohort"].unique())
+    if cohort_order:
+        ordered = [c for c in cohort_order if c in seen]
+        ordered.extend(sorted(c for c in seen if c not in ordered))
+    else:
+        ordered = list(sub["cohort"].unique())
+    for cohort in ordered:
+        s = sub[sub["cohort"] == cohort].sort_values("timeline")
+        ax.step(s["timeline"], s["KM_estimate"], where="post", label=cohort)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("survival (all-cause)")
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    yvals = pd.to_numeric(sub["KM_estimate"], errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+    if len(yvals) == 0:
+        ax.set_ylim(0.0, 1.02)
+    else:
+        y_min = float(yvals.min())
+        y_max = float(yvals.max())
+        span = max(y_max - y_min, 0.04)
+        pad_lo = max(0.01, span * 0.06)
+        pad_hi = max(0.004, span * 0.04)
+        y_lo = max(0.0, y_min - pad_lo)
+        y_hi = min(1.01, y_max + pad_hi)
+        if y_hi - y_lo < 0.06:
+            y_hi = min(1.02, y_lo + 0.10)
+        ax.set_ylim(y_lo, y_hi)
+
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
 def plot_km_post_infection(
     km_summary: pd.DataFrame,
     out_path: Path,
@@ -612,19 +664,29 @@ def plot_km_post_infection(
         sub = sub[sub["age_bin"] == age_bin].copy()
     if sub.empty:
         return
-    fig, ax = plt.subplots(figsize=(8, 5))
-    for cohort in sub["cohort"].unique():
-        s = sub[sub["cohort"] == cohort].sort_values("timeline")
-        ax.step(s["timeline"], s["KM_estimate"], where="post", label=cohort)
-    ax.set_xlabel("weeks since infection")
-    ax.set_ylabel("survival")
-    ax.set_title("Kaplan–Meier survival post first infection (all-cause death)")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    ax.set_ylim(0, 1.02)
-    fig.tight_layout()
-    fig.savefig(out_path, dpi=dpi)
-    plt.close(fig)
+    # Title label when table has no age_bin column (aggregate KM): use explicit age_bin kwarg only for display
+    age_bin_title = age_bin
+    if age_bin_title is None and "age_bin" not in sub.columns:
+        age_bin_title = "all"
+
+    if age_bin_title is not None:
+        age_title = str(age_bin_title)
+    elif "age_bin" in sub.columns:
+        uniq = sub["age_bin"].dropna().unique()
+        age_title = str(uniq[0]) if len(uniq) == 1 else ",".join(sorted(map(str, uniq)))
+    else:
+        age_title = "all"
+
+    plot_km_survival_curves(
+        sub,
+        out_path,
+        title=(
+            "Kaplan–Meier survival post first infection (all-cause death)\n"
+            f"enrollment age_bin={age_title}"
+        ),
+        xlabel="weeks since infection",
+        dpi=dpi,
+    )
 
 
 def plot_old_young_difference(

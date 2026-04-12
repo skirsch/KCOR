@@ -5,6 +5,14 @@ Czech CFR / infection / mortality pipeline entry point.
 Expects the national CSV at data/Czech/records.csv (53 columns, ISO-week dates).
 That file is not committed; use --smoke or data/Czech/records_100k.csv for quick tests.
 Runtime is roughly linear in row count (on the order of minutes for full population on a laptop).
+
+Kaplan–Meier outputs need ``lifelines`` in the project venv: from repo root run
+``.venv/bin/python test/CFR/run_cfr_analysis.py`` (Linux/WSL) or
+``.venv\\Scripts\\python.exe test/CFR/run_cfr_analysis.py`` (Windows), or ``test/CFR/run_with_venv.sh``.
+
+Optional landmark all-cause KM from a fixed ISO week (``extensions.km_landmark_survival``) writes
+``km_landmark_<week>_first_mfg_age_<bin>.csv`` / ``.png`` and
+``km_landmark_<week>_dose_censor_age_<bin>.csv`` / ``.png`` under the configured output directory.
 """
 
 from __future__ import annotations
@@ -30,6 +38,12 @@ from analysis import (  # noqa: E402
     build_km_post_infection_table,
     run_time_since_dose2_analysis,
     stability_check_quiet_period,
+)
+from km_landmark import (  # noqa: E402
+    DOSE_COHORTS,
+    FIRST_MFG_COHORTS,
+    build_km_landmark_dose_nextdose_censor_table,
+    build_km_landmark_first_mfg_table,
 )
 from cohort_builder import (  # noqa: E402
     PRIMARY_ENROLLMENT_COHORTS,
@@ -83,6 +97,7 @@ from plots import (  # noqa: E402
     plot_expected_vs_observed,
     plot_expected_vs_observed_cumulative_only,
     plot_km_post_infection,
+    plot_km_survival_curves,
     plot_mortality_rate,
     plot_old_young_difference,
     plot_placebo_break_scan,
@@ -912,7 +927,7 @@ def main() -> None:
         km_tbl, km_reason = build_km_post_infection_table(df_model, followup_end=followup_end, cohorts=cohorts)
         if len(km_tbl):
             km_tbl.to_csv(out_dir / "km_post_infection.csv", index=False)
-            plot_km_post_infection(km_tbl, out_dir / "km_post_infection.png", dpi=dpi)
+            plot_km_post_infection(km_tbl, out_dir / "km_post_infection.png", age_bin="all", dpi=dpi)
             km_age_tbl, km_age_reason = build_km_post_infection_age_bin_table(
                 df_model,
                 followup_end=followup_end,
@@ -936,6 +951,60 @@ def main() -> None:
             _log("KM tables/plots and infected cohort composition written")
         else:
             _log(f"Kaplan–Meier skipped: {km_reason}")
+
+    km_land_cfg = ext.get("km_landmark_survival")
+    if isinstance(km_land_cfg, dict) and km_land_cfg.get("enabled"):
+        _log("Kaplan–Meier landmark (first-dose manufacturer + dose with next-dose censor) …")
+        lm_week = str(km_land_cfg.get("landmark_iso_week") or enrollment_week)
+        lm_age = str(km_land_cfg.get("age_bin") or "70-120")
+        age_slug = lm_age.replace("-", "_")
+
+        mfg_tbl, mfg_reason = build_km_landmark_first_mfg_table(
+            df_model,
+            landmark_iso_week=lm_week,
+            followup_end=followup_end,
+            age_bin=lm_age,
+        )
+        if len(mfg_tbl):
+            mfg_path = out_dir / f"km_landmark_{lm_week.replace('-', '_')}_first_mfg_age_{age_slug}.csv"
+            mfg_tbl.to_csv(mfg_path, index=False)
+            plot_km_survival_curves(
+                mfg_tbl,
+                mfg_path.with_suffix(".png"),
+                title=(
+                    f"Landmark Kaplan–Meier (all-cause), first-dose manufacturer at {lm_week}\n"
+                    f"age_bin={lm_age} (alive at landmark; censor at follow-up end)"
+                ),
+                xlabel="weeks since landmark (ISO week Monday)",
+                dpi=dpi,
+                cohort_order=FIRST_MFG_COHORTS,
+            )
+        else:
+            _log(f"landmark KM (first mfg) skipped: {mfg_reason}")
+
+        dose_tbl, dose_reason = build_km_landmark_dose_nextdose_censor_table(
+            df_model,
+            landmark_iso_week=lm_week,
+            followup_end=followup_end,
+            age_bin=lm_age,
+        )
+        if len(dose_tbl):
+            dose_path = out_dir / f"km_landmark_{lm_week.replace('-', '_')}_dose_censor_age_{age_slug}.csv"
+            dose_tbl.to_csv(dose_path, index=False)
+            plot_km_survival_curves(
+                dose_tbl,
+                dose_path.with_suffix(".png"),
+                title=(
+                    f"Landmark Kaplan–Meier (all-cause), dose at {lm_week}\n"
+                    f"age_bin={lm_age}; censor at next dose or follow-up end"
+                ),
+                xlabel="weeks since landmark (ISO week Monday)",
+                dpi=dpi,
+                cohort_order=DOSE_COHORTS,
+            )
+        else:
+            _log(f"landmark KM (dose censor) skipped: {dose_reason}")
+        _log("landmark KM tables/plots done")
 
     if ext.get("time_since_dose2_plots"):
         _log("time-since-dose2 weekly slice …")

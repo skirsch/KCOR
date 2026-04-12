@@ -1,0 +1,34 @@
+Generated (UTC): 2026-04-12T05:31:04Z
+csv: data/Czech/records.csv
+config: /mnt/c/Users/stk/Documents/GitHub/KCOR/test/CFR/config/czech.yaml
+restrict_to_pfizer_moderna: False
+target ISO week: 2021-48
+age_bin (enrollment): 70-120
+
+Loading CSV …
+rows loaded: 12,597,668
+build_enrollment_table …
+rows with age_bin: 6,711,941
+
+FILE-WIDE (all rows, age_bin=70-120): unique people ≈ histogram sum = 8,461
+  COVID deaths in ISO week 2021-48 only: 703
+
+ENROLLED (dose0∪dose1∪dose2 at enrollment, age_bin=70-120):
+  unique people in stratum (one row per ID): 1,968,815
+  COVID deaths in ISO week 2021-48: 703
+
+WEEKLY_METRICS-STYLE (must match plot numerators/denominators for that week):
+  dose0: deaths_covid=388  population_at_risk=366,137  deaths/million=1059.7126
+  dose1: deaths_covid=66  population_at_risk=311,083  deaths/million=212.1620
+  dose2: deaths_covid=249  population_at_risk=1,249,689  deaths/million=199.2496
+  SUM cohorts: deaths_covid=703  population_at_risk=1,926,909
+  pooled deaths/million (sum d / sum p, descriptive only): 364.8330
+
+enrolled_covid_death_histogram_by_week (cross-check): week 2021-48 total = 703
+  (n_people union strata=1,968,815, with any parsed COVID-death week=11,847)
+
+WHY this differs from audit_covid_deaths_iso_week.py (703 for 2021-48, age≥70):
+  - Audit uses age ≥ 70 via 2021 − YearOfBirth (not necessarily same set as enrollment age_bin 70-120).
+  - Audit includes people NOT in dose0|dose1|dose2 at enrollment (e.g. not alive at enrollment week).
+  - Per-million plots further SPLIT enrolled people by dose — spikes use tiny denominators per cohort.
+

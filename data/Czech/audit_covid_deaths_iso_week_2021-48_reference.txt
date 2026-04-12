@@ -1,0 +1,12 @@
+Generated (UTC): 2026-04-12T05:07:32Z
+
+file: /mnt/c/Users/stk/Documents/GitHub/KCOR/data/Czech/records.csv
+rows in file: 12,597,668
+mrna_only filter: False
+target ISO week (Umrti→Date_COVID_death): 2021-48
+age: completed age >= 70 using reference year 2021 − YearOfBirth
+---
+rows with COVID-death week == 2021-48 and age_ok: 703
+unique ID in that set: 703
+---
+unique ID with COVID week == 2021-48 (all ages, same file): 839

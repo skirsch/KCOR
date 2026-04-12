@@ -95,6 +95,11 @@ falsification:
 # Optional: Kaplan–Meier from first infection; time-since-2nd-dose weeks bins for dose2-only table
 extensions:
   km_post_infection: true
+  # Landmark all-cause KM from ISO week Monday (same clock as enrollment); age_bin must match an age_bins label.
+  km_landmark_survival:
+    enabled: true
+    landmark_iso_week: "2021-24"
+    age_bin: "70-120"
   time_since_dose2_weeks_bins: [[0, 4], [5, 12], [13, 999]]
   time_since_dose2_plots: true
 
