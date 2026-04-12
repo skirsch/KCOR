@@ -63,6 +63,7 @@ from metrics import (  # noqa: E402
     build_period_aggregate_summary,
     build_period_ve_summary,
     build_weekly_metrics,
+    enrolled_covid_death_histogram_by_week,
     iso_weeks_in_period,
     log_period_aggregate_for_console,
     merge_period_unique_people,
@@ -73,7 +74,11 @@ from qa_summary import log_qa_summary, write_debug_birth_cohort_weekly_csv  # no
 from plots import (  # noqa: E402
     plot_case_rate,
     plot_cfr,
+    plot_covid_mortality_per_million,
     plot_cumulative_cases_deaths,
+    plot_debug_weekly_covid_deaths,
+    plot_debug_weekly_covid_deaths_enrolled_total,
+    plot_debug_weekly_population_at_risk,
     plot_decomposition_compare,
     plot_expected_vs_observed,
     plot_expected_vs_observed_cumulative_only,
@@ -713,6 +718,23 @@ def main() -> None:
         dpi=dpi,
     )
     plot_mortality_rate(weekly, out_dir / "mortality_rate.png", age_bin="all", wave_start=ws, wave_end=we, dpi=dpi)
+    plot_cfg = cfg.get("plots") or {}
+    covid_mort_cohorts = plot_cfg.get("covid_mortality_weekly_cohorts")
+    if covid_mort_cohorts is None:
+        covid_mort_cohorts = [c for c in cohorts if c in PRIMARY_ENROLLMENT_COHORTS]
+    else:
+        covid_mort_cohorts = [str(c) for c in covid_mort_cohorts]
+    if plot_cfg.get("save_covid_mortality_per_million_weekly", True):
+        _log("plot COVID deaths per million at risk (weekly, dose0–dose2) …")
+        plot_covid_mortality_per_million(
+            weekly,
+            out_dir / "covid_deaths_per_million_weekly.png",
+            age_bin="all",
+            wave_start=ws,
+            wave_end=we,
+            cohorts=covid_mort_cohorts,
+            dpi=dpi,
+        )
 
     if cfg.get("plots", {}).get("save_wave_ve_plot", True):
         _log("plot wave_ve_summary (decomposition) …")
@@ -797,6 +819,67 @@ def main() -> None:
                 age_bin=ab,
                 wave_start=ws,
                 wave_end=we,
+                dpi=dpi,
+            )
+            if plot_cfg.get("save_covid_mortality_per_million_weekly", True):
+                plot_covid_mortality_per_million(
+                    weekly,
+                    out_dir / f"covid_deaths_per_million_weekly_age_{ab}.png",
+                    age_bin=ab,
+                    wave_start=ws,
+                    wave_end=we,
+                    cohorts=covid_mort_cohorts,
+                    dpi=dpi,
+                )
+
+    if plot_cfg.get("save_debug_weekly_deaths_pop", True):
+        dbg_ab = str(plot_cfg.get("debug_weekly_denominator_age_bin", "70-120"))
+        if dbg_ab in set(weekly["age_bin"].unique()):
+            _log(f"debug plots: weekly COVID deaths + pop at risk (age_bin={dbg_ab}) …")
+            dbg_slug = dbg_ab.replace("/", "-")
+            plot_debug_weekly_covid_deaths(
+                weekly,
+                out_dir / f"debug_weekly_covid_deaths_age_{dbg_slug}.png",
+                age_bin=dbg_ab,
+                wave_start=ws,
+                wave_end=we,
+                cohorts=covid_mort_cohorts,
+                dpi=dpi,
+            )
+            plot_debug_weekly_population_at_risk(
+                weekly,
+                out_dir / f"debug_weekly_population_at_risk_age_{dbg_slug}.png",
+                age_bin=dbg_ab,
+                wave_start=ws,
+                wave_end=we,
+                cohorts=covid_mort_cohorts,
+                dpi=dpi,
+            )
+            hist_tbl, n_ppl, n_cv_dt = enrolled_covid_death_histogram_by_week(
+                df_model,
+                age_bin_label=dbg_ab,
+                cohorts=covid_mort_cohorts,
+                followup_start=followup_start,
+                followup_end=followup_end,
+            )
+            hist_tbl.to_csv(
+                out_dir / f"debug_enrolled_covid_deaths_weekly_total_age_{dbg_slug}.csv",
+                index=False,
+            )
+            in_win = int(hist_tbl["deaths_covid_enrolled_total"].sum())
+            _log(
+                f"debug {dbg_ab}: enrolled persons (union {covid_mort_cohorts})={n_ppl:,}; "
+                f"with parsed COVID-death week={n_cv_dt:,}; "
+                f"COVID deaths bucketed into follow-up [{followup_start}–{followup_end}]={in_win:,}. "
+                "These are analytic-cohort counts (same file / dose strata), not national 70+ totals."
+            )
+            plot_debug_weekly_covid_deaths_enrolled_total(
+                weekly,
+                out_dir / f"debug_weekly_covid_deaths_ENROLLED_TOTAL_age_{dbg_slug}.png",
+                age_bin=dbg_ab,
+                wave_start=ws,
+                wave_end=we,
+                cohorts=covid_mort_cohorts,
                 dpi=dpi,
             )
 

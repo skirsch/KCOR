@@ -42,10 +42,9 @@ def plot_case_rate(
     ax.set_xticks(x[:: max(1, len(x) // 12)])
     ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
     ax.set_ylabel("cases / population at risk")
-    ax.set_title(f"Case rate (age_bin={age_bin})")
+    ax.set_xlabel("ISO week")
+    ax.set_title(f"Weekly case rate (calendar time, age_bin={age_bin})")
     ax.legend()
-    if age_bin is not None:
-        ax.set_title(f"Kaplan-Meier survival post first infection (all-cause death) - age_bin={age_bin}")
     ax.grid(True, alpha=0.3)
     _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
     fig.tight_layout()
@@ -73,10 +72,9 @@ def plot_cfr(
     ax.set_xticks(x[:: max(1, len(x) // 12)])
     ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
     ax.set_ylabel(cfr_col)
-    ax.set_title(f"CFR ({cfr_col}, age_bin={age_bin})")
+    ax.set_xlabel("ISO week")
+    ax.set_title(f"Weekly CFR ({cfr_col}, calendar time, age_bin={age_bin})")
     ax.legend()
-    if age_bin is not None:
-        ax.set_title(f"Kaplan-Meier survival post first infection (all-cause death) - age_bin={age_bin}")
     ax.grid(True, alpha=0.3)
     _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
     fig.tight_layout()
@@ -103,10 +101,193 @@ def plot_mortality_rate(
     ax.set_xticks(x[:: max(1, len(x) // 12)])
     ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
     ax.set_ylabel("all-cause deaths / pop at risk")
-    ax.set_title(f"Mortality rate (age_bin={age_bin})")
+    ax.set_xlabel("ISO week")
+    ax.set_title(f"Weekly all-cause mortality rate (calendar time, age_bin={age_bin})")
     ax.legend()
     ax.grid(True, alpha=0.3)
     _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_covid_mortality_per_million(
+    weekly: pd.DataFrame,
+    out_path: Path,
+    *,
+    age_bin: str = "all",
+    wave_start: str,
+    wave_end: str,
+    cohorts: list[str],
+    dpi: int = 120,
+) -> None:
+    """Weekly COVID deaths per million at risk vs ISO week (calendar time); one line per cohort."""
+    rate_col = "mortality_rate_covid"
+    if rate_col not in weekly.columns:
+        return
+    sub = weekly[weekly["age_bin"] == age_bin].copy()
+    if sub.empty:
+        return
+    wk = sorted(sub["iso_week"].unique())
+    fig, ax = plt.subplots(figsize=(10, 4))
+    x = np.arange(len(wk))
+    any_line = False
+    for cohort in cohorts:
+        if cohort not in set(sub["cohort"].unique()):
+            continue
+        s = sub[sub["cohort"] == cohort].set_index("iso_week").reindex(wk)
+        y = pd.to_numeric(s[rate_col], errors="coerce").to_numpy(dtype=float) * 1.0e6
+        ax.plot(x, y, marker="o", ms=2, label=cohort)
+        any_line = True
+    if not any_line:
+        plt.close(fig)
+        return
+    ax.set_xticks(x[:: max(1, len(x) // 12)])
+    ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
+    ax.set_ylabel("COVID deaths per million at risk (weekly)")
+    ax.set_xlabel("ISO week")
+    ax.set_title(
+        f"Weekly COVID mortality per million at risk (calendar time, age_bin={age_bin})\n"
+        "per enrollment cohort in analytic file — not national vital statistics"
+    )
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_debug_weekly_covid_deaths(
+    weekly: pd.DataFrame,
+    out_path: Path,
+    *,
+    age_bin: str,
+    wave_start: str,
+    wave_end: str,
+    cohorts: list[str],
+    dpi: int = 120,
+) -> None:
+    """Raw weekly COVID death counts (no per-million scaling) vs ISO week — sanity check for sparse strata."""
+    col = "deaths_covid"
+    if col not in weekly.columns:
+        return
+    sub = weekly[weekly["age_bin"] == age_bin].copy()
+    if sub.empty:
+        return
+    wk = sorted(sub["iso_week"].unique())
+    fig, ax = plt.subplots(figsize=(10, 4))
+    x = np.arange(len(wk))
+    any_line = False
+    for cohort in cohorts:
+        if cohort not in set(sub["cohort"].unique()):
+            continue
+        s = sub[sub["cohort"] == cohort].set_index("iso_week").reindex(wk)
+        y = pd.to_numeric(s[col], errors="coerce").fillna(0).to_numpy(dtype=float)
+        ax.plot(x, y, marker="o", ms=4, linestyle="-", label=cohort)
+        any_line = True
+    if not any_line:
+        plt.close(fig)
+        return
+    ax.set_xticks(x[:: max(1, len(x) // 12)])
+    ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
+    ax.set_ylabel("COVID deaths (weekly count)")
+    ax.set_xlabel("ISO week")
+    ax.set_title(
+        f"DEBUG: weekly COVID deaths by enrollment cohort (age_bin={age_bin})\n"
+        "analytic file only — sum dose0+dose1+dose2 ≠ national 70+ vital stats"
+    )
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_debug_weekly_population_at_risk(
+    weekly: pd.DataFrame,
+    out_path: Path,
+    *,
+    age_bin: str,
+    wave_start: str,
+    wave_end: str,
+    cohorts: list[str],
+    dpi: int = 120,
+) -> None:
+    """Weekly population at risk (denominator for rates; person-weeks in weekly bins) vs ISO week."""
+    col = "population_at_risk"
+    if col not in weekly.columns:
+        return
+    sub = weekly[weekly["age_bin"] == age_bin].copy()
+    if sub.empty:
+        return
+    wk = sorted(sub["iso_week"].unique())
+    fig, ax = plt.subplots(figsize=(10, 4))
+    x = np.arange(len(wk))
+    any_line = False
+    for cohort in cohorts:
+        if cohort not in set(sub["cohort"].unique()):
+            continue
+        s = sub[sub["cohort"] == cohort].set_index("iso_week").reindex(wk)
+        y = pd.to_numeric(s[col], errors="coerce").to_numpy(dtype=float)
+        ax.plot(x, y, marker="o", ms=2, label=cohort)
+        any_line = True
+    if not any_line:
+        plt.close(fig)
+        return
+    ax.set_xticks(x[:: max(1, len(x) // 12)])
+    ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
+    ax.set_ylabel("Population at risk (weekly, ≈ person-weeks)")
+    ax.set_xlabel("ISO week")
+    ax.set_title(
+        f"DEBUG: weekly population at risk by cohort (age_bin={age_bin})\n"
+        "denominator for rates; same enrolled analytic cohort as above"
+    )
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    _wave_shade(ax, sorted(sub["iso_week"].unique()), wave_start, wave_end, alpha=0.15, color="orange")
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=dpi)
+    plt.close(fig)
+
+
+def plot_debug_weekly_covid_deaths_enrolled_total(
+    weekly: pd.DataFrame,
+    out_path: Path,
+    *,
+    age_bin: str,
+    wave_start: str,
+    wave_end: str,
+    cohorts: list[str],
+    dpi: int = 120,
+) -> None:
+    """Single series: sum of ``deaths_covid`` over enrollment cohorts (same week × age_bin)."""
+    col = "deaths_covid"
+    if col not in weekly.columns:
+        return
+    sub = weekly[(weekly["age_bin"] == age_bin) & (weekly["cohort"].isin(cohorts))].copy()
+    if sub.empty:
+        return
+    tot = sub.groupby("iso_week", sort=False)[col].sum()
+    wk = sorted(tot.index.tolist())
+    if not wk:
+        return
+    fig, ax = plt.subplots(figsize=(10, 4))
+    x = np.arange(len(wk))
+    y = tot.reindex(wk).fillna(0).to_numpy(dtype=float)
+    ax.plot(x, y, marker="o", ms=4, linestyle="-", color="black", label="sum(dose cohorts)")
+    ax.set_xticks(x[:: max(1, len(x) // 12)])
+    ax.set_xticklabels([wk[i] for i in x[:: max(1, len(x) // 12)]], rotation=45, ha="right")
+    ax.set_ylabel("COVID deaths (weekly count, summed)")
+    ax.set_xlabel("ISO week")
+    ax.set_title(
+        f"DEBUG: enrolled cohort total weekly COVID deaths (age_bin={age_bin})\n"
+        "dose0 + dose1 + dose2 in analytic file — compare to ministry totals only with care"
+    )
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    _wave_shade(ax, wk, wave_start, wave_end, alpha=0.15, color="orange")
     fig.tight_layout()
     fig.savefig(out_path, dpi=dpi)
     plt.close(fig)

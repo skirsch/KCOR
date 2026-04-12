@@ -118,6 +118,40 @@ def _iso_week_label_to_date(iso: str) -> date | None:
     return ts.date()
 
 
+def _bucket_event_week_index(raw: object, wmap: dict[date, int]) -> int | None:
+    """
+    Map an event calendar date to a follow-up week index.
+
+    Prefer exact ``wmap`` lookup (pipeline usually stores ISO-week Mondays). If missing, normalize
+    to the ISO-week Monday containing ``raw`` so deaths saved as an arbitrary weekday still bucket
+    correctly.
+    """
+    if raw is None or (isinstance(raw, float) and np.isnan(raw)):
+        return None
+    if isinstance(raw, pd.Timestamp):
+        d = raw.date()
+    elif isinstance(raw, date):
+        d = raw
+    elif hasattr(raw, "date") and callable(raw.date):
+        try:
+            d = raw.date()
+        except Exception:
+            return None
+    else:
+        return None
+    if not isinstance(d, date):
+        return None
+    j = wmap.get(d)
+    if j is not None:
+        return j
+    y, wk, _ = d.isocalendar()
+    try:
+        mon = date.fromisocalendar(y, wk, 1)
+    except ValueError:
+        return None
+    return wmap.get(mon)
+
+
 def _hist_event(sub: pd.DataFrame, col: str, weeks: list[date], wmap: dict[date, int]) -> np.ndarray:
     n_weeks = len(weeks)
     h = np.zeros(n_weeks, dtype=np.int64)
@@ -125,7 +159,7 @@ def _hist_event(sub: pd.DataFrame, col: str, weeks: list[date], wmap: dict[date,
         return h
     s = sub[col].dropna()
     for d in s:
-        j = wmap.get(d)
+        j = _bucket_event_week_index(d, wmap)
         if j is not None:
             h[j] += 1
     return h
@@ -174,7 +208,7 @@ def _episode_death_numerators(
     m = m.sort_values(["ID", "infection_monday", "_inv"], ascending=[True, False, False])
     attrib = m.groupby("ID", sort=False).head(1)
     for inf_mon in attrib["infection_monday"]:
-        j = wmap.get(inf_mon)
+        j = _bucket_event_week_index(inf_mon, wmap)
         if j is not None:
             h[j] += 1
     return h
@@ -327,6 +361,43 @@ def _compute_weekly_stratum_rows(
             }
         )
     return rows
+
+
+def enrolled_covid_death_histogram_by_week(
+    df: pd.DataFrame,
+    *,
+    age_bin_label: str,
+    cohorts: list[str],
+    followup_start: str,
+    followup_end: str,
+) -> tuple[pd.DataFrame, int, int]:
+    """
+    Weekly histogram of COVID deaths (``covid_death_monday``) for enrolled people in
+    ``age_bin_label`` who fall in any of ``cohorts`` (dose0|dose1|dose2 union). Same bucketing as
+    ``build_weekly_metrics``; **not** national vital-statistics totals.
+
+    Returns ``(table, n_people_one_row_each, n_rows_with_non_missing_covid_death_date)``.
+    """
+    weeks = iter_followup_mondays(followup_start, followup_end)
+    wmap = _week_index_map(weeks)
+    iso_labels = [monday_to_iso_week(w) for w in weeks]
+    if not cohorts:
+        z = np.zeros(len(iso_labels), dtype=np.int64)
+        return (pd.DataFrame({"iso_week": iso_labels, "deaths_covid_enrolled_total": z}), 0, 0)
+    cm = cohort_mask(df, cohorts[0])
+    for c in cohorts[1:]:
+        cm = cm | cohort_mask(df, c)
+    sub = df.loc[cm & (df["age_bin"] == age_bin_label)]
+    subp = _sub_one_row_per_person(sub)
+    n_people = len(subp)
+    n_cv = (
+        int(subp["covid_death_monday"].notna().sum())
+        if "covid_death_monday" in subp.columns
+        else 0
+    )
+    h = _hist_event(subp, "covid_death_monday", weeks, wmap)
+    out = pd.DataFrame({"iso_week": iso_labels, "deaths_covid_enrolled_total": h.astype(np.int64)})
+    return out, n_people, n_cv
 
 
 def build_weekly_metrics(
