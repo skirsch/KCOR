@@ -11,8 +11,8 @@ Kaplan–Meier outputs need ``lifelines`` in the project venv: from repo root ru
 ``.venv\\Scripts\\python.exe test/CFR/run_cfr_analysis.py`` (Windows), or ``test/CFR/run_with_venv.sh``.
 
 Optional landmark all-cause KM from a fixed ISO week (``extensions.km_landmark_survival``) writes
-``km_landmark_<week>_first_mfg_age_<bin>.csv`` / ``.png`` and
-``km_landmark_<week>_dose_censor_age_<bin>.csv`` / ``.png`` under the configured output directory.
+per-age ``km_landmark_<week>_first_mfg_age_<bin>.png`` and ``..._dose_censor_age_<bin>.png``, plus long
+CSVs ``km_landmark_<week>_first_mfg_by_age_bin.csv`` and ``..._dose_censor_by_age_bin.csv``.
 """
 
 from __future__ import annotations
@@ -44,6 +44,7 @@ from km_landmark import (  # noqa: E402
     FIRST_MFG_COHORTS,
     build_km_landmark_dose_nextdose_censor_table,
     build_km_landmark_first_mfg_table,
+    resolve_landmark_age_bins,
 )
 from cohort_builder import (  # noqa: E402
     PRIMARY_ENROLLMENT_COHORTS,
@@ -954,57 +955,82 @@ def main() -> None:
 
     km_land_cfg = ext.get("km_landmark_survival")
     if isinstance(km_land_cfg, dict) and km_land_cfg.get("enabled"):
-        _log("Kaplan–Meier landmark (first-dose manufacturer + dose with next-dose censor) …")
         lm_week = str(km_land_cfg.get("landmark_iso_week") or enrollment_week)
-        lm_age = str(km_land_cfg.get("age_bin") or "70-120")
-        age_slug = lm_age.replace("-", "_")
-
-        mfg_tbl, mfg_reason = build_km_landmark_first_mfg_table(
-            df_model,
-            landmark_iso_week=lm_week,
-            followup_end=followup_end,
-            age_bin=lm_age,
-        )
-        if len(mfg_tbl):
-            mfg_path = out_dir / f"km_landmark_{lm_week.replace('-', '_')}_first_mfg_age_{age_slug}.csv"
-            mfg_tbl.to_csv(mfg_path, index=False)
-            plot_km_survival_curves(
-                mfg_tbl,
-                mfg_path.with_suffix(".png"),
-                title=(
-                    f"Landmark Kaplan–Meier (all-cause), first-dose manufacturer at {lm_week}\n"
-                    f"age_bin={lm_age} (alive at landmark; censor at follow-up end)"
-                ),
-                xlabel="weeks since landmark (ISO week Monday)",
-                dpi=dpi,
-                cohort_order=FIRST_MFG_COHORTS,
+        lm_slug = lm_week.replace("-", "_")
+        lm_ages = resolve_landmark_age_bins(km_land_cfg, age_labels)
+        _bad = [x for x in lm_ages if x not in set(age_labels)]
+        if _bad:
+            raise ValueError(
+                f"km_landmark_survival age_bins not in cfg age_bins labels: {_bad!r} "
+                f"(allowed: {age_labels!r})"
             )
-        else:
-            _log(f"landmark KM (first mfg) skipped: {mfg_reason}")
-
-        dose_tbl, dose_reason = build_km_landmark_dose_nextdose_censor_table(
-            df_model,
-            landmark_iso_week=lm_week,
-            followup_end=followup_end,
-            age_bin=lm_age,
+        _log(
+            "Kaplan–Meier landmark (first-dose manufacturer + dose with next-dose censor) "
+            f"for age_bin in [{', '.join(lm_ages)}] …"
         )
-        if len(dose_tbl):
-            dose_path = out_dir / f"km_landmark_{lm_week.replace('-', '_')}_dose_censor_age_{age_slug}.csv"
-            dose_tbl.to_csv(dose_path, index=False)
-            plot_km_survival_curves(
-                dose_tbl,
-                dose_path.with_suffix(".png"),
-                title=(
-                    f"Landmark Kaplan–Meier (all-cause), dose at {lm_week}\n"
-                    f"age_bin={lm_age}; censor at next dose or follow-up end"
-                ),
-                xlabel="weeks since landmark (ISO week Monday)",
-                dpi=dpi,
-                cohort_order=DOSE_COHORTS,
+
+        mfg_frames: list[pd.DataFrame] = []
+        dose_frames: list[pd.DataFrame] = []
+        for lm_age in lm_ages:
+            age_slug = lm_age.replace("-", "_")
+
+            mfg_tbl, mfg_reason = build_km_landmark_first_mfg_table(
+                df_model,
+                landmark_iso_week=lm_week,
+                followup_end=followup_end,
+                age_bin=lm_age,
             )
-        else:
-            _log(f"landmark KM (dose censor) skipped: {dose_reason}")
-        _log("landmark KM tables/plots done")
+            if len(mfg_tbl):
+                mfg_frames.append(mfg_tbl)
+                mfg_path = out_dir / f"km_landmark_{lm_slug}_first_mfg_age_{age_slug}.png"
+                plot_km_survival_curves(
+                    mfg_tbl,
+                    mfg_path,
+                    title=(
+                        f"Landmark Kaplan–Meier (all-cause), first-dose manufacturer at {lm_week}\n"
+                        f"age_bin={lm_age} (alive at landmark; censor at follow-up end)"
+                    ),
+                    xlabel="weeks since landmark (ISO week Monday)",
+                    dpi=dpi,
+                    cohort_order=FIRST_MFG_COHORTS,
+                )
+            elif mfg_reason:
+                _log(f"landmark KM (first mfg, age_bin={lm_age}) skipped: {mfg_reason}")
+
+            dose_tbl, dose_reason = build_km_landmark_dose_nextdose_censor_table(
+                df_model,
+                landmark_iso_week=lm_week,
+                followup_end=followup_end,
+                age_bin=lm_age,
+            )
+            if len(dose_tbl):
+                dose_frames.append(dose_tbl)
+                dose_path = out_dir / f"km_landmark_{lm_slug}_dose_censor_age_{age_slug}.png"
+                plot_km_survival_curves(
+                    dose_tbl,
+                    dose_path,
+                    title=(
+                        f"Landmark Kaplan–Meier (all-cause), dose at {lm_week}\n"
+                        f"age_bin={lm_age}; censor at next dose or follow-up end"
+                    ),
+                    xlabel="weeks since landmark (ISO week Monday)",
+                    dpi=dpi,
+                    cohort_order=DOSE_COHORTS,
+                )
+            elif dose_reason:
+                _log(f"landmark KM (dose censor, age_bin={lm_age}) skipped: {dose_reason}")
+
+        if mfg_frames:
+            pd.concat(mfg_frames, ignore_index=True).to_csv(
+                out_dir / f"km_landmark_{lm_slug}_first_mfg_by_age_bin.csv",
+                index=False,
+            )
+        if dose_frames:
+            pd.concat(dose_frames, ignore_index=True).to_csv(
+                out_dir / f"km_landmark_{lm_slug}_dose_censor_by_age_bin.csv",
+                index=False,
+            )
+        _log("landmark KM plots + by_age_bin CSVs done")
 
     if ext.get("time_since_dose2_plots"):
         _log("time-since-dose2 weekly slice …")

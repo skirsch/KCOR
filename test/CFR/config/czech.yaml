@@ -40,6 +40,7 @@ cfr:
 filters:
   # If true: drop rows with AstraZeneca, J&J, Novavax, etc. on any of doses 1–4 (same as KCOR_ts).
   # Unvaccinated rows (empty manufacturer fields) are kept. This is Pfizer+Moderna-only for vaccinated people.
+  # Set false to keep AstraZeneca / J&J / Novavax rows (needed for landmark KM cohort ``other``).
   restrict_to_pfizer_moderna: true
   # Legacy alias (same meaning): non_mrna_only: true
   # Default pipeline keeps all Infection episodes (1,2,3,…). Set true to drop Infection>1 (legacy).
@@ -95,11 +96,13 @@ falsification:
 # Optional: Kaplan–Meier from first infection; time-since-2nd-dose weeks bins for dose2-only table
 extensions:
   km_post_infection: true
-  # Landmark all-cause KM from ISO week Monday (same clock as enrollment); age_bin must match an age_bins label.
+  # Landmark all-cause KM from ISO week Monday (same clock as enrollment).
+  # age_bins: all → every band in cohort.age_bins; or age_bin: "70-120" for a single band.
+  # Manufacturer strata: unvax | pfizer | moderna | other (AZ / J&J / Novavax / unknown code).
   km_landmark_survival:
     enabled: true
     landmark_iso_week: "2021-24"
-    age_bin: "70-120"
+    age_bins: all
   time_since_dose2_weeks_bins: [[0, 4], [5, 12], [13, 999]]
   time_since_dose2_plots: true
 

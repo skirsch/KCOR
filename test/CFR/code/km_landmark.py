@@ -16,9 +16,9 @@ _REPO_CODE = Path(__file__).resolve().parents[3] / "code"
 if str(_REPO_CODE) not in sys.path:
     sys.path.insert(0, str(_REPO_CODE))
 
-from mfg_codes import MFG_DICT, MODERNA, OTHER, PFIZER  # noqa: E402
+from mfg_codes import MFG_DICT, MODERNA, OTHER, PFIZER, UNVAX  # noqa: E402
 
-FIRST_MFG_COHORTS = ("unvax", "pfizer", "moderna", "other_mfg")
+FIRST_MFG_COHORTS = ("unvax", "pfizer", "moderna", "other")
 DOSE_COHORTS = ("dose0", "dose1", "dose2")
 
 
@@ -56,9 +56,13 @@ def _min_time_event(pairs: list[tuple[float, int]]) -> tuple[float, int]:
 
 def _mfg_from_code(code: object) -> str:
     if code is None or (isinstance(code, float) and np.isnan(code)):
-        return parse_mfg("")
+        return UNVAX
     s = str(code).strip()
     return MFG_DICT.get(s, OTHER)
+
+
+def _horizon_weeks(landmark: date, censor_d: date) -> float:
+    return float(max(weeks_between(landmark, censor_d), 0))
 
 
 def _assign_first_mfg_stratum(
@@ -74,7 +78,7 @@ def _assign_first_mfg_stratum(
         return "pfizer"
     if m == MODERNA:
         return "moderna"
-    return "other_mfg"
+    return "other"
 
 
 def _assign_dose_stratum(
@@ -89,6 +93,27 @@ def _assign_dose_stratum(
     if sd is None or sd > landmark:
         return "dose1"
     return "dose2"
+
+
+def resolve_landmark_age_bins(km_land_cfg: dict, age_labels: list[str]) -> list[str]:
+    """
+    Which age_bin labels to run landmark KM for.
+
+    * ``age_bins: all`` (string) or ``age_bins: [ "40-49", ... ]`` — explicit list or all cfg age bands.
+    * ``age_bin: all`` — same as all bands.
+    * ``age_bin: "70-120"`` — single band (legacy).
+    """
+    raw_bins = km_land_cfg.get("age_bins")
+    if raw_bins is not None:
+        if isinstance(raw_bins, str) and raw_bins.strip().lower() == "all":
+            return list(age_labels)
+        if raw_bins is True:
+            return list(age_labels)
+        return [str(x) for x in raw_bins]
+    ab = km_land_cfg.get("age_bin", "all")
+    if isinstance(ab, str) and ab.strip().lower() == "all":
+        return list(age_labels)
+    return [str(ab)]
 
 
 def _fit_km_to_table(
@@ -144,9 +169,11 @@ def build_km_landmark_first_mfg_table(
     Landmark KM: strata by first-dose manufacturer as of the landmark week (fixed enrollment).
     Unvaccinated at landmark = no first dose on or before landmark Monday.
     Death vs administrative censor at end of follow-up (no dose-based censoring).
+    Deaths recorded after ``followup_end`` are treated as alive through the horizon (not events).
     """
     landmark = _landmark_monday(landmark_iso_week)
     censor_d = _censor_horizon_date(followup_end)
+    wh = _horizon_weeks(landmark, censor_d)
 
     if "age_bin" not in df.columns:
         return pd.DataFrame(), "age_bin column missing (build enrollment table first)"
@@ -160,26 +187,26 @@ def build_km_landmark_first_mfg_table(
     fd = subp["first_dose_monday"].to_numpy()
     vc = subp["VaccineCode_FirstDose"].to_numpy() if "VaccineCode_FirstDose" in subp.columns else np.array([""] * len(subp), dtype=object)
 
-    keep = np.zeros(len(subp), dtype=bool)
+    n_at_risk = 0
     cohort_to_te: dict[str, tuple[list[float], list[int]]] = {c: ([], []) for c in FIRST_MFG_COHORTS}
 
     for i in range(len(subp)):
         dth = _as_date(dm[i])
         if dth is not None and dth < landmark:
             continue
-        keep[i] = True
+        n_at_risk += 1
         st = _assign_first_mfg_stratum(fd[i], vc[i], landmark)
-        if dth is not None and dth >= landmark:
+        # Deaths after follow-up end are not observed in this window: administrative censor at horizon.
+        if dth is not None and landmark <= dth <= censor_d:
             t = float(max(weeks_between(landmark, dth), 0))
             e = 1
         else:
-            t = float(max(weeks_between(landmark, censor_d), 0))
-            e = 0
+            t, e = wh, 0
         tt, ee = cohort_to_te[st]
         tt.append(t)
         ee.append(e)
 
-    if not keep.any():
+    if n_at_risk == 0:
         return pd.DataFrame(), "no one alive at landmark (all deaths strictly before landmark week)"
 
     return _fit_km_to_table(cohort_to_te, age_bin=age_bin)
@@ -195,6 +222,7 @@ def build_km_landmark_dose_nextdose_censor_table(
     """
     Landmark KM with dose0 | dose1 | dose2 at landmark; censor at next dose (2nd or 3rd) or follow-up end.
     Death is the event; dose transitions are non-informative censoring (standard KM).
+    Times and deaths are truncated at ``followup_end``; dose steps after that week are ignored.
     """
     landmark = _landmark_monday(landmark_iso_week)
     censor_d = _censor_horizon_date(followup_end)
@@ -214,7 +242,7 @@ def build_km_landmark_dose_nextdose_censor_table(
 
     cohort_to_te: dict[str, tuple[list[float], list[int]]] = {c: ([], []) for c in DOSE_COHORTS}
 
-    wh = float(max(weeks_between(landmark, censor_d), 0))
+    wh = _horizon_weeks(landmark, censor_d)
 
     for i in range(len(subp)):
         dth = _as_date(dm[i])
@@ -229,19 +257,19 @@ def build_km_landmark_dose_nextdose_censor_table(
         pairs: list[tuple[float, int]] = [(wh, 0)]
 
         if stratum == "dose0":
-            if dth is not None and dth >= landmark:
+            if dth is not None and landmark <= dth <= censor_d:
                 pairs.append((float(max(weeks_between(landmark, dth), 0)), 1))
-            if d1 is not None and d1 > landmark:
+            if d1 is not None and landmark < d1 <= censor_d:
                 pairs.append((float(max(weeks_between(landmark, d1), 0)), 0))
         elif stratum == "dose1":
-            if dth is not None and dth >= landmark:
+            if dth is not None and landmark <= dth <= censor_d:
                 pairs.append((float(max(weeks_between(landmark, dth), 0)), 1))
-            if d2 is not None and d2 > landmark:
+            if d2 is not None and landmark < d2 <= censor_d:
                 pairs.append((float(max(weeks_between(landmark, d2), 0)), 0))
         else:  # dose2
-            if dth is not None and dth >= landmark:
+            if dth is not None and landmark <= dth <= censor_d:
                 pairs.append((float(max(weeks_between(landmark, dth), 0)), 1))
-            if d3 is not None and d3 > landmark:
+            if d3 is not None and landmark < d3 <= censor_d:
                 pairs.append((float(max(weeks_between(landmark, d3), 0)), 0))
 
         t, e = _min_time_event(pairs)

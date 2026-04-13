@@ -13,6 +13,7 @@ sys.path.insert(0, str((Path(__file__).resolve().parent / "code")))
 from km_landmark import (  # noqa: E402
     build_km_landmark_dose_nextdose_censor_table,
     build_km_landmark_first_mfg_table,
+    resolve_landmark_age_bins,
 )
 
 
@@ -45,7 +46,7 @@ def test_landmark_first_mfg_table():
     )
     assert reason == ""
     assert not tbl.empty
-    assert set(tbl["cohort"].unique()) <= {"unvax", "pfizer", "moderna", "other_mfg"}
+    assert set(tbl["cohort"].unique()) <= {"unvax", "pfizer", "moderna", "other"}
     # ID 1 died before landmark → excluded
     # ID 2 Pfizer at L, death at L → event t=0 in pfizer
     # ID 3 Moderna at L, death after → event in moderna
@@ -68,3 +69,11 @@ def test_landmark_dose_censor_table():
     assert not tbl.empty
     assert set(tbl["cohort"].unique()) <= {"dose0", "dose1", "dose2"}
     assert "dose2" in set(tbl["cohort"].unique())
+
+
+def test_resolve_landmark_age_bins():
+    labels = ["40-49", "50-59", "70-120"]
+    assert resolve_landmark_age_bins({"age_bins": "all"}, labels) == labels
+    assert resolve_landmark_age_bins({"age_bin": "all"}, labels) == labels
+    assert resolve_landmark_age_bins({"age_bin": "70-120"}, labels) == ["70-120"]
+    assert resolve_landmark_age_bins({"age_bins": ["40-49", "70-120"]}, labels) == ["40-49", "70-120"]
