@@ -18,7 +18,8 @@ if str(_REPO_CODE) not in sys.path:
 
 from mfg_codes import MFG_DICT, MODERNA, OTHER, PFIZER, UNVAX  # noqa: E402
 
-FIRST_MFG_COHORTS = ("unvax", "pfizer", "moderna", "other")
+# Legend order: Pfizer, Moderna, unvaccinated at landmark, non–Pfizer/Moderna first dose.
+FIRST_MFG_COHORTS = ("pfizer", "moderna", "unvax", "OTHER")
 DOSE_COHORTS = ("dose0", "dose1", "dose2")
 
 
@@ -78,7 +79,7 @@ def _assign_first_mfg_stratum(
         return "pfizer"
     if m == MODERNA:
         return "moderna"
-    return "other"
+    return "OTHER"
 
 
 def _assign_dose_stratum(

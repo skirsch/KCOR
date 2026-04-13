@@ -46,7 +46,7 @@ def test_landmark_first_mfg_table():
     )
     assert reason == ""
     assert not tbl.empty
-    assert set(tbl["cohort"].unique()) <= {"unvax", "pfizer", "moderna", "other"}
+    assert set(tbl["cohort"].unique()) <= {"unvax", "pfizer", "moderna", "OTHER"}
     # ID 1 died before landmark → excluded
     # ID 2 Pfizer at L, death at L → event t=0 in pfizer
     # ID 3 Moderna at L, death after → event in moderna
