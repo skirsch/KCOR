@@ -72,7 +72,11 @@ from falsification import (  # noqa: E402
     build_quantitative_scenario_bounds,
     build_ve_death_signal_bounds,
 )
-from load_data import load_czech_records, validate_loaded_schema  # noqa: E402
+from load_data import (  # noqa: E402
+    filter_to_pfizer_moderna_only,
+    load_czech_records,
+    validate_loaded_schema,
+)
 from metrics import (  # noqa: E402
     build_implied_ve_long_summary,
     build_period_aggregate_summary,
@@ -187,26 +191,50 @@ def main() -> None:
     if cfg.get("reinfection_sensitivity") or filt.get("reinfection_sensitivity", False):
         single_inf = False
 
+    _ext_prev = cfg.get("extensions", {}) or {}
+    _km_lc = _ext_prev.get("km_landmark_survival")
+    split_enrolled_for_landmark_mfg = (
+        isinstance(_km_lc, dict) and bool(_km_lc.get("enabled")) and restrict_pm
+    )
+
     _log(f"repo_root={REPO_ROOT}")
     _log(f"reading {data_path}")
     if restrict_pm:
-        _log(
-            "restrict_to_pfizer_moderna=True "
-            "(unvaccinated + Pfizer/Moderna on doses 1–4 only; drops AZ/J&J/Novavax/other)"
-        )
+        if split_enrolled_for_landmark_mfg:
+            _log(
+                "restrict_to_pfizer_moderna=True for main pipeline "
+                "(post-enrollment row filter). Full enrolled table is also kept for landmark "
+                "first-dose KM so cohort OTHER (non–Pfizer/Moderna first dose) can appear."
+            )
+        else:
+            _log(
+                "restrict_to_pfizer_moderna=True "
+                "(unvaccinated + Pfizer/Moderna on doses 1–4 only; drops AZ/J&J/Novavax/other)"
+            )
     else:
         _log("restrict_to_pfizer_moderna=False (all manufacturer codes kept)")
     _log(f"single_infection_only={single_inf}")
 
-    _log("load_czech_records …")
-    df = load_czech_records(
-        data_path,
-        restrict_to_pfizer_moderna=restrict_pm,
-        single_infection_only=single_inf,
-        repo_code_dir=repo_code,
-    )
-    validate_loaded_schema(df, stage="load")
-    _log(f"rows after load: {len(df):,}")
+    if split_enrolled_for_landmark_mfg:
+        _log("load_czech_records (all manufacturers; Pfizer/Moderna-only filter after enrollment) …")
+        df_all = load_czech_records(
+            data_path,
+            restrict_to_pfizer_moderna=False,
+            single_infection_only=single_inf,
+            repo_code_dir=repo_code,
+        )
+        validate_loaded_schema(df_all, stage="load")
+        _log(f"rows after load: {len(df_all):,}")
+    else:
+        _log("load_czech_records …")
+        df = load_czech_records(
+            data_path,
+            restrict_to_pfizer_moderna=restrict_pm,
+            single_infection_only=single_inf,
+            repo_code_dir=repo_code,
+        )
+        validate_loaded_schema(df, stage="load")
+        _log(f"rows after load: {len(df):,}")
 
     _log("reading cohort / follow-up settings from config …")
     cohort_cfg = cfg["cohort"]
@@ -248,14 +276,29 @@ def main() -> None:
         f"build_enrollment_table (enrollment_week={enrollment_week}; "
         "vectorized date parse like KCOR_CMR) …"
     )
-    df = build_enrollment_table(
-        df,
-        enrollment_week=enrollment_week,
-        age_bins=age_bins_config,
-        progress_log=_log,
-    )
-    df = add_prior_infection_before_enrollment_flag(df, progress_log=_log)
-    validate_loaded_schema(df, stage="enrollment")
+    if split_enrolled_for_landmark_mfg:
+        df_all = build_enrollment_table(
+            df_all,
+            enrollment_week=enrollment_week,
+            age_bins=age_bins_config,
+            progress_log=_log,
+        )
+        df_all = add_prior_infection_before_enrollment_flag(df_all, progress_log=_log)
+        validate_loaded_schema(df_all, stage="enrollment")
+        df = filter_to_pfizer_moderna_only(df_all, repo_code_dir=repo_code)
+        _log(
+            f"Pfizer/Moderna-only filter applied post-enrollment: {len(df):,} rows "
+            f"(dropped {len(df_all) - len(df):,} with non–Pfizer/Moderna on doses 1–4)"
+        )
+    else:
+        df = build_enrollment_table(
+            df,
+            enrollment_week=enrollment_week,
+            age_bins=age_bins_config,
+            progress_log=_log,
+        )
+        df = add_prior_infection_before_enrollment_flag(df, progress_log=_log)
+        validate_loaded_schema(df, stage="enrollment")
 
     n_total = len(df)
     excluded_age = int(df["age_bin"].isna().sum())
@@ -272,6 +315,10 @@ def main() -> None:
         )
 
     df_model = df[df["age_bin"].notna()].copy()
+    if split_enrolled_for_landmark_mfg:
+        df_landmark_mfg = df_all[df_all["age_bin"].notna()].copy()
+    else:
+        df_landmark_mfg = df_model
     if df_model["covid_death_monday"].notna().sum() == 0:
         _log(
             "warning: no parseable COVID death dates (Date_COVID_death); "
@@ -506,7 +553,7 @@ def main() -> None:
     fals_age_groups = fals_cfg.get(
         "age_groups",
         {
-            younger_group: ["40-49", "50-59", "60-69"],
+            younger_group: ["10-19", "20-29", "30-39", "40-49", "50-59", "60-69"],
             older_group: ["70-120"],
         },
     )
@@ -517,9 +564,21 @@ def main() -> None:
     split_definitions = fals_cfg.get(
         "split_definitions",
         [
-            {"name": "70plus_vs_under70", "older": ["70-120"], "younger": ["40-49", "50-59", "60-69"]},
-            {"name": "60plus_vs_under60", "older": ["60-69", "70-120"], "younger": ["40-49", "50-59"]},
-            {"name": "50plus_vs_under50", "older": ["50-59", "60-69", "70-120"], "younger": ["40-49"]},
+            {
+                "name": "70plus_vs_under70",
+                "older": ["70-120"],
+                "younger": ["10-19", "20-29", "30-39", "40-49", "50-59", "60-69"],
+            },
+            {
+                "name": "60plus_vs_under60",
+                "older": ["60-69", "70-120"],
+                "younger": ["10-19", "20-29", "30-39", "40-49", "50-59"],
+            },
+            {
+                "name": "50plus_vs_under50",
+                "older": ["50-59", "60-69", "70-120"],
+                "younger": ["10-19", "20-29", "30-39", "40-49"],
+            },
         ],
     )
     _log(
@@ -975,7 +1034,7 @@ def main() -> None:
             age_slug = lm_age.replace("-", "_")
 
             mfg_tbl, mfg_reason = build_km_landmark_first_mfg_table(
-                df_model,
+                df_landmark_mfg,
                 landmark_iso_week=lm_week,
                 followup_end=followup_end,
                 age_bin=lm_age,

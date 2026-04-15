@@ -141,6 +141,34 @@ def _load_mfg_codes(repo_code_dir: Path):
     return mod.parse_mfg, mod.PFIZER, mod.MODERNA
 
 
+def filter_to_pfizer_moderna_only(df: pd.DataFrame, *, repo_code_dir: Path) -> pd.DataFrame:
+    """
+    Drop rows with any non-empty manufacturer on doses 1–4 that is not Pfizer or Moderna.
+
+    Same rule as ``load_czech_records(..., restrict_to_pfizer_moderna=True)``.
+    Unvaccinated rows (empty dose codes) are kept. Use after enrollment when the pipeline
+    needs a manufacturer-complete frame for landmark KM (OTHER) while keeping the main
+    analysis Pfizer/Moderna-only.
+    """
+    parse_mfg, PFIZER, MODERNA = _load_mfg_codes(repo_code_dir)
+    vaccine_code_cols = [
+        "VaccineCode_FirstDose",
+        "VaccineCode_SecondDose",
+        "VaccineCode_ThirdDose",
+        "VaccineCode_FourthDose",
+    ]
+    has_non_mrna = pd.Series(False, index=df.index)
+    for col in vaccine_code_cols:
+        if col not in df.columns:
+            continue
+        mfg_values = df[col].apply(
+            lambda x: parse_mfg(x) if pd.notna(x) and str(x).strip() != "" else None
+        )
+        non_mrna_mask = (mfg_values.notna()) & (mfg_values != PFIZER) & (mfg_values != MODERNA)
+        has_non_mrna = has_non_mrna | non_mrna_mask
+    return df.loc[~has_non_mrna].copy()
+
+
 def load_czech_records(
     csv_path: str | Path,
     *,
@@ -174,24 +202,7 @@ def load_czech_records(
     if restrict_to_pfizer_moderna:
         if repo_code_dir is None:
             raise ValueError("repo_code_dir required when restrict_to_pfizer_moderna=True")
-        parse_mfg, PFIZER, MODERNA = _load_mfg_codes(repo_code_dir)
-
-        vaccine_code_cols = [
-            "VaccineCode_FirstDose",
-            "VaccineCode_SecondDose",
-            "VaccineCode_ThirdDose",
-            "VaccineCode_FourthDose",
-        ]
-        has_non_mrna = pd.Series(False, index=df.index)
-        for col in vaccine_code_cols:
-            if col not in df.columns:
-                continue
-            mfg_values = df[col].apply(
-                lambda x: parse_mfg(x) if pd.notna(x) and str(x).strip() != "" else None
-            )
-            non_mrna_mask = (mfg_values.notna()) & (mfg_values != PFIZER) & (mfg_values != MODERNA)
-            has_non_mrna = has_non_mrna | non_mrna_mask
-        df = df[~has_non_mrna].copy()
+        df = filter_to_pfizer_moderna_only(df, repo_code_dir=repo_code_dir)
 
     return df
 

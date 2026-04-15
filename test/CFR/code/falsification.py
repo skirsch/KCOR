@@ -13,7 +13,10 @@ DEFAULT_VE_ASSUMPTIONS: tuple[float, ...] = (0.3, 0.5, 0.7, 0.9)
 
 def _norm_groups(age_groups: Mapping[str, Sequence[str]] | None) -> dict[str, list[str]]:
     if not age_groups:
-        return {"younger": ["40-49", "50-59", "60-69"], "older": ["70-120"]}
+        return {
+            "younger": ["10-19", "20-29", "30-39", "40-49", "50-59", "60-69"],
+            "older": ["70-120"],
+        }
     out: dict[str, list[str]] = {}
     for name, vals in age_groups.items():
         arr = [str(v) for v in vals]

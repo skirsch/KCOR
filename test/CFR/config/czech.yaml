@@ -6,7 +6,7 @@ dataset:
 cohort:
   enrollment_week: "2021-24"
   followup_start: "2021-24"
-  followup_end: "2022-20"
+  followup_end: "2023-52"
 
 baseline:
   start: "2021-24"
@@ -14,7 +14,7 @@ baseline:
 
 wave:
   start: "2021-41"
-  end: "2022-20"
+  end: "2023-52"
 
 # Enrollment ~mid-June 2021 (2021-24): strata are dose0 | dose1 | dose2 only (third dose by enrollment is negligible).
 # Do not add dose3 here — run_cfr_analysis restricts to PRIMARY_ENROLLMENT_COHORTS.
@@ -24,7 +24,11 @@ cohorts:
   - dose2
 
 # Applied to age_at_enrollment = (calendar year of enrollment_week Monday) − YearOfBirth (4-digit); not a fixed 2020 anchor.
+# Ages outside these ranges get age_bin NA and are excluded from stratified outputs.
 age_bins:
+  - [10, 19]
+  - [20, 29]
+  - [30, 39]
   - [40, 49]
   - [50, 59]
   - [60, 69]
@@ -40,7 +44,7 @@ cfr:
 filters:
   # If true: drop rows with AstraZeneca, J&J, Novavax, etc. on any of doses 1–4 (same as KCOR_ts).
   # Unvaccinated rows (empty manufacturer fields) are kept. This is Pfizer+Moderna-only for vaccinated people.
-  # Set false to keep AstraZeneca / J&J / Novavax rows (needed for landmark KM cohort OTHER).
+  # When true, weekly/CFR metrics use Pfizer+Moderna-only rows; landmark first-dose KM still uses full data so OTHER appears.
   restrict_to_pfizer_moderna: true
   # Legacy alias (same meaning): non_mrna_only: true
   # Default pipeline keeps all Infection episodes (1,2,3,…). Set true to drop Infection>1 (legacy).
@@ -76,17 +80,17 @@ falsification:
   younger_group_name: younger
   older_group_name: older
   age_groups:
-    younger: ["40-49", "50-59", "60-69"]
+    younger: ["10-19", "20-29", "30-39", "40-49", "50-59", "60-69"]
     older: ["70-120"]
   split_definitions:
     - name: "70plus_vs_under70"
-      younger: ["40-49", "50-59", "60-69"]
+      younger: ["10-19", "20-29", "30-39", "40-49", "50-59", "60-69"]
       older: ["70-120"]
     - name: "60plus_vs_under60"
-      younger: ["40-49", "50-59"]
+      younger: ["10-19", "20-29", "30-39", "40-49", "50-59"]
       older: ["60-69", "70-120"]
     - name: "50plus_vs_under50"
-      younger: ["40-49"]
+      younger: ["10-19", "20-29", "30-39", "40-49"]
       older: ["50-59", "60-69", "70-120"]
   break_iso_week: "2021-41"
   placebo_start: "2021-30"
@@ -110,7 +114,7 @@ extensions:
 # Cohort population_at_risk in weekly_metrics still follows cohort.followup_start–followup_end from enrollment.
 qa_summary:
   period_start: "2021-40"
-  period_end: "2022-20"
+  period_end: "2023-52"
   # QA period table + weekly-derived rates: only YearOfBirth → birth_band_start in this range.
   period_birth_year_min: 1940
   period_birth_year_max: 1949
