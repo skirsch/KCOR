@@ -1354,9 +1354,21 @@ def process_monte_carlo_iteration(args):
         out_mc_all_ages['YearOfBirth'] = -2  # Mark as all-ages
         # Derive DateDied from ISOweekDied (Monday of that ISO week)
         out_mc_all_ages['DateDied'] = pd.to_datetime(out_mc_all_ages['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
+
+        # Third, create born-1960-or-later (-60) aggregation.
+        out_mc_1960_plus_source = out[out['YearOfBirth'] >= 1960].copy()
+        if not out_mc_1960_plus_source.empty:
+            out_mc_1960_plus = out_mc_1960_plus_source.groupby(['ISOweekDied', 'Dose']).agg({
+                'Alive': 'sum',
+                'Dead': 'sum'
+            }).reset_index()
+            out_mc_1960_plus['YearOfBirth'] = -60
+            out_mc_1960_plus['DateDied'] = pd.to_datetime(out_mc_1960_plus['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
+        else:
+            out_mc_1960_plus = pd.DataFrame(columns=out_mc_all_ages.columns)
         
         # Combine individual birth years and all-ages aggregation
-        out_mc_final = pd.concat([out_mc_individual, out_mc_all_ages], ignore_index=True)
+        out_mc_final = pd.concat([out_mc_individual, out_mc_all_ages, out_mc_1960_plus], ignore_index=True)
         
         # Select only required columns and ensure YearOfBirth is included
         # Add iteration identifier column
@@ -1591,41 +1603,42 @@ else:
             a_copy, enrollment_date, enroll_week_str
         )
         
-        # Create all-ages aggregation (YearOfBirth = -2) by summing across all YearOfBirth, Sex, and DCCI
-        print(f"  Creating all-ages aggregation (YearOfBirth = -2)...")
-        # Aggregate basic columns (don't include cumDead_prev in aggregation - will compute it fresh)
-        out_all_ages = out.groupby(['ISOweekDied', 'Dose']).agg({
-            'Alive': 'sum',
-            'Dead': 'sum',
-            'Dead_COVID': 'sum',
-            'DateDied': 'first'  # Keep first DateDied for each week
-        }).reset_index()
+        def make_special_yob_aggregation(source_df, special_yob, label):
+            print(f"  Creating {label} aggregation (YearOfBirth = {special_yob})...")
+            if source_df.empty:
+                return pd.DataFrame(columns=out.columns)
+
+            out_special = source_df.groupby(['ISOweekDied', 'Dose']).agg({
+                'Alive': 'sum',
+                'Dead': 'sum',
+                'Dead_COVID': 'sum',
+                'DateDied': 'first'
+            }).reset_index()
+
+            # Compute cumulative deaths from previous weeks for this aggregate cohort.
+            out_special = out_special.sort_values(['Dose', 'ISOweekDied'])
+            out_special['cumDead_prev'] = (
+                out_special.groupby('Dose')['Dead']
+                  .transform(lambda s: s.cumsum().shift(fill_value=0))
+            )
+
+            out_special['YearOfBirth'] = special_yob
+            out_special['Sex'] = 'O'
+            out_special['DCCI'] = -1
+            return out_special[list(out.columns)]
+
+        out_all_ages = make_special_yob_aggregation(out, -2, "all-ages")
+        out_1960_plus = make_special_yob_aggregation(out[out['YearOfBirth'] >= 1960].copy(), -60, "born-1960-or-later")
         
-        # Compute cumDead_prev correctly for all-ages: cumulative sum of Dead per Dose, shifted by 1
-        # This represents cumulative deaths from previous weeks (not including current week)
-        out_all_ages = out_all_ages.sort_values(['Dose', 'ISOweekDied'])
-        out_all_ages['cumDead_prev'] = (
-            out_all_ages.groupby('Dose')['Dead']
-              .cumsum()
-              .shift(fill_value=0)
-        )
-        
-        out_all_ages['YearOfBirth'] = -2  # Mark as all-ages
-        # Set Sex and DCCI to placeholder values (KCOR.py will ignore these for -2)
-        out_all_ages['Sex'] = 'O'
-        out_all_ages['DCCI'] = -1
-        
-        # Combine individual birth years and all-ages aggregation
+        # Combine individual birth years and aggregate cohorts
         # Select columns in the same order as out
-        out_cols = list(out.columns)
-        out_all_ages = out_all_ages[out_cols]
-        out_final = pd.concat([out, out_all_ages], ignore_index=True)
+        out_final = pd.concat([out, out_all_ages, out_1960_plus], ignore_index=True)
         
         # Write to Excel sheet
         sheet_name = enroll_date_str.replace('-', '_')
         print(f"  Writing to Excel sheet...")
         out_final.to_excel(excel_writer, sheet_name=sheet_name, index=False)
-        print(f"  Wrote sheet '{sheet_name}' ({len(out_final)} rows: {len(out)} individual birth years + {len(out_all_ages)} all-ages)")
+        print(f"  Wrote sheet '{sheet_name}' ({len(out_final)} rows: {len(out)} individual birth years + {len(out_all_ages)} all-ages + {len(out_1960_plus)} born-1960-or-later)")
         
         # Enrollment-week per-dose totals for quick cross-check
         try:

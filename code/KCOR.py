@@ -266,6 +266,8 @@ from scipy.special import gammaln
 KCOR_NORMALIZATION_WEEKS = 4     # Number of weeks of data to use to compute the KCOR normalization baseline. 
 
 AGE_RANGE = 10                  # Bucket size for YearOfBirth aggregation (e.g., 10 -> 1920, 1930, ..., 2000)
+POST_1960_COHORT_YOB = -60      # Special aggregate: people born in 1960 or later
+SPECIAL_AGGREGATE_YOBS = {-2, POST_1960_COHORT_YOB}
 SLOPE_ANCHOR_T = 0              # Enrollment week index for slope anchoring
 EPS = 1e-12                     # Numerical floor to avoid log(0) and division by zero
 NPH_IDENTITY_TOL = 1e-12
@@ -305,6 +307,31 @@ SLOPE_DEBUG_ENABLED = True
 # Global dictionary to store ASMR weights per sheet (computed in build_kcor_rows)
 # Key: sheet_name, Value: dict mapping YearOfBirth to weight
 ASMR_WEIGHTS_BY_SHEET = {}
+
+
+def is_special_aggregate_yob(yob):
+    try:
+        return int(yob) in SPECIAL_AGGREGATE_YOBS
+    except (TypeError, ValueError):
+        return False
+
+
+def year_of_birth_label(yob):
+    try:
+        yob_int = int(yob)
+    except (TypeError, ValueError):
+        return f"{yob}"
+    if yob_int == 0:
+        return "ASMR (direct)"
+    if yob_int == -3:
+        return "All Ages ASMR"
+    if yob_int == -2:
+        return "All Ages"
+    if yob_int == POST_1960_COHORT_YOB:
+        return "-60 (born 1960+)"
+    if yob_int == -1:
+        return "(unknown)"
+    return f"{yob}"
 
 
 def format_initial_params(C_init, ka_init, delta_k_init, tau_init):
@@ -3460,13 +3487,13 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
     df = df.copy()
     df["hazard"] = hazard_from_mr(df["MR"])
     
-    # Create all-ages cohort (YearOfBirth=-2) by aggregating across all YearOfBirth values
+    # Create all-ages cohort (YearOfBirth=-2) by aggregating across regular YearOfBirth values
     # This is done before processing so it's treated like any other cohort
     # NOTE: If KCOR_CMR.py already outputs YearOfBirth=-2, skip creation to avoid duplicates
     if -2 not in df["YearOfBirth"].values:
         df_sorted = df.sort_values("DateDied")
-        # Exclude any existing -2 rows from aggregation (shouldn't be any, but be safe)
-        df_for_agg = df_sorted[df_sorted["YearOfBirth"] != -2].copy()
+        # Exclude any existing aggregate rows from aggregation (shouldn't be any, but be safe)
+        df_for_agg = df_sorted[df_sorted["YearOfBirth"] > 0].copy()
         if not df_for_agg.empty:
             all_ages_agg = df_for_agg.groupby(["Dose", "DateDied"]).agg({
                 "ISOweekDied": "first",
@@ -3750,7 +3777,7 @@ def compute_slope6_normalization(df, baseline_window, enrollment_date_str, dual_
         # Only attempt slope8 for cohorts born before SLOPE8_MAX_YOB (1940)
         # Cohorts >= 1940 and all-ages cohort (YOB=-2) will use linear fit (already computed above)
         # In MC mode (force_linear_mode=True), always use linear fits
-        use_slope8 = (yob < SLOPE8_MAX_YOB and yob != -2) and not force_linear_mode
+        use_slope8 = (yob < SLOPE8_MAX_YOB and not is_special_aggregate_yob(yob)) and not force_linear_mode
         
         if use_slope8:
             # Build slope8 deployment window: enrollment_date to SLOPE_FIT_END_ISO
@@ -4518,7 +4545,8 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
     
     # Define quiet baseline window W using the agreed range: first 4 distinct weeks from the sheet start
     quiet_window_dates = df_sorted.drop_duplicates(subset=["DateDied"]).head(4)["DateDied"].tolist()
-    quiet_data = df_sorted[df_sorted["DateDied"].isin(quiet_window_dates)]
+    asmr_source = df_sorted[df_sorted["YearOfBirth"] > 0].copy()
+    quiet_data = asmr_source[asmr_source["DateDied"].isin(quiet_window_dates)]
     
     # Calculate expected-deaths weights for each age group
     for yob, g_age in quiet_data.groupby("YearOfBirth", sort=False):
@@ -4578,9 +4606,9 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
         # Process each mc_id separately in MC mode
         for mc_id_val in mc_id_values:
             # Filter to this iteration's data
-            df_for_iteration = df_sorted
+            df_for_iteration = asmr_source
             if mc_id_val is not None:
-                df_for_iteration = df_sorted[df_sorted["mc_id"] == mc_id_val]
+                df_for_iteration = asmr_source[asmr_source["mc_id"] == mc_id_val]
                 if df_for_iteration.empty:
                     continue
             
@@ -6584,9 +6612,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         if MONTE_CARLO_MODE:
             # In MC mode, YearOfBirth=-2 (all ages) and individual birth years (1930-1960) are valid
             df = df[df["YearOfBirth"] <= 2020]
-            # Filter to only valid YearOfBirth values: -2 (all ages) and 1930-1960 (individual birth years)
-            df = df[(df["YearOfBirth"] == -2) | ((df["YearOfBirth"] >= 1930) & (df["YearOfBirth"] <= 1960))]
-            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to YOB=-2 and 1930-1960: {len(df)} rows")
+            # Filter to only valid YearOfBirth values: aggregate cohorts and 1930-1960 individual birth years
+            df = df[(df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS)) | ((df["YearOfBirth"] >= 1930) & (df["YearOfBirth"] <= 1960))]
+            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to aggregate cohorts and YOB 1930-1960: {len(df)} rows")
         else:
             df = df[df["YearOfBirth"] <= 2020]
         
@@ -6637,7 +6665,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         # Apply debug age filter (skip in MC mode since YearOfBirth=-2 is always used)
         if YEAR_RANGE and not MONTE_CARLO_MODE:
             start_year, end_year = YEAR_RANGE
-            df = df[(df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year)]
+            df = df[(df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS)) | ((df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year))]
             dual_print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
         
         # Apply sheet-specific dose filtering
@@ -6662,12 +6690,13 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             try:
                 if int(AGE_RANGE) and int(AGE_RANGE) > 1:
                     if MONTE_CARLO_MODE:
-                        # In MC mode, bucket individual birth years but preserve YOB=-2
+                        # In MC mode, bucket individual birth years but preserve aggregate/sentinel YOBs.
                         mask_individual = df["YearOfBirth"] >= 0  # Individual birth years (exclude -1, -2)
                         df.loc[mask_individual, "YearOfBirth"] = (df.loc[mask_individual, "YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
                     else:
-                        # Normal mode: bucket all YearOfBirth values
-                        df["YearOfBirth"] = (df["YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
+                        # Normal mode: bucket individual birth years while preserving aggregate/sentinel YOBs.
+                        mask_individual = df["YearOfBirth"] >= 0
+                        df.loc[mask_individual, "YearOfBirth"] = (df.loc[mask_individual, "YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
             except Exception:
                 pass
         # In MC mode, group by ISOweekDied (not DateDied) to avoid duplicate rows per week
@@ -7114,9 +7143,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
             # Fit All Ages cohort (YearOfBirth = -2) aggregated across YoB groups, per Dose
             try:
-                # CRITICAL FIX: Exclude YearOfBirth=-2 from aggregation (if already present, use it directly)
-                # Otherwise aggregate from individual birth years
-                df_for_all_ages = df[df["YearOfBirth"] != -2].copy()
+                # Build all-ages from individual birth years only; exclude existing aggregate/sentinel rows.
+                df_for_all_ages = df[df["YearOfBirth"] > 0].copy()
                 if not df_for_all_ages.empty:
                     # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
                     groupby_all_ages_agg = ["Dose", "DateDied"]
@@ -8494,10 +8522,12 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                 def age_sort_key(age):
                     if age == -2:
                         return (0, 0)  # Aggregated All Ages first
+                    elif age == POST_1960_COHORT_YOB:
+                        return (0, 1)  # Born 1960+ aggregate second
                     elif age == 0:
-                        return (0, 1)  # ASMR second
+                        return (0, 2)  # ASMR third
                     elif age == -1:
-                        return (0, 2)  # Unknown third
+                        return (0, 3)  # Unknown fourth
                     elif age == -3:
                         return (2, 0)  # All Ages ASMR - exclude from display (sort to end)
                     else:
@@ -8612,16 +8642,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
 
                         # Age label for output
-                        if age == 0:
-                            age_label = "ASMR (direct)"
-                        elif age == -3:
-                            age_label = "All Ages ASMR"
-                        elif age == -2:
-                            age_label = "All Ages"
-                        elif age == -1:
-                            age_label = "(unknown)"
-                        else:
-                            age_label = f"{age}"
+                        age_label = year_of_birth_label(age)
 
                         # KCOR6 mode: suppress slope parameter extraction/printing (no slope6/slope8).
                         if kcor6_enabled_effective:
@@ -8774,14 +8795,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         kb_den = np.nan
                         tau_den = np.nan
                     
-                    if age == 0:
-                        age_label = "ASMR (direct)"
-                    elif age == -2:
-                        age_label = "All Ages"
-                    elif age == -1:
-                        age_label = "(unknown)"
-                    else:
-                        age_label = f"{age}"
+                    age_label = year_of_birth_label(age)
                     
                     # Format ka, kb values for numerator and denominator (3 significant digits)
                     def format_param(val):
@@ -9488,6 +9502,9 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     elif year_of_birth == -2:
                         age_group = "All Ages"
                         yob_label = -2
+                    elif year_of_birth == POST_1960_COHORT_YOB:
+                        age_group = "-60 (born 1960+)"
+                        yob_label = POST_1960_COHORT_YOB
                     elif year_of_birth == -1:
                         age_group = "(unknown)"
                         yob_label = "Unknown"
@@ -9698,8 +9715,10 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                                 return (0, 0)  # ASMR first
                             elif age == -2:
                                 return (0, 1)  # All ages second
+                            elif age == POST_1960_COHORT_YOB:
+                                return (0, 2)  # Born 1960+ aggregate third
                             elif age == -1:
-                                return (0, 2)  # Unknown third
+                                return (0, 3)  # Unknown fourth
                             else:
                                 return (1, age)  # Regular ages after
                         
@@ -9724,14 +9743,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         # Add data rows for each age group
                         for _, row in dose_data.iterrows():
                             age = row["YearOfBirth"]
-                            if age == 0:
-                                age_label = "ASMR (direct)"
-                            elif age == -2:
-                                age_label = "All Ages"
-                            elif age == -1:
-                                age_label = "(unknown)"
-                            else:
-                                age_label = f"{age}"
+                            age_label = year_of_birth_label(age)
                             
                             # Check if abnormal fit flag is present
                             abnormal_fit_flag = row.get("abnormal_fit", False) if "abnormal_fit" in row.index else False
@@ -9883,8 +9895,10 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
             return (0, 0)  # ASMR first
         elif age == -2:
             return (0, 1)  # All ages second
+        elif age == POST_1960_COHORT_YOB:
+            return (0, 2)  # Born 1960+ aggregate third
         elif age == -1:
-            return (0, 2)  # Unknown third
+            return (0, 3)  # Unknown fourth
         else:
             return (1, age)  # Regular ages after
     
@@ -9911,10 +9925,8 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
         # Iterate through each YearOfBirth value
         for yob in unique_yobs:
             # Format age label
-            if yob == -2:
-                age_label = "All Ages"
-            elif yob == -1:
-                age_label = "(unknown)"
+            if yob in (0, -1, -2, POST_1960_COHORT_YOB):
+                age_label = year_of_birth_label(yob)
             else:
                 age_label = f"Year {yob}"
             
