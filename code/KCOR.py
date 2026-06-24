@@ -687,6 +687,11 @@ def get_reporting_date(enrollment_date_str):
 
 # Check for Monte Carlo mode
 MONTE_CARLO_MODE = str(os.environ.get('MONTE_CARLO', '')).strip().lower() in ('1', 'true', 'yes')
+MC_YOB_START = int(os.environ.get('MC_YOB_START', '1930'))
+MC_YOB_END = int(os.environ.get('MC_YOB_END', '1960'))
+if MC_YOB_END < MC_YOB_START:
+    MC_YOB_START, MC_YOB_END = MC_YOB_END, MC_YOB_START
+MC_INCLUDE_AGGREGATES = str(os.environ.get('MC_INCLUDE_AGGREGATES', '1')).strip().lower() not in ('0', 'false', 'no')
 
 # DATA SMOOTHING:
 # Moving-average smoothing parameters removed
@@ -4238,8 +4243,23 @@ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kco
 
     # -------- per-age KCOR rows --------
     dose_pairs = get_dose_pairs(sheet_name)
-    # In Monte Carlo mode, process all YearOfBirth values (don't filter by OVERRIDE_YOBS)
     yob_values = [y for y in df["YearOfBirth"].unique() if y != -2]
+    if MONTE_CARLO_MODE and MC_INCLUDE_AGGREGATES:
+        pass
+    elif MONTE_CARLO_MODE:
+        yob_values = [y for y in yob_values if not is_special_aggregate_yob(y)]
+    if MONTE_CARLO_MODE:
+        try:
+            if int(AGE_RANGE) and int(AGE_RANGE) > 1:
+                mc_yob_buckets_local = {
+                    (int(y) // int(AGE_RANGE)) * int(AGE_RANGE)
+                    for y in range(int(MC_YOB_START), int(MC_YOB_END) + 1)
+                }
+            else:
+                mc_yob_buckets_local = set(range(int(MC_YOB_START), int(MC_YOB_END) + 1))
+            yob_values = [y for y in yob_values if int(y) in mc_yob_buckets_local or (MC_INCLUDE_AGGREGATES and is_special_aggregate_yob(y))]
+        except Exception:
+            pass
     if OVERRIDE_YOBS is not None and not MONTE_CARLO_MODE:
         yob_values = [yob for yob in yob_values if yob in OVERRIDE_YOBS]
     for yob in yob_values:
@@ -6132,6 +6152,18 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
     # KCOR 6.0 (gamma-frailty) is always enabled (no legacy toggle).
     kcor6_enabled_effective = True
+    mc_yob_buckets = None
+    if MONTE_CARLO_MODE:
+        try:
+            if int(AGE_RANGE) and int(AGE_RANGE) > 1:
+                mc_yob_buckets = sorted({
+                    (int(y) // int(AGE_RANGE)) * int(AGE_RANGE)
+                    for y in range(int(MC_YOB_START), int(MC_YOB_END) + 1)
+                })
+            else:
+                mc_yob_buckets = list(range(int(MC_YOB_START), int(MC_YOB_END) + 1))
+        except Exception:
+            mc_yob_buckets = None
 
     # Configuration parameter dump (always show effective values)
     dual_print("-"*80)
@@ -6147,6 +6179,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
     dual_print(f"  ENROLLMENT_DATES      = {ENROLLMENT_DATES}")
     if MONTE_CARLO_MODE:
         dual_print(f"  MC_ENROLLMENT_DATE    = {mc_enrollment_label}")
+        dual_print(f"  MC_YOB_RANGE          = {MC_YOB_START}-{MC_YOB_END}")
+        dual_print(f"  MC_YOB_BUCKETS        = {mc_yob_buckets}")
+        dual_print(f"  MC_INCLUDE_AGGREGATES = {MC_INCLUDE_AGGREGATES}")
     # MR is computed in annualized per 100k units; no additional display scaling applied
     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
@@ -6610,11 +6645,11 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         
         # Filter out unreasonably large birth years (keep -1 for "not available", -2 for all ages in MC mode)
         if MONTE_CARLO_MODE:
-            # In MC mode, YearOfBirth=-2 (all ages) and individual birth years (1930-1960) are valid
+            # In MC mode, keep the requested raw birth-year range plus optional aggregate rows.
             df = df[df["YearOfBirth"] <= 2020]
-            # Filter to only valid YearOfBirth values: aggregate cohorts and 1930-1960 individual birth years
-            df = df[(df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS)) | ((df["YearOfBirth"] >= 1930) & (df["YearOfBirth"] <= 1960))]
-            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to aggregate cohorts and YOB 1930-1960: {len(df)} rows")
+            aggregate_mask = df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS) if MC_INCLUDE_AGGREGATES else pd.Series(False, index=df.index)
+            df = df[aggregate_mask | ((df["YearOfBirth"] >= MC_YOB_START) & (df["YearOfBirth"] <= MC_YOB_END))]
+            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to YOB {MC_YOB_START}-{MC_YOB_END} (aggregates={MC_INCLUDE_AGGREGATES}): {len(df)} rows")
         else:
             df = df[df["YearOfBirth"] <= 2020]
         
@@ -6699,6 +6734,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                         df.loc[mask_individual, "YearOfBirth"] = (df.loc[mask_individual, "YearOfBirth"].astype(int) // int(AGE_RANGE)) * int(AGE_RANGE)
             except Exception:
                 pass
+        if MONTE_CARLO_MODE and mc_yob_buckets is not None:
+            aggregate_mask = df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS) if MC_INCLUDE_AGGREGATES else pd.Series(False, index=df.index)
+            df = df[aggregate_mask | df["YearOfBirth"].isin(mc_yob_buckets)]
+            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to YOB buckets {mc_yob_buckets} (aggregates={MC_INCLUDE_AGGREGATES}): {len(df)} rows")
         # In MC mode, group by ISOweekDied (not DateDied) to avoid duplicate rows per week
         # DateDied can vary within the same ISOweekDied, causing duplicates
         if MONTE_CARLO_MODE:
@@ -7143,6 +7182,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
 
             # Fit All Ages cohort (YearOfBirth = -2) aggregated across YoB groups, per Dose
             try:
+                if MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES:
+                    raise StopIteration
                 # Build all-ages from individual birth years only; exclude existing aggregate/sentinel rows.
                 df_for_all_ages = df[df["YearOfBirth"] > 0].copy()
                 if not df_for_all_ages.empty:
@@ -7414,6 +7455,8 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
                             kcor6_params_map[(effective_sheet_name, int(mc_id_all), -2, int(dose))] = params_dict
                         else:
                             kcor6_params_map[(sh, -2, int(dose))] = params_dict
+            except StopIteration:
+                pass
             except Exception as _e_kcor6_all:
                 # Do not interrupt the main pipeline for diagnostics-only fits.
                 try:
@@ -7672,8 +7715,9 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
             sheet_name=effective_sheet_name_for_processing,
         )
         
-        # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing
-        if -2 not in df["YearOfBirth"].values:
+        # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing.
+        build_all_ages_hazard = not (MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES)
+        if build_all_ages_hazard and -2 not in df["YearOfBirth"].values:
             df_for_agg = df[df["YearOfBirth"] > 0].copy()
             if not df_for_agg.empty:
                 groupby_cols = ["Dose", "DateDied"]
@@ -8205,23 +8249,7 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         #         print(f"    MR_adj: {row['MR_adj']:.6f}, PT: {row['PT']:.6f}")
         #     print()
 
-        # build_kcor_rows() computes an additional YoB=-2 "All Ages" block internally; in MC mode we
-        # remap per-iteration (-2, dose) fits (keyed by iteration sheet name) onto the fixed enrollment
-        # label used for MC outputs (effective_sheet_name) so that All-Ages normalization is consistent.
         kcor6_params_map_for_build = kcor6_params_map
-        if MONTE_CARLO_MODE:
-            try:
-                kcor6_params_map_for_build = {}
-                for _dose in sorted(df["Dose"].unique()):
-                    try:
-                        dose_i = int(_dose)
-                    except Exception:
-                        continue
-                    params = kcor6_params_map.get((sh, -2, dose_i), None)
-                    if isinstance(params, dict):
-                        kcor6_params_map_for_build[(effective_sheet_name, -2, dose_i)] = params
-            except Exception:
-                kcor6_params_map_for_build = kcor6_params_map
         # In MC mode, mc_id should already be in the dataframe from KCOR_CMR.py
         # Only pass iteration_number if mc_id is missing (for backward compatibility)
         iteration_num_for_mc_id = None
@@ -9921,6 +9949,11 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
         # Get all unique YearOfBirth values, sorted: negative values first (-2, -1), then positive ages
         # EXCLUDE age 0 (ASMR pooled) - only show -2 (all ages) and individual birth years
         unique_yobs = [yob for yob in sorted(pair_data["YearOfBirth"].unique(), key=age_sort_key) if yob != 0]
+        if MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES:
+            unique_yobs = [
+                yob for yob in unique_yobs
+                if not is_special_aggregate_yob(yob) and int(yob) != -3
+            ]
         
         # Iterate through each YearOfBirth value
         for yob in unique_yobs:
@@ -9957,6 +9990,7 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
             kcor_values = yob_data_unique["KCOR"].values.copy()
             dose_combo_stats[(dose_num, dose_den, yob)] = {
                 "kcor_values": kcor_values,
+                "iterations": yob_data_unique["Iteration"].values.copy(),
                 "num_iterations": len(yob_data_unique),
                 "age_label": age_label
             }
@@ -9992,14 +10026,19 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
             dose_num_key, dose_den_key, yob = key
             stats = dose_combo_stats[key]
             kcor_values = stats["kcor_values"]
+            iterations = stats["iterations"]
             num_iterations = stats["num_iterations"]
             age_label = stats["age_label"]
             
             dual_print(f"\nDose combination: {dose_num} vs {dose_den} - {age_label}")
             dual_print("-" * 60)
             
-            # Convert to pandas Series for statistics computation (kcor_values is numpy array)
-            kcor_series = pd.Series(kcor_values)
+            point_values = kcor_values[iterations == 0]
+            point_estimate = point_values[0] if len(point_values) else np.nan
+            bootstrap_values = kcor_values[iterations != 0]
+            if len(bootstrap_values) == 0:
+                bootstrap_values = kcor_values
+            kcor_series = pd.Series(bootstrap_values)
             
             # Compute statistics
             mean_kcor = kcor_series.mean()
@@ -10013,18 +10052,28 @@ def create_mc_summary(mc_summary_data, dual_print, enrollment_label="2022_06"):
             p97_5 = kcor_series.quantile(0.975)
             p25 = kcor_series.quantile(0.25)
             p75 = kcor_series.quantile(0.75)
+            has_point = pd.notna(point_estimate)
+            basic_low = 2 * point_estimate - p97_5 if has_point else np.nan
+            basic_high = 2 * point_estimate - p2_5 if has_point else np.nan
+            point_rank_pct = (kcor_series <= point_estimate).mean() if has_point else np.nan
             
             dual_print(f"  Iterations: {num_iterations}")
-            dual_print(f"  Mean KCOR:   {mean_kcor:.4f}")
-            dual_print(f"  Median KCOR: {median_kcor:.4f}")
-            dual_print(f"  Std Dev:     {std_kcor:.4f}")
+            if has_point:
+                dual_print(f"  Point estimate (iteration 0): {point_estimate:.4f}")
+            dual_print(f"  Bootstrap draws: {len(kcor_series)}")
+            dual_print(f"  Bootstrap mean KCOR:   {mean_kcor:.4f}")
+            dual_print(f"  Bootstrap median KCOR: {median_kcor:.4f}")
+            dual_print(f"  Bootstrap Std Dev:     {std_kcor:.4f}")
             dual_print(f"  Min:         {min_kcor:.4f}")
             dual_print(f"  Max:         {max_kcor:.4f}")
             dual_print(f"  2.5th %ile:  {p2_5:.4f}")
             dual_print(f"  25th %ile:   {p25:.4f}")
             dual_print(f"  75th %ile:   {p75:.4f}")
             dual_print(f"  97.5th %ile: {p97_5:.4f}")
-            dual_print(f"  95% Range:   [{p2_5:.4f}, {p97_5:.4f}]")
+            dual_print(f"  Percentile 95% CI: [{p2_5:.4f}, {p97_5:.4f}]")
+            if has_point:
+                dual_print(f"  Basic bootstrap 95% CI: [{basic_low:.4f}, {basic_high:.4f}]")
+                dual_print(f"  Point percentile in bootstrap draws: {point_rank_pct:.4f}")
     
     dual_print("\n" + "="*80)
 

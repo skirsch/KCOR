@@ -34,6 +34,10 @@ DATASET ?= Czech
 MC_ITERATIONS ?= 4
 # Monte Carlo enrollment cohort (ISO week label; accepts YYYY_WW or YYYY-WW)
 MC_ENROLLMENT_DATE ?= 2021_24
+# Monte Carlo birth-year filter (override for narrow cohort runs, e.g. 1940-1949)
+MC_YOB_START ?= 1930
+MC_YOB_END ?= 1960
+MC_INCLUDE_AGGREGATES ?= 1
 
 # Quiet-window contamination synthetic experiment (test/quiet_window_contamination/run_contamination_test.py)
 QUIET_SIM_ENROLLMENT ?= 2021_24
@@ -97,7 +101,7 @@ CMR:
 
 # Monte Carlo mode (delegates to code/Makefile target monte_carlo)
 monte_carlo:
-	$(MAKE) -C $(CODE_DIR) monte_carlo DATASET=$(DATASET) MC_ITERATIONS=$(MC_ITERATIONS) MC_ENROLLMENT_DATE=$(MC_ENROLLMENT_DATE)
+	$(MAKE) -C $(CODE_DIR) monte_carlo DATASET=$(DATASET) MC_ITERATIONS=$(MC_ITERATIONS) MC_ENROLLMENT_DATE=$(MC_ENROLLMENT_DATE) MC_YOB_START=$(MC_YOB_START) MC_YOB_END=$(MC_YOB_END) MC_INCLUDE_AGGREGATES=$(MC_INCLUDE_AGGREGATES)
 
 # Run CMR on KRF input by adapting to Czech-like format first
 CMR_from_krf:
@@ -676,6 +680,9 @@ help:
 	@echo "  CFR_METRICS_WORKERS=<n> - Fork pool for weekly strata (Linux/WSL); 0=all CPUs (see cfr.metrics_workers in YAML)"
 	@echo "  MC_ITERATIONS=<n>     - Number of Monte Carlo iterations (default: 4)"
 	@echo "  MC_ENROLLMENT_DATE=<YYYY_WW> - (Monte Carlo) Enrollment cohort used for MC CMR + analysis (default: 2021_24)"
+	@echo "  MC_YOB_START=<year>   - (Monte Carlo) First birth year to resample/analyze (default: 1930)"
+	@echo "  MC_YOB_END=<year>     - (Monte Carlo) Last birth year to resample/analyze (default: 1960)"
+	@echo "  MC_INCLUDE_AGGREGATES=<0|1> - (Monte Carlo) Include aggregate rows such as all-ages (default: 1)"
 	@echo "  SIM_GRID_MAX_WORKERS=<n> - Parallel processes for make sim_grid (default: 6; capped at scenario count)"
 	@echo "  BOOTSTRAP_MAX_WORKERS=<n> - Parallel processes for make bootstrap_coverage (default: 20)"
 	@echo "  BOOTSTRAP_N_SIM=<n>       - Simulations per scenario for bootstrap_coverage (default: 500)"
@@ -712,4 +719,3 @@ help:
 	@echo "Note: KCOR v5.1+ uses slope7 mode and no longer requires cvxpy (it was only needed for legacy quadratic mode)."
 	@echo "      The 'make install' target automatically creates and uses .venv."
 	@echo "      All Python commands run through the Makefile use the virtual environment automatically."
-

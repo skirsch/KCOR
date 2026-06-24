@@ -91,7 +91,10 @@
 import pandas as pd
 import numpy as np
 # Suppress FutureWarning about fillna downcasting (we handle conversions explicitly)
-pd.set_option('future.no_silent_downcasting', True)
+try:
+    pd.set_option('future.no_silent_downcasting', True)
+except Exception:
+    pass
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
@@ -214,6 +217,11 @@ def get_czech_reference_pop_for_birth_year(birth_year: int) -> int:
 MONTE_CARLO_MODE = str(os.environ.get('MONTE_CARLO', '')).strip().lower() in ('1', 'true', 'yes')
 MC_ITERATIONS = int(os.environ.get('MC_ITERATIONS', '4'))
 MC_THREADS = int(os.environ.get('MC_THREADS', '5'))  # Number of parallel threads for Monte Carlo iterations (reduced from 20 to 5 to avoid memory exhaustion)
+MC_YOB_START = int(os.environ.get('MC_YOB_START', '1930'))
+MC_YOB_END = int(os.environ.get('MC_YOB_END', '1960'))
+if MC_YOB_END < MC_YOB_START:
+    MC_YOB_START, MC_YOB_END = MC_YOB_END, MC_YOB_START
+MC_INCLUDE_AGGREGATES = str(os.environ.get('MC_INCLUDE_AGGREGATES', '1')).strip().lower() not in ('0', 'false', 'no')
 
 # define the output Excel file path
 # This will contain the CMR for each dose group by week, birth cohort, and vaccination status.
@@ -268,6 +276,8 @@ if MONTE_CARLO_MODE:
     print(f"Monte Carlo mode: Processing only {MC_ENROLL_DATE_STR} enrollment with {MC_ITERATIONS} iterations", flush=True)
     print(f"  Using {MC_THREADS} parallel processes", flush=True)
     print(f"  Max dose group: {MC_MAX_DOSE_EFFECTIVE}", flush=True)
+    print(f"  Birth-year range: {MC_YOB_START}-{MC_YOB_END}", flush=True)
+    print(f"  Include aggregate rows: {MC_INCLUDE_AGGREGATES}", flush=True)
 
 # REQUIRED: Load enrollment dates from dataset YAML config
 # Look for data/{DATASET}/{DATASET}.yaml
@@ -339,6 +349,8 @@ if not _parsed_config_dates:
     sys.exit(1)
 
 enrollment_dates = _parsed_config_dates
+if MONTE_CARLO_MODE:
+    enrollment_dates = [MC_ENROLL_DATE_STR]
 print(f"✓ Loaded enrollment dates from dataset config: {', '.join(enrollment_dates)}", flush=True)
 
 # Optional override via environment variable ENROLLMENT_DATES (comma-separated, e.g., "2021-24" or "2021-13,2021-24")
@@ -629,17 +641,16 @@ if MONTE_CARLO_MODE:
     a_copy_mc = a_copy_mc[((a_copy_mc['YearOfBirth'] >= 1920) & (a_copy_mc['YearOfBirth'] <= 2005)) | (a_copy_mc['YearOfBirth'] == -1)].copy()
     after_mc = len(a_copy_mc)
     print(f"  Filtered YearOfBirth to 1920-2005: kept {after_mc}/{before_mc} records")
-    # Extract master_monte_carlo: people alive at start of enrollment week
-    # Alive means: DateOfDeath is null OR DateOfDeath >= enrollment_date
-    # Filter to YearOfBirth between 1930 and 1960 (inclusive)
+    # Extract master_monte_carlo: people alive at start of enrollment week.
+    # Alive means: DateOfDeath is null OR DateOfDeath >= enrollment_date.
     master_monte_carlo = a_copy_mc[
         ((a_copy_mc['DateOfDeath'].isna()) | (a_copy_mc['DateOfDeath'] >= enrollment_date_mc)) &
-        (a_copy_mc['YearOfBirth'] >= 1930) & (a_copy_mc['YearOfBirth'] <= 1960)
+        (a_copy_mc['YearOfBirth'] >= MC_YOB_START) & (a_copy_mc['YearOfBirth'] <= MC_YOB_END)
     ].copy()
     # Store in module-level variable for fork() copy-on-write access (no pickling!)
     _master_monte_carlo_global = master_monte_carlo
     master_count = len(master_monte_carlo)
-    print(f"  Master Monte Carlo population: {master_count:,} records (alive at start of enrollment week)")
+    print(f"  Master Monte Carlo population: {master_count:,} records (alive at start of enrollment week, YOB {MC_YOB_START}-{MC_YOB_END})")
     print(f"  Will perform {MC_ITERATIONS} bootstrap iterations using {MC_THREADS} parallel processes")
 
 def process_enrollment_data(a_copy, enrollment_date, enroll_week_str, max_dose=6, monte_carlo_mode=False, iteration=None):
@@ -1309,11 +1320,15 @@ def process_monte_carlo_iteration(args):
         # All other iterations sample WITH REPLACEMENT from master_monte_carlo
         if iteration == 0:
             print(f"[Iteration {iteration}] Using full dataset without sampling ({len(master_monte_carlo)} records)...", flush=True)
-            a_copy = master_monte_carlo.copy()
+            a_copy = master_monte_carlo.copy().reset_index(drop=True)
         else:
             # Sample WITH REPLACEMENT from master_monte_carlo
             print(f"[Iteration {iteration}] Sampling {master_count} records...", flush=True)
-            sampled_records = master_monte_carlo.sample(n=master_count, replace=True, random_state=iteration)
+            sampled_records = master_monte_carlo.sample(
+                n=master_count,
+                replace=True,
+                random_state=iteration,
+            ).reset_index(drop=True)
             # Use sampled records as a_copy for this iteration
             a_copy = sampled_records.copy()
         
@@ -1336,7 +1351,7 @@ def process_monte_carlo_iteration(args):
         
         print(f"[Iteration {iteration}] Aggregating results...", flush=True)
         
-        # Monte Carlo mode: Output individual birth years (1930-1960) plus -2 (all ages)
+        # Monte Carlo mode: output the requested individual birth years plus optional aggregates.
         # FIX: Group by ISOweekDied, YearOfBirth, and Dose (not DateDied) to avoid duplicate rows per week
         # First, aggregate by (ISOweekDied, YearOfBirth, Dose) to get individual birth years
         out_mc_individual = out.groupby(['ISOweekDied', 'YearOfBirth', 'Dose']).agg({
@@ -1346,29 +1361,27 @@ def process_monte_carlo_iteration(args):
         # Derive DateDied from ISOweekDied (Monday of that ISO week)
         out_mc_individual['DateDied'] = pd.to_datetime(out_mc_individual['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
         
-        # Second, create all-ages (-2) aggregation by summing across all YearOfBirth values
-        out_mc_all_ages = out.groupby(['ISOweekDied', 'Dose']).agg({
-            'Alive': 'sum',
-            'Dead': 'sum'
-        }).reset_index()
-        out_mc_all_ages['YearOfBirth'] = -2  # Mark as all-ages
-        # Derive DateDied from ISOweekDied (Monday of that ISO week)
-        out_mc_all_ages['DateDied'] = pd.to_datetime(out_mc_all_ages['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
-
-        # Third, create born-1960-or-later (-60) aggregation.
-        out_mc_1960_plus_source = out[out['YearOfBirth'] >= 1960].copy()
-        if not out_mc_1960_plus_source.empty:
-            out_mc_1960_plus = out_mc_1960_plus_source.groupby(['ISOweekDied', 'Dose']).agg({
+        aggregate_frames = []
+        if MC_INCLUDE_AGGREGATES:
+            out_mc_all_ages = out.groupby(['ISOweekDied', 'Dose']).agg({
                 'Alive': 'sum',
                 'Dead': 'sum'
             }).reset_index()
-            out_mc_1960_plus['YearOfBirth'] = -60
-            out_mc_1960_plus['DateDied'] = pd.to_datetime(out_mc_1960_plus['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
-        else:
-            out_mc_1960_plus = pd.DataFrame(columns=out_mc_all_ages.columns)
+            out_mc_all_ages['YearOfBirth'] = -2
+            out_mc_all_ages['DateDied'] = pd.to_datetime(out_mc_all_ages['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
+            aggregate_frames.append(out_mc_all_ages)
+
+            out_mc_1960_plus_source = out[out['YearOfBirth'] >= 1960].copy()
+            if not out_mc_1960_plus_source.empty:
+                out_mc_1960_plus = out_mc_1960_plus_source.groupby(['ISOweekDied', 'Dose']).agg({
+                    'Alive': 'sum',
+                    'Dead': 'sum'
+                }).reset_index()
+                out_mc_1960_plus['YearOfBirth'] = -60
+                out_mc_1960_plus['DateDied'] = pd.to_datetime(out_mc_1960_plus['ISOweekDied'] + '-1', format='%G-%V-%u', errors='coerce')
+                aggregate_frames.append(out_mc_1960_plus)
         
-        # Combine individual birth years and all-ages aggregation
-        out_mc_final = pd.concat([out_mc_individual, out_mc_all_ages, out_mc_1960_plus], ignore_index=True)
+        out_mc_final = pd.concat([out_mc_individual] + aggregate_frames, ignore_index=True)
         
         # Select only required columns and ensure YearOfBirth is included
         # Add iteration identifier column
