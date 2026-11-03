@@ -138,7 +138,7 @@ $$
 
 with $r>1$ for harm and $0<r<1$ for benefit.
 
-After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude broadly consistent with the injected effect (up to discretization and sampling noise). Figure @fig:pos_control_injected and Table @tbl:pos_control_summary illustrate this behavior.
+After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude broadly consistent with the injected effect (up to discretization and sampling noise). Figure @fig:pos_control_injected and main-text Table 9 illustrate this behavior.
 
 ![Positive control validation: KCOR tracks injected effects in the expected direction. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows $\mathrm{KCOR}(t)$ deviating from 1.0 in the expected direction during the effect window. Uncertainty bands (95% bootstrap intervals; aggregated cohort--time resampling) are shown. X-axis units are weeks since enrollment.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
 
@@ -188,7 +188,7 @@ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 
 Both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
 
-Figure @fig:si_kcor_bias_vs_theta provides a compact summary of KCOR bias as a function of frailty variance under the same synthetic-null grid used in Table @tbl:cox_bias_demo.
+Figure S2 provides a compact summary of KCOR bias as a function of frailty variance under the same synthetic-null grid used in main-text Table 7.
 
 ![Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance $\theta_0$. Bias is defined as $\mathrm{KCOR}_{\mathrm{asymptote}} - 1$ at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
 
@@ -196,7 +196,7 @@ Figure @fig:si_kcor_bias_vs_theta provides a compact summary of KCOR bias as a f
 
 #### S4.2.2 Empirical negative control: age-shift construction
 
-The empirical negative control (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_{0,d}$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
+The empirical negative control (main-text Figure 6 and SI Figure S9) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_{0,d}$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
 
 Parameter values and scripts are summarized in Table @tbl:si_sim_params.
 

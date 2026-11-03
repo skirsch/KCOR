@@ -99,7 +99,7 @@ Together, these contributions position KCOR not as a replacement for existing su
 
 ### 1.7 Paper organization and supporting information (SI)
 
-The main text introduces the KCOR estimator, provides a canonical demonstration of Cox bias under frailty-driven depletion, and presents two primary validation examples (a negative control and a stress test). Additional validations—including positive controls—along with extended diagnostics, empirical registry-based nulls, and detailed simulation specifications are provided in the Supplementary Information (SI; Sections S2 and S4.2–S4.3; Tables @tbl:si_assumptions–@tbl:si_identifiability).
+The main text introduces the KCOR estimator, provides a canonical demonstration of Cox bias under frailty-driven depletion, and presents two primary validation examples (a negative control and a stress test). Additional validations—including positive controls—along with extended diagnostics, empirical registry-based nulls, and detailed simulation specifications are provided in the Supplementary Information (SI; Sections S2 and S4.2–S4.3; Tables S1–S3).
 
 ## 2. Methods
 
@@ -172,13 +172,13 @@ Anchoring is used only when explicitly stated to remove pre-existing level diffe
 
 Scope and interpretation are summarized in Box 2 (§1.6). A working-model identification proposition for $\theta_{0,d}$ is stated immediately after §2.4.4, together with a diagnostic interpretation disclaimer.
 
-Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables @tbl:si_assumptions–@tbl:si_identifiability). When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported. Checks include:
+Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables S1–S3). When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported. Checks include:
 
 * stability of $(\hat{k}_d,\hat{\theta}_{0,d})$ and the aligned quiet-window geometry under small perturbations,
 * approximate linearity of $\tilde H_{0,d}(t)$ within the quiet window,
 * absence of systematic residual structure in hazard space.
 
-Diagnostics corresponding to each assumption are summarized in Supplementary Information §S2 (Tables @tbl:si_assumptions–@tbl:si_identifiability).
+Diagnostics corresponding to each assumption are summarized in Supplementary Information §S2 (Tables S1–S3).
 
 #### 2.1.3 KCOR assumptions and diagnostics
 
@@ -193,7 +193,7 @@ The KCOR framework relies on the following assumptions, which are framed diagnos
    Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
 
 3. **Quiet-window stability.**
-   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Quiet windows need not be perfectly free of shocks; they should represent intervals where no large transient perturbations dominate baseline mortality. Residual baseline drift can be absorbed into the frailty parameter if quiet-window conditions are violated; empirical robustness of fitted frailty parameters to quiet-window placement (12-month windows shifted monthly) is demonstrated in Supplementary Figure @fig:si_quiet_window_theta_scan using Czech registry data, supporting stability when this condition holds approximately. Epidemic-wave periods with sharp hazard shocks fall outside this assumption and are excluded from normalization by design.
+   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Quiet windows need not be perfectly free of shocks; they should represent intervals where no large transient perturbations dominate baseline mortality. Residual baseline drift can be absorbed into the frailty parameter if quiet-window conditions are violated; empirical robustness of fitted frailty parameters to quiet-window placement (12-month windows shifted monthly) is demonstrated in Supplementary Figure S5 using Czech registry data, supporting stability when this condition holds approximately. Epidemic-wave periods with sharp hazard shocks fall outside this assumption and are excluded from normalization by design.
 
 4. **Independence across strata.**
    Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
@@ -201,7 +201,7 @@ The KCOR framework relies on the following assumptions, which are framed diagnos
 5. **Sufficient event-time resolution.**
    Event timing is observed at a temporal resolution adequate to estimate cumulative hazards over the quiet window.
 
-If no candidate quiet window satisfies diagnostic criteria, KCOR is not interpretable and analysis should terminate without reporting contrasts. Multiple disjoint quiet windows may be pooled provided fitted depletion parameters are stable and diagnostics are consistent across windows. Quiet-window validity diagnostics are summarized in Supplementary Information §S2 (Tables @tbl:si_assumptions–@tbl:si_identifiability).
+If no candidate quiet window satisfies diagnostic criteria, KCOR is not interpretable and analysis should terminate without reporting contrasts. Multiple disjoint quiet windows may be pooled provided fitted depletion parameters are stable and diagnostics are consistent across windows. Quiet-window validity diagnostics are summarized in Supplementary Information §S2 (Tables S1–S3).
 
 These assumptions are evaluated empirically using post-normalization diagnostics. Violations are expected to manifest as residual curvature, drift, or instability in adjusted cumulative hazard trajectories.
 
@@ -727,7 +727,7 @@ Table @tbl:cox_bias_demo reports numerical summaries of the Cox-vs-KCOR behavior
 
 Figure @fig:estimator_bias_vs_theta summarizes **relative bias** (estimate minus true target) for standard Cox, an **approximate reference curve** for shared-frailty Cox constructed from null-case bias in Table @tbl:joint_frailty_comparison (see caption—not a refit at each $\theta_0$), and KCOR asymptotes on the same $\theta_0$ grid. This approximation is included to illustrate **expected bias attenuation** relative to standard Cox; a full simulation of shared-frailty Cox across the $\theta_0$ grid is left for future work. Additional Cox HR results from the same synthetic-null grid are shown in Figure @fig:cox_bias_hr.
 
-A compact summary of KCOR bias as a function of frailty variance $\theta_0$ is provided in the Supplementary Information (Figure @fig:si_kcor_bias_vs_theta).
+A compact summary of KCOR bias as a function of frailty variance $\theta_0$ is provided in the Supplementary Information (Figure S2).
 
 ![Cox regression produces spurious non-null hazard ratios under a *synthetic null* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
 
@@ -1085,7 +1085,7 @@ KCOR complements hazard-based modeling by stabilizing cumulative risk comparison
 
 ### Ethics approval and consent to participate
 
-This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. The primary validation results use synthetic data. Empirical negative-control figures (Figures @fig:neg_control_10yr and @fig:neg_control_20yr) use aggregated cohort summaries derived from publicly available Czech Republic administrative data; no record-level data are reproduced in this manuscript, although the underlying Czech datasets are available at the record level [@sanca2024].
+This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. The primary validation results use synthetic data. Empirical negative-control figures (Figure 6 and Supplementary Figure S9) use aggregated cohort summaries derived from publicly available Czech Republic administrative data; no record-level data are reproduced in this manuscript, although the underlying Czech datasets are available at the record level [@sanca2024].
 
 ### Consent for publication
 
