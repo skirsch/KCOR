@@ -1,0 +1,17 @@
+{
+  "reused_source_sha256": {
+    "production_adapter.py": "1f99f2a0609e6cbc9edbee6d3044a18b2e42df8dc6c5f70e6d958207537da6ca",
+    "simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "run_study.py": "371bcedc0b45871080e075ecdf3407b1efd14e81630e57a7dd5524db94f18cfe",
+    "summarize.py": "8cb4d0c1366ebeedad91d5bc94549bdfaefd2c34a41e0bd7b6f36410f9c5ae77",
+    "verify_production.py": "65045e7576f046b561debc73d2eebf1dd1d5a676e49c5024cac7d265bbffcb21",
+    "check_model.py": "4b186171d09c2827c08b5c5b1a06791a52371857f0ff0a671c7365ef83636f59"
+  },
+  "source_snapshot_sha256": {
+    "source_snapshot\\code\\KCOR.py": "b5549264ef49de51f3569e53eb4e901541870598918ab5be5ebcdbf9823e019d",
+    "source_snapshot\\code\\KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "source_snapshot\\data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266"
+  },
+  "original_module_unchanged": true,
+  "pr": "https://github.com/skirsch/KCOR/pull/4"
+}

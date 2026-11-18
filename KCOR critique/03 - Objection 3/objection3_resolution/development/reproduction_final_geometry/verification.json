@@ -1,0 +1,410 @@
+{
+  "checks": "passed",
+  "max_curve_errors": [
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16
+  ],
+  "truth": 1.0,
+  "total_iterations": 10,
+  "points": [
+    1.0326463776836101,
+    1.0610574500055276,
+    0.9492582023960261,
+    1.0199614591999995,
+    1.120255291296987,
+    1.1083959009605393,
+    1.0146188721542835,
+    1.0218654926113164,
+    1.0683250752444513,
+    1.0711785407376182
+  ],
+  "diagnostics": [
+    [
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.001191114428240679,
+        "theta": 2.802317556132538,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0008875441833254756,
+        "theta": 1.3672323170071539,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.00105770823668261,
+        "theta": 2.418720088317191,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0012400581895592772,
+        "theta": 2.077197310429647,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0010207231894052344,
+        "theta": 2.2729390742677067,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0008943705015912802,
+        "theta": 1.2229604680276451,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0011510106812944074,
+        "theta": 2.746638538657098,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0012189934078282417,
+        "theta": 2.0813408260651665,
+        "success": true,
+        "status": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": NaN,
+        "theta": 0.0,
+        "success": false,
+        "status": "insufficient_data",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ]
+  ],
+  "seconds_per_estimate": 0.03388222999987192,
+  "config": {
+    "gompertz": {
+      "gamma_per_year": 0.085,
+      "k_anchor_weeks": 4,
+      "gamma_per_week": 0.0016346153846153847,
+      "k_anchor_tolerance": 0.2,
+      "convergence_tol": 1e-08,
+      "max_iterations": 25
+    },
+    "guards": {
+      "min_quiet_deaths": 30,
+      "theta0_max": 100.0,
+      "bad_fit_relrmse_threshold": 100000.0,
+      "action": "set_zero"
+    },
+    "skip": 2,
+    "anchor": 5,
+    "windows": [
+      {
+        "start_iso": "2021-30",
+        "end_iso": "2022-12",
+        "start_int": 202130,
+        "end_int": 202212
+      }
+    ],
+    "optional_wave_adjustment": false
+  },
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_frailty",
+    "scope": "within_model",
+    "n": 100000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "source_sha256": {
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code\\KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266"
+  }
+}

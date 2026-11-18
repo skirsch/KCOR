@@ -1,0 +1,23 @@
+{
+  "paused_at_utc": "2026-11-11T01:36:26Z",
+  "coordinator": 77592,
+  "runner": 79492,
+  "workers": [
+    75852,
+    78432,
+    63504,
+    80304,
+    74980,
+    74576
+  ],
+  "statuses": {
+    "75852": "stopped",
+    "78432": "stopped",
+    "63504": "stopped",
+    "80304": "stopped",
+    "74980": "stopped",
+    "74576": "stopped",
+    "79492": "stopped",
+    "77592": "stopped"
+  }
+}

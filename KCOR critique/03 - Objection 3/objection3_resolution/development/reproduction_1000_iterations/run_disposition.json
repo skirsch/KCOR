@@ -1,0 +1,12 @@
+{
+  "time": "2026-11-10T23:08:52.383774+00:00",
+  "status": "intentionally_stopped_after_requested_calculation_verified",
+  "pid": 78512,
+  "age_specific_points_verified": 100000,
+  "max_absolute_error": 0.0,
+  "scope": "Single-age comparison, as prespecified in DESIGN.md; age pooling is outside scope.",
+  "remaining_work": "Production all_ages_asmr_rows calculation; source near line 5456 explicitly excludes those rows from exported output.",
+  "full_workbook_export_completed": false,
+  "reason": "All 1000 completed age-specific trajectories, fitted theta columns, and production summary quantiles had been saved and verified; unused aggregate work was no longer required.",
+  "source_files_modified": false
+}

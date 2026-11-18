@@ -1,0 +1,76 @@
+{
+  "checks": "passed",
+  "same_original_records_across_layouts": true,
+  "row_statuses": [
+    {
+      "mc_id": 0,
+      "theta0_status_num": "NOT_IDENTIFIED",
+      "theta0_status_den": "NOT_IDENTIFIED"
+    },
+    {
+      "mc_id": 1,
+      "theta0_status_num": "NOT_IDENTIFIED",
+      "theta0_status_den": "NOT_IDENTIFIED"
+    },
+    {
+      "mc_id": 2,
+      "theta0_status_num": "OK",
+      "theta0_status_den": "OK"
+    },
+    {
+      "mc_id": 3,
+      "theta0_status_num": "OK",
+      "theta0_status_den": "OK"
+    },
+    {
+      "mc_id": 4,
+      "theta0_status_num": "OK",
+      "theta0_status_den": "OK"
+    },
+    {
+      "mc_id": 5,
+      "theta0_status_num": "OK",
+      "theta0_status_den": "OK"
+    },
+    {
+      "mc_id": 6,
+      "theta0_status_num": "NOT_IDENTIFIED",
+      "theta0_status_den": "NOT_IDENTIFIED"
+    },
+    {
+      "mc_id": 7,
+      "theta0_status_num": "NOT_IDENTIFIED",
+      "theta0_status_den": "NOT_IDENTIFIED"
+    },
+    {
+      "mc_id": 8,
+      "theta0_status_num": "NOT_IDENTIFIED",
+      "theta0_status_den": "NOT_IDENTIFIED"
+    },
+    {
+      "mc_id": 9,
+      "theta0_status_num": "NOT_IDENTIFIED",
+      "theta0_status_den": "NOT_IDENTIFIED"
+    }
+  ],
+  "compact_summary": [
+    {
+      "enrollment_date": "2021_24",
+      "reporting_date": "2022-06-13",
+      "OK": "0",
+      "INSUFFICIENT_SIGNAL": "0",
+      "INSUFFICIENT_DEATHS": "0",
+      "NOT_IDENTIFIED": "0",
+      "any_non_ok_status": "False",
+      "quality_flag": "False",
+      "quality_flag_detail": NaN
+    }
+  ],
+  "source_sha256": {
+    "code/KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code/KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "code/Makefile": "fb36efdf96419a0193bebdb568a26c0074fa4ae156c2799b63ee1b86da3317d1",
+    "documentation/preprint/paper.md": "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a",
+    "documentation/preprint/supplement.md": "dc24e25ef100937b715ed002fe1efd5bbd2d55184fad312eecb70d2d06036e90"
+  }
+}

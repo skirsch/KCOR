@@ -1,0 +1,33 @@
+{
+  "scope": "exact Gompertz-gamma identities, not a finite-sample fit audit",
+  "original_k": 0.001,
+  "original_theta": 4.0,
+  "gamma_per_week": 0.0016346153846153847,
+  "time_weeks": [
+    0,
+    100
+  ],
+  "cases": [
+    {
+      "multiplier": 0.5,
+      "baseline_k_after_observed_scaling": 0.0005,
+      "frailty_theta_after_observed_scaling": 8.0,
+      "frailty_theta_after_individual_scaling": 4.0,
+      "max_relative_observed_hazard_identity_error": 0.0,
+      "max_relative_cumulative_identity_error": 0.0,
+      "max_relative_exact_inversion_error": 0.0,
+      "individual_scaled_over_marginal_scaled_week52": 1.097919031258838
+    },
+    {
+      "multiplier": 2.0,
+      "baseline_k_after_observed_scaling": 0.002,
+      "frailty_theta_after_observed_scaling": 2.0,
+      "frailty_theta_after_individual_scaling": 4.0,
+      "max_relative_observed_hazard_identity_error": 0.0,
+      "max_relative_cumulative_identity_error": 0.0,
+      "max_relative_exact_inversion_error": 0.0,
+      "individual_scaled_over_marginal_scaled_week52": 0.8486284145147994
+    }
+  ],
+  "paper_source_sha256": "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a"
+}

@@ -1,0 +1,15 @@
+{
+  "calibration_rows": 200,
+  "evaluation_rows": 600,
+  "variant_rows": 10400,
+  "all_variant_fits_eligible": true,
+  "calibration_combined_passes": 155,
+  "checks": [
+    "unique rows and complete variants",
+    "finite metrics",
+    "exact cutoff reproduction with round-trip CSV parsing",
+    "acceptance decisions and summaries",
+    "shared comparator parameters",
+    "unchanged source and script hashes"
+  ]
+}

@@ -1,0 +1,498 @@
+{
+  "same_datasets": 60,
+  "truth": 1.0,
+  "current": {
+    "mean_error": 0.0070448387654555526,
+    "sd": 0.009999894501593873,
+    "rmse": 0.01216392254881442
+  },
+  "candidate": {
+    "mean_error": -0.00490083605380152,
+    "sd": 0.03831131280377154,
+    "rmse": 0.03830551228342378
+  },
+  "current_accepted": 60,
+  "candidate_raw_accepted": 57,
+  "rows": [
+    {
+      "repetition": 0,
+      "current": 1.0030798066242814,
+      "candidate": 0.9677451494340263,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 1,
+      "current": 1.0198700020089777,
+      "candidate": 1.0199180659678633,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 2,
+      "current": 1.009183428278552,
+      "candidate": 1.014890135554918,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 3,
+      "current": 1.0031676619166725,
+      "candidate": 0.9991990883497691,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 4,
+      "current": 0.9951622708073449,
+      "candidate": 0.9393972091700731,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 5,
+      "current": 1.0005819914357204,
+      "candidate": 1.00410866478336,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 6,
+      "current": 1.0018978846203155,
+      "candidate": 0.9290114445100847,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 7,
+      "current": 0.9967413205545099,
+      "candidate": 0.973059953536426,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 8,
+      "current": 1.0148887310110717,
+      "candidate": 0.9963452935742446,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 9,
+      "current": 0.9974877593047207,
+      "candidate": 0.9942954261750969,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 10,
+      "current": 1.0067812448648923,
+      "candidate": 0.9976696395341431,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 11,
+      "current": 1.015104245349399,
+      "candidate": 0.9940583252084112,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 12,
+      "current": 1.011490824082933,
+      "candidate": 0.9591119153653732,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 13,
+      "current": 1.01383637063193,
+      "candidate": 1.0359155316925965,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 14,
+      "current": 1.0141621468407838,
+      "candidate": 0.9992529288139254,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 15,
+      "current": 1.011545634893787,
+      "candidate": 0.9933214284844492,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 16,
+      "current": 0.9945295899406011,
+      "candidate": 0.9587412774258504,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 17,
+      "current": 0.996986390603293,
+      "candidate": 0.9756985190536301,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 18,
+      "current": 1.0070857183199908,
+      "candidate": 0.998285433782338,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 19,
+      "current": 1.008406945626826,
+      "candidate": 0.9714857140900771,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 20,
+      "current": 0.9867970599715357,
+      "candidate": 0.9289870993861414,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 21,
+      "current": 1.0137540520206862,
+      "candidate": 1.034013653461576,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 22,
+      "current": 1.0271168546237222,
+      "candidate": 1.0157319537361806,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 23,
+      "current": 1.0191322357214685,
+      "candidate": 1.104709033333613,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 24,
+      "current": 1.0099368054358842,
+      "candidate": 1.026395983211153,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": false
+    },
+    {
+      "repetition": 25,
+      "current": 1.0051980047280553,
+      "candidate": 0.9872868444887919,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 26,
+      "current": 1.0066521790148992,
+      "candidate": 1.0352360656702182,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 27,
+      "current": 1.021628731019045,
+      "candidate": 1.0513657146353916,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 28,
+      "current": 0.9969364893920073,
+      "candidate": 1.0177142154487726,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 29,
+      "current": 1.0014495977462714,
+      "candidate": 0.9490695051943444,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 30,
+      "current": 1.0036039821429354,
+      "candidate": 0.9711963267394004,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 31,
+      "current": 0.9982724763558455,
+      "candidate": 0.9493636268159046,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 32,
+      "current": 1.005904434762898,
+      "candidate": 1.0217047809200859,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 33,
+      "current": 1.0024850456797145,
+      "candidate": 1.0130618697362617,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 34,
+      "current": 1.0156813491560157,
+      "candidate": 0.9834255539861504,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 35,
+      "current": 1.0090720200658518,
+      "candidate": 0.9582624928211952,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 36,
+      "current": 0.9988481445576939,
+      "candidate": 0.9443619427316928,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 37,
+      "current": 0.9965031591286452,
+      "candidate": 0.9989186557344854,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 38,
+      "current": 1.004053977768969,
+      "candidate": 0.8916033811962643,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": false
+    },
+    {
+      "repetition": 39,
+      "current": 1.0114998693827915,
+      "candidate": 1.0248608475240506,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 40,
+      "current": 1.0072288868269572,
+      "candidate": 1.031991460918142,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 41,
+      "current": 0.9953560955485751,
+      "candidate": 0.9584468317072253,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 42,
+      "current": 1.0089753306889138,
+      "candidate": 0.9808514790711036,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 43,
+      "current": 1.008761937532966,
+      "candidate": 1.0168642386362363,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 44,
+      "current": 0.9950763322211429,
+      "candidate": 0.9528474341035282,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 45,
+      "current": 0.9868654295388039,
+      "candidate": 0.9653949289879409,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 46,
+      "current": 0.9971119495440487,
+      "candidate": 0.9601640722806004,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 47,
+      "current": 1.0120844391544044,
+      "candidate": 1.0107727123893793,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 48,
+      "current": 1.0023826348817282,
+      "candidate": 0.9911297605838032,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 49,
+      "current": 1.0250039328783647,
+      "candidate": 1.0572917158065973,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 50,
+      "current": 1.0154275670211548,
+      "candidate": 0.9848709292943127,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 51,
+      "current": 1.0244803820595645,
+      "candidate": 1.0461958165173524,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 52,
+      "current": 1.0157949718857364,
+      "candidate": 1.0288781910214782,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 53,
+      "current": 1.0037497381498914,
+      "candidate": 0.9716024154605873,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 54,
+      "current": 1.0163094525970322,
+      "candidate": 1.0567999216886883,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 55,
+      "current": 1.0168450003599478,
+      "candidate": 1.0174191919888875,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 56,
+      "current": 1.0379985242078376,
+      "candidate": 1.065460803512677,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 57,
+      "current": 1.0033310291538446,
+      "candidate": 0.9911179313545735,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    },
+    {
+      "repetition": 58,
+      "current": 0.9935739727308696,
+      "candidate": 1.0068891720425566,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": false
+    },
+    {
+      "repetition": 59,
+      "current": 0.9998162825540113,
+      "candidate": 0.9821801381279086,
+      "truth": 1.0,
+      "current_accepted": true,
+      "candidate_raw_accepted": true
+    }
+  ]
+}

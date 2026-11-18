@@ -1,0 +1,127 @@
+{
+  "created_utc": "2026-11-10T06:15:37.705996+00:00",
+  "variants": [
+    [
+      "nominal",
+      0,
+      0,
+      2,
+      1.0
+    ],
+    [
+      "window_-4_-4",
+      -4,
+      -4,
+      2,
+      1.0
+    ],
+    [
+      "window_-4_0",
+      -4,
+      0,
+      2,
+      1.0
+    ],
+    [
+      "window_-4_4",
+      -4,
+      4,
+      2,
+      1.0
+    ],
+    [
+      "window_0_-4",
+      0,
+      -4,
+      2,
+      1.0
+    ],
+    [
+      "window_0_4",
+      0,
+      4,
+      2,
+      1.0
+    ],
+    [
+      "window_4_-4",
+      4,
+      -4,
+      2,
+      1.0
+    ],
+    [
+      "window_4_0",
+      4,
+      0,
+      2,
+      1.0
+    ],
+    [
+      "window_4_4",
+      4,
+      4,
+      2,
+      1.0
+    ],
+    [
+      "skip_0",
+      0,
+      0,
+      0,
+      1.0
+    ],
+    [
+      "skip_4",
+      0,
+      0,
+      4,
+      1.0
+    ],
+    [
+      "gamma_0.95",
+      0,
+      0,
+      2,
+      0.95
+    ],
+    [
+      "gamma_1.05",
+      0,
+      0,
+      2,
+      1.05
+    ]
+  ],
+  "source_hashes": {
+    "test\\quiet_window_contamination\\run_contamination_test.py": "7d2268c46a7fce5d9e47d5efb68ea7a6cce45892d2e04aa336386365fb66615d",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "KCOR critique\\step1_contamination_audit.py": "12941930b8ef08bd37708de5dfcad3695f4499bd463ca3c35572c64c384902ac",
+    "KCOR critique\\step6_random_detection.py": "a7a11b9d5670f22f257de194d09a5c922c920a7d847d55f561bc50f9e6a6e43c",
+    "KCOR critique\\step6_results_2026-11-10\\design.json": "fd3224a022a09aa0e1cc69b578d64ce6d9d6ad706e1e9a110d6d988ad7d35b87",
+    "KCOR critique\\step6_results_2026-11-10\\evaluation_runs.csv": "3f48845a14cca079394f19775adc696fd4b5566d111c098d1cb2690a2b63437b",
+    "KCOR critique\\step6_results_2026-11-10\\calibration.csv": "308602dad84907233aadf0153e11f09876579eeae494664dc83add951c4ebc47",
+    "KCOR critique\\step6_results_2026-11-10\\frozen_threshold.json": "5a638a9fe74c422c9eec0be981374d935f542ec13f3eca6b1952d756cd5795be",
+    "KCOR critique\\step4_results_2026-11-09\\diagnostic_mapping.csv": "4e4a22dd236a81a73e4f004f35e306ae4f8576980e8b858eca82c019aac8a602",
+    "KCOR critique\\step5_results_2026-11-09\\manifest.json": "228fa108e359bda3f701a9f808fba5ee1964a858e760e62200574db17e7bf95d"
+  },
+  "script_sha256": "aa4672311af16704b41933eb01ea2485239b4c82c1fc5c08b9d59ae5d913a6ff",
+  "metrics": {
+    "window_change": "max abs(variant raw / nominal raw - 1) over eight boundary shifts",
+    "skip_change": "max abs(variant raw / nominal raw - 1) for skip 0 and 4",
+    "gamma_change": "max abs(variant raw / nominal raw - 1) for gamma times 0.95 and 1.05",
+    "linearity_loss": "max(1 - R squared) across both nominal corrected cumulative hazards versus Gompertz time"
+  },
+  "cutoff_rule": "Each metric independently uses the higher empirical 95th percentile of all 200 separate null calibration runs, before evaluation replay. Failed variant fits force rejection for their sensitivity family.",
+  "combined_rule": "Step 6 residual acceptance AND all four additional checks. No promised joint 5% false-alarm rate; report observed null rejection.",
+  "scope": "Exploratory diagnostic comparison on the existing draws, not a complete manuscript protocol or fresh validation. No thresholds tuned to harm outcomes.",
+  "caveats": [
+    "Skip/gamma perturbation magnitudes are exploratory, inherited from Step 4.",
+    "Moving the lower window bound earlier includes four harm weeks in the baseline-clean case; no affected-baseline harm enters any shifted quiet window.",
+    "Skip changes alter the included follow-up and target: treat this as stability, not as error against the nominal target.",
+    "One quiet window cannot test omit-window or between-window coherence.",
+    "Near-zero frailty frequency is reported descriptively, with no new rejection rule.",
+    "Uncertainty intervals are simulation-rate intervals conditional on calibration."
+  ]
+}

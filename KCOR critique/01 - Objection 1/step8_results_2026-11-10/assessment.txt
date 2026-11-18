@@ -1,0 +1,133 @@
+STEP 8: FRESH VALIDATION WITH FIXED DIAGNOSTIC RULES
+Date: 2026-11-10 (America/Toronto)
+
+Main finding
+------------
+The fresh simulations reproduce the main Step 7 finding. With harm during the
+early baseline weeks, 114/200 runs (57%) pass all implemented checks. Their
+median raw contrast is 1.309078, compared with the reference 1.049735: 24.7%
+above the reference. The corresponding earlier median was 1.309151.
+
+This is independent simulation replication within the same constructed model.
+It is not validation against actual data, a claim of plausible real-world harm,
+or a test of every manuscript diagnostic requirement.
+
+Fixed design and independence
+-----------------------------
+Use the same 50,000 initial people per group, 200-week follow-up, constant added
+hazard of 0.0001 for 53 weeks, and three cases:
+  No effect: no added hazard.
+  Clean baseline: harm in rebased weeks 5-57.
+  Affected baseline: harm in rebased weeks 0-52.
+The initial two weeks are skipped; baseline estimation uses rebased weeks 0-3
+and the nominal quiet window is weeks 58-110.
+
+There are 200 fresh paired repetitions, each with all three cases. Random seed
+sequences use [20261109, 2, repetition, cohort]; earlier calibration and evaluation
+used branches 0 and 1. Within a repetition the comparator is shared and the
+affected-group cases share random streams. These are 200 paired repetitions,
+not 600 independent case comparisons.
+
+All five diagnostic cutoffs are read unchanged from Steps 6 and 7. There is no
+calibration, tuning, early stopping, or outcome-dependent exclusion in this run.
+The additional checks remain quiet-window boundary sensitivity, skipped-week
+sensitivity, fitted mortality-growth sensitivity, and corrected-curve linearity
+in Gompertz-transformed time. Acceptance requires all four plus the original
+residual check and applicable fitting eligibility conditions.
+
+The design was saved before replays and fresh outcomes. Before generating fresh
+draws, the new adapter reproduced earlier repetitions 0, 99, and 199 for all
+three cases: nine cases, 117 fitting variants, diagnostic scores, and decisions.
+It reuses the original binomial simulator and production fitter/inversion.
+
+Results of the combined rule
+----------------------------
+Case                Reference  Accepted   Median among accepted  >10% error*
+No effect           1.000000    151/200        1.047899             66/151
+Clean baseline      1.049735    130/200        1.103584             53/130
+Affected baseline   1.049735    114/200        1.309078             94/114
+
+*Absolute relative error against the matching nominal raw reference. This 10%
+reporting threshold is exploratory, not a manuscript criterion. The reference
+removes baseline frailty depletion while retaining the additive hazard. These
+contrasts are not death-count ratios. All accuracy summaries are before anchoring.
+
+The combined rule accepts 75.5%, 65.0%, and 57.0%, respectively. Among accepted
+runs, more than 10% error occurs in 43.7%, 40.8%, and 82.5%, respectively.
+For affected baseline, 94/200 (47%) both pass every implemented check and have
+more than 10% error. For no effect that joint rate is 66/200 (33%).
+
+Accepted-run 5th-95th percentiles of the raw contrast:
+  No effect:          0.821428 to 1.313746
+  Clean baseline:     0.861240 to 1.346577
+  Affected baseline:  1.008881 to 1.646124
+These are distribution percentiles, not uncertainty intervals for an individual
+estimate. Substantial sampling variation remains even without contamination.
+
+Wilson 95% simulation-rate intervals for acceptance:
+  No effect:          69.1% to 80.9%
+  Clean baseline:     58.2% to 71.3%
+  Affected baseline:  50.1% to 63.7%
+The affected-baseline accepted-large-error rate of 82.5% has interval 74.4-88.3%.
+These intervals condition on the fixed cutoffs and omit cutoff-calibration
+uncertainty. They are not clinical confidence intervals.
+
+Comparison with the earlier evaluation
+-------------------------------------
+Case                Earlier pass  Fresh pass  Earlier passing median  Fresh median
+No effect              70.0%        75.5%          1.048551             1.047899
+Clean baseline         62.5%        65.0%          1.087915             1.103584
+Affected baseline      55.0%        57.0%          1.309151             1.309078
+
+The fresh no-effect rejection rate is 24.5%, compared with 30.0% earlier.
+Affected-baseline rejection is 43.0%, compared with 45.0% earlier. There is some
+discrimination, but passing the checks does not ensure an accurate contrast.
+No formal test of differences between the two simulation batches is claimed.
+
+Before diagnostic selection, affected-baseline estimates exceed the paired
+clean-baseline estimates in 199/200 fresh repetitions. The median within-pair
+increase is 0.264373 contrast units. This corroborates an additional effect of
+the timing change beyond the broad uncertainty seen in the no-effect results.
+
+The residual check alone accepts 187/200 no-effect, 187/200 clean-baseline, and
+199/200 affected-baseline runs. Additional checks provide the rejection above;
+the residual check alone remains ineffective for this contamination pattern.
+
+Interpretation and remaining scope
+----------------------------------
+The earlier result is reproduced under independent random draws and unchanged
+rules: early-baseline contamination can yield substantial overcorrection that
+survives this set of residual, stability, and shape checks. The inference stays
+conditional on the tested generator, effect strength, sample size, and rules.
+
+This does not establish a failure passing the complete manuscript procedure.
+The numerical cutoffs and some perturbation magnitudes are exploratory; there
+is no promised overall 5% false-alarm rate. One quiet window cannot test omission
+or coherence across windows, and the optional epidemic module is inactive.
+The inherited effect's real-data plausibility and applicability remain untested.
+
+As previously recorded, shifting the quiet-window start earlier can introduce
+four harm weeks in the clean-baseline case; affected-baseline harm stays outside
+all shifted quiet windows. Skipped-week sensitivity changes the included
+follow-up, so it is a stability check, not error against an unchanged target.
+
+This completes the planned simulation work. One bounded step remains: assemble
+the assessment of objection 1 across the original audit, expected-count timing
+experiments, and random-death diagnostic experiments. No further scenarios or
+cutoff tuning are planned as part of that write-up.
+
+Verification and reproduction
+-----------------------------
+Command from C:\Users\jasmi\repo\KCOR-update:
+python -u "KCOR critique\step8_fresh_validation.py" --step6 "KCOR critique\step6_results_2026-11-10" --step7 "KCOR critique\step7_results_2026-11-10" --outdir "KCOR critique\step8_results_2026-11-10"
+Use a fresh output directory when repeating; overwriting is refused.
+
+Independent verification confirmed 600 unique fresh case rows, 7,800 complete
+case/variant records, finite metrics, all variant fits eligible, the fresh seed
+branch, unchanged cutoffs, sensitivity measures reconstructed from saved variant
+endpoints, acceptance decisions, summary counts and medians, shared comparator
+parameters, and unchanged source/script hashes. The plot was visually inspected.
+See verification.json, completion.json, and prior_replay_verification.csv.
+
+New code and artifacts remain under KCOR critique. Original code, configuration,
+earlier scripts, and previous results were not modified.

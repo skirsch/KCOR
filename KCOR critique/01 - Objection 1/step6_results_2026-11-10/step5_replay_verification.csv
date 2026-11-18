@@ -1,0 +1,4 @@
+case,matched,raw_final,target
+no_effect,True,1.0048954605732647,1.0
+baseline_clean,True,1.0576004049213108,1.0497353811994399
+baseline_affected,True,1.349050238850655,1.0497353811994399

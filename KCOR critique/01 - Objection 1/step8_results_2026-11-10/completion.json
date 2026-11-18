@@ -1,0 +1,8 @@
+{
+  "fresh_case_runs": 600,
+  "fresh_phase": 2,
+  "prior_cases_reproduced": 9,
+  "source_hashes_unchanged": true,
+  "cutoffs_unchanged": true,
+  "script_sha256": "2d2a1ddbd3a1ac3c078cb365fc29efa74158ccf92ef48dc4b0b6b3a17ef8d507"
+}

@@ -1,0 +1,9 @@
+{
+  "saved_rows_checked": 2500,
+  "generator_cases_checked": 4,
+  "seeds_per_case": 3,
+  "saved_rows_replayed": 1,
+  "bootstrap_draws_in_replay": 200,
+  "source_hashes_unchanged": true,
+  "limitation": "One saved row replay establishes local numerical reproduction, not the complete historical execution environment or correct coverage."
+}

@@ -1,0 +1,196 @@
+{
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_large",
+    "scope": "within_model",
+    "n": 1000000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "truth": 1.0,
+  "candidate": [
+    {
+      "point": 0.9999999999891722,
+      "accepted": true,
+      "diagnostics": [
+        {
+          "k_effective": 0.0009829497100826605,
+          "theta": 3.9999999999738223,
+          "success": true,
+          "objective": -1.9889512259396724e-10,
+          "gradient_norm": 2.3111538897746884e-09,
+          "iterations": 16,
+          "near_zero": false,
+          "hit_upper_bound": false
+        },
+        {
+          "k_effective": 0.0010035467702650732,
+          "theta": 0.4999999995305099,
+          "success": true,
+          "objective": -2.3590018827235326e-11,
+          "gradient_norm": 1.362752555261235e-07,
+          "iterations": 7,
+          "near_zero": false,
+          "hit_upper_bound": false
+        }
+      ]
+    },
+    {
+      "point": 1.0000000000202862,
+      "accepted": true,
+      "diagnostics": [
+        {
+          "k_effective": 0.0009829497100828667,
+          "theta": 3.9999999999936104,
+          "success": true,
+          "objective": -1.9764456737902947e-10,
+          "gradient_norm": 6.744577431981721e-10,
+          "iterations": 13,
+          "near_zero": false,
+          "hit_upper_bound": false
+        },
+        {
+          "k_effective": 0.0010035467703633217,
+          "theta": 0.5000000008287808,
+          "success": true,
+          "objective": -2.3874235921539366e-11,
+          "gradient_norm": 1.42062154131955e-06,
+          "iterations": 14,
+          "near_zero": false,
+          "hit_upper_bound": false
+        }
+      ]
+    },
+    {
+      "point": 0.9999999999968128,
+      "accepted": true,
+      "diagnostics": [
+        {
+          "k_effective": 0.0009829497100860428,
+          "theta": 4.000000000177886,
+          "success": true,
+          "objective": -1.9912249626941048e-10,
+          "gradient_norm": 3.5847610736603643e-09,
+          "iterations": 15,
+          "near_zero": false,
+          "hit_upper_bound": false
+        },
+        {
+          "k_effective": 0.0010035467702661312,
+          "theta": 0.5000000000353358,
+          "success": true,
+          "objective": -2.3021584638627246e-11,
+          "gradient_norm": 1.776079936781908e-10,
+          "iterations": 15,
+          "near_zero": false,
+          "hit_upper_bound": false
+        }
+      ]
+    },
+    {
+      "point": 1.0000000000161025,
+      "accepted": true,
+      "diagnostics": [
+        {
+          "k_effective": 0.0009829497100860428,
+          "theta": 4.000000000177886,
+          "success": true,
+          "objective": -1.9912249626941048e-10,
+          "gradient_norm": 3.5847610736603643e-09,
+          "iterations": 15,
+          "near_zero": false,
+          "hit_upper_bound": false
+        },
+        {
+          "k_effective": 0.0010035467703633217,
+          "theta": 0.5000000008287808,
+          "success": true,
+          "objective": -2.3874235921539366e-11,
+          "gradient_norm": 1.42062154131955e-06,
+          "iterations": 14,
+          "near_zero": false,
+          "hit_upper_bound": false
+        }
+      ]
+    }
+  ],
+  "original_point": 1.0046145529025252,
+  "checks": [
+    {
+      "theta": 3.9999999999738223,
+      "expected_theta": 4.0,
+      "max_hazard_error": 5.398242616805327e-16,
+      "success": true,
+      "objective": -1.9889512259396724e-10
+    },
+    {
+      "theta": 0.4999999995305099,
+      "expected_theta": 0.5,
+      "max_hazard_error": 1.6747670958383587e-14,
+      "success": true,
+      "objective": -2.3590018827235326e-11
+    },
+    {
+      "theta": 3.9999999999936104,
+      "expected_theta": 4.0,
+      "max_hazard_error": 1.9927635930283571e-16,
+      "success": true,
+      "objective": -1.9764456737902947e-10
+    },
+    {
+      "theta": 0.5000000008287808,
+      "expected_theta": 0.5,
+      "max_hazard_error": 9.733425003488616e-14,
+      "success": true,
+      "objective": -2.3874235921539366e-11
+    },
+    {
+      "theta": 4.000000000177886,
+      "expected_theta": 4.0,
+      "max_hazard_error": 3.013431518206211e-15,
+      "success": true,
+      "objective": -1.9912249626941048e-10
+    },
+    {
+      "theta": 0.5000000000353358,
+      "expected_theta": 0.5,
+      "max_hazard_error": 6.657001339060997e-16,
+      "success": true,
+      "objective": -2.3021584638627246e-11
+    },
+    {
+      "theta": 4.000000000177886,
+      "expected_theta": 4.0,
+      "max_hazard_error": 3.013431518206211e-15,
+      "success": true,
+      "objective": -1.9912249626941048e-10
+    },
+    {
+      "theta": 0.5000000008287808,
+      "expected_theta": 0.5,
+      "max_hazard_error": 9.733425003488616e-14,
+      "success": true,
+      "objective": -2.3874235921539366e-11
+    }
+  ],
+  "code_sha256": "34205a38c6c7aa3123b26429a836beb2fd3136e3968edd286b808192ce780adb",
+  "passed": true
+}

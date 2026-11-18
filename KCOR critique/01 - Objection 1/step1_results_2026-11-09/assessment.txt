@@ -1,0 +1,95 @@
+STEP 1: AUDIT OF THE EXISTING QUIET-WINDOW CONTAMINATION EXPERIMENT
+Date: 2026-11-09 (America/Toronto)
+
+Scope
+-----
+This step audits the existing scenarios. It introduces no new effect shapes,
+timings, cohorts, or plausibility judgments. Original code and saved experiment
+outputs were not edited. The separate audit script imports the original module
+and calls its fitting/inversion functions. It is not a full workbook/NPH run.
+
+Command from C:\Users\jasmi\repo\KCOR-update:
+python "KCOR critique\step1_contamination_audit.py" --outdir "KCOR critique\step1_results_2026-11-09"
+
+The runner refuses to overwrite an existing output directory. For another run,
+choose a new directory. The manifest retains input hashes and configuration.
+
+What was checked
+----------------
+1. The saved 520 random repetitions and their summaries were inspected.
+2. One saved repetition from each of the 26 settings was reconstructed with the
+   current code and the inferred default seed. All 26 final KCOR results matched
+   within rtol=1e-6, atol=1e-8. Maximum absolute KCOR difference: 8.28e-8.
+   Three settings exceeded that tolerance on a fitted frailty parameter, with
+   maximum absolute parameter difference 2.20e-6. These small discrepancies were
+   retained in saved_replay_comparison.csv, not hidden or treated as exact matches.
+   Historical files lack the original code hash and seed, so this is numerical
+   reproduction, not proof of the original execution environment.
+3. All 26 existing settings were evaluated with smooth expected death counts,
+   using the original discrete hazard schedule and original fitter. Two settings
+   are duplicate no-contamination controls. No random event noise is present in
+   these new expected-count calculations.
+4. Arithmetic checks passed for survivor recursion, total deaths, recovery of
+   the specified weekly hazards, the survival ratio exp(-sum(added hazard)), and
+   the anchoring identity. Input hashes remained unchanged after the audit.
+
+Main finding: anchoring can produce the below-one result
+------------------------------------------------------
+The original experiment anchors at original week 6, rebased week 4. That is also
+the FIRST CONTAMINATED WEEK. Its cumulative quantity includes that week's deaths.
+
+Expected-count results at the end of 130 weeks:
+
+Scenario                   Before anchoring   Value at anchor   After anchoring
+No contamination                 1.0064             1.0025             1.0038
+Fading, epsilon=0.0005            1.1121             1.1814             0.9413
+Constant, epsilon=0.0001          1.0733             1.0458             1.0262
+Combined, above two values       1.1944             1.2252             0.9748
+
+For the fading example: 1.1121 / 1.1814 = 0.9413. The final contrast is below its
+reference contrast, even though the final unanchored contrast is above one.
+It is therefore incorrect to identify this anchored value alone with benefit
+or with proof that frailty fitting erased harm.
+
+The same fading scenario produces about 364 additional expected deaths in the
+50,000-person affected group, compared with that SAME group without added hazard.
+This is a known consequence of the specified mortality schedule, not a claim
+that KCOR directly estimates a death-count ratio.
+
+Holding the frailty fit at its no-contamination value still gives an anchored
+result of 0.9571 (unanchored 1.1315). Thus refitting is not necessary for a
+below-one anchored result. Refitting lowers it further to 0.9413 in this example.
+The fixed-fit curve is a sensitivity comparison, NOT a correct-effect oracle.
+
+Other observations
+------------------
+- The deterministic null is close to, but not exactly, one. The historical random
+  null means were 1.0626 and 1.0341, with standard deviations 0.1390 and 0.0901.
+  These motivate examining smooth data before interpreting stochastic changes.
+- In all nonzero expected-count settings the affected group's fitted frailty is
+  essentially zero, although the generating value is 0.5. Parameter distortion
+  is present; its effect on an explicitly chosen target has not yet been measured.
+- The fitter reports status 'ok' for these expected-count cases. Its current
+  relative-fit-error threshold is 100000, while observed relative RMSE ranges
+  up to approximately 0.867. Status 'ok' is therefore not evidence of a close fit,
+  nor is it evidence that all manuscript-level acceptance rules were passed.
+- The smallest tested fading effect peaks at about 90% of the saved baseline
+  mortality scale. The smallest constant effect is about 22%. No empirical
+  plausibility verdict follows from this audit. The source script's plausibility
+  cutoffs are hard-coded inputs; their supporting evidence was not established.
+
+Limits and next step
+--------------------
+The audit retains the original discrete generator, including pre-skip depletion
+and its weekly approximation. It does not substitute an exact continuous-time
+gamma model. It does not establish a treatment-effect target, an error percentage
+relative to that target, or general robustness of KCOR.
+
+Before adding new timings, define the contrast that should preserve the added
+effect under this mechanism, and apply the SAME anchoring convention to that
+reference if anchored results are compared. In particular, simply applying the
+gamma inversion with the true frailty to baseline-plus-additive mortality is not
+automatically an oracle: the additive component changes the model relationship.
+
+Objection 1 remains open. This first step prevents an anchoring effect from being
+mistaken for evidence that the fitter cannot distinguish treatment from selection.

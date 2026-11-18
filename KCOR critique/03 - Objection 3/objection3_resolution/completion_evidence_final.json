@@ -1,0 +1,74 @@
+{
+  "checks": "passed",
+  "completed": "2026-11-10T23:12:02.995535+00:00",
+  "independent_datasets": 4800,
+  "retained_draws": 4795200,
+  "dataset_seed_replays": 16,
+  "bootstrap_seed_replays": 128,
+  "frozen_hashes_checked": [
+    "code\\KCOR.py",
+    "code\\KCOR_CMR.py",
+    "data\\Czech\\Czech.yaml",
+    "KCOR critique\\objection3_resolution\\check_model.py",
+    "KCOR critique\\objection3_resolution\\production_adapter.py",
+    "KCOR critique\\objection3_resolution\\run_study.py",
+    "KCOR critique\\objection3_resolution\\simulation.py",
+    "KCOR critique\\objection3_resolution\\summarize.py",
+    "KCOR critique\\objection3_resolution\\verify_person_aggregation.py",
+    "KCOR critique\\objection3_resolution\\verify_production.py",
+    "KCOR critique\\objection3_resolution\\design.json",
+    "KCOR critique\\objection3_resolution\\DESIGN.md"
+  ],
+  "source_snapshot_files": 6,
+  "production_comparisons": [
+    {
+      "fixture": "reproduction_single_iteration",
+      "iterations": 1,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_04",
+      "iterations": 4,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_10_iterations",
+      "iterations": 10,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_final_geometry",
+      "iterations": 10,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_1000_iterations",
+      "iterations": 1000,
+      "max_error": 0.0,
+      "rows": 100000,
+      "scope": "all completed age-specific production trajectories and actual-value interval summary",
+      "full_workbook_export_completed": false
+    }
+  ],
+  "report_coverage_recomputed_from_replicates": true,
+  "conditional_denominators_checked": true,
+  "development_final_separation": true,
+  "target_sensitivity_verified": true,
+  "final_module_file_hashes": {
+    "ASSESSMENT.md": "cccaa577c32f03a61637ce47788ee0ede657be47646cf45adf5593a8b14a95f5",
+    "audit_completed_module.py": "69cf9a957217d470021107fa36a41f1e3c0ac99c1cc7bccdc701da9150332546",
+    "check_model.py": "4b186171d09c2827c08b5c5b1a06791a52371857f0ff0a671c7365ef83636f59",
+    "COMPLETION_AUDIT.md": "b4dc7d5e6cf9dde78a27c73e23cfa3382e3da9e8681ee5c42ee0d9e747465802",
+    "DESIGN.md": "1b717fddb2ce3d7327ddc6c681fc448da8f6adeaaf9669b094fbe5ac814c23aa",
+    "IMPLEMENTATION_FINDINGS.md": "b3e9c855c2ed6aa05d8d7c2cae8432187b65e8f02b2b54a017b170a91c2dae03",
+    "production_adapter.py": "1f99f2a0609e6cbc9edbee6d3044a18b2e42df8dc6c5f70e6d958207537da6ca",
+    "README.md": "92190591fb066485171534bc406e3e06d6cb71e856d35f2a224d2cd227311325",
+    "run_study.py": "371bcedc0b45871080e075ecdf3407b1efd14e81630e57a7dd5524db94f18cfe",
+    "simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "summarize.py": "8cb4d0c1366ebeedad91d5bc94549bdfaefd2c34a41e0bd7b6f36410f9c5ae77",
+    "target_sensitivity.py": "5bb2d750a0ca19d8c752b0e66ba7a86547ea20b5af1d54507271cfd03ea9ccea",
+    "verify_captured_production.py": "b02258f1af29fd7a76361759f41c67ec52cccbc28d299683713ba6a87cf029bc",
+    "verify_person_aggregation.py": "4d6baa7e55530138044d6b150950d813fc3837507e0977e0ef314be3be89d216",
+    "verify_production.py": "65045e7576f046b561debc73d2eebf1dd1d5a676e49c5024cac7d265bbffcb21"
+  }
+}

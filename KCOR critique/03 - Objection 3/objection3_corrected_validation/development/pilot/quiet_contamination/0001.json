@@ -1,0 +1,74 @@
+{
+  "scenario": "quiet_contamination",
+  "repetition": 1,
+  "seed_components": [
+    526103,
+    7,
+    1
+  ],
+  "truth": 1.1517877725988084,
+  "point": 1.309926906210751,
+  "accepted": true,
+  "diagnostics": [
+    {
+      "k": 0.001079041513038714,
+      "theta": 10.165450487457177,
+      "success": true,
+      "status": "ok",
+      "message": "ok",
+      "degenerate": false,
+      "flags": {
+        "identifiability_flag": false,
+        "insufficient_signal": false,
+        "insufficient_deaths": false,
+        "bad_fit": false,
+        "theta_hit_bound": false,
+        "delta_negative_clamped": false
+      }
+    },
+    {
+      "k": 0.0008433071109823246,
+      "theta": 4.389112044731608e-10,
+      "success": true,
+      "status": "ok",
+      "message": "ok",
+      "degenerate": false,
+      "flags": {
+        "identifiability_flag": false,
+        "insufficient_signal": false,
+        "insufficient_deaths": false,
+        "bad_fit": false,
+        "theta_hit_bound": false,
+        "delta_negative_clamped": false
+      }
+    }
+  ],
+  "intervals": {
+    "percentile": [
+      1.1535108293027954,
+      1.4884744648533481
+    ],
+    "basic": [
+      1.131379347568154,
+      1.4663429831187067
+    ],
+    "valid_draws": 49
+  },
+  "prefix_intervals": {
+    "percentile": [
+      1.1535108293027954,
+      1.4884744648533481
+    ],
+    "basic": [
+      1.131379347568154,
+      1.4663429831187067
+    ],
+    "valid_draws": 49
+  },
+  "bootstrap_fit_failures": 0,
+  "accepted_bootstrap": 49,
+  "bootstrap_status_counts": {
+    "ok": 98
+  },
+  "counts_sha256": "12ba686dc0554b9083a23c8ffd1ed0ecd88d5b499f6217d169c1c981052545a3"
+}

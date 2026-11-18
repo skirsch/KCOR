@@ -1,0 +1,14 @@
+{
+  "purpose": "Unmodified evidence copies; runtime adapter imports repository production functions.",
+  "source_hashes": {
+    "code/KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code/KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "code/Makefile": "fb36efdf96419a0193bebdb568a26c0074fa4ae156c2799b63ee1b86da3317d1",
+    "data/Czech/Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "documentation/preprint/paper.md": "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a",
+    "documentation/preprint/supplement.md": "dc24e25ef100937b715ed002fe1efd5bbd2d55184fad312eecb70d2d06036e90"
+  },
+  "git_head": "055a90c94a7907a219c05af28589b7db2c12ce81",
+  "limited_source_status": "M  code/KCOR.py\nM  code/KCOR_CMR.py\nM  code/Makefile\nA  data/Czech/Czech.yaml\nAM documentation/preprint/paper.md\nAM documentation/preprint/supplement.md\n",
+  "note": "The working-tree hashes, not HEAD alone, identify the tested source."
+}

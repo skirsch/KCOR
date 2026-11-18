@@ -1,0 +1,10 @@
+rep,case,variants_matched,metrics_and_decisions_matched
+0,no_effect,13,True
+0,baseline_clean,13,True
+0,baseline_affected,13,True
+99,no_effect,13,True
+99,baseline_clean,13,True
+99,baseline_affected,13,True
+199,no_effect,13,True
+199,baseline_clean,13,True
+199,baseline_affected,13,True

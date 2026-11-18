@@ -1,0 +1,25 @@
+{
+  "created": "2026-11-13T07:20:35.969054+00:00",
+  "pull_request": "https://github.com/skirsch/KCOR/pull/4",
+  "pr_status_observed": "open, unmerged",
+  "status_checked": "2026-11-13",
+  "base": "b639be2572e04c3fbc8d15e102c56b87295959c9",
+  "head": "ab5baf07fad1b0b340e494d22bb39c13295a2441",
+  "changed_files": [
+    "code/KCOR.py",
+    "test/monte_carlo/README.md",
+    "test/monte_carlo/test_sample_isolation.py"
+  ],
+  "reviewer_note_source": "test/monte_carlo/README.md at PR head; verified against live connector response",
+  "verification_source": "objection3_production_fix/pr_verification/verification.json",
+  "git_diff_check": "passed",
+  "reverse_apply_check_at_head": "passed",
+  "sha256": {
+    "fix.patch": "15a18d24542e00553680cef640dfdb13544af6a447108789bd252c95b7aabf0f",
+    "test_sample_isolation.py": "4bdafe42895bbf90d000a7ab320b62f5014aa13e8f1e7f86bb8f20fa9e488e49",
+    "verification.json": "e1820dd2078286467e0527331b39d11d96406467b5f584881e8698d58e574ac4",
+    "REVIEWER_NOTE.md": "1e9111e99e9093abe798f05be29b7b7e94254d208203c2eb6eb467d2bd33a650",
+    "README.md": "4431782c63280c5ae8cd7d0a64ba7f1670843a1fdfc22dd77eacfb92fc2d361f",
+    "package_from_pr.py": "25c0bcd25b7d2183c495e60a7a3e3f397bf52ca4764a7912fd0ef2781b453fc7"
+  }
+}

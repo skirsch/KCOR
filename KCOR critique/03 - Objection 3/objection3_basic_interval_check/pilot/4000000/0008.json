@@ -1,0 +1,54 @@
+{
+  "n": 4000000,
+  "repetition": 8,
+  "truth": 1.0,
+  "point": 0.997486570536402,
+  "accepted": true,
+  "diagnostics": [
+    {
+      "k": 0.0009705269786695289,
+      "theta": 3.301864861509381,
+      "success": true,
+      "status": "ok",
+      "message": "ok",
+      "degenerate": false,
+      "flags": {
+        "identifiability_flag": false,
+        "insufficient_signal": false,
+        "insufficient_deaths": false,
+        "bad_fit": false,
+        "theta_hit_bound": false,
+        "delta_negative_clamped": false
+      }
+    },
+    {
+      "k": 0.0010052080323955201,
+      "theta": 0.3864365778140013,
+      "success": true,
+      "status": "ok",
+      "message": "ok",
+      "degenerate": false,
+      "flags": {
+        "identifiability_flag": false,
+        "insufficient_signal": false,
+        "insufficient_deaths": false,
+        "bad_fit": false,
+        "theta_hit_bound": false,
+        "delta_negative_clamped": false
+      }
+    }
+  ],
+  "bootstrap_fit_failures": 0,
+  "intervals": {
+    "percentile": [
+      0.9910082263114102,
+      1.0099701148208033
+    ],
+    "basic": [
+      0.9850030262520006,
+      1.0039649147613938
+    ],
+    "valid_draws": 199
+  },
+  "counts_sha256": "60ef38a4befaf8a8e4fdaee050a2480114a3b9eb6e4d315f9c2d7bdb406337be"
+}

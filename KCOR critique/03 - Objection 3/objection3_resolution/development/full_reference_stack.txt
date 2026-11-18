@@ -1,0 +1,15 @@
+Current thread 0x00011eac (most recent call first):
+  File "<string>", line 3 in <module>
+  File "<string>", line 1 in <module>
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\internals\blocks.py", line 650 in copy
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\internals\managers.py", line 442 in apply
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\internals\managers.py", line 734 in copy
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\generic.py", line 6663 in copy
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\generic.py", line 4099 in take
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\groupby\ops.py", line 1260 in _sorted_data
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\groupby\ops.py", line 1254 in __iter__
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\groupby\ops.py", line 627 in get_iterator
+  File "C:\Users\jasmi\repo\KCOR-update\code\KCOR.py", line 4896 in build_kcor_rows
+  File "C:\Users\jasmi\repo\KCOR-update\code\KCOR.py", line 8259 in process_workbook
+  File "C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_resolution\verify_production.py", line 39 in main
+  File "C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_resolution\verify_production.py", line 88 in <module>

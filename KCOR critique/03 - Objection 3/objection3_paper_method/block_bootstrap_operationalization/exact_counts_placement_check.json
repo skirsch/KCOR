@@ -1,0 +1,104 @@
+{
+  "scope": "Post-hoc diagnostic of an unspecified paper choice, not prespecified coverage",
+  "truth": 1.0,
+  "exact_expected_count_point": 0.9999999663074063,
+  "results": [
+    {
+      "choice": "primary_segments",
+      "segments": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          40
+        ],
+        [
+          41,
+          99
+        ]
+      ],
+      "median": 1.1003433191492538,
+      "percentile_interval": [
+        1.0673809863731825,
+        1.1455754779849525
+      ],
+      "median_minus_point": 0.10034335284184748
+    },
+    {
+      "choice": "target_horizon_segment",
+      "segments": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          40
+        ],
+        [
+          41,
+          52
+        ],
+        [
+          53,
+          99
+        ]
+      ],
+      "median": 1.0827411929722282,
+      "percentile_interval": [
+        1.0460117470686738,
+        1.1226333710639405
+      ],
+      "median_minus_point": 0.08274122666482187
+    },
+    {
+      "choice": "roughly_quarterly_segments",
+      "segments": [
+        [
+          0,
+          5
+        ],
+        [
+          6,
+          17
+        ],
+        [
+          18,
+          29
+        ],
+        [
+          30,
+          40
+        ],
+        [
+          41,
+          52
+        ],
+        [
+          53,
+          64
+        ],
+        [
+          65,
+          76
+        ],
+        [
+          77,
+          88
+        ],
+        [
+          89,
+          99
+        ]
+      ],
+      "median": 1.0113118437808117,
+      "percentile_interval": [
+        1.0020028536557688,
+        1.023363695379122
+      ],
+      "median_minus_point": 0.011311877473405452
+    }
+  ]
+}

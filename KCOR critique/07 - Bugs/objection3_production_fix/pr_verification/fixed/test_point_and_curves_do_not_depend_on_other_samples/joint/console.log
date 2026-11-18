@@ -1,0 +1,120 @@
+================================================================================
+KCOR v7.6 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-11-10 18:32:44
+Mode: Primary Analysis (Monte Carlo)
+Input File: C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\pr_verification\fixed\test_point_and_curves_do_not_depend_on_other_samples\joint\input.xlsx
+Output File: C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\pr_verification\fixed\test_point_and_curves_do_not_depend_on_other_samples\joint\output.xlsx
+Log File: C:/Users/jasmi/repo/KCOR-update/KCOR critique/objection3_production_fix/pr_verification/fixed/test_point_and_curves_do_not_depend_on_other_samples/joint/KCOR_summary.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = ['2021_24']
+  MC_ENROLLMENT_DATE    = 2021_24
+  MC_YOB_RANGE          = 1950-1950
+  MC_YOB_BUCKETS        = [1950]
+  MC_INCLUDE_AGGREGATES = False
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  THETA_ESTIMATION_WINDOWS = 2021-30..2022-12
+  THETA_IDENTIFIABILITY = min_quiet_deaths=30, theta0_max=100.0, action=set_zero
+  GOMPERTZ_THETA_FIT     = gamma=0.085/yr, k_anchor_weeks=4, convergence_tol=1e-08, max_iterations=25, gamma_per_week=0.00163462
+  NPH_CORRECTION        = disabled
+  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)
+================================================================================
+
+[INFO] Monte Carlo mode: Found 1 enrollment date sheet(s): ['2021_24']
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: [2021_24] (processing 1 enrollment date sheet(s))
+[Info] Processing sheet: 2021_24
+[DEBUG] Input data for sheet 2021_24:
+  Columns: ['DateDied', 'ISOweekDied', 'YearOfBirth', 'Sex', 'Dose', 'Dead', 'Alive', 'mc_id']
+  Rows: 636
+  mc_id column: 636/636 non-NaN, unique values: [0, 1, 2, 3, 4, 5]
+  mc_id range: 0 to 5
+[INFO] Processing 6 Monte Carlo iteration(s): [0, 1, 2, 3, 4, 5]
+  Alive column: 636/636 non-NaN, 636/636 > 0
+  Alive range: 94495 to 100167
+  Dead column: 636/636 non-NaN, range: 54 to 134
+  ISOweekDied sample: ['2021-24', '2021-25', '2021-26']
+[DEBUG] Monte Carlo mode: Filtered to YOB 1950-1950 (aggregates=False): 636 rows
+[DEBUG] Monte Carlo mode: Using enrollment date 06/14/2021 (2021-24) for iteration 2021_24
+[DEBUG] Filtered to start from enrollment date: 636 rows
+[DEBUG] Monte Carlo mode: Filtered to doses [0, 1] (max dose 1): 636 rows
+[DEBUG] Monte Carlo mode: Filtered to YOB buckets [1950] (aggregates=False): 636 rows
+[DEBUG] Sample ISOweekDied values: ['2021-24', '2021-24', '2021-24', '2021-24', '2021-24']
+[DEBUG] Sample parsed ISO int values: [202124.0, 202124.0, 202124.0, 202124.0, 202124.0]
+[DEBUG] Quiet window: 2023-01 (202301) to 2023-52 (202352)
+[DEBUG] Valid ISO int values: 636/636
+[DEBUG] ISO int range in data: 202124 to 202224
+enroll | iter | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_24 | 0 | 1950 | 0 | 7.6 | 9.840107e-04 | 1.227324e-02 | 39
+2021_24 | 1 | 1950 | 0 | 6.8 | 9.946983e-04 | 1.021310e-01 | 39
+2021_24 | 2 | 1950 | 0 | 8.6 | 1.012755e-03 | 1.240357e-01 | 39
+2021_24 | 3 | 1950 | 0 | 6.4 | 9.850820e-04 | 1.009106e-01 | 39
+2021_24 | 4 | 1950 | 0 | 3.4 | 8.751775e-04 | 1.238267e-01 | 39
+2021_24 | 5 | 1950 | 0 | 12.7 | 1.097137e-03 | 1.087006e-01 | 39
+2021_24 | 0 | 1950 | 1 | 6.192586e-09 | 1.001558e-03 | 7.494092e-03 | 39
+2021_24 | 1 | 1950 | 1 | 0.8 | 1.005965e-03 | 1.055154e-01 | 39
+2021_24 | 2 | 1950 | 1 | 1.000000e-10 | 9.703138e-04 | 1.084079e-01 | 39
+2021_24 | 3 | 1950 | 1 | 1.000000e-10 | 9.829588e-04 | 1.088919e-01 | 39
+2021_24 | 4 | 1950 | 1 | 2.8 | 1.088308e-03 | 1.118087e-01 | 39
+2021_24 | 5 | 1950 | 1 | 1.4 | 1.053908e-03 | 1.183089e-01 | 39
+C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\pandas\core\array_algos\take.py:265: ResourceWarning: unclosed file <_io.FileIO name='C:\\Users\\jasmi\\repo\\KCOR-update\\KCOR critique\\objection3_production_fix\\pr_verification\\fixed\\test_point_and_curves_do_not_depend_on_other_samples\\single\\input.xlsx' mode='rb' closefd=True>
+  def _get_take_nd_function(
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+[MC] Wrote iteration 2021_24 to sheet '2021_24' (324 rows)
+[MC] Wrote Monte Carlo output to C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\pr_verification\fixed\test_point_and_curves_do_not_depend_on_other_samples\joint\output.xlsx
+[MC Summary] Creating summary with 12 data points
+
+================================================================================
+MONTE CARLO SUMMARY - KCOR VALUES AT REPORTING DATE (2021_24)
+================================================================================
+
+Dose combination: 1 vs 0 - Year 1950
+------------------------------------------------------------
+   Iteration         KCOR
+-------------------------
+           0       1.0256
+           1       1.0503
+           2       1.0513
+           3       1.0590
+           4       1.0426
+           5       1.0168
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+
+Dose combination: 1 vs 0 - Year 1950
+------------------------------------------------------------
+  Iterations: 6
+  Point estimate (iteration 0): 1.0256
+  Bootstrap draws: 5
+  Bootstrap mean KCOR:   1.0440
+  Bootstrap median KCOR: 1.0503
+  Bootstrap Std Dev:     0.0163
+  Min:         1.0168
+  Max:         1.0590
+  2.5th %ile:  1.0194
+  25th %ile:   1.0426
+  75th %ile:   1.0513
+  97.5th %ile: 1.0582
+  Percentile 95% CI: [1.0194, 1.0582]
+  Basic bootstrap 95% CI: [0.9929, 1.0318]
+  Point percentile in bootstrap draws: 0.2000
+
+================================================================================
+[Summary] Creating summary file: C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\pr_verification\fixed\test_point_and_curves_do_not_depend_on_other_samples\joint\KCOR_summary.xlsx
+  - 2021_24: 1 dose combinations, 15 summary rows
+  - theta0_status_summary: 1 enrollment rows (file=C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\pr_verification\fixed\test_point_and_curves_do_not_depend_on_other_samples\joint\KCOR_summary.xlsx, sheet=theta0_status_summary)
+    2021_24: any_non_ok_status=False, quality_flag=False, quality_flag_detail=
+  - gamma_frailty_fit: 12 diagnostic rows (file=C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\pr_verification\fixed\test_point_and_curves_do_not_depend_on_other_samples\joint\KCOR_summary.xlsx, sheet=gamma_frailty_fit)
+[Summary] Created summary with 1 enrollment periods

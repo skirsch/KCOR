@@ -1,0 +1,69 @@
+{
+  "checks": "passed",
+  "scenarios": [
+    {
+      "scenario": "equal_frailty",
+      "truth": 1.0,
+      "exact_inversion_reference": 1.0,
+      "single_population_point": 1.0,
+      "production_population_point": 1.0,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "unequal_frailty",
+      "truth": 1.0,
+      "exact_inversion_reference": 0.9999999999999919,
+      "single_population_point": 1.0046145529040709,
+      "production_population_point": 1.0802882726766254,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "unequal_large",
+      "truth": 1.0,
+      "exact_inversion_reference": 0.9999999999999919,
+      "single_population_point": 1.0046145529025252,
+      "production_population_point": 1.0802882726766254,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "zero_frailty",
+      "truth": 1.0,
+      "exact_inversion_reference": 1.0,
+      "single_population_point": 1.0,
+      "production_population_point": 1.0,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "post_quiet_increase",
+      "truth": 1.0486487233384174,
+      "exact_inversion_reference": 1.0486487233384076,
+      "single_population_point": 1.0534503657399357,
+      "production_population_point": 1.1311592997402833,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "post_quiet_decrease",
+      "truth": 0.9513512766615826,
+      "exact_inversion_reference": 0.9513512766615748,
+      "single_population_point": 0.9557752999096273,
+      "production_population_point": 1.02935321054589,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "sparse",
+      "truth": 1.0,
+      "exact_inversion_reference": 0.9999999999999919,
+      "single_population_point": 1.0046145528281172,
+      "production_population_point": 1.0802882726766254,
+      "independent_dataset_hashes": 10
+    },
+    {
+      "scenario": "quiet_contamination",
+      "truth": 1.1517877725988084,
+      "exact_inversion_reference": 1.1517877725987988,
+      "single_population_point": 1.1416843559220837,
+      "production_population_point": 1.2387987443918964,
+      "independent_dataset_hashes": 10
+    }
+  ]
+}

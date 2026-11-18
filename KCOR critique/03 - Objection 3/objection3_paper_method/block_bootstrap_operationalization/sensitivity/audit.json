@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "files": 60,
+  "checked_draw_files": 60,
+  "source_hashes_verified": true,
+  "replayed_dataset_indices": [
+    0,
+    30,
+    59
+  ],
+  "risk_set_recurrence_verified": true,
+  "intervals_reconstructed": true
+}

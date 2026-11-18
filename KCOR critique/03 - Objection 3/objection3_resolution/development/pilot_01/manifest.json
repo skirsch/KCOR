@@ -1,0 +1,174 @@
+{
+  "phase": "development",
+  "created": "2026-11-10T22:25:44.780209+00:00",
+  "repetitions": 3,
+  "draws": 49,
+  "namespace": 415003,
+  "design": {
+    "version": 1,
+    "outer_repetitions": 600,
+    "bootstrap_draws": 999,
+    "precision_prefix_draws": 499,
+    "final_seed_namespace": 831047,
+    "development_seed_namespace": 415003,
+    "nominal_coverage": 0.95,
+    "acceptable_coverage_range": [
+      0.92,
+      0.98
+    ],
+    "minimum_accepted_repetitions": 300,
+    "maximum_interval_failure_rate": 0.01,
+    "maximum_precision_coverage_change": 0.02,
+    "scenarios": [
+      {
+        "id": "equal_frailty",
+        "scope": "within_model",
+        "n": 100000,
+        "theta": [
+          2.0,
+          2.0
+        ]
+      },
+      {
+        "id": "unequal_frailty",
+        "scope": "within_model",
+        "n": 100000,
+        "theta": [
+          4.0,
+          0.5
+        ]
+      },
+      {
+        "id": "unequal_large",
+        "scope": "within_model",
+        "n": 1000000,
+        "theta": [
+          4.0,
+          0.5
+        ]
+      },
+      {
+        "id": "zero_frailty",
+        "scope": "within_model_boundary",
+        "n": 100000,
+        "theta": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "id": "post_quiet_increase",
+        "scope": "within_model",
+        "n": 100000,
+        "theta": [
+          4.0,
+          0.5
+        ],
+        "effect": 1.3
+      },
+      {
+        "id": "post_quiet_decrease",
+        "scope": "within_model",
+        "n": 100000,
+        "theta": [
+          4.0,
+          0.5
+        ],
+        "effect": 0.7
+      },
+      {
+        "id": "sparse",
+        "scope": "within_model_low_information",
+        "n": 4000,
+        "theta": [
+          4.0,
+          0.5
+        ]
+      },
+      {
+        "id": "quiet_contamination",
+        "scope": "assumption_violation_stress",
+        "n": 100000,
+        "theta": [
+          4.0,
+          0.5
+        ],
+        "effect": 1.3,
+        "effect_window": [
+          10,
+          35
+        ]
+      }
+    ],
+    "common": {
+      "k": 0.001,
+      "weeks": 100,
+      "target": 52,
+      "windows": [
+        [
+          6,
+          40
+        ]
+      ],
+      "effect_window": [
+        44,
+        51
+      ],
+      "arm_weights": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "hashes": {
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code\\KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "KCOR critique\\objection3_resolution\\production_adapter.py": "9a3679d57c9efa69f940644c6a8fc55a72aa92ccc359fb94caaa466e0019a15c",
+    "KCOR critique\\objection3_resolution\\run_study.py": "22b6cf7b1d42a27475f856e5337c39d0dae08c9afdb60f2eec13eddf2a682ba1",
+    "KCOR critique\\objection3_resolution\\simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "KCOR critique\\objection3_resolution\\verify_person_aggregation.py": "4d6baa7e55530138044d6b150950d813fc3837507e0977e0ef314be3be89d216",
+    "KCOR critique\\objection3_resolution\\verify_production.py": "37c381b5a1e678e7ae1cc68ae1a54818a820e5a666d4f846f0aa37efec1e4039",
+    "KCOR critique\\objection3_resolution\\design.json": "23e2ee29fefd92b334aff99756324747848883b05164d9fb33496030dcab5529",
+    "KCOR critique\\objection3_resolution\\DESIGN.md": "1b717fddb2ce3d7327ddc6c681fc448da8f6adeaaf9669b094fbe5ac814c23aa"
+  },
+  "python": "3.14.3",
+  "numpy": "2.4.4",
+  "production_config": {
+    "gompertz": {
+      "gamma_per_year": 0.085,
+      "k_anchor_weeks": 4,
+      "gamma_per_week": 0.0016346153846153847,
+      "k_anchor_tolerance": 0.2,
+      "convergence_tol": 1e-08,
+      "max_iterations": 25
+    },
+    "guards": {
+      "min_quiet_deaths": 30,
+      "theta0_max": 100.0,
+      "bad_fit_relrmse_threshold": 100000.0,
+      "action": "set_zero"
+    },
+    "skip": 2,
+    "anchor": 5,
+    "windows": [
+      {
+        "start_iso": "2021-30",
+        "end_iso": "2022-12",
+        "start_int": 202130,
+        "end_int": 202212
+      }
+    ],
+    "optional_wave_adjustment": false
+  },
+  "command": [
+    "KCOR critique/objection3_resolution/run_study.py",
+    "--phase",
+    "development",
+    "--out",
+    "KCOR critique/objection3_resolution/development/pilot_01",
+    "--workers",
+    "4"
+  ],
+  "workers": 4
+}

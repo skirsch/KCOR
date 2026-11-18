@@ -1,0 +1,27 @@
+{
+  "flagged_original_arm_fits": 3,
+  "all_projected_under_1e_3": true,
+  "details": [
+    {
+      "repetition": 24,
+      "arm": 1,
+      "theta": 0.2660833633829119,
+      "raw_gradient": 2.4293088031868137e-05,
+      "projected_gradient": 2.4293088031868137e-05
+    },
+    {
+      "repetition": 38,
+      "arm": 1,
+      "theta": 0.0,
+      "raw_gradient": 1.330898033835775,
+      "projected_gradient": 7.189348494307524e-08
+    },
+    {
+      "repetition": 58,
+      "arm": 1,
+      "theta": 0.0,
+      "raw_gradient": 3.0662483926400914,
+      "projected_gradient": 2.7154152416386523e-05
+    }
+  ]
+}

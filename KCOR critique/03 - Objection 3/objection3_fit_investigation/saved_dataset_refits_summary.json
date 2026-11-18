@@ -1,0 +1,53 @@
+{
+  "scope": "Post-run original point estimates only; no new intervals or coverage",
+  "datasets": 600,
+  "source_manifest_sha256": "6ccad0fa35538efe51db0896acb2e04399be73131861f3bf169ce37c5b14ae6f",
+  "production": {
+    "mean": 1.0098587696071721,
+    "bias_from_model_truth": 0.009858769607172135,
+    "sd": 0.010579053673829757,
+    "rmse": 0.014454244619027485,
+    "median": 1.0086958468101521,
+    "quantiles": [
+      0.993186485614363,
+      1.0027193031661885,
+      1.0086958468101521,
+      1.0149112442321164,
+      1.0376559600176996
+    ]
+  },
+  "joint_approximate": {
+    "mean": 1.0039099582498316,
+    "bias_from_model_truth": 0.0039099582498316465,
+    "sd": 0.026125011905452255,
+    "rmse": 0.02639444057935335,
+    "median": 1.0043562647405504,
+    "quantiles": [
+      0.9543291953880052,
+      0.9851553327026735,
+      1.0043562647405504,
+      1.0216265705244196,
+      1.055749727763784
+    ],
+    "successful_both_arms": 600
+  },
+  "joint_exact_discrete": {
+    "mean": 1.0039726316008935,
+    "bias_from_model_truth": 0.00397263160089345,
+    "sd": 0.02612401221851179,
+    "rmse": 0.026402810005856987,
+    "median": 1.0044094918194015,
+    "quantiles": [
+      0.9543981065024744,
+      0.9852048543992666,
+      1.0044094918194015,
+      1.021698192368452,
+      1.0557993288501517
+    ],
+    "successful_both_arms": 600
+  },
+  "paired_joint_approximate_minus_production_mean": -0.005948811357340674,
+  "paired_joint_exact_minus_joint_approximate_mean": 6.267335106179827e-05,
+  "joint_approximate_theta_1_near_zero": 131,
+  "production_theta_1_near_zero": 202
+}

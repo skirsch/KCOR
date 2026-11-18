@@ -1,0 +1,10 @@
+{
+  "checks": "passed",
+  "source_hashes_match": true,
+  "exact_population_model_verified": true,
+  "production_fixed_k_optimum_reproduced": true,
+  "saved_original_datasets_recomputed": 600,
+  "bootstrap_replay_datasets": 3,
+  "bootstrap_estimates_replayed": 2997,
+  "prespecified_coverage_unchanged": true
+}

@@ -1,0 +1,110 @@
+{
+  "model_truth": 1.0,
+  "generating_k": 0.001,
+  "generating_theta": [
+    4.0,
+    0.5
+  ],
+  "production_population_output": 1.0046145529025252,
+  "production_fit_theta": [
+    3.7670070691320543,
+    0.4720024130273005
+  ],
+  "production_fit_k": [
+    0.0009842802858971752,
+    0.000998005337061002
+  ],
+  "oracle_both_theta": 0.999999999999992,
+  "oracle_control_theta": 0.9993196580382306,
+  "oracle_treatment_theta": 1.0052984996559369,
+  "optimizer_start_sensitivity": [
+    [
+      {
+        "initial": 0.0,
+        "k": 0.0009842802858971752,
+        "theta": 3.767007070088522,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.002931132769606899
+      },
+      {
+        "initial": 0.1,
+        "k": 0.0009842802858971752,
+        "theta": 3.7670070688302553,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.0029311327702072412
+      },
+      {
+        "initial": 1.0,
+        "k": 0.0009842802858971752,
+        "theta": 3.7670070691320543,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.002931132770063235
+      },
+      {
+        "initial": 5.0,
+        "k": 0.0009842802858971752,
+        "theta": 3.76700707058002,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.002931132769372429
+      },
+      {
+        "initial": 20.0,
+        "k": 0.0009842802858971752,
+        "theta": 3.767007070316238,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.0029311327694983144
+      }
+    ],
+    [
+      {
+        "initial": 0.0,
+        "k": 0.000998005337061002,
+        "theta": 0.4720024117724696,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.00038325135658661986
+      },
+      {
+        "initial": 0.1,
+        "k": 0.000998005337061002,
+        "theta": 0.472002410659251,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.00038325135629041816
+      },
+      {
+        "initial": 1.0,
+        "k": 0.000998005337061002,
+        "theta": 0.4720024130273005,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.00038325135692050404
+      },
+      {
+        "initial": 5.0,
+        "k": 0.000998005337061002,
+        "theta": 0.4720024122455578,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.00038325135671251926
+      },
+      {
+        "initial": 20.0,
+        "k": 0.000998005337061002,
+        "theta": 0.47200241105862256,
+        "success": true,
+        "status": "ok",
+        "relative_hazard_rmse": 0.0003832513563967079
+      }
+    ]
+  ],
+  "max_theta_spread_across_starts": [
+    1.7497647775144287e-09,
+    2.3680494787292616e-09
+  ]
+}

@@ -1,0 +1,52 @@
+test_mc_diagnostics_count_failed_fits_and_preserve_iteration (__main__.SampleIsolation.test_mc_diagnostics_count_failed_fits_and_preserve_iteration) ... [DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+FAIL
+test_normal_diagnostic_keys_keep_their_existing_format (__main__.SampleIsolation.test_normal_diagnostic_keys_keep_their_existing_format) ... ok
+test_point_and_curves_do_not_depend_on_other_samples (__main__.SampleIsolation.test_point_and_curves_do_not_depend_on_other_samples) ... FAIL
+
+======================================================================
+FAIL: test_mc_diagnostics_count_failed_fits_and_preserve_iteration (__main__.SampleIsolation.test_mc_diagnostics_count_failed_fits_and_preserve_iteration)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jasmi\repo\KCOR-mc-fix-pr\test\monte_carlo\test_sample_isolation.py", line 125, in test_mc_diagnostics_count_failed_fits_and_preserve_iteration
+    self.assertEqual(int(counts.NOT_IDENTIFIED),1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_point_and_curves_do_not_depend_on_other_samples (__main__.SampleIsolation.test_point_and_curves_do_not_depend_on_other_samples)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jasmi\repo\KCOR-mc-fix-pr\test\monte_carlo\test_sample_isolation.py", line 81, in test_point_and_curves_do_not_depend_on_other_samples
+    np.testing.assert_allclose(joint[joint.mc_id == 0][columns], single[columns],
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                               rtol=1e-10, atol=1e-12, equal_nan=True)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\numpy\testing\_private\utils.py", line 1768, in assert_allclose
+    assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         verbose=verbose, header=header, equal_nan=equal_nan,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         strict=strict)
+                         ^^^^^^^^^^^^^^
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\numpy\testing\_private\utils.py", line 847, in assert_array_compare
+    flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
+  File "C:\Users\jasmi\AppData\Roaming\Python\Python314\site-packages\numpy\testing\_private\utils.py", line 790, in func_assert_same_pos
+    raise AssertionError(msg)
+AssertionError: 
+Not equal to tolerance rtol=1e-10, atol=1e-12
+
+nan location mismatch:
+ ACTUAL: array([[         nan,          nan,          nan, 0.000000e+00,
+        0.000000e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00],
+       [9.859653e-01,          nan,          nan, 0.000000e+00,...
+ DESIRED: array([[         nan,          nan,          nan, 6.192586e-09,
+        7.574559e+00, 0.000000e+00, 0.000000e+00, 0.000000e+00],
+       [         nan,          nan,          nan, 6.192586e-09,...
+
+----------------------------------------------------------------------
+Ran 3 tests in 12.698s
+
+FAILED (failures=2)

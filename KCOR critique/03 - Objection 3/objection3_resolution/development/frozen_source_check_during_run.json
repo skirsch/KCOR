@@ -1,0 +1,25 @@
+{
+  "stage": "during_run",
+  "checks": "passed",
+  "files_verified": [
+    "code\\KCOR.py",
+    "code\\KCOR_CMR.py",
+    "data\\Czech\\Czech.yaml",
+    "KCOR critique\\objection3_resolution\\check_model.py",
+    "KCOR critique\\objection3_resolution\\production_adapter.py",
+    "KCOR critique\\objection3_resolution\\run_study.py",
+    "KCOR critique\\objection3_resolution\\simulation.py",
+    "KCOR critique\\objection3_resolution\\summarize.py",
+    "KCOR critique\\objection3_resolution\\verify_person_aggregation.py",
+    "KCOR critique\\objection3_resolution\\verify_production.py",
+    "KCOR critique\\objection3_resolution\\design.json",
+    "KCOR critique\\objection3_resolution\\DESIGN.md"
+  ],
+  "final_manifest_created": "2026-11-10T22:27:45.109899+00:00",
+  "versions": {
+    "python": "3.14.3",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2",
+    "scipy": "1.17.1"
+  }
+}

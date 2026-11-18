@@ -1,0 +1,26 @@
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+# Calibration results
+
+| Scenario | Interval | Coverage (95% Wilson interval) | Accepted | Mean width | Mean error |
+|---|---|---:|---:|---:|---:|
+| equal_frailty | percentile | 97.7% (96.1%–98.6%) | 600/600 | 0.2026 | 0.0011 |
+| equal_frailty | basic | 98.0% (96.5%–98.9%) | 600/600 | 0.2026 | 0.0011 |
+| unequal_frailty | percentile | 96.2% (94.3%–97.4%) | 600/600 | 0.2125 | 0.0227 |
+| unequal_frailty | basic | 98.7% (97.4%–99.3%) | 600/600 | 0.2125 | 0.0227 |
+| unequal_large | percentile | 83.7% (80.5%–86.4%) | 600/600 | 0.0496 | 0.0099 |
+| unequal_large | basic | 97.7% (96.1%–98.6%) | 600/600 | 0.0496 | 0.0099 |
+| zero_frailty | percentile | 98.0% (96.5%–98.9%) | 600/600 | 0.2542 | 0.0027 |
+| zero_frailty | basic | 96.2% (94.3%–97.4%) | 600/600 | 0.2542 | 0.0027 |
+| post_quiet_increase | percentile | 94.7% (92.6%–96.2%) | 600/600 | 0.2270 | 0.0306 |
+| post_quiet_increase | basic | 97.7% (96.1%–98.6%) | 600/600 | 0.2270 | 0.0306 |
+| post_quiet_decrease | percentile | 94.5% (92.4%–96.1%) | 600/600 | 0.2062 | 0.0248 |
+| post_quiet_decrease | basic | 98.0% (96.5%–98.9%) | 600/600 | 0.2062 | 0.0248 |
+| sparse | percentile | 97.3% (95.7%–98.4%) | 0/600 | 3.6839 | 0.2768 |
+| sparse | basic | 90.0% (87.3%–92.2%) | 0/600 | 3.6839 | 0.2768 |
+| quiet_contamination | percentile | 93.5% (91.2%–95.2%) | 600/600 | 0.3256 | -0.0150 |
+| quiet_contamination | basic | 90.2% (87.5%–92.3%) | 600/600 | 0.3256 | -0.0150 |

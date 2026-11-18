@@ -1,0 +1,2002 @@
+[
+  {
+    "dataset": 0,
+    "point": 0.9604030890690597,
+    "person_lower": 0.8969978307786126,
+    "person_upper": 1.030802727238811,
+    "person_covered": true,
+    "block_lower": 0.9787207087910853,
+    "block_upper": 1.1335698570128043,
+    "block_covered": true
+  },
+  {
+    "dataset": 1,
+    "point": 0.9726490150733326,
+    "person_lower": 0.9099275583995795,
+    "person_upper": 1.0543123718397862,
+    "person_covered": true,
+    "block_lower": 1.0364659120090767,
+    "block_upper": 1.2655623107643879,
+    "block_covered": false
+  },
+  {
+    "dataset": 2,
+    "point": 0.9251392813952968,
+    "person_lower": 0.8586251040958378,
+    "person_upper": 0.9892922650310175,
+    "person_covered": false,
+    "block_lower": 0.9614709939825699,
+    "block_upper": 1.1062151881376723,
+    "block_covered": true
+  },
+  {
+    "dataset": 3,
+    "point": 1.0140642417026493,
+    "person_lower": 0.9353551377371498,
+    "person_upper": 1.0839584905674275,
+    "person_covered": true,
+    "block_lower": 1.0772359497812642,
+    "block_upper": 1.2131148720709273,
+    "block_covered": false
+  },
+  {
+    "dataset": 4,
+    "point": 0.9767156877531017,
+    "person_lower": 0.912341516249832,
+    "person_upper": 1.0533644993919622,
+    "person_covered": true,
+    "block_lower": 1.001992840398161,
+    "block_upper": 1.143851221049225,
+    "block_covered": false
+  },
+  {
+    "dataset": 5,
+    "point": 1.0252616627924054,
+    "person_lower": 0.9535506687203397,
+    "person_upper": 1.1060101930400612,
+    "person_covered": true,
+    "block_lower": 0.9915786236626318,
+    "block_upper": 1.1488733277139878,
+    "block_covered": true
+  },
+  {
+    "dataset": 6,
+    "point": 0.9943040643144856,
+    "person_lower": 0.9352782226795935,
+    "person_upper": 1.0717967008435159,
+    "person_covered": true,
+    "block_lower": 1.023159325704486,
+    "block_upper": 1.1675092776964808,
+    "block_covered": false
+  },
+  {
+    "dataset": 7,
+    "point": 1.0868787862999632,
+    "person_lower": 1.0129132091145479,
+    "person_upper": 1.167740713224546,
+    "person_covered": false,
+    "block_lower": 1.061837447226715,
+    "block_upper": 1.1965566116933022,
+    "block_covered": false
+  },
+  {
+    "dataset": 8,
+    "point": 1.0190655571137508,
+    "person_lower": 0.9440816506514849,
+    "person_upper": 1.1033724528678415,
+    "person_covered": true,
+    "block_lower": 1.0281932314562692,
+    "block_upper": 1.181204820890558,
+    "block_covered": false
+  },
+  {
+    "dataset": 9,
+    "point": 1.0050057680999536,
+    "person_lower": 0.9384400262871135,
+    "person_upper": 1.0926433075009743,
+    "person_covered": true,
+    "block_lower": 1.0031285866138078,
+    "block_upper": 1.1687007562280909,
+    "block_covered": false
+  },
+  {
+    "dataset": 10,
+    "point": 1.0233827453746724,
+    "person_lower": 0.9551973752979944,
+    "person_upper": 1.1075934022515723,
+    "person_covered": true,
+    "block_lower": 1.0694990531847626,
+    "block_upper": 1.2275700694688345,
+    "block_covered": false
+  },
+  {
+    "dataset": 11,
+    "point": 0.9760587151765777,
+    "person_lower": 0.9146613831956787,
+    "person_upper": 1.0450778884020937,
+    "person_covered": true,
+    "block_lower": 0.9722376904078334,
+    "block_upper": 1.142810235142927,
+    "block_covered": true
+  },
+  {
+    "dataset": 12,
+    "point": 0.9244747722347723,
+    "person_lower": 0.868169639882459,
+    "person_upper": 0.9962294411906166,
+    "person_covered": false,
+    "block_lower": 1.0007014933856773,
+    "block_upper": 1.1352355018445721,
+    "block_covered": false
+  },
+  {
+    "dataset": 13,
+    "point": 0.9477124729369536,
+    "person_lower": 0.8804455236140935,
+    "person_upper": 1.0182780428334774,
+    "person_covered": true,
+    "block_lower": 1.0207272886599703,
+    "block_upper": 1.188775081568311,
+    "block_covered": false
+  },
+  {
+    "dataset": 14,
+    "point": 0.9984677521986737,
+    "person_lower": 0.9298259204520929,
+    "person_upper": 1.0794660955794397,
+    "person_covered": true,
+    "block_lower": 1.0481012760394843,
+    "block_upper": 1.2197129573213312,
+    "block_covered": false
+  },
+  {
+    "dataset": 15,
+    "point": 1.0085785603194428,
+    "person_lower": 0.9423374702266433,
+    "person_upper": 1.0936303102198104,
+    "person_covered": true,
+    "block_lower": 1.012189335165653,
+    "block_upper": 1.1745029463035235,
+    "block_covered": false
+  },
+  {
+    "dataset": 16,
+    "point": 1.0225763595059227,
+    "person_lower": 0.945851769371152,
+    "person_upper": 1.0946374446773353,
+    "person_covered": true,
+    "block_lower": 1.0169045260562593,
+    "block_upper": 1.1803720178118535,
+    "block_covered": false
+  },
+  {
+    "dataset": 17,
+    "point": 0.9745318647394082,
+    "person_lower": 0.9111317636279782,
+    "person_upper": 1.0514584904746624,
+    "person_covered": true,
+    "block_lower": 1.0178509285187471,
+    "block_upper": 1.142073309848938,
+    "block_covered": false
+  },
+  {
+    "dataset": 18,
+    "point": 1.0116273445978539,
+    "person_lower": 0.9514018641177371,
+    "person_upper": 1.1031525430288818,
+    "person_covered": true,
+    "block_lower": 1.0331502676313047,
+    "block_upper": 1.1826516854802138,
+    "block_covered": false
+  },
+  {
+    "dataset": 19,
+    "point": 1.0630583706700534,
+    "person_lower": 0.9880988421587971,
+    "person_upper": 1.1476513659983445,
+    "person_covered": true,
+    "block_lower": 1.0532581145682889,
+    "block_upper": 1.2232125169888337,
+    "block_covered": false
+  },
+  {
+    "dataset": 20,
+    "point": 1.0100572193308048,
+    "person_lower": 0.9495105141744912,
+    "person_upper": 1.101807955626424,
+    "person_covered": true,
+    "block_lower": 1.0397680976176178,
+    "block_upper": 1.1902463050963366,
+    "block_covered": false
+  },
+  {
+    "dataset": 21,
+    "point": 1.0280850873555059,
+    "person_lower": 0.9655226590738172,
+    "person_upper": 1.1046995515188394,
+    "person_covered": true,
+    "block_lower": 1.0386899794152495,
+    "block_upper": 1.2006929354227296,
+    "block_covered": false
+  },
+  {
+    "dataset": 22,
+    "point": 0.9969666521343783,
+    "person_lower": 0.938237189114525,
+    "person_upper": 1.0708832236921777,
+    "person_covered": true,
+    "block_lower": 1.0318507935522825,
+    "block_upper": 1.184250403833382,
+    "block_covered": false
+  },
+  {
+    "dataset": 23,
+    "point": 0.9828797340371433,
+    "person_lower": 0.9163114952583286,
+    "person_upper": 1.064264914017327,
+    "person_covered": true,
+    "block_lower": 1.0224016895671908,
+    "block_upper": 1.170154377047334,
+    "block_covered": false
+  },
+  {
+    "dataset": 24,
+    "point": 0.9753417994622426,
+    "person_lower": 0.9082272962036643,
+    "person_upper": 1.0566328278990622,
+    "person_covered": true,
+    "block_lower": 1.0065654006011453,
+    "block_upper": 1.1892477642994739,
+    "block_covered": false
+  },
+  {
+    "dataset": 25,
+    "point": 0.9627596172970392,
+    "person_lower": 0.9051245485121435,
+    "person_upper": 1.0468904579507747,
+    "person_covered": true,
+    "block_lower": 1.009999046816887,
+    "block_upper": 1.1630378457563881,
+    "block_covered": false
+  },
+  {
+    "dataset": 26,
+    "point": 1.0004472182784407,
+    "person_lower": 0.9386085663228405,
+    "person_upper": 1.0727427652845607,
+    "person_covered": true,
+    "block_lower": 1.0371778366396582,
+    "block_upper": 1.1775996219801659,
+    "block_covered": false
+  },
+  {
+    "dataset": 27,
+    "point": 1.0597783651510186,
+    "person_lower": 0.9964254791106164,
+    "person_upper": 1.1526560532379626,
+    "person_covered": true,
+    "block_lower": 1.065042284751509,
+    "block_upper": 1.2061719727704003,
+    "block_covered": false
+  },
+  {
+    "dataset": 28,
+    "point": 1.0259161028292054,
+    "person_lower": 0.9510339938914467,
+    "person_upper": 1.1128109802025241,
+    "person_covered": true,
+    "block_lower": 1.0329420354341905,
+    "block_upper": 1.1861907792594946,
+    "block_covered": false
+  },
+  {
+    "dataset": 29,
+    "point": 1.0289362529567168,
+    "person_lower": 0.9649307898323347,
+    "person_upper": 1.1115278202405479,
+    "person_covered": true,
+    "block_lower": 1.0401069088779187,
+    "block_upper": 1.223870217459078,
+    "block_covered": false
+  },
+  {
+    "dataset": 30,
+    "point": 1.0214173750157185,
+    "person_lower": 0.9566139722771501,
+    "person_upper": 1.0912847652365187,
+    "person_covered": true,
+    "block_lower": 1.0362887454598189,
+    "block_upper": 1.2034871117640689,
+    "block_covered": false
+  },
+  {
+    "dataset": 31,
+    "point": 0.9309699638567209,
+    "person_lower": 0.8674496412391997,
+    "person_upper": 1.006911588727762,
+    "person_covered": true,
+    "block_lower": 1.014165169428246,
+    "block_upper": 1.2130250854064748,
+    "block_covered": false
+  },
+  {
+    "dataset": 32,
+    "point": 0.9370555231920447,
+    "person_lower": 0.879075408056313,
+    "person_upper": 1.0182646428024422,
+    "person_covered": true,
+    "block_lower": 1.0015483059790227,
+    "block_upper": 1.1608250626655925,
+    "block_covered": false
+  },
+  {
+    "dataset": 33,
+    "point": 1.0232468816071183,
+    "person_lower": 0.9480165327117619,
+    "person_upper": 1.1102682796050776,
+    "person_covered": true,
+    "block_lower": 1.0319736009780933,
+    "block_upper": 1.1911978417477367,
+    "block_covered": false
+  },
+  {
+    "dataset": 34,
+    "point": 1.0501062320477548,
+    "person_lower": 0.9805459270761107,
+    "person_upper": 1.1199282160404842,
+    "person_covered": true,
+    "block_lower": 1.0597465237466097,
+    "block_upper": 1.2048395583301021,
+    "block_covered": false
+  },
+  {
+    "dataset": 35,
+    "point": 1.0168906161453553,
+    "person_lower": 0.9494741557134907,
+    "person_upper": 1.092027199601381,
+    "person_covered": true,
+    "block_lower": 1.0246580264889007,
+    "block_upper": 1.2095397379188544,
+    "block_covered": false
+  },
+  {
+    "dataset": 36,
+    "point": 1.0401899716666072,
+    "person_lower": 0.9612385295061093,
+    "person_upper": 1.1308062569952337,
+    "person_covered": true,
+    "block_lower": 1.031746377846802,
+    "block_upper": 1.158449832316471,
+    "block_covered": false
+  },
+  {
+    "dataset": 37,
+    "point": 0.9891998953740638,
+    "person_lower": 0.9277068667972714,
+    "person_upper": 1.0781705668391717,
+    "person_covered": true,
+    "block_lower": 1.0024878098414627,
+    "block_upper": 1.1354530355235626,
+    "block_covered": false
+  },
+  {
+    "dataset": 38,
+    "point": 1.022323755336425,
+    "person_lower": 0.9653398965622315,
+    "person_upper": 1.103074329571257,
+    "person_covered": true,
+    "block_lower": 1.020025982640846,
+    "block_upper": 1.1540840746813599,
+    "block_covered": false
+  },
+  {
+    "dataset": 39,
+    "point": 1.0359660970698727,
+    "person_lower": 0.9528386117404749,
+    "person_upper": 1.1215605534539803,
+    "person_covered": true,
+    "block_lower": 1.0562338023440598,
+    "block_upper": 1.1850970690701221,
+    "block_covered": false
+  },
+  {
+    "dataset": 40,
+    "point": 0.9748791144220901,
+    "person_lower": 0.9134639030879842,
+    "person_upper": 1.050009883956909,
+    "person_covered": true,
+    "block_lower": 1.025262538994002,
+    "block_upper": 1.1658360480066288,
+    "block_covered": false
+  },
+  {
+    "dataset": 41,
+    "point": 0.942048364381679,
+    "person_lower": 0.8779553220185791,
+    "person_upper": 1.0162863695786402,
+    "person_covered": true,
+    "block_lower": 0.995037067770884,
+    "block_upper": 1.1971508732839753,
+    "block_covered": true
+  },
+  {
+    "dataset": 42,
+    "point": 0.9815288564696726,
+    "person_lower": 0.9198633841736062,
+    "person_upper": 1.0547428955731795,
+    "person_covered": true,
+    "block_lower": 1.010094760201428,
+    "block_upper": 1.1472417207199286,
+    "block_covered": false
+  },
+  {
+    "dataset": 43,
+    "point": 0.9650614377603101,
+    "person_lower": 0.9027853328178894,
+    "person_upper": 1.0506575310482225,
+    "person_covered": true,
+    "block_lower": 1.0207586290239603,
+    "block_upper": 1.1756601111139071,
+    "block_covered": false
+  },
+  {
+    "dataset": 44,
+    "point": 0.921210667559375,
+    "person_lower": 0.864543582720675,
+    "person_upper": 0.9899683488628291,
+    "person_covered": false,
+    "block_lower": 0.9327868719119929,
+    "block_upper": 1.0990448636173067,
+    "block_covered": true
+  },
+  {
+    "dataset": 45,
+    "point": 1.01834795132365,
+    "person_lower": 0.9658402652237197,
+    "person_upper": 1.0990494095009542,
+    "person_covered": true,
+    "block_lower": 1.0199110417823973,
+    "block_upper": 1.1790259253550333,
+    "block_covered": false
+  },
+  {
+    "dataset": 46,
+    "point": 1.0407373707216951,
+    "person_lower": 0.9582387422437962,
+    "person_upper": 1.1300307039202278,
+    "person_covered": true,
+    "block_lower": 1.0471145640413089,
+    "block_upper": 1.1994969419231953,
+    "block_covered": false
+  },
+  {
+    "dataset": 47,
+    "point": 0.9692318092417824,
+    "person_lower": 0.9055691419427712,
+    "person_upper": 1.043686177701628,
+    "person_covered": true,
+    "block_lower": 0.979787136380101,
+    "block_upper": 1.1273162195248174,
+    "block_covered": true
+  },
+  {
+    "dataset": 48,
+    "point": 0.9327488889405303,
+    "person_lower": 0.8733045233156932,
+    "person_upper": 0.9952702919789405,
+    "person_covered": false,
+    "block_lower": 1.010022597378292,
+    "block_upper": 1.1508612847580992,
+    "block_covered": false
+  },
+  {
+    "dataset": 49,
+    "point": 0.9959329063644948,
+    "person_lower": 0.941311754827901,
+    "person_upper": 1.0677349501683537,
+    "person_covered": true,
+    "block_lower": 1.0057224861033034,
+    "block_upper": 1.1599523752803036,
+    "block_covered": false
+  },
+  {
+    "dataset": 50,
+    "point": 1.0422873652020286,
+    "person_lower": 0.9540035309926188,
+    "person_upper": 1.1155559073070567,
+    "person_covered": true,
+    "block_lower": 1.0620509561870077,
+    "block_upper": 1.2002424648990544,
+    "block_covered": false
+  },
+  {
+    "dataset": 51,
+    "point": 1.0318124318841253,
+    "person_lower": 0.9532373113092273,
+    "person_upper": 1.1289110621106344,
+    "person_covered": true,
+    "block_lower": 1.0717236838962014,
+    "block_upper": 1.2565417403808181,
+    "block_covered": false
+  },
+  {
+    "dataset": 52,
+    "point": 0.9899329551649074,
+    "person_lower": 0.9352291965339703,
+    "person_upper": 1.0657777263348773,
+    "person_covered": true,
+    "block_lower": 1.0017170332235408,
+    "block_upper": 1.1436177011938138,
+    "block_covered": false
+  },
+  {
+    "dataset": 53,
+    "point": 1.0147033628129885,
+    "person_lower": 0.9487425263181125,
+    "person_upper": 1.1056788202615235,
+    "person_covered": true,
+    "block_lower": 1.0088414186153252,
+    "block_upper": 1.1400850600014847,
+    "block_covered": false
+  },
+  {
+    "dataset": 54,
+    "point": 1.013201476538905,
+    "person_lower": 0.9392018944051563,
+    "person_upper": 1.0821364557042978,
+    "person_covered": true,
+    "block_lower": 1.039779638151539,
+    "block_upper": 1.1792714339410884,
+    "block_covered": false
+  },
+  {
+    "dataset": 55,
+    "point": 0.9598222269755579,
+    "person_lower": 0.8987227148563648,
+    "person_upper": 1.0237992767192372,
+    "person_covered": true,
+    "block_lower": 1.0197532672199763,
+    "block_upper": 1.1613179977690367,
+    "block_covered": false
+  },
+  {
+    "dataset": 56,
+    "point": 0.9749020147257037,
+    "person_lower": 0.9145059627115929,
+    "person_upper": 1.0549140417114304,
+    "person_covered": true,
+    "block_lower": 1.0247291618650354,
+    "block_upper": 1.1804531551598019,
+    "block_covered": false
+  },
+  {
+    "dataset": 57,
+    "point": 0.987690299178965,
+    "person_lower": 0.914014650723609,
+    "person_upper": 1.058652543352999,
+    "person_covered": true,
+    "block_lower": 1.0163195151153688,
+    "block_upper": 1.1573384885883848,
+    "block_covered": false
+  },
+  {
+    "dataset": 58,
+    "point": 0.9914785457530518,
+    "person_lower": 0.9358128211298767,
+    "person_upper": 1.0794236721919137,
+    "person_covered": true,
+    "block_lower": 1.045447390106978,
+    "block_upper": 1.1838503606544262,
+    "block_covered": false
+  },
+  {
+    "dataset": 59,
+    "point": 0.9842398314611984,
+    "person_lower": 0.9152405232417252,
+    "person_upper": 1.063761693352107,
+    "person_covered": true,
+    "block_lower": 1.0230580500634991,
+    "block_upper": 1.1634841610358397,
+    "block_covered": false
+  },
+  {
+    "dataset": 60,
+    "point": 1.0362425774574262,
+    "person_lower": 0.9503366394672519,
+    "person_upper": 1.1256620725355966,
+    "person_covered": true,
+    "block_lower": 1.0627754699965388,
+    "block_upper": 1.1936470369370895,
+    "block_covered": false
+  },
+  {
+    "dataset": 61,
+    "point": 0.9485223955298014,
+    "person_lower": 0.8859739610203139,
+    "person_upper": 1.0191295350266618,
+    "person_covered": true,
+    "block_lower": 0.9735120099800982,
+    "block_upper": 1.1628763734463399,
+    "block_covered": true
+  },
+  {
+    "dataset": 62,
+    "point": 0.9639238288277754,
+    "person_lower": 0.9044164986565265,
+    "person_upper": 1.0293931687720468,
+    "person_covered": true,
+    "block_lower": 1.0236017665212005,
+    "block_upper": 1.1494427825152362,
+    "block_covered": false
+  },
+  {
+    "dataset": 63,
+    "point": 0.9814878658718227,
+    "person_lower": 0.9170044536299641,
+    "person_upper": 1.0671541215284472,
+    "person_covered": true,
+    "block_lower": 1.0274104960856614,
+    "block_upper": 1.164180583478746,
+    "block_covered": false
+  },
+  {
+    "dataset": 64,
+    "point": 1.005686325508694,
+    "person_lower": 0.9383470321527076,
+    "person_upper": 1.088850584873065,
+    "person_covered": true,
+    "block_lower": 1.0752970803670439,
+    "block_upper": 1.1821414040592115,
+    "block_covered": false
+  },
+  {
+    "dataset": 65,
+    "point": 0.9589913758656192,
+    "person_lower": 0.8922817951233373,
+    "person_upper": 1.017409931862429,
+    "person_covered": true,
+    "block_lower": 0.9825083059589446,
+    "block_upper": 1.1392901661738262,
+    "block_covered": true
+  },
+  {
+    "dataset": 66,
+    "point": 0.951803882914802,
+    "person_lower": 0.8942431293832205,
+    "person_upper": 1.0253214460526505,
+    "person_covered": true,
+    "block_lower": 1.024896047079163,
+    "block_upper": 1.1908466092216163,
+    "block_covered": false
+  },
+  {
+    "dataset": 67,
+    "point": 1.0212983871450416,
+    "person_lower": 0.958253180640871,
+    "person_upper": 1.1094818649169287,
+    "person_covered": true,
+    "block_lower": 1.051672078429339,
+    "block_upper": 1.2162157636368283,
+    "block_covered": false
+  },
+  {
+    "dataset": 68,
+    "point": 0.9405834241366196,
+    "person_lower": 0.8788550007845168,
+    "person_upper": 1.030881475911577,
+    "person_covered": true,
+    "block_lower": 0.9815869669762667,
+    "block_upper": 1.1454345774880739,
+    "block_covered": true
+  },
+  {
+    "dataset": 69,
+    "point": 1.0054965326926675,
+    "person_lower": 0.9372748859040215,
+    "person_upper": 1.0958513376697503,
+    "person_covered": true,
+    "block_lower": 0.9767658524435419,
+    "block_upper": 1.1556366846711446,
+    "block_covered": true
+  },
+  {
+    "dataset": 70,
+    "point": 0.9364813810471466,
+    "person_lower": 0.8640264920412574,
+    "person_upper": 1.0087137545149292,
+    "person_covered": true,
+    "block_lower": 0.9765849459321699,
+    "block_upper": 1.0933237742782516,
+    "block_covered": true
+  },
+  {
+    "dataset": 71,
+    "point": 1.0678755761965946,
+    "person_lower": 1.0034958999056818,
+    "person_upper": 1.1489818786484651,
+    "person_covered": false,
+    "block_lower": 1.1126114408272856,
+    "block_upper": 1.2425187911068967,
+    "block_covered": false
+  },
+  {
+    "dataset": 72,
+    "point": 0.9175255641096933,
+    "person_lower": 0.8637449141209375,
+    "person_upper": 0.9846202803856678,
+    "person_covered": false,
+    "block_lower": 0.9620032910941833,
+    "block_upper": 1.1324411844400681,
+    "block_covered": true
+  },
+  {
+    "dataset": 73,
+    "point": 0.9812673788203695,
+    "person_lower": 0.9160146727195193,
+    "person_upper": 1.054029949682976,
+    "person_covered": true,
+    "block_lower": 1.0116012581681062,
+    "block_upper": 1.1291595942298887,
+    "block_covered": false
+  },
+  {
+    "dataset": 74,
+    "point": 0.98768887320241,
+    "person_lower": 0.9088190843315332,
+    "person_upper": 1.0754581981173597,
+    "person_covered": true,
+    "block_lower": 0.9956140452994381,
+    "block_upper": 1.18670488508474,
+    "block_covered": true
+  },
+  {
+    "dataset": 75,
+    "point": 0.9932775325259636,
+    "person_lower": 0.9388076742919966,
+    "person_upper": 1.0675125700470984,
+    "person_covered": true,
+    "block_lower": 1.0330905927867478,
+    "block_upper": 1.1859433518829805,
+    "block_covered": false
+  },
+  {
+    "dataset": 76,
+    "point": 0.9982552662572489,
+    "person_lower": 0.9461702195650982,
+    "person_upper": 1.0899072119262392,
+    "person_covered": true,
+    "block_lower": 1.05685390295666,
+    "block_upper": 1.1657276464505262,
+    "block_covered": false
+  },
+  {
+    "dataset": 77,
+    "point": 1.0043380770464987,
+    "person_lower": 0.9193771125441503,
+    "person_upper": 1.0927152877237825,
+    "person_covered": true,
+    "block_lower": 1.02149744747926,
+    "block_upper": 1.18814000192085,
+    "block_covered": false
+  },
+  {
+    "dataset": 78,
+    "point": 0.970166911778665,
+    "person_lower": 0.9115499419251402,
+    "person_upper": 1.055632012630351,
+    "person_covered": true,
+    "block_lower": 1.0418009470393663,
+    "block_upper": 1.201197089360515,
+    "block_covered": false
+  },
+  {
+    "dataset": 79,
+    "point": 1.0151072068810114,
+    "person_lower": 0.932164646265986,
+    "person_upper": 1.0894846845634247,
+    "person_covered": true,
+    "block_lower": 1.049529471017924,
+    "block_upper": 1.1998530239434821,
+    "block_covered": false
+  },
+  {
+    "dataset": 80,
+    "point": 0.9796087374601045,
+    "person_lower": 0.923940531238598,
+    "person_upper": 1.0576989909403656,
+    "person_covered": true,
+    "block_lower": 1.0520960137265623,
+    "block_upper": 1.204275448156473,
+    "block_covered": false
+  },
+  {
+    "dataset": 81,
+    "point": 0.975171184492297,
+    "person_lower": 0.898294131437364,
+    "person_upper": 1.0471836247588084,
+    "person_covered": true,
+    "block_lower": 0.9871459318950465,
+    "block_upper": 1.1000434884148975,
+    "block_covered": true
+  },
+  {
+    "dataset": 82,
+    "point": 1.0028099818999159,
+    "person_lower": 0.9331594870935863,
+    "person_upper": 1.0821114286654099,
+    "person_covered": true,
+    "block_lower": 1.0397767194585694,
+    "block_upper": 1.2042080719036086,
+    "block_covered": false
+  },
+  {
+    "dataset": 83,
+    "point": 0.9676407533903798,
+    "person_lower": 0.8955208809435071,
+    "person_upper": 1.0599085886682074,
+    "person_covered": true,
+    "block_lower": 1.024293156465575,
+    "block_upper": 1.1613917655965005,
+    "block_covered": false
+  },
+  {
+    "dataset": 84,
+    "point": 1.0562646849593824,
+    "person_lower": 0.9869822324401246,
+    "person_upper": 1.1496840962664043,
+    "person_covered": true,
+    "block_lower": 1.0904309423064331,
+    "block_upper": 1.2430127215758446,
+    "block_covered": false
+  },
+  {
+    "dataset": 85,
+    "point": 1.0194252397341985,
+    "person_lower": 0.9519596853559761,
+    "person_upper": 1.112119162981165,
+    "person_covered": true,
+    "block_lower": 1.0441849283067348,
+    "block_upper": 1.2186266785335214,
+    "block_covered": false
+  },
+  {
+    "dataset": 86,
+    "point": 0.9810386433775503,
+    "person_lower": 0.9258416773552841,
+    "person_upper": 1.0624652328071615,
+    "person_covered": true,
+    "block_lower": 1.0254868650779498,
+    "block_upper": 1.1736476524986132,
+    "block_covered": false
+  },
+  {
+    "dataset": 87,
+    "point": 1.0428613831156086,
+    "person_lower": 0.9859218844779326,
+    "person_upper": 1.117442415317278,
+    "person_covered": true,
+    "block_lower": 1.075444737080192,
+    "block_upper": 1.2086752095716873,
+    "block_covered": false
+  },
+  {
+    "dataset": 88,
+    "point": 0.9983267693073888,
+    "person_lower": 0.9186818846501928,
+    "person_upper": 1.0905255246597834,
+    "person_covered": true,
+    "block_lower": 1.0309202287929284,
+    "block_upper": 1.1723636831408468,
+    "block_covered": false
+  },
+  {
+    "dataset": 89,
+    "point": 0.9721980433077348,
+    "person_lower": 0.9007984084743569,
+    "person_upper": 1.0608213946332221,
+    "person_covered": true,
+    "block_lower": 1.0032290407031559,
+    "block_upper": 1.1610361617489908,
+    "block_covered": false
+  },
+  {
+    "dataset": 90,
+    "point": 0.9747085465197929,
+    "person_lower": 0.9192272238763459,
+    "person_upper": 1.0492298564641673,
+    "person_covered": true,
+    "block_lower": 1.0272686646629838,
+    "block_upper": 1.165850459346975,
+    "block_covered": false
+  },
+  {
+    "dataset": 91,
+    "point": 0.9580916140729635,
+    "person_lower": 0.8826345104075909,
+    "person_upper": 1.0328768465067895,
+    "person_covered": true,
+    "block_lower": 0.9480826995529231,
+    "block_upper": 1.0975895457021065,
+    "block_covered": true
+  },
+  {
+    "dataset": 92,
+    "point": 0.9982545341408146,
+    "person_lower": 0.9269044246831437,
+    "person_upper": 1.0829564531990854,
+    "person_covered": true,
+    "block_lower": 1.0471060689154859,
+    "block_upper": 1.1947203859666733,
+    "block_covered": false
+  },
+  {
+    "dataset": 93,
+    "point": 1.0391748530912828,
+    "person_lower": 0.9618283996584212,
+    "person_upper": 1.1189026676824594,
+    "person_covered": true,
+    "block_lower": 1.0471598343497315,
+    "block_upper": 1.1934622206540522,
+    "block_covered": false
+  },
+  {
+    "dataset": 94,
+    "point": 1.0720537513604118,
+    "person_lower": 1.0039271492547686,
+    "person_upper": 1.1538611937895935,
+    "person_covered": false,
+    "block_lower": 1.056739858240413,
+    "block_upper": 1.2189753967060823,
+    "block_covered": false
+  },
+  {
+    "dataset": 95,
+    "point": 0.9752239374862267,
+    "person_lower": 0.9114495260418971,
+    "person_upper": 1.03943967247517,
+    "person_covered": true,
+    "block_lower": 1.0419961268543438,
+    "block_upper": 1.198504154996772,
+    "block_covered": false
+  },
+  {
+    "dataset": 96,
+    "point": 1.0018130183236496,
+    "person_lower": 0.9260301287219803,
+    "person_upper": 1.08286377088363,
+    "person_covered": true,
+    "block_lower": 1.0149712450107486,
+    "block_upper": 1.1785602949440042,
+    "block_covered": false
+  },
+  {
+    "dataset": 97,
+    "point": 0.9893748011182993,
+    "person_lower": 0.9318624681849319,
+    "person_upper": 1.073056297601724,
+    "person_covered": true,
+    "block_lower": 0.9864678430768693,
+    "block_upper": 1.15087064776381,
+    "block_covered": true
+  },
+  {
+    "dataset": 98,
+    "point": 0.9851765317957005,
+    "person_lower": 0.9214861046827078,
+    "person_upper": 1.0662495040316222,
+    "person_covered": true,
+    "block_lower": 1.0234963131733281,
+    "block_upper": 1.1561094505090443,
+    "block_covered": false
+  },
+  {
+    "dataset": 99,
+    "point": 1.0226650376958895,
+    "person_lower": 0.9479505585550301,
+    "person_upper": 1.109013428493471,
+    "person_covered": true,
+    "block_lower": 0.9935073202107586,
+    "block_upper": 1.1479495308894292,
+    "block_covered": true
+  },
+  {
+    "dataset": 100,
+    "point": 1.0353775845835944,
+    "person_lower": 0.9498711050935177,
+    "person_upper": 1.1264105232540682,
+    "person_covered": true,
+    "block_lower": 1.0469081838371082,
+    "block_upper": 1.1942087231757348,
+    "block_covered": false
+  },
+  {
+    "dataset": 101,
+    "point": 1.0045479036674296,
+    "person_lower": 0.9452872185936048,
+    "person_upper": 1.087433369394792,
+    "person_covered": true,
+    "block_lower": 1.00086395337893,
+    "block_upper": 1.1165807656322775,
+    "block_covered": false
+  },
+  {
+    "dataset": 102,
+    "point": 0.9947266132717125,
+    "person_lower": 0.9301651374327383,
+    "person_upper": 1.0782400576518278,
+    "person_covered": true,
+    "block_lower": 1.0150021388993424,
+    "block_upper": 1.1342499674740802,
+    "block_covered": false
+  },
+  {
+    "dataset": 103,
+    "point": 1.0077533864285768,
+    "person_lower": 0.9512632776766797,
+    "person_upper": 1.0896266229122444,
+    "person_covered": true,
+    "block_lower": 1.0705222933899394,
+    "block_upper": 1.2435066191320236,
+    "block_covered": false
+  },
+  {
+    "dataset": 104,
+    "point": 0.9876318123851657,
+    "person_lower": 0.9365537631534484,
+    "person_upper": 1.0660122747389278,
+    "person_covered": true,
+    "block_lower": 1.0051056668510936,
+    "block_upper": 1.1560334063620281,
+    "block_covered": false
+  },
+  {
+    "dataset": 105,
+    "point": 1.0531155468884623,
+    "person_lower": 0.9748151217379176,
+    "person_upper": 1.141793299000922,
+    "person_covered": true,
+    "block_lower": 1.0476020072878927,
+    "block_upper": 1.2075873486772792,
+    "block_covered": false
+  },
+  {
+    "dataset": 106,
+    "point": 1.0336495951465103,
+    "person_lower": 0.9742414026358539,
+    "person_upper": 1.1138958455525398,
+    "person_covered": true,
+    "block_lower": 1.046781126428841,
+    "block_upper": 1.2235283135152548,
+    "block_covered": false
+  },
+  {
+    "dataset": 107,
+    "point": 1.0383252725406358,
+    "person_lower": 0.9696577598899799,
+    "person_upper": 1.1123907246412506,
+    "person_covered": true,
+    "block_lower": 1.0258780868456336,
+    "block_upper": 1.2116865426643377,
+    "block_covered": false
+  },
+  {
+    "dataset": 108,
+    "point": 1.038599565361918,
+    "person_lower": 0.9638614065780389,
+    "person_upper": 1.1167866784029343,
+    "person_covered": true,
+    "block_lower": 1.0326581323919,
+    "block_upper": 1.187616431819426,
+    "block_covered": false
+  },
+  {
+    "dataset": 109,
+    "point": 0.9651737082108165,
+    "person_lower": 0.9145970034994282,
+    "person_upper": 1.0514860678085989,
+    "person_covered": true,
+    "block_lower": 0.9862702800718589,
+    "block_upper": 1.1516662813171756,
+    "block_covered": true
+  },
+  {
+    "dataset": 110,
+    "point": 0.9565434615236743,
+    "person_lower": 0.8960977176306532,
+    "person_upper": 1.0243058314454132,
+    "person_covered": true,
+    "block_lower": 0.9968148632801197,
+    "block_upper": 1.173830201235504,
+    "block_covered": true
+  },
+  {
+    "dataset": 111,
+    "point": 0.9730465648868986,
+    "person_lower": 0.9126491767491235,
+    "person_upper": 1.0530232597264642,
+    "person_covered": true,
+    "block_lower": 1.0294516585433322,
+    "block_upper": 1.1821465249487766,
+    "block_covered": false
+  },
+  {
+    "dataset": 112,
+    "point": 1.0213032152898354,
+    "person_lower": 0.9552656215285615,
+    "person_upper": 1.1008258004296358,
+    "person_covered": true,
+    "block_lower": 1.0614365164356172,
+    "block_upper": 1.21029731526126,
+    "block_covered": false
+  },
+  {
+    "dataset": 113,
+    "point": 0.9656547083936223,
+    "person_lower": 0.9019298110684578,
+    "person_upper": 1.0517870682512982,
+    "person_covered": true,
+    "block_lower": 0.9833507589463338,
+    "block_upper": 1.127315335851308,
+    "block_covered": true
+  },
+  {
+    "dataset": 114,
+    "point": 0.9835963224498366,
+    "person_lower": 0.909376886152518,
+    "person_upper": 1.0570207002883916,
+    "person_covered": true,
+    "block_lower": 1.0170859505385879,
+    "block_upper": 1.1501404410382823,
+    "block_covered": false
+  },
+  {
+    "dataset": 115,
+    "point": 0.9765566707722898,
+    "person_lower": 0.9070131982246745,
+    "person_upper": 1.0561958664863103,
+    "person_covered": true,
+    "block_lower": 0.9901670710811495,
+    "block_upper": 1.147561600439502,
+    "block_covered": true
+  },
+  {
+    "dataset": 116,
+    "point": 1.0319453869166035,
+    "person_lower": 0.9639176552613467,
+    "person_upper": 1.1095903505328029,
+    "person_covered": true,
+    "block_lower": 1.0618249847305188,
+    "block_upper": 1.1890598612055887,
+    "block_covered": false
+  },
+  {
+    "dataset": 117,
+    "point": 1.0067381493509444,
+    "person_lower": 0.9389342380017272,
+    "person_upper": 1.0919137037395301,
+    "person_covered": true,
+    "block_lower": 1.0313129818294633,
+    "block_upper": 1.2174295436827998,
+    "block_covered": false
+  },
+  {
+    "dataset": 118,
+    "point": 0.9490288991905431,
+    "person_lower": 0.8911096484915497,
+    "person_upper": 1.0182509171891327,
+    "person_covered": true,
+    "block_lower": 0.9981408976210026,
+    "block_upper": 1.1945710854375873,
+    "block_covered": true
+  },
+  {
+    "dataset": 119,
+    "point": 0.9896730054870022,
+    "person_lower": 0.929291130152958,
+    "person_upper": 1.0741236249494752,
+    "person_covered": true,
+    "block_lower": 0.9968472250645163,
+    "block_upper": 1.1808928177891465,
+    "block_covered": true
+  },
+  {
+    "dataset": 120,
+    "point": 1.032438338826529,
+    "person_lower": 0.9745929112712671,
+    "person_upper": 1.1041900199813495,
+    "person_covered": true,
+    "block_lower": 1.077804794936301,
+    "block_upper": 1.2430179920640225,
+    "block_covered": false
+  },
+  {
+    "dataset": 121,
+    "point": 0.9742898896388963,
+    "person_lower": 0.8971692339326784,
+    "person_upper": 1.0569815475063467,
+    "person_covered": true,
+    "block_lower": 1.0096107328034865,
+    "block_upper": 1.1457716994989684,
+    "block_covered": false
+  },
+  {
+    "dataset": 122,
+    "point": 0.9962308116876062,
+    "person_lower": 0.9275579120918336,
+    "person_upper": 1.076994450369264,
+    "person_covered": true,
+    "block_lower": 1.023296753250407,
+    "block_upper": 1.1682760126750416,
+    "block_covered": false
+  },
+  {
+    "dataset": 123,
+    "point": 0.9800414031243859,
+    "person_lower": 0.9207759616607789,
+    "person_upper": 1.04530631664026,
+    "person_covered": true,
+    "block_lower": 0.9863908477905561,
+    "block_upper": 1.154962704080757,
+    "block_covered": true
+  },
+  {
+    "dataset": 124,
+    "point": 1.0153131713289114,
+    "person_lower": 0.9450488475487334,
+    "person_upper": 1.0906115327359405,
+    "person_covered": true,
+    "block_lower": 1.0790239009232818,
+    "block_upper": 1.1867594290270638,
+    "block_covered": false
+  },
+  {
+    "dataset": 125,
+    "point": 0.9878958607254191,
+    "person_lower": 0.917128340058322,
+    "person_upper": 1.0688611911499062,
+    "person_covered": true,
+    "block_lower": 1.002429084247797,
+    "block_upper": 1.1343134414746603,
+    "block_covered": false
+  },
+  {
+    "dataset": 126,
+    "point": 1.0144955427249984,
+    "person_lower": 0.9444690640636794,
+    "person_upper": 1.0975605591087878,
+    "person_covered": true,
+    "block_lower": 1.0809749667738082,
+    "block_upper": 1.246058731436568,
+    "block_covered": false
+  },
+  {
+    "dataset": 127,
+    "point": 0.9869110705642495,
+    "person_lower": 0.9134886901084275,
+    "person_upper": 1.0647679994373245,
+    "person_covered": true,
+    "block_lower": 1.0152431857922495,
+    "block_upper": 1.1698352896635562,
+    "block_covered": false
+  },
+  {
+    "dataset": 128,
+    "point": 0.9622389837271202,
+    "person_lower": 0.8968505482415071,
+    "person_upper": 1.0401969114646863,
+    "person_covered": true,
+    "block_lower": 1.0063967796823001,
+    "block_upper": 1.1376826005106944,
+    "block_covered": false
+  },
+  {
+    "dataset": 129,
+    "point": 0.9971544482048853,
+    "person_lower": 0.9363115791856716,
+    "person_upper": 1.075572649239779,
+    "person_covered": true,
+    "block_lower": 1.0689569978103097,
+    "block_upper": 1.2320579519942378,
+    "block_covered": false
+  },
+  {
+    "dataset": 130,
+    "point": 1.0552324348513995,
+    "person_lower": 0.9831048116302795,
+    "person_upper": 1.140440203456242,
+    "person_covered": true,
+    "block_lower": 1.0891340482922576,
+    "block_upper": 1.2372890365460028,
+    "block_covered": false
+  },
+  {
+    "dataset": 131,
+    "point": 0.9739594020697842,
+    "person_lower": 0.9140329513801453,
+    "person_upper": 1.0525961141372022,
+    "person_covered": true,
+    "block_lower": 1.0448070375216794,
+    "block_upper": 1.1893281441655983,
+    "block_covered": false
+  },
+  {
+    "dataset": 132,
+    "point": 1.050790371938001,
+    "person_lower": 0.9835777165156349,
+    "person_upper": 1.1259054403259137,
+    "person_covered": true,
+    "block_lower": 1.0788232785203244,
+    "block_upper": 1.2274231032050247,
+    "block_covered": false
+  },
+  {
+    "dataset": 133,
+    "point": 1.0193363366032084,
+    "person_lower": 0.9514441289641419,
+    "person_upper": 1.101151874966479,
+    "person_covered": true,
+    "block_lower": 1.0210606395247115,
+    "block_upper": 1.147972483985028,
+    "block_covered": false
+  },
+  {
+    "dataset": 134,
+    "point": 0.9185517366637954,
+    "person_lower": 0.8675737130819202,
+    "person_upper": 0.990372353883407,
+    "person_covered": false,
+    "block_lower": 0.9908781245583552,
+    "block_upper": 1.129219935353721,
+    "block_covered": true
+  },
+  {
+    "dataset": 135,
+    "point": 1.025515773310526,
+    "person_lower": 0.9623491451851853,
+    "person_upper": 1.107824866764836,
+    "person_covered": true,
+    "block_lower": 1.052936943228465,
+    "block_upper": 1.1829034820004538,
+    "block_covered": false
+  },
+  {
+    "dataset": 136,
+    "point": 0.953612835782205,
+    "person_lower": 0.8860353880745214,
+    "person_upper": 1.0355668600053767,
+    "person_covered": true,
+    "block_lower": 1.0015803473538953,
+    "block_upper": 1.1176167618517534,
+    "block_covered": false
+  },
+  {
+    "dataset": 137,
+    "point": 1.0443893613868944,
+    "person_lower": 0.9627517270528488,
+    "person_upper": 1.1382294389405432,
+    "person_covered": true,
+    "block_lower": 1.0509489055334553,
+    "block_upper": 1.180552440107539,
+    "block_covered": false
+  },
+  {
+    "dataset": 138,
+    "point": 1.0086055056698005,
+    "person_lower": 0.9466666275557709,
+    "person_upper": 1.078877515222212,
+    "person_covered": true,
+    "block_lower": 1.0313018432404673,
+    "block_upper": 1.1943408038387213,
+    "block_covered": false
+  },
+  {
+    "dataset": 139,
+    "point": 1.0439678313363585,
+    "person_lower": 0.9718014730183592,
+    "person_upper": 1.1344022102650804,
+    "person_covered": true,
+    "block_lower": 1.0614694863337828,
+    "block_upper": 1.1908336145097191,
+    "block_covered": false
+  },
+  {
+    "dataset": 140,
+    "point": 0.9771024567649002,
+    "person_lower": 0.9178213228961078,
+    "person_upper": 1.0506648233127753,
+    "person_covered": true,
+    "block_lower": 1.01197584564004,
+    "block_upper": 1.20347116122446,
+    "block_covered": false
+  },
+  {
+    "dataset": 141,
+    "point": 1.0679773012480849,
+    "person_lower": 0.9917502063714638,
+    "person_upper": 1.1472895461337491,
+    "person_covered": true,
+    "block_lower": 1.050687975098002,
+    "block_upper": 1.2103828407003596,
+    "block_covered": false
+  },
+  {
+    "dataset": 142,
+    "point": 0.9985752889162429,
+    "person_lower": 0.9270680526936083,
+    "person_upper": 1.0746801293784611,
+    "person_covered": true,
+    "block_lower": 1.0498471235089066,
+    "block_upper": 1.2032258456665181,
+    "block_covered": false
+  },
+  {
+    "dataset": 143,
+    "point": 1.0177181380161595,
+    "person_lower": 0.9393115993180533,
+    "person_upper": 1.106158454560332,
+    "person_covered": true,
+    "block_lower": 1.0439133779287386,
+    "block_upper": 1.163778529246523,
+    "block_covered": false
+  },
+  {
+    "dataset": 144,
+    "point": 1.0213020060914282,
+    "person_lower": 0.9651272073315368,
+    "person_upper": 1.0914290323804896,
+    "person_covered": true,
+    "block_lower": 1.045330572975432,
+    "block_upper": 1.1844281454878949,
+    "block_covered": false
+  },
+  {
+    "dataset": 145,
+    "point": 0.9829538882650074,
+    "person_lower": 0.9090386778075619,
+    "person_upper": 1.052624572531801,
+    "person_covered": true,
+    "block_lower": 0.9872322066112406,
+    "block_upper": 1.1192049016825267,
+    "block_covered": true
+  },
+  {
+    "dataset": 146,
+    "point": 1.0061718068772836,
+    "person_lower": 0.9470099014580813,
+    "person_upper": 1.0957615650842527,
+    "person_covered": true,
+    "block_lower": 1.016501670576864,
+    "block_upper": 1.1556550526035991,
+    "block_covered": false
+  },
+  {
+    "dataset": 147,
+    "point": 0.9422518256163461,
+    "person_lower": 0.8853475849687245,
+    "person_upper": 1.0326672206936183,
+    "person_covered": true,
+    "block_lower": 0.9820249785634902,
+    "block_upper": 1.0928135566705233,
+    "block_covered": true
+  },
+  {
+    "dataset": 148,
+    "point": 1.0783456895838759,
+    "person_lower": 0.9953730635589232,
+    "person_upper": 1.1502421530685345,
+    "person_covered": true,
+    "block_lower": 1.080097474519785,
+    "block_upper": 1.2140749781276394,
+    "block_covered": false
+  },
+  {
+    "dataset": 149,
+    "point": 1.016517785447391,
+    "person_lower": 0.9553855412236077,
+    "person_upper": 1.087503740509945,
+    "person_covered": true,
+    "block_lower": 0.995792206406332,
+    "block_upper": 1.1711492942743036,
+    "block_covered": true
+  },
+  {
+    "dataset": 150,
+    "point": 0.9522363255678463,
+    "person_lower": 0.8987299546804373,
+    "person_upper": 1.0225842965925571,
+    "person_covered": true,
+    "block_lower": 0.9940834766065128,
+    "block_upper": 1.1586137495462798,
+    "block_covered": true
+  },
+  {
+    "dataset": 151,
+    "point": 0.9645786843468422,
+    "person_lower": 0.9015641481564831,
+    "person_upper": 1.0408363916565402,
+    "person_covered": true,
+    "block_lower": 0.9981015632997599,
+    "block_upper": 1.1368155935897795,
+    "block_covered": true
+  },
+  {
+    "dataset": 152,
+    "point": 0.9918820273973815,
+    "person_lower": 0.9323739743852782,
+    "person_upper": 1.06904863045276,
+    "person_covered": true,
+    "block_lower": 1.035741029399573,
+    "block_upper": 1.1608644443147482,
+    "block_covered": false
+  },
+  {
+    "dataset": 153,
+    "point": 1.0301448482397801,
+    "person_lower": 0.9573375578160935,
+    "person_upper": 1.1232109300614248,
+    "person_covered": true,
+    "block_lower": 1.0664219339083925,
+    "block_upper": 1.1888196559024748,
+    "block_covered": false
+  },
+  {
+    "dataset": 154,
+    "point": 0.9755104998215502,
+    "person_lower": 0.9095913056104811,
+    "person_upper": 1.054116380377133,
+    "person_covered": true,
+    "block_lower": 1.013222938685074,
+    "block_upper": 1.1381822229763312,
+    "block_covered": false
+  },
+  {
+    "dataset": 155,
+    "point": 1.0543373572544927,
+    "person_lower": 0.9719068349578673,
+    "person_upper": 1.1362523992795097,
+    "person_covered": true,
+    "block_lower": 1.0837286972637563,
+    "block_upper": 1.219449320617122,
+    "block_covered": false
+  },
+  {
+    "dataset": 156,
+    "point": 1.021582059765512,
+    "person_lower": 0.9408403913610573,
+    "person_upper": 1.0977037626105917,
+    "person_covered": true,
+    "block_lower": 1.0484756721046729,
+    "block_upper": 1.2081116222804609,
+    "block_covered": false
+  },
+  {
+    "dataset": 157,
+    "point": 0.9758378005687304,
+    "person_lower": 0.9194843247238393,
+    "person_upper": 1.0639779292280802,
+    "person_covered": true,
+    "block_lower": 1.0201769668966543,
+    "block_upper": 1.1849774513347726,
+    "block_covered": false
+  },
+  {
+    "dataset": 158,
+    "point": 0.941568528260813,
+    "person_lower": 0.8805360602548683,
+    "person_upper": 1.0174325277365515,
+    "person_covered": true,
+    "block_lower": 0.9902250179303276,
+    "block_upper": 1.1182663902113312,
+    "block_covered": true
+  },
+  {
+    "dataset": 159,
+    "point": 1.0360797288378676,
+    "person_lower": 0.9663074132001936,
+    "person_upper": 1.1245381028830204,
+    "person_covered": true,
+    "block_lower": 1.0871037796811989,
+    "block_upper": 1.2402388276000031,
+    "block_covered": false
+  },
+  {
+    "dataset": 160,
+    "point": 0.918874538080551,
+    "person_lower": 0.8562455327113918,
+    "person_upper": 0.9889817746329533,
+    "person_covered": false,
+    "block_lower": 0.9859215086816834,
+    "block_upper": 1.1756340786388848,
+    "block_covered": true
+  },
+  {
+    "dataset": 161,
+    "point": 0.9429570369914856,
+    "person_lower": 0.8906084585517327,
+    "person_upper": 1.015035936158145,
+    "person_covered": true,
+    "block_lower": 0.9949178865923628,
+    "block_upper": 1.1328761129509375,
+    "block_covered": true
+  },
+  {
+    "dataset": 162,
+    "point": 1.0058094723654922,
+    "person_lower": 0.9455743300384319,
+    "person_upper": 1.0956959097170265,
+    "person_covered": true,
+    "block_lower": 1.0273699291654526,
+    "block_upper": 1.200245075094175,
+    "block_covered": false
+  },
+  {
+    "dataset": 163,
+    "point": 0.9673877436758448,
+    "person_lower": 0.8935581965784186,
+    "person_upper": 1.043822786758246,
+    "person_covered": true,
+    "block_lower": 0.9745446850777573,
+    "block_upper": 1.1440919715908988,
+    "block_covered": true
+  },
+  {
+    "dataset": 164,
+    "point": 0.970921850811975,
+    "person_lower": 0.9022830025713232,
+    "person_upper": 1.0446791099785853,
+    "person_covered": true,
+    "block_lower": 1.0091996944434696,
+    "block_upper": 1.1514974875609842,
+    "block_covered": false
+  },
+  {
+    "dataset": 165,
+    "point": 1.0086509467459948,
+    "person_lower": 0.9442811702614744,
+    "person_upper": 1.082055388650811,
+    "person_covered": true,
+    "block_lower": 1.0361318058911093,
+    "block_upper": 1.20136899582592,
+    "block_covered": false
+  },
+  {
+    "dataset": 166,
+    "point": 1.073204731077592,
+    "person_lower": 0.9986752650297532,
+    "person_upper": 1.1566867727846941,
+    "person_covered": true,
+    "block_lower": 1.0777554986632947,
+    "block_upper": 1.224840853824794,
+    "block_covered": false
+  },
+  {
+    "dataset": 167,
+    "point": 0.974640842472203,
+    "person_lower": 0.9107564191184184,
+    "person_upper": 1.0537998278228953,
+    "person_covered": true,
+    "block_lower": 1.0058498693217386,
+    "block_upper": 1.142056230644162,
+    "block_covered": false
+  },
+  {
+    "dataset": 168,
+    "point": 0.9503599300651951,
+    "person_lower": 0.8835177374846497,
+    "person_upper": 1.0125735146034387,
+    "person_covered": true,
+    "block_lower": 1.009528123864044,
+    "block_upper": 1.142140930100816,
+    "block_covered": false
+  },
+  {
+    "dataset": 169,
+    "point": 1.040896630003176,
+    "person_lower": 0.9655065696250754,
+    "person_upper": 1.1299305165459574,
+    "person_covered": true,
+    "block_lower": 1.0301526586410021,
+    "block_upper": 1.1930084576762843,
+    "block_covered": false
+  },
+  {
+    "dataset": 170,
+    "point": 0.9540349073469714,
+    "person_lower": 0.9037271929023619,
+    "person_upper": 1.0261664902622956,
+    "person_covered": true,
+    "block_lower": 0.9827163719300133,
+    "block_upper": 1.1431931002198903,
+    "block_covered": true
+  },
+  {
+    "dataset": 171,
+    "point": 0.9960601166706387,
+    "person_lower": 0.9316181773144974,
+    "person_upper": 1.0704036007852051,
+    "person_covered": true,
+    "block_lower": 1.003211449825955,
+    "block_upper": 1.1447819193235405,
+    "block_covered": false
+  },
+  {
+    "dataset": 172,
+    "point": 1.0091315325279215,
+    "person_lower": 0.9467309548499983,
+    "person_upper": 1.0934560988332798,
+    "person_covered": true,
+    "block_lower": 1.0585211076388112,
+    "block_upper": 1.2209567162662238,
+    "block_covered": false
+  },
+  {
+    "dataset": 173,
+    "point": 0.9667876056419575,
+    "person_lower": 0.8869692555335928,
+    "person_upper": 1.0411989547871239,
+    "person_covered": true,
+    "block_lower": 1.0153751381757181,
+    "block_upper": 1.1499793635486477,
+    "block_covered": false
+  },
+  {
+    "dataset": 174,
+    "point": 0.9810422321444572,
+    "person_lower": 0.9167895231221775,
+    "person_upper": 1.0580122071649773,
+    "person_covered": true,
+    "block_lower": 1.0269752610468046,
+    "block_upper": 1.1892302753904067,
+    "block_covered": false
+  },
+  {
+    "dataset": 175,
+    "point": 0.9907379070033655,
+    "person_lower": 0.9294000577681264,
+    "person_upper": 1.0709753651423244,
+    "person_covered": true,
+    "block_lower": 1.0343568938073289,
+    "block_upper": 1.1434630745993968,
+    "block_covered": false
+  },
+  {
+    "dataset": 176,
+    "point": 0.9657513069298173,
+    "person_lower": 0.8987672502626899,
+    "person_upper": 1.042095478486838,
+    "person_covered": true,
+    "block_lower": 1.0269962529293593,
+    "block_upper": 1.2031885562605458,
+    "block_covered": false
+  },
+  {
+    "dataset": 177,
+    "point": 1.0074307368124227,
+    "person_lower": 0.9405575098246032,
+    "person_upper": 1.091354088049972,
+    "person_covered": true,
+    "block_lower": 1.0502064050721889,
+    "block_upper": 1.2173172764724975,
+    "block_covered": false
+  },
+  {
+    "dataset": 178,
+    "point": 1.061900838313713,
+    "person_lower": 0.979679992013658,
+    "person_upper": 1.1384140695208733,
+    "person_covered": true,
+    "block_lower": 1.0631764638611139,
+    "block_upper": 1.2091381602456839,
+    "block_covered": false
+  },
+  {
+    "dataset": 179,
+    "point": 1.0091655682641725,
+    "person_lower": 0.9341585572476185,
+    "person_upper": 1.092332674827378,
+    "person_covered": true,
+    "block_lower": 1.040172838331851,
+    "block_upper": 1.1280710451612859,
+    "block_covered": false
+  },
+  {
+    "dataset": 180,
+    "point": 0.9399305328930445,
+    "person_lower": 0.8792242476257893,
+    "person_upper": 1.0043041740647858,
+    "person_covered": true,
+    "block_lower": 0.9663235948640145,
+    "block_upper": 1.117428385395789,
+    "block_covered": true
+  },
+  {
+    "dataset": 181,
+    "point": 1.001558818016818,
+    "person_lower": 0.9299049738321782,
+    "person_upper": 1.0781065110155414,
+    "person_covered": true,
+    "block_lower": 1.0354894605231355,
+    "block_upper": 1.182094360118017,
+    "block_covered": false
+  },
+  {
+    "dataset": 182,
+    "point": 1.0053267234073195,
+    "person_lower": 0.940675818541901,
+    "person_upper": 1.0814188160984672,
+    "person_covered": true,
+    "block_lower": 1.0462154432637225,
+    "block_upper": 1.184047728044274,
+    "block_covered": false
+  },
+  {
+    "dataset": 183,
+    "point": 0.9866512330529333,
+    "person_lower": 0.9259559710527442,
+    "person_upper": 1.0490024133063416,
+    "person_covered": true,
+    "block_lower": 1.0239325871532838,
+    "block_upper": 1.2194657033102207,
+    "block_covered": false
+  },
+  {
+    "dataset": 184,
+    "point": 0.9835312898757709,
+    "person_lower": 0.9075601702174553,
+    "person_upper": 1.0573923567030699,
+    "person_covered": true,
+    "block_lower": 1.012844880157612,
+    "block_upper": 1.1160566378374248,
+    "block_covered": false
+  },
+  {
+    "dataset": 185,
+    "point": 1.0173269353781675,
+    "person_lower": 0.9480416739868618,
+    "person_upper": 1.105578537619789,
+    "person_covered": true,
+    "block_lower": 1.0574440259880888,
+    "block_upper": 1.1808727934349912,
+    "block_covered": false
+  },
+  {
+    "dataset": 186,
+    "point": 0.9820981761855874,
+    "person_lower": 0.9251696258620665,
+    "person_upper": 1.0397571751589292,
+    "person_covered": true,
+    "block_lower": 1.0330744235864384,
+    "block_upper": 1.1799668322378454,
+    "block_covered": false
+  },
+  {
+    "dataset": 187,
+    "point": 0.9364628611919923,
+    "person_lower": 0.8727297481611649,
+    "person_upper": 1.0115652253082106,
+    "person_covered": true,
+    "block_lower": 1.0160288032297944,
+    "block_upper": 1.1953640023534904,
+    "block_covered": false
+  },
+  {
+    "dataset": 188,
+    "point": 1.0270772659155583,
+    "person_lower": 0.961441010637779,
+    "person_upper": 1.1027715343534665,
+    "person_covered": true,
+    "block_lower": 1.0291271770633739,
+    "block_upper": 1.2043629443465664,
+    "block_covered": false
+  },
+  {
+    "dataset": 189,
+    "point": 1.048989955741918,
+    "person_lower": 0.9830987098583929,
+    "person_upper": 1.1463430287439778,
+    "person_covered": true,
+    "block_lower": 1.0018736354696252,
+    "block_upper": 1.2197123779067183,
+    "block_covered": false
+  },
+  {
+    "dataset": 190,
+    "point": 1.0374322584378721,
+    "person_lower": 0.9574817120214396,
+    "person_upper": 1.1168272539027158,
+    "person_covered": true,
+    "block_lower": 1.0091074708019554,
+    "block_upper": 1.171206578835159,
+    "block_covered": false
+  },
+  {
+    "dataset": 191,
+    "point": 0.9748348533369672,
+    "person_lower": 0.8978220324362584,
+    "person_upper": 1.0447873220177315,
+    "person_covered": true,
+    "block_lower": 1.0069572367493294,
+    "block_upper": 1.154953289254856,
+    "block_covered": false
+  },
+  {
+    "dataset": 192,
+    "point": 1.0227655350283926,
+    "person_lower": 0.9530795416241705,
+    "person_upper": 1.1068814219185836,
+    "person_covered": true,
+    "block_lower": 1.0060477823217888,
+    "block_upper": 1.2144353950415547,
+    "block_covered": false
+  },
+  {
+    "dataset": 193,
+    "point": 1.0121414380325306,
+    "person_lower": 0.9420096490838566,
+    "person_upper": 1.0969209232530992,
+    "person_covered": true,
+    "block_lower": 1.0415384939489205,
+    "block_upper": 1.1901005350881309,
+    "block_covered": false
+  },
+  {
+    "dataset": 194,
+    "point": 0.9896346374480828,
+    "person_lower": 0.919571278167935,
+    "person_upper": 1.0647551672690687,
+    "person_covered": true,
+    "block_lower": 1.0072725776702665,
+    "block_upper": 1.1887702736027514,
+    "block_covered": false
+  },
+  {
+    "dataset": 195,
+    "point": 1.0092682453522088,
+    "person_lower": 0.9474639357365465,
+    "person_upper": 1.0762353780412837,
+    "person_covered": true,
+    "block_lower": 1.0851649052499124,
+    "block_upper": 1.222521206288429,
+    "block_covered": false
+  },
+  {
+    "dataset": 196,
+    "point": 1.078826979850652,
+    "person_lower": 1.0111658901473066,
+    "person_upper": 1.1768110632816637,
+    "person_covered": false,
+    "block_lower": 1.061332577977816,
+    "block_upper": 1.2836594123570333,
+    "block_covered": false
+  },
+  {
+    "dataset": 197,
+    "point": 1.0549178192742872,
+    "person_lower": 0.9852807277114922,
+    "person_upper": 1.1476726538029098,
+    "person_covered": true,
+    "block_lower": 1.0349933684860009,
+    "block_upper": 1.1646713418848944,
+    "block_covered": false
+  },
+  {
+    "dataset": 198,
+    "point": 0.9957397770330298,
+    "person_lower": 0.9214215397475553,
+    "person_upper": 1.0735165742262545,
+    "person_covered": true,
+    "block_lower": 0.9948704504532603,
+    "block_upper": 1.1225459911342368,
+    "block_covered": true
+  },
+  {
+    "dataset": 199,
+    "point": 1.0333128242416048,
+    "person_lower": 0.963062600459775,
+    "person_upper": 1.1205897445848,
+    "person_covered": true,
+    "block_lower": 1.0454593452934944,
+    "block_upper": 1.235616189316127,
+    "block_covered": false
+  }
+]

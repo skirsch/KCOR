@@ -1,0 +1,141 @@
+STEP 7: ADDITIONAL DIAGNOSTICS ON THE STEP 6 RANDOM DRAWS
+Date: 2026-11-10 (America/Toronto)
+
+Main finding
+------------
+Adding window, skipped-week, mortality-trend, and corrected-curve checks removes
+more affected-baseline runs, but does not reliably identify accurate results.
+The combined exploratory rule accepts 110/200 affected-baseline runs (55%).
+Their median raw contrast is 1.309151 versus the reference 1.049735, about 25%
+too high. Of those accepted runs, 87/110 (79.1%) differ by more than 10% from
+the reference. The same combined rule rejects 60/200 no-effect runs (30%).
+
+These results concern the specific numerical checks below. They do not establish
+acceptance by the complete manuscript procedure or real-data plausibility.
+
+What was done
+-------------
+Retain Step 6's 200 separate calibration draws and 200 paired evaluation draws
+per case, at 50,000 initial people per group. Regenerate their original binomial
+death counts with the same seeds and source functions. Reproduce all 600 nominal
+evaluation endpoints and parameters, plus both fitted frailty parameters in
+each of the 200 calibration draws. Hold each realized dataset fixed across fits.
+
+Additional diagnostics:
+1. Independently shift each quiet-window boundary by -4, 0, or +4 weeks, giving
+   eight alternatives to the nominal window. Measure the largest absolute
+   relative change in the final raw contrast.
+2. Skip zero or four initial weeks instead of two, with the physical quiet
+   window fixed. Measure the largest absolute relative contrast change.
+3. Change the fitted Gompertz growth rate by -5% or +5%, holding the generated
+   data fixed. Measure the largest absolute relative contrast change.
+4. Fit a straight line to each nominal corrected cumulative-hazard curve versus
+   Gompertz-transformed time within the quiet window. Use the worse of the two
+   values of 1 minus R-squared. This is a specified shape metric, not proof of
+   valid correction; it also differs from ordinary-calendar-time linearity.
+
+The script uses the production fitter and inversion directly so that changing
+the skipped weeks changes both the effective hazard and its time coordinate.
+All 10,400 saved case/variant records have eligible fits. Comparator fits are
+shared across evaluation cases within each repetition.
+
+Before replaying evaluation draws, freeze each diagnostic's cutoff at the higher
+empirical 95th percentile of its 200 no-effect calibration values:
+  Window sensitivity:      0.043963824842217614 (about 4.40% contrast change)
+  Skipped-week sensitivity:0.3227947085754006   (about 32.28% contrast change)
+  Growth-rate sensitivity: 0.008838900033899533 (about 0.884% contrast change)
+  Curve nonlinearity:      0.001812386317579142 (R-squared at least 0.998188)
+
+Each added check is combined with Step 6's frozen residual rule. The final
+intersection requires all four added checks and that residual rule. There is
+no claim of a 5% overall false-alarm rate: separately calibrated cutoffs do not
+provide that guarantee when combined. The combined rule accepts 155/200
+calibration draws and 140/200 independent no-effect evaluation draws.
+Individual evaluation acceptance also need not equal the calibration target.
+
+Results
+-------
+Accepted out of 200; each single added check includes the original residual rule:
+
+Check                       No effect   Clean baseline   Affected baseline
+Residual only                  188           188                 199
+Plus window sensitivity        161           158                 154
+Plus skipped-week sensitivity  175           171                 180
+Plus growth-rate sensitivity   186           178                 182
+Plus curve linearity           173           171                 170
+All checks together            140           125                 110
+
+Results among runs accepted by all checks:
+Case                Reference   Median raw estimate    >10% error among accepted
+No effect           1.000000       1.048551                 70/140 (50.0%)
+Clean baseline      1.049735       1.087915                 60/125 (48.0%)
+Affected baseline   1.049735       1.309151                 87/110 (79.1%)
+
+Of all 200 affected-baseline draws, 87 (43.5%) both pass every implemented check
+and have more than 10% error. The corresponding no-effect fraction is 35.0%.
+The estimates remain imprecise without contamination, so large individual
+errors cannot all be attributed to contamination.
+
+The combined acceptance-rate Wilson 95% simulation intervals are 63.3-75.9%
+for no effect and 48.1-61.7% for affected baseline. These intervals condition on
+the calibrated cutoffs and do not include cutoff-estimation uncertainty.
+
+Interpretation
+--------------
+The extra checks provide some discrimination: they reject 45% of affected-
+baseline runs versus 30% of no-effect runs. They do not ensure recovery of the
+specified contrast among runs that remain. The accepted affected-baseline
+median falls from 1.345 to 1.309, but stays substantially above 1.050.
+
+No individual added check provides a clean separation in this experiment.
+Sensitivity to skipping early weeks is itself substantial in no-effect draws.
+Near-zero fitted frailty, reported descriptively for either cohort, appears in
+74/200 no-effect, 75/200 clean-baseline, and 13/200 affected-baseline runs. It
+would not automatically identify this mechanism. No new near-zero rejection
+threshold was introduced.
+
+Scope and qualifications
+------------------------
+All week labels in the profiles are rebased after the original two-week skip.
+The clean-baseline harm lasts weeks 5-57, affected-baseline harm weeks 0-52,
+and the nominal quiet window weeks 58-110. Moving its start four weeks earlier
+includes four harm weeks in the clean-baseline case, but no harm weeks in the
+affected-baseline case. Thus clean-baseline window sensitivity can include a
+response to actual added hazard entering the fitting window.
+
+Skip changes also change the included follow-up and matching reference. Their
+contrast changes are stability measures, not errors against the nominal target.
+All accuracy summaries use the nominal raw contrast and its original matching
+reference, before anchoring. These are not death-count ratios.
+
+The boundary shifts follow the previously audited diagnostic specification;
+skip zero/four and growth-rate +/-5% remain exploratory choices from Step 4.
+One quiet window cannot test omission of a window or coherence across windows.
+The optional epidemic module is inactive. This is not a complete numerical
+implementation of all manuscript requirements, which lack complete cutoffs.
+The alternative outcomes were already known from Step 6; this stage is an
+exploratory diagnostic extension, not new independent validation.
+
+Remaining bounded work
+----------------------
+Two planned steps remain for this investigation:
+1. Repeat these already fixed rules on fresh independent simulations at the
+   same cohort size and the same three cases, without tuning the cutoffs.
+2. Write the conclusion for objection 1, distinguishing demonstrated sensitivity,
+   diagnostic limitations, and unresolved applicability to the actual data.
+Completion means a defensible assessment, not a promise to eliminate the
+objection. No additional mechanism or larger scenario campaign is planned here.
+
+Verification and reproduction
+-----------------------------
+python -u "KCOR critique\step7_additional_diagnostics.py" --step6 "KCOR critique\step6_results_2026-11-10" --outdir "KCOR critique\step7_results_2026-11-10"
+Run from C:\Users\jasmi\repo\KCOR-update; use a new output directory to repeat.
+
+The script records its design before outcomes and cutoffs before evaluation.
+It saves per-repetition checkpoints. Independent verification confirmed 200
+calibration, 600 evaluation, and 10,400 unique variant records; complete variant
+sets; finite metrics; exact cutoff reproduction with round-trip CSV parsing;
+acceptance rules and summary counts; shared comparator parameters; and unchanged
+source/script hashes. The generated plot was visually inspected.
+New code and results remain separate in KCOR critique. Production code,
+configuration, previous scripts, and prior result artifacts were not modified.

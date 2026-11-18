@@ -1,0 +1,124 @@
+OBJECTION 3, STEP 2: INTERVAL IMPLEMENTATIONS AND PAPER-ASSET PROVENANCE
+Date: 2026-11-10 (America/Toronto)
+
+Main finding
+------------
+The repository has functioning code paths for several different kinds of
+intervals. Their existence is not in question. The paper's blanket description
+of bootstrap intervals does not reliably identify which path produced a given
+output. Two figure captions explicitly claim bands absent from their plotting
+code. The numerical intervals in Table 8 remain unattributed in this bounded
+audit; they must not be assumed to come from either Monte Carlo or the analytic
+path merely because both exist.
+
+Confirmed implementation paths
+------------------------------
+Real-data Monte Carlo:
+  code/Makefile:119-147 -> code/KCOR_CMR.py:1296 -> code/KCOR.py.
+  Iteration zero uses original person records. Later iterations sample person
+  records with replacement, rebuild aggregated death counts and risk sets, and
+  run KCOR with separate fits per mc_id. The current summary at approximately
+  KCOR.py:10036-10075 takes percentiles across bootstrap estimates, excluding
+  iteration zero, and also calculates a basic-bootstrap interval reflected
+  around the original estimate. These are genuine resampling-based intervals.
+
+Ordinary KCOR output:
+  build_kcor_rows, code/KCOR.py:4212, calculates CI_lower and CI_upper from an
+  analytic log-scale standard error (around 4378-4408), using post-anchor hazard
+  increments and death-count/risk-set variance terms. Analogous paths exist for
+  aggregated results. This is a different calculation from taking quantiles
+  across Monte Carlo refits. The local formula does not itself execute refits;
+  whether its uncertainty treatment is adequate is a separate statistical audit.
+
+Simulation coverage:
+  The separate test/sim_grid coverage script uses weekly Poisson resampling and
+  its own constant-baseline cumulative-hazard fitter, as established in Step 1.
+  Its results do not validate the current person-resampling/Gompertz workflow
+  end to end. Step 1 also verified deterministic outer data in four scenarios.
+
+Manuscript description:
+  The retained paper and current preprint source describe aggregated time-block
+  resampling. The supplement explicitly says its intervals do not resample
+  individuals. That description differs from the current real-data MC path.
+  A description-versus-implementation mismatch does not establish that the
+  current MC method is statistically wrong.
+
+Paper assets with traceable inconsistencies
+------------------------------------------
+1. Positive-control figure:
+   documentation/preprint/figures/fig_pos_control_injected.png is byte-for-byte
+   identical to test/positive_control/analysis/fig_pos_control_injected.png.
+   Its plotting script is test/positive_control/code/plot_positive_control.py.
+   The plotting function draws trajectories and shades the intervention window.
+   It does not compute or draw confidence bands. The image was visually checked:
+   its colored background marks the injection period, not uncertainty.
+   Yet the preprint supplement caption, line 143, says 95% bootstrap uncertainty
+   bands are shown. That caption is not supported by this asset/code path.
+
+2. KCOR-versus-frailty simulation figure:
+   documentation/preprint/figures/fig_cox_bias_kcor_vs_theta.png is byte-for-byte
+   identical to test/sim_grid/out/fig_cox_bias_kcor_vs_theta.png.
+   test/sim_grid/Makefile explicitly builds and copies this asset.
+   plot_kcor_vs_theta in test/sim_grid/code/plot_cox_bias_sim.py reads theta_B
+   and kcor_asymptote and draws a line with point markers and a null reference.
+   It has no interval series or band-drawing call. The separate Cox figure in
+   the same script does draw Cox confidence bands; those are not KCOR bands.
+   The preprint paper caption, line 734, nevertheless says KCOR bootstrap bands
+   are shown and merely narrow. That explanation is not supported by the code.
+
+3. Empirical age-shift figures:
+   Both preprint PNGs are byte-for-byte identical to the corresponding retained
+   test/negative_control/analysis images. The 10-year image was visually checked:
+   it is a spreadsheet-chart export with a single KCOR trace and no visible
+   uncertainty band. Its caption says bootstrap bands are shown.
+   Image inspection alone does not prove whether invisible/coincident interval
+   series existed in the original chart. The original chart-series provenance
+   was not established here. Do not overstate this as a verified bootstrap failure.
+
+Table 8: unresolved provenance
+-----------------------------
+The current preprint source contains the reported 2022_06 values 1.0756 with
+[1.055, 1.097], and 1.0911 with [1.070, 1.112]. No exact producing run was
+established by the source and retained-text-output searches performed here.
+The negative-control Makefile invokes ordinary KCOR rather than the Monte Carlo
+target, but the retained negative-control log identifies an older KCOR v4.3 run.
+Those facts are insufficient to attribute the published table values to the
+current analytic formula. A numerical match and a documented source path are
+needed before asserting which calculation produced them.
+
+Version boundary
+----------------
+The root Makefile's default paper directory is documentation/preprint. Root-level
+paper.md and supplement.md differ byte-for-byte from those build-source files.
+The relevant bootstrap and figure-caption statements above were checked directly
+in the documentation/preprint copies; root copies were not silently treated as
+identical. The retained 78-page critique PDF remains the reviewed manuscript.
+Current figure assets and source-code provenance do not prove an exact historical
+PDF build environment or establish the origin of every interval in that PDF.
+
+Disposition at this stage
+-------------------------
+Objection 3 should not be phrased as absence of Monte Carlo intervals or a proven
+flaw in the individual-record bootstrap. The demonstrated issues are:
+  - competing interval implementations and a mismatched methods description;
+  - unsupported bootstrap-band captions for two traced figure/code paths;
+  - a coverage test that does not validate the current production MC procedure;
+  - unresolved provenance for some numerical reported intervals.
+
+The practical next step is to validate the intended person-resampling procedure
+with the production estimator, while keeping its target, diagnostic selection,
+and sampling design explicit. The publication also needs a per-output source
+mapping before numerical intervals can be described consistently. Existing MC
+code should be reused; another estimator or a new resampling mechanism is not
+required just to begin that work. No production changes or new simulations were
+made in this step.
+
+Verification and preservation
+-----------------------------
+Four paper/test image pairs were checked for byte equality. The two identified
+plotting functions were inspected directly, and the positive-control and 10-year
+negative-control PNGs were visually inspected. Methods and captions were checked
+in the actual preprint build sources. Evidence and source hashes are recorded in
+manifest.json and asset_matches.json. Earlier files, images, and results remain
+unchanged. This is a bounded provenance audit, not a complete interval-calibration
+study or a claim that all paper-output provenance has been recovered.

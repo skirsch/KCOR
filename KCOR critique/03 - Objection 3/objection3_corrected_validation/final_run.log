@@ -1,0 +1,64 @@
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+final: 4800 pending jobs, 999 bootstrap draws each
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+[DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_corrected_validation\source_snapshot\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+50/4800 complete; equal_frailty/50; elapsed 148.1s
+100/4800 complete; equal_frailty/98; elapsed 302.2s
+150/4800 complete; equal_frailty/149; elapsed 477.7s
+200/4800 complete; equal_frailty/199; elapsed 654.2s
+250/4800 complete; equal_frailty/250; elapsed 830.0s
+300/4800 complete; equal_frailty/300; elapsed 1036.9s
+350/4800 complete; equal_frailty/349; elapsed 1220.0s
+400/4800 complete; equal_frailty/399; elapsed 1396.7s
+450/4800 complete; equal_frailty/450; elapsed 1599.4s
+500/4800 complete; equal_frailty/499; elapsed 1776.4s
+550/4800 complete; equal_frailty/548; elapsed 4630.4s
+600/4800 complete; equal_frailty/599; elapsed 5261.4s
+650/4800 complete; unequal_frailty/50; elapsed 5406.4s
+700/4800 complete; unequal_frailty/99; elapsed 5546.3s
+750/4800 complete; unequal_frailty/149; elapsed 5696.1s
+800/4800 complete; unequal_frailty/200; elapsed 5843.1s
+850/4800 complete; unequal_frailty/249; elapsed 5983.5s
+900/4800 complete; unequal_frailty/299; elapsed 6169.2s
+950/4800 complete; unequal_frailty/349; elapsed 6346.4s
+1000/4800 complete; unequal_frailty/399; elapsed 6532.4s
+1050/4800 complete; unequal_frailty/449; elapsed 6766.5s

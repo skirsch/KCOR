@@ -1,0 +1,3636 @@
+{
+  "cohorts": [
+    {
+      "sheet": "2021_24",
+      "yob": 1920,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1920,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1920,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1930,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 1.0282772352936358
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 1.026297337008433
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1930,
+      "dose": 1,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.3862227180309214
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.3860346453704398
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1930,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1940,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 3.4489688397479927
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 3.440449896595236
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1940,
+      "dose": 1,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.2683514272901938
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.26832026257740865
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1940,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1950,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 8.659687525222935
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 8.638419626430668
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1950,
+      "dose": 1,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.0928512057199052e-07
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.0928512057199052e-07
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1950,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.9358176075400134e-08
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.9358176075400134e-08
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1960,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 19.32062463644315
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 19.287104473539696
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1960,
+      "dose": 1,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.459798191580334e-06
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.459799655936748e-06
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1960,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.2167046313577993e-06
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.2167046313577993e-06
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1970,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 52.917925360253555
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 52.835849804874954
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1970,
+      "dose": 1,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 6.894329270239891e-09
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 6.8943266586136975e-09
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1970,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 9.404662981650665e-08
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 9.404682668615397e-08
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1980,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1980,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1980,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1990,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1990,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1990,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 2000,
+      "dose": 0,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.002128639052660364
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.002128620628398248
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 2000,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 2000,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 1.4832096630616471
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 1.475356374054168
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 1.011944878082024
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 1.0114885312436497
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.18052396889230954
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.18043513518779467
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 2.782650407742672
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 2.7811153441226226
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit",
+          "delta_negative_clamped"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit",
+          "delta_negative_clamped"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 2.3853020827239853
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 2.3842851237554346
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 7.610097017993903
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 7.606319171832876
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 6.246111719704087
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 6.2435198214470375
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 6.505293467594249
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 6.502455344415117
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 17.279471626193505
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 17.27156499556269
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit",
+          "delta_negative_clamped"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit",
+          "delta_negative_clamped"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 13.936352712531242
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 13.93150932008181
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1e-10
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 30.030190422307406
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 29.956191230997774
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 32.465854333262264
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 32.45633783911418
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.880457562911499e-09
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.9487674070479445e-09
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.5927195585359322e-06
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.5927202996236789e-06
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.00026332773723124203
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.0002647401835653984
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.0015821503336653775
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.0015913259811646818
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "dose": 0,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.885405809648291
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.8822049722084033
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.2862063394932972
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 0.28602496183467796
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.2792903230460633
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.275693344376074
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "dose": 4,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.2232783352305807
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.2214617503594012
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "dose": 0,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.472421527847685
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.465133355617891
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 3.5780817907656455
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 3.5780817875372604
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.078433093835087
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.072120763818411
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.548212834250187
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.541217199781521
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "dose": 4,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 3.465641694073042
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 3.460648587671955
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "dose": 0,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 9.916554409867611
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 9.900845834808766
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 10.233040880392217
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 10.21742974423589
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 11.087651950299053
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 11.071491469420016
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "dose": 4,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.4290400785712425
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 4.424267367320466
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "dose": 0,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 23.61361440231016
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 23.57748244197779
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 23.723598254234254
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 23.68921112616159
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "dose": 3,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 33.47172703346349
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 33.42163139825635
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "dose": 4,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.686955693062
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 2.6867134940542154
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "dose": 0,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 53.358569921460486
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 53.28306532973719
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "dose": 2,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 65.90237512874634
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 65.80443965136126
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 41.590753028373584
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "ok",
+        "flags": [
+          "delta_negative_clamped"
+        ],
+        "theta": 41.59075177716893
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "dose": 4,
+      "first": true,
+      "exact": true,
+      "first_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.374394402952478e-05
+      },
+      "exact_fit": {
+        "accepted": true,
+        "status": "ok",
+        "flags": [],
+        "theta": 1.374394402952478e-05
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "theta_hit_bound"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "theta_hit_bound"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "dose": 4,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "dose": 4,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "theta_hit_bound"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "theta_hit_bound"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "dose": 4,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "dose": 0,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal",
+          "bad_fit"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "dose": 1,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "dose": 2,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_signal",
+        "flags": [
+          "insufficient_signal"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "dose": 3,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_deaths",
+        "flags": [
+          "insufficient_deaths"
+        ],
+        "theta": 0.0
+      }
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "dose": 4,
+      "first": false,
+      "exact": false,
+      "first_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      },
+      "exact_fit": {
+        "accepted": false,
+        "status": "insufficient_data",
+        "flags": [],
+        "theta": null
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "sheet": "2021_24",
+      "yob": 1920,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1920,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1920,
+      "num": 2,
+      "den": 1,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1930,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1930,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1930,
+      "num": 2,
+      "den": 1,
+      "first": true,
+      "first_kcor": 1.071727367438531,
+      "exact": true,
+      "exact_kcor": 1.0717392872158331
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1940,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1940,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1940,
+      "num": 2,
+      "den": 1,
+      "first": true,
+      "first_kcor": 1.2237729874483094,
+      "exact": true,
+      "exact_kcor": 1.2237736518073403
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1950,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1950,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1950,
+      "num": 2,
+      "den": 1,
+      "first": true,
+      "first_kcor": 1.1852392599462611,
+      "exact": true,
+      "exact_kcor": 1.1852392599462611
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1960,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1960,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1960,
+      "num": 2,
+      "den": 1,
+      "first": true,
+      "first_kcor": 0.9535145714342473,
+      "exact": true,
+      "exact_kcor": 0.9535145714342458
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1970,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1970,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1970,
+      "num": 2,
+      "den": 1,
+      "first": true,
+      "first_kcor": 0.8993355768842654,
+      "exact": true,
+      "exact_kcor": 0.8993355768842656
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1980,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1980,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1980,
+      "num": 2,
+      "den": 1,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1990,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1990,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 1990,
+      "num": 2,
+      "den": 1,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 2000,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 2000,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2021_24",
+      "yob": 2000,
+      "num": 2,
+      "den": 1,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1920,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1930,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1940,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1950,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1960,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1970,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "num": 3,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.1443145251970663,
+      "exact": true,
+      "exact_kcor": 1.1443145281665228
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1980,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 1990,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_06",
+      "yob": 2000,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 2,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.185696812455231,
+      "exact": true,
+      "exact_kcor": 1.1862591414637185
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 3,
+      "den": 0,
+      "first": true,
+      "first_kcor": 0.9952320607188697,
+      "exact": true,
+      "exact_kcor": 0.9951801660367721
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 3,
+      "den": 2,
+      "first": true,
+      "first_kcor": 0.8393647096495397,
+      "exact": true,
+      "exact_kcor": 0.8389230744378711
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 4,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.0708083689272967,
+      "exact": true,
+      "exact_kcor": 1.0710631942243807
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 4,
+      "den": 2,
+      "first": true,
+      "first_kcor": 0.903104704068459,
+      "exact": true,
+      "exact_kcor": 0.9028914145207783
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1920,
+      "num": 4,
+      "den": 3,
+      "first": true,
+      "first_kcor": 1.0759383777828027,
+      "exact": true,
+      "exact_kcor": 1.0762505431451743
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 2,
+      "den": 0,
+      "first": true,
+      "first_kcor": 0.9435359024381837,
+      "exact": true,
+      "exact_kcor": 0.9436571832131897
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 3,
+      "den": 0,
+      "first": true,
+      "first_kcor": 0.9755350580824297,
+      "exact": true,
+      "exact_kcor": 0.9757294048765421
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 3,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.0339140837794907,
+      "exact": true,
+      "exact_kcor": 1.0339871536336378
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 4,
+      "den": 0,
+      "first": true,
+      "first_kcor": 0.9844538476878821,
+      "exact": true,
+      "exact_kcor": 0.9848038871789874
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 4,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.0433666012538183,
+      "exact": true,
+      "exact_kcor": 1.0436034448714646
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1930,
+      "num": 4,
+      "den": 3,
+      "first": true,
+      "first_kcor": 1.009142459342244,
+      "exact": true,
+      "exact_kcor": 1.0093002037830288
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 2,
+      "den": 0,
+      "first": true,
+      "first_kcor": 0.9961420294037554,
+      "exact": true,
+      "exact_kcor": 0.9961767410137514
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 3,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.032588675395561,
+      "exact": true,
+      "exact_kcor": 1.0327603861789407
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 3,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.036587800650898,
+      "exact": true,
+      "exact_kcor": 1.036724050722124
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 4,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.005146055199411,
+      "exact": true,
+      "exact_kcor": 1.0055377940806383
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 4,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.0090388975968065,
+      "exact": true,
+      "exact_kcor": 1.009396980155711
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1940,
+      "num": 4,
+      "den": 3,
+      "first": true,
+      "first_kcor": 0.9734234735959724,
+      "exact": true,
+      "exact_kcor": 0.9736409408584872
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 2,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.0374942294806386,
+      "exact": true,
+      "exact_kcor": 1.03756506880674
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 3,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.0464308862428002,
+      "exact": true,
+      "exact_kcor": 1.0465336478810303
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 3,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.0086136929808613,
+      "exact": true,
+      "exact_kcor": 1.008643871448568
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 4,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.0786651390163322,
+      "exact": true,
+      "exact_kcor": 1.079118122848605
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 4,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.0396830250866103,
+      "exact": true,
+      "exact_kcor": 1.0400486246994163
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1950,
+      "num": 4,
+      "den": 3,
+      "first": true,
+      "first_kcor": 1.0308039959421196,
+      "exact": true,
+      "exact_kcor": 1.0311356209459204
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 2,
+      "den": 0,
+      "first": true,
+      "first_kcor": 0.9748953867609726,
+      "exact": true,
+      "exact_kcor": 0.9749182714592812
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 4,
+      "den": 0,
+      "first": true,
+      "first_kcor": 1.2461936219916188,
+      "exact": true,
+      "exact_kcor": 1.2465856682346321
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 4,
+      "den": 2,
+      "first": true,
+      "first_kcor": 1.278284458942838,
+      "exact": true,
+      "exact_kcor": 1.2786565856117482
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1960,
+      "num": 4,
+      "den": 3,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 4,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 4,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1970,
+      "num": 4,
+      "den": 3,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 4,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 4,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1980,
+      "num": 4,
+      "den": 3,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 4,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 4,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 1990,
+      "num": 4,
+      "den": 3,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 1,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 2,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 3,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 3,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 4,
+      "den": 0,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 4,
+      "den": 2,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    },
+    {
+      "sheet": "2022_47",
+      "yob": 2000,
+      "num": 4,
+      "den": 3,
+      "first": false,
+      "first_kcor": null,
+      "exact": false,
+      "exact_kcor": null
+    }
+  ],
+  "workbook_sha256": "ea44c0a67bb25d78dfb06f0a1d768c2b5db6ca9474775f05ca3c0e78f81d165e",
+  "summary": {
+    "cohorts": {
+      "n": 108,
+      "decisions": {
+        "False->False": 69,
+        "False->True": 0,
+        "True->False": 0,
+        "True->True": 39
+      },
+      "paired_points": 0,
+      "median_abs_kcor_change": null,
+      "max_abs_kcor_change": null
+    },
+    "pairs": {
+      "n": 126,
+      "decisions": {
+        "False->False": 93,
+        "False->True": 0,
+        "True->False": 0,
+        "True->True": 33
+      },
+      "paired_points": 33,
+      "median_abs_kcor_change": 0.00017171078337963053,
+      "max_abs_kcor_change": 0.0005623290084875165
+    }
+  },
+  "fit_source_sha256": "1292282a3c031ba633ab7fd8a7fb6ebd795e6302cc2aa4ab5441b0542ab6b660"
+}

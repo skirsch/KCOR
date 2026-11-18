@@ -1,0 +1,55 @@
+{
+  "created": "2026-11-13T07:31:34.209864+00:00",
+  "design": {
+    "outer_repetitions_per_size": 40,
+    "bootstrap_draws": 199,
+    "seed_namespace": 663809,
+    "cohort_sizes": [
+      4000000,
+      16000000
+    ],
+    "scenario_source": "../objection3_corrected_validation/design.json:common + unequal_large",
+    "worker_count": 1,
+    "purpose": "Exploratory basic-versus-percentile coverage as cohort size increases"
+  },
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_large",
+    "scope": "within_model",
+    "n": 1000000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "hashes": {
+    "objection3_basic_interval_check\\run.py": "3dadc5aa0e917c496f03a22dfb3c5a023a65dea137881686fd18cd7257f8582d",
+    "objection3_basic_interval_check\\summarize.py": "ba06a5bb5d82ac6d79212879c194e3dd159b1565a187d768051cf94740e4e39e",
+    "objection3_basic_interval_check\\design.json": "4a3afccebccd3998660cfedb05a35c79ccbb5d741734df63ce635a4d433473c7",
+    "objection3_basic_interval_check\\DESIGN.md": "b600294c7bc853af5130f4ab1d3eae0bece4c580cc1e1b51933b8aa85c54a95d",
+    "objection3_corrected_validation\\simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "objection3_corrected_validation\\production_adapter.py": "6c127a83b9891a92101f14103702f448f18b4e94452a862845a254792bcc7a7f",
+    "objection3_corrected_validation\\design.json": "71c9f821f2cefc1d1a7aff375131d834415155de2caf428f9563d6bdf69b2a16",
+    "objection3_corrected_validation\\source_snapshot\\code\\KCOR.py": "b5549264ef49de51f3569e53eb4e901541870598918ab5be5ebcdbf9823e019d",
+    "objection3_corrected_validation\\source_snapshot\\data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266"
+  },
+  "python": "3.14.3",
+  "numpy": "2.4.4",
+  "scipy": "1.17.1"
+}

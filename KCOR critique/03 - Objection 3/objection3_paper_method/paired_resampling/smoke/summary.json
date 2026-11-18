@@ -1,0 +1,34 @@
+{
+  "scope": "Paper joint fit held fixed; same outer datasets; person versus one explicit aggregate-block rule",
+  "datasets": 2,
+  "draws_per_dataset": 19,
+  "truth": 1.0,
+  "nominal_coverage": 0.95,
+  "person_covered": 2,
+  "person_coverage": 1.0,
+  "person_coverage_wilson_95": [
+    0.34238022750665303,
+    1.0
+  ],
+  "person_one_sided_binomial_p_vs_95": 1.0,
+  "block_covered_on_same_datasets": 1,
+  "block_coverage_on_same_datasets": 0.5,
+  "paired_outcomes": {
+    "both": 1,
+    "person_only": 1,
+    "block_only": 0,
+    "neither": 0
+  },
+  "person_lower_endpoint_above_truth": 0,
+  "person_upper_endpoint_below_truth": 0,
+  "person_point_outside_own_interval": 0,
+  "mean_point": 0.9665260520711961,
+  "point_sd": 0.008659177319530035,
+  "person_mean_bootstrap_median_minus_point": 0.013175713795185617,
+  "person_mean_interval_width": 0.1338327843374124,
+  "person_failed_draws": 0,
+  "person_warm_start_check_mismatches": 0,
+  "original_any_theta_below_point01": 1,
+  "both_original_theta_at_least_point01": 1,
+  "person_coverage_among_both_theta_at_least_point01": 1.0
+}

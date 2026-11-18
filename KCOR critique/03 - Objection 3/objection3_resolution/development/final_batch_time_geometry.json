@@ -1,0 +1,12 @@
+{
+  "checks": "passed",
+  "total_iterations": 1000,
+  "weeks": 100,
+  "rows": 200000,
+  "executed_source_lines": [
+    6767,
+    6772
+  ],
+  "time_formula": "M*week+mc_id",
+  "original_anchor_rows": 0
+}

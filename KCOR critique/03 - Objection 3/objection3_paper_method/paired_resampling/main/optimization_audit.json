@@ -1,0 +1,60 @@
+{
+  "checked": [
+    {
+      "dataset": 0,
+      "draw": 0,
+      "point_difference": 1.2660280934717605e-08,
+      "max_objective_difference": 1.0323214044661785e-21
+    },
+    {
+      "dataset": 0,
+      "draw": 99,
+      "point_difference": 4.074698467526616e-09,
+      "max_objective_difference": 2.6469779601696886e-23
+    },
+    {
+      "dataset": 0,
+      "draw": 198,
+      "point_difference": 1.8446155714002543e-09,
+      "max_objective_difference": 6.617444900424221e-23
+    },
+    {
+      "dataset": 100,
+      "draw": 0,
+      "point_difference": 6.2517546695062265e-09,
+      "max_objective_difference": 1.0587911840678754e-21
+    },
+    {
+      "dataset": 100,
+      "draw": 99,
+      "point_difference": 1.7223682036160426e-08,
+      "max_objective_difference": 7.676236084492097e-22
+    },
+    {
+      "dataset": 100,
+      "draw": 198,
+      "point_difference": 3.1252123111613628e-09,
+      "max_objective_difference": 1.5881867761018131e-22
+    },
+    {
+      "dataset": 199,
+      "draw": 0,
+      "point_difference": 5.361449728624734e-09,
+      "max_objective_difference": 7.940933880509066e-22
+    },
+    {
+      "dataset": 199,
+      "draw": 99,
+      "point_difference": 1.1966962532028447e-08,
+      "max_objective_difference": 1.3499587596865412e-21
+    },
+    {
+      "dataset": 199,
+      "draw": 198,
+      "point_difference": 1.897348766988216e-08,
+      "max_objective_difference": 2.8852059765849605e-21
+    }
+  ],
+  "max_point_difference": 1.897348766988216e-08,
+  "max_objective_difference": 2.8852059765849605e-21
+}

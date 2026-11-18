@@ -1,0 +1,4 @@
+contamination_type,fit_status_A,fit_status_B,count
+combined,ok,ok,320
+comorbidity,ok,ok,100
+dynamic,ok,ok,100

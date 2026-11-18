@@ -1,0 +1,71 @@
+================================================================================
+KCOR v7.6 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-11-10 18:20:21
+Mode: Primary Analysis
+Input File: C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\regression_fixed\test_point_and_curves_do_not_depend_on_other_samples\normal\input.xlsx
+Output File: C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\regression_fixed\test_point_and_curves_do_not_depend_on_other_samples\normal\output.xlsx
+Log File: C:/Users/jasmi/repo/KCOR-update/KCOR critique/objection3_production_fix/regression_fixed/test_point_and_curves_do_not_depend_on_other_samples/normal/KCOR_summary.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = ['2021_24']
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  THETA_ESTIMATION_WINDOWS = 2021-30..2022-12
+  THETA_IDENTIFIABILITY = min_quiet_deaths=30, theta0_max=100.0, action=set_zero
+  GOMPERTZ_THETA_FIT     = gamma=0.085/yr, k_anchor_weeks=4, convergence_tol=1e-08, max_iterations=25, gamma_per_week=0.00163462
+  NPH_CORRECTION        = disabled
+  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_24']
+[Info] Processing sheet: 2021_24
+[DEBUG] Filtered to start from enrollment date 06/14/2021: 106 rows
+[DEBUG] Filtered to 106 rows for ages 1920-2009
+[DEBUG] Filtered to doses [0, 1] (max dose 1): 106 rows
+[DEBUG] Aggregated across sexes: 106 rows
+enroll | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_24 | 1950 | 0 | 7.6 | 9.840107e-04 | 1.227324e-02 | 39
+2021_24 | 1950 | 1 | 6.192586e-09 | 1.001558e-03 | 7.494092e-03 | 39
+2021_24 | -2 | 0 | 7.6 | 9.840107e-04 | 1.227324e-02 | 39
+2021_24 | -2 | 1 | 6.192586e-09 | 1.001558e-03 | 7.494092e-03 | 39
+
+================================================================================
+KCOR VALUES AT REPORTING DATES - ALL SHEETS
+================================================================================
+
+Sheet: 2021_24 — Reporting date: 2022-06-13
+============================================================
+
+ASMR Expected-Deaths Weights (for KCOR and KCOR_ns pooling):
+  Age 1950: weight = 1.000000
+  Total weight: 1.000000
+
+
+Dose combination: 1 vs 0 [2021_24]
+--------------------------------------------------
+            YoB | KCOR [95% CI] |             KCOR_ns
+--------------------------------------------------
+  All Ages        |   1.0256 [0.985, 1.068] |  1.1989
+  ASMR (direct)   |   1.0256 [0.987, 1.066] |  1.1989
+  1950            |   1.0256 [0.985, 1.068] |  1.1989
+================================================================================
+[THETA0_DIAG_INFO] No vaccinated cohorts with h_obs_first4_vs_last4_ratio > 1.0 (window may be short or contamination signal absent).
+[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | dose=1:mean_ratio=1.0178
+[MFG] No M/P manufacturer comparisons generated (missing or empty MFG sheets)
+[Done] Wrote 107 rows to C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\regression_fixed\test_point_and_curves_do_not_depend_on_other_samples\normal\output.xlsx at 2026-11-10 18:20:22
+[Summary] Creating summary file: C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\regression_fixed\test_point_and_curves_do_not_depend_on_other_samples\normal\KCOR_summary.xlsx
+  - 2021_24: 1 dose combinations, 6 summary rows
+  - theta0_status_summary: 1 enrollment rows (file=C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\regression_fixed\test_point_and_curves_do_not_depend_on_other_samples\normal\KCOR_summary.xlsx, sheet=theta0_status_summary)
+    2021_24: any_non_ok_status=False, quality_flag=False, quality_flag_detail=
+  - gamma_frailty_fit: 4 diagnostic rows (file=C:\Users\jasmi\repo\KCOR-update\KCOR critique\objection3_production_fix\regression_fixed\test_point_and_curves_do_not_depend_on_other_samples\normal\KCOR_summary.xlsx, sheet=gamma_frailty_fit)
+[Summary] Created summary with 1 enrollment periods

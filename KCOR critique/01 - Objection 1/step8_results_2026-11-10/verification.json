@@ -1,0 +1,22 @@
+{
+  "fresh_case_runs": 600,
+  "variant_records": 7800,
+  "prior_cases_replayed": 9,
+  "prior_variants_replayed": 117,
+  "all_variant_fits_eligible": true,
+  "fixed_cutoffs_unchanged": true,
+  "source_hashes_unchanged": true,
+  "paired_affected_above_clean_count": 199,
+  "paired_median_increase": 0.2643734053115959,
+  "checks": [
+    "unique complete variants",
+    "finite metrics",
+    "fresh seed branch",
+    "unchanged cutoffs",
+    "reconstructed sensitivity measures",
+    "pass decisions",
+    "summary counts and medians",
+    "paired comparator parameters",
+    "source and script hashes"
+  ]
+}

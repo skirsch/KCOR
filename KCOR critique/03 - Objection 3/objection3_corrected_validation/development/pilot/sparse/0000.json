@@ -1,0 +1,74 @@
+{
+  "scenario": "sparse",
+  "repetition": 0,
+  "seed_components": [
+    526103,
+    6,
+    0
+  ],
+  "truth": 1.0,
+  "point": 1.397326885109998,
+  "accepted": false,
+  "diagnostics": [
+    {
+      "k": 0.0008968698944770345,
+      "theta": 0.0,
+      "success": true,
+      "status": "insufficient_signal",
+      "message": "INSUFFICIENT_SIGNAL: BAD_FIT relRMSE_hazard_fit=3.77628e+08 > threshold=100000; applied theta=0.0",
+      "degenerate": false,
+      "flags": {
+        "identifiability_flag": false,
+        "insufficient_signal": true,
+        "insufficient_deaths": false,
+        "bad_fit": true,
+        "theta_hit_bound": false,
+        "delta_negative_clamped": false
+      }
+    },
+    {
+      "k": 0.0008566931673905469,
+      "theta": 0.0,
+      "success": true,
+      "status": "insufficient_signal",
+      "message": "INSUFFICIENT_SIGNAL: BAD_FIT relRMSE_hazard_fit=3.15529e+08 > threshold=100000; applied theta=0.0",
+      "degenerate": false,
+      "flags": {
+        "identifiability_flag": false,
+        "insufficient_signal": true,
+        "insufficient_deaths": false,
+        "bad_fit": true,
+        "theta_hit_bound": false,
+        "delta_negative_clamped": false
+      }
+    }
+  ],
+  "intervals": {
+    "percentile": [
+      0.6525527817018887,
+      3.3276265685714446
+    ],
+    "basic": [
+      -0.5329727983514485,
+      2.1421009885181075
+    ],
+    "valid_draws": 49
+  },
+  "prefix_intervals": {
+    "percentile": [
+      0.6525527817018887,
+      3.3276265685714446
+    ],
+    "basic": [
+      -0.5329727983514485,
+      2.1421009885181075
+    ],
+    "valid_draws": 49
+  },
+  "bootstrap_fit_failures": 0,
+  "accepted_bootstrap": 0,
+  "bootstrap_status_counts": {
+    "insufficient_signal": 98
+  },
+  "counts_sha256": "878ec55dbda363688c60194aa5bf55f7bb39091142269f696de57900bc9171fe"
+}
