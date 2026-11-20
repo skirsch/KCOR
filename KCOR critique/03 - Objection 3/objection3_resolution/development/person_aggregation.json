@@ -1,0 +1,31 @@
+{
+  "checks": "passed",
+  "function": "process_enrollment_data",
+  "source_sha256": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+  "comparisons": [
+    {
+      "seed": 0,
+      "rows": 200,
+      "arm_totals": [
+        6135,
+        5865
+      ]
+    },
+    {
+      "seed": 7,
+      "rows": 200,
+      "arm_totals": [
+        6223,
+        5777
+      ]
+    },
+    {
+      "seed": 31,
+      "rows": 200,
+      "arm_totals": [
+        6174,
+        5826
+      ]
+    }
+  ]
+}

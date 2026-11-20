@@ -1,0 +1,43 @@
+{
+  "checks": "passed",
+  "max_curve_errors": [
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    0.0,
+    4.440892098500626e-16
+  ],
+  "truth": 1.0,
+  "seconds_per_estimate": 0.03229172000021208,
+  "config": {
+    "gompertz": {
+      "gamma_per_year": 0.085,
+      "k_anchor_weeks": 4,
+      "gamma_per_week": 0.0016346153846153847,
+      "k_anchor_tolerance": 0.2,
+      "convergence_tol": 1e-08,
+      "max_iterations": 25
+    },
+    "guards": {
+      "min_quiet_deaths": 30,
+      "theta0_max": 100.0,
+      "bad_fit_relrmse_threshold": 100000.0,
+      "action": "set_zero"
+    },
+    "skip": 2,
+    "anchor": 5,
+    "windows": [
+      {
+        "start_iso": "2021-30",
+        "end_iso": "2022-27",
+        "start_int": 202130,
+        "end_int": 202227
+      }
+    ],
+    "optional_wave_adjustment": false
+  },
+  "source_sha256": {
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code\\KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266"
+  }
+}

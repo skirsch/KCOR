@@ -1,0 +1,127 @@
+STEP 3: SAME ADDITIVE EFFECT BEFORE, DURING, OR AFTER ESTIMATION
+Date: 2026-11-09 (America/Toronto)
+
+Scope
+-----
+Separate extension using the original fitting and inversion functions. Production
+files, original experiment outputs, and previous audit files remain unchanged.
+Only smooth expected counts are evaluated. No additional effect-strength grid,
+individual frailty-dependent effect, or epidemic correction is introduced.
+
+Command from C:\Users\jasmi\repo\KCOR-update:
+python "KCOR critique\step3_contamination_timing.py" --step1 "KCOR critique\step1_results_2026-11-09" --outdir "KCOR critique\step3_results_2026-11-09"
+
+Controlled design
+-----------------
+All scenarios have 50,000 initial people per group, 200 weeks of follow-up, the
+same baseline mortality schedule, and the original frailty values (0.5 for the
+affected group and 4 for its comparator). Baseline level estimation uses the
+first four post-skip weeks. The anchor is post-skip week 4; it is uncontaminated.
+
+All following week numbers are rebased after the original two-week skip:
+
+  Baseline-estimation weeks: 0-3
+  Anchor:                    4
+  Fixed frailty-fit window:  58-110
+  Effect before estimation: 5-57
+  Effect during estimation: 58-110
+  Effect after estimation:  111-163
+
+The longer common follow-up and middle fitting window allow all three placements
+to be tested without contaminating the baseline/anchor. This is a new matched
+comparison; differences from Step 2 cannot all be attributed to effect timing.
+Within this step, only placement changes for a given profile.
+
+Each effect lasts 53 weeks. Its complete weekly added-hazard vector is identical
+across positions, merely shifted in time. Profiles are the smallest existing
+fading epsilon=0.0005, constant epsilon=0.0001, and their combination. The fading
+profile retains the original exp(-0.05*4) onset scaling rather than accidentally
+changing its peak when shifting it.
+
+The defined reference remains (B+G)/B: remove baseline frailty depletion while
+retaining additive mortality. All placements have the same final B and G, hence
+the same final reference. The final additional expected deaths are also equal
+across the three placements, within each profile. The reference's anchor is
+exactly one because no effect has begun there.
+
+Results before anchoring, at the common endpoint
+-----------------------------------------------
+Profile       Reference   KCOR before   KCOR during   KCOR after
+Fading        1.073202      1.082516      1.053070      1.082516
+Constant      1.049735      1.057600      1.029471      1.057600
+Combined      1.122937      1.135423      1.103086      1.135423
+
+No-effect reference is 1; no-effect KCOR is 1.004895. Anchored results are in the
+CSV and show the same timing pattern. This result is not produced by anchoring
+at an already-affected reference point.
+
+Compared with the same affected group without added mortality, there are about
+350 additional expected deaths for fading, 238 for constant, and 586 for combined
+effects. These values are identical before/during/after for each profile.
+
+Why timing changes the result
+-----------------------------
+When the effect is outside the fitting window, the estimated affected-group
+frailty stays near its clean-data value (0.492 versus generating value 0.5).
+When it overlaps the fitting window, the estimate reaches essentially zero.
+The extra mortality changes the fitted correction, and the resulting final
+contrast is smaller. Holding the clean-data fit fixed gives the before/after
+final result even in the overlapping case; this isolates the refitting effect.
+
+Before and after have identical final values here because the fit sees the same
+uncontaminated weekly hazards and inversion depends on accumulated hazard. The
+additive component does not selectively target frail individuals. This equality
+should not be generalized to frailty-dependent treatment effects or epidemics.
+
+How much of the added contrast remains?
+--------------------------------------
+For the during-window cases, the raw excess above one retains approximately:
+  Fading:   72.5% of the expected excess
+  Constant: 59.3%
+  Combined: 83.9%
+
+If the estimator's no-effect discrepancy is accounted for by comparing each
+result with the paired no-effect KCOR result (1.004895), the corresponding
+effect-induced changes retain:
+  Fading:   65.8%
+  Constant: 49.4%
+  Combined: 79.9%
+
+For before/after, paired responses are about 106% of their respective targets.
+Both metrics are saved so the baseline adjustment is explicit. Neither metric
+is a percentage of excess deaths detected. They concern the specified
+selection-removed cumulative-hazard contrast.
+
+Diagnostics and interpretation
+------------------------------
+All these fits report status 'ok'. However, relative root-mean-square fit errors
+for during-window cases are about 0.219, 0.141, and 0.303, respectively; the code's
+configured bad-fit threshold is 100000. Thus an 'ok' return here is not evidence
+of a close fit or of passing every diagnostic described in the manuscript.
+
+The experiment establishes a timing-dependent distortion for these defined
+mechanisms and settings. Harm remains visible; it is not completely erased or
+reversed. This supports a bounded concern about effects overlapping estimation,
+but does not establish that the real study has the same problem or that its
+full diagnostic protocol would accept these scenarios.
+
+The inherited effect peaks are about 90% (fading), 22% (constant), and 112%
+(combined) of the saved initial baseline hazard scale. No empirical plausibility
+judgment is made. No uncertainty, interval coverage, or finite-sample detection
+rate is established by these expected-count calculations.
+
+Verification
+------------
+The new wrapper first reproduced four saved Step 1 expected-count cases, including
+the null and all three selected profiles, with maximum differences around 1e-16.
+Checks passed for expected deaths, survivor/hazard arithmetic, clean baseline and
+anchor, identical shifted effect vectors, intended window overlap, equal final
+references/excess deaths, and anchoring. Source/input hashes remained unchanged.
+The generated figure was visually inspected.
+
+Next bounded question
+---------------------
+Before judging whether this is an undetected failure under the manuscript's
+claims, map the appreciable fit errors to the actual stated diagnostic acceptance
+rules. Effects contaminating early baseline-estimation weeks remain a separate,
+not-yet-tested extension.

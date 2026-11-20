@@ -1,0 +1,17 @@
+{
+  "created_utc": "2026-11-10T22:06:42.641239+00:00",
+  "source_hashes": {
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code\\KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "code\\Makefile": "fb36efdf96419a0193bebdb568a26c0074fa4ae156c2799b63ee1b86da3317d1",
+    "test\\sim_grid\\code\\compute_bootstrap_coverage.py": "ba663d4c610ad150c7c650721bd21d43d88082f32490b6b2d1cf9336b5cd22b6",
+    "test\\sim_grid\\code\\generate_sim_grid.py": "27d92352a30a45c39f6c52a6a94d597ba97c4c85893e593a305f5e58d0d72f03",
+    "test\\sim_grid\\out\\bootstrap_coverage.csv": "713bc92b46cf52c752daf4f89cfb164eb1a00006bfe06da07baf9d0d91767a30",
+    "test\\sim_grid\\out\\bootstrap_coverage_replicates.csv": "b179b0b0c5aaaf79e56f0e2ba1ad5eacd676b64a1352ca27838cd5763b25ca51",
+    "test\\sim_grid\\out\\bootstrap_coverage_run.json": "afa6f6a79541ea07c5a21fac560aa9502679107246850f5486bbecbe566071c5",
+    "KCOR critique\\KCOR.pdf": "645a252d7b24f3f636a29c2eff9322eddfe234408c40d50c67c8c1346c60d6b7",
+    "KCOR critique\\step4_results_2026-11-09\\manuscript_extracted.txt": "d3798c0b9618ef773ff7f3a8359bd5e6ff51e1b4ad89c67b5951dd1e88b8d3d1"
+  },
+  "script_sha256": "9e63c9d742f6e83bbdcd1e68c6f5be22ace1c8f6a06465adc2d9649f86693549",
+  "scope": "Read-only inventory, three-seed generator comparison, and replay of one saved 200-bootstrap-draw row; not a new calibration campaign."
+}

@@ -1,0 +1,17 @@
+C:\Users\jasmi\repo\KCOR-mc-fix-pr\code\KCOR.py:18: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  at enrollment (t = 0): \( r_{\text{total}} = \frac{\sum_d A_d \, r_d}{\sum_d A_d} \). Printed for diagnostics only; it does
+test_mc_diagnostics_count_failed_fits_and_preserve_iteration (__main__.SampleIsolation.test_mc_diagnostics_count_failed_fits_and_preserve_iteration) ... [DEBUG] Loaded dose pairs config from C:\Users\jasmi\repo\KCOR-mc-fix-pr\data\Czech\Czech.yaml
+[DEBUG] Loaded NPH_correction config from C:\Users\jasmi\repo\KCOR-mc-fix-pr\data\Czech\Czech.yaml
+[DEBUG] Loaded 4 theta estimation window(s) from C:\Users\jasmi\repo\KCOR-mc-fix-pr\data\Czech\Czech.yaml
+[DEBUG] Loaded Gompertz theta fit config from C:\Users\jasmi\repo\KCOR-mc-fix-pr\data\Czech\Czech.yaml: {'gamma_per_year': 0.085, 'k_anchor_weeks': 4, 'gamma_per_week': 0.0016346153846153847, 'k_anchor_tolerance': 0.2, 'convergence_tol': 1e-08, 'max_iterations': 25}
+ok
+test_normal_diagnostic_keys_keep_their_existing_format (__main__.SampleIsolation.test_normal_diagnostic_keys_keep_their_existing_format) ... ok
+test_point_and_curves_do_not_depend_on_other_samples (__main__.SampleIsolation.test_point_and_curves_do_not_depend_on_other_samples) ... C:\Python314\Lib\zipfile\__init__.py:2059: ResourceWarning: unclosed file <_io.BufferedReader name='C:\\Users\\jasmi\\repo\\KCOR-update\\KCOR critique\\objection3_production_fix\\pr_verification\\fixed\\test_point_and_curves_do_not_depend_on_other_samples\\joint\\input.xlsx'>
+  self.close()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 22.865s
+
+OK

@@ -1,0 +1,56 @@
+{
+  "checks": "passed",
+  "completed": "2026-11-10T23:09:23.034132+00:00",
+  "independent_datasets": 4800,
+  "retained_draws": 4795200,
+  "dataset_seed_replays": 16,
+  "bootstrap_seed_replays": 128,
+  "frozen_hashes_checked": [
+    "code\\KCOR.py",
+    "code\\KCOR_CMR.py",
+    "data\\Czech\\Czech.yaml",
+    "KCOR critique\\objection3_resolution\\check_model.py",
+    "KCOR critique\\objection3_resolution\\production_adapter.py",
+    "KCOR critique\\objection3_resolution\\run_study.py",
+    "KCOR critique\\objection3_resolution\\simulation.py",
+    "KCOR critique\\objection3_resolution\\summarize.py",
+    "KCOR critique\\objection3_resolution\\verify_person_aggregation.py",
+    "KCOR critique\\objection3_resolution\\verify_production.py",
+    "KCOR critique\\objection3_resolution\\design.json",
+    "KCOR critique\\objection3_resolution\\DESIGN.md"
+  ],
+  "source_snapshot_files": 6,
+  "production_comparisons": [
+    {
+      "fixture": "reproduction_single_iteration",
+      "iterations": 1,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_04",
+      "iterations": 4,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_10_iterations",
+      "iterations": 10,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_final_geometry",
+      "iterations": 10,
+      "max_error": 4.440892098500626e-16
+    },
+    {
+      "fixture": "reproduction_1000_iterations",
+      "iterations": 1000,
+      "max_error": 0.0,
+      "rows": 100000,
+      "scope": "all completed age-specific production trajectories and actual-value interval summary",
+      "full_workbook_export_completed": false
+    }
+  ],
+  "report_coverage_recomputed_from_replicates": true,
+  "conditional_denominators_checked": true,
+  "development_final_separation": true
+}

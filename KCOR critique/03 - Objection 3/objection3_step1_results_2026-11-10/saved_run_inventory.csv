@@ -1,0 +1,6 @@
+scenario,rows,distinct_point_estimates,point_estimate_min,point_estimate_max,distinct_interval_lower_bounds,reported_coverage_percent,point_equals_reference_count
+Gamma-frailty null,500,1,1.00943851579404,1.00943851579404,479,100.0,500
+Injected effect (harm),500,1,1.1511348305379185,1.1511348305379185,483,100.0,500
+Injected effect (benefit),500,1,0.9625549099317127,0.9625549099317127,489,100.0,500
+Non-gamma frailty,500,500,0.901010002269819,1.1654923028574737,500,25.4,0
+Sparse events,500,1,1.0127308718663242,1.0127308718663242,484,100.0,500

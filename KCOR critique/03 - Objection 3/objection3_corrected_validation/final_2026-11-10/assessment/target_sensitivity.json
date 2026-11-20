@@ -1,0 +1,210 @@
+[
+  {
+    "scenario": "equal_frailty",
+    "interval": "percentile",
+    "target": 1.0,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9766666666666667,
+    "coverage_wilson": [
+      0.9612176696483747,
+      0.9860508420518974
+    ],
+    "conditional_coverage": 0.9766666666666667,
+    "accepted": 600
+  },
+  {
+    "scenario": "equal_frailty",
+    "interval": "basic",
+    "target": 1.0,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.98,
+    "coverage_wilson": [
+      0.9653699456538909,
+      0.9885228213729564
+    ],
+    "conditional_coverage": 0.98,
+    "accepted": 600
+  },
+  {
+    "scenario": "unequal_frailty",
+    "interval": "percentile",
+    "target": 1.0046145529040709,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.97,
+    "coverage_wilson": [
+      0.9530792576730233,
+      0.9809407433740981
+    ],
+    "conditional_coverage": 0.97,
+    "accepted": 600
+  },
+  {
+    "scenario": "unequal_frailty",
+    "interval": "basic",
+    "target": 1.0046145529040709,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.985,
+    "coverage_wilson": [
+      0.9717403929844038,
+      0.9920887570323066
+    ],
+    "conditional_coverage": 0.985,
+    "accepted": 600
+  },
+  {
+    "scenario": "unequal_large",
+    "interval": "percentile",
+    "target": 1.0046145529025252,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.94,
+    "coverage_wilson": [
+      0.9180531318673975,
+      0.956348571240546
+    ],
+    "conditional_coverage": 0.94,
+    "accepted": 600
+  },
+  {
+    "scenario": "unequal_large",
+    "interval": "basic",
+    "target": 1.0046145529025252,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9783333333333334,
+    "coverage_wilson": [
+      0.9632857238042716,
+      0.9872949155592883
+    ],
+    "conditional_coverage": 0.9783333333333334,
+    "accepted": 600
+  },
+  {
+    "scenario": "zero_frailty",
+    "interval": "percentile",
+    "target": 1.0,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.98,
+    "coverage_wilson": [
+      0.9653699456538909,
+      0.9885228213729564
+    ],
+    "conditional_coverage": 0.98,
+    "accepted": 600
+  },
+  {
+    "scenario": "zero_frailty",
+    "interval": "basic",
+    "target": 1.0,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9616666666666667,
+    "coverage_wilson": [
+      0.9431366405466431,
+      0.9743227221840399
+    ],
+    "conditional_coverage": 0.9616666666666667,
+    "accepted": 600
+  },
+  {
+    "scenario": "post_quiet_increase",
+    "interval": "percentile",
+    "target": 1.0534503657399357,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9616666666666667,
+    "coverage_wilson": [
+      0.9431366405466431,
+      0.9743227221840399
+    ],
+    "conditional_coverage": 0.9616666666666667,
+    "accepted": 600
+  },
+  {
+    "scenario": "post_quiet_increase",
+    "interval": "basic",
+    "target": 1.0534503657399357,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9833333333333333,
+    "coverage_wilson": [
+      0.9695947528170743,
+      0.9909222695363482
+    ],
+    "conditional_coverage": 0.9833333333333333,
+    "accepted": 600
+  },
+  {
+    "scenario": "post_quiet_decrease",
+    "interval": "percentile",
+    "target": 0.9557752999096273,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9533333333333334,
+    "coverage_wilson": [
+      0.9333806100851985,
+      0.9675181143290463
+    ],
+    "conditional_coverage": 0.9533333333333334,
+    "accepted": 600
+  },
+  {
+    "scenario": "post_quiet_decrease",
+    "interval": "basic",
+    "target": 0.9557752999096273,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9783333333333334,
+    "coverage_wilson": [
+      0.9632857238042716,
+      0.9872949155592883
+    ],
+    "conditional_coverage": 0.9783333333333334,
+    "accepted": 600
+  },
+  {
+    "scenario": "sparse",
+    "interval": "percentile",
+    "target": 1.0046145528281172,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9733333333333334,
+    "coverage_wilson": [
+      0.9571240661880865,
+      0.9835201901856102
+    ],
+    "conditional_coverage": null,
+    "accepted": 0
+  },
+  {
+    "scenario": "sparse",
+    "interval": "basic",
+    "target": 1.0046145528281172,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.8983333333333333,
+    "coverage_wilson": [
+      0.8715621099533396,
+      0.9200364015724122
+    ],
+    "conditional_coverage": null,
+    "accepted": 0
+  },
+  {
+    "scenario": "quiet_contamination",
+    "interval": "percentile",
+    "target": 1.1416843559220837,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9466666666666667,
+    "coverage_wilson": [
+      0.9256793173512055,
+      0.9619708964098885
+    ],
+    "conditional_coverage": 0.9466666666666667,
+    "accepted": 600
+  },
+  {
+    "scenario": "quiet_contamination",
+    "interval": "basic",
+    "target": 1.1416843559220837,
+    "target_kind": "fitted_population_output_secondary_only",
+    "coverage": 0.9116666666666666,
+    "coverage_wilson": [
+      0.8862624651137733,
+      0.9318330677182797
+    ],
+    "conditional_coverage": 0.9116666666666666,
+    "accepted": 600
+  }
+]

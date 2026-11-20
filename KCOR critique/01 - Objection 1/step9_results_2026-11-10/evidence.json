@@ -1,0 +1,121 @@
+{
+  "original_fading": {
+    "source": "KCOR critique\\step2_results_2026-11-09\\reference_comparison.csv",
+    "selector": {
+      "mode": "dynamic",
+      "epsilon_dyn": 0.0005
+    },
+    "raw_kcor": 1.1120926634666792,
+    "anchored_kcor": 0.9413256125439512,
+    "anchored_reference": 0.9502180535051211
+  },
+  "original_nonzero_trajectories": {
+    "count": 24,
+    "max_raw_relative_error_percent": 0.7761498823112944,
+    "max_anchored_relative_error_percent": 0.9776765559749934
+  },
+  "constant_timing": [
+    {
+      "position": "before",
+      "target_raw_final": 1.0497353811994399,
+      "kcor_raw_final": 1.0576004049213108,
+      "paired_added_raw_contrast_recovery_percent": 105.97072562226514
+    },
+    {
+      "position": "during",
+      "target_raw_final": 1.0497353811994399,
+      "kcor_raw_final": 1.0294712838978832,
+      "paired_added_raw_contrast_recovery_percent": 49.41315967011281
+    },
+    {
+      "position": "after",
+      "target_raw_final": 1.0497353811994399,
+      "kcor_raw_final": 1.0576004049213112,
+      "paired_added_raw_contrast_recovery_percent": 105.97072562226603
+    }
+  ],
+  "constant_early_baseline": {
+    "reference_raw_final": 1.0497353811994399,
+    "kcor_raw_final": 1.349050238850655,
+    "theta_A": 4.751772738603461,
+    "k_A_over_clean_k": 1.2188551473993323
+  },
+  "fresh_combined_diagnostics": [
+    {
+      "case": "no_effect",
+      "accepted": 151,
+      "total": 200,
+      "acceptance_percent": 75.5,
+      "target": 1.0,
+      "accepted_raw_median": 1.0478994215961561,
+      "accepted_large_error_count": 66,
+      "accepted_large_error_percent": 43.70860927152318,
+      "joint_accept_large_error_percent": 33.0
+    },
+    {
+      "case": "baseline_clean",
+      "accepted": 130,
+      "total": 200,
+      "acceptance_percent": 65.0,
+      "target": 1.0497353811994399,
+      "accepted_raw_median": 1.1035839629735305,
+      "accepted_large_error_count": 53,
+      "accepted_large_error_percent": 40.76923076923077,
+      "joint_accept_large_error_percent": 26.5
+    },
+    {
+      "case": "baseline_affected",
+      "accepted": 114,
+      "total": 200,
+      "acceptance_percent": 57.0,
+      "target": 1.0497353811994399,
+      "accepted_raw_median": 1.309078357768922,
+      "accepted_large_error_count": 94,
+      "accepted_large_error_percent": 82.45614035087719,
+      "joint_accept_large_error_percent": 47.0
+    }
+  ],
+  "earlier_combined_diagnostics": [
+    {
+      "case": "no_effect",
+      "accepted": 140,
+      "acceptance_percent": 70.0,
+      "accepted_raw_median": 1.0485509645956277
+    },
+    {
+      "case": "baseline_clean",
+      "accepted": 125,
+      "acceptance_percent": 62.5,
+      "accepted_raw_median": 1.0879154321346414
+    },
+    {
+      "case": "baseline_affected",
+      "accepted": 110,
+      "acceptance_percent": 55.0,
+      "accepted_raw_median": 1.3091506448370247
+    }
+  ],
+  "fresh_paired_verification": {
+    "fresh_case_runs": 600,
+    "variant_records": 7800,
+    "prior_cases_replayed": 9,
+    "prior_variants_replayed": 117,
+    "all_variant_fits_eligible": true,
+    "fixed_cutoffs_unchanged": true,
+    "source_hashes_unchanged": true,
+    "paired_affected_above_clean_count": 199,
+    "paired_median_increase": 0.2643734053115959,
+    "checks": [
+      "unique complete variants",
+      "finite metrics",
+      "fresh seed branch",
+      "unchanged cutoffs",
+      "reconstructed sensitivity measures",
+      "pass decisions",
+      "summary counts and medians",
+      "paired comparator parameters",
+      "source and script hashes"
+    ]
+  },
+  "interpretation": "Specified mechanistic raw cumulative-hazard reference; exploratory diagnostic rules; not full manuscript acceptance, causal attribution, or real-data plausibility."
+}

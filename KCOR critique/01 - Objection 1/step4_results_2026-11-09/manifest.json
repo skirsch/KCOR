@@ -1,0 +1,43 @@
+{
+  "created_utc": "2026-11-10T04:09:05.929838+00:00",
+  "source_hashes": {
+    "KCOR critique\\KCOR.pdf": "645a252d7b24f3f636a29c2eff9322eddfe234408c40d50c67c8c1346c60d6b7",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "test\\quiet_window\\code\\quiet_window_scan_theta_czech_2021_24.py": "ff536e08967570a97854cf3de2b5d6564cc28f4ad8bc81b8f90b358d564d3968",
+    "KCOR critique\\step3_results_2026-11-09\\manifest.json": "301e21dca8963ebf19f441383dc5306eb82f1fc19fdcf7debc24eee827c41ad9",
+    "KCOR critique\\step3_results_2026-11-09\\timing_results.csv": "e61e00d877c97c608ff51612e927017a2bf486fe8d1a5210d93d098fdefd557b",
+    "KCOR critique\\step3_results_2026-11-09\\timing_trajectories.csv": "ad6dd6882bb6b511e5f22cb838f45b8b52a97d08e1b46a4aca3d325ec9c57ed8"
+  },
+  "script_sha256": "85c79ed6c73d93fecd419e9230586f29326633388c1d3d505734faa328a2fad2",
+  "pdf_pages_examined": [
+    7,
+    8,
+    12,
+    14,
+    38,
+    56,
+    58,
+    59,
+    67,
+    68,
+    75
+  ],
+  "nominal_cases_reproduced": 10,
+  "perturbation_fits": 52,
+  "production_diagnostic_config": {
+    "min_quiet_deaths": 30,
+    "theta0_max": 100.0,
+    "bad_fit_relrmse_threshold": 100000.0,
+    "action": "set_zero"
+  },
+  "limits": [
+    "No formal full-pass label assigned: manuscript qualitative criteria lack complete numeric thresholds.",
+    "Residual metrics describe expected-count schedules; no random-noise rejection rates or significance tests.",
+    "Near-zero estimate is a warning under manuscript wording, not by itself proof of statistical non-identification.",
+    "Only one quiet window: omit-one-window and inter-window offset checks cannot be evaluated.",
+    "Optional epidemic module inactive: its checks do not apply.",
+    "Skip 0/4 and gamma +/-5% chosen for exploratory sensitivity, not claimed manuscript-prespecified magnitudes.",
+    "Separate empirical scan's R2/percentile thresholds use a different fitter and are not imported as universal rules."
+  ]
+}

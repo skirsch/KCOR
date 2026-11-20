@@ -1,0 +1,62 @@
+{
+  "created_utc": "2026-11-10T04:51:57.611540+00:00",
+  "seed": 20261109,
+  "calibration_reps": 200,
+  "evaluation_reps": 200,
+  "cohort_size": 50000,
+  "n_weeks": 200,
+  "quiet_rebased": [
+    58,
+    110
+  ],
+  "profiles": {
+    "no_effect": {
+      "start_rebased": null,
+      "duration": 0,
+      "added_weekly_hazard": 0
+    },
+    "baseline_clean": {
+      "start_rebased": 5,
+      "duration": 53,
+      "added_weekly_hazard": 0.0001
+    },
+    "baseline_affected": {
+      "start_rebased": 0,
+      "duration": 53,
+      "added_weekly_hazard": 0.0001
+    }
+  },
+  "theta_A": 0.5,
+  "theta_B": 4.0,
+  "targets": {
+    "no_effect": 1,
+    "baseline_clean": 1.0497353811994399,
+    "baseline_affected": 1.0497353811994399
+  },
+  "statistic": "For quiet-week binomial standardized residuals z: max(mean(z^2), (sum(z)/sqrt(n))^2, (dot(centered time,z)/norm(centered time))^2), maximized across both cohorts.",
+  "threshold_rule": "95th empirical quantile (higher order statistic) of separate no-effect calibration scores; frozen before evaluation.",
+  "pass_rule": "Both fitters report success and no identifiability/insufficient-signal/deaths/bad-fit flag, plus score <= fixed threshold.",
+  "large_error_rule": "Absolute relative error >10% in raw final contrast, reported both among accepted and among all runs; an exploratory reporting threshold, not a manuscript cutoff.",
+  "pairing": "Independent calibration/evaluation seed branches. Evaluation cases share per-repetition cohort seeds; comparator draws/fits are identical across cases.",
+  "limits": [
+    "This is only an exploratory residual gate, not full manuscript diagnostic acceptance.",
+    "Calibration is specific to this known synthetic null, cohort size, and nuisance parameters.",
+    "No parameter-window/skip/gamma perturbations inside each random run; no formal low-theta gate.",
+    "Only the inherited constant effect and its two placements are evaluated; plausibility is not established.",
+    "Wilson intervals describe Monte Carlo rate uncertainty conditional on the chosen threshold, not clinical confidence intervals or threshold-calibration uncertainty."
+  ],
+  "source_hashes": {
+    "test\\quiet_window_contamination\\run_contamination_test.py": "7d2268c46a7fce5d9e47d5efb68ea7a6cce45892d2e04aa336386365fb66615d",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "KCOR critique\\step1_contamination_audit.py": "12941930b8ef08bd37708de5dfcad3695f4499bd463ca3c35572c64c384902ac",
+    "KCOR critique\\step5_results_2026-11-09\\manifest.json": "228fa108e359bda3f701a9f808fba5ee1964a858e760e62200574db17e7bf95d",
+    "KCOR critique\\step5_results_2026-11-09\\baseline_results.csv": "ac5653f9a079102df127ef584fc6c693984c188e5b7ea909cf6be87eeeb9ed1e"
+  },
+  "script_sha256": "a7a11b9d5670f22f257de194d09a5c922c920a7d847d55f561bc50f9e6a6e43c",
+  "versions": {
+    "python": "3.14.3",
+    "numpy": "2.4.4",
+    "pandas": "3.0.2"
+  }
+}

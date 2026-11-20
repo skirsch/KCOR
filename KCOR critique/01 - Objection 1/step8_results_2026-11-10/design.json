@@ -1,0 +1,196 @@
+{
+  "created_utc": "2026-11-10T06:29:58.369588+00:00",
+  "seed": 20261109,
+  "fresh_phase": 2,
+  "repetitions": 200,
+  "profiles": {
+    "no_effect": {
+      "start_rebased": null,
+      "duration": 0,
+      "added_weekly_hazard": 0
+    },
+    "baseline_clean": {
+      "start_rebased": 5,
+      "duration": 53,
+      "added_weekly_hazard": 0.0001
+    },
+    "baseline_affected": {
+      "start_rebased": 0,
+      "duration": 53,
+      "added_weekly_hazard": 0.0001
+    }
+  },
+  "targets": {
+    "no_effect": 1,
+    "baseline_clean": 1.0497353811994399,
+    "baseline_affected": 1.0497353811994399
+  },
+  "cohort_size": 50000,
+  "original_design": {
+    "n_initial": 50000,
+    "n_weeks": 200,
+    "skip_weeks": 2,
+    "quiet_start_rebased": 58,
+    "quiet_end_rebased": 110,
+    "anchor_rebased": 4,
+    "effect_starts_rebased": {
+      "before": 5,
+      "during": 58,
+      "after": 111
+    },
+    "duration_weeks": 53,
+    "theta_A": 0.5,
+    "theta_B": 4.0,
+    "profiles": {
+      "fading": [
+        0.0005,
+        0.0
+      ],
+      "constant": [
+        0.0,
+        0.0001
+      ],
+      "combined": [
+        0.0005,
+        0.0001
+      ]
+    },
+    "mortality_scale": 0.00045616902672594684,
+    "gamma_per_week": 0.0016346153846153847
+  },
+  "variants": [
+    [
+      "nominal",
+      0,
+      0,
+      2,
+      1.0
+    ],
+    [
+      "window_-4_-4",
+      -4,
+      -4,
+      2,
+      1.0
+    ],
+    [
+      "window_-4_0",
+      -4,
+      0,
+      2,
+      1.0
+    ],
+    [
+      "window_-4_4",
+      -4,
+      4,
+      2,
+      1.0
+    ],
+    [
+      "window_0_-4",
+      0,
+      -4,
+      2,
+      1.0
+    ],
+    [
+      "window_0_4",
+      0,
+      4,
+      2,
+      1.0
+    ],
+    [
+      "window_4_-4",
+      4,
+      -4,
+      2,
+      1.0
+    ],
+    [
+      "window_4_0",
+      4,
+      0,
+      2,
+      1.0
+    ],
+    [
+      "window_4_4",
+      4,
+      4,
+      2,
+      1.0
+    ],
+    [
+      "skip_0",
+      0,
+      0,
+      0,
+      1.0
+    ],
+    [
+      "skip_4",
+      0,
+      0,
+      4,
+      1.0
+    ],
+    [
+      "gamma_0.95",
+      0,
+      0,
+      2,
+      0.95
+    ],
+    [
+      "gamma_1.05",
+      0,
+      0,
+      2,
+      1.05
+    ]
+  ],
+  "additional_cutoffs": {
+    "window_change": 0.043963824842217614,
+    "skip_change": 0.3227947085754006,
+    "gamma_change": 0.008838900033899533,
+    "linearity_loss": 0.001812386317579142
+  },
+  "residual_cutoff": 31.009394979566853,
+  "rule": "Unchanged Step 6 residual acceptance AND all four Step 7 checks. No recalibration, optimization, early stopping, or post-outcome exclusions.",
+  "metrics": {
+    "window_change": "max abs(variant raw / nominal raw - 1) over eight boundary shifts",
+    "skip_change": "max abs(variant raw / nominal raw - 1) for skip 0 and 4",
+    "gamma_change": "max abs(variant raw / nominal raw - 1) for gamma times 0.95 and 1.05",
+    "linearity_loss": "max(1 - R squared) across both nominal corrected cumulative hazards versus Gompertz time"
+  },
+  "large_error_rule": "Absolute relative error >10% in nominal raw contrast versus its matching mechanistic reference.",
+  "pairing": "Within each fresh repetition the comparator is shared and affected-group cases share seed streams; branch 2 is distinct from earlier branches 0 and 1.",
+  "replay": "Before fresh draws, reproduce all three cases and all 13 variants for earlier evaluation repetitions 0, 99, and 199, including residual scores and acceptance.",
+  "limits": [
+    "Validation is conditional on the same synthetic generator, parameters, cohort size, and fixed cutoffs.",
+    "These exploratory numerical checks are not the complete manuscript procedure.",
+    "No real-data plausibility or attribution claim; no guaranteed combined false-alarm rate.",
+    "Window shifts can include four harm weeks in the baseline-clean case; skip changes alter included follow-up.",
+    "Intervals measure simulation-rate uncertainty conditional on the cutoffs."
+  ],
+  "source_hashes": {
+    "test\\quiet_window_contamination\\run_contamination_test.py": "7d2268c46a7fce5d9e47d5efb68ea7a6cce45892d2e04aa336386365fb66615d",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "KCOR critique\\step1_contamination_audit.py": "12941930b8ef08bd37708de5dfcad3695f4499bd463ca3c35572c64c384902ac",
+    "KCOR critique\\step6_random_detection.py": "a7a11b9d5670f22f257de194d09a5c922c920a7d847d55f561bc50f9e6a6e43c",
+    "KCOR critique\\step7_additional_diagnostics.py": "aa4672311af16704b41933eb01ea2485239b4c82c1fc5c08b9d59ae5d913a6ff",
+    "KCOR critique\\step5_results_2026-11-09\\manifest.json": "228fa108e359bda3f701a9f808fba5ee1964a858e760e62200574db17e7bf95d",
+    "KCOR critique\\step6_results_2026-11-10\\design.json": "fd3224a022a09aa0e1cc69b578d64ce6d9d6ad706e1e9a110d6d988ad7d35b87",
+    "KCOR critique\\step6_results_2026-11-10\\frozen_threshold.json": "5a638a9fe74c422c9eec0be981374d935f542ec13f3eca6b1952d756cd5795be",
+    "KCOR critique\\step6_results_2026-11-10\\evaluation_runs.csv": "3f48845a14cca079394f19775adc696fd4b5566d111c098d1cb2690a2b63437b",
+    "KCOR critique\\step7_results_2026-11-10\\design.json": "52153d84c71b760592a68d97deed6f3c41af19c77f4c07d61f5f659fa396a978",
+    "KCOR critique\\step7_results_2026-11-10\\frozen_cutoffs.json": "fff52daf735bbbdfc1c3a1c335af98156a04e063b926bb1b2e88bc6988c40021",
+    "KCOR critique\\step7_results_2026-11-10\\evaluation_metrics.csv": "05fe3922938c7fb5881339ab8df2904e04c29ecb1ea2b3449c6b7bd2ba788686",
+    "KCOR critique\\step7_results_2026-11-10\\variant_runs.csv": "037ae6df06150ee3ddbbff8cf4132537a610446434fb6b963e77973cb6222ce1",
+    "KCOR critique\\step7_results_2026-11-10\\summary.csv": "4522c255b0790cee6b1c02e7ab2f442733d2bfaea38c1a700a9f6caab01d66b5"
+  },
+  "script_sha256": "2d2a1ddbd3a1ac3c078cb365fc29efa74158ccf92ef48dc4b0b6b3a17ef8d507"
+}

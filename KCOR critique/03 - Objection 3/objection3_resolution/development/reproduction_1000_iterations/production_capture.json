@@ -1,0 +1,11 @@
+{
+  "capture": "completed age-specific out_rows from unmodified production build_kcor_rows",
+  "rows": 100000,
+  "iterations": 1000,
+  "weeks_per_iteration": 100,
+  "production_source_sha256": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+  "paused_at_line": 5005,
+  "ongoing_work": "all_ages_asmr_rows; source states these rows are not included in output",
+  "csv_sha256": "9674c152aec80c609eb8c84735ee289e6eda331ab87fccfbb82850f589d19453",
+  "numerical_inputs_modified": false
+}

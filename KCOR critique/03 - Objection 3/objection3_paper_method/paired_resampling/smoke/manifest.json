@@ -1,0 +1,61 @@
+{
+  "phase": "smoke",
+  "n": 2,
+  "b": 19,
+  "method": "person",
+  "paired_block_run": "block_bootstrap_operationalization\\main",
+  "design": {
+    "version": 1,
+    "question": "On each identical model-consistent dataset, compare percentile intervals from the software's person-resampling Monte Carlo with the explicit aggregate-block implementation, holding the paper's joint fit fixed.",
+    "paired_block_run": "../block_bootstrap_operationalization/main",
+    "outer_datasets": 200,
+    "person_draws_per_dataset": 199,
+    "person_bootstrap": "Resample the original pooled people with replacement, preserving each person's arm and death week. Multinomial draws over arm-by-lifetime cells are mathematically the same resampling in compressed form. Total enrollment count is fixed; arm counts vary.",
+    "fit": "For both arms, use the paper's joint baseline-rate/frailty least-squares fit, exact cumulative gamma inversion, and week-5 normalized contrast at week 52.",
+    "interval": "2.5th and 97.5th percentiles of each dataset's 199 person-bootstrap estimates",
+    "bootstrap_seed_namespace": 2026411401,
+    "worker_count": 1,
+    "scope": "Paired resampling comparison under the paper joint point estimator. It does not claim the current production fixed-rate estimator equals the paper fit, and it cannot recover the manuscript's unspecified unique block algorithm or full diagnostic acceptance rule."
+  },
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_large",
+    "scope": "within_model",
+    "n": 1000000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "hashes": {
+    "objection3_paper_method\\paired_resampling\\run_person.py": "f5d12c52c1bd851cc6f6f79e1bd131b05cbcee6bb162f5daf22a542188c0015b",
+    "objection3_paper_method\\paired_resampling\\design.json": "5b8fff2d4ecfe7fc9d411b6b1f8943980b213f902e37e23a9e0e890a04e10ce7",
+    "objection3_paper_method\\block_bootstrap_operationalization\\run.py": "6849abc565ca8ad09ac7fd4e72611f35591272b5f1943b4c173e89abc0e0be22",
+    "objection3_paper_method\\block_bootstrap_operationalization\\design.json": "997219e9d9badbd2b9eceb4b8f5bca771850a8119e95d4568383c6f1a4bef94e",
+    "objection3_paper_method\\block_bootstrap_operationalization\\main\\manifest.json": "f32da387c30ad41ffab3845a315b088bdda9f1c1fd1542c0b15ef83b66c5ddb1",
+    "objection3_paper_method\\paper_step1.py": "e5d2e98623755eb7c0d46bdfccad2c469e9b6dd409191e7d038d83a9c35617e2",
+    "objection3_corrected_validation\\simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "objection3_corrected_validation\\production_adapter.py": "c5b556724b98b24d1460b957e0d6203e8e5955767d44dfd764b1959670a4b1af",
+    "objection3_corrected_validation\\design.json": "71c9f821f2cefc1d1a7aff375131d834415155de2caf428f9563d6bdf69b2a16"
+  },
+  "python": "3.14.3",
+  "numpy": "2.4.4",
+  "created_utc": "2026-11-14T06:45:43.691212+00:00",
+  "workers": 1
+}

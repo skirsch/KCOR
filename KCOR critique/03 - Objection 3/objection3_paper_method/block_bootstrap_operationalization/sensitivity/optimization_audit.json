@@ -1,0 +1,79 @@
+{
+  "phase": "sensitivity",
+  "checked": [
+    {
+      "dataset": 0,
+      "draw": 0,
+      "warm_point": 1.0828899856112435,
+      "full_point": 1.082889994071972,
+      "max_objective_difference": 7.808584982500581e-22,
+      "point_difference": 8.460728562198483e-09
+    },
+    {
+      "dataset": 0,
+      "draw": 99,
+      "warm_point": 1.0498766152566754,
+      "full_point": 1.0498766183668724,
+      "max_objective_difference": 1.3234889800848443e-23,
+      "point_difference": 3.1101969888425174e-09
+    },
+    {
+      "dataset": 0,
+      "draw": 198,
+      "warm_point": 1.041721653753583,
+      "full_point": 1.0417216529475701,
+      "max_objective_difference": 3.970466940254533e-23,
+      "point_difference": 8.060128120490617e-10
+    },
+    {
+      "dataset": 30,
+      "draw": 0,
+      "warm_point": 1.1170687278068567,
+      "full_point": 1.1170687345136106,
+      "max_objective_difference": 9.26442286059391e-23,
+      "point_difference": 6.706753818974676e-09
+    },
+    {
+      "dataset": 30,
+      "draw": 99,
+      "warm_point": 1.2357416947151973,
+      "full_point": 1.2357417008244032,
+      "max_objective_difference": 2.6469779601696886e-23,
+      "point_difference": 6.10920580790264e-09
+    },
+    {
+      "dataset": 30,
+      "draw": 198,
+      "warm_point": 1.178025421433171,
+      "full_point": 1.1780254290467287,
+      "max_objective_difference": 9.26442286059391e-23,
+      "point_difference": 7.613557784225122e-09
+    },
+    {
+      "dataset": 59,
+      "draw": 0,
+      "warm_point": 1.0920818484948427,
+      "full_point": 1.092081879799982,
+      "max_objective_difference": 2.8587361969832636e-21,
+      "point_difference": 3.130513936966395e-08
+    },
+    {
+      "dataset": 59,
+      "draw": 99,
+      "warm_point": 1.0345493902843856,
+      "full_point": 1.0345494125397907,
+      "max_objective_difference": 6.617444900424221e-22,
+      "point_difference": 2.22554050743895e-08
+    },
+    {
+      "dataset": 59,
+      "draw": 198,
+      "warm_point": 1.053662503783172,
+      "full_point": 1.0536625086834934,
+      "max_objective_difference": 1.5881867761018131e-22,
+      "point_difference": 4.9003214819265395e-09
+    }
+  ],
+  "max_point_difference": 3.130513936966395e-08,
+  "max_objective_difference": 2.8587361969832636e-21
+}

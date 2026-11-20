@@ -1,0 +1,287 @@
+[
+  {
+    "repetition": 0,
+    "bootstrap": 11,
+    "arm": 1,
+    "recorded_fit": {
+      "k_effective": 0.0010001735963191525,
+      "theta": 0.0,
+      "success": false,
+      "objective": 34.629874586756614,
+      "gradient_norm": 1.1065638919738758,
+      "iterations": 18,
+      "near_zero": true,
+      "hit_upper_bound": false
+    },
+    "retry_starts": [
+      {
+        "theta_start": 0.01,
+        "theta": 0.0,
+        "objective": 34.62987458675565,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 1.1065638974975345
+      },
+      {
+        "theta_start": 0.1,
+        "theta": 0.0,
+        "objective": 34.62987458675667,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 1.1065638915208933
+      },
+      {
+        "theta_start": 1,
+        "theta": 0.0,
+        "objective": 34.62987458676099,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 1.1065638918772345
+      },
+      {
+        "theta_start": 5,
+        "theta": 0.0,
+        "objective": 34.62987458675667,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 1.1065638935507347
+      },
+      {
+        "theta_start": 20,
+        "theta": 0.0,
+        "objective": 34.62987458675815,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 1.106563890816699
+      }
+    ]
+  },
+  {
+    "repetition": 0,
+    "bootstrap": 27,
+    "arm": 1,
+    "recorded_fit": {
+      "k_effective": 0.0009987433225974406,
+      "theta": 0.0,
+      "success": false,
+      "objective": 32.95103702466588,
+      "gradient_norm": 0.6149950967920197,
+      "iterations": 6,
+      "near_zero": true,
+      "hit_upper_bound": false
+    },
+    "retry_starts": [
+      {
+        "theta_start": 0.01,
+        "theta": 0.0,
+        "objective": 32.95103702466821,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.6149951005415237
+      },
+      {
+        "theta_start": 0.1,
+        "theta": 0.0,
+        "objective": 32.95103702466588,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.6149950967922857
+      },
+      {
+        "theta_start": 1,
+        "theta": 0.0,
+        "objective": 32.951037024668665,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.614995103876337
+      },
+      {
+        "theta_start": 5,
+        "theta": 0.0,
+        "objective": 32.95103702466815,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.6149951016594224
+      },
+      {
+        "theta_start": 20,
+        "theta": 0.0,
+        "objective": 32.95103702467077,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.6149951015571007
+      }
+    ]
+  },
+  {
+    "repetition": 0,
+    "bootstrap": 36,
+    "arm": 1,
+    "recorded_fit": {
+      "k_effective": 0.0009916663669214158,
+      "theta": 0.0,
+      "success": false,
+      "objective": 34.02053929628369,
+      "gradient_norm": 0.9414393111293553,
+      "iterations": 14,
+      "near_zero": true,
+      "hit_upper_bound": false
+    },
+    "retry_starts": [
+      {
+        "theta_start": 0.01,
+        "theta": 0.0,
+        "objective": 34.02053929628403,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.9414393103771468
+      },
+      {
+        "theta_start": 0.1,
+        "theta": 0.0,
+        "objective": 34.0205392962842,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.9414393078523317
+      },
+      {
+        "theta_start": 1,
+        "theta": 0.0,
+        "objective": 34.02053929628744,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.9414393087434216
+      },
+      {
+        "theta_start": 5,
+        "theta": 0.0,
+        "objective": 34.02053929628289,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.9414393111293553
+      },
+      {
+        "theta_start": 20,
+        "theta": 0.0,
+        "objective": 34.020539296283516,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.9414393195067398
+      }
+    ]
+  },
+  {
+    "repetition": 0,
+    "bootstrap": 44,
+    "arm": 1,
+    "recorded_fit": {
+      "k_effective": 0.0009981904896437356,
+      "theta": 0.0,
+      "success": false,
+      "objective": 37.86377602631859,
+      "gradient_norm": 0.02478504213715471,
+      "iterations": 16,
+      "near_zero": true,
+      "hit_upper_bound": false
+    },
+    "retry_starts": [
+      {
+        "theta_start": 0.01,
+        "theta": 0.0,
+        "objective": 37.86377602632041,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.02478505041932655
+      },
+      {
+        "theta_start": 0.1,
+        "theta": 0.0,
+        "objective": 37.86377602632001,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.024785048009299482
+      },
+      {
+        "theta_start": 1,
+        "theta": 0.0,
+        "objective": 37.86377602631927,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.024785041317510137
+      },
+      {
+        "theta_start": 5,
+        "theta": 0.0,
+        "objective": 37.86377602632007,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.024789068825356475
+      },
+      {
+        "theta_start": 20,
+        "theta": 0.0,
+        "objective": 37.86377602632206,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.02478505040762724
+      }
+    ]
+  },
+  {
+    "repetition": 0,
+    "bootstrap": 59,
+    "arm": 1,
+    "recorded_fit": {
+      "k_effective": 0.0009957696507903453,
+      "theta": 0.0,
+      "success": false,
+      "objective": 45.13985049477856,
+      "gradient_norm": 0.42886225644570475,
+      "iterations": 8,
+      "near_zero": true,
+      "hit_upper_bound": false
+    },
+    "retry_starts": [
+      {
+        "theta_start": 0.01,
+        "theta": 0.0,
+        "objective": 45.139850494781854,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.4288622393806203
+      },
+      {
+        "theta_start": 0.1,
+        "theta": 0.0,
+        "objective": 45.13985049477867,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.4288622501777113
+      },
+      {
+        "theta_start": 1,
+        "theta": 0.0,
+        "objective": 45.13985049477964,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.42886225647772447
+      },
+      {
+        "theta_start": 5,
+        "theta": 0.0,
+        "objective": 45.139850494780376,
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "gradient": 0.4288622543922864
+      },
+      {
+        "theta_start": 20,
+        "theta": 0.0,
+        "objective": 45.13985049478032,
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "gradient": 0.4288623169604451
+      }
+    ]
+  }
+]

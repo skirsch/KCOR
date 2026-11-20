@@ -1,0 +1,46 @@
+[
+  {
+    "scenario": "Gamma-frailty null",
+    "seeds": [
+      0,
+      42,
+      43
+    ],
+    "all_count_arrays_identical": true,
+    "all_point_estimates_identical": true,
+    "point_estimate": 1.0094385170438827
+  },
+  {
+    "scenario": "Injected effect (harm)",
+    "seeds": [
+      0,
+      42,
+      43
+    ],
+    "all_count_arrays_identical": true,
+    "all_point_estimates_identical": true,
+    "point_estimate": 1.1511348305379185
+  },
+  {
+    "scenario": "Injected effect (benefit)",
+    "seeds": [
+      0,
+      42,
+      43
+    ],
+    "all_count_arrays_identical": true,
+    "all_point_estimates_identical": true,
+    "point_estimate": 0.9625549107031263
+  },
+  {
+    "scenario": "Sparse events",
+    "seeds": [
+      0,
+      42,
+      43
+    ],
+    "all_count_arrays_identical": true,
+    "all_point_estimates_identical": true,
+    "point_estimate": 1.0127308718663242
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "created_utc": "2026-11-10T03:34:21.898807+00:00",
+  "python": "3.14.3",
+  "numpy": "2.4.4",
+  "pandas": "3.0.2",
+  "dataset": "Czech",
+  "mortality_scale": 0.00045616902672594684,
+  "gamma_per_week": 0.0016346153846153847,
+  "baseline_fit_config": {
+    "gamma_per_year": 0.085,
+    "k_anchor_weeks": 4,
+    "gamma_per_week": 0.0016346153846153847,
+    "k_anchor_tolerance": 0.2,
+    "convergence_tol": 1e-08,
+    "max_iterations": 25
+  },
+  "diagnostic_config": {
+    "min_quiet_deaths": 30,
+    "theta0_max": 100.0,
+    "bad_fit_relrmse_threshold": 100000.0,
+    "action": "set_zero"
+  },
+  "anchor_original_week": 6,
+  "anchor_rebased_week": 4,
+  "sources": {
+    "test\\quiet_window_contamination\\run_contamination_test.py": "7d2268c46a7fce5d9e47d5efb68ea7a6cce45892d2e04aa336386365fb66615d",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "test\\quiet_window_contamination\\out\\quiet_contamination_meta.csv": "960dd4ba133cc233da0878a8527bc359e003261ad6d387f4d14935a98f481fcb",
+    "test\\quiet_window_contamination\\out\\quiet_contamination_agg.csv": "154c8d985df0f8caa748dd70087d1c1cefe1027572812b4c2cca49443cf94a55",
+    "test\\quiet_window_contamination\\out\\quiet_contamination_long.csv": "3de76452f2164ff191084415ab70d7b2898ae3f01a0f84497e9995c0e0873b0c",
+    "KCOR critique\\step1_contamination_audit.py": "12941930b8ef08bd37708de5dfcad3695f4499bd463ca3c35572c64c384902ac"
+  },
+  "limitations": [
+    "Existing discrete generator retained; no new timing or mechanisms.",
+    "Expected counts remove random event noise; they are not a continuous-time exact gamma model.",
+    "Fixed-clean-fit contrasts measure refitting sensitivity, not truth.",
+    "Full workbook/NPH processing and paper-level acceptance claims are not evaluated.",
+    "Historical base seed 42 is inferred; saved files lack original code hashes and seed.",
+    "No causal or depletion-neutral target is declared by this first-step audit."
+  ]
+}

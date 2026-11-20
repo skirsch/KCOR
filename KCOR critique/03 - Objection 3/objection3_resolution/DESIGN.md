@@ -1,0 +1,35 @@
+# Objection 3: validation design
+
+This design is written after development reproduction checks and before any final coverage outcomes. Development has already exposed a production time-index problem; this study must evaluate the code as it exists, not quietly substitute a repaired estimator. Original files remain unchanged.
+
+## Procedure and scope
+
+The production CMR writer puts all person-bootstrap samples in one enrollment worksheet. `KCOR.process_workbook` preserves sample identifiers in aggregation and fitting, but constructs `t` using `groupby([YearOfBirth, Dose]).cumcount()`, omitting `mc_id`. With M complete samples and i the sample identifier, the resulting time is M*w+i, not calendar week w. The adapter reproduces this behavior and the original fit, fallback, inversion, and baseline normalization. Production workbook comparisons are required before final validation. A single-sample calculation is a diagnostic comparison, not the procedure being validated.
+
+We validate one age stratum, two fixed dose groups, optional wave adjustment disabled, a prespecified quiet window, and the one-year reporting point (week 52). This is a direct age-stratum application of the working model, not a validation of age pooling, every possible calendar, optional wave correction, or historical numerical tables. The current Czech YAML enables an optional wave adjustment, so this study does not claim to reproduce every aspect of that empirical configuration. Production defaults for the Gompertz aging slope, fit guards, two skipped weeks, and four-week normalization are retained and recorded.
+
+## Independent data and target
+
+People are independent draws of an arm label and a death week (or survival beyond follow-up). Cell counts have the exact joint multinomial distribution of these records. In arm d, gamma frailty has mean one and variance theta[d]; its population survival is `(1 + theta*H0)^(-1/theta)`, with the exponential limit at theta=0. H0 accumulates a Gompertz baseline, optionally multiplied during the stated effect window. This is an exact survival model, not a deterministic outer simulation and not an independent Poisson draw for each week. All scenarios generate deaths from enrollment, including the two ordinarily skipped weeks.
+
+The reference is the ratio of post-skip, depletion-neutralized cumulative hazards, normalized at week index 5 and evaluated at index 52. It is known from the population survival model. Conditioning on survival through the skipped interval changes gamma frailty's mean and variance; the arm-specific mean cancels under normalization. This reference is a descriptive working-model contrast. It is not an attribution of observed differences to treatment. We also record the deterministic population output of the implemented procedure and the single-sample procedure, separately, to distinguish finite-sample error from algorithmic bias. A fitted population output must not replace the mathematical reference merely to improve coverage.
+
+The bootstrap draws from pooled lifetime categories with probabilities equal to observed category proportions. This is distributionally identical to resampling complete people with replacement, including random arm sizes. Equivalence of the aggregation is checked by executing the original CMR function on explicit people and actual pandas resamples. Different random-number generators may yield different individual realizations; the claimed equivalence is the sampling distribution, not identical seeds across generators.
+
+## Rules fixed before final runs
+
+`design.json` specifies eight scenarios, 600 independent datasets per scenario, and 999 resamples per dataset. Development uses different seed namespaces and smaller repetition counts. Final sample counts are fixed; no stopping when results look favorable. Resume may complete missing jobs with the same seeds but must not overwrite completed jobs. Any defect discovered in final validation invalidates that run; retain it and use a newly versioned design and fresh final seeds if repaired.
+
+Primary intervals are production percentile intervals; production basic intervals are secondary. Iteration zero supplies the point estimate and is excluded from quantiles. A finite, ordered interval counts as successfully produced. Report both coverage among produced intervals and coverage counting failed intervals as misses. Record fit failures separately, including deliberate theta-zero fallbacks. Do not discard finite estimates just because the fit failed: production reports them.
+
+For each original sample, the module's explicit diagnostic gate requires successful fits in both arms, no degeneracy guard, and none of the production flags listed in `production_adapter.FLAGS`. Report acceptance and coverage conditional on this gate. This is an auditable operational gate, not a claim to implement every manuscript diagnostic. The manuscript's full graphical/stability judgment is not fully specified as an executable rule; missing rules cannot be invented retrospectively. If fewer than 300 analyses pass, conditional calibration is inconclusive, even if their observed coverage happens to look good.
+
+Coverage is practically adequate for a tested scenario only when its two-sided 95% Wilson interval lies wholly within [0.92, 0.98], with interval failure at most 1%. If the Wilson interval lies wholly below 0.92, undercoverage is established for that scenario. All other cases are inconclusive or conservative, as appropriate. At nominal coverage, 600 repetitions give Monte Carlo standard error about 0.009. These are scenario-wise statements, not a simultaneous universal guarantee. Withholding all analyses is not evidence of calibrated useful intervals.
+
+As a bootstrap precision check, recompute quantiles using the first 499 draws from each complete final run. Report coverage changes and endpoint changes; a coverage change above 0.02 prevents a claim of numerical stability. This is a quantile precision check at the same production batch geometry, not a rerun with a different number of worksheets/iterations. The distinction matters because of the production time-index issue.
+
+Report interval width, signed error, root mean squared error, failures, diagnostic acceptance, conditional coverage, Wilson uncertainty, and prefix sensitivity. The quiet-contamination case is a separately labelled stress test and cannot refute the paper's conditional scope. No procedures or gates will be tuned on final results.
+
+## Stopping and assessment
+
+Complete all prespecified jobs, verify independent datasets and retained draws, reproduce selected rows from their seeds, check source hashes, and audit every goal requirement. The final assessment may conclude that the objection remains because an implementation defect prevents validation of the intended method. That is distinct from claiming that the working-model method is mathematically incapable of valid intervals. A passing subset cannot lift a broader objection. Documentation discrepancies are assessed separately from interval calibration.

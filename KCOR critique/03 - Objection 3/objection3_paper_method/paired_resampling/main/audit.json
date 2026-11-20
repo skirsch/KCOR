@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "source_hashes_verified": true,
+  "paired_datasets": 200,
+  "intervals_reconstructed": 200,
+  "replayed_datasets": [
+    0,
+    100,
+    199
+  ],
+  "first_person_bootstrap_draws_replayed": true,
+  "person_resampling_source": "corrected_validation/simulation.py:bootstrap"
+}

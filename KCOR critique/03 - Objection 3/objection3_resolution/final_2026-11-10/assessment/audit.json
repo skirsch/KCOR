@@ -1,0 +1,88 @@
+{
+  "checks": "passed",
+  "independent_datasets": 4800,
+  "retained_draws": 4795200,
+  "all_intervals_reconstructed": true,
+  "seed_replays": [
+    {
+      "scenario": "equal_frailty",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "equal_frailty",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "unequal_frailty",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "unequal_frailty",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "unequal_large",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "unequal_large",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "zero_frailty",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "zero_frailty",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "post_quiet_increase",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "post_quiet_increase",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "post_quiet_decrease",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "post_quiet_decrease",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "sparse",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "sparse",
+      "repetition": 599,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "quiet_contamination",
+      "repetition": 0,
+      "checked_draws": 8
+    },
+    {
+      "scenario": "quiet_contamination",
+      "repetition": 599,
+      "checked_draws": 8
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# Fixed exploratory cohort-size check
+
+The corrected production fitter and person bootstrap are unchanged. Earlier retained studies already tested 100,000 and 1,000,000 people, with 600 independent datasets and 999 bootstrap draws each. This extension adds 4,000,000 and 16,000,000 people in the same within-model unequal-frailty scenario: frailties 4 and 0.5, true normalized KCOR 1 at week 52, quiet weeks 6–40, two skipped weeks, and no optional wave correction.
+
+Before seeing outcomes, fix 40 independent datasets at each added size, 199 pooled person-bootstrap draws per dataset, and seed namespace 663809. Use one process and below-normal priority when available. Calculate both the existing percentile and basic intervals from exactly the same draws; iteration zero never enters quantiles. Save every count table, draw, point, diagnostic, and interval with a source manifest. No change of fitter or interval rule is allowed after outcome inspection.
+
+This is a screening study, not a 95% calibration certification. Report coverage counts and Wilson ranges without declaring acceptance from 40 datasets. Compare with the earlier 600-dataset results descriptively because seeds and bootstrap counts differ. Check exact expected population counts at both sizes. If the basic interval loses coverage as cohorts grow, it cannot be the stand-alone resolution of objection 3. If it remains promising, a prespecified larger validation is needed before recommending it.

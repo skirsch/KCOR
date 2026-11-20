@@ -1,0 +1,26 @@
+{
+  "checks": "passed",
+  "tests": {
+    "original": {
+      "exit_code": 1,
+      "expected": 1
+    },
+    "fixed": {
+      "exit_code": 0,
+      "expected": 0
+    }
+  },
+  "historical_replay": {
+    "original_input_sha256": "0667036df5428b0034ce148eb77a9caf6f3abe930c2ebcf0c873028fead70e84",
+    "points_compared": 100,
+    "max_curve_error": 0.0,
+    "week80_old_joint": 1.053172263346009,
+    "week80_original_alone": 1.004049494273245,
+    "week80_fixed_joint": 1.004049494273245,
+    "original_fit_status": "OK"
+  },
+  "original_source_unchanged": true,
+  "patch_applies": true,
+  "coverage_revalidated": false,
+  "note": "Regression and historical replay establish these software fixes. Fresh coverage validation is separate work."
+}

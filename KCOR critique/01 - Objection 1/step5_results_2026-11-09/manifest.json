@@ -1,0 +1,70 @@
+{
+  "created_utc": "2026-11-10T04:23:31.135909+00:00",
+  "source_hashes": {
+    "test\\quiet_window_contamination\\run_contamination_test.py": "7d2268c46a7fce5d9e47d5efb68ea7a6cce45892d2e04aa336386365fb66615d",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266",
+    "KCOR critique\\step1_contamination_audit.py": "12941930b8ef08bd37708de5dfcad3695f4499bd463ca3c35572c64c384902ac",
+    "KCOR critique\\step3_results_2026-11-09\\manifest.json": "301e21dca8963ebf19f441383dc5306eb82f1fc19fdcf7debc24eee827c41ad9",
+    "KCOR critique\\step3_results_2026-11-09\\timing_results.csv": "e61e00d877c97c608ff51612e927017a2bf486fe8d1a5210d93d098fdefd557b",
+    "KCOR critique\\step3_results_2026-11-09\\timing_trajectories.csv": "ad6dd6882bb6b511e5f22cb838f45b8b52a97d08e1b46a4aca3d325ec9c57ed8"
+  },
+  "script_sha256": "558160de7eae0837436da54b6970969405426a11cc28d7b853adcf0d7b5d220b",
+  "original_design": {
+    "n_initial": 50000,
+    "n_weeks": 200,
+    "skip_weeks": 2,
+    "quiet_start_rebased": 58,
+    "quiet_end_rebased": 110,
+    "anchor_rebased": 4,
+    "effect_starts_rebased": {
+      "before": 5,
+      "during": 58,
+      "after": 111
+    },
+    "duration_weeks": 53,
+    "theta_A": 0.5,
+    "theta_B": 4.0,
+    "profiles": {
+      "fading": [
+        0.0005,
+        0.0
+      ],
+      "constant": [
+        0.0,
+        0.0001
+      ],
+      "combined": [
+        0.0005,
+        0.0001
+      ]
+    },
+    "mortality_scale": 0.00045616902672594684,
+    "gamma_per_week": 0.0016346153846153847
+  },
+  "new_effect_start_rebased": 0,
+  "new_effect_end_rebased": 52,
+  "reference": "(B+G)/B and identically anchored version; same discrete generator and accumulation origin",
+  "baseline_fit_config": {
+    "gamma_per_year": 0.085,
+    "k_anchor_weeks": 4,
+    "gamma_per_week": 0.0016346153846153847,
+    "k_anchor_tolerance": 0.2,
+    "convergence_tol": 1e-08,
+    "max_iterations": 25
+  },
+  "diagnostic_config": {
+    "min_quiet_deaths": 30,
+    "theta0_max": 100.0,
+    "bad_fit_relrmse_threshold": 100000.0,
+    "action": "set_zero"
+  },
+  "validation": "Reproduced four Step 3 cases; identical effect vectors/integrals, final hazards, quiet-window hazards/risk sets/deaths, and final targets verified; residual RMS and anchoring reconstructed; 36 +/-4-week boundary fits retain uncontaminated quiet windows.",
+  "limitations": [
+    "Same three existing effect strengths only; no plausibility claim.",
+    "Expected counts only, not statistical diagnostic rejection rates.",
+    "Only early baseline weeks added to scope; effects still end before quiet window.",
+    "Anchor is affected in the early case, so raw and anchored references differ.",
+    "No complete manuscript-diagnostic pass is inferred from fitter status."
+  ]
+}

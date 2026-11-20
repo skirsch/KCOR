@@ -1,0 +1,28 @@
+{
+  "scope": "Post-pilot diagnostic, not a prespecified coverage result",
+  "exact_expected_count_point": 0.9999999663074063,
+  "truth": 1.0,
+  "block_results": [
+    {
+      "block_length": 4,
+      "bootstrap_median": 1.1007585662607207,
+      "bootstrap_mean": 1.101614169204281,
+      "percentile_interval": [
+        1.0642493778606106,
+        1.1419709820803856
+      ],
+      "median_minus_point": 0.10075859995331438
+    },
+    {
+      "block_length": 8,
+      "bootstrap_median": 1.0958604185858032,
+      "bootstrap_mean": 1.094919286673516,
+      "percentile_interval": [
+        1.0455234760848404,
+        1.1440129525714338
+      ],
+      "median_minus_point": 0.0958604522783969
+    }
+  ],
+  "interpretation": "Any nonzero center shift here comes from block rearrangement, not random sampling of persons or deaths."
+}

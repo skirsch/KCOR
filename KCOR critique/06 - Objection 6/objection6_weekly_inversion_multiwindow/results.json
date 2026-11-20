@@ -1,0 +1,569 @@
+{
+  "design": "Exact expected weekly death counts from gamma-frailty model; both fitter versions receive identical input",
+  "source_function_sha256": "1292282a3c031ba633ab7fd8a7fb6ebd795e6302cc2aa4ab5441b0542ab6b660",
+  "current_production_file_sha256": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+  "current_production_contains_both_approximation_lines": true,
+  "variant": "Only two internal first-order weekly reconstruction lines are replaced; final cumulative inversion and all other fitting rules are unchanged",
+  "cases": [
+    {
+      "name": "one_window_control",
+      "windows": [
+        [
+          6,
+          55
+        ]
+      ],
+      "effect": 1.0,
+      "wave_in_both_arms": false,
+      "truth": 1.0,
+      "first_order": {
+        "point": 1.0052275822157175,
+        "accepted": true,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 3.832394734121157,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4802068077212278,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "exact_weekly": {
+        "point": 1.0052275822157175,
+        "accepted": true,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 3.832394734121157,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4802068077212278,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "first_order_raw_fit": [
+        {
+          "theta0_init": 3.8333349256102474,
+          "theta0_raw": 3.832394734121157,
+          "delta_raw_values": [],
+          "delta_applied_values": [],
+          "n_iter": 2
+        },
+        {
+          "theta0_init": 0.48028077389141444,
+          "theta0_raw": 0.4802068077212278,
+          "delta_raw_values": [],
+          "delta_applied_values": [],
+          "n_iter": 2
+        }
+      ],
+      "exact_weekly_raw_fit": [
+        {
+          "theta0_init": 3.8333349256102474,
+          "theta0_raw": 3.832394734121157,
+          "delta_raw_values": [],
+          "delta_applied_values": [],
+          "n_iter": 2
+        },
+        {
+          "theta0_init": 0.48028077389141444,
+          "theta0_raw": 0.4802068077212278,
+          "delta_raw_values": [],
+          "delta_applied_values": [],
+          "n_iter": 2
+        }
+      ],
+      "point_change": 0.0,
+      "theta_changes": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "two_windows_no_wave",
+      "windows": [
+        [
+          6,
+          25
+        ],
+        [
+          41,
+          55
+        ]
+      ],
+      "effect": 1.0,
+      "wave_in_both_arms": false,
+      "truth": 1.0,
+      "first_order": {
+        "point": 1.1276163043862117,
+        "accepted": false,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 0.0,
+            "success": true,
+            "status": "insufficient_signal",
+            "message": "INSUFFICIENT_SIGNAL: negative delta on first reconstruction pass; applied theta=0.0",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": true,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.0,
+            "success": true,
+            "status": "insufficient_signal",
+            "message": "INSUFFICIENT_SIGNAL: negative delta on first reconstruction pass; applied theta=0.0",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": true,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "exact_weekly": {
+        "point": 1.005468850626539,
+        "accepted": true,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 3.8267072803981077,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4811369300429912,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "first_order_raw_fit": [
+        {
+          "theta0_init": 3.626356945532225,
+          "theta0_raw": 3.626356945532225,
+          "delta_raw_values": [
+            -3.255940682744124e-05
+          ],
+          "delta_applied_values": [
+            0.0
+          ],
+          "n_iter": 0
+        },
+        {
+          "theta0_init": 0.4541680614495562,
+          "theta0_raw": 0.4541680614495562,
+          "delta_raw_values": [
+            -4.882782689015486e-06
+          ],
+          "delta_applied_values": [
+            0.0
+          ],
+          "n_iter": 0
+        }
+      ],
+      "exact_weekly_raw_fit": [
+        {
+          "theta0_init": 3.626356945532225,
+          "theta0_raw": 3.8267072803981077,
+          "delta_raw_values": [
+            0.00018134395908701167
+          ],
+          "delta_applied_values": [
+            0.00018134395908701167
+          ],
+          "n_iter": 6
+        },
+        {
+          "theta0_init": 0.4541680614495562,
+          "theta0_raw": 0.4811369300429912,
+          "delta_raw_values": [
+            2.475150244248686e-05
+          ],
+          "delta_applied_values": [
+            2.475150244248686e-05
+          ],
+          "n_iter": 4
+        }
+      ],
+      "point_change": -0.12214745375967273,
+      "theta_changes": [
+        3.8267072803981077,
+        0.4811369300429912
+      ]
+    },
+    {
+      "name": "two_windows_one_arm_wave",
+      "windows": [
+        [
+          6,
+          25
+        ],
+        [
+          41,
+          55
+        ]
+      ],
+      "effect": 1.3,
+      "wave_in_both_arms": false,
+      "truth": 1.056184348599593,
+      "first_order": {
+        "point": 1.2139128990907047,
+        "accepted": false,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 0.0,
+            "success": true,
+            "status": "insufficient_signal",
+            "message": "INSUFFICIENT_SIGNAL: negative delta on first reconstruction pass; applied theta=0.0",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": true,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4855786255356569,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "exact_weekly": {
+        "point": 1.0621070690968553,
+        "accepted": true,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 3.8267072803981077,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4854768562755887,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "first_order_raw_fit": [
+        {
+          "theta0_init": 3.626356945532225,
+          "theta0_raw": 3.626356945532225,
+          "delta_raw_values": [
+            -3.255940682744124e-05
+          ],
+          "delta_applied_values": [
+            0.0
+          ],
+          "n_iter": 0
+        },
+        {
+          "theta0_init": 0.4541680614495562,
+          "theta0_raw": 0.4855786255356569,
+          "delta_raw_values": [
+            0.004423583828521628
+          ],
+          "delta_applied_values": [
+            0.004423583828521628
+          ],
+          "n_iter": 4
+        }
+      ],
+      "exact_weekly_raw_fit": [
+        {
+          "theta0_init": 3.626356945532225,
+          "theta0_raw": 3.8267072803981077,
+          "delta_raw_values": [
+            0.00018134395908701167
+          ],
+          "delta_applied_values": [
+            0.00018134395908701167
+          ],
+          "n_iter": 6
+        },
+        {
+          "theta0_init": 0.4541680614495562,
+          "theta0_raw": 0.4854768562755887,
+          "delta_raw_values": [
+            0.004435829809683836
+          ],
+          "delta_applied_values": [
+            0.004435829809683836
+          ],
+          "n_iter": 4
+        }
+      ],
+      "point_change": -0.1518058299938494,
+      "theta_changes": [
+        3.8267072803981077,
+        -0.00010176926006821851
+      ]
+    },
+    {
+      "name": "two_windows_both_arms_wave",
+      "windows": [
+        [
+          6,
+          25
+        ],
+        [
+          41,
+          55
+        ]
+      ],
+      "effect": 1.3,
+      "wave_in_both_arms": true,
+      "truth": 1.0,
+      "first_order": {
+        "point": 1.0045125962088115,
+        "accepted": true,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 3.864569746429278,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4855786255356569,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "exact_weekly": {
+        "point": 1.0047265064952602,
+        "accepted": true,
+        "diagnostics": [
+          {
+            "k": 0.0009842802858971752,
+            "theta": 3.8588033906609516,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          },
+          {
+            "k": 0.000998005337061002,
+            "theta": 0.4854768562755887,
+            "success": true,
+            "status": "ok",
+            "message": "ok",
+            "degenerate": false,
+            "flags": {
+              "identifiability_flag": false,
+              "insufficient_signal": false,
+              "insufficient_deaths": false,
+              "bad_fit": false,
+              "theta_hit_bound": false,
+              "delta_negative_clamped": false
+            }
+          }
+        ]
+      },
+      "first_order_raw_fit": [
+        {
+          "theta0_init": 3.626356945532225,
+          "theta0_raw": 3.864569746429278,
+          "delta_raw_values": [
+            0.004470647470263163
+          ],
+          "delta_applied_values": [
+            0.004470647470263163
+          ],
+          "n_iter": 7
+        },
+        {
+          "theta0_init": 0.4541680614495562,
+          "theta0_raw": 0.4855786255356569,
+          "delta_raw_values": [
+            0.004423583828521628
+          ],
+          "delta_applied_values": [
+            0.004423583828521628
+          ],
+          "n_iter": 4
+        }
+      ],
+      "exact_weekly_raw_fit": [
+        {
+          "theta0_init": 3.626356945532225,
+          "theta0_raw": 3.8588033906609516,
+          "delta_raw_values": [
+            0.004560729374756656
+          ],
+          "delta_applied_values": [
+            0.004560729374756656
+          ],
+          "n_iter": 7
+        },
+        {
+          "theta0_init": 0.4541680614495562,
+          "theta0_raw": 0.4854768562755887,
+          "delta_raw_values": [
+            0.004435829809683836
+          ],
+          "delta_applied_values": [
+            0.004435829809683836
+          ],
+          "n_iter": 4
+        }
+      ],
+      "point_change": 0.00021391028644868193,
+      "theta_changes": [
+        -0.005766355768326292,
+        -0.00010176926006821851
+      ]
+    }
+  ]
+}

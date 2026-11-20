@@ -1,0 +1,135 @@
+OBJECTION 3, STEP 1: EXISTING MONTE CARLO INTERVALS AND COVERAGE EVIDENCE
+Date: 2026-11-10 (America/Toronto)
+
+Answer to the user's question
+-----------------------------
+Yes. KCOR already has Monte Carlo uncertainty intervals. The current real-data
+Monte Carlo path resamples individual people, rebuilds their aggregated weekly
+data, reruns KCOR, and summarizes the resulting estimates with percentile
+intervals. The question is not whether simulation-based intervals exist.
+
+The retained paper describes a different resampling procedure, and the separate
+simulation coverage script does not validate this current real-data path as-is.
+The original objection about rearranging time blocks must not be applied to
+the person-resampling path, which does not rearrange the time axis that way.
+
+Four distinct pieces must be kept separate
+-----------------------------------------
+1. The retained manuscript, section 2.9.1, pp. 18-19:
+   Describes resampling blocks of event-time death counts and risk sets, refitting,
+   and taking percentile intervals. It explicitly defers definitive coverage
+   claims and does not promise universal validity under misspecification. Table
+   12, p. 55, leaves empirical coverage cells blank. Those qualifications matter.
+
+2. Current real-data Monte Carlo pipeline:
+   code/Makefile, lines 119-147, calls KCOR_CMR.py and KCOR.py in Monte Carlo mode.
+   code/KCOR_CMR.py, process_monte_carlo_iteration (around line 1296), uses the
+   original records for iteration zero and samples person records with replacement
+   for later iterations. Shared enrollment processing reconstructs weekly data.
+   KCOR.py fits each mc_id separately (around lines 6880-6888). Its current Monte
+   Carlo summary (around lines 10036-10075) excludes iteration zero from bootstrap
+   draws and reports 2.5th/97.5th percentile intervals, plus a basic-bootstrap
+   interval reflected around the original point estimate.
+   This is a person-level bootstrap implemented through repeated computations.
+   Monte Carlo and bootstrap are not mutually exclusive descriptions here.
+
+3. Separate coverage test:
+   test/sim_grid/code/compute_bootstrap_coverage.py draws weekly deaths from a
+   Poisson distribution whose mean is the observed weekly death count, then
+   reconstructs survivors (lines 76-126). Weeks retain their original positions.
+   It calls the separate fitter in generate_sim_grid.py, which fits a constant-
+   baseline gamma model in cumulative-hazard space (around lines 802-880).
+   It does not call the production Gompertz hazard fitter used in our earlier
+   contamination extensions or validate the person-level bootstrap end to end.
+
+4. Ordinary output interval columns:
+   KCOR.py also contains analytic log-scale interval calculations, for example
+   lines 4397-4406 and 5367-5374. These must not be confused with percentile
+   intervals across Monte Carlo runs. This audit has not traced every plotted
+   band or table interval in the paper to its exact generation path.
+
+Existing coverage results really do exist
+----------------------------------------
+The saved run manifest reports 500 simulation datasets and 200 bootstrap draws
+per dataset, across five scenarios. The numerical summary and all 2,500 saved
+replicate rows are present. Thus the blank PDF table does not establish that no
+larger run was performed. The manifest records an April 2026 execution and a
+historical Git identifier; this audit does not reconstruct that entire environment.
+
+However, inspection and reproduction reveal a problem with the outer simulation:
+
+Scenario                 Saved datasets  Distinct point estimates  Reported coverage
+Gamma-frailty null             500                   1                  100.0%
+Injected harm                 500                   1                  100.0%
+Injected benefit              500                   1                  100.0%
+Non-gamma frailty              500                 500                   25.4%
+Sparse events                 500                   1                  100.0%
+
+In the four gamma-based scenarios, simulate_gamma_frailty_cohort sets deaths
+equal to current_alive * p_death deterministically (around lines 385-386).
+Changing the outer seed does not change the data. The saved point estimate
+equals the saved reference in all 500 rows of each of those four scenarios.
+The inner bootstrap does vary and generates interval variation.
+
+To evaluate repeated-sample coverage, the outer datasets must represent the
+sampling variation being assessed. Repeatedly bootstrapping the same smooth
+dataset measures a different property. Consequently, these 100% figures do not
+establish that intervals achieve nominal coverage across independently sampled
+datasets. This is a problem with this validation experiment, not proof that
+the real-data person-bootstrap intervals have incorrect coverage.
+
+The non-gamma scenario does generate random individual frailties and deaths.
+Its reference is the fitted output of one fixed-seed realization, as implemented
+by dgp_kcor_at_target_week. The population or conditional quantity that this
+reference represents needs checking before treating the 25.4% result as a clean
+coverage estimate for the intended target. It also concerns model misspecification,
+for which the paper already qualifies its guarantees.
+
+The coverage routine's recorded inclusion checks concern finite point estimates
+and enough valid bootstrap values. It does not implement the paper's full
+diagnostic acceptance procedure. Thus its aggregate results should not be
+presented as validated coverage conditional on all manuscript diagnostics passing.
+
+What was verified in this bounded step
+-------------------------------------
+- Recomputed coverage classifications and summary rates from all 2,500 saved rows.
+- Checked four gamma-based generators at seeds 0, 42, and 43. Within each scenario,
+  complete count arrays were identical, and all three point estimates matched.
+- Replayed the first retained gamma-null coverage row, including its 200 bootstrap
+  draws. Point estimate, interval endpoints, width, and counts matched the saved
+  values within relative tolerance 1e-6 and absolute tolerance 1e-8.
+- Verified source hashes remained unchanged.
+
+The first audit attempt encountered the legacy np.trapz call removed from the
+installed NumPy. The separate audit wrapper provides np.trapezoid under that
+name in its own process only; no production or validation source was changed.
+The incomplete first output folder is preserved. The verified results are in
+this folder. The replay is a numerical reproduction, not proof of every detail
+of the historical execution environment.
+
+Current framing of objection 3
+------------------------------
+Do not say KCOR lacks Monte Carlo intervals. Do not infer that its current
+person-bootstrap intervals shuffle weeks. Do not declare those intervals wrong
+from the coverage figures above.
+
+The supported issues at this stage are:
+  A. The manuscript description and current interval-generation paths need to
+     be reconciled, including identifying the source of each reported interval.
+  B. The retained coverage experiment does not establish calibration of the
+     current real-data Monte Carlo procedure. Its gamma-based outer datasets
+     do not vary, and its estimator/resampling path differs from production.
+
+The next bounded task is to trace the reported intervals to the intended current
+procedure and determine which existing evidence actually validates that procedure.
+Any repair or new calibration should follow that decision. No new large simulation
+campaign or production-code change is justified merely by the word Monte Carlo.
+
+Reproduction
+------------
+From C:\Users\jasmi\repo\KCOR-update, using a fresh output directory:
+python "KCOR critique\objection3_step1_interval_audit.py" --outdir "KCOR critique\objection3_step1_results_2026-11-10_verified"
+
+See saved_run_inventory.csv, seed_comparison.json, saved_row_replay.csv,
+verification.json, and manifest.json. All new audit code and artifacts are
+separate under KCOR critique; original code, data, and saved results are unchanged.

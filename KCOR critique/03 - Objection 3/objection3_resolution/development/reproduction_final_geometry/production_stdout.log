@@ -1,0 +1,128 @@
+================================================================================
+KCOR v7.6 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-11-10 17:27:04
+Mode: Primary Analysis (Monte Carlo)
+Input File: KCOR critique\objection3_resolution\development\reproduction_final_geometry\input.xlsx
+Output File: KCOR critique\objection3_resolution\development\reproduction_final_geometry\production.xlsx
+Log File: KCOR critique/objection3_resolution/development/reproduction_final_geometry/KCOR_summary.log
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = None
+  MC_ENROLLMENT_DATE    = 2021_24
+  MC_YOB_RANGE          = 1950-1950
+  MC_YOB_BUCKETS        = [1950]
+  MC_INCLUDE_AGGREGATES = False
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  THETA_ESTIMATION_WINDOWS = 2021-30..2022-12
+  THETA_IDENTIFIABILITY = min_quiet_deaths=30, theta0_max=100.0, action=set_zero
+  GOMPERTZ_THETA_FIT     = gamma=0.085/yr, k_anchor_weeks=4, convergence_tol=1e-08, max_iterations=25, gamma_per_week=0.00163462
+  NPH_CORRECTION        = disabled
+  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)
+================================================================================
+
+[INFO] Monte Carlo mode: Found 1 enrollment date sheet(s): ['2021_24']
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: [2021_24] (processing 1 enrollment date sheet(s))
+[Info] Processing sheet: 2021_24
+[DEBUG] Input data for sheet 2021_24:
+  Columns: ['ISOweekDied', 'DateDied', 'YearOfBirth', 'Sex', 'Dose', 'Alive', 'Dead', 'mc_id']
+  Rows: 2000
+  mc_id column: 2000/2000 non-NaN, unique values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  mc_id range: 0 to 9
+[INFO] Processing 10 Monte Carlo iteration(s): [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  Alive column: 2000/2000 non-NaN, 2000/2000 > 0
+  Alive range: 44603 to 50403
+  Dead column: 2000/2000 non-NaN, range: 14 to 82
+  ISOweekDied sample: ['2021-24', '2021-25', '2021-26']
+[DEBUG] Monte Carlo mode: Filtered to YOB 1950-1950 (aggregates=False): 2000 rows
+[DEBUG] Monte Carlo mode: Using enrollment date 06/14/2021 (2021-24) for iteration 2021_24
+[DEBUG] Filtered to start from enrollment date: 2000 rows
+[DEBUG] Monte Carlo mode: Filtered to doses [0, 1] (max dose 1): 2000 rows
+[DEBUG] Monte Carlo mode: Filtered to YOB buckets [1950] (aggregates=False): 2000 rows
+[DEBUG] Sample ISOweekDied values: ['2021-24', '2021-24', '2021-24', '2021-24', '2021-24']
+[DEBUG] Sample parsed ISO int values: [202124.0, 202124.0, 202124.0, 202124.0, 202124.0]
+[DEBUG] Quiet window: 2023-01 (202301) to 2023-52 (202352)
+[DEBUG] Valid ISO int values: 2000/2000
+[DEBUG] ISO int range in data: 202124 to 202319
+enroll | iter | YoB | dose | theta | k | relRMSE | bins
+----------------------------------------------------------------------
+2021_24 | 0 | 1950 | 0 | 0.000000e+00 | nan | nan | 35
+2021_24 | 1 | 1950 | 0 | 0.000000e+00 | nan | nan | 35
+2021_24 | 2 | 1950 | 0 | 2.8 | 1.191114e-03 | 2.162184e-01 | 36
+2021_24 | 3 | 1950 | 0 | 2.4 | 1.057708e-03 | 2.809317e-01 | 36
+2021_24 | 4 | 1950 | 0 | 2.3 | 1.020723e-03 | 2.549591e-01 | 36
+2021_24 | 5 | 1950 | 0 | 2.7 | 1.151011e-03 | 3.208386e-01 | 36
+2021_24 | 6 | 1950 | 0 | 0.000000e+00 | nan | nan | 35
+2021_24 | 7 | 1950 | 0 | 0.000000e+00 | nan | nan | 35
+2021_24 | 8 | 1950 | 0 | 0.000000e+00 | nan | nan | 35
+2021_24 | 9 | 1950 | 0 | 0.000000e+00 | nan | nan | 35
+2021_24 | 0 | 1950 | 1 | 0.000000e+00 | nan | nan | 35
+2021_24 | 1 | 1950 | 1 | 0.000000e+00 | nan | nan | 35
+2021_24 | 2 | 1950 | 1 | 1.4 | 8.875442e-04 | 2.469167e-01 | 36
+2021_24 | 3 | 1950 | 1 | 2.1 | 1.240058e-03 | 2.328488e-01 | 36
+2021_24 | 4 | 1950 | 1 | 1.2 | 8.943705e-04 | 2.850971e-01 | 36
+2021_24 | 5 | 1950 | 1 | 2.1 | 1.218993e-03 | 2.349345e-01 | 36
+2021_24 | 6 | 1950 | 1 | 0.000000e+00 | nan | nan | 35
+2021_24 | 7 | 1950 | 1 | 0.000000e+00 | nan | nan | 35
+2021_24 | 8 | 1950 | 1 | 0.000000e+00 | nan | nan | 35
+2021_24 | 9 | 1950 | 1 | 0.000000e+00 | nan | nan | 35
+[MC] Wrote iteration 2021_24 to sheet '2021_24' (1010 rows)
+[MC] Wrote Monte Carlo output to KCOR critique\objection3_resolution\development\reproduction_final_geometry\production.xlsx
+[MC Summary] Creating summary with 10 data points
+
+================================================================================
+MONTE CARLO SUMMARY - KCOR VALUES AT REPORTING DATE (2021_24)
+================================================================================
+
+Dose combination: 1 vs 0 - Year 1950
+------------------------------------------------------------
+   Iteration         KCOR
+-------------------------
+           0       1.0326
+           1       1.0611
+           2       0.9493
+           3       1.0200
+           4       1.1203
+           5       1.1084
+           6       1.0146
+           7       1.0219
+           8       1.0683
+           9       1.0712
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+
+Dose combination: 1 vs 0 - Year 1950
+------------------------------------------------------------
+  Iterations: 10
+  Point estimate (iteration 0): 1.0326
+  Bootstrap draws: 9
+  Bootstrap mean KCOR:   1.0483
+  Bootstrap median KCOR: 1.0611
+  Bootstrap Std Dev:     0.0528
+  Min:         0.9493
+  Max:         1.1203
+  2.5th %ile:  0.9623
+  25th %ile:   1.0200
+  75th %ile:   1.0712
+  97.5th %ile: 1.1179
+  Percentile 95% CI: [0.9623, 1.1179]
+  Basic bootstrap 95% CI: [0.9474, 1.1030]
+  Point percentile in bootstrap draws: 0.4444
+
+================================================================================
+[Summary] Creating summary file: KCOR critique\objection3_resolution\development\reproduction_final_geometry\KCOR_summary.xlsx
+  - 2021_24: 1 dose combinations, 13 summary rows
+  - theta0_status_summary: 1 enrollment rows (file=KCOR critique\objection3_resolution\development\reproduction_final_geometry\KCOR_summary.xlsx, sheet=theta0_status_summary)
+    2021_24: any_non_ok_status=False, quality_flag=False, quality_flag_detail=
+[Summary] Created summary with 1 enrollment periods

@@ -1,0 +1,246 @@
+OBJECTION 1: FINAL ASSESSMENT OF THE CONTAMINATION INVESTIGATION
+Date: 2026-11-10 (America/Toronto)
+
+Decision
+--------
+The planned investigation is complete. Objection 1 is narrowed and supported
+by concrete evidence, but it is not rebutted.
+
+KCOR's correction is sensitive to when added mortality occurs. In the tested
+mechanism, harm during the later fitting window can reduce the recovered
+contrast, while harm during the early baseline-estimation weeks can amplify
+it, even when the later quiet window is uncontaminated. Some smooth-data
+failures have clear diagnostic warnings. With random deaths, however, our
+specified residual, stability, and shape checks often accept materially
+distorted contrasts. That finding reproduces on fresh independent simulations.
+
+This supports conditional interpretation and narrower diagnostic claims. It
+does not prove that the actual application is biased, that these harm patterns
+occurred or are plausible there, or that the full manuscript procedure would
+accept the same examples.
+
+What objection 1 means
+----------------------
+The concern is not whether a frailty parameter can be fitted under the assumed
+model, or whether the inversion formula is correct within that model. It is
+whether the fitted correction represents the selection mechanism it is intended
+to remove, rather than a genuine change in mortality that should remain in the
+comparison. A good fit alone cannot establish the origin of the change.
+
+This assessment addresses that central concern in KCOR_Independent_Review_EN.md,
+item 1, and KCOR_Review_EN.md, section 2. It also touches the related validation
+and target-definition concerns. It does not resolve the separate objection
+about the optional epidemic-wave correction or the bootstrap.
+
+The question we actually tested
+------------------------------
+We reused the original quiet-window contamination generator and production
+fitting/inversion functions. Added hazard acts outside the generator's frailty
+depletion denominator. It changes mortality without selectively targeting the
+frailest individuals through that added component. We varied timing while
+holding the added-hazard profile fixed within each matched comparison.
+
+For an explicit benchmark, we removed the baseline depletion denominator while
+retaining the added mortality. If B is accumulated baseline hazard and G is
+accumulated added hazard after the same initial skip, the reference is:
+
+                         reference = (B + G) / B
+
+An anchored comparison divides both KCOR and this reference by their respective
+values at the same anchor. This benchmark tests a specified meaning of removing
+selection while retaining added mortality. It is not a death-count ratio, an
+externally established causal effect, or an automatic target guaranteed by
+KCOR's descriptive definition under arbitrary model violations.
+
+What the original experiment did and did not show
+------------------------------------------------
+The original experiment anchored at the first contaminated week. For its
+smallest fading effect, final KCOR was 1.112093 before anchoring and 0.941326
+after anchoring. But the matching reference was also below one after anchoring:
+0.950218. Thus a final anchored value below one did not, by itself, show that
+harm had been erased or turned into benefit.
+
+For all 24 nonzero original settings with smooth expected counts, whole-ratio
+errors against the matching raw and anchored references stayed below 1% over
+the tested post-skip trajectories. This is a favorable, bounded result. It
+does not imply equally small error relative to the added increment: for the
+smallest constant effect, the change in KCOR relative to its paired no-effect
+run recovered 81.9% of the reference's added contrast.
+
+Conclusion: the original test was not a demonstrated hidden reversal of harm.
+Its interpretation needed the correct target and anchoring convention. These
+corrections are part of the final assessment, not superseded by later failures.
+[Evidence: Steps 1-2.]
+
+What the timing extensions established
+-------------------------------------
+In the 200-week extensions, all following week numbers are after the original
+two-week skip. Baseline estimation uses weeks 0-3, the anchor is week 4, and
+the later fitting window is weeks 58-110. The initial cohort size is 50,000
+per group. The constant-effect example adds weekly hazard 0.0001 for 53 weeks.
+
+Effect placement                   Raw reference   Smooth-data KCOR
+Weeks 5-57: after baseline,
+  before the later fitting window       1.049735        1.057600
+Weeks 58-110: during later fitting      1.049735        1.029471
+Weeks 111-163: after later fitting      1.049735        1.057600
+Weeks 0-52: including early baseline    1.049735        1.349050
+
+The first three placements share a clean early baseline and anchor. Their
+comparison isolates overlap with the later fitting window. In the constant
+case, the during-window change relative to the no-effect result retains 49.4%
+of the reference added contrast. This is not a percentage of excess deaths
+detected. Harm is attenuated on that scale, not completely erased or reversed.
+
+Moving the same effect from weeks 5-57 to weeks 0-52 contaminates the early
+baseline estimate. The later quiet-window hazards, expected survivors, and
+expected deaths remain identical in the smooth-data comparison. The fitter
+then attributes higher early mortality to a higher baseline and fits more
+frailty to explain the subsequent lower hazard. The correction becomes much
+larger. Because the raw contrast is already distorted, anchoring cannot explain
+away this result. The anchor is also affected and needs its own matching target.
+
+The fading and combined profiles show the same qualitative timing mechanisms.
+These findings are conditional on the retained discrete generator, including
+its small no-effect discrepancy. The smooth no-effect KCOR is 1.004895, not
+exactly one. The mechanism does not model treatment-induced changes in frailty
+or selective epidemic mortality; no conclusion about those mechanisms follows.
+[Evidence: Steps 3 and 5.]
+
+What the diagnostic audit changed
+---------------------------------
+Fitter status 'ok' is not equivalent to passing the manuscript's diagnostics.
+The smooth cases overlapping the later window have strong, systematic fitting
+residuals and warrant flagging under the qualitative residual requirements
+audited in Step 4. They are not examples of failure passing the full protocol.
+Smooth early-baseline contamination also leaves residual patterns.
+
+The audited manuscript requirements do not supply a complete numerical
+acceptance classifier. We therefore introduced explicitly exploratory rules:
+a residual check, quiet-window boundary shifts, skipped-week sensitivity,
+fitted mortality-growth sensitivity, and corrected-curve linearity in
+Gompertz-transformed time. Cutoffs were calibrated on separate no-effect draws.
+They were fixed before evaluation and unchanged for the fresh validation.
+
+These rules do not cover every manuscript requirement. There is one quiet
+window, so omission of a window and coherence across windows cannot be tested.
+The optional epidemic module is inactive. Some perturbation magnitudes and all
+numerical cutoffs are choices of this investigation, not official universal
+manuscript tolerances. No overall 5% false-alarm rate was promised for their
+intersection. Moving the window earlier also reaches four harm weeks in the
+clean-baseline case; changing skipped weeks changes included follow-up.
+[Evidence: Steps 4, 6 and 7.]
+
+Fresh independent validation: the strongest finite-sample evidence
+----------------------------------------------------------------
+Step 8 used 200 new paired repetitions of each case, under the same generator,
+sample size, and fixed rules. The following values concern nominal raw
+contrasts among runs passing all implemented checks:
+
+Case                Reference  Passed all checks  Median estimate  >10% error*
+No added harm       1.000000     151/200 (75.5%)       1.047899       66/151
+Harm after baseline 1.049735     130/200 (65.0%)       1.103584       53/130
+Harm in baseline   1.049735     114/200 (57.0%)       1.309078       94/114
+
+*Absolute relative error in the raw contrast versus its matching reference.
+The 10% reporting threshold is exploratory, not a manuscript acceptance rule.
+
+For harm in the baseline weeks, the passing median is 24.7% above its reference.
+Of accepted runs, 82.5% have more than 10% error; 47% of all affected-baseline
+runs both pass and have that much error. The earlier evaluation gave 55%
+acceptance and a passing median of 1.309151, closely matching the fresh result.
+
+The checks reject 43% of affected-baseline runs, but also reject 24.5% of no-harm
+runs. They provide some discrimination, not assurance that accepted results
+are accurate. Individual estimates are also noisy without contamination:
+43.7% of accepted no-harm runs differ by more than 10% from their reference.
+That uncertainty must not be misattributed entirely to contamination.
+
+The paired timing comparison supports an additional distortion: before any
+diagnostic selection, moving harm into baseline weeks raises the estimate in
+199/200 fresh pairs. The median within-pair increase is 0.264373 contrast units.
+The cases share comparator draws and random streams within repetitions; they
+are 200 paired repetitions, not 600 independent comparisons.
+
+The fresh affected-baseline acceptance rate has a Wilson 95% simulation interval
+of 50.1-63.7%; the accepted-large-error rate has interval 74.4-88.3%. These
+intervals condition on the fixed cutoffs and do not include their calibration
+uncertainty. No interval-coverage or clinical-effect validation was performed.
+[Evidence: Steps 6-8; headline results from Step 8.]
+
+Disposition of the objection
+----------------------------
+1. The original anchored reversal interpretation is not supported and should
+   not be used as evidence against KCOR.
+2. Sensitivity to contamination of estimation periods is demonstrated for the
+   tested mechanism. It can attenuate or amplify the specified contrast.
+3. Reliable automatic detection is not established. Our implemented checks
+   accept many distorted results, including on fresh simulations. Neither the
+   smooth failures nor these exploratory passes establish a failure passing
+   every requirement of the complete manuscript procedure.
+4. Applicability to the actual study remains unresolved. The smallest constant
+   addition is about 22% of the initial baseline hazard scale and lasts 53 weeks;
+   the fading and combined additions are larger at onset. No empirical evidence
+   was used to label those profiles plausible or implausible in the application.
+   The experiment cannot attribute the added hazard to treatment versus an
+   environmental cause; it specifies its mathematical placement, not its origin.
+
+I would therefore retain objection 1 as a limitation of interpretation and
+validation, with the more precise evidence and qualifications above. I would
+not claim that KCOR is generally invalid, that every accepted result is wrong,
+or that the actual result has a quantified bias based on these simulations.
+
+Recommended manuscript response
+-------------------------------
+The justified response is to narrow the claims and report this evidence:
+- State that interpretation depends on assumptions about both the early
+  baseline-estimation weeks and the later quiet fitting windows.
+- Replace assurances of automatic detection or conservative behavior with the
+  conditional statement that diagnostics can reveal some violations but do not
+  establish that the inferred correction represents only pre-existing selection.
+- Define the reference quantity under each simulated violation, with the same
+  anchoring convention as the estimator. Report raw and anchored quantities
+  separately and distinguish whole-ratio error from recovery of an added effect.
+- Report acceptance together with error among accepted runs and rejection of
+  no-effect controls. Do not treat fitting success as full diagnostic acceptance.
+- Support any claim about real-data robustness with application-specific
+  evidence for the estimation periods and competing mechanisms. This requirement
+  remains outstanding; it is not supplied by our constructed profiles.
+
+Suggested wording for a response, not inserted into the manuscript:
+
+  We agree that fitting the assumed frailty model does not identify the origin
+  of a time-varying mortality pattern. In extensions of the contamination
+  experiment, an explicit benchmark retained added mortality while removing
+  baseline depletion. Overlap with later fitting attenuated the contrast,
+  whereas contamination of early baseline estimation amplified it. Some
+  smooth-data cases had clear residual warnings. With random deaths, a fixed
+  exploratory set of residual, stability, and shape checks nevertheless
+  accepted many materially distorted contrasts, and this persisted in fresh
+  simulations. These checks are not the complete manuscript protocol, and the
+  scenarios have not been established as plausible in the actual application.
+  The findings support conditional interpretation and do not support a general
+  guarantee that diagnostic acceptance establishes valid selection removal.
+
+Completion, evidence, and separation
+-----------------------------------
+All planned steps of this bounded investigation are complete. This final step
+adds no simulations and changes no cutoffs. No production fixes, manuscript
+edits, commits, or changes to prior experiments are included.
+
+Source reports and principal numerical artifacts, relative to KCOR critique:
+  step1_results_2026-11-09/assessment.txt
+  step2_results_2026-11-09/reference_comparison.csv
+  step3_results_2026-11-09/timing_results.csv
+  step4_results_2026-11-09/assessment.txt and diagnostic_mapping.csv
+  step5_results_2026-11-09/baseline_results.csv
+  step6_results_2026-11-10/summary.csv
+  step7_results_2026-11-10/summary.csv
+  step8_results_2026-11-10/summary.csv and verification.json
+
+The incomplete step6_results_2026-11-09 run is preserved but excluded from the
+numerical synthesis. Source provenance and extracted numerical evidence are
+recorded alongside this assessment in manifest.json and evidence.json.
+New code and artifacts remain separate under KCOR critique, reusing existing
+functions. Original code, configuration, saved outputs, and prior audit files
+remain unchanged.

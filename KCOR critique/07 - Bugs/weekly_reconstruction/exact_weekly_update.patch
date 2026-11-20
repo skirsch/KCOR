@@ -1,0 +1,20 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1453,7 +1453,7 @@
+         for i in post_idx:
+             H0_eff[i] = H_running
+             hi = float(h_arr[i]) if np.isfinite(h_arr[i]) else 0.0
+-            h0_i = hi * (1.0 + theta * H_running)
++            h0_i = (1.0 + theta * H_running) * (np.expm1(theta * hi) / theta if theta != 0 else hi)
+             H_running += max(h0_i, 0.0)
+ 
+         # 3b: compute incremental deltas at each gap end.
+@@ -1616,7 +1616,7 @@
+         for i in post_idx:
+             H0_eff[i] = H_running
+             hi = float(h_arr[i]) if np.isfinite(h_arr[i]) else 0.0
+-            H_running += max(hi * (1.0 + theta * H_running), 0.0)
++            H_running += max((1.0 + theta * H_running) * (np.expm1(theta * hi) / theta if theta != 0 else hi), 0.0)
+         cumulative_prev = 0.0
+         Delta = np.zeros_like(h_arr, dtype=float)
+         for gidx in gap_end_idx:

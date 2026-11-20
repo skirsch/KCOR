@@ -1,0 +1,22 @@
+[
+  {
+    "dataset": 0,
+    "point": 0.9604030890690597,
+    "person_lower": 0.8957404601815875,
+    "person_upper": 1.0158267252459807,
+    "person_covered": true,
+    "block_lower": 0.9787207087910853,
+    "block_upper": 1.1335698570128043,
+    "block_covered": true
+  },
+  {
+    "dataset": 1,
+    "point": 0.9726490150733326,
+    "person_lower": 0.9101405555942101,
+    "person_upper": 1.0577198592046417,
+    "person_covered": true,
+    "block_lower": 1.0364659120090767,
+    "block_upper": 1.2655623107643879,
+    "block_covered": false
+  }
+]

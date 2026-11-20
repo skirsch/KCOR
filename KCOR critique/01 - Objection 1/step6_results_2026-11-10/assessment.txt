@@ -1,0 +1,113 @@
+STEP 6: DO RANDOM DEATHS HIDE THE EARLY-BASELINE WARNING?
+Date: 2026-11-10 (America/Toronto)
+
+Finding
+-------
+At 50,000 initial people per group, this exploratory residual check does not
+reliably detect the previously demonstrated distortion from early-baseline
+contamination. It accepts 199/200 affected-baseline runs. Their median raw
+contrast is 1.345, compared with the specified reference of 1.050.
+
+This is evidence against relying on this particular residual check as a
+sufficient safeguard. It is not a test of the complete manuscript diagnostic
+procedure, and does not establish that the simulated harm occurred or was
+plausible in the actual application.
+
+Design
+------
+Reuse the original binomial death generator and production fitting/inversion
+functions. Retain the preceding experiment's 200-week follow-up, two-week skip,
+frailty values 0.5 and 4, and quiet window at rebased weeks 58-110.
+Compare three cases, with 200 paired evaluation repetitions each:
+  No effect: no added hazard.
+  Clean baseline: added weekly hazard 0.0001 during weeks 5-57.
+  Affected baseline: the same added hazard during weeks 0-52.
+Baseline estimation uses weeks 0-3. Both harm profiles end before the quiet
+window. They have the same integrated added hazard and raw reference contrast.
+The comparator draws/fits are identical within each repetition; affected-group
+cases share random seeds, but do not have identical realized death counts.
+
+Use 200 separate no-effect simulations to calibrate a residual check. Its score
+combines quiet-week residual scatter, average discrepancy, and time trend,
+standardized using binomial death-count variance. Take the worst component
+across both cohorts. Require fitting success and absence of specified fitter
+warning flags as well. The exact rule is recorded in design.json and the script.
+
+The 95th empirical percentile (higher order statistic) gives a frozen cutoff
+of 31.009394979566853. Calibration accepts 191/200. Evaluation uses a separate
+seed branch; the cutoff is not adjusted after seeing evaluation results.
+The independent no-effect evaluation accepts 188/200, a 94% acceptance rate.
+
+Results
+-------
+Case                 Reference  Accepted   Median among accepted  >10% error*
+No effect             1.000000   188/200        1.056816            98/188
+Clean baseline        1.049735   188/200        1.112121           101/188
+Affected baseline     1.049735   199/200        1.345126           163/199
+
+*Absolute relative error in the raw contrast versus its matching reference.
+The 10% threshold is an exploratory reporting convention, not a manuscript
+acceptance criterion. Rates among accepted runs are 52.1%, 53.7%, and 81.9%.
+For affected-baseline runs, 163/200 (81.5%) both pass and have >10% error.
+The affected-baseline median among accepted runs is 28.1% above its reference.
+
+Accepted-run 5th-95th percentiles of the raw estimates:
+  No effect:          0.829 to 1.345
+  Clean baseline:     0.872 to 1.424
+  Affected baseline:  1.018 to 1.759
+These are simulation distribution percentiles, not confidence intervals for
+an individual estimate. Even the no-effect case is imprecise at this cohort
+size under this fitting setup; large individual errors are not exclusively
+caused by contamination.
+
+The paired comparison helps separate the additional timing effect:
+affected-baseline estimates exceed clean-baseline estimates in 198/200 pairs.
+The median within-pair increase is 0.265591 contrast units, with 5th-95th
+percentiles 0.079957 to 0.353484. This uses all pairs, before diagnostic selection.
+
+Interpretation and limits
+-------------------------
+The visible residual pattern in expected-count data from Step 5 does not imply
+that this check detects it reliably in finite samples. Here the contaminated
+case passes more often than the clean cases. Diagnostic acceptance therefore
+does not rank these cases by accuracy. Why its residual-score distribution has
+a smaller upper tail requires further analysis; this run does not establish
+that mechanism.
+
+The reference removes baseline frailty depletion while retaining the added
+hazard. It is a stated mechanistic comparison, not a death-count ratio or an
+unqualified claim about KCOR's target under arbitrary model violations.
+All headline comparisons use raw final contrasts, before anchoring.
+
+This residual check is exploratory and calibrated for this particular synthetic
+null and cohort size. The study does not implement per-run window, skip, or
+gamma sensitivity, nor a formal near-zero-frailty rejection rule. It cannot
+establish acceptance by the complete manuscript procedure. Summary Wilson
+intervals measure simulation-rate uncertainty conditional on the frozen cutoff;
+they do not include uncertainty in calibrating the cutoff.
+
+Only one inherited constant-effect strength was tested. The initial addition is
+about 22% of the underlying initial mortality scale. No real-data plausibility
+assessment or general robustness claim follows from this constructed example.
+Objection 1 remains open. A sensible next bounded step is to determine whether
+the additional stated diagnostics distinguish these accepted, distorted runs
+from the accepted no-effect runs, with criteria specified before evaluating
+further simulations.
+
+Verification and reproducibility
+-------------------------------
+Command from C:\Users\jasmi\repo\KCOR-update:
+python -u "KCOR critique\step6_random_detection.py" --step5 "KCOR critique\step5_results_2026-11-09" --outdir "KCOR critique\step6_results_2026-11-10"
+
+Use a fresh output directory when repeating; the script refuses to overwrite.
+The preceding partial run in step6_results_2026-11-09 is preserved. Its process
+was no longer available and it had not saved evaluation outcomes. This complete
+rerun reproduces its calibration.csv, frozen_threshold.json, and deterministic
+replay file byte for byte, using the same script, design, and seed.
+
+Three deterministic Step 5 endpoints and references reproduce within specified
+tolerances before random trials. Independently checked: 600 unique case/rep
+rows, finite numeric outcomes, identical comparator fits within pairs, saved
+acceptance decisions and summary counts, and unchanged input/script hashes.
+The generated plot was visually inspected. Original production code,
+configuration, original outputs, and earlier audit artifacts remain unchanged.

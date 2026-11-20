@@ -1,0 +1,91 @@
+{
+  "phase": "smoke",
+  "n": 2,
+  "b": 19,
+  "block_length": 4,
+  "seed_offset": 50000,
+  "design": {
+    "version": 1,
+    "question": "Coverage of an explicit aggregate-block implementation of the manuscript's one-window joint fit and percentile interval",
+    "primary_scenario": "unequal_large",
+    "truth": 1.0,
+    "target_week": 52,
+    "anchor_week": 5,
+    "quiet_window_inclusive": [
+      6,
+      40
+    ],
+    "post_skip_week": 2,
+    "one_stratum_per_arm": true,
+    "optional_wave_module": false,
+    "block_length_primary_weeks": 4,
+    "block_length_sensitivity_weeks": 8,
+    "source_segments_inclusive": [
+      [
+        0,
+        5
+      ],
+      [
+        6,
+        40
+      ],
+      [
+        41,
+        99
+      ]
+    ],
+    "block_sampling": "For each target segment and arm, sample source starts uniformly with replacement from the same segment; concatenate contiguous source runs, truncating the last run to the target segment length.",
+    "risk_set_seam": "Fix each arm's original enrollment count. At each resampled target bin apply the source bin's deaths/at-risk fraction to the reconstructed current risk set, round to the nearest integer, cap at the current risk set, and decrement the risk set. This enforces N(t)=N(0)-sum of earlier deaths exactly.",
+    "fit": "Use the manuscript's joint k/theta least-squares objective in weeks 6-40, exact cumulative gamma inversion, and normalization by week-5 cumulative ratio. In this single-window no-wave setting, Step 4 has the same objective as Step 1 and no offset to align.",
+    "bootstrap_fit_starts": "Warm start theta at the original dataset's fitted theta; confirm against the four-start fit on a prespecified subset of draws and fall back to all starts on failure.",
+    "bootstrap_draws_pilot": 99,
+    "outer_datasets_pilot": 20,
+    "bootstrap_draws_main": 199,
+    "outer_datasets_main": 200,
+    "bootstrap_draws_sensitivity": 199,
+    "outer_datasets_sensitivity": 60,
+    "seed_namespace": 2026111401,
+    "interval": "Unadjusted 2.5th and 97.5th empirical percentiles of bootstrap KCOR at week 52",
+    "acceptance": "Report all datasets, optimizer success, finite intervals, boundary fits, and any diagnostic proxy separately. The manuscript does not give numeric thresholds for its full diagnostic pass rule; do not claim calibrated conditional-on-diagnostic-pass coverage.",
+    "decision": "A material coverage failure in the main version supports a failure of this version only. Agreement across prespecified block lengths strengthens the inference. Near-nominal coverage of a version does not validate the uniquely intended paper method or its missing diagnostic gate."
+  },
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_large",
+    "scope": "within_model",
+    "n": 1000000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "hashes": {
+    "objection3_paper_method\\block_bootstrap_operationalization\\run.py": "4823dc55a656cd7548c6a445bb320dfaf4d0aa4b3e6ad9710c9a72111b2f5e74",
+    "objection3_paper_method\\block_bootstrap_operationalization\\design.json": "997219e9d9badbd2b9eceb4b8f5bca771850a8119e95d4568383c6f1a4bef94e",
+    "objection3_paper_method\\paper_step1.py": "e5d2e98623755eb7c0d46bdfccad2c469e9b6dd409191e7d038d83a9c35617e2",
+    "objection3_corrected_validation\\simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "objection3_corrected_validation\\production_adapter.py": "c5b556724b98b24d1460b957e0d6203e8e5955767d44dfd764b1959670a4b1af",
+    "objection3_corrected_validation\\design.json": "71c9f821f2cefc1d1a7aff375131d834415155de2caf428f9563d6bdf69b2a16",
+    "objection3_resolution\\source_snapshot\\documentation\\preprint\\paper.md": "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a"
+  },
+  "python": "3.14.3",
+  "numpy": "2.4.4",
+  "workers": 1,
+  "created_utc": "2026-11-14T06:13:20.866786+00:00"
+}

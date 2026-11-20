@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "question": "On each identical model-consistent dataset, compare percentile intervals from the software's person-resampling Monte Carlo with the explicit aggregate-block implementation, holding the paper's joint fit fixed.",
+  "paired_block_run": "../block_bootstrap_operationalization/main",
+  "outer_datasets": 200,
+  "person_draws_per_dataset": 199,
+  "person_bootstrap": "Resample the original pooled people with replacement, preserving each person's arm and death week. Multinomial draws over arm-by-lifetime cells are mathematically the same resampling in compressed form. Total enrollment count is fixed; arm counts vary.",
+  "fit": "For both arms, use the paper's joint baseline-rate/frailty least-squares fit, exact cumulative gamma inversion, and week-5 normalized contrast at week 52.",
+  "interval": "2.5th and 97.5th percentiles of each dataset's 199 person-bootstrap estimates",
+  "bootstrap_seed_namespace": 2026411401,
+  "worker_count": 1,
+  "scope": "Paired resampling comparison under the paper joint point estimator. It does not claim the current production fixed-rate estimator equals the paper fit, and it cannot recover the manuscript's unspecified unique block algorithm or full diagnostic acceptance rule."
+}

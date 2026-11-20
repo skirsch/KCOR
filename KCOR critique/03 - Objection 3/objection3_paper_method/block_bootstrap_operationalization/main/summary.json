@@ -1,0 +1,42 @@
+{
+  "phase": "main",
+  "datasets": 200,
+  "draws_per_dataset": 199,
+  "block_length": 4,
+  "true_value": 1.0,
+  "nominal_coverage": 0.95,
+  "covered": 38,
+  "coverage": 0.19,
+  "coverage_wilson_95": [
+    0.14167171527790676,
+    0.25001238707599854
+  ],
+  "one_sided_binomial_p_vs_95": 3.0239061711548237e-171,
+  "lower_endpoint_above_truth": 162,
+  "upper_endpoint_below_truth": 0,
+  "point_outside_own_interval": 173,
+  "point_mean": 0.9976919896114947,
+  "point_sd": 0.03610368147020603,
+  "point_rmse": 0.03608719092111544,
+  "mean_bootstrap_median_minus_point": 0.1018787864843646,
+  "median_bootstrap_median_minus_point": 0.10252809702805543,
+  "mean_interval_width": 0.1516339230271882,
+  "failed_draws": 0,
+  "warm_start_check_mismatches": 0,
+  "original_theta_near_zero_by_arm": [
+    0,
+    71
+  ],
+  "both_original_theta_at_least_point01": 129,
+  "coverage_among_both_original_theta_at_least_point01": 0.16279069767441862,
+  "mean_fit_rmse_by_coverage": {
+    "covered": 4.397109687475546e-05,
+    "missed": 4.3178891862241495e-05
+  },
+  "bootstrap_theta_near_zero_by_arm": [
+    1882,
+    1001
+  ],
+  "total_bootstrap_draws": 39800,
+  "scope": "One explicit aggregate-block implementation of the manuscript outline, one window and one stratum. Full manuscript diagnostic-pass coverage is unavailable."
+}

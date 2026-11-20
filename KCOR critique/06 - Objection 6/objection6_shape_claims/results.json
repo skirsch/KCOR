@@ -1,0 +1,32 @@
+{
+  "model": "h0(t)=k exp(gamma t), Hobs=log(1+theta H0)/theta",
+  "k": 0.001,
+  "gamma_per_week": 0.0016346153846153847,
+  "curvature_identity": "Hobs''(t) = k exp(gamma t) (gamma-theta*k)/(1+theta*H0(t))^2",
+  "cases": [
+    {
+      "theta": 0.0,
+      "curvature_sign": 1,
+      "observed_hazard_start": 0.001,
+      "observed_hazard_end": 0.0010887170666983987,
+      "observed_midpoint_deviation_from_chord": -0.0005765741497306201
+    },
+    {
+      "theta": 1.6346153846153848,
+      "curvature_sign": 0,
+      "observed_hazard_start": 0.001,
+      "observed_hazard_end": 0.001,
+      "observed_midpoint_deviation_from_chord": 3.469446951953614e-18
+    },
+    {
+      "theta": 4.0,
+      "curvature_sign": -1,
+      "observed_hazard_start": 0.001,
+      "observed_hazard_end": 0.0008945203774145998,
+      "observed_midpoint_deviation_from_chord": 0.0006836414901914487
+    }
+  ],
+  "gompertz_baseline_52_week_midpoint_deviation_from_chord": -0.0005765741497306201,
+  "gompertz_baseline_52_week_midpoint_deviation_fraction_of_end_cumulative_hazard": -0.010623401004963765,
+  "baseline_hazard_increase_52_weeks": 0.08871706669839874
+}

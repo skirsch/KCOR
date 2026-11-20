@@ -1,0 +1,21 @@
+# Local artifacts from running review scripts
+__pycache__/
+*.pyc
+
+# Frozen draw files restored from the study archives
+/03 - Objection 3/objection3_corrected_validation/final_2026-11-10/**/[0-9]*.json
+/03 - Objection 3/objection3_corrected_validation/final_2026-11-10/**/[0-9]*.npz
+/03 - Objection 3/objection3_joint_fit_candidate/pilot/**/[0-9]*.json
+/03 - Objection 3/objection3_joint_fit_candidate/pilot/**/[0-9]*.npz
+/03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/main/**/[0-9]*.json
+/03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/main/**/[0-9]*.npz
+/03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/sensitivity/**/[0-9]*.json
+/03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/sensitivity/**/[0-9]*.npz
+/03 - Objection 3/objection3_paper_method/paired_resampling/main/**/[0-9]*.json
+/03 - Objection 3/objection3_paper_method/paired_resampling/main/**/[0-9]*.npz
+/03 - Objection 3/objection3_paper_method/saved_600/**/[0-9]*.json
+/03 - Objection 3/objection3_paper_method/saved_600/**/[0-9]*.npz
+/03 - Objection 3/objection3_resolution/development/reproduction_1000_iterations/production_age_rows.csv
+/03 - Objection 3/objection3_resolution/development/reproduction_1000_iterations/input.xlsx
+/03 - Objection 3/objection3_resolution/final_2026-11-10/**/[0-9]*.json
+/03 - Objection 3/objection3_resolution/final_2026-11-10/**/[0-9]*.npz

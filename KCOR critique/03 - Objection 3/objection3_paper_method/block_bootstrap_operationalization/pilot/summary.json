@@ -1,0 +1,36 @@
+{
+  "phase": "pilot",
+  "datasets": 20,
+  "draws_per_dataset": 99,
+  "block_length": 4,
+  "true_value": 1.0,
+  "nominal_coverage": 0.95,
+  "covered": 3,
+  "coverage": 0.15,
+  "coverage_wilson_95": [
+    0.052368745896216595,
+    0.36041886474075696
+  ],
+  "one_sided_binomial_p_vs_95": 7.522803306579704e-20,
+  "lower_endpoint_above_truth": 17,
+  "upper_endpoint_below_truth": 0,
+  "point_outside_own_interval": 18,
+  "point_mean": 1.0003379948770457,
+  "point_sd": 0.027200110675783727,
+  "point_rmse": 0.026513542959647033,
+  "mean_bootstrap_median_minus_point": 0.10450425615986489,
+  "median_bootstrap_median_minus_point": 0.10845532067727964,
+  "mean_interval_width": 0.15371842024789503,
+  "failed_draws": 0,
+  "warm_start_check_mismatches": 0,
+  "original_theta_near_zero_by_arm": [
+    0,
+    7
+  ],
+  "bootstrap_theta_near_zero_by_arm": [
+    86,
+    62
+  ],
+  "total_bootstrap_draws": 1980,
+  "scope": "One explicit aggregate-block implementation of the manuscript outline, one window and one stratum. Full manuscript diagnostic-pass coverage is unavailable."
+}

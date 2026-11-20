@@ -1,0 +1,38 @@
+{
+  "model_truth": 1.0,
+  "production": {
+    "params": [
+      {
+        "k": 0.0009842802858971752,
+        "theta": 3.7670070691320543,
+        "success": true,
+        "status": "ok"
+      },
+      {
+        "k": 0.000998005337061002,
+        "theta": 0.4720024130273005,
+        "success": true,
+        "status": "ok"
+      }
+    ],
+    "population_output": 1.0046145529025252
+  },
+  "early_k_replaced_with_generating_k": {
+    "params": [
+      {
+        "k": 0.001,
+        "theta": 4.399303783477034,
+        "success": true,
+        "status": "ok"
+      },
+      {
+        "k": 0.001,
+        "theta": 0.5476243721401478,
+        "success": true,
+        "status": "ok"
+      }
+    ],
+    "population_output": 0.992108902295752
+  },
+  "ablation_note": "For mechanistic diagnosis only; not a proposed estimator or coverage validation."
+}

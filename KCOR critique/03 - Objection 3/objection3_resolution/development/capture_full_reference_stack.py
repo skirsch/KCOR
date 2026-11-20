@@ -1,0 +1,1 @@
+exec('import faulthandler\nwith open(\'C:\\\\Users\\\\jasmi\\\\repo\\\\KCOR-update\\\\KCOR critique\\\\objection3_resolution\\\\development\\\\full_reference_stack.txt\', "x") as stream:\n    faulthandler.dump_traceback(file=stream)\n', {})

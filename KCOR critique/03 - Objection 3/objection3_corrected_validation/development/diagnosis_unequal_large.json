@@ -1,0 +1,72 @@
+{
+  "n": 600,
+  "truth": 1.0,
+  "fitted_population_output": 1.0046145529025252,
+  "population_output_minus_truth": 0.004614552902525215,
+  "point_mean": 1.0098587696071721,
+  "point_sd": 0.010579053673829757,
+  "point_quantiles": [
+    0.9880528524296752,
+    0.993186485614363,
+    1.0027193031661885,
+    1.0086958468101521,
+    1.0149112442321164,
+    1.0376559600176996,
+    1.0538809712744932
+  ],
+  "point_minus_truth_mean": 0.009858769607172274,
+  "theta_means": [
+    3.734138126071148,
+    0.5990116128669151
+  ],
+  "theta_medians": [
+    3.768889169367529,
+    0.4275388963377311
+  ],
+  "bootstrap_mean_minus_point_mean": 0.0034816391208568978,
+  "bootstrap_median_minus_point_mean": 0.0017491850951525635,
+  "bootstrap_median_above_point": 518,
+  "bootstrap_median_minus_point_quantiles": [
+    -0.004513500699830031,
+    -0.0010169698217398493,
+    0.00037146827123007986,
+    0.0013710795265914344,
+    0.002899085758484604,
+    0.005532151263443945,
+    0.007016360084120876
+  ],
+  "percentile_center_minus_point_mean": 0.008215578215514403,
+  "interval_width_mean": 0.04961765833500707,
+  "interval_width_quantiles": [
+    0.027031276924413872,
+    0.02833305791449716,
+    0.033959174973437645,
+    0.04762861517845218,
+    0.06223379899751949,
+    0.08335998267355177,
+    0.09236857544485622
+  ],
+  "percentile_coverage": 502,
+  "percentile_miss_below_truth": 0,
+  "percentile_miss_above_truth": 98,
+  "miss_gap_quantiles": [
+    2.404359807095524e-05,
+    0.00010635699473737217,
+    0.001537485680986328,
+    0.003662817333223156,
+    0.005748816690152869,
+    0.012682170183603946,
+    0.020734702576660213
+  ],
+  "basic_coverage": 586,
+  "percentile_coverage_fitted_population": 564,
+  "primary_misses_rescued_by_fitted_target": 63,
+  "percentile_coverage_after_subtracting_population_bias": 564,
+  "percentile_coverage_after_recentering_bootstrap_median": 524,
+  "prefix_coverage": 500,
+  "all_bootstrap_estimates_finite": true,
+  "all_original_accepted": true,
+  "all_bootstrap_fits_successful": true,
+  "all_saved_intervals_reconstructed": true,
+  "max_endpoint_reconstruction_error": 0.0
+}

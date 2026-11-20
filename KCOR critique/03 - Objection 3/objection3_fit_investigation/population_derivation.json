@@ -1,0 +1,60 @@
+{
+  "scenario": "unequal_large",
+  "scope": "exact expected counts; no sampling noise",
+  "source_sha256": "b5549264ef49de51f3569e53eb4e901541870598918ab5be5ebcdbf9823e019d",
+  "design_sha256": "71c9f821f2cefc1d1a7aff375131d834415155de2caf428f9563d6bdf69b2a16",
+  "model_truth": 1.0,
+  "production_population_output": 1.0046145529025252,
+  "arms": [
+    {
+      "arm": 0,
+      "generating_k": 0.001,
+      "generating_theta": 4.0,
+      "early_k_from_marginal_hazards": 0.0009842802858971752,
+      "production_theta": 3.7670070691320543,
+      "independent_fixed_k_theta": 3.7670070831082016,
+      "exact_model_at_generating_parameters_max_hazard_error": 1.0766127572781059e-16,
+      "approximate_model_at_generating_parameters_relative_rmse": 0.009342768766574784,
+      "approximate_model_at_production_parameters_relative_rmse": 0.0029311327730854406,
+      "joint_approximate_fit": {
+        "k": 0.0009901195058747562,
+        "theta": 4.003272579904858,
+        "max_abs_residual": 1.3137572626997773e-12,
+        "nfev": 6
+      },
+      "joint_exact_discrete_fit": {
+        "k": 0.001,
+        "theta": 4.0,
+        "max_abs_residual": 1.0766127572781059e-16,
+        "nfev": 4
+      }
+    },
+    {
+      "arm": 1,
+      "generating_k": 0.001,
+      "generating_theta": 0.5,
+      "early_k_from_marginal_hazards": 0.000998005337061002,
+      "production_theta": 0.4720024130273005,
+      "independent_fixed_k_theta": 0.4720023658448394,
+      "exact_model_at_generating_parameters_max_hazard_error": 9.6710833785707e-17,
+      "approximate_model_at_generating_parameters_relative_rmse": 0.0012434215859895498,
+      "approximate_model_at_production_parameters_relative_rmse": 0.0003832513573003626,
+      "joint_approximate_fit": {
+        "k": 0.0009987540237807215,
+        "theta": 0.5004089293104159,
+        "max_abs_residual": 6.562458909620261e-15,
+        "nfev": 5
+      },
+      "joint_exact_discrete_fit": {
+        "k": 0.001,
+        "theta": 0.5,
+        "max_abs_residual": 9.6710833785707e-17,
+        "nfev": 5
+      }
+    }
+  ],
+  "oracle_inversion_at_generating_theta": 0.999999999999992,
+  "inversion_at_joint_approximate_theta": 0.9999356452926512,
+  "inversion_at_joint_exact_discrete_theta": 0.999999999999992,
+  "note": "Counterfactual fits diagnose approximation; they are not validated replacement estimators."
+}

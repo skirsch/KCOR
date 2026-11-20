@@ -1,0 +1,14 @@
+{
+  "created_utc": "2026-11-10T03:43:51.984087+00:00",
+  "reference_definition": "Remove baseline depletion denominator; retain additive hazard. Q=(B+G)/B. Q_anchored=Q/Q(anchor). B,G start after the same skip as the experiment.",
+  "reference_scope": "Specified discrete generator only; not a ratio of death risks or a model-free causal estimate.",
+  "no_effect_raw_kcor": 1.006380260231776,
+  "no_effect_anchored_kcor": 1.0038225259272349,
+  "inputs": {
+    "KCOR critique\\step1_results_2026-11-09\\manifest.json": "5beff9ea33d473709bf5e35a94d44a7c815b79c1d3c973429193c3b9a99ccd0f",
+    "KCOR critique\\step1_results_2026-11-09\\expected_count_results.csv": "0cb9b93c9b00faec841ed9763fec83678a1243730e41c8bc0a9ffc79c37835c4",
+    "KCOR critique\\step1_results_2026-11-09\\expected_count_trajectories.csv": "5c4aa503438da95260ad5251b10c03e8210451b02e088387ffaa9adb1d482114"
+  },
+  "script_sha256": "ff9fd4fd3b9b34b93fd36dea15645a8e45dfa49f1b49956b59a19a8a3d5a5bb2",
+  "validation": "All 26 saved Step 1 settings read and verified; survival/log-hazard, null, anchoring, decomposition and endpoint checks passed. Original Step 1 sources match recorded hashes."
+}

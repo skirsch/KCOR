@@ -1,0 +1,11 @@
+requirement,pdf_reference,observed_evidence,assessment,limitation
+Small unstructured hazard residuals,"p14 section 2.6.2; p68 S5.2","53 of 53 residuals positive; pooled relative RMSE 14-30% in overlap cases",Clear qualitative warning under manuscript wording,No complete numerical tolerance or stochastic rejection rate specified
+Near-zero frailty boundary warning,p14 section 2.6.2,Affected-group estimate near zero in all three overlap cases,Warning under manuscript wording,Boundary alone is not proof of non-identifiability
+Window perturbation stability,p68 S5.3,Independent +/-4-week boundary shifts barely change final contrast,No instability demonstrated by this check,Stable misspecified fits are possible
+Post-normalization linearity,"p14 section 2.6.2; p58 Table S2",Ordinary-time R-squared above 0.995 in all three cases,No gross failure under that illustrative single metric,No universal cutoff; Gompertz cumulative hazard is not exactly linear in ordinary time
+Skip-week sensitivity,p68 S5.3,Exploratory skip 0 and 4 preserve contrast direction but change magnitude,Measured without assigning a formal pass,Selected magnitudes are not prescribed by the manuscript
+Gompertz-slope sensitivity,p68 S5.3,Exploratory +/-5% changes preserve contrast direction but change magnitude,Measured without assigning a formal pass,Selected magnitudes are not prescribed by the manuscript
+Multiple-window omission and coherence,"p58 Tables S2-S3; p68 S5.3",Only one fitted quiet window,Not assessable in this design,Do not equate absence of check with passing
+Delta offset plausibility,p58 Tables S2-S3,No multiple-window gaps in this design,Not applicable to the fitted setup,No test of wave-offset behavior
+Optional epidemic-module diagnostics,"p58 Table S2; p59 Table S3",Module inactive,Not applicable,No conclusions about epidemic correction
+All required diagnostics pass,"p58-p59 Table S3",Clear residual warnings despite fitter status ok,Full pass not established; qualitative paper checks warrant flagging,No calibrated complete numerical acceptance classifier inferred

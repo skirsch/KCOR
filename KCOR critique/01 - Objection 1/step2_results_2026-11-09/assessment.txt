@@ -1,0 +1,113 @@
+STEP 2: REFERENCE THAT RETAINS ADDED MORTALITY
+Date: 2026-11-09 (America/Toronto)
+
+Scope and separation
+--------------------
+This step reads Step 1's smooth expected-count trajectories for the same 26
+existing settings (including two duplicate null settings). It adds no timings,
+effect shapes, strengths, or random repetitions. Production code, original
+outputs, and Step 1 files remain unchanged. The extension is a separate script.
+
+Command from C:\Users\jasmi\repo\KCOR-update:
+python "KCOR critique\step2_contamination_reference.py" --step1 "KCOR critique\step1_results_2026-11-09" --outdir "KCOR critique\step2_results_2026-11-09"
+
+The expected reference
+----------------------
+The existing generator specifies weekly population hazard
+
+  h_j = b_j / (1 + theta * Bpre_j) + g_j,
+
+where b_j is baseline mortality, Bpre_j accumulates previous baseline increments,
+and g_j is the added mortality, independent of the frailty-depletion denominator.
+
+For this assessment, selection neutralization means removing that denominator
+while retaining the added component. Equivalently, evaluate the same generating
+schedule with theta=0 in BOTH groups. The treated reference hazard is b_j+g_j;
+the control reference hazard is b_j. This gives an explicit reference under which
+the added mortality is supposed to remain in the contrast.
+
+Accumulate B=sum(b_j) and G=sum(g_j) from the same post-skip origin as KCOR:
+
+  reference(t) = (B(t) + G(t)) / B(t)
+  anchored_reference(t) = reference(t) / reference(anchor).
+
+This is a chosen mechanistic benchmark for retaining added mortality while
+removing the generator's baseline selection. It is NOT a death-risk ratio, a
+death-count ratio, an externally established causal effect, or a claim that
+KCOR's descriptive definition alone guarantees recovery outside its model.
+Simply substituting the true theta into gamma inversion of the entire
+contaminated cumulative hazard would not define this reference.
+
+Results: smallest existing settings, at final follow-up
+------------------------------------------------------
+Scenario       Reference raw  KCOR raw  Reference anchored  KCOR anchored
+Fading             1.120206   1.112093        0.950218          0.941326
+Constant           1.081671   1.073276        1.036381          1.026249
+Combined           1.201877   1.194362        0.983055          0.974800
+
+Fading epsilon=0.0005; constant epsilon=0.0001; combined uses both.
+
+The correct anchored fading reference is itself below one. Thus the direction
+of the anchored result is not a failure for this benchmark. KCOR is close to the
+reference curve, but it is not exact. Across all 24 nonzero settings, final
+relative error in the whole raw ratio ranges from -0.776% to +0.382%; final
+relative error in the anchored ratio ranges from -0.978% to +0.112%.
+Over all post-skip time points and these settings, the absolute relative errors
+also remain below 1% in both versions. This descriptive result is not a
+prespecified acceptance threshold and does not establish general accuracy.
+
+Why whole-ratio error is not the only metric
+-------------------------------------------
+The fading example's expected raw excess above one is 0.120206, whereas KCOR's is
+0.112093: 93.25% of that excess. The raw no-contamination KCOR is already 1.006380,
+rather than exactly 1. Subtracting that no-contamination result, the effect-induced
+change in KCOR is 0.105712, or 87.94% of the reference added contrast.
+
+For the smallest constant case, the corresponding figures are 89.72% using the
+excess above one and 81.91% using the paired no-contamination comparison.
+For the smallest combined case, they are 96.28% and 93.12%.
+
+These percentages concern an increment in the specified cumulative-hazard
+contrast. They do NOT mean that those percentages of excess deaths are detected,
+or that the biological treatment hazard has been estimated to that accuracy.
+The paired metric accounts for the algorithm's existing null discrepancy; both
+metrics are retained so the choice is visible.
+
+Interpretation for objection 1
+------------------------------
+The existing smooth-data scenarios do not demonstrate that KCOR eliminates the
+added harmful effect or reverses its direction on the unanchored reference scale.
+Much of the earlier alarming interpretation arose from the wrong reference for
+the anchored quantity. There is still a measurable discrepancy, especially when
+expressed relative to the added contrast rather than the whole ratio.
+
+The status 'ok' and fitted-parameter behavior from Step 1 have not been redefined
+as proof that the manuscript's diagnostics passed. Parameter accuracy and output
+accuracy are distinct: fitted theta can be wrong while this particular contrast
+is close to the chosen benchmark.
+
+Limits
+------
+- The original low-frailty affected group, clean baseline-estimation weeks, and
+  original timing are retained. Other contamination placements are untested here.
+- These are deterministic expected-count calculations, not uncertainty or
+  coverage results from the 520 saved random repetitions.
+- The original discrete generator approximation is retained. The no-effect
+  discrepancy is reported explicitly rather than silently normalized away.
+- No plausibility judgment has been made about the tested hazard strengths.
+- This benchmark is explicit and scientifically interpretable, but does not
+  settle all possible intended targets under model violations.
+
+Verification
+------------
+All 26 Step 1 endpoints matched the saved trajectories. The original source
+hashes matched Step 1's manifest. Independent survival/log-hazard calculations
+matched the reference; the no-effect reference is exactly one; identical
+anchoring and the refitting decomposition identities passed. The generated
+figure was visually inspected. No original inputs were modified.
+
+Next bounded question
+---------------------
+Compare the same effect at different positions relative to a fixed estimation
+window. Define the comparison and keep its effect strength, duration and target
+explicit. Do not infer the answer from the current scenarios.

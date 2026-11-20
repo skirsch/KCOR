@@ -1,0 +1,5 @@
+mode,epsilon_dyn,epsilon_constant,max_abs_difference,matched
+dynamic,0.0,0.0,5.551115123125783e-17,True
+dynamic,0.0005,0.0,1.1102230246251565e-16,True
+comorbidity,0.0,0.0001,0.0,True
+combined,0.0005,0.0001,1.1102230246251565e-16,True

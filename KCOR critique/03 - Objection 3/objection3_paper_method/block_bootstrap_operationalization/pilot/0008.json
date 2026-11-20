@@ -1,0 +1,37 @@
+{
+  "dataset": 8,
+  "source_seed": 2026111409,
+  "bootstrap_seed": 2026511409,
+  "counts_sha256": "c242c787d577b2900caa1dd2c58b9265799a326af3f6cff94c2f2b307070a5ab",
+  "truth": 1.0,
+  "point": 0.9915354859463561,
+  "fits": [
+    {
+      "k": 0.0010143378133856333,
+      "theta": 5.016485365101805,
+      "objective": 3.587803597550501e-08,
+      "success": true,
+      "message": "`gtol` termination condition is satisfied."
+    },
+    {
+      "k": 0.0009978570340774884,
+      "theta": 0.5190253712331563,
+      "objective": 5.778923672662477e-08,
+      "success": true,
+      "message": "`gtol` termination condition is satisfied."
+    }
+  ],
+  "interval": [
+    1.0408231726739732,
+    1.181769858468654
+  ],
+  "covered": false,
+  "valid_draws": 99,
+  "failed_draws": 0,
+  "warm_start_check_mismatches": 0,
+  "theta_near_zero_draws": [
+    8,
+    0
+  ],
+  "bootstrap_median": 1.1095999895641775
+}

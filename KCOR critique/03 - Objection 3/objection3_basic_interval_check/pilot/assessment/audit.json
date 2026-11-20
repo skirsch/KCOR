@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "datasets": 80,
+  "retained_draws": 15920,
+  "reconstructed_intervals": true,
+  "seed_replays": [
+    {
+      "n": 4000000,
+      "repetition": 0,
+      "draws": 3
+    },
+    {
+      "n": 4000000,
+      "repetition": 39,
+      "draws": 3
+    },
+    {
+      "n": 16000000,
+      "repetition": 0,
+      "draws": 3
+    },
+    {
+      "n": 16000000,
+      "repetition": 39,
+      "draws": 3
+    }
+  ]
+}

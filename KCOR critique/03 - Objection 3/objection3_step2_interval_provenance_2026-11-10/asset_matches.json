@@ -1,0 +1,79 @@
+{
+  "image_pairs": [
+    {
+      "paper_asset": "documentation/preprint/figures/fig_pos_control_injected.png",
+      "test_asset": "test/positive_control/analysis/fig_pos_control_injected.png",
+      "sha256": "b9b55425f3547f4a8a9f1a3d4b87b806317cc2c5cf93db78c4d3d9ea6c123c09",
+      "identical": true
+    },
+    {
+      "paper_asset": "documentation/preprint/figures/fig_cox_bias_kcor_vs_theta.png",
+      "test_asset": "test/sim_grid/out/fig_cox_bias_kcor_vs_theta.png",
+      "sha256": "a601b09893aeda14c3832eae20fefc757878b57617f6da384e57aa4b812729a3",
+      "identical": true
+    },
+    {
+      "paper_asset": "documentation/preprint/figures/fig2_neg_control_10yr_age_diff.png",
+      "test_asset": "test/negative_control/analysis/neg_control_10yr_age_diff.png",
+      "sha256": "57bbba013c53b4d4887ecc438642d33a2e5df941eda410a1120a86a9d193bae8",
+      "identical": true
+    },
+    {
+      "paper_asset": "documentation/preprint/figures/fig3_neg_control_20yr_age_diff.png",
+      "test_asset": "test/negative_control/analysis/neg_control_20yr_age_diff.png",
+      "sha256": "7786eda886b84671682d15b2bdb17e7de2fd0b4c20dee4b726349ae5bce0fc61",
+      "identical": true
+    }
+  ],
+  "plot_function_checks": [
+    {
+      "source": "test/positive_control/code/plot_positive_control.py",
+      "function": "plot_positive_control",
+      "called_methods": [
+        "add_subplot",
+        "axhline",
+        "axvspan",
+        "capitalize",
+        "close",
+        "dirname",
+        "figure",
+        "get_ylim",
+        "grid",
+        "legend",
+        "makedirs",
+        "nanmax",
+        "nanmin",
+        "plot",
+        "savefig",
+        "set_title",
+        "set_xlabel",
+        "set_ylabel",
+        "set_ylim",
+        "suptitle",
+        "tight_layout"
+      ],
+      "review": "Function read directly: no interval calculation or confidence-band plotting; AST call inventory supports the read."
+    },
+    {
+      "source": "test/sim_grid/code/plot_cox_bias_sim.py",
+      "function": "plot_kcor_vs_theta",
+      "called_methods": [
+        "axhline",
+        "close",
+        "figure",
+        "grid",
+        "legend",
+        "plot",
+        "read_csv",
+        "savefig",
+        "sort_values",
+        "tight_layout",
+        "title",
+        "to_numpy",
+        "xlabel",
+        "ylabel"
+      ],
+      "review": "Function read directly: no interval calculation or confidence-band plotting; AST call inventory supports the read."
+    }
+  ]
+}

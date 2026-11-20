@@ -1,0 +1,49 @@
+{
+  "created": "2026-11-13T06:39:40.166495+00:00",
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_large",
+    "scope": "within_model",
+    "n": 1000000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "scenario_index": 2,
+  "repetitions": 60,
+  "draws": 199,
+  "seed_namespace": 672913,
+  "hashes": {
+    "objection3_joint_fit_candidate\\candidate_estimator.py": "716752e4c71d8f6b2cbe7ee7c363f3791d5fb9b63517516c6e9c05c949f4c338",
+    "objection3_joint_fit_candidate\\check_exact_population.py": "f026fb0be8d81c387d2afd04507251e415e0e2bc21763f14532f6451c084be7d",
+    "objection3_joint_fit_candidate\\conditional_fit.py": "34205a38c6c7aa3123b26429a836beb2fd3136e3968edd286b808192ce780adb",
+    "objection3_joint_fit_candidate\\run_pilot.py": "ccf1695ed3a97282456e87653798449c28f0f742ba6e6a82e79f61afc270a3a4",
+    "objection3_joint_fit_candidate\\DESIGN.md": "70118136d256859509c3bef4ea8627210993d5fbc073717c89816d0fdd7432bd",
+    "objection3_corrected_validation\\simulation.py": "53f235d2cf46d5a89ed5f9368a82da51d935b375ca0f05b9bda06e22ce427aec",
+    "objection3_corrected_validation\\production_adapter.py": "6c127a83b9891a92101f14103702f448f18b4e94452a862845a254792bcc7a7f",
+    "objection3_corrected_validation\\design.json": "71c9f821f2cefc1d1a7aff375131d834415155de2caf428f9563d6bdf69b2a16",
+    "objection3_corrected_validation\\source_snapshot\\code\\KCOR.py": "b5549264ef49de51f3569e53eb4e901541870598918ab5be5ebcdbf9823e019d",
+    "objection3_corrected_validation\\source_snapshot\\data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266"
+  },
+  "python": "3.14.3",
+  "numpy": "2.4.4",
+  "scipy": "1.17.1",
+  "workers": 1
+}

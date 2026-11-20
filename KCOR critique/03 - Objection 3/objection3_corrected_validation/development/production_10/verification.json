@@ -1,0 +1,430 @@
+{
+  "checks": "passed",
+  "max_curve_errors": [
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16,
+    4.440892098500626e-16
+  ],
+  "truth": 1.0,
+  "total_iterations": 10,
+  "points": [
+    1.0179099057535868,
+    1.0015725858715965,
+    1.0179904930254462,
+    0.9785067815356537,
+    0.9957125228596049,
+    1.1199786712972897,
+    1.0274142697542439,
+    1.0161643174743131,
+    1.0837994752464088,
+    0.9562673273429214
+  ],
+  "diagnostics": [
+    [
+      {
+        "k": 0.0009072104363492654,
+        "theta": 1.869665212863747,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.000990745891192679,
+        "theta": 0.8983489310218848,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0009231843400685557,
+        "theta": 4.850558296120122,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.001044639444761221,
+        "theta": 2.4179684674880906,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0009041504084345545,
+        "theta": 2.685389975780132,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0011010815231312933,
+        "theta": 6.167800586529655,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.000880439560078247,
+        "theta": 1.7229087090625015,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0010879487584900553,
+        "theta": 2.7501896010623446,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.001025180126640725,
+        "theta": 7.358157472127015,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0009979070726553088,
+        "theta": 0.7706603511360508,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0008784870579449809,
+        "theta": 1.2737272801903041,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.000889664226364762,
+        "theta": 1e-10,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0009178645404575793,
+        "theta": 2.5066264204096704,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0010154656238813805,
+        "theta": 2.3965360742959517e-08,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0008464495097249745,
+        "theta": 8.570568478104713e-07,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0009461338856728608,
+        "theta": 0.9265351104054276,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.0009117507677142229,
+        "theta": 3.029060639799864,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0009814440372220845,
+        "theta": 1.4067321073938859,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ],
+    [
+      {
+        "k": 0.000801317720722849,
+        "theta": 1e-10,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      },
+      {
+        "k": 0.0009657889093529536,
+        "theta": 0.07188116866131493,
+        "success": true,
+        "status": "ok",
+        "message": "ok",
+        "degenerate": false,
+        "flags": {
+          "identifiability_flag": false,
+          "insufficient_signal": false,
+          "insufficient_deaths": false,
+          "bad_fit": false,
+          "theta_hit_bound": false,
+          "delta_negative_clamped": false
+        }
+      }
+    ]
+  ],
+  "seconds_per_estimate": 0.014583866000175477,
+  "config": {
+    "gompertz": {
+      "gamma_per_year": 0.085,
+      "k_anchor_weeks": 4,
+      "gamma_per_week": 0.0016346153846153847,
+      "k_anchor_tolerance": 0.2,
+      "convergence_tol": 1e-08,
+      "max_iterations": 25
+    },
+    "guards": {
+      "min_quiet_deaths": 30,
+      "theta0_max": 100.0,
+      "bad_fit_relrmse_threshold": 100000.0,
+      "action": "set_zero"
+    },
+    "skip": 2,
+    "anchor": 5,
+    "windows": [
+      {
+        "start_iso": "2021-30",
+        "end_iso": "2022-12",
+        "start_int": 202130,
+        "end_int": 202212
+      }
+    ],
+    "optional_wave_adjustment": false
+  },
+  "scenario": {
+    "k": 0.001,
+    "weeks": 100,
+    "target": 52,
+    "windows": [
+      [
+        6,
+        40
+      ]
+    ],
+    "effect_window": [
+      44,
+      51
+    ],
+    "arm_weights": [
+      0.5,
+      0.5
+    ],
+    "id": "unequal_frailty",
+    "scope": "within_model",
+    "n": 100000,
+    "theta": [
+      4.0,
+      0.5
+    ]
+  },
+  "source_sha256": {
+    "KCOR critique\\objection3_corrected_validation\\source_snapshot\\code\\KCOR.py": "b5549264ef49de51f3569e53eb4e901541870598918ab5be5ebcdbf9823e019d",
+    "KCOR critique\\objection3_corrected_validation\\source_snapshot\\code\\KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "KCOR critique\\objection3_corrected_validation\\source_snapshot\\data\\Czech\\Czech.yaml": "d6a638187063cd3b04159dc4d07fb95d6dabf6466afe3abd3ab3de4726f58266"
+  }
+}

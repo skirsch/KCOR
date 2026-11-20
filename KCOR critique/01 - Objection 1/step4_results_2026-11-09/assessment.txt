@@ -1,0 +1,164 @@
+STEP 4: MANUSCRIPT DIAGNOSTICS VERSUS THE TESTED OVERLAP CASES
+Date: 2026-11-09 (America/Toronto)
+
+Main conclusion
+---------------
+The overlapping-effect cases from Step 3 show distortion, but they do NOT
+demonstrate a wrong result that passes the full manuscript diagnostic procedure.
+They have conspicuous residual patterns of the kind the manuscript says should
+signal model inadequacy. Under a faithful qualitative application of those
+requirements, these cases warrant flagging rather than normal interpretation.
+
+The current numerical fitter nevertheless returns 'ok'. That is a mismatch
+between this software status and the manuscript's broader diagnostic standard,
+not proof that the whole standard has been passed. No production code was changed.
+
+Manuscript version and requirements
+-----------------------------------
+Source: the retained 78-page KCOR critique/KCOR.pdf, identified by its SHA-256 in
+manifest.json, rather than a newer online manuscript or the current editable text.
+Relevant complete pages were extracted; pages 14, 58, 59 and 68 were rendered and
+visually checked, including table continuations and equations.
+
+Pages 7-8, sections 2.1.2-2.1.3:
+Interpretation requires stable parameters, suitable normalized shape, and absence
+of systematic residual structure. If no candidate window meets the criteria,
+results should not be reported as interpretable contrasts.
+
+Page 14, section 2.6.2:
+Requires small, unstructured hazard residuals, post-normalization shape checks,
+parameter/window stability, and consideration of near-zero frailty estimates as
+a weak-identification warning.
+
+Pages 58-59, Tables S2-S3:
+Lists the checks and an all-required-diagnostics rule. Failure should lead to
+non-identification and withheld interpretation. Optional epidemic-module checks
+apply only when that module is used.
+
+Page 68, sections S5.2-S5.3:
+Residuals should be approximately random around zero, without strong patterns or
+autocorrelation. Quiet-window boundaries should be perturbed by +/-4 weeks.
+Window omission, skip-week sensitivity, and modest Gompertz-slope sensitivity
+are also described.
+
+These sections do not provide a complete set of numerical pass/fail tolerances
+for 'small', 'modest', or 'approximately linear'. Accordingly, this audit does
+not invent cutoffs or assign a calibrated universal diagnostic-pass label.
+
+Observed checks
+---------------
+                                   Fading       Constant     Combined
+Pooled relative hazard RMSE          21.86%        14.13%        30.35%
+Positive residual weeks             53/53         53/53         53/53
+First quiet-week relative residual  44.55%        15.70%        50.08%
+Last quiet-week relative residual    2.85%        13.56%        17.53%
+Fitted theta                         ~0            ~0            ~0
+Fitter's reported status              ok            ok            ok
+
+A positive residual means the fitted hazard is LOWER than the observed simulated
+hazard. This is a persistent mismatch, not random scatter about zero. The no-
+effect control and clean-window cases have pooled relative error about 0.0109%.
+
+The quoted RMSE is the square root of the mean squared residual divided by the
+observed hazard, over the pooled fit set (quiet window plus early anchor weeks),
+matching the fitter's definition. The 53/53 counts and endpoints concern only
+the quiet window. These are smooth expected-count data, so no stochastic
+significance test or false-acceptance probability is claimed.
+
+Near-zero theta is a warning under the manuscript's own wording. Scientifically,
+a boundary estimate alone does not establish non-identifiability; that warning
+is supplementary to the direct and substantial lack of fit here.
+
+Which checks can look reassuring despite the distortion?
+--------------------------------------------------------
+Window boundaries were independently moved by -4, 0, or +4 weeks (nine fits per
+case). The affected group's frailty remained essentially zero. Final raw KCOR:
+
+  Fading:   1.052922 to 1.053231
+  Constant: 1.029327 to 1.029629
+  Combined: 1.102931 to 1.103254
+
+The estimator is therefore stable under these perturbations even though its
+fit is inadequate. Stability is not a substitute for residual review.
+
+Quiet-window cumulative-hazard R-squared against ordinary time was approximately
+0.99644, 0.99994 and 0.99733. All would exceed 0.995 if that value were used as a
+standalone rule. This is NOT a full diagnostic-pass conclusion. The high values
+illustrate why a nearly straight cumulative curve alone is insufficient.
+
+The manuscript's baseline is Gompertz, whose cumulative hazard is not exactly
+linear in ordinary time. We also computed linearity against Gompertz-transformed
+time rather than silently declaring the ordinary-time check a universal test.
+Corresponding R-squared values were approximately 0.99502, 0.99999 and 0.99609.
+
+Additional exploratory sensitivity
+----------------------------------
+Following the types of checks on page 68, we also fitted the SAME physical death
+schedule using skip=0 or 4 (instead of 2) and gamma +/-5%. Those amounts were
+chosen for this audit; the paper does not prescribe them. The fitting windows
+remain at the same physical weeks when skip changes. No model-generation
+parameters or effect schedules were changed.
+
+These checks preserved positive final contrasts and near-zero affected-group
+frailty for overlap cases, while altering the numerical contrast. Their ranges
+are saved in perturbation_ranges.csv. They are sensitivity measurements, not
+formal passes under invented tolerances.
+
+Checks that cannot be established here
+-------------------------------------
+- There is only one quiet window. Leave-one-window-out and cross-window offset
+  coherence cannot be assessed meaningfully without changing the design.
+- Optional epidemic correction is inactive, so its identification checks do
+  not apply.
+- No empirical external information is used to declare these windows quiet.
+- Random-data diagnostic acceptance rates and interval coverage remain untested.
+
+What the code enforces
+----------------------
+Current code/KCOR.py:
+- fit_theta0_gompertz reads bad_fit_relrmse_threshold at line 1160.
+- The supplied configuration resolves it to the default 100000 (1e5), as shown
+  by get_theta_degenerate_fit_config around line 2220.
+- The rejection/fallback comparison is around line 1698. Errors of 0.14-0.30
+  do not exceed this threshold.
+- The identifiability flag around line 1639 is based on few fitting points or
+  a small model cumulative-hazard span. It does not itself flag the near-zero
+  lower boundary in these cases. The bound check around line 1653 is an UPPER-
+  bound check. The workbook status mapping around line 7098 relies on these
+  reported flags and fitting success.
+- We did not execute the full workbook path or claim to audit every external
+  analysis procedure. This scope is the fitter used in our experiment and the
+  located status/diagnostic code.
+
+A separate empirical-window scan does contain a pass classifier:
+test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py.
+It uses at least 30 points, R-squared >=0.995, theta<100, and a cumulative-hazard
+RMSE cutoff at the 75th percentile of that scan's eligible fits (lines 12-15 and
+243-257). It uses its own constant-baseline cumulative-hazard fitting function,
+not the current Gompertz fitter used here. Those dataset-relative thresholds
+cannot be imported as a universal diagnostic gate for this experiment. We have
+not claimed that these cases pass that separate scan's full classifier.
+
+Conclusion for objection 1
+--------------------------
+Our current examples establish that overlap can distort the fitted correction.
+They also show visible evidence of inadequacy that the manuscript explicitly
+asks analysts to inspect. Thus they support a need to enforce/document the
+diagnostic procedure, but do not yet establish that a plausible effect can
+materially distort the result while satisfying that procedure.
+
+The general mathematical ambiguity remains, but these particular cases are not
+evidence of hidden failure under all of the paper's stated checks. Whether the
+signals would be reliably detected with finite random data is a separate question.
+
+Artifacts and verification
+--------------------------
+Command:
+python "KCOR critique\step4_diagnostic_audit.py" --step3 "KCOR critique\step3_results_2026-11-09" --outdir "KCOR critique\step4_results_2026-11-09"
+
+All 10 nominal Step 3 cases were reproduced, including fitted parameters, final
+contrasts and reported relative RMSE. Independent residual reconstruction matched
+the fitter. There were 52 diagnostic perturbation fits (four cases, each with
+nine window-boundary, two skip and two gamma settings); all returned 'ok'.
+Source/input hashes remained unchanged. The residual plot was visually inspected.
+All new code and artifacts remain separate under KCOR critique.

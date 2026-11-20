@@ -1,0 +1,10 @@
+{
+  "original_sha256": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+  "patched_sha256": "b5549264ef49de51f3569e53eb4e901541870598918ab5be5ebcdbf9823e019d",
+  "test_sha256": "4bdafe42895bbf90d000a7ab320b62f5014aa13e8f1e7f86bb8f20fa9e488e49",
+  "original_modified": false,
+  "patch_files": [
+    "code/KCOR.py",
+    "test/monte_carlo/test_sample_isolation.py"
+  ]
+}

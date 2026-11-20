@@ -1,0 +1,17 @@
+{
+  "checks": "passed",
+  "datasets": 4800,
+  "retained_bootstrap_draws": 4795200,
+  "seed_replays": 16,
+  "replayed_bootstrap_estimates": 128,
+  "execution_hashes_checked": 13,
+  "original_execution_hashes_unchanged": true,
+  "original_module_sources_unchanged": true,
+  "scenarios_and_statistical_rules_unchanged": true,
+  "fresh_final_seeds": true,
+  "production_comparison_samples": 10,
+  "production_max_curve_error": 4.440892098500626e-16,
+  "unchanged_person_bootstrap_verification_reused": true,
+  "conditional_gate_and_denominators_rechecked": true,
+  "all_intervals_reconstructed": true
+}

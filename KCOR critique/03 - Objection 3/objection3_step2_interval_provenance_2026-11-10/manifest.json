@@ -1,0 +1,42 @@
+{
+  "created_utc": "2026-11-10T22:12:24.943177+00:00",
+  "scope": "Read-only code and asset provenance audit; no new simulation or source changes",
+  "source_hashes": {
+    "Makefile": "42a9e39f30a1b61839cc6e1ffc18a14895a2a9b65973780c5995001ab3f02c00",
+    "code/Makefile": "fb36efdf96419a0193bebdb568a26c0074fa4ae156c2799b63ee1b86da3317d1",
+    "code/KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef",
+    "code/KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+    "paper.md": "60d1518422eaa794fac4a104ddaecab24bdf376edb0fee818de00923163891bd",
+    "supplement.md": "0914eb21bb1bb63546a004876dec1e5974f9aec9bb5f4fa6eabb8a63a817b6ef",
+    "documentation/preprint/paper.md": "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a",
+    "documentation/preprint/supplement.md": "dc24e25ef100937b715ed002fe1efd5bbd2d55184fad312eecb70d2d06036e90",
+    "test/negative_control/Makefile": "69748e7806b3eeaa5e12c87e778dc82b4e4873a415c5a9ef83d3d778cb607e17",
+    "test/negative_control/README.md": "315b30256acba770d3a9ef1cdf903ca76197684814e03228b872dc9a92a62ee8",
+    "test/negative_control/out/KCOR_summary_neg_control.log": "5d784e5c366a5b43b619e6eb55180c768e701ae9022a43881262a795d7ec17e9",
+    "test/positive_control/Makefile": "10ad2ea6d41c7a297ce26c919ee139d2a602172ab0f0cf379305533d928aa0c8",
+    "test/positive_control/code/plot_positive_control.py": "b618bc3fc66dacb9167d90815d00e35fb06e63fc65320862ed5927a0231cf667",
+    "test/sim_grid/Makefile": "b8e11ff5771f7c3f59e5bd71dee3b6b9752ee6a21ba062ced04152cf9fe80a3e",
+    "test/sim_grid/code/plot_cox_bias_sim.py": "cf9332160d7648e6f364d86edc548144407c7bc364ef78ceb79926310c45135f",
+    "documentation/preprint/figures/fig_pos_control_injected.png": "b9b55425f3547f4a8a9f1a3d4b87b806317cc2c5cf93db78c4d3d9ea6c123c09",
+    "test/positive_control/analysis/fig_pos_control_injected.png": "b9b55425f3547f4a8a9f1a3d4b87b806317cc2c5cf93db78c4d3d9ea6c123c09",
+    "documentation/preprint/figures/fig_cox_bias_kcor_vs_theta.png": "a601b09893aeda14c3832eae20fefc757878b57617f6da384e57aa4b812729a3",
+    "test/sim_grid/out/fig_cox_bias_kcor_vs_theta.png": "a601b09893aeda14c3832eae20fefc757878b57617f6da384e57aa4b812729a3",
+    "documentation/preprint/figures/fig2_neg_control_10yr_age_diff.png": "57bbba013c53b4d4887ecc438642d33a2e5df941eda410a1120a86a9d193bae8",
+    "test/negative_control/analysis/neg_control_10yr_age_diff.png": "57bbba013c53b4d4887ecc438642d33a2e5df941eda410a1120a86a9d193bae8",
+    "documentation/preprint/figures/fig3_neg_control_20yr_age_diff.png": "7786eda886b84671682d15b2bdb17e7de2fd0b4c20dee4b726349ae5bce0fc61",
+    "test/negative_control/analysis/neg_control_20yr_age_diff.png": "7786eda886b84671682d15b2bdb17e7de2fd0b4c20dee4b726349ae5bce0fc61"
+  },
+  "deliverable_hashes": {
+    "assessment.txt": "afdc568c68884c11ad607d658ff72ebc04b5378bd2d80d5d82de110ef0384c48",
+    "asset_matches.json": "f8b1d08b74d79437b67327637e89bfc8c04bd5adea0636d91e63a21406b3f85f"
+  },
+  "unresolved": [
+    "Exact producing runs for Table 8 intervals",
+    "Historical PDF-build provenance",
+    "Complete mapping of all published bands and numerical intervals"
+  ],
+  "root_build_source_equal": {
+    "paper.md": false,
+    "supplement.md": false
+  }
+}

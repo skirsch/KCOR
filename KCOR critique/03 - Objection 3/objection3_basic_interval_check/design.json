@@ -1,0 +1,9 @@
+{
+  "outer_repetitions_per_size": 40,
+  "bootstrap_draws": 199,
+  "seed_namespace": 663809,
+  "cohort_sizes": [4000000, 16000000],
+  "scenario_source": "../objection3_corrected_validation/design.json:common + unequal_large",
+  "worker_count": 1,
+  "purpose": "Exploratory basic-versus-percentile coverage as cohort size increases"
+}

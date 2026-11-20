@@ -1,0 +1,26 @@
+{
+  "n": 600,
+  "truth": 1.0,
+  "paper_joint_step1": {
+    "mean": 1.0056696136746108,
+    "sd": 0.038076557426169014,
+    "mean_error": 0.0056696136746108355,
+    "rmse": 0.03846494990167845,
+    "minimum": 0.9044914990150879,
+    "maximum": 1.1202621285162342
+  },
+  "tested_fixed_rate_code": {
+    "mean": 1.0098587696071721,
+    "sd": 0.010579053673829757,
+    "mean_error": 0.009858769607172274,
+    "rmse": 0.014454244619027485,
+    "minimum": 0.9880528524296752,
+    "maximum": 1.0538809712744932
+  },
+  "paper_fit_successes": 600,
+  "theta_near_zero_by_arm": [
+    0,
+    152
+  ],
+  "scope": "point estimates, one quiet window; no manuscript bootstrap or full diagnostic gate"
+}

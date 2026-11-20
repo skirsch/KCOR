@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "independent_datasets": 60,
+  "retained_bootstrap_draws": 11940,
+  "reconstructed_intervals": true,
+  "seed_replays": [
+    {
+      "repetition": 0,
+      "checked_bootstrap_draws": 3
+    },
+    {
+      "repetition": 59,
+      "checked_bootstrap_draws": 3
+    }
+  ]
+}

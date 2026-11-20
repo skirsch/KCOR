@@ -1,0 +1,25 @@
+{
+  "model": "Gamma-frailty survival with k=.001, gamma=.085/52, skip=2",
+  "identity": "Delta H0 = (1+theta*H0_before)*expm1(theta*h_obs)/theta",
+  "paper_update": "Delta H0 = (1+theta*H0_before)*h_obs",
+  "arms": [
+    {
+      "theta": 4.0,
+      "max_relative_weekly_increment_error": 0.00198285583586566,
+      "relative_cumulative_error_week_52": -0.0020577081980335294,
+      "exact_cumulative_week_52": 0.05272194209731114,
+      "approximate_cumulative_week_52": 0.05261345572484125
+    },
+    {
+      "theta": 0.5,
+      "max_relative_weekly_increment_error": 0.0002780490073419628,
+      "relative_cumulative_error_week_52": -0.0002602096633004221,
+      "exact_cumulative_week_52": 0.053089725149878905,
+      "approximate_cumulative_week_52": 0.05307591069037294
+    }
+  ],
+  "source_sha256": {
+    "documentation\\preprint\\paper.md": "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a",
+    "code\\KCOR.py": "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef"
+  }
+}

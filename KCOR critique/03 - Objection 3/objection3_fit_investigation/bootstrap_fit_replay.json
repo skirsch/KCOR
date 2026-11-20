@@ -1,0 +1,113 @@
+[
+  {
+    "repetition": 0,
+    "original_point": 1.0111569195345709,
+    "original_theta": [
+      2.5333727668171435,
+      1.3004256047742386
+    ],
+    "percentile_interval": [
+      0.9980164284235966,
+      1.0277211449363666
+    ],
+    "percentile_covers_truth": true,
+    "bootstrap_draws": 999,
+    "max_replay_point_error": 0.0,
+    "bootstrap_point_quantiles": [
+      0.9895586514132743,
+      0.9980164284235966,
+      1.0067614183135318,
+      1.0118990999659734,
+      1.016922059021767,
+      1.0277211449363666,
+      1.0597945225098386
+    ],
+    "bootstrap_point_mean": 1.012109345527846,
+    "bootstrap_theta1_near_zero": 80,
+    "bootstrap_theta1_quantiles": [
+      1e-10,
+      3.370709014640828e-09,
+      0.6612361586941521,
+      1.2115583013186844,
+      1.8481777985889654,
+      3.0204512489164186,
+      4.015224554950426
+    ],
+    "correlation_point_theta0": -0.030568181483684426,
+    "correlation_point_theta1": -0.05026379390200475
+  },
+  {
+    "repetition": 7,
+    "original_point": 1.0167253783727592,
+    "original_theta": [
+      2.9750873495455292,
+      5.11112553186981e-07
+    ],
+    "percentile_interval": [
+      1.003608569844908,
+      1.0641540697392837
+    ],
+    "percentile_covers_truth": false,
+    "bootstrap_draws": 999,
+    "max_replay_point_error": 0.0,
+    "bootstrap_point_quantiles": [
+      0.9869821689033946,
+      1.003608569844908,
+      1.0133659600571434,
+      1.021000010209905,
+      1.0310554948010264,
+      1.0641540697392837,
+      1.098467624328749
+    ],
+    "bootstrap_point_mean": 1.0242404367094098,
+    "bootstrap_theta1_near_zero": 542,
+    "bootstrap_theta1_quantiles": [
+      1e-10,
+      1e-10,
+      4.378043584344722e-09,
+      9.024587324307299e-07,
+      0.540830975129238,
+      1.6812377279251178,
+      2.5303903003789654
+    ],
+    "correlation_point_theta0": -0.06464977635087048,
+    "correlation_point_theta1": -0.3650416209745941
+  },
+  {
+    "repetition": 171,
+    "original_point": 1.0166507567041765,
+    "original_theta": [
+      3.184040448305668,
+      0.16695903584943564
+    ],
+    "percentile_interval": [
+      1.0057578297724532,
+      1.060789707897519
+    ],
+    "percentile_covers_truth": false,
+    "bootstrap_draws": 999,
+    "max_replay_point_error": 0.0,
+    "bootstrap_point_quantiles": [
+      0.9935803571487517,
+      1.0057578297724532,
+      1.0151761976472196,
+      1.021548207673145,
+      1.0295282954348313,
+      1.060789707897519,
+      1.0844365392045456
+    ],
+    "bootstrap_point_mean": 1.0242568415591542,
+    "bootstrap_theta1_near_zero": 435,
+    "bootstrap_theta1_quantiles": [
+      1e-10,
+      1e-10,
+      1.6173364640752782e-08,
+      0.17255787343619666,
+      0.7321602485435232,
+      1.8176619088645922,
+      3.479174384434874
+    ],
+    "correlation_point_theta0": 0.005229932408910569,
+    "correlation_point_theta1": -0.3476673213657864
+  }
+]

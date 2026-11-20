@@ -1,0 +1,140 @@
+STEP 5: CONTAMINATION OF THE EARLY BASELINE-ESTIMATION WEEKS
+Date: 2026-11-09 (America/Toronto)
+
+Main finding
+------------
+Moving the same added-mortality profile five weeks earlier, into the weeks used
+to estimate baseline mortality, can greatly amplify the corrected contrast in
+this simulator. This occurs even though the later quiet-window observations and
+the total added mortality are unchanged. Systematic fit residuals remain visible;
+these are not established examples passing the full manuscript diagnostic rules.
+
+Design
+------
+All week numbers below are rebased after the original two-week skip. The same
+three profiles and strengths from Steps 3-4 are used, with the original cohort
+frailty values (affected group 0.5, comparator 4), 50,000 initial people per group,
+and a common 200-week follow-up.
+
+                          Clean early baseline    Affected early baseline
+Effect active             weeks 5-57              weeks 0-52
+Baseline-estimation       weeks 0-3               weeks 0-3
+Anchor                    week 4                  week 4
+Quiet window              weeks 58-110            weeks 58-110
+
+Each profile's 53 weekly added-hazard values are shifted, not rescaled. The new
+case includes harm in the early baseline and anchor, but no harm in the quiet
+window. This specifically tests the early estimate of baseline mortality; it
+does not add an epidemic or a new persistent effect shape.
+
+The following are numerically verified to match between placements:
+- integrated added hazard;
+- final observed cumulative hazard and total expected additional deaths;
+- observed hazards, survivor counts, and deaths throughout the fixed quiet window;
+- the final raw reference contrast that retains the additive effect while removing
+  the simulator's baseline frailty depletion.
+
+Consequently, the contrast changes cannot be attributed to more total harm or
+different mortality data within the quiet window. The early information used to
+set the baseline changes, which changes the fitted frailty and the inversion.
+
+Results before anchoring, at common final follow-up
+--------------------------------------------------
+Profile       Reference   KCOR clean baseline   KCOR affected baseline
+Fading        1.073202       1.082516                2.155671
+Constant      1.049735       1.057600                1.349050
+Combined      1.122937       1.135423                2.612933
+
+The no-effect result remains 1.004895, versus a reference of 1.
+These are cumulative-hazard contrasts, not death-count ratios or causal estimates
+from real data. Extra expected deaths compared with the SAME affected group
+without the extra hazard remain about 350, 238, and 586 for the three profiles,
+respectively, identical between placements.
+
+Mechanism visible in the fitted parameters
+------------------------------------------
+With a clean early baseline, fitted affected-group frailty is 0.492, close to its
+generating value of 0.5. When early baseline weeks contain harm:
+
+Profile       Fitted baseline / clean baseline    Fitted frailty
+Fading                    1.833                       11.60
+Constant                  1.219                        4.75
+Combined                  2.051                       13.11
+
+The fitter interprets the high early mortality as a higher underlying baseline.
+It then uses much larger frailty to explain the later, lower quiet-window hazard.
+The resulting inversion applies a substantially larger correction. This is an
+amplification of the contrast in these cases, rather than the attenuation observed
+when the early baseline was clean but the later fit window was contaminated.
+
+Anchoring is handled with its own matching reference
+----------------------------------------------------
+Because the early case also contaminates the anchor, its correctly anchored
+reference differs from the clean-baseline placement. It must not be compared
+with an unanchored reference or assumed to be above one just because harm exists.
+
+Profile       Reference anchored    KCOR anchored (affected baseline)
+Fading             0.592480                    1.159029
+Constant           0.861497                    1.097569
+Combined           0.553206                    1.245519
+
+The large raw discrepancy already exists before anchoring. Anchoring therefore
+does not explain it away. The anchored disagreement is also present when the
+same reference convention is applied to both quantities.
+
+Diagnostic evidence
+-------------------
+All nominal fits return status 'ok'. However, residual patterns are systematic:
+
+Profile       Pooled relative RMSE    First quiet residual    Last quiet residual
+Fading                8.51%                  -16.87%                  +13.15%
+Constant              3.30%                   -6.45%                   +5.01%
+Combined              9.63%                  -19.13%                  +14.91%
+
+Residual = observed minus predicted hazard, divided by observed hazard for the
+last two columns. The fitted model starts above the observed hazard and ends
+below it. Pooled RMSE includes quiet and baseline anchor fitting points; quiet-
+only RMSE is slightly higher and is retained in baseline_results.csv.
+
+Moving each quiet-window boundary by +/-4 weeks still leaves the entire quiet
+window uncontaminated. Across these nine perturbations, final raw KCOR ranges:
+  Fading:   2.077581 to 2.245909
+  Constant: 1.333086 to 1.366788
+  Combined: 2.496333 to 2.749335
+
+The effect is not cured by these small boundary shifts. Those ranges are
+descriptive; no new pass/fail tolerance is invented. Smooth-data residual
+patterns are visible, but statistical detection rates with random deaths have
+not been evaluated. Do not claim that the full diagnostic procedure accepts
+these examples merely because the fitter returns 'ok'.
+
+Scope of the evidence
+---------------------
+This is a controlled demonstration of sensitivity to early baseline contamination
+at the inherited effect strengths. The initial added hazards are about 90%, 22%,
+and 112% of the saved initial mortality scale. It is not a claim that those
+strengths are plausible in the real application, nor that its early weeks were
+contaminated. The same discrete generator and fixed baseline estimation procedure
+are retained. No production code, configurations, original outputs, or earlier
+audit artifacts were changed.
+
+For objection 1, we now have two different failure mechanisms to keep distinct:
+1. With a clean early baseline, overlap with the later window can understate the
+   specified added-effect contrast.
+2. If early baseline estimation is affected, the fitted correction can instead
+   amplify that contrast substantially, even with an uncontaminated later window.
+
+Both tested mechanisms have diagnostic warning patterns in expected-count data.
+Neither establishes a hidden failure passing the complete manuscript procedure.
+
+Reproduction and verification
+-----------------------------
+Command from C:\Users\jasmi\repo\KCOR-update:
+python "KCOR critique\step5_baseline_contamination.py" --step3 "KCOR critique\step3_results_2026-11-09" --outdir "KCOR critique\step5_results_2026-11-09"
+
+Four previous Step 3 cases were reproduced before adding the new placements.
+Seven nominal cases and 36 boundary perturbations were evaluated. Checks passed
+for matching effect vectors, total hazard, quiet-window data, final references,
+residual reconstruction, and anchoring identities. Input hashes remained unchanged.
+The generated comparison plot was visually inspected. Files are all separate
+under KCOR critique; the original experiment is imported, not modified.
