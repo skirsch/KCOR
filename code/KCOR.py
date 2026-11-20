@@ -6769,7 +6769,10 @@ def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_sum
         df["PT"]   = df["Alive"].astype(float).clip(lower=0.0)
         df["Dead"] = df["Dead"].astype(float).clip(lower=0.0)
         df["MR"]   = np.where(df["PT"] > 0, df["Dead"]/(df["PT"] + EPS), np.nan)
-        df["t"]    = df.groupby(["YearOfBirth","Dose"]).cumcount().astype(float)
+        time_group_cols = ["YearOfBirth", "Dose"]
+        if MONTE_CARLO_MODE and "mc_id" in df.columns:
+            time_group_cols = ["mc_id"] + time_group_cols
+        df["t"] = df.groupby(time_group_cols).cumcount().astype(float)
 
         # -------------------------------------------------------------------
         # KCOR 6.0 (gamma-frailty) fits in quiet window
@@ -9522,7 +9525,10 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                 if "Dose_den" in yob_data.columns:
                     unique_doses.update(yob_data["Dose_den"].unique())
                 
-                for dose in unique_doses:
+                mc_ids = [None]
+                if MONTE_CARLO_MODE and "mc_id" in yob_data.columns:
+                    mc_ids = sorted(yob_data["mc_id"].dropna().unique().tolist())
+                for mc_id, dose in ((i, d) for i in mc_ids for d in unique_doses):
                     # Determine age_group label
                     if year_of_birth == 0:
                         age_group = "ASMR (direct)"
@@ -9542,6 +9548,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     
                     # Get diagnostics from kcor6_params_map (computed during fit)
                     params_key = (enrollment_date, int(year_of_birth), int(dose))
+                    if mc_id is not None:
+                        params_key = (enrollment_date, int(mc_id), int(year_of_birth), int(dose))
                     params = kcor6_params_map.get(params_key)
                     
                     if params is not None:
@@ -9564,9 +9572,10 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                         drift_per_year = params.get("drift_per_year", np.nan)
                         n_bins = params.get("n_bins", params.get("n_obs", 0))
                         
-                        # Only include if we have valid fit parameters
-                        if np.isfinite(theta0_hat) or np.isfinite(k_hat):
+                        # Preserve failed Monte Carlo fits as diagnostic evidence.
+                        if mc_id is not None or np.isfinite(theta0_hat) or np.isfinite(k_hat):
                             gamma_frailty_rows.append({
+                                **({"mc_id": int(mc_id), "theta0_status": params.get("theta0_status", "")} if mc_id is not None else {}),
                                 "reporting_date": reporting_date_str,
                                 "enrollment_date": enrollment_date,
                                 "age_group": age_group,
@@ -9598,7 +9607,8 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
             x["enrollment_date"],
             x["age_group"],
             x["year_of_birth"],
-            x["dose"]
+            x["dose"],
+            x.get("mc_id", -1)
         ))
 
     theta0_status_summary_rows = []
@@ -9617,10 +9627,13 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
             return "INSUFFICIENT_SIGNAL"
         return "OK"
 
-    def _theta0_params_lookup(enrollment_date, yob, dose):
+    def _theta0_params_lookup(enrollment_date, yob, dose, mc_id=None):
         if not isinstance(kcor6_params_map, dict):
             return None
-        params = kcor6_params_map.get((enrollment_date, int(yob), int(dose)))
+        key = (enrollment_date, int(yob), int(dose))
+        if MONTE_CARLO_MODE and mc_id is not None and pd.notna(mc_id):
+            key = (enrollment_date, int(mc_id), int(yob), int(dose))
+        params = kcor6_params_map.get(key)
         return params if isinstance(params, dict) else None
 
     theta_degen_cfg_local = get_theta_degenerate_fit_config()
@@ -9659,18 +9672,19 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     quality_hits = set()
                     if isinstance(kcor6_params_map, dict):
                         for key, params in kcor6_params_map.items():
-                            if not isinstance(key, tuple) or len(key) != 3:
+                            if not isinstance(key, tuple) or len(key) not in (3, 4):
                                 continue
                             if str(key[0]) != str(sheet_name):
                                 continue
+                            mc_id = key[1] if len(key) == 4 else None
                             st = _theta0_status_from_params(params)
                             if st not in theta_counts:
                                 st = "NOT_IDENTIFIED"
                             theta_counts[st] += 1
                             if st != "OK":
                                 try:
-                                    yob_val = int(key[1])
-                                    dose_val = int(key[2])
+                                    yob_val = int(key[-2])
+                                    dose_val = int(key[-1])
                                 except Exception:
                                     continue
                                 total_qd = params.get("total_quiet_deaths", np.nan)
@@ -9685,17 +9699,18 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                                     and np.isfinite(total_qd)
                                     and total_qd >= float(min_quiet_deaths_for_quality)
                                 ):
-                                    quality_hits.add((yob_val, dose_val, st))
+                                    quality_hits.add((mc_id, yob_val, dose_val, st))
                     any_non_ok_theta = bool(
                         theta_counts["INSUFFICIENT_SIGNAL"] > 0
                         or theta_counts["INSUFFICIENT_DEATHS"] > 0
                         or theta_counts["NOT_IDENTIFIED"] > 0
                     )
-                    quality_hits_sorted = sorted(quality_hits)
+                    quality_hits_sorted = sorted(quality_hits, key=lambda item: (-1 if item[0] is None else item[0], *item[1:]))
                     quality_flag = bool(quality_hits_sorted)
                     quality_flag_detail = ", ".join(
-                        f"({int(yob_val)},{int(dose_val)},{str(status_val)})"
-                        for yob_val, dose_val, status_val in quality_hits_sorted
+                        (f"(mc_id={int(mc_id)},{int(yob_val)},{int(dose_val)},{str(status_val)})"
+                         if mc_id is not None else f"({int(yob_val)},{int(dose_val)},{str(status_val)})")
+                        for mc_id, yob_val, dose_val, status_val in quality_hits_sorted
                     )
                     theta0_status_summary_rows.append({
                         "enrollment_date": sheet_name,
@@ -9781,8 +9796,9 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                             n_qb_pre_num = np.nan
                             n_qb_pre_den = np.nan
                             row_theta_non_ok = False
-                            params_num = _theta0_params_lookup(sheet_name, age, dose_num)
-                            params_den = _theta0_params_lookup(sheet_name, age, dose_den)
+                            mc_id = row.get("mc_id") if MONTE_CARLO_MODE else None
+                            params_num = _theta0_params_lookup(sheet_name, age, dose_num, mc_id)
+                            params_den = _theta0_params_lookup(sheet_name, age, dose_den, mc_id)
                             if isinstance(params_num, dict):
                                 theta0_hat_num = params_num.get("theta0_hat", params_num.get("theta_hat", np.nan))
                                 n_qb_pre_num = params_num.get("n_quiet_bins_prewave", np.nan)
@@ -9804,6 +9820,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                                 "n_quiet_bins_prewave_num": n_qb_pre_num,
                                 "n_quiet_bins_prewave_den": n_qb_pre_den,
                                 "Row_Theta0_NonOK": row_theta_non_ok,
+                                **({"mc_id": int(mc_id)} if mc_id is not None and pd.notna(mc_id) else {}),
                             })
                         
                         # Add empty row for separation
@@ -9853,7 +9870,7 @@ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=No
                     gamma_frailty_df = pd.DataFrame(gamma_frailty_rows)
                     # Ensure columns are in the correct order
                     column_order = [
-                        "reporting_date", "enrollment_date", "age_group", "year_of_birth", "dose",
+                        "reporting_date", "enrollment_date", "age_group", "year_of_birth", "dose", "mc_id", "theta0_status",
                         "quiet_window", "theta_source", "total_quiet_deaths", "insufficient_deaths", "degenerate_fit",
                         "theta_fit_status", "theta0_raw", "theta_applied", "theta0_hat", "theta_hat", "k_hat",
                         "relRMSE_hazard_fit", "mean", "sd", "max_abs_dev",
