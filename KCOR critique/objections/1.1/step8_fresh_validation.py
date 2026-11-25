@@ -31,7 +31,7 @@ def main():
     for num,meta in [(6,m6),(7,m7)]:
         script='step6_random_detection.py' if num==6 else 'step7_additional_diagnostics.py'
         assert sha(Path(__file__).with_name(script))==meta['script_sha256']
-    d=json.loads((ROOT/'KCOR critique/01 - Objection 1/step5_results_2026-11-09/manifest.json').read_text())['original_design']
+    d=json.loads((ROOT/'KCOR critique/objections/1.1/step5_results_2026-11-09/manifest.json').read_text())['original_design']
     cutoffs=json.loads((args.step7/'frozen_cutoffs.json').read_text())
     residual_cut=json.loads((args.step6/'frozen_threshold.json').read_text())['score_cutoff']
     variants=m7['variants']; metrics=list(cutoffs)
@@ -39,7 +39,7 @@ def main():
     inputs=[SOURCE,ROOT/'code/KCOR.py',ROOT/'data/Czech/Czech.yaml',
             Path(__file__).with_name('step1_contamination_audit.py'),Path(__file__).with_name('step6_random_detection.py'),
             Path(__file__).with_name('step7_additional_diagnostics.py'),
-            ROOT/'KCOR critique/01 - Objection 1/step5_results_2026-11-09/manifest.json']
+            ROOT/'KCOR critique/objections/1.1/step5_results_2026-11-09/manifest.json']
     inputs += [args.step6/f for f in ['design.json','frozen_threshold.json','evaluation_runs.csv']]
     inputs += [args.step7/f for f in ['design.json','frozen_cutoffs.json','evaluation_metrics.csv','variant_runs.csv','summary.csv']]
     design=dict(created_utc=datetime.now(timezone.utc).isoformat(),seed=m6['seed'],fresh_phase=phase,

@@ -5,8 +5,8 @@ import json
 import shutil
 
 ROOT = Path(__file__).resolve().parents[3]
-OLD = ROOT/'KCOR critique/03 - Objection 3/objection3_resolution'
-NEW = ROOT/'KCOR critique/03 - Objection 3/objection3_corrected_validation'
+OLD = ROOT/'KCOR critique/objections/1.3/objection3_resolution'
+NEW = ROOT/'KCOR critique/objections/1.3/objection3_corrected_validation'
 PR = Path('C:/Users/jasmi/repo/KCOR-mc-fix-pr')
 NEW.mkdir(exist_ok=False)
 (NEW/'development').mkdir()

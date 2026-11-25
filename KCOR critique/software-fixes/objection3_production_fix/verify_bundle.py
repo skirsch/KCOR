@@ -51,7 +51,7 @@ def main():
     K._DATASET_DOSE_PAIRS_CACHE = {'2021_24':[(1,0)], 'default':[(1,0)]}
     K._DATASET_THETA_ESTIMATION_WINDOWS_CACHE = [dict(start_iso='2021-30', end_iso='2022-27',
         start_int=202130, end_int=202227)]
-    artifacts = ROOT/'KCOR critique/03 - Objection 3/objection3_resolution/development'
+    artifacts = ROOT/'KCOR critique/objections/1.3/objection3_resolution/development'
     replay = out/'historical_replay'
     replay.mkdir()
     old_input = artifacts/'reproduction_10_iterations/input.xlsx'

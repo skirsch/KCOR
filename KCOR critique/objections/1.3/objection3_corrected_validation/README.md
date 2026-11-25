@@ -11,11 +11,11 @@ See `DESIGN.md` and `design.json` for the fixed rules. `provenance.json` records
 Run from the repository root:
 
 ```powershell
-python 'KCOR critique/03 - Objection 3/objection3_corrected_validation/check_model.py' 'KCOR critique/03 - Objection 3/objection3_corrected_validation/development/model_checks_reproduction.json'
-python 'KCOR critique/03 - Objection 3/objection3_corrected_validation/verify_production.py' --draws 9 --design-case --out 'KCOR critique/03 - Objection 3/objection3_corrected_validation/development/production_10_reproduction'
-python 'KCOR critique/03 - Objection 3/objection3_corrected_validation/run_study.py' --phase development --out 'KCOR critique/03 - Objection 3/objection3_corrected_validation/development/pilot_reproduction' --workers 6
-python 'KCOR critique/03 - Objection 3/objection3_corrected_validation/run_study.py' --phase final --out 'KCOR critique/03 - Objection 3/objection3_corrected_validation/final_reproduction' --workers 6
-python 'KCOR critique/03 - Objection 3/objection3_corrected_validation/summarize.py' 'KCOR critique/03 - Objection 3/objection3_corrected_validation/final_reproduction'
+python 'KCOR critique/objections/1.3/objection3_corrected_validation/check_model.py' 'KCOR critique/objections/1.3/objection3_corrected_validation/development/model_checks_reproduction.json'
+python 'KCOR critique/objections/1.3/objection3_corrected_validation/verify_production.py' --draws 9 --design-case --out 'KCOR critique/objections/1.3/objection3_corrected_validation/development/production_10_reproduction'
+python 'KCOR critique/objections/1.3/objection3_corrected_validation/run_study.py' --phase development --out 'KCOR critique/objections/1.3/objection3_corrected_validation/development/pilot_reproduction' --workers 6
+python 'KCOR critique/objections/1.3/objection3_corrected_validation/run_study.py' --phase final --out 'KCOR critique/objections/1.3/objection3_corrected_validation/final_reproduction' --workers 6
+python 'KCOR critique/objections/1.3/objection3_corrected_validation/summarize.py' 'KCOR critique/objections/1.3/objection3_corrected_validation/final_reproduction'
 ```
 
 Output locations must be new. `--resume` is reserved for a stopped run with matching source hashes and complete per-job file pairs. Check running processes before resuming. This run completed after preserving 1,062 file pairs through a pause and resuming the remaining jobs; `final_execution_resumed.json` records the successful stage exit codes.

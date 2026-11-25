@@ -42,5 +42,5 @@ python test/monte_carlo/test_sample_isolation.py
 
 The test creates synthetic workbooks and requires no original person records. Two of three tests fail on the affected source; all three pass with the fix. The test and reviewer note are included in the patch.
 
-The older [objection3_production_fix](../objection3_production_fix/) folder remains the immutable preparation and replay archive. Its preparation README predates submission and should not be used for current PR status. [Objection 3](<../../03 - Objection 3/README.md>) separately evaluates corrected interval calibration. This package does not propose the later joint-fit candidate.
+The older [objection3_production_fix](../objection3_production_fix/) folder remains the immutable preparation and replay archive. Its preparation README predates submission and should not be used for current PR status. [Objection 3](<../../objections/1.3/README.md>) separately evaluates corrected interval calibration. This package does not propose the later joint-fit candidate.
 

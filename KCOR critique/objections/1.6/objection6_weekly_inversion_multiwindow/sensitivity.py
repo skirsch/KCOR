@@ -13,7 +13,7 @@ import pandas as pd
 from check import HERE, K, estimate, exact_weekly_variant, population
 from production_adapter import FLAGS
 
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 WORKBOOK = ROOT / "data/Czech/KCOR_CMR.Czech.xlsx"
 SHEETS = ("2021_24", "2022_06", "2022_47")
 

@@ -1,0 +1,3828 @@
+{
+  "datasets": 200,
+  "draws_per_dataset": 199,
+  "source": "revised\\code\\KCOR.py",
+  "revised_code_sha256": "9baa948ec391b81ca43bd5a93db398bb582b24acf2cbaeedd710a27fc76ffa01",
+  "summary": {
+    "fixed": {
+      "covered": 160,
+      "accepted": 200,
+      "mean_width": 0.04778353916722642,
+      "mean_point": 1.0097517064051473,
+      "rmse": 0.013567252436985127
+    },
+    "joint": {
+      "covered": 194,
+      "accepted": 200,
+      "mean_width": 0.148835430692959,
+      "mean_point": 1.005869055395236,
+      "rmse": 0.037513036274636945
+    },
+    "joint_only": 38,
+    "fixed_only": 4,
+    "paired_exact_p": 5.65314621780999e-08,
+    "joint_draw_fit_failures": 0
+  },
+  "paired_results": [
+    {
+      "dataset": 0,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0111569195345709,
+        "accepted": true,
+        "low": 0.9992334887537613,
+        "high": 1.0293415892255064,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.988766222313046,
+        "accepted": true,
+        "low": 0.9128459788490768,
+        "high": 1.06875351197002,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 1,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0097988443719852,
+        "accepted": true,
+        "low": 0.9981184120277671,
+        "high": 1.0314624097019953,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.000041857173815,
+        "accepted": true,
+        "low": 0.9174681695840948,
+        "high": 1.0717654996298303,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 2,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.000552640927153,
+        "accepted": true,
+        "low": 0.990004722652158,
+        "high": 1.0221337872091834,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0231538786135697,
+        "accepted": true,
+        "low": 0.9634765633756398,
+        "high": 1.1012363199665147,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 3,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0095635634609454,
+        "accepted": true,
+        "low": 1.000163510460856,
+        "high": 1.0479474303108292,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.032479503871604,
+        "accepted": true,
+        "low": 0.9741320094782429,
+        "high": 1.1204377727358281,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 4,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0106195743151132,
+        "accepted": true,
+        "low": 0.9987895764143158,
+        "high": 1.0349229087935345,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.025323196160357,
+        "accepted": true,
+        "low": 0.9501790824996995,
+        "high": 1.1016748223954405,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 5,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9951665574358123,
+        "accepted": true,
+        "low": 0.9757986772305413,
+        "high": 1.036846611654463,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.004487338669042,
+        "accepted": true,
+        "low": 0.9327291232921726,
+        "high": 1.086496688605354,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 6,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9986705900287005,
+        "accepted": true,
+        "low": 0.9850799656127429,
+        "high": 1.0268741298113393,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9536515956213801,
+        "accepted": true,
+        "low": 0.8762741530826287,
+        "high": 1.0194160557756091,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 7,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0167253783727592,
+        "accepted": true,
+        "low": 1.0054908877821824,
+        "high": 1.0641540697392837,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0237421892016163,
+        "accepted": true,
+        "low": 0.9522224772246233,
+        "high": 1.115477878945029,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 8,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0214413656913772,
+        "accepted": true,
+        "low": 1.0014825080171408,
+        "high": 1.06495456391969,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0255955381204584,
+        "accepted": true,
+        "low": 0.9564153745105789,
+        "high": 1.1110166176521776,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 9,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.01226337255096,
+        "accepted": true,
+        "low": 1.0014048924611545,
+        "high": 1.058331994953448,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0331383506582101,
+        "accepted": true,
+        "low": 0.9469782951062905,
+        "high": 1.112494575809938,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 10,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0158473334784321,
+        "accepted": true,
+        "low": 1.0035740216227045,
+        "high": 1.0616058692614008,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0441269302258196,
+        "accepted": true,
+        "low": 0.982085380899298,
+        "high": 1.1322541032353253,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 11,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0114840432689134,
+        "accepted": true,
+        "low": 0.9995816415308045,
+        "high": 1.0262557871697457,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0075218774848718,
+        "accepted": true,
+        "low": 0.9512414657474704,
+        "high": 1.080305413472503,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 12,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0034137657286095,
+        "accepted": true,
+        "low": 0.9913621926740349,
+        "high": 1.0192342046868466,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9708151851906156,
+        "accepted": true,
+        "low": 0.915080010273368,
+        "high": 1.0476154120161538,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 13,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9978337633671042,
+        "accepted": true,
+        "low": 0.9853981589231124,
+        "high": 1.0284779051046586,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9705770162521333,
+        "accepted": true,
+        "low": 0.8929583696060838,
+        "high": 1.0706286319282332,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 14,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.011325601706368,
+        "accepted": true,
+        "low": 1.000115037678535,
+        "high": 1.02764752509628,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0258766222465094,
+        "accepted": true,
+        "low": 0.9469556594075085,
+        "high": 1.1023397106614596,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 15,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0177844159023797,
+        "accepted": true,
+        "low": 0.9913964243315183,
+        "high": 1.0598882487175465,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0469175563886104,
+        "accepted": true,
+        "low": 0.9814264208429655,
+        "high": 1.1218585527539342,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 16,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0149984434645476,
+        "accepted": true,
+        "low": 1.0042959665438655,
+        "high": 1.035588292095217,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0465711590032338,
+        "accepted": true,
+        "low": 0.9731023035068106,
+        "high": 1.1171185270098976,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 17,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.008589097146619,
+        "accepted": true,
+        "low": 0.9962309335087403,
+        "high": 1.0556106304524142,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9892290953801269,
+        "accepted": true,
+        "low": 0.91526158618328,
+        "high": 1.0535627052830614,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 18,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.016274883979755,
+        "accepted": true,
+        "low": 1.0033650708458455,
+        "high": 1.0600613770879197,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0755462448848743,
+        "accepted": true,
+        "low": 0.9831152456563472,
+        "high": 1.165822277299899,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 19,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9942586526909658,
+        "accepted": true,
+        "low": 0.9833134277222628,
+        "high": 1.036266729726846,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9734868855329616,
+        "accepted": true,
+        "low": 0.9090869906658797,
+        "high": 1.0378196990913948,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 20,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0067753664463157,
+        "accepted": true,
+        "low": 0.9948440156969838,
+        "high": 1.0375378110264772,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9755189836075105,
+        "accepted": true,
+        "low": 0.9207769998678935,
+        "high": 1.052231988441626,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 21,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0032150912403108,
+        "accepted": true,
+        "low": 0.9928296052504288,
+        "high": 1.0405617661768696,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0404421036584381,
+        "accepted": true,
+        "low": 0.9732349571102445,
+        "high": 1.1260698683940715,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 22,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0006845379914213,
+        "accepted": true,
+        "low": 0.9884165581304692,
+        "high": 1.0222153128348987,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9662160238543055,
+        "accepted": true,
+        "low": 0.9075398806566097,
+        "high": 1.0396724853788208,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 23,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.016280543557651,
+        "accepted": true,
+        "low": 1.001665456549608,
+        "high": 1.041278144964722,
+        "covered": false
+      },
+      "joint": {
+        "point": 0.9948357881314805,
+        "accepted": true,
+        "low": 0.9144412189301917,
+        "high": 1.082395360955968,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 24,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0118156182397213,
+        "accepted": true,
+        "low": 0.9958878629383692,
+        "high": 1.0549222078002194,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0512361650717363,
+        "accepted": true,
+        "low": 0.9704125425598312,
+        "high": 1.136752379625244,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 25,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0211056406305927,
+        "accepted": true,
+        "low": 1.0082775430584057,
+        "high": 1.0513884476922022,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0881263857373213,
+        "accepted": true,
+        "low": 1.0070347289526012,
+        "high": 1.1709457570650805,
+        "covered": false
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 26,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0288396841118082,
+        "accepted": true,
+        "low": 0.9941668433255377,
+        "high": 1.0731935325168787,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0121529045959259,
+        "accepted": true,
+        "low": 0.9447291131015066,
+        "high": 1.0916784677947473,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 27,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.019046024215624,
+        "accepted": true,
+        "low": 0.977460851902801,
+        "high": 1.0558183652646582,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9738133521606894,
+        "accepted": true,
+        "low": 0.9175933636505079,
+        "high": 1.0556873958803132,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 28,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0010279632904175,
+        "accepted": true,
+        "low": 0.986709477994638,
+        "high": 1.015559520241,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9595856178257427,
+        "accepted": true,
+        "low": 0.90119869029483,
+        "high": 1.039625991402688,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 29,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.01543175816034,
+        "accepted": true,
+        "low": 1.0036937352943973,
+        "high": 1.0449331589046842,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.04234732650361,
+        "accepted": true,
+        "low": 0.9736177134653378,
+        "high": 1.131197497125135,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 30,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0118797959220645,
+        "accepted": true,
+        "low": 0.999435757483322,
+        "high": 1.0335394657653307,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0764801578553782,
+        "accepted": true,
+        "low": 1.0086102773882142,
+        "high": 1.1586462072940915,
+        "covered": false
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 31,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0298023729812347,
+        "accepted": true,
+        "low": 0.9965643919605703,
+        "high": 1.0726468275614078,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.006606750507276,
+        "accepted": true,
+        "low": 0.9395789051873082,
+        "high": 1.0915007441331912,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 32,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0065860549054622,
+        "accepted": true,
+        "low": 0.9898268098599607,
+        "high": 1.0243713418499116,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9755112300547206,
+        "accepted": true,
+        "low": 0.9107712480301339,
+        "high": 1.054092701069953,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 33,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0120879098098678,
+        "accepted": true,
+        "low": 0.9852551719987032,
+        "high": 1.0614218481437347,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.029217344096624,
+        "accepted": true,
+        "low": 0.9551103874925064,
+        "high": 1.1223487696188543,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 34,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0133701550877567,
+        "accepted": true,
+        "low": 1.0010439498946386,
+        "high": 1.0494618882212274,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0613464979977139,
+        "accepted": true,
+        "low": 0.9933774573859726,
+        "high": 1.1587000033046408,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 35,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9956406761266948,
+        "accepted": true,
+        "low": 0.9804725391609009,
+        "high": 1.0170006771894486,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.984043009431205,
+        "accepted": true,
+        "low": 0.9190873197254441,
+        "high": 1.063864939267493,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 36,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0218642249488485,
+        "accepted": true,
+        "low": 0.9952570871054145,
+        "high": 1.0765728587903507,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0607408960767775,
+        "accepted": true,
+        "low": 0.9747537225852204,
+        "high": 1.142536061199178,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 37,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0115639525539721,
+        "accepted": true,
+        "low": 0.999011914442677,
+        "high": 1.0292945162704936,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9733054575891631,
+        "accepted": true,
+        "low": 0.9051466783922211,
+        "high": 1.0543574561222848,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 38,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9957983014783557,
+        "accepted": true,
+        "low": 0.981371933549318,
+        "high": 1.0221379296810442,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0132988672049326,
+        "accepted": true,
+        "low": 0.9500659356067288,
+        "high": 1.09525639201678,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 39,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0111795163155235,
+        "accepted": true,
+        "low": 0.9924052296641616,
+        "high": 1.0547303832236858,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0779244793876488,
+        "accepted": true,
+        "low": 1.0074051866026312,
+        "high": 1.168253132272729,
+        "covered": false
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 40,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0114166218753298,
+        "accepted": true,
+        "low": 0.9944297587983396,
+        "high": 1.0596589120018993,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0134113633173611,
+        "accepted": true,
+        "low": 0.9349429091403092,
+        "high": 1.092513170989215,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 41,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0096368697138276,
+        "accepted": true,
+        "low": 0.9970994989478815,
+        "high": 1.0361731039647923,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0163796198560395,
+        "accepted": true,
+        "low": 0.9428436935876507,
+        "high": 1.1013901319821093,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 42,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.009552633920066,
+        "accepted": true,
+        "low": 0.9891369654025277,
+        "high": 1.0503361479422213,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0211482492066906,
+        "accepted": true,
+        "low": 0.9497114889977921,
+        "high": 1.114824773158125,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 43,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.006343731718766,
+        "accepted": true,
+        "low": 0.9932416783955235,
+        "high": 1.0286569042668665,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9754212590158556,
+        "accepted": true,
+        "low": 0.8993169092173066,
+        "high": 1.0465959450873659,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 44,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.002229745349628,
+        "accepted": true,
+        "low": 0.9876466415460512,
+        "high": 1.0199084716838407,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9955258040349544,
+        "accepted": true,
+        "low": 0.9216853713592634,
+        "high": 1.066442726261452,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 45,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0121523684333287,
+        "accepted": true,
+        "low": 0.9973239811900284,
+        "high": 1.0271225325348528,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.988880688085945,
+        "accepted": true,
+        "low": 0.9199710967163429,
+        "high": 1.068731454593399,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 46,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.011585664835436,
+        "accepted": true,
+        "low": 0.9948253852140314,
+        "high": 1.0383799152991213,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0221832583073647,
+        "accepted": true,
+        "low": 0.9592960136704305,
+        "high": 1.0946905298407412,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 47,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0141867395734552,
+        "accepted": true,
+        "low": 0.987805991398319,
+        "high": 1.0625031062382995,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9636071733979155,
+        "accepted": true,
+        "low": 0.8935977064842983,
+        "high": 1.04516839913783,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 48,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.000109412997558,
+        "accepted": true,
+        "low": 0.9846687975990476,
+        "high": 1.0259592073500365,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9349282140820775,
+        "accepted": true,
+        "low": 0.8668763847929928,
+        "high": 1.0245333151075016,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 49,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0125574503491914,
+        "accepted": true,
+        "low": 0.9963101387539413,
+        "high": 1.0269513855740895,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9246160017297365,
+        "accepted": true,
+        "low": 0.8620460236128756,
+        "high": 1.003534316896234,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 50,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9942227869622142,
+        "accepted": true,
+        "low": 0.9822212508326398,
+        "high": 1.0339408043470566,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9533368666935849,
+        "accepted": true,
+        "low": 0.8963905667335823,
+        "high": 1.028064366000893,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 51,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0056625807458777,
+        "accepted": true,
+        "low": 0.993008103436317,
+        "high": 1.0404379668153132,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9855184043594493,
+        "accepted": true,
+        "low": 0.9222411427884836,
+        "high": 1.0562507581822143,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 52,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0087224722659627,
+        "accepted": true,
+        "low": 0.9929701485539377,
+        "high": 1.0288448977339553,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0143651982152122,
+        "accepted": true,
+        "low": 0.9442232116769271,
+        "high": 1.0907564452208194,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 53,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0200757839067194,
+        "accepted": true,
+        "low": 1.0081481999084185,
+        "high": 1.0394818645701671,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.035491776805734,
+        "accepted": true,
+        "low": 0.9618805031886706,
+        "high": 1.1110863611514492,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 54,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0028504811822192,
+        "accepted": true,
+        "low": 0.9885888745828413,
+        "high": 1.0209388997970597,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9511955138217422,
+        "accepted": true,
+        "low": 0.8883495652736628,
+        "high": 1.0385956091615465,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 55,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0037197466172267,
+        "accepted": true,
+        "low": 0.991740800476942,
+        "high": 1.022539921024668,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.998074492101242,
+        "accepted": true,
+        "low": 0.9359402107422741,
+        "high": 1.083746350555458,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 56,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0130465757722757,
+        "accepted": true,
+        "low": 1.0000559206147446,
+        "high": 1.0291041708078474,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0048453570151121,
+        "accepted": true,
+        "low": 0.9405423518940077,
+        "high": 1.0790093150622582,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 57,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0000109223354177,
+        "accepted": true,
+        "low": 0.9869637735220685,
+        "high": 1.0162222228779407,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0013573251227268,
+        "accepted": true,
+        "low": 0.9328859289666784,
+        "high": 1.093665979164122,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 58,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9922410023826636,
+        "accepted": true,
+        "low": 0.9811666745868776,
+        "high": 1.0169312782060334,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9958209015897325,
+        "accepted": true,
+        "low": 0.9381781196555996,
+        "high": 1.0695047562801945,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 59,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0153440071760782,
+        "accepted": true,
+        "low": 1.0014593691244775,
+        "high": 1.0545716443341968,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.057747903397876,
+        "accepted": true,
+        "low": 0.9971829589475301,
+        "high": 1.1527973169218182,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 60,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9951661615338887,
+        "accepted": true,
+        "low": 0.9815623387625164,
+        "high": 1.0090101967447125,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9393788303053506,
+        "accepted": true,
+        "low": 0.8782017465559614,
+        "high": 1.0109610196375516,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 61,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0358831901075505,
+        "accepted": true,
+        "low": 1.003076912340771,
+        "high": 1.0929044389946971,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0402262403310232,
+        "accepted": true,
+        "low": 0.9608209983811467,
+        "high": 1.1299693833399311,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 62,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0127633052270166,
+        "accepted": true,
+        "low": 0.9958697104322045,
+        "high": 1.051483738532174,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0647975244400234,
+        "accepted": true,
+        "low": 0.9936575373752897,
+        "high": 1.1458772609993244,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 63,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0131152753067887,
+        "accepted": true,
+        "low": 0.9952585778780128,
+        "high": 1.0583663590717243,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9768171937470183,
+        "accepted": true,
+        "low": 0.8942917825561072,
+        "high": 1.055690698886608,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 64,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0176092552525484,
+        "accepted": true,
+        "low": 1.0015751915391184,
+        "high": 1.0573588152274862,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0260614336267198,
+        "accepted": true,
+        "low": 0.9622987431989498,
+        "high": 1.103334984092244,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 65,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0141051782006723,
+        "accepted": true,
+        "low": 1.0022963030342507,
+        "high": 1.0321331748307268,
+        "covered": false
+      },
+      "joint": {
+        "point": 0.984410697251893,
+        "accepted": true,
+        "low": 0.9197764651875638,
+        "high": 1.0530321301702068,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 66,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.016617594215902,
+        "accepted": true,
+        "low": 0.9939873089514045,
+        "high": 1.0576395605308595,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0444385829590703,
+        "accepted": true,
+        "low": 0.977131833150684,
+        "high": 1.1178528625651962,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 67,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9979204888845071,
+        "accepted": true,
+        "low": 0.9885176804837303,
+        "high": 1.0468650482084951,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9965074589905172,
+        "accepted": true,
+        "low": 0.9295634204106213,
+        "high": 1.080293297556908,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 68,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0152962770872516,
+        "accepted": true,
+        "low": 1.004483559082625,
+        "high": 1.0400498277877912,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.009807792419082,
+        "accepted": true,
+        "low": 0.9403478238932031,
+        "high": 1.0904558259676482,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 69,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0112833857836716,
+        "accepted": true,
+        "low": 0.986876045843817,
+        "high": 1.053165717082111,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9865983179819421,
+        "accepted": true,
+        "low": 0.9218148970777187,
+        "high": 1.062194564617029,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 70,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0164278570141603,
+        "accepted": true,
+        "low": 1.0062594975294616,
+        "high": 1.0400603083976119,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0391465426622737,
+        "accepted": true,
+        "low": 0.9577345095395429,
+        "high": 1.1280709757432124,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 71,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0084674043548163,
+        "accepted": true,
+        "low": 0.9927775929796592,
+        "high": 1.0263842572460982,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9687817651319972,
+        "accepted": true,
+        "low": 0.8951894724995032,
+        "high": 1.0404355295003,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 72,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0085799226195573,
+        "accepted": true,
+        "low": 0.9966462721405799,
+        "high": 1.036345165594014,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0176801516688108,
+        "accepted": true,
+        "low": 0.9454597219438805,
+        "high": 1.0907125170727265,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 73,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0235982229397487,
+        "accepted": true,
+        "low": 1.0068957169758896,
+        "high": 1.0702795962204499,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.041557241870368,
+        "accepted": true,
+        "low": 0.9791762807112016,
+        "high": 1.1289185599646478,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 74,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0136637592611135,
+        "accepted": true,
+        "low": 0.998398461442713,
+        "high": 1.053413333200177,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0100679577882155,
+        "accepted": true,
+        "low": 0.9261313539864656,
+        "high": 1.0868020869755164,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 75,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.030507798548651,
+        "accepted": true,
+        "low": 0.9901196953914608,
+        "high": 1.0715423525556582,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.038057505222375,
+        "accepted": true,
+        "low": 0.9604586939490511,
+        "high": 1.1235229991717322,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 76,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0018178492365282,
+        "accepted": true,
+        "low": 0.9896552018195536,
+        "high": 1.0341531203208492,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0248052956210825,
+        "accepted": true,
+        "low": 0.9508859394632814,
+        "high": 1.0987872732179211,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 77,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0395012063937359,
+        "accepted": true,
+        "low": 1.0034481853075288,
+        "high": 1.0905408359474629,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.069606802938934,
+        "accepted": true,
+        "low": 0.9987984304898393,
+        "high": 1.1727316755031818,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 78,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.002050643535496,
+        "accepted": true,
+        "low": 0.990360517608434,
+        "high": 1.028197757067595,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0225662500980173,
+        "accepted": true,
+        "low": 0.9554851769816907,
+        "high": 1.1128827311906397,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 79,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0006633223444774,
+        "accepted": true,
+        "low": 0.9888542078899532,
+        "high": 1.034501742582951,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0075916344112104,
+        "accepted": true,
+        "low": 0.9356675530228666,
+        "high": 1.0843561512080377,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 80,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0123404104110865,
+        "accepted": true,
+        "low": 0.9982612897212106,
+        "high": 1.0270524783165906,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9650977823396405,
+        "accepted": true,
+        "low": 0.8888643399398646,
+        "high": 1.0404779525044148,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 81,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0106680243889974,
+        "accepted": true,
+        "low": 0.9983677900450755,
+        "high": 1.0444339692466098,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0178684747055167,
+        "accepted": true,
+        "low": 0.9536083232170006,
+        "high": 1.0971492144188868,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 82,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0417558277949108,
+        "accepted": true,
+        "low": 0.999751076224735,
+        "high": 1.0858767416165374,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.043114675965731,
+        "accepted": true,
+        "low": 0.9837935111433491,
+        "high": 1.1139778885809828,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 83,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.024889547052042,
+        "accepted": true,
+        "low": 1.005074471573473,
+        "high": 1.0673316162687987,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0609057421652344,
+        "accepted": true,
+        "low": 0.9689931640604238,
+        "high": 1.1458918457126814,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 84,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.011808430786373,
+        "accepted": true,
+        "low": 0.9996945153793538,
+        "high": 1.041394728642909,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0405601530721078,
+        "accepted": true,
+        "low": 0.9607643455782341,
+        "high": 1.1227123599909334,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 85,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0098923865036562,
+        "accepted": true,
+        "low": 0.9969832723793304,
+        "high": 1.0394032633200379,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0222636202597142,
+        "accepted": true,
+        "low": 0.9451580204156838,
+        "high": 1.094858504523941,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 86,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.021488010929516,
+        "accepted": true,
+        "low": 0.990507033672867,
+        "high": 1.066286648850855,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9719030115385893,
+        "accepted": true,
+        "low": 0.9017141482125337,
+        "high": 1.0464342717129609,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 87,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0002176098577846,
+        "accepted": true,
+        "low": 0.9868089679542841,
+        "high": 1.0153888385742142,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9825420992776321,
+        "accepted": true,
+        "low": 0.9325331563647997,
+        "high": 1.0662017054344184,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 88,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0318237791214173,
+        "accepted": true,
+        "low": 1.00631140586764,
+        "high": 1.0815022552316285,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.045196866538106,
+        "accepted": true,
+        "low": 0.9656310765810632,
+        "high": 1.1358081033777652,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 89,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0038543733844605,
+        "accepted": true,
+        "low": 0.986839784725034,
+        "high": 1.0473501230240465,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0059648055599653,
+        "accepted": true,
+        "low": 0.9480822497956584,
+        "high": 1.0918787313464804,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 90,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0010913792381066,
+        "accepted": true,
+        "low": 0.9893341853792267,
+        "high": 1.0389614443728998,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9879154586263263,
+        "accepted": true,
+        "low": 0.9224630189535755,
+        "high": 1.057123380446728,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 91,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0087426569949858,
+        "accepted": true,
+        "low": 0.9966163923857164,
+        "high": 1.0474973421517886,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0136216920137495,
+        "accepted": true,
+        "low": 0.9435093711783168,
+        "high": 1.0884925856312753,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 92,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9979129837377343,
+        "accepted": true,
+        "low": 0.9838764118140165,
+        "high": 1.020800433050553,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9830182768497676,
+        "accepted": true,
+        "low": 0.921063897781135,
+        "high": 1.0792986377703637,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 93,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.001493892983214,
+        "accepted": true,
+        "low": 0.9898796301297369,
+        "high": 1.0372257736120092,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9433440748717039,
+        "accepted": true,
+        "low": 0.8688616215093267,
+        "high": 1.0109742011007008,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 94,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0053495063049214,
+        "accepted": true,
+        "low": 0.9927173640094323,
+        "high": 1.048157074964847,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9990559484839011,
+        "accepted": true,
+        "low": 0.9237391967712185,
+        "high": 1.0739174128194187,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 95,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0062078352613042,
+        "accepted": true,
+        "low": 0.9925763330105143,
+        "high": 1.0208577598057307,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9456522417631793,
+        "accepted": true,
+        "low": 0.8772809533471269,
+        "high": 1.0068188024213258,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 96,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0074022524607353,
+        "accepted": true,
+        "low": 0.9910987470660035,
+        "high": 1.0524172583710136,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0270806764358122,
+        "accepted": true,
+        "low": 0.9565569527634136,
+        "high": 1.1119346602737104,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 97,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0105382524650592,
+        "accepted": true,
+        "low": 0.9989579759409191,
+        "high": 1.0450323313258536,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0083906281316513,
+        "accepted": true,
+        "low": 0.9482806095610032,
+        "high": 1.0887237190169246,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 98,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0070566877634828,
+        "accepted": true,
+        "low": 0.9945224577449554,
+        "high": 1.0307193748913315,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.976223744968346,
+        "accepted": true,
+        "low": 0.9037809388844137,
+        "high": 1.0592299278956157,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 99,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.011372373110321,
+        "accepted": true,
+        "low": 0.9979513848724001,
+        "high": 1.0261731114000996,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9862910102095883,
+        "accepted": true,
+        "low": 0.9201582386448371,
+        "high": 1.05665839249282,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 100,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0101091605870092,
+        "accepted": true,
+        "low": 0.9947490422524179,
+        "high": 1.0270985956552763,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9923981079343338,
+        "accepted": true,
+        "low": 0.924572252692785,
+        "high": 1.0747190730612342,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 101,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0241724272875519,
+        "accepted": true,
+        "low": 1.002423887110318,
+        "high": 1.067473629764628,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0298421710227568,
+        "accepted": true,
+        "low": 0.9494940402512614,
+        "high": 1.1181725092236572,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 102,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0132259070161382,
+        "accepted": true,
+        "low": 0.9973905047679221,
+        "high": 1.0296008225332378,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0523904133205646,
+        "accepted": true,
+        "low": 0.9703583769471795,
+        "high": 1.1376735786730832,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 103,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0105684500301135,
+        "accepted": true,
+        "low": 0.9956501651155018,
+        "high": 1.0258835418650263,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0288317185772442,
+        "accepted": true,
+        "low": 0.9598379096813653,
+        "high": 1.0977289661970124,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 104,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0086211868110837,
+        "accepted": true,
+        "low": 0.9937428520067523,
+        "high": 1.0449130525063652,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9538671570240543,
+        "accepted": true,
+        "low": 0.8905239243303235,
+        "high": 1.0246484986416116,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 105,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0028943733716833,
+        "accepted": true,
+        "low": 0.9930564578011489,
+        "high": 1.0442585366289339,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9870822731788136,
+        "accepted": true,
+        "low": 0.9406205490934025,
+        "high": 1.0546931873932135,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 106,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.013353703050999,
+        "accepted": true,
+        "low": 0.9917374263180451,
+        "high": 1.0626442583066649,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0633351017304733,
+        "accepted": true,
+        "low": 0.9837083932287914,
+        "high": 1.1489857229893687,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 107,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.013601657252089,
+        "accepted": true,
+        "low": 1.0017224886266496,
+        "high": 1.0361430232844449,
+        "covered": false
+      },
+      "joint": {
+        "point": 0.962330101647279,
+        "accepted": true,
+        "low": 0.9032661404732928,
+        "high": 1.05397876919891,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 108,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.00805565228263,
+        "accepted": true,
+        "low": 0.9924914629841425,
+        "high": 1.023039142591587,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9959191409640286,
+        "accepted": true,
+        "low": 0.9291652912935188,
+        "high": 1.0898946485350383,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 109,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0227280129774632,
+        "accepted": true,
+        "low": 0.9980188780038991,
+        "high": 1.0682408909501504,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0361471314043955,
+        "accepted": true,
+        "low": 0.9630216581397026,
+        "high": 1.1092978759788663,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 110,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9955889407698657,
+        "accepted": true,
+        "low": 0.9823106512582941,
+        "high": 1.0171857341232662,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9776524530890717,
+        "accepted": true,
+        "low": 0.911095521057806,
+        "high": 1.049396269606521,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 111,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0042357529340158,
+        "accepted": true,
+        "low": 0.9894633792796697,
+        "high": 1.0253562276047636,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0440555398677045,
+        "accepted": true,
+        "low": 0.9776391920450358,
+        "high": 1.1327565259926373,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 112,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0101536471400343,
+        "accepted": true,
+        "low": 0.9960767149104401,
+        "high": 1.02392805756174,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9295192845975944,
+        "accepted": true,
+        "low": 0.8614284282300705,
+        "high": 1.0023966917108242,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 113,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.037826531002879,
+        "accepted": true,
+        "low": 1.0080339844188289,
+        "high": 1.0787019410845584,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0251343252688183,
+        "accepted": true,
+        "low": 0.9646072618050731,
+        "high": 1.0973383982677956,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 114,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9998531644735263,
+        "accepted": true,
+        "low": 0.9864240520516253,
+        "high": 1.0449806563636126,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9675876036107816,
+        "accepted": true,
+        "low": 0.9090514342923406,
+        "high": 1.0426913509567117,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 115,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0040022762817962,
+        "accepted": true,
+        "low": 0.9897697406067663,
+        "high": 1.0487654205092312,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0259511841053393,
+        "accepted": true,
+        "low": 0.9648763441622952,
+        "high": 1.10747103776177,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 116,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0092796113926525,
+        "accepted": true,
+        "low": 0.986458912142206,
+        "high": 1.0566343748931144,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0150290945789084,
+        "accepted": true,
+        "low": 0.9464603222523936,
+        "high": 1.1009687853434604,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 117,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.003383318857022,
+        "accepted": true,
+        "low": 0.9893540209569752,
+        "high": 1.0468828028958266,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0099350073804922,
+        "accepted": true,
+        "low": 0.9417687186725828,
+        "high": 1.0875106955796987,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 118,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0057245891821556,
+        "accepted": true,
+        "low": 0.9929906269786739,
+        "high": 1.0476126446741618,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9783892465123721,
+        "accepted": true,
+        "low": 0.9184715681949331,
+        "high": 1.0640098413410062,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 119,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0297776970684087,
+        "accepted": true,
+        "low": 1.000416901796126,
+        "high": 1.0727370489410244,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0683602151688167,
+        "accepted": true,
+        "low": 0.9908066686519351,
+        "high": 1.1496189436736204,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 120,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.008224081869084,
+        "accepted": true,
+        "low": 0.9967468138208245,
+        "high": 1.0520116370751342,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.027269916464142,
+        "accepted": true,
+        "low": 0.9576486406442553,
+        "high": 1.123443883939888,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 121,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9995072730998141,
+        "accepted": true,
+        "low": 0.9877027483721434,
+        "high": 1.0211040197557024,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0275707881275107,
+        "accepted": true,
+        "low": 0.9608779075528252,
+        "high": 1.10263992125553,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 122,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.015181538753846,
+        "accepted": true,
+        "low": 1.0026032440581403,
+        "high": 1.044912246475636,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0266870983624863,
+        "accepted": true,
+        "low": 0.9700507656442504,
+        "high": 1.1140991334322614,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 123,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0056938035385852,
+        "accepted": true,
+        "low": 0.9969427148930193,
+        "high": 1.0435212071587474,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0371647759822935,
+        "accepted": true,
+        "low": 0.959104331740832,
+        "high": 1.1232660371552625,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 124,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0027565324974799,
+        "accepted": true,
+        "low": 0.9885759611457464,
+        "high": 1.0445626123958816,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9805598683285879,
+        "accepted": true,
+        "low": 0.9152202181746718,
+        "high": 1.0587152063349017,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 125,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9953833755649582,
+        "accepted": true,
+        "low": 0.9830912952685525,
+        "high": 1.0119693391928626,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9626327503446,
+        "accepted": true,
+        "low": 0.9062049467707913,
+        "high": 1.0324015229563976,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 126,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0212741471085427,
+        "accepted": true,
+        "low": 0.9880195336077957,
+        "high": 1.0615013985095134,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0267608951051193,
+        "accepted": true,
+        "low": 0.9607557752330327,
+        "high": 1.102328553551432,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 127,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.020007254843512,
+        "accepted": true,
+        "low": 1.0043305869489234,
+        "high": 1.03501302996634,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0226576630917095,
+        "accepted": true,
+        "low": 0.9507717810740144,
+        "high": 1.1040505478635938,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 128,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0108011458609736,
+        "accepted": true,
+        "low": 0.9980284040386208,
+        "high": 1.0583408945913813,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0426974917909841,
+        "accepted": true,
+        "low": 0.9612037581064758,
+        "high": 1.1263144312678444,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 129,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0214814821803129,
+        "accepted": true,
+        "low": 0.9924954232865019,
+        "high": 1.0700791214118852,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0078231509119067,
+        "accepted": true,
+        "low": 0.9423068879413449,
+        "high": 1.092710853790786,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 130,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.008937617997547,
+        "accepted": true,
+        "low": 0.9949067132722482,
+        "high": 1.0373504075967945,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9831379123655437,
+        "accepted": true,
+        "low": 0.9165350443710584,
+        "high": 1.0564001188775982,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 131,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.999265719119638,
+        "accepted": true,
+        "low": 0.987567212084559,
+        "high": 1.030819708736111,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9539771734287112,
+        "accepted": true,
+        "low": 0.8883910364280928,
+        "high": 1.0193114767462996,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 132,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.017926919347099,
+        "accepted": true,
+        "low": 1.0038638032578082,
+        "high": 1.0618328948885034,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0499633493655842,
+        "accepted": true,
+        "low": 0.9648168959449586,
+        "high": 1.1205594787011184,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 133,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9967601385670589,
+        "accepted": true,
+        "low": 0.9822251366627708,
+        "high": 1.0145635304930734,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9838770751958024,
+        "accepted": true,
+        "low": 0.9115099916960728,
+        "high": 1.0619743742724477,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 134,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0348603936698435,
+        "accepted": true,
+        "low": 1.0051380556674563,
+        "high": 1.0787641351887662,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.113986866222841,
+        "accepted": true,
+        "low": 1.0272763917709193,
+        "high": 1.2121824097759826,
+        "covered": false
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 135,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0073476646998385,
+        "accepted": true,
+        "low": 0.9928786309925323,
+        "high": 1.0217386511891662,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0140201139773173,
+        "accepted": true,
+        "low": 0.938512454246358,
+        "high": 1.0813333845250606,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 136,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0042130091144805,
+        "accepted": true,
+        "low": 0.9912673163340365,
+        "high": 1.0457702598324645,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9722351982642121,
+        "accepted": true,
+        "low": 0.9090398647659764,
+        "high": 1.0557461060389082,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 137,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.012054659066392,
+        "accepted": true,
+        "low": 0.9977573036508044,
+        "high": 1.026055505767139,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9956486111025951,
+        "accepted": true,
+        "low": 0.9249468190397935,
+        "high": 1.065196703902551,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 138,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0018481040064555,
+        "accepted": true,
+        "low": 0.9903587942557402,
+        "high": 1.044416076881008,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0176081430655608,
+        "accepted": true,
+        "low": 0.9534645430702017,
+        "high": 1.0815189292715914,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 139,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0149257804632703,
+        "accepted": true,
+        "low": 1.0022029222632947,
+        "high": 1.0354776848643417,
+        "covered": false
+      },
+      "joint": {
+        "point": 0.9980781763535024,
+        "accepted": true,
+        "low": 0.9176218015204242,
+        "high": 1.0888602162947485,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 140,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0202299678825075,
+        "accepted": true,
+        "low": 1.005714810349427,
+        "high": 1.0345428595227377,
+        "covered": false
+      },
+      "joint": {
+        "point": 0.9952211873812598,
+        "accepted": true,
+        "low": 0.9223894774671898,
+        "high": 1.0633331996828572,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 141,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9931878599267313,
+        "accepted": true,
+        "low": 0.9789630886567133,
+        "high": 1.0113358732561044,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9350442443265101,
+        "accepted": true,
+        "low": 0.868682968188598,
+        "high": 1.0298725055828621,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 142,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0034447900179444,
+        "accepted": true,
+        "low": 0.9896543258425984,
+        "high": 1.0437528638245785,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.980138778167946,
+        "accepted": true,
+        "low": 0.933144919747466,
+        "high": 1.0660194993166068,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 143,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.002762475845858,
+        "accepted": true,
+        "low": 0.9910014728026866,
+        "high": 1.0271020102792578,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9426145192749326,
+        "accepted": true,
+        "low": 0.8870357788212758,
+        "high": 1.0265951042570545,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 144,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.998251787760446,
+        "accepted": true,
+        "low": 0.9861121885983152,
+        "high": 1.0123689860181286,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9284193563429384,
+        "accepted": true,
+        "low": 0.8631294023127551,
+        "high": 1.0004558924174733,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 145,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9989182085577306,
+        "accepted": true,
+        "low": 0.9850332341795099,
+        "high": 1.0263859069660362,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9647835205202263,
+        "accepted": true,
+        "low": 0.9069702506477172,
+        "high": 1.0405017920346804,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 146,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9910361433678805,
+        "accepted": true,
+        "low": 0.9790172492193435,
+        "high": 1.0110623337765892,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9652121515985448,
+        "accepted": true,
+        "low": 0.8997068000497174,
+        "high": 1.0374347821672532,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 147,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.001405079077633,
+        "accepted": true,
+        "low": 0.9885191565670817,
+        "high": 1.0197531617893043,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9597927552504772,
+        "accepted": true,
+        "low": 0.88686968773948,
+        "high": 1.040693890123224,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 148,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0051778042136685,
+        "accepted": true,
+        "low": 0.9921809093923377,
+        "high": 1.0274007088063213,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9809956658551999,
+        "accepted": true,
+        "low": 0.9171061148711589,
+        "high": 1.0551903219782586,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 149,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.037651586402695,
+        "accepted": true,
+        "low": 0.9991027008135756,
+        "high": 1.0839887225275828,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0590835097303506,
+        "accepted": true,
+        "low": 0.9850253035930071,
+        "high": 1.1516319189306852,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 150,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0047870247451764,
+        "accepted": true,
+        "low": 0.9936122607719162,
+        "high": 1.0215850731466403,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9808595467158135,
+        "accepted": true,
+        "low": 0.9240391498713403,
+        "high": 1.058421380003122,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 151,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9902159400676642,
+        "accepted": true,
+        "low": 0.9762064418634313,
+        "high": 1.0073266140513029,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9152766432186659,
+        "accepted": true,
+        "low": 0.8532961560745717,
+        "high": 0.9774957351965168,
+        "covered": false
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 152,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0050599068638588,
+        "accepted": true,
+        "low": 0.9913712597146939,
+        "high": 1.019913974134594,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9691228583463044,
+        "accepted": true,
+        "low": 0.8989086234260004,
+        "high": 1.041949317638316,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 153,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0126366123030528,
+        "accepted": true,
+        "low": 0.9981938117392304,
+        "high": 1.0386186084710092,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0409045881831223,
+        "accepted": true,
+        "low": 0.9711403483978066,
+        "high": 1.1329293403966274,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 154,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9986589640598624,
+        "accepted": true,
+        "low": 0.9875548776132153,
+        "high": 1.0420755728359534,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9746647106563829,
+        "accepted": true,
+        "low": 0.9199735960544531,
+        "high": 1.0547284154628906,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 155,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.015513529308072,
+        "accepted": true,
+        "low": 0.9935214482010248,
+        "high": 1.062782309566891,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.001379450344099,
+        "accepted": true,
+        "low": 0.9234551874010805,
+        "high": 1.075575563326313,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 156,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.002095264347887,
+        "accepted": true,
+        "low": 0.9900610475217535,
+        "high": 1.0306873815863828,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.00062387736299,
+        "accepted": true,
+        "low": 0.9344146042543353,
+        "high": 1.059050626615857,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 157,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0022919459505923,
+        "accepted": true,
+        "low": 0.9890268590693656,
+        "high": 1.034822911334287,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9550174229719561,
+        "accepted": true,
+        "low": 0.8865324558382058,
+        "high": 1.0333470886070155,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 158,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.01651184415299,
+        "accepted": true,
+        "low": 1.0030678964766717,
+        "high": 1.0316798302043542,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0009635426734305,
+        "accepted": true,
+        "low": 0.9209103352732122,
+        "high": 1.076028128087608,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 159,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0036823682453162,
+        "accepted": true,
+        "low": 0.9899402503693073,
+        "high": 1.0493714923594515,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9856107311989935,
+        "accepted": true,
+        "low": 0.9228240450746876,
+        "high": 1.0483177070111243,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 160,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0123913554863728,
+        "accepted": true,
+        "low": 0.9983322335650539,
+        "high": 1.032105903800983,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.05692728394301,
+        "accepted": true,
+        "low": 0.9790898315449892,
+        "high": 1.1353058620572098,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 161,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0227918254235207,
+        "accepted": true,
+        "low": 0.9973798343047053,
+        "high": 1.0641212398862383,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0109433397850607,
+        "accepted": true,
+        "low": 0.9465685893273292,
+        "high": 1.0843628368768254,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 162,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0101416006027404,
+        "accepted": true,
+        "low": 0.9957353685773243,
+        "high": 1.0267805851530596,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9957845843971713,
+        "accepted": true,
+        "low": 0.9206731302516585,
+        "high": 1.0748600744168566,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 163,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0180331377339902,
+        "accepted": true,
+        "low": 1.0062483620271414,
+        "high": 1.05359777492454,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0491608143083642,
+        "accepted": true,
+        "low": 0.9796862672845017,
+        "high": 1.1227117371820703,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 164,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0038419493841466,
+        "accepted": true,
+        "low": 0.9895543912276257,
+        "high": 1.023320102361739,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.058204555382288,
+        "accepted": true,
+        "low": 0.9746461852422729,
+        "high": 1.151978347751727,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 165,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.009186882805701,
+        "accepted": true,
+        "low": 0.9988127019431086,
+        "high": 1.046510956240414,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9728727674710436,
+        "accepted": true,
+        "low": 0.9123027512224797,
+        "high": 1.0485056463718037,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 166,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0063184799273266,
+        "accepted": true,
+        "low": 0.9931016145520022,
+        "high": 1.0181171431709013,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9346924208220765,
+        "accepted": true,
+        "low": 0.8831437224641165,
+        "high": 1.0086967694613134,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 167,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.01134166801909,
+        "accepted": true,
+        "low": 0.9966366412485838,
+        "high": 1.0526661067796834,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0702411335846145,
+        "accepted": true,
+        "low": 0.9885725093213732,
+        "high": 1.1466605930119333,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 168,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0093253902360229,
+        "accepted": true,
+        "low": 0.9909010813459702,
+        "high": 1.0532659896195813,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0179020321081291,
+        "accepted": true,
+        "low": 0.9426751095436449,
+        "high": 1.0910212444649818,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 169,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0063058275839696,
+        "accepted": true,
+        "low": 0.994484730442438,
+        "high": 1.050841110260212,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0622162011044203,
+        "accepted": true,
+        "low": 1.001246800013729,
+        "high": 1.1479627959740242,
+        "covered": false
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 170,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0098911454591353,
+        "accepted": true,
+        "low": 0.9962288109477168,
+        "high": 1.0259331322518799,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9563439879492476,
+        "accepted": true,
+        "low": 0.8873222230421418,
+        "high": 1.0438825938043257,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 171,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0166507567041765,
+        "accepted": true,
+        "low": 1.0062178642252713,
+        "high": 1.0641029282058225,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.020843723448689,
+        "accepted": true,
+        "low": 0.9515060404532926,
+        "high": 1.1287538178632812,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 172,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0028431067954453,
+        "accepted": true,
+        "low": 0.9883357440768449,
+        "high": 1.0490035464789411,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9802357604621625,
+        "accepted": true,
+        "low": 0.9145652724788608,
+        "high": 1.051608250776153,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 173,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0125865230185114,
+        "accepted": true,
+        "low": 1.0002547984185017,
+        "high": 1.0399408758151312,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0078805698966709,
+        "accepted": true,
+        "low": 0.9357178436173416,
+        "high": 1.096847704340306,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 174,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9961994262295497,
+        "accepted": true,
+        "low": 0.9818692197383513,
+        "high": 1.0129964746277464,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9725221826618229,
+        "accepted": true,
+        "low": 0.8963015033631005,
+        "high": 1.0549623010063702,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 175,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9989649807424117,
+        "accepted": true,
+        "low": 0.9862485544934626,
+        "high": 1.0171794280403061,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0026161496344381,
+        "accepted": true,
+        "low": 0.9244872059156569,
+        "high": 1.0924107371119718,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 176,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0084219729523192,
+        "accepted": true,
+        "low": 0.9866315333218532,
+        "high": 1.053160300813038,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0190901301237691,
+        "accepted": true,
+        "low": 0.9484700378986941,
+        "high": 1.1098165506686875,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 177,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0079773261563905,
+        "accepted": true,
+        "low": 0.9980574877541947,
+        "high": 1.0537413542340472,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0003671181976022,
+        "accepted": true,
+        "low": 0.9462394855402345,
+        "high": 1.0738366944945632,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 178,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9979726835746352,
+        "accepted": true,
+        "low": 0.9818432838871503,
+        "high": 1.0172896919657166,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9421523836136585,
+        "accepted": true,
+        "low": 0.8812679231239839,
+        "high": 1.0000126238704248,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 179,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0127204862022767,
+        "accepted": true,
+        "low": 1.000221879462182,
+        "high": 1.0283061321471023,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0069044740077224,
+        "accepted": true,
+        "low": 0.9321383387224439,
+        "high": 1.0811964986879137,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 180,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0116759530294215,
+        "accepted": true,
+        "low": 0.9934592131887842,
+        "high": 1.0591175247199094,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0257890394444917,
+        "accepted": true,
+        "low": 0.9535863080796753,
+        "high": 1.105147303792672,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 181,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0070920348453416,
+        "accepted": true,
+        "low": 0.9950595669576164,
+        "high": 1.0451890488229245,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0508740853727725,
+        "accepted": true,
+        "low": 0.9838434366267357,
+        "high": 1.1283342858007006,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 182,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0146301385769325,
+        "accepted": true,
+        "low": 1.0032813081177194,
+        "high": 1.0610440061284891,
+        "covered": false
+      },
+      "joint": {
+        "point": 1.0066955984236126,
+        "accepted": true,
+        "low": 0.9441132180025956,
+        "high": 1.0816800730044271,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 183,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0167115543531058,
+        "accepted": true,
+        "low": 0.991753967685866,
+        "high": 1.0633600980018378,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0368766673364758,
+        "accepted": true,
+        "low": 0.9565384344466151,
+        "high": 1.120570823358404,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 184,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0175880442068652,
+        "accepted": true,
+        "low": 0.9904352240587365,
+        "high": 1.0644798050940736,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0612207459541998,
+        "accepted": true,
+        "low": 0.9772215876532709,
+        "high": 1.1355590997216096,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 185,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0030923780206429,
+        "accepted": true,
+        "low": 0.9909613310703862,
+        "high": 1.0378986283836111,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0134306221680467,
+        "accepted": true,
+        "low": 0.9455381629647607,
+        "high": 1.0870530335839228,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 186,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0065554150802531,
+        "accepted": true,
+        "low": 0.9930114691717292,
+        "high": 1.0376731469164016,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.011231672182483,
+        "accepted": true,
+        "low": 0.9384543344375035,
+        "high": 1.0982979307129355,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 187,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0065742556727588,
+        "accepted": true,
+        "low": 0.9935014818454334,
+        "high": 1.0305070104826002,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9916385863544925,
+        "accepted": true,
+        "low": 0.9323686249882491,
+        "high": 1.073216546287825,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 188,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0100979927904756,
+        "accepted": true,
+        "low": 0.9973579581141536,
+        "high": 1.0230915120087059,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.95968181699361,
+        "accepted": true,
+        "low": 0.8940692430004467,
+        "high": 1.0274676633290918,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 189,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0085879672884928,
+        "accepted": true,
+        "low": 0.9821647451407632,
+        "high": 1.045512551042503,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9382207372364785,
+        "accepted": true,
+        "low": 0.8766765050853684,
+        "high": 1.0236620369218408,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 190,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.011218554469287,
+        "accepted": true,
+        "low": 0.999598347618027,
+        "high": 1.0535685760050257,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0498318000870914,
+        "accepted": true,
+        "low": 0.9521485602861476,
+        "high": 1.1296114144965037,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 191,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0039930493002713,
+        "accepted": true,
+        "low": 0.9902623771853869,
+        "high": 1.0464902624789276,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.947687067391843,
+        "accepted": true,
+        "low": 0.88570147292549,
+        "high": 1.0299102215778615,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 192,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0036375471112362,
+        "accepted": true,
+        "low": 0.9909528869884455,
+        "high": 1.017596822614771,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0144023020145736,
+        "accepted": true,
+        "low": 0.9292054431989488,
+        "high": 1.0924540990284124,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 193,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.018236676814919,
+        "accepted": true,
+        "low": 0.9962100288097717,
+        "high": 1.0647312367519264,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.031415353113671,
+        "accepted": true,
+        "low": 0.9501668141994842,
+        "high": 1.1030030638692905,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 194,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0032877488278011,
+        "accepted": true,
+        "low": 0.9885464690981792,
+        "high": 1.037641938756326,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0473718873559503,
+        "accepted": true,
+        "low": 0.9786529383584427,
+        "high": 1.1184012967537906,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 195,
+      "truth": 1.0,
+      "fixed": {
+        "point": 0.9977515089803578,
+        "accepted": true,
+        "low": 0.9874228722305012,
+        "high": 1.0169804023523323,
+        "covered": true
+      },
+      "joint": {
+        "point": 0.9826680132182242,
+        "accepted": true,
+        "low": 0.9224504809904774,
+        "high": 1.0754262505366374,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 196,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0026509791393283,
+        "accepted": true,
+        "low": 0.990777057829823,
+        "high": 1.0420315690331108,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0636957092641113,
+        "accepted": true,
+        "low": 0.9865808830275795,
+        "high": 1.1415249238783438,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 197,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.010067682667404,
+        "accepted": true,
+        "low": 0.9914140198488777,
+        "high": 1.0502473636301837,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0214453748993755,
+        "accepted": true,
+        "low": 0.9526177399584813,
+        "high": 1.102090391771588,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 198,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.020229946142441,
+        "accepted": true,
+        "low": 0.9957134255997107,
+        "high": 1.0590200749363023,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.0178666949529656,
+        "accepted": true,
+        "low": 0.9567534890686785,
+        "high": 1.1149177490798396,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    },
+    {
+      "dataset": 199,
+      "truth": 1.0,
+      "fixed": {
+        "point": 1.0152536124904754,
+        "accepted": true,
+        "low": 0.9984583712519087,
+        "high": 1.0609261626243514,
+        "covered": true
+      },
+      "joint": {
+        "point": 1.027453185686178,
+        "accepted": true,
+        "low": 0.9629801583998068,
+        "high": 1.0977624834779354,
+        "covered": true
+      },
+      "joint_draw_fit_failures": 0
+    }
+  ]
+}

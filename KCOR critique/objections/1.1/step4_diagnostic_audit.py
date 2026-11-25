@@ -159,7 +159,7 @@ def main():
     fig.savefig(args.outdir/"overlap_residuals.png",dpi=160)
     plt.close(fig)
 
-    inputs=[ROOT/"KCOR critique/KCOR.pdf", ROOT/"code/KCOR.py", ROOT/"data/Czech/Czech.yaml",
+    inputs=[ROOT/"KCOR critique/original-review/KCOR.pdf", ROOT/"code/KCOR.py", ROOT/"data/Czech/Czech.yaml",
             ROOT/"test/quiet_window/code/quiet_window_scan_theta_czech_2021_24.py",
             args.step3/"manifest.json",args.step3/"timing_results.csv",args.step3/"timing_trajectories.csv"]
     manifest=dict(created_utc=datetime.now(timezone.utc).isoformat(),source_hashes={str(p.resolve().relative_to(ROOT)):sha(p) for p in inputs},

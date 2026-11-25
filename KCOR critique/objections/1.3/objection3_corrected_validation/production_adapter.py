@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 sys.dont_write_bytecode = True
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 os.environ['DATASET'] = 'Czech'
 os.environ['MONTE_CARLO'] = '1'
 os.environ['MC_INCLUDE_AGGREGATES'] = '0'

@@ -207,8 +207,8 @@ def cohort_pipeline(
     return float(k_hat), th, diag, H_obs, H0
 
 
-def anchored_kcor(H0_a: np.ndarray, H0_b: np.ndarray, skip: int) -> np.ndarray:
-    norm_week = skip + 4
+def anchored_kcor(H0_a: np.ndarray, H0_b: np.ndarray, skip: int, *, workbook_anchor=False) -> np.ndarray:
+    norm_week = skip + K.KCOR_NORMALIZATION_WEEKS - 1 if workbook_anchor else skip + 4
     with np.errstate(divide="ignore", invalid="ignore"):
         raw = np.where(H0_b > 1e-12, H0_a / H0_b, np.nan)
     if norm_week < len(raw) and np.isfinite(raw[norm_week]) and raw[norm_week] > 0:
@@ -250,6 +250,8 @@ def run_single_rep(
     quiet_mask: np.ndarray,
     k_anchor_weeks: int,
     gamma_per_week: float,
+    *,
+    workbook_anchor=False,
 ) -> dict | None:
     skip = int(K.DYNAMIC_HVE_SKIP_WEEKS)
 
@@ -301,7 +303,7 @@ def run_single_rep(
     if not (bool(dib.get("success", False)) and np.isfinite(thb)):
         return None
 
-    kcor = anchored_kcor(H0a, H0b, skip)
+    kcor = anchored_kcor(H0a, H0b, skip, workbook_anchor=workbook_anchor)
     kasy = kcor_asymptote_value(kcor, H0b)
     kslope = kcor_slope(kcor, t_rebased)
 
@@ -335,6 +337,8 @@ def sweep_mode(
     k_anchor_weeks: int,
     gamma_per_week: float,
     base_seed: int,
+    *,
+    workbook_anchor=False,
 ) -> list[dict]:
     rows: list[dict] = []
     if mode == "combined":
@@ -364,6 +368,7 @@ def sweep_mode(
                 quiet_mask,
                 k_anchor_weeks,
                 gamma_per_week,
+                workbook_anchor=workbook_anchor,
             )
             if out is not None:
                 rep_results.append(out)
@@ -451,6 +456,8 @@ def plot_figures(
     agg_comorb: list[dict],
     agg_combined: list[dict],
     h_ref: float,
+    *,
+    mean_intervals=False,
 ) -> None:
     def agg_only(rows, mode):
         return [r for r in rows if r.get("contamination_type") == f"{mode}_agg"]
@@ -499,7 +506,7 @@ def plot_figures(
             )
             cbar.ax.yaxis.set_major_formatter(mticker.FormatStrFormatter("%.2f"))
             cbar.ax.yaxis.get_offset_text().set_visible(False)
-            ax_i.set_title("Combined: reversal frequency")
+            ax_i.set_title("Combined: fraction above 1" if mean_intervals else "Combined: reversal frequency")
     fig_a.tight_layout()
     fig_a.savefig(out_dir / "fig_quiet_contam_theta_error.png", dpi=150)
     plt.close(fig_a)
@@ -515,7 +522,8 @@ def plot_figures(
         if data is not None:
             xs = [float(r[xkey]) for r in data]
             ys = [r["KCOR_asymptote_mean"] for r in data]
-            yerr = [r["KCOR_asymptote_std"] for r in data]
+            error_key = "KCOR_asymptote_margin95" if mean_intervals else "KCOR_asymptote_std"
+            yerr = [r[error_key] for r in data]
             ax_i.errorbar(xs, ys, yerr=yerr, fmt="o-", capsize=3)
             ax_i.axhline(1.0, color="black", ls="--", lw=1)
             ax_i.set_xlabel(xkey)

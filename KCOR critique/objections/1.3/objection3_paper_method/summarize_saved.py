@@ -18,8 +18,8 @@ def main():
         if Path(path).name=='production_adapter.py':
             # The retained run predates the folder move. Restore the original
             # repository-root expression in memory for the historical hash.
-            assert source.count(b'parents[3]')==1
-            source=source.replace(b'parents[3]',b'parents[2]')
+            assert source.count(b'parents[4]')==1
+            source=source.replace(b'parents[4]',b'parents[2]')
         assert hashlib.sha256(source).hexdigest()==digest
     cfg=configure(manifest['scenario']['windows']);first,last=manifest['scenario']['windows'][0]
     t=np.arange(first,last+1)-cfg['skip'];gamma=cfg['gompertz']['gamma_per_week']

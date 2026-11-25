@@ -1,5 +1,7 @@
 # Objection 1: correction interpretation and diagnostics
 
+Index **1.1**, original PR #5 objection 1. [Revision assessment](assessment.md) · [Targeted re-evaluation](fresh-review-evaluation.md) · [All objections](../../README.md)
+
 Read [the corrected framing](KCOR_Objection_1_Corrected_Framing.md) first. It supersedes the broad identification criticism in the original reviews: the paper already defines a conditional descriptive target and acknowledges that different mechanisms can create similar curves. The remaining issue concerns stronger claims about diagnostic detection and conservative behavior.
 
 ## Retained work

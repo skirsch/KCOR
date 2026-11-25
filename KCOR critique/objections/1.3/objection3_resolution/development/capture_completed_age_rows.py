@@ -9,7 +9,7 @@ import sys, json, hashlib
 from pathlib import Path
 import pandas as pd
 base = Path(__file__).resolve().parent / 'reproduction_1000_iterations'
-source = base.parents[4] / 'code/KCOR.py'
+source = base.parents[5] / 'code/KCOR.py'
 matches = []
 for current in sys._current_frames().values():
     while current is not None:

@@ -12,7 +12,7 @@ import numpy as np
 from scipy.optimize import least_squares, minimize_scalar
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 CAL = HERE.parent/'objection3_corrected_validation'
 sys.path.insert(0,str(CAL))
 from production_adapter import K, arrays, configure, estimate

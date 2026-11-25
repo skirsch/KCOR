@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 HERE=Path(__file__).resolve().parent
-ROOT=HERE.parents[2]
+ROOT=HERE.parents[3]
 
 def main():
     gamma=.085/52.;k=.001;skip=2;weeks=100

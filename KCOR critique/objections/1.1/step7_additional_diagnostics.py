@@ -27,7 +27,7 @@ def main():
     for name,h in meta['source_hashes'].items():
         assert sha(ROOT/name)==h,name
     assert sha(Path(__file__).with_name('step6_random_detection.py'))==meta['script_sha256']
-    prior=json.loads((ROOT/'KCOR critique/01 - Objection 1/step5_results_2026-11-09/manifest.json').read_text())
+    prior=json.loads((ROOT/'KCOR critique/objections/1.1/step5_results_2026-11-09/manifest.json').read_text())
     d=prior['original_design']
     saved=pd.read_csv(args.step6/'evaluation_runs.csv').set_index(['rep','case'])
     cal_saved=pd.read_csv(args.step6/'calibration.csv').set_index('rep')
@@ -46,8 +46,8 @@ def main():
             Path(__file__).with_name('step1_contamination_audit.py'),
             Path(__file__).with_name('step6_random_detection.py'),
             args.step6/'design.json',args.step6/'evaluation_runs.csv',args.step6/'calibration.csv',
-            args.step6/'frozen_threshold.json',ROOT/'KCOR critique/01 - Objection 1/step4_results_2026-11-09/diagnostic_mapping.csv',
-            ROOT/'KCOR critique/01 - Objection 1/step5_results_2026-11-09/manifest.json']
+            args.step6/'frozen_threshold.json',ROOT/'KCOR critique/objections/1.1/step4_results_2026-11-09/diagnostic_mapping.csv',
+            ROOT/'KCOR critique/objections/1.1/step5_results_2026-11-09/manifest.json']
     design=dict(created_utc=datetime.now(timezone.utc).isoformat(),variants=variants,
         source_hashes={str(p.resolve().relative_to(ROOT)):sha(p) for p in inputs},script_sha256=sha(Path(__file__)),
         metrics={'window_change':'max abs(variant raw / nominal raw - 1) over eight boundary shifts',

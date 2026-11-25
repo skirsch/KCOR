@@ -11,7 +11,7 @@ import numpy as np
 
 
 HERE = Path(__file__).resolve().parent
-VALIDATION = HERE.parents[1] / "03 - Objection 3" / "objection3_corrected_validation"
+VALIDATION = HERE.parents[1] / "1.3" / "objection3_corrected_validation"
 sys.path.insert(0, str(VALIDATION))
 from production_adapter import K, arrays, configure, estimate  # noqa: E402
 from simulation import population  # noqa: E402
@@ -83,7 +83,7 @@ def both_arm_wave_probabilities(scenario):
 
 def main() -> None:
     original, variant, source_hash = exact_weekly_variant()
-    current_source = (HERE.parents[2] / "code" / "KCOR.py").read_text(encoding="utf-8")
+    current_source = (HERE.parents[3] / "code" / "KCOR.py").read_text(encoding="utf-8")
     assert current_source.count("h0_i = hi * (1.0 + theta * H_running)") == 1
     assert current_source.count("H_running += max(hi * (1.0 + theta * H_running), 0.0)") == 1
     cases = []

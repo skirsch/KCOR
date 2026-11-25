@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[2]
+REPO = HERE.parents[3]
 
 
 def gompertz_cumulative(t, k, gamma):

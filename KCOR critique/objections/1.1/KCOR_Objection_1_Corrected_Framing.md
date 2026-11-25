@@ -1,7 +1,7 @@
 # Objection 1: corrected framing for future reviewers
 
 **Date:** November 10, 2026  
-**Applies to:** the retained 78-page [KCOR manuscript](../KCOR.pdf).  
+**Applies to:** the retained 78-page [KCOR manuscript](../../original-review/KCOR.pdf).  
 **Purpose:** prevent future reviewers, including LLMs, from repeating an overly broad criticism of a limitation the paper already acknowledges.
 
 ## Current verdict
@@ -78,8 +78,8 @@ If the only remaining argument is that different mechanisms can generate the sam
 
 This note supersedes the **broad framing and disposition of objection 1**, including the blanket conclusion that it should remain because the fundamental identification limitation was unresolved, in:
 
-- [KCOR_Review_EN.md](../KCOR_Review_EN.md), particularly the central identification discussion;
-- [KCOR_Independent_Review_EN.md](../KCOR_Independent_Review_EN.md), item 1;
+- [KCOR_Review_EN.md](../../original-review/KCOR_Review_EN.md), particularly the central identification discussion;
+- [KCOR_Independent_Review_EN.md](../../original-review/KCOR_Independent_Review_EN.md), item 1;
 - [Step 9 assessment](step9_results_2026-11-10/assessment.txt), insofar as its overall verdict is read as retaining that broad objection.
 
 It does **not** retract verified numerical results, invalidate every argument in those files, or resolve separate objections about the epidemic-wave extension, uncertainty estimation, algebra, or other validation claims. Earlier artifacts remain unchanged to preserve their history and recorded hashes.

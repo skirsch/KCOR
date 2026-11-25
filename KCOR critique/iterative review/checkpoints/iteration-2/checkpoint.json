@@ -1,0 +1,17 @@
+{
+  "build_pdfs.py": "b23d5397f87ec975e89a492b4f3191f025c255bb0428bc1191b4a7109a3e6043",
+  "KCOR-clean.pdf": "654579218381aec3644e5e3d62e739f174052c75a5ea168b0368bda2313436f9",
+  "KCOR-redline.pdf": "0ad21b3d5619a3346cd9774512e12e78201cf36b698bb8069e19364abba748c3",
+  "pr5_text_edits.py": "c52a1bef25f1bfb0cbcce8cdc10bc757600779462076c32be125ff063b8baf91",
+  "rebuild.py": "34ab539c6fdea1528c11880bbd3e1f0b7a582373350ac64d30b12e1c9ed190c6",
+  "review_links.py": "2738fbb182dbbd7bf83716931ae1f528ab3c601e252f25eb8e23b00a626f110a",
+  "revised/code/KCOR.py": "52fe5d94b6b24924a1f7b79720fcd4603b2de2995fea25d5b943d2ceafd4f78e",
+  "revised/code/KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+  "revised/documentation/preprint/figures/fig_cox_bias_kcor_vs_theta.png": "ef2b2989f00d4e5e7bd48021f89b527849be816026987331ada04b14e139bb31",
+  "revised/documentation/preprint/figures/fig_si_quiet_window_theta_scan_czech_2021_24.png": "35be2ea2f162b1d53c86643373b9d66a2765f4a9dd5213c23f63621c72986d7b",
+  "revised/documentation/preprint/paper.md": "690815ef6012f65de5f7f631b06f369245e3ce37f7b2cf7207d846d71fe230ce",
+  "revised/documentation/preprint/supplement.md": "f97e77459b10f576bc8b0c626592c3cd0126ac276dae0e2b319bc247b88856f1",
+  "revised/manifest.json": "bfc3a82b5f33f7d9ee0930c7c67f0e15d25071f395500966aa91aeeeec84bb5c",
+  "revised/test/test_nph_post_window_continuity.py": "b71842e05aee02584dbe59309146bd1f62842d6f2023ffe3874bf80e2407708f",
+  "table8_bootstrap.json": "b6d24ceb63bc7329870fc37451f142c6b97b0e21a88d618abaa15cc93a8c9c21"
+}

@@ -1,5 +1,9 @@
 # Objection 3: uncertainty calibration
 
+Index **1.3**, original PR #5 objection 3. [Revised resampling checks](verification.md) · [Paired fitter comparison](paired-seed-fit/assessment.md) · [All objections](../../README.md)
+
+The [pooled multiwindow coverage study](multiwindow-coverage/README.md) tests the current production calculation with both fitters, a no-wave and nonlinear-wave scenario, and a separate low-information stress that exercises diagnostic fallbacks. The results and their uncertainty are retained for the lead-author decision on the joint fitter.
+
 **Status: on hold pending the lead author's decision on the recommendation to drop resampling blocks of raw weeks.** The reason comes from the application. Even in a quiet period under the gamma-frailty model, the expected death rate changes with baseline risk and with who is still alive. Moving a block to a different point in follow-up mixes death rates from different times and alters the trajectory used to fit frailty. Correct survivor counts within the resample still leave the rates at the wrong times. Person resampling keeps death weeks in place and rebuilds counts and risk sets. The [block placement check](objection3_paper_method/block_bootstrap_operationalization/WHY_BLOCK_PLACEMENT_MATTERS.md) illustrates the problem even when the starting counts match the model exactly.
 
 After the decision, verify that the paper describes the chosen resampling and fitting procedure and that its reported intervals come from that workflow. The coverage comparison below corroborates the recommendation in the tested setting.
@@ -29,9 +33,9 @@ The candidate's 60-dataset interval comparison and the original 600-dataset stud
 
 ## Independent software dependency
 
-The [Monte Carlo sample-isolation bug package](<../07 - Bugs/monte_carlo_sample_isolation/README.md>) has its own explanation, patch, regression, and PR. Those bugs were discovered while working on this objection but are ordinary software defects. Accepting their repair does not require accepting a changed statistical method. Their repair alone does not settle calibration.
+The [Monte Carlo sample-isolation bug package](<../../software-fixes/monte_carlo_sample_isolation/README.md>) has its own explanation, patch, regression, and PR. Those bugs were discovered while working on this objection but are ordinary software defects. Accepting their repair does not require accepting a changed statistical method. Their repair alone does not settle calibration.
 
-The [baseline-rate fit mismatch](<../07 - Bugs/k_fit_spec_mismatch/README.md>) is a separate specification question revealed by the residual deterministic offset. The paper describes a joint first fit, while the validated code fixes the early rate before iterating frailty. This needs an explicit algorithm choice; the exploratory joint fit is not an approved replacement.
+The [baseline-rate fit mismatch](<../../software-fixes/k_fit_spec_mismatch/README.md>) is a separate specification question revealed by the residual deterministic offset. The paper describes a joint first fit, while the validated code fixes the early rate before iterating frailty. This needs an explicit algorithm choice; the exploratory joint fit is not an approved replacement.
 
 Remaining review questions include calibration, alignment of the paper's description with implementation, and identification of the source workflow behind historical manuscript intervals. No historical figure or table is assigned to a workflow without provenance evidence.
 

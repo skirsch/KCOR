@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / "test/quiet_window_contamination/run_contamination_test.py"
 SAVED = SOURCE.parent / "out"
 

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "documentation/preprint/paper.md",
+    "sha256": "63735f00e11800195a58a3e02af6bb181802b459bafd0efbf626bb649747c26f"
+  },
+  {
+    "path": "documentation/preprint/supplement.md",
+    "sha256": "b512b0023057dbd6bcf84566e399d39a7a748e26f00c6859167508addded0806"
+  },
+  {
+    "path": "code/KCOR.py",
+    "sha256": "10692b74a85a7cb45d5a80ac0d98601d1371bd1c755931d1067d616da1c234c9"
+  },
+  {
+    "path": "code/KCOR_CMR.py",
+    "sha256": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666"
+  }
+]

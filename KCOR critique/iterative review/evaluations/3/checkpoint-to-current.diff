@@ -1,0 +1,1202 @@
+--- a/analysis/cox_intervals/figure_intervals.csv
++++ b/analysis/cox_intervals/figure_intervals.csv
+@@ -0,0 +1,8 @@
++theta_B,kcor_asymptote,lower95,upper95
++0.0,0.9884019857183004,0.9684951615867542,1.0085046070918542
++0.5,0.9899624319289688,0.9697574154914432,1.0086906792260977
++1.0,0.9918078120244858,0.972247885869744,1.01161644152258
++2.0,0.991460403768186,0.9701999751588067,1.0123208085287916
++5.0,0.992503273904054,0.9690239477318744,1.0160320368201097
++10.0,1.0201309389372637,0.9929639260784107,1.0481902690306932
++20.0,1.023636849150175,0.9878497592791302,1.0597302910539792
+--- a/analysis/cox_intervals/figure_intervals.py
++++ b/analysis/cox_intervals/figure_intervals.py
+@@ -0,0 +1,76 @@
++"""Reproduce the Cox experiment's KCOR points and their person-bootstrap intervals."""
++from pathlib import Path
++import sys
++
++import matplotlib
++matplotlib.use("Agg")
++import matplotlib.pyplot as plt
++import numpy as np
++import pandas as pd
++
++HERE = Path(__file__).resolve().parent
++STUDY = HERE.parents[1] / "test/sim_grid"
++FIGURE = (HERE.parents[1] / "documentation/preprint/figures"
++          / "fig_cox_bias_kcor_vs_theta.png")
++sys.path.insert(0, str(STUDY / "code"))
++import generate_cox_bias_sim as sim
++
++
++def bootstrap_hazard(group, rng, horizon, draws=1999):
++    n = len(group)
++    events = np.sort(group.loc[group.event == 1, "time"].to_numpy())
++    assert np.all(np.diff(events) > 0) and events[-1] < horizon
++    assert (group.loc[group.event == 0, "time"] == horizon).all()
++    # One category per event time, one shared category for administrative censoring.
++    # Multinomial weights resample people with replacement within their cohort.
++    probabilities = np.r_[np.full(len(events), 1/n), 1-len(events)/n]
++    result = np.empty(draws)
++    for start in range(0, draws, 25):
++        stop = min(start+25, draws)
++        dead = rng.multinomial(n, probabilities, size=stop-start)[:, :-1]
++        at_risk = n-np.cumsum(dead, axis=1)+dead
++        result[start:stop] = np.sum(dead/at_risk, axis=1)
++    point = np.sum(1/(n-np.arange(len(events))))
++    return point, result
++
++
++def intervals():
++    cfg = sim.CoxBiasConfig()
++    df = pd.read_csv(STUDY / "out/cox_bias_results.csv")
++    rows = []
++    for index, row in enumerate(df.itertuples()):
++        people = sim.simulate_two_cohorts(row.theta_B, cfg)
++        rng = np.random.default_rng([20261122, index])
++        a, b = [bootstrap_hazard(group, rng, cfg.censor_horizon)
++                for _, group in people.groupby("cohort", sort=True)]
++        point = (sim.invert_gamma_frailty(np.asarray(b[0]), row.theta_B)+1e-12)/(a[0]+1e-12)
++        np.testing.assert_allclose(point, row.kcor_asymptote, rtol=1e-11)
++        ratios = (sim.invert_gamma_frailty(b[1], row.theta_B)+1e-12)/(a[1]+1e-12)
++        lo, hi = np.quantile(ratios, [.025, .975])
++        rows.append((row.theta_B, row.kcor_asymptote, lo, hi))
++    return pd.DataFrame(rows, columns=["theta_B", "kcor_asymptote", "lower95", "upper95"])
++
++
++def plot(df):
++    fig, ax = plt.subplots(figsize=(8, 6))
++    y = df.kcor_asymptote
++    bars = ax.errorbar(df.theta_B, y, yerr=[y-df.lower95, df.upper95-y],
++                       fmt="o-", color="#1f77b4", linewidth=2, markersize=6,
++                       elinewidth=1.3, capsize=2.5, capthick=1.3)
++    null = ax.axhline(1., color="black", linestyle="--", linewidth=1)
++    ax.set_xlabel("Frailty variance θ (cohort B)", fontsize=12)
++    ax.set_ylabel("KCOR asymptote (end of follow-up)", fontsize=12)
++    ax.set_title("KCOR under synthetic null: remains centered near 1 across θ", fontsize=13)
++    ax.grid(True, alpha=.3)
++    ax.set_axisbelow(True)
++    ax.legend([bars, null], ["KCOR asymptote (95% CI)", "True KCOR = 1"],
++              loc="upper left", fontsize=10)
++    fig.tight_layout()
++    fig.savefig(FIGURE, dpi=300, bbox_inches="tight")
++    plt.close(fig)
++
++
++if __name__ == "__main__":
++    data = intervals()
++    data.to_csv(HERE / "figure_intervals.csv", index=False)
++    plot(data)
+--- a/analysis/quiet_windows/check_workbook.py
++++ b/analysis/quiet_windows/check_workbook.py
+@@ -0,0 +1,53 @@
++"""Compare the scan with the ordinary workbook entry point for every placement."""
++import contextlib
++from concurrent.futures import ProcessPoolExecutor
++from datetime import timedelta
++from functools import partial
++import os
++from pathlib import Path
++import tempfile
++from unittest.mock import patch
++
++import numpy as np
++import pandas as pd
++from scan import HERE, KCOR, historical, population
++
++
++def check_window(args):
++    root, window = args
++    start = window.start_iso
++    last = historical.iso_week_to_monday(*map(int, window.end_iso.split("-"))) - timedelta(weeks=1)
++    settings = [dict(start_iso=start, end_iso=last.strftime("%G-%V"),
++                     start_int=int(start.replace("-", "")), end_int=int(last.strftime("%G%V")))]
++    work = root / start
++    work.mkdir()
++    fitter = partial(KCOR.fit_theta0_gompertz, joint_seed=True)
++    with contextlib.chdir(work), patch.object(KCOR, "fit_theta0_gompertz", fitter), patch.object(
++            KCOR, "get_theta_estimation_windows", return_value=settings):
++        with open(os.devnull, "w") as sink, contextlib.redirect_stdout(sink):
++            KCOR.process_workbook(str(root / "input.xlsx"), str(work / "output.xlsx"))
++        with pd.ExcelFile("output.xlsx") as book:
++            sheet = pd.read_excel(book, sheet_name="theta0_diagnostics")
++    observed = sheet[sheet.YearOfBirth.isin([1940, 1950]) & sheet.Dose.isin([0, 1, 2])].set_index(["YearOfBirth", "Dose"]).sort_index()
++    expected = pd.read_csv(HERE / "windows.csv")
++    reference = expected[expected.window_start_iso == start].set_index(["yob_decade", "dose"]).sort_index()
++    assert observed.index.tolist() == reference.index.tolist()
++    np.testing.assert_allclose(observed.k_hat, reference.k, rtol=1e-5, atol=1e-8)
++    np.testing.assert_allclose(observed.theta0_hat, reference.theta_applied, rtol=1e-5, atol=1e-7)
++    np.testing.assert_array_equal(observed.status.eq("OK").to_numpy(), reference.passed.to_numpy(bool))
++
++
++def main():
++    frame = population().rename(columns={"yob_decade": "YearOfBirth", "monday": "DateDied"})
++    frame["ISOweekDied"] = pd.to_datetime(frame.DateDied).dt.strftime("%G-%V")
++    frame["Sex"] = "O"
++    with tempfile.TemporaryDirectory(prefix="kcor-n5-") as tmp:
++        root = Path(tmp)
++        frame.drop(columns="t").to_excel(root / "input.xlsx", sheet_name="2021_24", index=False)
++        with ProcessPoolExecutor(4) as pool:
++            list(pool.map(check_window, [(root, w) for w in historical.build_windows()[0]]))
++    print("All 78 scan fits match the workbook parameters and diagnostic outcomes.")
++
++
++if __name__ == "__main__":
++    main()
+--- a/analysis/quiet_windows/scan.py
++++ b/analysis/quiet_windows/scan.py
+@@ -0,0 +1,121 @@
++"""Replay the Czech quiet-window scan with the iteration 2 joint fitter."""
++import hashlib
++import io
++from pathlib import Path
++import subprocess
++import sys
++
++import matplotlib
++matplotlib.use("Agg")
++import matplotlib.dates as mdates
++import matplotlib.pyplot as plt
++from matplotlib.lines import Line2D
++import numpy as np
++import pandas as pd
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parents[1]
++OLD = ROOT / "test/quiet_window"
++FIGURE = ROOT / "documentation/preprint/figures/fig_si_quiet_window_theta_scan_czech_2021_24.png"
++INPUT = "63c60f1f020d0ee59c4c03e6f86d30014cca107f"
++sys.path.insert(0, str(OLD / "code"))
++import quiet_window_scan_theta_czech_2021_24 as historical
++sys.path.insert(0, str(ROOT / "code"))
++import KCOR
++
++
++def population():
++    raw = (ROOT/"data/Czech/reference_without_COVID_correction-1-24-26/KCOR_CMR.xlsx").read_bytes()
++    assert hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest() == INPUT
++    data = pd.read_excel(io.BytesIO(raw), sheet_name="2021_24",
++                         usecols=["YearOfBirth", "Dose", "ISOweekDied", "Alive", "Dead"])
++    data["yob_decade"] = (data.YearOfBirth // 10) * 10
++    data = data[data.yob_decade.isin(historical.YOB_DECADES) & data.Dose.isin([0, 1, 2])].copy()
++    dates = {v: historical.iso_week_to_monday(*historical.parse_iso_week(v))
++             for v in data.ISOweekDied.unique()}
++    data["monday"] = data.ISOweekDied.map(dates)
++    enrollment = historical.iso_week_to_monday(2021, 24)
++    data = data[data.monday >= enrollment]
++    groups = data.groupby(["yob_decade", "Dose", "monday"], as_index=False)[["Alive", "Dead"]].sum()
++    groups["t"] = groups.monday.map(lambda d: historical.abs_week_index(d, enrollment))
++    return groups[groups.Alive > 0]
++
++
++def scan():
++    windows, origin = historical.build_windows()
++    old = pd.read_csv(OLD / "out/quiet_window_scan_theta_czech_2021_24_yob1940_50.csv")
++    keys = ["yob_decade", "dose", "window_start_iso"]
++    old = old.set_index(keys, verify_integrity=True)
++    cfg = KCOR.get_gompertz_theta_fit_config()
++    guard = KCOR.get_theta_degenerate_fit_config()
++    rows = []
++    for (decade, dose), group in population().groupby(["yob_decade", "Dose"]):
++        group = group.sort_values("t")
++        time = group.t.to_numpy(float)
++        deaths = group.Dead.to_numpy(float)
++        alive = group.Alive.to_numpy(float)
++        t_rebased = time - KCOR.DYNAMIC_HVE_SKIP_WEEKS
++        hazard = KCOR.hazard_from_mr(np.clip(deaths / (alive + KCOR.EPS), 0, .999))
++        effective = np.where(t_rebased >= 0, hazard, 0.)
++        historical_H = np.cumsum(-np.log1p(-np.clip(deaths / alive, 0, 1-1e-12)))
++        weeks = group.monday.map(lambda d: historical.abs_week_index(d, origin)).to_numpy()
++        for w in windows:
++            quiet = (weeks >= w.start_abs) & (weeks < w.end_abs)
++            previous = old.loc[(decade, dose, w.start_iso)]
++            assert quiet.sum() == previous.n_points and w.end_iso == previous.window_end_iso
++            # Match the saved historical trajectories before changing fitter and diagnostics.
++            historical_fit = historical.fit_window(time[quiet], historical_H[quiet])
++            np.testing.assert_allclose(historical_fit, previous[["k_hat", "theta_hat", "rmse_H", "r2_postnorm"]].to_numpy(float),
++                                       rtol=1e-5, atol=1e-8)
++            (k, theta), diag = KCOR.fit_theta0_gompertz(
++                effective, t_rebased, quiet, cfg["k_anchor_weeks"], cfg["gamma_per_week"],
++                deaths_arr=deaths, joint_seed=True)
++            applied, degenerate, _ = KCOR._apply_theta_degenerate_guard(theta, guard)
++            passed = bool(diag["success"] and diag["status"] == "ok" and not degenerate)
++            rows.append(dict(yob_decade=decade, dose=dose, window_start_iso=w.start_iso,
++                             window_end_iso=w.end_iso, midpoint=w.midpoint, quiet_weeks=int(quiet.sum()),
++                             fit_weeks=diag["n_fit"], old_pass=int(previous["pass"]), passed=int(passed),
++                             k=k, theta_seed=diag["theta0_init"], theta_raw=diag["theta0_raw"],
++                             theta_applied=applied, status=diag["status"], success=diag["success"],
++                             message=diag["message"], degenerate=degenerate, rmse=diag["rmse_hazard"]))
++    results = pd.DataFrame(rows)
++    assert len(results) == len(old) == 78 and not results.duplicated(keys).any()
++    return results
++
++
++def figure(rows):
++    fig, axes = plt.subplots(2, 3, figsize=(8, 4.7), sharex=True, sharey=True, layout="constrained")
++    for (decade, dose), group in rows.groupby(["yob_decade", "dose"]):
++        row = 0 if decade == 1940 else 1
++        ax = axes[row, dose]
++        for value, marker, color in [(1, "o", "#1d5265"), (0, "x", "#983b20")]:
++            selected = group[group.passed == value]
++            ax.scatter(pd.to_datetime(selected.midpoint), selected.theta_raw, marker=marker, s=21, color=color)
++        ax.grid(axis="y", alpha=.23)
++        ax.set_axisbelow(True)
++        if row == 0:
++            ax.set_title(f"Dose {dose}")
++        if dose == 0:
++            ax.set_ylabel(f"{decade}s births\nFrailty variance")
++        ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=[1, 4, 7, 10]))
++        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %y"))
++        ax.tick_params(labelsize=8)
++    fig.supxlabel("Quiet-window midpoint", fontsize=10)
++    handles = [Line2D([], [], marker=m, color=c, linestyle="none", label=l) for m,c,l in
++               [("o", "#1d5265", "Diagnostic pass"), ("x", "#983b20", "Diagnostic failure")]]
++    fig.legend(handles=handles, loc="outside upper center", ncols=2, frameon=False)
++    FIGURE.parent.mkdir(parents=True, exist_ok=True)
++    fig.savefig(FIGURE, dpi=180)
++    plt.close(fig)
++
++
++if __name__ == "__main__":
++    rows = scan()
++    summary = rows.groupby(["yob_decade", "dose"], as_index=False).agg(
++        attempted=("passed", "size"), historical_passed=("old_pass", "sum"), revised_passed=("passed", "sum"))
++    assert len(summary) == 6 and (summary.attempted == 13).all()
++    summary["pass_rate"] = summary.revised_passed / summary.attempted
++    rows.to_csv(HERE / "windows.csv", index=False)
++    summary.to_csv(HERE / "summary.csv", index=False)
++    print(summary.to_string(index=False), flush=True)
++    figure(rows)
+--- a/analysis/quiet_windows/summary.csv
++++ b/analysis/quiet_windows/summary.csv
+@@ -0,0 +1,7 @@
++yob_decade,dose,attempted,historical_passed,revised_passed,pass_rate
++1940,0,13,8,13,1.0
++1940,1,13,3,13,1.0
++1940,2,13,8,13,1.0
++1950,0,13,13,13,1.0
++1950,1,13,13,13,1.0
++1950,2,13,13,13,1.0
+--- a/analysis/quiet_windows/windows.csv
++++ b/analysis/quiet_windows/windows.csv
+@@ -0,0 +1,79 @@
++yob_decade,dose,window_start_iso,window_end_iso,midpoint,quiet_weeks,fit_weeks,old_pass,passed,k,theta_seed,theta_raw,theta_applied,status,success,message,degenerate,rmse
++1940,0,2022-13,2023-13,2022-09-30,52,56,0,1,0.0012029824223189819,0.7833589693934189,0.7786487865730698,0.7786487865730698,ok,True,ok,False,0.00016780851965681156
++1940,0,2022-17,2023-18,2022-10-30,53,57,0,1,0.0012510922558193554,1.574238042560736,1.570307903794289,1.570307903794289,ok,True,ok,False,0.00017233930378853272
++1940,0,2022-22,2023-22,2022-11-30,52,56,1,1,0.0013718076468132497,2.643906556162843,2.642433485964272,2.642433485964272,ok,True,ok,False,0.00017527997700677266
++1940,0,2022-26,2023-26,2022-12-30,52,56,1,1,0.0016082065217655867,3.924907503659258,3.930983396791055,3.930983396791055,ok,True,ok,False,0.000176891202300756
++1940,0,2022-31,2023-31,2023-01-30,52,56,1,1,0.002174767568573296,5.806276493048922,5.849174452710344,5.849174452710344,ok,True,ok,False,0.0002517299622064094
++1940,0,2022-35,2023-35,2023-03-02,52,56,1,1,0.002700526409414989,6.720993633416466,6.827694236812863,6.827694236812863,ok,True,ok,False,0.0003593005531412745
++1940,0,2022-39,2023-39,2023-04-01,52,56,1,1,0.004847007003831425,8.38906806439619,9.329100247358252,9.329100247358252,ok,True,ok,False,0.000836956288402163
++1940,0,2022-44,2023-44,2023-05-02,52,56,1,1,0.0037469822801711695,7.590516786168016,7.94938957752847,7.94938957752847,ok,True,ok,False,0.0005932415200329302
++1940,0,2022-48,2023-48,2023-06-01,52,56,1,1,0.0050030033286235145,7.913628858446568,8.878965693112553,8.878965693112553,ok,True,ok,False,0.0008777081872519995
++1940,0,2022-52,2024-01,2023-07-02,53,57,1,1,0.0014084877637628318,2.9557754482344176,2.9554121683576215,2.9554121683576215,ok,True,ok,False,0.0001913838845698872
++1940,0,2023-05,2024-05,2023-08-02,52,56,0,1,0.0009300945262950564,9.7329377845698e-16,1e-10,1e-10,ok,True,ok,False,0.00019587919987383977
++1940,0,2023-09,2024-09,2023-08-31,52,56,0,1,0.0009265619892366572,7.525917556128806e-16,1e-10,1e-10,ok,True,ok,False,0.00019933234342048222
++1940,0,2023-13,2024-14,2023-10-01,53,57,0,1,0.0009089203459772101,1.0980000567438233e-18,1e-10,1e-10,ok,True,ok,False,0.0002013673504789388
++1940,1,2022-13,2023-13,2022-09-30,52,56,0,1,0.0007339057742354801,3.3179988218581048e-15,1e-10,1e-10,ok,True,ok,False,0.00013940633501326722
++1940,1,2022-17,2023-18,2022-10-30,53,57,0,1,0.0007417699581504792,2.829023869380359e-19,1e-10,1e-10,ok,True,ok,False,0.0001404083771146687
++1940,1,2022-22,2023-22,2022-11-30,52,56,0,1,0.0007449003327874889,1.759321033417211e-29,1e-10,1e-10,ok,True,ok,False,0.00013863107517052926
++1940,1,2022-26,2023-26,2022-12-30,52,56,0,1,0.000744542204065614,1.2329334625433163e-16,1e-10,1e-10,ok,True,ok,False,0.0001365949477860422
++1940,1,2022-31,2023-31,2023-01-30,52,56,0,1,0.0008447446686473904,1.8908341361268843,1.897107197172294,1.897107197172294,ok,True,ok,False,0.0001458970186090181
++1940,1,2022-35,2023-35,2023-03-02,52,56,0,1,0.0009261518824186264,2.9735207188805473,2.983447549538225,2.983447549538225,ok,True,ok,False,0.0001542469663573205
++1940,1,2022-39,2023-39,2023-04-01,52,56,0,1,0.0012510087136372364,5.840247023654909,5.877430538299126,5.877430538299126,ok,True,ok,False,0.0002026705003286613
++1940,1,2022-44,2023-44,2023-05-02,52,56,0,1,0.0016609169358208068,7.604405321399081,7.704444977936868,7.704444977936868,ok,True,ok,False,0.0002892000747039906
++1940,1,2022-48,2023-48,2023-06-01,52,56,0,1,0.0016670221813653973,7.1013105607463,7.188017428193858,7.188017428193858,ok,True,ok,False,0.00029502684353799
++1940,1,2022-52,2024-01,2023-07-02,53,57,1,1,0.0012616652519552034,5.076989454673293,5.103917922500235,5.103917922500235,ok,True,ok,False,0.00020904619409245777
++1940,1,2023-05,2024-05,2023-08-02,52,56,1,1,0.0007361949328773391,0.3654961818457203,0.36667971441141806,0.36667971441141806,ok,True,ok,False,0.00013421409489493977
++1940,1,2023-09,2024-09,2023-08-31,52,56,1,1,0.0007177726373843714,1.2157115116405569e-16,1e-10,1e-10,ok,True,ok,False,0.00014530562484085056
++1940,1,2023-13,2024-14,2023-10-01,53,57,0,1,0.0007066463997210604,3.747089299799806e-29,1e-10,1e-10,ok,True,ok,False,0.00015234011939595476
++1940,2,2022-13,2023-13,2022-09-30,52,56,1,1,0.0005932727578070186,1.5114394768923578e-14,1e-10,1e-10,ok,True,ok,False,8.992523922562855e-05
++1940,2,2022-17,2023-18,2022-10-30,53,57,0,1,0.0005911389437954596,2.0606954297610518e-14,1e-10,1e-10,ok,True,ok,False,8.901184599010014e-05
++1940,2,2022-22,2023-22,2022-11-30,52,56,0,1,0.0005894628465224058,1.2924697071141057e-26,1e-10,1e-10,ok,True,ok,False,8.919932455377446e-05
++1940,2,2022-26,2023-26,2022-12-30,52,56,0,1,0.0005966538410701993,0.24042471345192926,0.2476613848602396,0.2476613848602396,ok,True,ok,False,8.96805649655951e-05
++1940,2,2022-31,2023-31,2023-01-30,52,56,0,1,0.0007229538199514739,3.5786873656690426,3.596163361532863,3.596163361532863,ok,True,ok,False,0.00010859280778527173
++1940,2,2022-35,2023-35,2023-03-02,52,56,0,1,0.0008008590563563712,4.923580237244713,4.948616437715296,4.948616437715296,ok,True,ok,False,0.0001224218562777598
++1940,2,2022-39,2023-39,2023-04-01,52,56,1,1,0.0009461915097501716,6.783652937236005,6.828869040067791,6.828869040067791,ok,True,ok,False,0.00015317173657639288
++1940,2,2022-44,2023-44,2023-05-02,52,56,1,1,0.0009586068851953832,6.6125822648122305,6.655099006589318,6.655099006589318,ok,True,ok,False,0.00015677533997185555
++1940,2,2022-48,2023-48,2023-06-01,52,56,1,1,0.0010177973049532289,6.871953544719894,6.91995992973646,6.91995992973646,ok,True,ok,False,0.0001708959247503545
++1940,2,2022-52,2024-01,2023-07-02,53,57,1,1,0.0006633558791490988,1.9173539649297524,1.9242300873300586,1.9242300873300586,ok,True,ok,False,9.628811243417914e-05
++1940,2,2023-05,2024-05,2023-08-02,52,56,1,1,0.0005731820359986374,9.752457655969588e-16,1e-10,1e-10,ok,True,ok,False,7.54307635778615e-05
++1940,2,2023-09,2024-09,2023-08-31,52,56,1,1,0.000574946352590956,2.9057647009111336e-18,1e-10,1e-10,ok,True,ok,False,7.853803605263744e-05
++1940,2,2023-13,2024-14,2023-10-01,53,57,1,1,0.0005684178162799254,2.3634017260552728e-17,1e-10,1e-10,ok,True,ok,False,7.851443238619561e-05
++1950,0,2022-13,2023-13,2022-09-30,52,56,1,1,0.0004712884008342965,1.7104783738107499,1.6946300736180961,1.6946300736180961,ok,True,ok,False,7.488593650808271e-05
++1950,0,2022-17,2023-18,2022-10-30,53,57,1,1,0.00046450120543961614,1.841180002061683,1.8261964337997432,1.8261964337997432,ok,True,ok,False,7.246014460805653e-05
++1950,0,2022-22,2023-22,2022-11-30,52,56,1,1,0.0004940683282847773,3.885133748753367,3.8725784852900915,3.8725784852900915,ok,True,ok,False,7.053267953963646e-05
++1950,0,2022-26,2023-26,2022-12-30,52,56,1,1,0.0005670949140315682,7.1272279225881165,7.12339647941264,7.12339647941264,ok,True,ok,False,6.630279145397678e-05
++1950,0,2022-31,2023-31,2023-01-30,52,56,1,1,0.0007465554819639261,11.954996464190142,11.994542999877668,11.994542999877668,ok,True,ok,False,7.374390234838761e-05
++1950,0,2022-35,2023-35,2023-03-02,52,56,1,1,0.0009711869831205286,15.07555218991264,15.22542387009423,15.22542387009423,ok,True,ok,False,0.00011035803930870651
++1950,0,2022-39,2023-39,2023-04-01,52,56,1,1,0.00132956469832855,17.734227986493085,18.245788220291608,18.245788220291608,ok,True,ok,False,0.00019014817332497165
++1950,0,2022-44,2023-44,2023-05-02,52,56,1,1,0.0011758673529431711,16.233138279370372,16.53762649378054,16.53762649378054,ok,True,ok,False,0.0001559857282325555
++1950,0,2022-48,2023-48,2023-06-01,52,56,1,1,0.001132992920539022,15.526202989407375,15.777034992200251,15.777034992200251,ok,True,ok,False,0.00014695448126884287
++1950,0,2022-52,2024-01,2023-07-02,53,57,1,1,0.0006130665111273783,8.578989653648513,8.581976496263342,8.581976496263342,ok,True,ok,False,5.581807517874207e-05
++1950,0,2023-05,2024-05,2023-08-02,52,56,1,1,0.0003764561561235463,0.12239333866062879,0.11139236761520088,0.11139236761520088,ok,True,ok,False,7.144149118147735e-05
++1950,0,2023-09,2024-09,2023-08-31,52,56,1,1,0.0003737688993196043,3.184594659912425e-17,1e-10,1e-10,ok,True,ok,False,7.04450299821493e-05
++1950,0,2023-13,2024-14,2023-10-01,53,57,1,1,0.00036886868256009737,3.6905495265393787e-11,1e-10,1e-10,ok,True,ok,False,7.195155897006922e-05
++1950,1,2022-13,2023-13,2022-09-30,52,56,1,1,0.0002284107740911029,2.152081163356532e-11,1e-10,1e-10,ok,True,ok,False,3.825515923273037e-05
++1950,1,2022-17,2023-18,2022-10-30,53,57,1,1,0.00022686324867241087,1.9459423910309976e-22,1e-10,1e-10,ok,True,ok,False,3.832327144983639e-05
++1950,1,2022-22,2023-22,2022-11-30,52,56,1,1,0.0002288814359400906,0.7305846565549473,0.753902552400183,0.753902552400183,ok,True,ok,False,3.8954284210030795e-05
++1950,1,2022-26,2023-26,2022-12-30,52,56,1,1,0.00025424165310687,5.957231667141941,5.99368828173162,5.99368828173162,ok,True,ok,False,4.221330283451409e-05
++1950,1,2022-31,2023-31,2023-01-30,52,56,1,1,0.000278058634410285,9.643218867252939,9.692482860275527,9.692482860275527,ok,True,ok,False,4.628142392555188e-05
++1950,1,2022-35,2023-35,2023-03-02,52,56,1,1,0.000296914346527211,11.338222452672406,11.395666660260451,11.395666660260451,ok,True,ok,False,4.920377847901935e-05
++1950,1,2022-39,2023-39,2023-04-01,52,56,1,1,0.000328001569793265,14.43048832207253,14.51069800809001,14.51069800809001,ok,True,ok,False,5.5152436143392774e-05
++1950,1,2022-44,2023-44,2023-05-02,52,56,1,1,0.0002743119526669807,7.499741829557792,7.531666912872005,7.531666912872005,ok,True,ok,False,4.932530762630858e-05
++1950,1,2022-48,2023-48,2023-06-01,52,56,1,1,0.00029483394883834507,9.709326136774614,9.749793361855662,9.749793361855662,ok,True,ok,False,5.21283677949865e-05
++1950,1,2022-52,2024-01,2023-07-02,53,57,1,1,0.00022396882110962222,3.437600916110506e-07,0.007930427840408014,0.007930427840408014,ok,True,ok,False,4.060848178467233e-05
++1950,1,2023-05,2024-05,2023-08-02,52,56,1,1,0.00022147131991507332,5.140504029317531e-18,1e-10,1e-10,ok,True,ok,False,3.776237533346962e-05
++1950,1,2023-09,2024-09,2023-08-31,52,56,1,1,0.00022117489222871916,1.171187599412235e-10,1.171187599412235e-10,1.171187599412235e-10,ok,True,ok,False,3.781736786753266e-05
++1950,1,2023-13,2024-14,2023-10-01,53,57,1,1,0.0002188600647861775,5.76657970533362e-10,5.76657970533362e-10,5.76657970533362e-10,ok,True,ok,False,3.8524858590958766e-05
++1950,2,2022-13,2023-13,2022-09-30,52,56,1,1,0.00022574562448192837,3.6352636415115695e-20,1e-10,1e-10,ok,True,ok,False,3.764692727170759e-05
++1950,2,2022-17,2023-18,2022-10-30,53,57,1,1,0.00022546878004787123,1.318734794681945e-11,1e-10,1e-10,ok,True,ok,False,3.743903821320019e-05
++1950,2,2022-22,2023-22,2022-11-30,52,56,1,1,0.00022443058738176778,1.7298592518062116e-19,1e-10,1e-10,ok,True,ok,False,3.867263038876991e-05
++1950,2,2022-26,2023-26,2022-12-30,52,56,1,1,0.0002403654168058314,3.8746982976307276,3.9142591240676166,3.9142591240676166,ok,True,ok,False,4.2608992867739795e-05
++1950,2,2022-31,2023-31,2023-01-30,52,56,1,1,0.00027429330778089105,9.91483911475314,9.97732787780886,9.97732787780886,ok,True,ok,False,4.880822809625446e-05
++1950,2,2022-35,2023-35,2023-03-02,52,56,1,1,0.0003282607232509896,15.775023707457676,15.885996725266933,15.885996725266933,ok,True,ok,False,5.847884338325316e-05
++1950,2,2022-39,2023-39,2023-04-01,52,56,1,1,0.00036515713566172097,18.697850124194314,18.850578113260177,18.850578113260177,ok,True,ok,False,6.650912892990408e-05
++1950,2,2022-44,2023-44,2023-05-02,52,56,1,1,0.0004207906321449316,21.582891246398862,21.810479002094706,21.810479002094706,ok,True,ok,False,7.919696099613597e-05
++1950,2,2022-48,2023-48,2023-06-01,52,56,1,1,0.00043671598064130195,21.56941967470078,21.805588091411455,21.805588091411455,ok,True,ok,False,8.317963696246596e-05
++1950,2,2022-52,2024-01,2023-07-02,53,57,1,1,0.0002565429787882575,6.479511364842077,6.508920858217091,6.508920858217091,ok,True,ok,False,4.488747464561451e-05
++1950,2,2023-05,2024-05,2023-08-02,52,56,1,1,0.00021288564841350998,6.127214361821844e-13,1e-10,1e-10,ok,True,ok,False,3.599013717034606e-05
++1950,2,2023-09,2024-09,2023-08-31,52,56,1,1,0.00021416968849541964,8.178738348527988e-10,8.178738348527988e-10,8.178738348527988e-10,ok,True,ok,False,3.629241046771156e-05
++1950,2,2023-13,2024-14,2023-10-01,53,57,1,1,0.000212354890493944,7.56815097032966e-22,1e-10,1e-10,ok,True,ok,False,3.647144728354515e-05
+--- a/analysis/table8/compare.py
++++ b/analysis/table8/compare.py
+@@ -1,37 +1,12 @@
+-import importlib.util, inspect, os
++from functools import partial
+ from pathlib import Path
+ from types import SimpleNamespace
+-import numpy as np
+-from scipy.optimize import least_squares
+-PRODUCTION = Path(__file__).resolve().parents[2]/'code/KCOR.py'
+-adapter=SimpleNamespace()
+-os.environ['DATASET']='Czech'
+-def fit_step1(h, t, gamma, theta_start):
+-    def residual(x):
+-        k=np.exp(x[0]);theta=x[1]
+-        Hgom=k*np.expm1(gamma*t)/gamma
+-        return h-k*np.exp(gamma*t)/(1+theta*Hgom)
+-    guess=float(np.mean(h[:4]/np.exp(gamma*t[:4])))
+-    r=least_squares(residual,[np.log(guess),theta_start],
+-        bounds=([np.log(1e-8),0.],[np.log(.1),100.]),
+-        xtol=1e-14,ftol=1e-14,gtol=1e-14,max_nfev=10000)
+-    return dict(k=float(np.exp(r.x[0])),theta=float(r.x[1]),
+-        objective=float(np.sum(r.fun**2)),success=bool(r.success),
+-        message=str(r.message))
+-def initialize(weekly_update="archived"):
+-    global production_fit, joint_fit
+-    spec = importlib.util.spec_from_file_location("revised_kcor", PRODUCTION)
+-    module = importlib.util.module_from_spec(spec)
+-    spec.loader.exec_module(module)
+-    adapter.K = module
+-    production_fit = module.fit_theta0_gompertz
+-    source = inspect.getsource(production_fit)
+-    assert weekly_update == "revised"
+-    original = "theta_seed, _, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)"
+-    candidate = """seed = fit_step1(h_arr[first_idx], t_r[first_idx], gamma, theta0_init)
+-        k_fixed, theta_seed, seed_ok = seed["k"], seed["theta"], seed["success"]
+-        H_gom_full = _build_H_gom_discrete(k_fixed)"""
+-    assert source.count(original) == 1
+-    namespace = dict(vars(module), fit_step1=fit_step1)
+-    exec(compile(source.replace(original, candidate), "<isolated Step 1 trial>", "exec"), namespace)
+-    joint_fit = namespace["fit_theta0_gompertz"]
++import os, sys
++os.environ['DATASET'] = 'Czech'
++sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'code'))
++import KCOR
++adapter = SimpleNamespace(K=KCOR)
++production_fit = KCOR.fit_theta0_gompertz
++joint_fit = partial(production_fit, joint_seed=True)
++def initialize(weekly_update):
++    assert weekly_update == 'revised'
+--- a/analysis/table8/table8_bootstrap.json
++++ b/analysis/table8/table8_bootstrap.json
+@@ -20,54 +20,54 @@
+   "summary": {
+     "2021_24": {
+       "joint": [
+-        1.0090511062039011,
+-        1.0317408143534943,
+-        1.0224861833162773
++        1.0083165247447765,
++        1.031238297453854,
++        1.0227327155179566
+       ],
+       "fixed": [
+-        1.011412227320502,
+-        1.0281432527908587,
+-        1.016542241648276
++        1.0113598477362327,
++        1.028022487240436,
++        1.0164754805537317
+       ],
+       "original_insufficient_signal": 0,
+       "people": 2511927,
+       "lower": [
+-        0.9548332057528764,
+-        0.9708832624542189,
+-        0.9618441354698304
++        0.9553215105479369,
++        0.9711417859493755,
++        0.9617850297986626
+       ],
+       "upper": [
+-        1.057620253824331,
+-        1.0940439325287428,
+-        1.0870558541964948
++        1.0561725685470862,
++        1.0943427012699738,
++        1.0868444070163386
+       ],
+-      "draws_with_insufficient_signal": 512,
++      "draws_with_insufficient_signal": 307,
+       "unsuccessful_stratum_fits": 0
+     },
+     "2022_06": {
+       "joint": [
+-        1.0503395110991844,
+-        1.0575001851650245,
+-        1.0068174851942362
++        1.046203612860373,
++        1.0677027443809315,
++        1.0205496628536572
+       ],
+       "fixed": [
+-        1.0065374075095472,
+-        1.0115152328940116,
+-        1.0049454946704672
++        1.0073327814661046,
++        1.012919914718309,
++        1.005546462256567
+       ],
+       "original_insufficient_signal": 4,
+       "people": 2450449,
+       "lower": [
+-        0.23320591202381705,
+-        0.23805983332023892,
+-        0.8059276789372901
++        0.3218007770328593,
++        0.3351367576016181,
++        0.8224251723850494
+       ],
+       "upper": [
+-        1.2986875195416998,
+-        1.2342393382565529,
+-        1.2093230457535507
++        1.2679788113922426,
++        1.2130364315807494,
++        1.2082789036450985
+       ],
+-      "draws_with_insufficient_signal": 998,
++      "draws_with_insufficient_signal": 999,
+       "unsuccessful_stratum_fits": 0
+     }
+   }
+--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -128,10 +128,17 @@
+     parser.add_argument("--workers", type=int, default=5)
+     parser.add_argument("--output", type=Path, required=True)
+     parser.add_argument("--check-workbook", type=Path, help="Full-workbook reference for a later revision of the fitter.")
++    edition = parser.add_mutually_exclusive_group()
++    for mode in ("iteration-2", "gap-boundary", "wave-entry"):
++        edition.add_argument("--" + mode, dest="edition", action="store_const", const=mode)
+     args = parser.parse_args()
++    if args.edition and not args.check_workbook:
++        parser.error("Iteration 2 replays require --check-workbook")
+     book = io.BytesIO((HERE/"input.xlsx").read_bytes())
+     populations = [read_population(book, sh) for sh in SHEETS]
+-    weekly_update = "revised" if args.check_workbook else "archived"
++    if args.edition or not args.check_workbook:
++        parser.error("Use replay.py to generate the matching workbook")
++    weekly_update = "revised"
+     initialize(populations, weekly_update)
+     point = [estimate(i, 0) for i in range(2)]
+     # Permanent regression check against the six independently reconstructed
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1123,6 +1123,13 @@
+         }
+ 
+ 
++def weekly_gamma_hazard(baseline_start, baseline_increment, theta):
++    """Observed integrated hazard for one week under mean-one gamma frailty."""
++    if theta == 0.0:
++        return baseline_increment
++    return np.log1p(theta * baseline_increment / (1.0 + theta * baseline_start)) / theta
++
++
+ def fit_theta0_gompertz(
+     h_arr,
+     t_rebased,
+@@ -1131,6 +1138,8 @@
+     gamma_per_week,
+     theta0_init=1.0,
+     deaths_arr=None,
++    *,
++    joint_seed=False,
+ ):
+     """Estimate theta0 using v7.4 delta-iteration (hazard space).
+ 
+@@ -1141,7 +1150,8 @@
+ 
+     v7.4 steps:
+       1) Direct k read from early post-skip weeks (no optimization/bounds):
+-         k = mean(h_obs(t) / exp(gamma*t)) over first k_anchor_weeks.
++         k = mean(h_obs(t) / unit_weekly_increment(t)) over first k_anchor_weeks.
++         With joint_seed, estimate k and theta together in the first quiet window.
+       2) Initial theta from first quiet window only (pre-first-wave window).
+       3) Hold k fixed; iterate theta + delta_i across all quiet windows.
+          If first-pass delta is negative, signal is treated as insufficient and we
+@@ -1228,7 +1238,12 @@
+     anchor_idx = np.where(anchor_mask)[0]
+     if anchor_idx.size == 0:
+         return _fail(np.nan, "empty_anchor", int(np.count_nonzero(fit_mask_theta)))
+-    scale = np.exp(gamma * t_r[anchor_idx])
++    # Unit-scale Gompertz cumulative hazard at week entry and growth over that week.
++    unit_start = np.zeros_like(t_r)
++    unit_week = np.zeros_like(t_r)
++    unit_start[post_skip] = np.expm1(gamma * t_r[post_skip]) / gamma
++    unit_week[post_skip] = np.exp(gamma * t_r[post_skip]) * (np.expm1(gamma) / gamma)
++    scale = unit_week[anchor_idx]
+     k_terms = h_arr[anchor_idx] / np.where(scale > EPS, scale, EPS)
+     k_terms = k_terms[np.isfinite(k_terms)]
+     if k_terms.size == 0:
+@@ -1318,29 +1333,14 @@
+     if first_idx.size < 3:
+         return _fail(k_fixed, "first_quiet_window_too_small", int(first_idx.size))
+ 
+-    def _build_H_gom_discrete(k_val):
+-        H = np.zeros_like(h_arr, dtype=float)
+-        H_running = 0.0
+-        prev_t = None
+-        prev_h_g = 0.0
+-        for i in post_idx:
+-            ti = float(t_r[i])
+-            if prev_t is not None:
+-                dt_steps = int(max(1, round(ti - prev_t)))
+-                H_running += prev_h_g * float(dt_steps)
+-            H[i] = H_running
+-            prev_t = ti
+-            prev_h_g = float(k_val) * safe_exp(gamma * ti)
+-        return H
+-
+-    H_gom_full = _build_H_gom_discrete(k_fixed)
++    H_gom_full = k_fixed * unit_start
+ 
+     def _fit_theta(mask_bool, theta_start, Delta=None):
+         idx = np.where(mask_bool)[0]
+         if idx.size < 3:
+             return np.nan, np.nan, np.nan, np.nan, False
+         h_local = h_arr[idx]
+-        t_local = t_r[idx]
++        week_local = k_fixed * unit_week[idx]
+         if Delta is None:
+             H_eff_local = H_gom_full[idx]
+         else:
+@@ -1350,8 +1350,7 @@
+             th = float(params[0])
+             if (not np.isfinite(th)) or th < 0.0:
+                 return np.ones_like(h_local, dtype=float) * 1e6
+-            den = np.where(1.0 + th * H_eff_local > EPS, 1.0 + th * H_eff_local, EPS)
+-            pred_local = k_fixed * np.exp(gamma * t_local) / den
++            pred_local = weekly_gamma_hazard(H_eff_local, week_local, th)
+             return h_local - pred_local
+ 
+         res = least_squares(
+@@ -1364,33 +1363,44 @@
+             gtol=1e-14,
+         )
+         th_hat = float(res.x[0])
+-        den = np.where(1.0 + th_hat * H_eff_local > EPS, 1.0 + th_hat * H_eff_local, EPS)
+-        pred_local = k_fixed * np.exp(gamma * t_local) / den
++        pred_local = weekly_gamma_hazard(H_eff_local, week_local, th_hat)
+         resid_local = h_local - pred_local
+         rmse_local = float(np.sqrt(np.mean(resid_local**2))) if resid_local.size else np.nan
+         rel_local = float(np.sqrt(np.mean(((h_local - pred_local) / (h_local + 1e-12)) ** 2))) if resid_local.size else np.nan
+         max_abs_local = float(np.nanmax(np.abs(resid_local))) if resid_local.size else np.nan
+         return th_hat, rmse_local, rel_local, max_abs_local, bool(res.success)
+ 
+-    # Step 2: initial theta from first quiet window only (fixed k).
++    # Seed the fit on the first quiet window.
+     try:
+-        theta_seed, _, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)
++        if joint_seed:
++            first_start = unit_start[first_idx]
++            first_week = unit_week[first_idx]
++            first_obs = h_arr[first_idx]
++
++            def joint_residual(params):
++                k, th = np.exp(params[0]), params[1]
++                return first_obs - weekly_gamma_hazard(k * first_start, k * first_week, th)
++
++            guess = np.mean(first_obs[:4] / first_week[:4])
++            seed = least_squares(joint_residual, [np.log(guess), theta0_init],
++                                 bounds=([np.log(1e-8), 0.0], [np.log(0.1), 100.0]),
++                                 xtol=1e-14, ftol=1e-14, gtol=1e-14, max_nfev=10000)
++            k_fixed, theta_seed, seed_ok = np.exp(seed.x[0]), seed.x[1], seed.success
++            H_gom_full = k_fixed * unit_start
++        else:
++            theta_seed, _, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)
+     except Exception as e:
+         return _fail(k_fixed, f"seed_fit_exception: {e}", int(first_idx.size))
+     if (not seed_ok) or (not np.isfinite(theta_seed)):
+         return _fail(k_fixed, "seed_fit_failed", int(first_idx.size))
+     theta = float(theta_seed)
+ 
+-    # Derive gap-end boundaries from quiet-window gaps: t_gap_end = start(next_quiet)-1 index.
+-    gap_end_idx = []
+-    for i in range(len(segments) - 1):
+-        next_start = int(segments[i + 1][0])
+-        t_gap_end = int(next_start - 1)
+-        if t_gap_end >= int(segments[i][1]) and t_gap_end < len(h_arr):
+-            gap_end_idx.append(t_gap_end)
++    # The reconstructed totals are start-of-week values. At quiet-window
++    # re-entry they include the full preceding gap and exclude the new week.
++    reentry_indices = [start for start, _ in segments[1:]]
+ 
+     h_fit = h_arr[fit_mask_theta]
+-    t_fit = t_r[fit_mask_theta]
++    week_fit = k_fixed * unit_week[fit_mask_theta]
+     n_fit = int(h_fit.size)
+ 
+     if n_fit < 3:
+@@ -1431,13 +1441,13 @@
+             if np.isfinite(h_obs_first4_mean) and np.isfinite(h_obs_last4_mean) and abs(h_obs_last4_mean) > EPS:
+                 h_obs_first4_vs_last4_ratio = float(h_obs_first4_mean / h_obs_last4_mean)
+ 
+-            first4_scale = np.exp(gamma * t_r[first4_idx])
++            first4_scale = unit_week[first4_idx]
+             first4_terms = h_arr[first4_idx] / np.where(first4_scale > EPS, first4_scale, EPS)
+             first4_terms = first4_terms[np.isfinite(first4_terms)]
+             if first4_terms.size == 4:
+                 k_hat_first4 = float(np.average(first4_terms))
+ 
+-            last4_scale = np.exp(gamma * t_r[last4_idx])
++            last4_scale = unit_week[last4_idx]
+             last4_terms = h_arr[last4_idx] / np.where(last4_scale > EPS, last4_scale, EPS)
+             last4_terms = last4_terms[np.isfinite(last4_terms)]
+             if last4_terms.size == 4:
+@@ -1461,8 +1471,8 @@
+         delta_raw_iter = []
+         cumulative_prev = 0.0
+         iteration_neg_preclamp = False
+-        for gidx in gap_end_idx:
+-            cumulative_i = float(H0_eff[gidx] - H_gom_full[gidx])
++        for start in reentry_indices:
++            cumulative_i = float(H0_eff[start] - H_gom_full[start])
+             delta_i_raw = cumulative_i - cumulative_prev
+             delta_raw_iter.append(float(delta_i_raw))
+             if delta_i_raw <= 0.0:
+@@ -1532,10 +1542,8 @@
+             delta_negative_clamped = True
+ 
+         Delta = np.zeros_like(h_arr, dtype=float)
+-        for gidx, di in zip(gap_end_idx, deltas):
+-            start_idx = int(gidx + 1)
+-            if start_idx < len(Delta):
+-                Delta[start_idx:] += float(di)
++        for start, di in zip(reentry_indices, deltas):
++            Delta[start:] += float(di)
+ 
+         # 3c: refit theta on all quiet windows with fixed k and accumulated Delta.
+         H_eff_fit = H_gom_full[fit_mask_theta] + Delta[fit_mask_theta]
+@@ -1544,8 +1552,7 @@
+             th = float(params[0])
+             if (not np.isfinite(th)) or th < 0.0:
+                 return np.ones_like(h_fit, dtype=float) * 1e6
+-            den = np.where(1.0 + th * H_eff_fit > EPS, 1.0 + th * H_eff_fit, EPS)
+-            pred = k_fixed * np.exp(gamma * t_fit) / den
++            pred = weekly_gamma_hazard(H_eff_fit, week_fit, th)
+             return h_fit - pred
+ 
+         try:
+@@ -1609,7 +1616,7 @@
+ 
+     # Final diagnostics at converged theta.
+     H_eff_final = H_gom_full[fit_mask_theta]
+-    if gap_end_idx:
++    if reentry_indices:
+         # Rebuild final Delta once at converged theta for RMSE diagnostics.
+         H0_eff = np.zeros_like(h_arr, dtype=float)
+         H_running = 0.0
+@@ -1619,17 +1626,15 @@
+             H_running += max((1.0 + theta * H_running) * (np.expm1(theta * hi) / theta if theta != 0 else hi), 0.0)
+         cumulative_prev = 0.0
+         Delta = np.zeros_like(h_arr, dtype=float)
+-        for gidx in gap_end_idx:
+-            cumulative_i = float(H0_eff[gidx] - H_gom_full[gidx])
++        for start in reentry_indices:
++            cumulative_i = float(H0_eff[start] - H_gom_full[start])
+             delta_i_raw = cumulative_i - cumulative_prev
+             di = float(max(delta_i_raw, 0.0))
+             cumulative_prev = cumulative_i
+-            if gidx + 1 < len(Delta):
+-                Delta[gidx + 1:] += di
++            Delta[start:] += di
+         H_eff_final = H_gom_full[fit_mask_theta] + Delta[fit_mask_theta]
+ 
+-    den = np.where(1.0 + theta * H_eff_final > EPS, 1.0 + theta * H_eff_final, EPS)
+-    pred = k_fixed * np.exp(gamma * t_fit) / den
++    pred = weekly_gamma_hazard(H_eff_final, week_fit, theta)
+     resid = h_fit - pred
+     rmse_h = float(np.sqrt(np.mean(resid**2))) if resid.size else np.nan
+     fit_resid_max = float(np.nanmax(np.abs(resid))) if resid.size else np.nan
+@@ -2561,8 +2566,8 @@
+     negative delta is a valid signal that H0 is below the baseline and should not be
+     corrected.
+ 
+-    The H_ref path is anchored to H0 at the first wave point (H_ref[i0] = H0[i0]),
+-    ensuring continuity at wave entry, then accumulates forward using the Gompertz
++    The H_ref path starts at the cumulative hazard before the first modeled wave
++    week (zero at the origin) and includes that week's and each following week's Gompertz
+     per-week hazard h_base(t) = k_hat * exp(gamma_per_week * t_rebased).
+ 
+     Parameters
+@@ -2636,20 +2641,20 @@
+     start_np = np.datetime64(start_dt, "ns")
+     end_np = np.datetime64(end_dt, "ns")
+     dates_arr = np.asarray(dates, dtype="datetime64[ns]")
+-    wave_mask = (dates_arr >= start_np) & (dates_arr <= end_np)
+-    wave_indices = np.where(wave_mask)[0]
+-    diag["wave_points"] = int(wave_indices.size)
+-
+-    if wave_indices.size == 0:
+-        diag["correction_mode"] = "no_wave_points"
+-        return H0.copy(), diag
+-
+     # t_rebased
+     if t_rebased is None:
+         t_reb = t_vals - float(DYNAMIC_HVE_SKIP_WEEKS)
+     else:
+         t_reb = np.asarray(t_rebased, dtype=float)
+ 
++    wave_mask = (dates_arr >= start_np) & (dates_arr <= end_np) & (t_reb >= 0)
++    wave_indices = np.where(wave_mask)[0]
++    diag["wave_points"] = int(wave_indices.size)
++
++    if wave_indices.size == 0:
++        diag["correction_mode"] = "no_wave_points"
++        return H0.copy(), diag
++
+     # F_d values: theta_t propagated from H0, then gamma_moment_alpha
+     theta_t = propagate_theta(float(theta_applied), H0)
+     f_vals = gamma_moment_alpha(theta_t, alpha)
+@@ -2665,8 +2670,9 @@
+     H_ref = np.full(n, np.nan, dtype=float)
+ 
+     i0 = int(wave_indices[0])
+-    # Anchor H_ref to H0 at wave entry for continuity (delta[i0] = 0 by construction)
+-    H_ref[i0] = H0[i0]
++    # H0 holds end-of-week totals. At the modeled time origin the opening total is zero.
++    opening_total = H0[i0 - 1] if i0 > 0 else 0.0
++    H_ref[i0] = opening_total + h_base[i0]
+     for i in wave_indices[1:]:
+         H_ref[i] = H_ref[i - 1] + h_base[i]
+ 
+Binary documentation/preprint/figures/fig_cox_bias_kcor_vs_theta.png: a601b09893aeda14c3832eae20fefc757878b57617f6da384e57aa4b812729a3 -> ef2b2989f00d4e5e7bd48021f89b527849be816026987331ada04b14e139bb31
+Binary documentation/preprint/figures/fig_si_quiet_window_theta_scan_czech_2021_24.png: c262aec9d94474196d601cf32fe21cd89f703f68746661aa356389a3dc7751a8 -> 35be2ea2f162b1d53c86643373b9d66a2765f4a9dd5213c23f63621c72986d7b
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -134,9 +134,9 @@
+ 
+ KCOR operates by first estimating depletion geometry ($\theta_{0,d}$) from prespecified quiet windows, then optionally adjusting wave-period amplification ($\alpha$) on the **frailty-neutral cumulative-hazard scale after gamma-frailty inversion** (§2.7.3), and finally comparing cumulative outcomes on the normalized scale.
+ 
+-The normalization logic is illustrated empirically in Figure @fig:kcor_empirical_intuition using a representative cohort comparison drawn deterministically from the Czech analysis pipeline.
+-
+-![Empirical illustration of the KCOR workflow on a deterministically selected grouped Czech cohort comparison (2021-07 enrollment, grouped dose 2 versus dose 0 reference). (A) The raw observed cumulative hazards differ in both level and curvature. (B) After estimating cohort-specific depletion geometry and applying depletion normalization, the cumulative hazards become more nearly linear and directly comparable, illustrating how depletion normalization adjusts for curvature attributed to selection-induced depletion under the working model. (C) KCOR(t) is then computed as the cumulative contrast on that normalized scale. This figure is intended to illustrate the geometric effect of the workflow on a representative analysis example rather than to serve as a standalone substantive result.](figures/fig_kcor_empirical_intuition.png){#fig:kcor_empirical_intuition}
++Figure @fig:kcor_empirical_intuition illustrates normalization in a Czech cohort comparison. The selection rule restricted final KCOR to 0.85–1.15 and favored examples in which normalization reduced the between-cohort difference in curvature.
++
++![Empirical illustration of the KCOR workflow on a deterministically selected grouped Czech cohort comparison (2021-07 enrollment, grouped dose 2 versus dose 0 reference). (A) The raw observed cumulative hazards differ in both level and curvature. (B) The earlier monthly normalization adjusted each cohort's hazards using the slope fitted in its quiet period. The resulting cumulative hazards are more nearly linear. (C) KCOR(t) is then computed as the cumulative contrast on that normalized scale. This figure is intended to illustrate the geometric effect of the workflow on an analysis example rather than to serve as a standalone substantive result.](figures/fig_kcor_empirical_intuition.png){#fig:kcor_empirical_intuition}
+ 
+ KCOR deliberately targets cumulative mortality contrasts rather than instantaneous hazard ratios. This choice is intentional: cumulative outcome accumulation is invariant to transient hazard-ratio oscillations induced purely by depletion geometry. It is therefore not intended as a replacement for Cox proportional hazards models or flexible parametric survival models that estimate time-varying hazard effects. Instead, KCOR provides a geometry-based normalization of cumulative risk in settings where selection-induced depletion distorts marginal comparisons.
+ 
+@@ -193,7 +193,7 @@
+    Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
+ 
+ 3. **Quiet-window stability.**
+-   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Quiet windows need not be perfectly free of shocks; they should represent intervals where no large transient perturbations dominate baseline mortality. Residual baseline drift can be absorbed into the frailty parameter if quiet-window conditions are violated; empirical robustness of fitted frailty parameters to quiet-window placement (12-month windows shifted monthly) is demonstrated in Supplementary Figure S5 using Czech registry data, supporting stability when this condition holds approximately. Epidemic-wave periods with sharp hazard shocks fall outside this assumption and are excluded from normalization by design.
++   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Quiet windows need not be perfectly free of shocks; they should represent intervals where no large transient perturbations dominate baseline mortality. Residual baseline drift can be absorbed into the frailty parameter if quiet-window conditions are violated; sensitivity of fitted frailty variance to quiet-window placement is shown in Supplementary Figure S5 using Czech registry data. Epidemic-wave periods with sharp hazard shocks fall outside this assumption and are excluded from normalization by design.
+ 
+ 4. **Independence across strata.**
+    Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
+@@ -369,6 +369,14 @@
+ **Intuition.** The estimator reconstructs the latent baseline trajectory across the full follow-up, then aligns quiet windows by accounting for persistent cumulative deviations introduced by wave periods before the final frailty refit. Additivity is specified in cumulative-hazard space, where independent hazard contributions accumulate over time under the working model, making persistent offsets interpretable as additive deviations in $H(t)$.
+ 
+ **Step 1: joint seed fit in the nearest quiet window.**  
++Write $s=t_{\mathrm{rebased}}$ for the start of week $t$, and write $G(s;k)$ for the cumulative Gompertz baseline in §2.4.3 at scale $k$. For a cumulative offset $a$ held fixed within the week, the predicted observed weekly hazard is
++
++$$
++q_d(t;k,\theta,a)=\frac{1}{\theta}\log\!\left(1+\frac{\theta [G(s+1;k)-G(s;k)]}{1+\theta [G(s;k)+a]}\right).
++$$
++
++At $\theta=0$ this equals $G(s+1;k)-G(s;k)$. Both fitting steps compare this week-long increment with the observed weekly increment.
++
+ Estimate $(k_d,\theta_{0,d}^{(0)})$ from the nearest quiet window by nonlinear least squares in hazard space:
+ 
+ $$
+@@ -378,7 +386,7 @@
+ \sum_{t \in W_{0,d}}
+ \left[
+ h_d^{\mathrm{adj}}(t)-
+-\frac{k_d e^{\gamma t_{\mathrm{rebased}}}}{1+\theta_{0,d} H_{\mathrm{gom},d}(t_{\mathrm{rebased}})}
++q_d(t;k_d,\theta_{0,d},0)
+ \right]^2 .
+ $$
+ {#eq:nls-objective}
+@@ -399,7 +407,7 @@
+ This recursion reconstructs the hidden baseline trajectory over all observed weeks rather than only inside the fit window. It should be read as the working-model inversion step implied by the gamma-frailty geometry, not as a model-free update rule.
+ 
+ **Step 3: compute persistent wave offsets.**  
+-For each prespecified wave end time $t_i$, compute the incremental offset
++At the start of the first quiet week after each gap, denoted by $t_i$, compute the incremental offset
+ 
+ $$
+ \delta_{i,d}
+@@ -421,7 +429,7 @@
+ \sum_{t \in \bigcup_j W_{j,d}}
+ \left[
+ h_d^{\mathrm{adj}}(t)-
+-\frac{\hat{k}_d e^{\gamma t_{\mathrm{rebased}}}}{1+\theta_{0,d}\left(H_{\mathrm{gom},d}(t_{\mathrm{rebased}})+\Delta_d(t)\right)}
++q_d(t;\hat{k}_d,\theta_{0,d},\Delta_d(t))
+ \right]^2 .
+ $$
+ 
+@@ -460,7 +468,7 @@
+ 2. **Fit residual structure in hazard space.** Define residuals over the pooled fit set:
+ 
+ $$
+-r_{d}(t)=h_d^{\mathrm{adj}}(t)-\frac{\hat{k}_d e^{\gamma t_{\mathrm{rebased}}}}{1+\hat{\theta}_{0,d}\left(H_{\mathrm{gom},d}(t_{\mathrm{rebased}})+\Delta_d(t)\right)}.
++r_{d}(t)=h_d^{\mathrm{adj}}(t)-q_d(t;\hat{k}_d,\hat{\theta}_{0,d},\Delta_d(t)).
+ $$
+ {#eq:si_residuals}
+ 
+@@ -565,10 +573,10 @@
+ 
+ The NPH module **does not** modify quiet-window estimation of $\theta_{0,d}$ or $\hat k_d$; depletion geometry is identified from prespecified quiet windows **before** any wave-period cumulative correction.
+ 
+-Once $\alpha$ has been specified or localized, the correction is applied **after** Eq. @eq:normalized-cumhazard to $\tilde H_{0,d}(t)$. For $\alpha\ne1$, the implementation approximates the in-wave factor with a mean-one gamma moment evaluated at the propagated scale. The distribution of frailty among survivors generally has a different mean, and a nonlinear wave also changes its shape. Dividing accumulated excess by the current week's factor is an empirical approximation. The resulting wave exposure is the input to the post-wave equation. In discrete weekly time (§2.3), let $t_{0,d}$ index the first rebased week inside the prespecified NPH window for cohort $d$. Define a **no-wave** frailty-neutral reference cumulative hazard $H_{\mathrm{ref},d}(t)$ by anchoring
+-
+-$$
+-H_{\mathrm{ref},d}(t_{0,d})=\tilde H_{0,d}(t_{0,d})
++Once $\alpha$ has been specified or localized, the correction is applied **after** Eq. @eq:normalized-cumhazard to $\tilde H_{0,d}(t)$. For $\alpha\ne1$, the implementation approximates the in-wave factor with a mean-one gamma moment evaluated at the propagated scale. The distribution of frailty among survivors generally has a different mean, and a nonlinear wave also changes its shape. Dividing accumulated excess by the current week's factor is an empirical approximation. The resulting wave exposure is the input to the post-wave equation. In discrete weekly time (§2.3), let $t_{0,d}$ index the first rebased week inside the prespecified NPH window for cohort $d$. Define a **no-wave** frailty-neutral reference cumulative hazard $H_{\mathrm{ref},d}(t)$ using the cumulative hazard just before the first modeled wave week (zero at the start of modeled follow-up) and the fitted baseline increment for that week
++
++$$
++H_{\mathrm{ref},d}(t_{0,d})=\tilde H_{0,d}(t_{0,d}-1)+\hat{k}_d\,\exp\!\left(\gamma\,t_{\mathrm{rebased}}(t_{0,d})\right)
+ $$
+ 
+ and, for subsequent weeks $t$ inside the same window, accumulating fitted Gompertz weekly increments with $\Delta t=1$:
+@@ -621,7 +629,7 @@
+ 
+ When the optional NPH cumulative correction is active (§2.7.3), the same ratio is computed with $H_{\mathrm{corr},d}(t)$ in place of $\tilde H_{0,d}(t)$ for the affected cohorts and time range.
+ 
+-When an anchored presentation is used, KCOR is normalized to its mean over a prespecified short reference window after the anchor time. The primary estimand, however, remains the ratio of (optionally NPH-corrected) depletion-neutralized cumulative hazards rather than an instantaneous hazard ratio.
++When an anchored presentation is used, KCOR at each time $t$ is divided by its value at the prespecified reference week $t_0$, as defined in §2.1.1. The primary estimand, however, remains the ratio of (optionally NPH-corrected) depletion-neutralized cumulative hazards rather than an instantaneous hazard ratio.
+ 
+ This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
+ 
+@@ -629,11 +637,11 @@
+ 
+ ### 2.9 Uncertainty quantification
+ 
+-Uncertainty is quantified using person-level bootstrap resampling as **variance propagation** for the aggregated counting-process pipeline: event stochasticity and refitting uncertainty in $(\hat{k}_d,\hat{\theta}_{0,d})$ are carried through inversion (and, when prespecified, the optional NPH correction on **frailty-neutral cumulative hazard**, §2.7.3) to $\mathrm{KCOR}(t)$. The bootstrap is **not** asserted to yield universally calibrated inference under arbitrary frailty or baseline misspecification; interpretation remains tied to diagnostic pass status (§2.9.1; Table @tbl:bootstrap_coverage; §5). Formal bootstrap theory for this stacked construction is **left to future work**.
++Uncertainty is quantified using person-level bootstrap resampling as **variance propagation** for the aggregated counting-process pipeline: event stochasticity and refitting uncertainty in $(\hat{k}_d,\hat{\theta}_{0,d})$ are carried through inversion (and, when prespecified, the optional NPH correction on **frailty-neutral cumulative hazard**, §2.7.3) to $\mathrm{KCOR}(t)$. The bootstrap is **not** asserted to yield universally calibrated inference under arbitrary frailty or baseline misspecification; interpretation remains tied to diagnostic pass status (§2.9.1; §5). Formal bootstrap theory for this stacked construction is **left to future work**.
+ 
+ #### 2.9.1 Person-level bootstrap procedure
+ 
+-Throughout this manuscript, cohorts define the primary comparison groups and are the units at which frailty parameters $(k_d, \theta_{0,d})$ are estimated. Strata (e.g., age bands or sex) are treated as independent realizations of the same cohort-level process and are used solely for aggregation, age standardization, and uncertainty propagation; frailty parameters are not estimated separately by stratum. This use of stratification follows standard survival-analysis practice (e.g., Kalbfleisch and Prentice, The Statistical Analysis of Failure Time Data) [@kalbfleisch2002].
++Each bootstrap replicate refits the baseline rate and frailty variance for the same comparison groups used in the primary analysis. Strata used solely for resampling or standardization retain their membership during resampling and share the fit for their comparison group. For Table 8, each subgroup and pseudo-dose combination defines a separate fitted group. The anchored dose-pair ratios are then pooled across subgroups. This use of stratification follows standard survival-analysis practice (e.g., Kalbfleisch and Prentice, The Statistical Analysis of Failure Time Data) [@kalbfleisch2002].
+ 
+ The person-level bootstrap procedure for KCOR proceeds as follows:
+ 
+@@ -658,9 +666,9 @@
+ 
+ Uncertainty intervals reflect event stochasticity and model-fit uncertainty in $(\hat{k}_d,\hat{\theta}_{0,d})$ and are interpreted as sampling variability of the aggregated counting process, not uncertainty in individual-level causal effects.
+ 
+-Coverage depends on the resampling procedure and the estimator refitted in each draw. An end-to-end simulation pipeline now evaluates empirical bootstrap coverage by forming a percentile interval for each simulated dataset and computing the Monte Carlo fraction of intervals that contain the scenario truth (KCOR at the evaluation week from the data-generating process). **Stable numerical coverage estimates require large numbers of simulated datasets and bootstrap replicates; final coverage claims for the manuscript are deferred until that full validation run is completed.** Estimates are intended to be interpreted conditionally on diagnostic pass status.
+-
+-The bootstrap is used as a **variance-propagation** device for the aggregated process rather than a universally calibrated inferential procedure. Two person-bootstrap studies used one million people, unequal cohort frailties, and no wave adjustment. With the joint initial fit specified in section 2.4, the nominal 95 percent interval contained the true week-52 ratio in 189 of 200 datasets. In a separate study the production fitter fixed the baseline rate from early weeks. Its percentile interval contained the true ratio in 502 of 600 datasets, although all 600 original fits passed the study diagnostics. The studies used different designs and do not isolate the effect of the fitter. Reported percentile intervals are **conditional on passing identifiability diagnostics**. **The pilot coverage table describes a separate simulation using weekly Poisson death draws. Calibration of the person bootstrap requires evaluation using person resampling and the same fitter used for the reported intervals.** **Inference is therefore interpreted conditional on diagnostic acceptance.**
++Coverage depends on the resampling procedure and the estimator refitted in each draw. The historical pilot used weekly Poisson resampling and compared its intervals with a KCOR estimate fitted to one reference dataset. Four scenarios reused the same expected death counts across simulated datasets, so their reported coverage cannot establish how often intervals contain the population value across independently sampled cohorts.
++
++The bootstrap is used as a **variance-propagation** device for the aggregated process rather than a universally calibrated inferential procedure. Two person-bootstrap studies used one million people, unequal cohort frailties, and no wave adjustment. With the joint initial fit specified in section 2.4, the nominal 95 percent interval contained the true week-52 ratio in 189 of 200 datasets. In a separate study the production fitter fixed the baseline rate from early weeks. Its percentile interval contained the true ratio in 502 of 600 datasets, although all 600 original fits passed the study diagnostics. The studies used different designs and do not isolate the effect of the fitter. Both coverage studies predate the week-boundary fitting equations in section 2.5. Reported percentile intervals are **conditional on passing identifiability diagnostics**. **Inference is therefore interpreted conditional on diagnostic acceptance.**
+ 
+ ### 2.10 Algorithm summary and reproducibility checklist
+ 
+@@ -732,7 +740,7 @@
+ 
+ ![Cox regression produces spurious non-null hazard ratios under a *synthetic null* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
+ 
+-![$\mathrm{KCOR}(t)$ stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, $\mathrm{KCOR}(t)$ asymptotes remain near 1 across $\theta_0$, which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Uncertainty bands (95% bootstrap intervals) are shown but are narrow due to large sample sizes.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
++![$\mathrm{KCOR}(t)$ stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, $\mathrm{KCOR}(t)$ asymptotes remain near 1 across $\theta_0$, which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
+ 
+ ![Estimator bias as a function of enrollment-time frailty variance $\theta_0$ on the synthetic-null grid (true hazard ratio 1; true KCOR asymptote 1). **Cox:** standard Cox hazard ratio bias, $\widehat{\mathrm{HR}}-1$. **KCOR:** asymptotic $\mathrm{KCOR}$ bias, $\widehat{\mathrm{KCOR}}_\infty-1$. **Shared-frailty (approx.):** the shared-frailty Cox curve is an **approximate reference** constructed from the null-case bias observed in Table @tbl:joint_frailty_comparison (proportional attenuation of each standard Cox $\widehat{\mathrm{HR}}$ toward 1 using the ratio of deviations from 1 in that table’s gamma-frailty null row), **not** a full re-estimation of shared-frailty Cox at each frailty level. Generated by `test/sim_grid/code/plot_estimator_bias_vs_theta.py`.](figures/fig_estimator_bias_vs_theta.png){#fig:estimator_bias_vs_theta}
+ 
+@@ -744,7 +752,7 @@
+ 
+ A brief worked example is included to illustrate the KCOR workflow end-to-end. This example is descriptive and intended solely to illustrate the mechanics of cohort construction, hazard estimation, $\theta_0$ estimation, depletion normalization, and KCOR computation.
+ 
+-The example proceeds from aggregated cohort counts through cumulative-hazard estimation, stabilization and rebasing, delta-iteration fitting across prespecified quiet windows, gamma inversion, and $\mathrm{KCOR}(t)$ construction, accompanied by diagnostic plots assessing post-normalization linearity and parameter stability.
++The example proceeds from aggregated cohort counts through cumulative-hazard estimation, stabilization and rebasing, delta-iteration fitting across configured quiet windows, gamma inversion, and $\mathrm{KCOR}(t)$ construction, accompanied by diagnostic plots assessing post-normalization linearity and parameter stability.
+ 
+ ### 2.13 Reproducibility and computational implementation
+ 
+@@ -787,7 +795,7 @@
+ 
+ We first evaluate KCOR under synthetic settings in which the data-generating process matches the revised working model. The primary synthetic target is no longer only whether $\mathrm{KCOR}(t)$ is flat under a null; it is also whether the estimator recovers the **enrollment-time** frailty variance $\theta_0$ that generated the cohort geometry.
+ 
+-Under correct specification, the revised estimator should recover $\theta_0$ with small error, align the quiet windows coherently after offset reconstruction, and then produce $\mathrm{KCOR}(t)$ trajectories that remain approximately constant at 1 under a true null effect. Near-1 behavior in this setting is treated as a diagnostic implication of correct working-model alignment, not as a stand-alone proof of estimator validity. Full design details, recovery grids, and figures are provided in the Supplementary Information, including the $\theta_0$ recovery simulations and the synthetic negative-control figures (Section S4.2.1 and related figures).
++In the multiwave recovery example, weekly deaths equal their model expectations, so the first observed hazard gives the generating baseline rate exactly. With that rate fixed, the example checks recovery of the enrollment-time frailty variance and alignment of the quiet windows. The synthetic negative control also checks whether KCOR remains near 1 under a true null effect. Near-1 behavior in this setting is treated as a diagnostic implication of correct working-model alignment, not as a stand-alone proof of estimator validity. Full design details, recovery grids, and figures are provided in the Supplementary Information, including the $\theta_0$ recovery simulations and the synthetic negative-control figures (Section S4.2.1 and related figures).
+ 
+ #### 3.1.2 Empirical negative control using national registry data (Czech Republic)
+ 
+@@ -809,7 +817,7 @@
+ 
+ ![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ is expected to be approximately horizontal under the pseudo-null, subject to sampling stochasticity. Curves are shown as anchored $\mathrm{KCOR}(t; t_0)$, i.e., $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$, which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+ 
+-Table @tbl:neg_control_summary provides numeric summaries. For the revised estimates, baseline rate and frailty were fitted jointly in the first quiet window, with the Czech wave exponent fixed at 1.18. Each of 999 person-bootstrap draws per enrollment preserved subgroup membership and week of death, refitted the cohorts, and recomputed the pooling weights. The intervals give the 2.5th and 97.5th percentiles. Compared with v4.3, the two 2022 comparisons involving pseudo-dose 2 moved closer to 1, while the pseudo-dose 1 versus 0 estimate moved from 0.9858 to 1.0503. All six joint-fit intervals included 1. Holding the revised configuration fixed and estimating the baseline rate from the early weeks gave 2022 ratios of 1.0065, 1.0115 and 1.0049 for comparisons 1 versus 0, 2 versus 0 and 2 versus 1, respectively. All three were closer to 1 than their joint-fit counterparts.
++Table @tbl:neg_control_summary provides numeric summaries. For the revised estimates, the fit used week-boundary hazard increments (§2.5). Baseline rate and frailty were fitted jointly in the first quiet window, with the Czech wave exponent fixed at 1.18. Each of 999 person-bootstrap draws per enrollment preserved subgroup membership and week of death, refitted the cohorts, and recomputed the pooling weights. The intervals give the 2.5th and 97.5th percentiles. Compared with v4.3, the two 2022 comparisons involving pseudo-dose 2 moved closer to 1, while the pseudo-dose 1 versus 0 estimate moved from 0.9858 to 1.0462. All six joint-fit intervals included 1. Holding the revised configuration fixed and estimating the baseline rate from the early weeks gave 2022 ratios of 1.0073, 1.0129 and 1.0055 for comparisons 1 versus 0, 2 versus 0 and 2 versus 1, respectively. All three were closer to 1 than their joint-fit counterparts.
+ 
+ <!--
+ NOTE: The empirical negative control is built from real-world data where non-proportional external hazards (e.g., epidemic waves) can create small deviations from an idealized null.
+@@ -1008,9 +1016,9 @@
+ 
+ Sensitivity analyses in this work are intentionally embedded alongside the assumptions they interrogate, rather than consolidated into a single omnibus robustness section. Parameters governing quiet-window identification, frailty normalization, aggregation, and uncertainty estimation are stress-tested through targeted negative controls, pathological simulations, and diagnostic failure demonstrations. This structure reflects the diagnostic-first philosophy of KCOR: robustness is assessed by whether assumptions remain identifiable and diagnostics pass, not by tuning parameters to stabilize point estimates.
+ 
+-**Interpretation of sub-nominal bootstrap coverage**
+-
+-Table @tbl:bootstrap_coverage reports empirical coverage using the per-dataset bootstrap design described in the table caption (each simulated dataset yields its own percentile interval; coverage is the fraction of datasets for which the true $\mathrm{KCOR}(t)$ at the evaluation week lies inside that interval). **Under frailty misspecification or sparse-event regimes, one generally expects sub-nominal empirical coverage for working-model percentile intervals at sufficient Monte Carlo replication, because intervals can be too narrow relative to genuine sampling variability; such settings coincide with low curvature and diagnostic flags, indicating weak identifiability rather than a generic bootstrap implementation error.** Under non-gamma frailty, the working gamma-frailty approximation no longer captures depletion geometry exactly; under sparse events, limited information in cumulative-hazard space can lead to underestimated variability. These regimes coincide with degraded KCOR diagnostics (poor fit, residual structure, or parameter instability), and analyses are therefore flagged as weakly identified or not reported in practice. Pilot Monte Carlo outputs committed with the code (`test/sim_grid/out/bootstrap_coverage.csv`) are not intended as definitive calibration numbers; re-run `test/sim_grid/code/compute_bootstrap_coverage.py` with larger $n_{\mathrm{sim}}$ and $n_{\mathrm{boot}}$ for stable estimates. The pattern of interest is alignment between sub-nominal coverage and diagnostic failure, supporting diagnostic gating for inference.
++
++
++
+ 
+ ### 5.1 Failure modes and diagnostics
+ 
+@@ -1230,12 +1238,12 @@
+ 
+ | Enrollment | Dose comparison | KCOR (pooled/ASMR) | 95% CI | Joint fit [95% CI] |
+ |---|---|---:|---|---|
+-| 2021_24 | 1 vs 0 | 1.0097 | [0.992, 1.027] | 1.0091 [0.955, 1.058] |
+-| 2021_24 | 2 vs 0 | 1.0213 | [1.000, 1.043] | 1.0317 [0.971, 1.094] |
+-| 2021_24 | 2 vs 1 | 1.0115 | [0.991, 1.033] | 1.0225 [0.962, 1.087] |
+-| 2022_06 | 1 vs 0 | 0.9858 | [0.970, 1.002] | 1.0503 [0.233, 1.299] |
+-| 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] | 1.0575 [0.238, 1.234] |
+-| 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] | 1.0068 [0.806, 1.209] |
++| 2021_24 | 1 vs 0 | 1.0097 | [0.992, 1.027] | 1.0083 [0.955, 1.056] |
++| 2021_24 | 2 vs 0 | 1.0213 | [1.000, 1.043] | 1.0312 [0.971, 1.094] |
++| 2021_24 | 2 vs 1 | 1.0115 | [0.991, 1.033] | 1.0227 [0.962, 1.087] |
++| 2022_06 | 1 vs 0 | 0.9858 | [0.970, 1.002] | 1.0462 [0.322, 1.268] |
++| 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] | 1.0677 [0.335, 1.213] |
++| 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] | 1.0205 [0.822, 1.208] |
+ 
+ Table: Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios indicate KCOR deviating from 1.0 in the expected direction, consistent with the estimator detecting injected effects. {#tbl:pos_control_summary}
+ 
+@@ -1255,7 +1263,7 @@
+ | S7 benefit (r=0.8) | 0.8 | 0.83 | 0.82 | -2.1% | No (detects effect) | No (detects effect) | No (detects effect) |
+ 
+ 
+-Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. {#tbl:comparison_estimands}
++Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window. {#tbl:comparison_estimands}
+ 
+ | Method | Target estimand | Deviation from null (selection-only scenarios) | Variance/instability | Interpretability notes |
+ |--------|----------------|--------------------------------|---------------------|------------------------|
+@@ -1264,14 +1272,4 @@
+ | **Cox** | Time-varying hazard ratio | Non-zero under frailty heterogeneity | Moderate (HR instability across time windows) | Improves fit to non-proportional hazards but does not normalize selection geometry; inherits depletion structure |
+ 
+ 
+-Table: Bootstrap coverage for KCOR uncertainty intervals (**pilot / implementation table**). For each independent simulated dataset, a 95% percentile interval for $\mathrm{KCOR}(t)$ at the evaluation week is formed from bootstrap replicates of *that* dataset; empirical coverage is the Monte Carlo fraction of datasets whose interval contains the DGP $\mathrm{KCOR}(t)$ at that week (truth from a fixed reference draw; see `compute_bootstrap_coverage.py` and run manifest `test/sim_grid/out/bootstrap_coverage_run.json`). Summaries are written to `test/sim_grid/out/bootstrap_coverage.csv`; figures may be regenerated with `test/sim_grid/code/plot_bootstrap_coverage.py`. **Empirical coverage cells are left blank until a full run is committed; do not treat small-$n$ smoke values as final.** Script defaults use $n_{\mathrm{sim}}=500$, $n_{\mathrm{boot}}=200$. Stress-test regimes (non-gamma frailty, sparse events) are expected to show sub-nominal coverage at sufficient Monte Carlo replication when diagnostics fail. Coverage is **not** claimed to be universally valid outside diagnostic-pass settings. {#tbl:bootstrap_coverage}
+-
+-| Scenario | Nominal coverage | Empirical coverage | Notes |
+-|----------|-----------------|-------------------|-------|
+-| Gamma-frailty null | 95% | — | Populate after full Monte Carlo run |
+-| Injected effect (harm) | 95% | — | DGP truth at evaluation week (not raw hazard multiplier) |
+-| Injected effect (benefit) | 95% | — | DGP truth at evaluation week (not raw hazard multiplier) |
+-| Non-gamma frailty | 95% | — | Populate after full Monte Carlo run |
+-| Sparse events | 95% | — | Populate after full Monte Carlo run |
+-
+ \newpage
+Binary documentation/preprint/paper.pdf: be2f3b1ec963cd5e339579bfb9269f64845ac3b3400fa965ddb5426cedf27b7e -> 654579218381aec3644e5e3d62e739f174052c75a5ea168b0368bda2313436f9
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -89,7 +89,7 @@
+ \frac{F_i(t;\alpha)}{F_j(t;\alpha)}.
+ $$
+ 
+-**Post-inversion correction.** For $\alpha\ne1$ the in-wave calculation uses a mean-one gamma moment as a proxy for the survivor moment. Rescaling cumulative excess by this time-varying proxy gives an approximate wave exposure (main text §2.7.3). For $\alpha=1$, $H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)$ throughout follow-up. The following rescaling applies only for $\alpha\ne1$. In discrete weekly bins, a Gompertz reference path is anchored at wave entry, only strictly positive excess above that path is divided by $F_d(t;\alpha)$, and the corrected cumulative hazard is enforced to be non-decreasing. After wave exit, hold the estimated cumulative wave exposure fixed and recover each baseline increase from survival conditional on reaching wave exit (main text §2.7.3).
++**Post-inversion correction.** For $\alpha\ne1$ the in-wave calculation uses a mean-one gamma moment as a proxy for the survivor moment. Rescaling cumulative excess by this time-varying proxy gives an approximate wave exposure (main text §2.7.3). For $\alpha=1$, $H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)$ throughout follow-up. The following rescaling applies only for $\alpha\ne1$. In discrete weekly bins, a Gompertz reference path starts from the cumulative hazard before the first modeled wave week and includes that week's fitted baseline increment, only strictly positive excess above that path is divided by $F_d(t;\alpha)$, and the corrected cumulative hazard is enforced to be non-decreasing. After wave exit, hold the estimated cumulative wave exposure fixed and recover each baseline increase from survival conditional on reaching wave exit (main text §2.7.3).
+ 
+ **Identification with fixed external scale.** Under minimal aggregated data, $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects unless **externally supplied VE or other prespecified intervention-effect scale** is fixed and not estimated from the same wave-period contrasts used to localize $\alpha$ (main text §2.7.2). Given a fixed scale $x$ relating frailty-neutral excess hazards between cohorts $A$ and $B$,
+ 
+@@ -129,10 +129,10 @@
+ 
+ The effect window is a simulation construct used solely for positive-control validation and does not represent a real-world intervention period or biological effect window.
+ 
+-Positive controls are constructed by starting from a negative-control dataset and injecting a known effect into the data-generating process for one cohort, for example by multiplying the *baseline* hazard by a constant factor $r$ over a prespecified interval:
+-
+-$$
+-h_{0,\mathrm{treated}}(t) = r \cdot h_{0,\mathrm{control}}(t) \quad \text{for } t \in [t_1, t_2],
++During the effect window, the generator multiplies the treated cohort's weekly hazard among survivors by $r$, relative to what that same cohort's hazard would have been without the injection.
++
++$$
++h_{\mathrm{treated,injected}}(t) = r \, h_{\mathrm{treated,unperturbed}}(t) \quad \text{for } t_1 \le t < t_2,
+ $$
+ {#eq:pos-control-injection}
+ 
+@@ -182,7 +182,7 @@
+ 
+ #### S4.2.1 Synthetic negative control: gamma-frailty null
+ 
+-The synthetic negative control (Figure @fig:neg_control_synthetic) is a fully specified simulation designed to induce **strong selection-induced depletion curvature under a true null effect**. Under the revised estimator, this synthetic setting is used not only to ask whether KCOR remains near 1, but also whether the estimator recovers the cohort-specific enrollment-time frailty parameters governing the simulated geometry and aligns quiet windows coherently. Near-1 behavior here is interpreted as a diagnostic implication under the working model, not as stand-alone proof that the estimator is correct.
++The synthetic negative control (Figure @fig:neg_control_synthetic) is a fully specified simulation designed to induce **strong selection-induced depletion curvature under a true null effect**. The separate multiwave recovery example uses expected weekly deaths and fixes the baseline rate at the first observed hazard, which equals the generating rate. It checks recovery of enrollment-time frailty variance and alignment of the quiet windows under those conditions. Near-1 behavior here is interpreted as a diagnostic implication under the working model, not as stand-alone proof that the estimator is correct.
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+@@ -210,7 +210,7 @@
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+-The injection multiplies the treatment cohort's baseline hazard by factor $r$ during the effect window, while leaving the control cohort unchanged.
++The treatment cohort's weekly hazard among survivors follows its unperturbed curve outside the effect window and is multiplied by $r$ within it. The control cohort follows its own unperturbed curve throughout.
+ 
+ ### S4.4 Sensitivity analysis parameters
+ 
+@@ -279,10 +279,10 @@
+ 
+ ### S5.2 Residual analysis
+ 
+-Fit residuals should be examined in hazard space. Define residuals:
+-
+-$$
+-r_{d}(t)=h_d^{\mathrm{adj}}(t)-\frac{\hat{k}_d e^{\gamma t_{\mathrm{rebased}}}}{1+\hat{\theta}_{0,d}\left(H_{\mathrm{gom},d}(t_{\mathrm{rebased}})+\Delta_d(t)\right)}.
++Fit residuals should be examined in hazard space. The weekly prediction is defined in Step 1 of main-text §2.5. Define residuals:
++
++$$
++r_{d}(t)=h_d^{\mathrm{adj}}(t)-q_d(t;\hat{k}_d,\hat{\theta}_{0,d},\Delta_d(t)).
+ $$
+ 
+ - **Systematic patterns**: Residuals should be approximately random around zero. Systematic structure suggests model inadequacy.
+@@ -303,11 +303,11 @@
+ 
+ To assess whether diagnostically valid quiet windows are rare or fragile in applied registry data, we performed a systematic scan of quiet-window placements in the Czech Republic 2021–2024 cohort (enrollment ISO week 2021-24). We re-estimated the revised frailty parameters $(\hat{k}_d,\hat{\theta}_{0,d})$ across a sequence of overlapping quiet windows of fixed duration, holding all other settings fixed.
+ 
+-Specifically, we considered 12-month windows beginning at successive monthly offsets between April 2022 and April 2023 (inclusive). For each window placement, parameters were estimated using the same revised estimator and diagnostic pass/fail criteria used elsewhere in this SI. Results are shown for two birth-decade strata (1940s and 1950s), and for dose groups $d \in \{0,1,2\}$.
+-
+-Figure @fig:si_quiet_window_theta_scan shows fitted $\hat{\theta}_{0,d}$ as a function of quiet-window midpoint date. The purpose of this scan is technical rather than substantive: it asks whether the estimator remains coherent across nearby quiet-window choices and whether failures are surfaced explicitly. Open markers denote windows failing diagnostics (treated as non-identifiable and not interpreted).
+-
+-![Quiet-window robustness scan: fitted enrollment-time frailty variance $\hat{\theta}_{0,d}$ vs. quiet-window midpoint date for the Czech 2021–2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Marker shape denotes birth decade (1940s, 1950s). Filled markers indicate diagnostic pass; open markers indicate diagnostic failure. The figure is intended as a technical stability scan of the estimator rather than as substantive evidence for any one cohort narrative.](figures/fig_si_quiet_window_theta_scan_czech_2021_24.png){#fig:si_quiet_window_theta_scan}
++Specifically, we considered 12-month windows beginning at successive monthly offsets between April 2022 and April 2023 (inclusive). For each placement we fitted baseline rate and frailty jointly to that quiet window using the revised weekly equation (§2.5). The final refit used the window plus the four early post-skip anchor weeks. We retained the original enrollment time scale throughout. The pass rate counts fits accepted by the pipeline across all 13 attempted windows per group, including failures in the denominator. Results are shown for two birth-decade strata (1940s and 1950s), and for dose groups $d \in \{0,1,2\}$.
++
++Figure @fig:si_quiet_window_theta_scan shows fitted $\hat{\theta}_{0,d}$ as a function of quiet-window midpoint date. All six groups passed the pipeline diagnostics in all 13 windows (78 of 78 fits). The estimated frailty variance still depended on window placement. For dose 1 it ranged from effectively zero to 7.70 in the 1940s birth cohort and to 14.51 in the 1950s cohort. The windows overlap, so these counts describe sensitivity to placement within the same data.
++
++![Quiet-window robustness scan: fitted enrollment-time frailty variance $\hat{\theta}_{0,d}$ vs. quiet-window midpoint date for the Czech 2021–2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Rows show birth decade and columns show dose. Each dot gives the fitted frailty variance for one window. All 78 fits passed.](figures/fig_si_quiet_window_theta_scan_czech_2021_24.png){#fig:si_quiet_window_theta_scan}
+ 
+ ### S5.5 Quiet-window overlay plots
+ 
+--- a/test/test_nph_post_window_continuity.py
++++ b/test/test_nph_post_window_continuity.py
+@@ -1,57 +1,64 @@
+-#!/usr/bin/env python3
+-"""Regression: NPH post-inversion tail must not create a step at endDate."""
++"""Check the revised post-wave correction through its production entry point."""
+ 
+-from __future__ import annotations
+-
+-import sys
++from importlib.util import module_from_spec, spec_from_file_location
++from math import exp, inf, log
+ from pathlib import Path
+ 
+ import numpy as np
++from scipy.integrate import quad
+ 
+ 
+ def test_nph_tail_continuity() -> None:
+-    repo = Path(__file__).resolve().parents[1]
+-    sys.path.insert(0, str(repo / "code"))
+-    from KCOR import apply_nph_correction_post_inversion  # noqa: PLC0415
++    source = Path(__file__).resolve().parents[1] / "code" / "KCOR.py"
++    spec = spec_from_file_location("kcor_continuity_edition", source)
++    assert spec is not None and spec.loader is not None
++    edition = module_from_spec(spec)
++    spec.loader.exec_module(edition)
+ 
+-    n = 6
+-    t_vals = np.arange(n, dtype=float)
+-    t_reb = t_vals - 2.0
+-    inc = 0.001 + 0.0001 * np.arange(n, dtype=float)
+-    H0 = np.cumsum(inc)
+-    dates = np.array(
+-        [np.datetime64("2022-01-03") + np.timedelta64(7 * i, "D") for i in range(n)],
+-        dtype="datetime64[ns]",
+-    )
+-    start_dt = dates[1]
+-    end_dt = dates[2]
++    week = np.arange(5)
++    dates = np.datetime64("2022-01-03") + week * np.timedelta64(7, "D")
++    weekly_baseline = 0.02
+ 
+-    H_corr, diag = apply_nph_correction_post_inversion(
+-        H0,
+-        t_vals,
+-        dates,
+-        0.05,
+-        1.5,
+-        start_dt,
+-        end_dt,
+-        1e-5,
+-        0.01,
+-        t_rebased=t_reb,
+-    )
++    def correct(observed):
++        # With theta = 1, ordinary gamma inversion is exp(H_obs) - 1.
++        times = week[:len(observed)].astype(float)
++        return edition.apply_nph_correction_post_inversion(
++            np.expm1(observed), times, dates[:len(observed)],
++            theta_applied=1.0, alpha=2.0, start_dt=dates[1], end_dt=dates[2],
++            k_hat=weekly_baseline, gamma_per_week=0.0,
++            t_rebased=times, observed_cumhaz=observed,
++        )
+ 
+-    i_end = 2
+-    assert i_end < n - 1
+-    assert abs(H_corr[i_end + 1] - H_corr[i_end] - (H0[i_end + 1] - H0[i_end])) < 1e-9
+-    for j in range(i_end + 2, n):
+-        assert abs(H_corr[j] - H_corr[j - 1] - (H0[j] - H0[j - 1])) < 1e-9
++    ordinary_to_exit = np.array([0.03, 0.10, 0.22])
++    observed_to_exit = np.log1p(ordinary_to_exit)
++    through_exit, exit_diagnostics = correct(observed_to_exit)
++    wave = exit_diagnostics["post_wave_exposure"]
++    assert wave > 0
++    baseline_at_exit = ordinary_to_exit[0] + 2 * weekly_baseline
+ 
+-    off = float(H_corr[i_end] - H0[i_end])
+-    for j in range(i_end + 1, n):
+-        assert abs(H_corr[j] - (H0[j] + off)) < 1e-9
++    def survival(baseline):
++        # Unit exponential frailty z with individual cumulative hazard B*z + W*z².
++        return quad(lambda z: exp(-(1 + baseline) * z - wave * z**2), 0, inf)[0]
+ 
+-    assert abs(float(diag["post_wave_level_shift"]) - off) < 1e-9
++    # Generate the observed hazard for a known baseline increase by integrating
++    # survival independently of the production inverse.
++    expected_increase = 0.05
++    observed_increase = -log(survival(baseline_at_exit + expected_increase)
++                             / survival(baseline_at_exit))
++    observed = np.r_[observed_to_exit, observed_to_exit[-1],
++                     observed_to_exit[-1] + observed_increase]
++    corrected, diagnostics = correct(observed)
++
++    np.testing.assert_allclose(corrected[:3], through_exit, rtol=0, atol=1e-12)
++    assert corrected[3] == corrected[2]  # Zero deaths in the first post-wave week.
++    np.testing.assert_allclose(corrected[4] - corrected[3], expected_increase,
++                               rtol=0, atol=1e-9)
++    np.testing.assert_allclose(diagnostics["post_wave_level_shift"],
++                               corrected[2] - ordinary_to_exit[-1], rtol=0, atol=1e-12)
++    # The historical constant-offset rule would give a different increment here.
++    assert not np.isclose(np.diff(np.expm1(observed))[-1], expected_increase)
+ 
+ 
+ if __name__ == "__main__":
+     test_nph_tail_continuity()
+-    print("PASS nph post-window continuity")
++    print("PASS revised NPH post-window continuity")

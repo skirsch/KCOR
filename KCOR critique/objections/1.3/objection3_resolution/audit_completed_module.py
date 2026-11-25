@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 
 
 def read(path):

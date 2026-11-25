@@ -1,0 +1,77 @@
+{
+  "truth": 1.0,
+  "fixed": {
+    "covered": 48,
+    "datasets": 50,
+    "coverage": 0.96,
+    "coverage_lower": 0.8628623743960313,
+    "coverage_upper": 0.9951185665738638,
+    "mean_width": [
+      0.33115750650953146,
+      0.3105469137091989,
+      0.351768099309864
+    ],
+    "mean_point": [
+      1.0438194119690218,
+      1.0214167682686246,
+      1.066222055669419
+    ],
+    "rmse": 0.08949694536363872,
+    "prefix_coverage": 0.96,
+    "originals_with_insufficient_signal": 0,
+    "draws_with_insufficient_signal": 245,
+    "failed_fit_calls": 1,
+    "originals_with_clamped_gap": 0,
+    "coverage_among_flagged": [
+      0,
+      0
+    ],
+    "coverage_among_unflagged": [
+      48,
+      50
+    ],
+    "median_width": 0.3190819284001097,
+    "maximum_width": 0.5069086589495972
+  },
+  "joint": {
+    "covered": 50,
+    "datasets": 50,
+    "coverage": 1.0,
+    "coverage_lower": 0.9288782635357954,
+    "coverage_upper": 1.0,
+    "mean_width": [
+      421.3351136199345,
+      281.89094627812415,
+      560.7792809617448
+    ],
+    "mean_point": [
+      43.50638049565828,
+      -1.5602106681494803,
+      88.57297165946603
+    ],
+    "rmse": 162.63451110711145,
+    "prefix_coverage": 1.0,
+    "originals_with_insufficient_signal": 8,
+    "draws_with_insufficient_signal": 1779,
+    "failed_fit_calls": 177,
+    "originals_with_clamped_gap": 0,
+    "coverage_among_flagged": [
+      8,
+      8
+    ],
+    "coverage_among_unflagged": [
+      42,
+      42
+    ],
+    "median_width": 213.05642934381774,
+    "maximum_width": 1629.0015006697304
+  },
+  "gained_coverage": 2,
+  "lost_coverage": 0,
+  "paired_p": 0.5,
+  "width_difference": [
+    421.0039561134249,
+    281.563592494149,
+    560.4443197327008
+  ]
+}

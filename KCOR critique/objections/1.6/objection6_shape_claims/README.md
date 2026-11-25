@@ -1,6 +1,6 @@
 # Objection 6: curvature and linearity claims
 
-This module checks two shape claims in the [paper](../../../documentation/preprint/paper.md) under its own Gompertz plus gamma-frailty model. Run `python check.py` to reproduce [the numbers](results.json). This is an algebraic check, not a simulation of statistical coverage.
+This module checks two shape claims in the [paper](../../../../documentation/preprint/paper.md) under its own Gompertz plus gamma-frailty model. Run `python check.py` to reproduce [the numbers](results.json). This is an algebraic check, not a simulation of statistical coverage.
 
 With baseline hazard \(h_0(t)=k e^{\gamma t}\), baseline cumulative hazard is \(H_0(t)=k(e^{\gamma t}-1)/\gamma\). Observed hazard and its derivative are
 

@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT=Path(__file__).resolve().parents[2]
+ROOT=Path(__file__).resolve().parents[3]
 
 
 def sha(path):
@@ -32,7 +32,7 @@ def main():
         'test/sim_grid/out/bootstrap_coverage.csv',
         'test/sim_grid/out/bootstrap_coverage_replicates.csv',
         'test/sim_grid/out/bootstrap_coverage_run.json',
-        'KCOR critique/KCOR.pdf','KCOR critique/01 - Objection 1/step4_results_2026-11-09/manuscript_extracted.txt']]
+        'KCOR critique/original-review/KCOR.pdf','KCOR critique/objections/1.1/step4_results_2026-11-09/manuscript_extracted.txt']]
     hashes={str(p.relative_to(ROOT)):sha(p) for p in sources}
     # Legacy source uses the removed NumPy trapz name for a separate survival
     # summary. Supply its trapezoid equivalent in this process only.

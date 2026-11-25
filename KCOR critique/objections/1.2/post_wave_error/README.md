@@ -24,7 +24,7 @@ For a full quiet week with true baseline cumulative hazard increment \(\Delta B>
      {\theta\,\Delta B}-1.
 \]
 
-The optional KCOR correction adds a fixed offset after the wave. That offset cancels when subtracting cumulative hazards at two times on the shifted curve. The error above therefore applies to its post-wave increments as well. It measures error in one cohort's increment with true starting frailty. Error in a ratio of cohorts also depends on both cohorts' errors and cumulative levels, and a real fit can change the estimated frailty. [Manuscript §2.7.3](../../../documentation/preprint/paper.md)
+The optional KCOR correction adds a fixed offset after the wave. That offset cancels when subtracting cumulative hazards at two times on the shifted curve. The error above therefore applies to its post-wave increments as well. It measures error in one cohort's increment with true starting frailty. Error in a ratio of cohorts also depends on both cohorts' errors and cumulative levels, and a real fit can change the estimated frailty. [Manuscript §2.7.3](../../../../documentation/preprint/paper.md)
 
 ## Closed form for a quadratic wave
 

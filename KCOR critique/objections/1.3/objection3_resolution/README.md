@@ -27,19 +27,19 @@ Start with [the assessment](ASSESSMENT.md), [the design](DESIGN.md), and [the pr
 Run these from the repository root using the existing Python environment with NumPy, pandas, SciPy, PyYAML, openpyxl, and the production KCOR dependencies. Exact versions used for the final run are recorded in its manifest. Output directories must be new; scripts refuse to overwrite previous work.
 
 ```powershell
-python 'KCOR critique/03 - Objection 3/objection3_resolution/verify_production.py' --draws 9 --design-case --out 'KCOR critique/03 - Objection 3/objection3_resolution/development/reproduction_new'
-python 'KCOR critique/03 - Objection 3/objection3_resolution/verify_production.py' --draws 999 --design-case --out 'KCOR critique/03 - Objection 3/objection3_resolution/development/reproduction_1000_new'
-python 'KCOR critique/03 - Objection 3/objection3_resolution/verify_person_aggregation.py' 'KCOR critique/03 - Objection 3/objection3_resolution/development/person_aggregation_new.json'
-python 'KCOR critique/03 - Objection 3/objection3_resolution/check_model.py' 'KCOR critique/03 - Objection 3/objection3_resolution/development/model_checks_new.json'
-python 'KCOR critique/03 - Objection 3/objection3_resolution/run_study.py' --phase development --out 'KCOR critique/03 - Objection 3/objection3_resolution/development/pilot_new' --workers 6
-python 'KCOR critique/03 - Objection 3/objection3_resolution/run_study.py' --phase final --out 'KCOR critique/03 - Objection 3/objection3_resolution/final_reproduction' --workers 6
-python 'KCOR critique/03 - Objection 3/objection3_resolution/summarize.py' 'KCOR critique/03 - Objection 3/objection3_resolution/final_reproduction'
+python 'KCOR critique/objections/1.3/objection3_resolution/verify_production.py' --draws 9 --design-case --out 'KCOR critique/objections/1.3/objection3_resolution/development/reproduction_new'
+python 'KCOR critique/objections/1.3/objection3_resolution/verify_production.py' --draws 999 --design-case --out 'KCOR critique/objections/1.3/objection3_resolution/development/reproduction_1000_new'
+python 'KCOR critique/objections/1.3/objection3_resolution/verify_person_aggregation.py' 'KCOR critique/objections/1.3/objection3_resolution/development/person_aggregation_new.json'
+python 'KCOR critique/objections/1.3/objection3_resolution/check_model.py' 'KCOR critique/objections/1.3/objection3_resolution/development/model_checks_new.json'
+python 'KCOR critique/objections/1.3/objection3_resolution/run_study.py' --phase development --out 'KCOR critique/objections/1.3/objection3_resolution/development/pilot_new' --workers 6
+python 'KCOR critique/objections/1.3/objection3_resolution/run_study.py' --phase final --out 'KCOR critique/objections/1.3/objection3_resolution/final_reproduction' --workers 6
+python 'KCOR critique/objections/1.3/objection3_resolution/summarize.py' 'KCOR critique/objections/1.3/objection3_resolution/final_reproduction'
 ```
 
 The retained study's closure check is run with a new output filename:
 
 ```powershell
-python 'KCOR critique/03 - Objection 3/objection3_resolution/audit_completed_module.py' --out 'KCOR critique/03 - Objection 3/objection3_resolution/completion_evidence_new.json'
+python 'KCOR critique/objections/1.3/objection3_resolution/audit_completed_module.py' --out 'KCOR critique/objections/1.3/objection3_resolution/completion_evidence_new.json'
 ```
 
 The retained final audit is `completion_evidence_final.json`. Additional analysis scripts also refuse to overwrite their earlier output files.
@@ -51,7 +51,7 @@ The 1,000-sample full-workbook command is substantially slower than the array ad
 To recheck that retained full-size evidence without rerunning the expensive workbook assembly, run the following against a copy of the evidence directory that omits the verifier's two output files (`verification_age_scope.json` and `captured_production_interval_summary.log`); the verifier refuses to overwrite them:
 
 ```powershell
-python 'KCOR critique/03 - Objection 3/objection3_resolution/verify_captured_production.py' 'KCOR critique/03 - Objection 3/objection3_resolution/development/reproduction_1000_copy'
+python 'KCOR critique/objections/1.3/objection3_resolution/verify_captured_production.py' 'KCOR critique/objections/1.3/objection3_resolution/development/reproduction_1000_copy'
 ```
 
 `development/capture_completed_age_rows.py` records the read-only capture used in the live Python 3.14 process. Observation did not change numerical inputs, fitted parameters, or source code. The direct 1,000-sample workbook command above remains available to regenerate the full export if desired.

@@ -1,6 +1,6 @@
 # Proposed manuscript wording for objection 6
 
-These are reviewable replacements for the four mathematical statements in the [current manuscript](../../documentation/preprint/paper.md). They are proposals in the critique folder; the manuscript and production code are not edited here. The derivations and checks are in the [scaling](objection6_constant_scaling/README.md), [weekly inversion](objection6_weekly_inversion/README.md), [shape](objection6_shape_claims/README.md), and [multi-window implementation](objection6_weekly_inversion_multiwindow/README.md) modules.
+These are reviewable replacements for the four mathematical statements in the [current manuscript](../../../documentation/preprint/paper.md). They are proposals in the critique folder; the manuscript and production code are not edited here. The derivations and checks are in the [scaling](objection6_constant_scaling/README.md), [weekly inversion](objection6_weekly_inversion/README.md), [shape](objection6_shape_claims/README.md), and [multi-window implementation](objection6_weekly_inversion_multiwindow/README.md) modules.
 
 ## 1. Constant hazard multiplier (§2.4.4)
 
