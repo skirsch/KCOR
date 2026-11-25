@@ -6,11 +6,11 @@ To rerun a script that reads the archived files, change to the directory contain
 
 | Objection 3 run | Archive | Files |
 |---|---|---:|
-| corrected validation/final 2026-11-10 | [datasets.zip](<03 - Objection 3/objection3_corrected_validation/final_2026-11-10/datasets.zip>) | 9,600 |
-| joint fit candidate/pilot | [datasets.zip](<03 - Objection 3/objection3_joint_fit_candidate/pilot/datasets.zip>) | 120 |
-| paper method/block bootstrap operationalization/main | [datasets.zip](<03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/main/datasets.zip>) | 400 |
-| paper method/block bootstrap operationalization/sensitivity | [datasets.zip](<03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/sensitivity/datasets.zip>) | 120 |
-| paper method/paired resampling/main | [datasets.zip](<03 - Objection 3/objection3_paper_method/paired_resampling/main/datasets.zip>) | 400 |
-| paper method/saved 600 | [datasets.zip](<03 - Objection 3/objection3_paper_method/saved_600/datasets.zip>) | 600 |
-| resolution/development/reproduction 1000 iterations | [replay_data.zip](<03 - Objection 3/objection3_resolution/development/reproduction_1000_iterations/replay_data.zip>) | 2 |
-| resolution/final 2026-11-10 | [datasets.zip](<03 - Objection 3/objection3_resolution/final_2026-11-10/datasets.zip>) | 9,600 |
+| corrected validation/final 2026-11-10 | [datasets.zip](<objections/1.3/objection3_corrected_validation/final_2026-11-10/datasets.zip>) | 9,600 |
+| joint fit candidate/pilot | [datasets.zip](<objections/1.3/objection3_joint_fit_candidate/pilot/datasets.zip>) | 120 |
+| paper method/block bootstrap operationalization/main | [datasets.zip](<objections/1.3/objection3_paper_method/block_bootstrap_operationalization/main/datasets.zip>) | 400 |
+| paper method/block bootstrap operationalization/sensitivity | [datasets.zip](<objections/1.3/objection3_paper_method/block_bootstrap_operationalization/sensitivity/datasets.zip>) | 120 |
+| paper method/paired resampling/main | [datasets.zip](<objections/1.3/objection3_paper_method/paired_resampling/main/datasets.zip>) | 400 |
+| paper method/saved 600 | [datasets.zip](<objections/1.3/objection3_paper_method/saved_600/datasets.zip>) | 600 |
+| resolution/development/reproduction 1000 iterations | [replay_data.zip](<objections/1.3/objection3_resolution/development/reproduction_1000_iterations/replay_data.zip>) | 2 |
+| resolution/final 2026-11-10 | [datasets.zip](<objections/1.3/objection3_resolution/final_2026-11-10/datasets.zip>) | 9,600 |
