@@ -1,0 +1,245 @@
+{
+  "seed_status_counts": {
+    "bounded_seed": 1405,
+    "ok": 16595
+  },
+  "draws": 999,
+  "comparisons": 54,
+  "status_counts": {
+    "no_deficit_detected": 30,
+    "not_assessed": 24
+  },
+  "max_point_difference": 0.0013239999569780725,
+  "changed_draws": [
+    {
+      "enrollment": "2022_06",
+      "draw": 25,
+      "max_difference": 0.0008431089824008087
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 30,
+      "max_difference": 0.0008401310893746405
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 36,
+      "max_difference": 0.000855783905489238
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 39,
+      "max_difference": 0.0011161047825087866
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 79,
+      "max_difference": 1.8388429314786237e-06
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 90,
+      "max_difference": 0.0005027628276244034
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 113,
+      "max_difference": 0.0012071502266867151
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 121,
+      "max_difference": 0.0007380468383535455
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 157,
+      "max_difference": 0.00043349039716655824
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 168,
+      "max_difference": 0.00040580708123982845
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 207,
+      "max_difference": 0.0007241594374250981
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 213,
+      "max_difference": 0.001203348616642952
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 254,
+      "max_difference": 8.37659618522224e-05
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 259,
+      "max_difference": 0.000824822419374982
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 305,
+      "max_difference": 0.0010573462904757136
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 342,
+      "max_difference": 0.00014482071775456795
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 368,
+      "max_difference": 0.0008562266414280373
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 422,
+      "max_difference": 0.0007270378340457073
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 423,
+      "max_difference": 9.582760316373395e-07
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 443,
+      "max_difference": 0.0011464632997966184
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 455,
+      "max_difference": 0.00010300134387664084
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 470,
+      "max_difference": 0.0005779867635573588
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 480,
+      "max_difference": 2.236509934394615e-05
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 502,
+      "max_difference": 0.0006424213083808805
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 505,
+      "max_difference": 0.0009061421426552752
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 523,
+      "max_difference": 3.2903035116271795e-05
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 595,
+      "max_difference": 0.0012202258636964114
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 612,
+      "max_difference": 0.0013239999569780725
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 638,
+      "max_difference": 0.0006632416121916673
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 646,
+      "max_difference": 2.723805537185875e-05
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 657,
+      "max_difference": 0.0004489078015175174
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 673,
+      "max_difference": 0.000710976115839923
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 678,
+      "max_difference": 2.3802516967208476e-05
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 711,
+      "max_difference": 0.0010077918944131348
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 759,
+      "max_difference": 0.0012008154451842445
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 810,
+      "max_difference": 0.0009160300599810878
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 829,
+      "max_difference": 2.951922683402941e-06
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 883,
+      "max_difference": 0.0008490521888453451
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 888,
+      "max_difference": 0.00072967721190631
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 893,
+      "max_difference": 0.0007447842722494435
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 910,
+      "max_difference": 9.481580987014127e-08
+    },
+    {
+      "enrollment": "2022_06",
+      "draw": 961,
+      "max_difference": 1.7420176856575154e-07
+    }
+  ],
+  "cohort_status": {
+    "('2021_24', 1940, 0)": "no_deficit_detected",
+    "('2021_24', 1940, 1)": "no_deficit_detected",
+    "('2021_24', 1940, 2)": "no_deficit_detected",
+    "('2021_24', 1950, 0)": "no_deficit_detected",
+    "('2021_24', 1950, 1)": "no_deficit_detected",
+    "('2021_24', 1950, 2)": "no_deficit_detected",
+    "('2021_24', 1960, 0)": "no_deficit_detected",
+    "('2021_24', 1960, 1)": "no_deficit_detected",
+    "('2021_24', 1960, 2)": "no_deficit_detected",
+    "('2022_06', 1940, 0)": "not_assessed",
+    "('2022_06', 1940, 1)": "not_assessed",
+    "('2022_06', 1940, 2)": "not_assessed",
+    "('2022_06', 1950, 0)": "not_assessed",
+    "('2022_06', 1950, 1)": "not_assessed",
+    "('2022_06', 1950, 2)": "not_assessed",
+    "('2022_06', 1960, 0)": "no_deficit_detected",
+    "('2022_06', 1960, 1)": "not_assessed",
+    "('2022_06', 1960, 2)": "not_assessed"
+  }
+}

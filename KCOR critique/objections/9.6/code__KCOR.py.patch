@@ -1,0 +1,100 @@
+--- m146/code/KCOR.py
++++ m147/code/KCOR.py
+@@ -4286,8 +4286,8 @@
+         status_by_date = g.set_index("DateDied")["normalization_status"]
+         for status, dates in status_by_date.groupby(status_by_date):
+             affected = (rows["Dose_num"] == dose) | (rows["Dose_den"] == dose)
+-            if status not in ("missing_week_history", "invalid_risk_history", "normalization_failed") and not (
+-                    g.loc[g.normalization_status.eq(status), "t"] <= KCOR_NORMALIZATION_WEEKS_EFFECTIVE).any():
++            if status == "risk_set_exhausted" or (status not in ("missing_week_history", "invalid_risk_history", "normalization_failed") and not (
++                    g.loc[g.normalization_status.eq(status), "t"] <= KCOR_NORMALIZATION_WEEKS_EFFECTIVE).any()):
+                 affected &= pd.to_datetime(rows["Date"]).isin(dates.index)
+             if mc:
+                 affected &= rows.mc_id == draw
+@@ -6577,6 +6577,19 @@
+         if not MONTE_CARLO_MODE:
+             dual_print(f"[DEBUG] Aggregated across sexes: {len(df)} rows")
+         
++        # A genuinely exhausted cohort may omit its all-zero suffix. Make
++        # this support boundary explicit for the reporting calendar, without
++        # inventing deaths or treating an incomplete positive-risk suffix as zero.
++        if not MONTE_CARLO_MODE:
++            exhausted_suffixes = []
++            for (age, dose), group in df.groupby(["YearOfBirth", "Dose"], sort=False):
++                last = group.sort_values("DateDied").iloc[-1]
++                if last.DateDied < source_horizon and last.Alive == last.Dead:
++                    dates = pd.date_range(last.DateDied + pd.Timedelta(weeks=1), source_horizon, freq="7D")
++                    exhausted_suffixes.append(pd.DataFrame({"YearOfBirth": age, "Dose": dose,
++                        "DateDied": dates, "ISOweekDied": dates.strftime("%G-%V"), "Alive": 0, "Dead": 0}))
++            if exhausted_suffixes:
++                df = pd.concat([df, *exhausted_suffixes], ignore_index=True)
+         df = df.sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
+         # person-time proxy and MR (internal probability per week)
+         df["PT"]   = df["Alive"].astype(float).clip(lower=0.0)
+@@ -7885,8 +7898,12 @@
+                             neginf=np.inf,
+                         )
+ 
+-                        # Observed cumulative hazard (skip-week rule)
++                        # Zero opening risk means there is no observed hazard,
++                        # not that the cumulative hazard stays flat. Retain the
++                        # supported prefix and mark the remainder unavailable.
++                        exhausted = np.maximum.accumulate(g_sorted["Alive"].to_numpy(float) <= 0.)
+                         h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
++                        h_eff_obs[exhausted] = np.nan
+                         H_obs = np.cumsum(h_eff_obs)
+                         Hobs_all[idx] = H_obs
+ 
+@@ -7945,11 +7962,15 @@
+                         h0_inc = np.diff(H0, prepend=0.0)
+                         # Enforce skip-week rule and numeric safety
+                         h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
++                        h0_inc[exhausted] = np.nan
+                         h0_inc = np.where(np.maximum.accumulate(~np.isfinite(h0_inc)), np.nan, h0_inc)
+                         h0_inc = np.clip(h0_inc, 0.0, None)
+ 
+                         unavailable = ~np.isfinite(h0_inc)
+                         norm_status[idx[unavailable]] = "numerical_range_unavailable"
++                        norm_status[idx[exhausted]] = "risk_set_exhausted"
++                        if exhausted.any():
++                            dual_print(f"[WARN] KCOR_RISK_SET_EXHAUSTED,EnrollmentDate={sh},yob={yob},dose={dose},first_week={t_vals[np.flatnonzero(exhausted)[0]]}")
+                         if unavailable.any():
+                             dual_print(f"[WARN] KCOR_NUMERICAL_RANGE,EnrollmentDate={sh},yob={yob},dose={dose},first_week={t_vals[np.flatnonzero(unavailable)[0]]}")
+                         Hobs_all[idx] = H_obs
+@@ -8165,7 +8186,7 @@
+                 how="left"
+             )
+         if "normalization_status" in out_sh and "KCOR_ns" in out_sh:
+-            out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history"]), "KCOR_ns"] = np.nan
++            out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history", "risk_set_exhausted"]), "KCOR_ns"] = np.nan
+         out_sh["risk_history_policy"] = history_policy
+         all_out.append(out_sh)
+         
+@@ -10079,6 +10100,27 @@
+         return (np.nan, np.nan), dict(success=False, status="missing_week_history",
+             message="Missing calendar week in fixed cohort history", n_fit=0, n_obs=0,
+             fit_mask_theta=np.zeros(t.shape, dtype=bool), theta0_raw=np.nan)
++    # Fit only the observed prefix when opening risk counts are supplied.
++    # Pad the diagnostic fitting mask back to the original workbook shape.
++    if risk_arr is not None:
++        risk = np.asarray(risk_arr, dtype=float)
++        if risk.shape == t.shape:
++            empty = np.flatnonzero(risk <= 0.)
++            if empty.size:
++                stop = int(empty[0])
++                if not stop:
++                    return (np.nan, np.nan), dict(success=False, status="risk_set_exhausted",
++                        message="No positive opening risk set", n_fit=0, n_obs=0,
++                        fit_mask_theta=np.zeros(t.shape, dtype=bool), theta0_raw=np.nan)
++                result, diag = fit_theta0_gompertz(np.asarray(h_arr)[:stop], t[:stop], np.asarray(quiet_mask)[:stop],
++                    k_anchor_weeks, gamma_per_week, theta0_init,
++                    None if deaths_arr is None else np.asarray(deaths_arr)[:stop], joint_seed=joint_seed,
++                    iso_week=None if iso_week is None else np.asarray(iso_week)[:stop], wave=wave, alpha=alpha,
++                    risk_arr=risk[:stop], history_complete=history_complete)
++                mask = np.zeros(t.shape, dtype=bool)
++                mask[:stop] = np.asarray(diag.get("fit_mask_theta", np.zeros(stop, dtype=bool)), dtype=bool)
++                diag["fit_mask_theta"] = mask
++                return result, diag
+     if wave is None and iso_week is not None:
+         cfg = get_covid_correction_config()
+         if cfg and cfg["apply_correction"]:

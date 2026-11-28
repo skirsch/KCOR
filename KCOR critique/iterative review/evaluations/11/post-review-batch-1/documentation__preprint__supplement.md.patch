@@ -1,0 +1,30 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -188,9 +188,9 @@
+ 
+ Both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
+ 
+-Figure S2 provides a compact summary of KCOR bias as a function of frailty variance under the same synthetic-null grid used in main-text Table 7.
+-
+-![Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance $\theta_0$. Bias is defined as $\mathrm{KCOR}_{\mathrm{asymptote}} - 1$ at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
++Figure S2 provides a compact summary of observed week-52 KCOR deviation from one as a function of frailty variance under the same synthetic-null grid used in main-text Table 7.
++
++![Simulated-null summary: observed week-52 KCOR deviation from one as a function of enrollment-time frailty variance $\theta_0$. Deviation is defined as week-52 $\mathrm{KCOR} - 1$ in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
+ 
+ ![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, which is the diagnostic behavior expected under the working model rather than proof that all confounding has been removed. ](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
+ 
+@@ -411,7 +411,7 @@
+ 
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate little fitted frailty-induced depletion; precision and identification must be assessed separately. At zero variance, the working-model cumulative hazard follows the Gompertz baseline.
+-- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 frailty remains poorly resolved. With the numerical ceiling increased to 500, none of the 999 draws reaches the upper-bound flag threshold in either dose group. The upper tail is no longer truncated at 100; the broad raw variance range is a statistical limitation, not evidence that variance is zero. Source: `analysis/ceiling500/s6-all-window.json` and its matched draws; the previous ceiling and first-window studies are archived separately.
++- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 frailty remains poorly resolved. With the numerical ceiling increased to 500, none of the 999 draws reaches the upper-bound flag threshold in either dose group. The upper tail is no longer truncated at 100; the broad raw variance range is a statistical limitation, not evidence that variance is zero. Source: `analysis/seed_ceiling/s6/s6-all-window.json` and its matched draws; the previous ceiling and first-window studies are archived separately.
+ - The "All ages" row fits the supplied eligible-population aggregate counts, including unknown birth years.
+ - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied eligible-population total.
+ 
+@@ -502,4 +502,4 @@
+ | Forced alpha | 2022_06 | 2/0 | Yes / 986 | No / 93 |
+ | Forced alpha | 2022_06 | 2/1 | No / 986 | No / 90 |
+ 
+-For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/seed_ceiling/table8-primary/` and archived `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).
++For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/round11/table8-primary/` and archived `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).

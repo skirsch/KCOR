@@ -1,0 +1,39 @@
+{
+  "partial_point": {
+    "point": 1.0,
+    "contributors": [
+      1940
+    ],
+    "eligible": [
+      1940,
+      1950
+    ],
+    "retained_weight_fraction": 0.49993434914997786
+  },
+  "sparse_pool": {
+    "point": 6.917448969099931,
+    "contributors": [
+      1940,
+      1950
+    ],
+    "draws": 19,
+    "changed": 7,
+    "valid": 12,
+    "interval": null
+  },
+  "complete_pool": {
+    "point": 1.0,
+    "draws": 19,
+    "changed": 0,
+    "valid": 19,
+    "interval": [
+      0.9291234035415223,
+      1.160971067978899
+    ]
+  },
+  "table8_min_anchor_deaths": {
+    "2021_24": 281,
+    "2022_06": 335
+  },
+  "table8_matched_histories": 2000
+}

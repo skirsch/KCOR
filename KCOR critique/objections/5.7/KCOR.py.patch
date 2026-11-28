@@ -1,0 +1,139 @@
+--- m108/code/KCOR.py
++++ m109/code/KCOR.py
+@@ -5189,105 +5189,13 @@
+         all_ages_agg = all_ages_agg.drop_duplicates(subset=dedupe_cols, keep="first")
+ 
+     if kcor6_params_map is not None:
+-        # KCOR 6.0 path: gamma-frailty inversion
+-        all_ages_agg["hazard_adj"] = 0.0
+-        all_ages_agg["CH"] = 0.0
+-        all_ages_agg["CH_actual"] = 0.0
+-
+-        # In MC mode, group by mc_id as well to preserve separate iterations
+-        if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+-            groupby_for_ch = ["mc_id", "Dose"]
+-            for dose_key, g in all_ages_agg.groupby(groupby_for_ch, sort=False):
+-                # Extract dose number (last element when grouped by mc_id and Dose)
+-                dose = dose_key[-1]
+-                g_sorted = g.sort_values("DateDied")
+-                idx = g_sorted.index
+-                t_vals = g_sorted["t"].to_numpy(dtype=float)
+-                h_raw = np.nan_to_num(
+-                    g_sorted["hazard_raw"].to_numpy(dtype=float),
+-                    nan=0.0,
+-                    posinf=0.0,
+-                    neginf=0.0,
+-                )
+-
+-                # Observed cumulative hazard H_obs (skip-week rule)
+-                h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+-                H_obs = np.cumsum(h_eff_obs)
+-
+-                # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
+-                theta = 0.0
+-                params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
+-                if isinstance(params, dict):
+-                    th = params.get("theta_applied", params.get("theta_hat", np.nan))
+-                    ok = bool(params.get("success", False))
+-                    if ok and np.isfinite(th) and float(th) >= 0.0:
+-                        theta = float(th)
+-
+-                # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
+-                H0 = invert_gamma_frailty(H_obs, theta)
+-                h0_inc = np.diff(H0, prepend=0.0)
+-                h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+-                h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+-                h0_inc = np.clip(h0_inc, 0.0, None)
+-
+-                all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
+-                all_ages_agg.loc[idx, "CH"] = H0
+-                all_ages_agg.loc[idx, "CH_actual"] = H_obs
+-        else:
+-            # CRITICAL FIX: In MC mode, still need to group by mc_id even if not in columns check failed
+-            # This handles the case where mc_id exists but wasn't detected
+-            groupby_for_ch = "Dose"
+-            if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns:
+-                groupby_for_ch = ["mc_id", "Dose"]
+-            for dose_key, g in all_ages_agg.groupby(groupby_for_ch, sort=False):
+-                # Extract dose and mc_id from key
+-                if MONTE_CARLO_MODE and "mc_id" in all_ages_agg.columns and isinstance(dose_key, tuple):
+-                    mc_id_all_ages_else, dose = dose_key[0], dose_key[1]
+-                else:
+-                    dose = dose_key if not isinstance(dose_key, tuple) else dose_key[0]
+-                    mc_id_all_ages_else = None
+-                g_sorted = g.sort_values("DateDied")
+-                idx = g_sorted.index
+-                t_vals = g_sorted["t"].to_numpy(dtype=float)
+-                h_raw = np.nan_to_num(
+-                    g_sorted["hazard_raw"].to_numpy(dtype=float),
+-                    nan=0.0,
+-                    posinf=0.0,
+-                    neginf=0.0,
+-                )
+-
+-                # Observed cumulative hazard H_obs (skip-week rule)
+-                h_eff_obs = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h_raw, 0.0)
+-                H_obs = np.cumsum(h_eff_obs)
+-
+-                # Theta from KCOR6 fit for YoB=-2 (fallback theta=0 on missing/failed fits)
+-                # In Monte Carlo mode, include mc_id in the lookup key
+-                theta = 0.0
+-                if MONTE_CARLO_MODE and mc_id_all_ages_else is not None:
+-                    params = kcor6_params_map.get((sheet_name, int(mc_id_all_ages_else), -2, int(dose)), None)
+-                else:
+-                    params = kcor6_params_map.get((sheet_name, -2, int(dose)), None)
+-                if isinstance(params, dict):
+-                    th = params.get("theta_applied", params.get("theta_hat", np.nan))
+-                    ok = bool(params.get("success", False))
+-                    if ok and np.isfinite(th) and float(th) >= 0.0:
+-                        theta = float(th)
+-
+-                # Depletion-neutralized cumulative hazard H0 and baseline-hazard increments
+-                H0 = invert_gamma_frailty(H_obs, theta)
+-                h0_inc = np.diff(H0, prepend=0.0)
+-                h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+-                h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
+-                h0_inc = np.clip(h0_inc, 0.0, None)
+-
+-                all_ages_agg.loc[idx, "hazard_adj"] = h0_inc
+-                all_ages_agg.loc[idx, "CH"] = H0
+-                all_ages_agg.loc[idx, "CH_actual"] = H_obs
+-
+-        # For schema compatibility: slope is not defined in KCOR6; scale_factor is per-week ratio hazard_adj/hazard_raw.
+-        all_ages_agg["slope"] = 0.0
+-        hraw_safe = all_ages_agg["hazard_raw"].replace([np.inf, -np.inf], np.nan).fillna(0.0)
+-        all_ages_agg["scale_factor"] = np.where(hraw_safe > EPS, all_ages_agg["hazard_adj"] / (hraw_safe + EPS), 0.0)
++        # The ordinary normalization already processes the all-ages cohort
++        # (and each Monte Carlo draw separately), including the optional
++        # nonlinear survivor correction. Report that trajectory directly.
++        # A second gamma inversion here would discard the wave correction.
++        required = {"hazard_adj", "CH", "CH_actual"}
++        if not all_ages_agg.empty and not required.issubset(all_ages_agg.columns):
++            raise ValueError("all-ages report requires the normalized cumulative-hazard trajectory")
+     else:
+         # Legacy path: slope-based hazard normalization for all-ages cohort (used in SA mode + KCOR6 rollback)
+         def apply_slope8_norm_all_ages(row):
+@@ -5469,8 +5377,9 @@
+             # Check if either numerator or denominator cohort had abnormal fit (for all-ages)
+             abnormal_fit_all_ages = False
+             if slope6_params_map is not None:
+-                params_num_all = slope6_params_map.get((sheet_name, -2, int(num)), {})
+-                params_den_all = slope6_params_map.get((sheet_name, -2, int(den)), {})
++                prefix = (sheet_name, int(mc_id_all_ages_val)) if MONTE_CARLO_MODE and mc_id_all_ages_val is not None else (sheet_name,)
++                params_num_all = slope6_params_map.get((*prefix, -2, int(num)), {})
++                params_den_all = slope6_params_map.get((*prefix, -2, int(den)), {})
+                 if isinstance(params_num_all, dict):
+                     abnormal_fit_all_ages = abnormal_fit_all_ages or params_num_all.get("abnormal_fit", False)
+                 if isinstance(params_den_all, dict):
+@@ -8098,9 +8007,8 @@
+         #   H0(t)    = (exp(theta * H_obs(t)) - 1) / theta
+         #   hazard_adj(t) := H0(t) - H0(t-1)
+         #
+-        # NOTE: This applies to the age-stratified cohorts present in df (YoB != -2).
+-        # The YoB=-2 "All Ages" KCOR rows are computed inside build_kcor_rows() and
+-        # will be migrated in the next step.
++        # Normalize every cohort present in df, including YoB=-2 and each
++        # Monte Carlo draw. The reporting path reuses these trajectories.
+         # -------------------------------------------------------------------
+         kcor6_norm_ok = False
+         if kcor6_enabled_effective:

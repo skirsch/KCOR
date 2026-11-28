@@ -1,0 +1,17 @@
+--- a/analysis/README.md
++++ b/analysis/README.md
+@@ -18,7 +18,7 @@
+ 
+ Czech sensitivity grid (SI S4.4): `python analysis/sensitivity/replay.py` runs the ordinary all-ages estimator with the module off and regenerates all 27 configured comparison grids, 1,323 cells and the selected 2021-24 figure. The seven start offsets refer to 2023-01 with end 2023-52; reference lengths are two through eight accumulating weeks and reporting dates are the current one-year convention. Current files are under `analysis/sensitivity/current/`; the historical v6 workbook remains under `test/sensitivity/out/` and is not the source of the revised figure.
+ 
+-The default numerical frailty ceiling is now 500; near-ceiling estimates are retained and explicitly flagged. The current S6 table uses `seed_ceiling/s6/s6-all-window.json` and the module-off Table 8 column uses `finite_reference/table8-primary/identified_only-table8.json` (both fresh 999-draw replays). The preceding-seed archived forced-alpha Table 8 column is in `ceiling500/table8/forced_alpha-table8.json` (fresh 999-draw replay); prior ceiling-100 results remain archived under `solver_scaling/`.
++The default numerical frailty ceiling is now 500; near-ceiling estimates are retained and explicitly flagged. The current S6 table uses `gap_assessment/s6/s6-all-window.json` and the module-off Table 8 column uses `finite_reference/table8-primary/identified_only-table8.json` (both fresh 999-draw replays). The preceding-seed archived forced-alpha Table 8 column is in `ceiling500/table8/forced_alpha-table8.json` (fresh 999-draw replay); prior ceiling-100 results remain archived under `solver_scaling/`.
+ 
+ ### Matched frailty-misspecification study (SI S9)
+ 
+@@ -31,3 +31,5 @@
+ ### Table 8 contributing-fit diagnostics (SI S10)
+ 
+ `python analysis/solver_scaling/table8_replay.py --mode both --draws 999 --output-dir PATH` records separate group and pooled-comparison diagnostic arrays and point/draw counts. The current primary full refit is in `finite_reference/table8-primary/`. `python analysis/solver_scaling/forced_alpha_diagnostic_archive.py analysis/table8_diagnostics/archive-forced` evaluates the same residual and constraint diagnostics at the exact archived forced-alpha parameter pairs. The 300 fresh forced-alpha refits in `forced-fresh-refit-subset.npz` verified identical parameters, points and group/pair flags for those histories. `comparison-diagnostics.csv` contains all ten categories, independently aggregated from group arrays. Original ceiling-500 archives are preserved. No draw was filtered.
++
++Table 9 signed gap assessment: `python analysis/positive_control/gap_assessment.py OUTPUT_DIR` repeats the 999 matched fits, records signed offsets and seed completeness, and retains original archive. S6 matched assessment: `python analysis/solver_scaling/s6_replay.py . --draws 999 --output-dir OUTPUT_DIR` records the signed gap detail and seed status alongside parameter/ratio draws. Current archives are in `gap_assessment/table9/` and `gap_assessment/s6/`.

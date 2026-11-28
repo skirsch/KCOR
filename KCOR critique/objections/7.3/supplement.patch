@@ -1,0 +1,11 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -411,7 +411,7 @@
+ 
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate weak identifiability or effectively linear cumulative hazards under the working model.
+-- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 fitted value is poorly resolved across the entire allowed range. KCOR intervals retain the existing upper-bound zero-variance fallback (287 of 999 dose-2 draws at ages 40–49). Source: `analysis/s6/all-age-precision.json` and its matched draws.
++- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 fitted value is poorly resolved across the entire allowed range. KCOR intervals retain the existing upper-bound zero-variance fallback (287 of 999 dose-2 draws at ages 40–49). Source: `analysis/solver_scaling/s6-all-window.json` and its matched draws; the earlier first-window study is archived separately.
+ - The "All ages" row fits the supplied eligible-population aggregate counts, including unknown birth years.
+ - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied eligible-population total.
+ 

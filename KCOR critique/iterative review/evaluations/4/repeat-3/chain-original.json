@@ -1,0 +1,12 @@
+{
+  "model": "gpt-6.2-astra",
+  "reasoning_effort": "high",
+  "thread": "01a214c1-4eab-7191-8db1-b4e1cb1b5bcb",
+  "parent_thread": null,
+  "edition": "m17",
+  "diff": null,
+  "verbatim_handoff": null,
+  "prompt": "The repository edition under scientific review is C:/Users/jasmi/AppData/Local/Temp/kcor-s4-approved/m17. Inspect it read-only with local tools. The combined manuscript and its sources are in documentation/preprint. Use only the specified inputs. No external sources, history search, other reviewers or parent directories. Cite checkable locations. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?",
+  "handoff_sha256": null,
+  "sha256": "b727c35e1905a241c17387aefa23523bc04e9ecd543063f402bea157d6349067"
+}

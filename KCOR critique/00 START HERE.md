@@ -1,5 +1,11 @@
-# KCOR critique
+# Start here
 
-The numbered **Objection 1–6** folders and **07 - Bugs** folder are the visible entry points. Each contains its current status and links to supporting files. Start with the [full review index](README.md).
+**Current package: [m185, round 21 status](CURRENT-STATE.md).** The earlier briefing below is retained for review; its format will be revised separately.
 
-Older experiments and their results now live in the corresponding numbered folders. Each result folder has a short README; the [path migration notes](PATH_MIGRATION.md) explain the old locations recorded in saved manifests.
+**[Lead-author presentation — problems, shared root causes, proposed solutions and demonstrated results](PR-PRESENTATION.md)**
+
+For a three-minute plain-language overview, read the [simplified briefing](PR-BRIEFING.md). The full presentation is the main scientific overview. For deeper numerical comparisons and mathematical evidence, see the [scientific evidence companion](PR-SCIENTIFIC-EVIDENCE.md). The [clean manuscript](<iterative review/KCOR-clean.pdf>) and [linked cumulative redline](<iterative review/KCOR-redline.pdf>) show the current implemented edition.
+
+The [objection lineage and hierarchy](OBJECTION-LINEAGE.md) tracks every numbered objection, returns, linked root causes and implementation/review status across rounds. The [numbered objection index](README.md) leads to the historical objection folders. The [PR structure and draft](PR-STRUCTURE.md) and [internal working notes](WORKING-NOTES.md) describe packaging and pending decisions separately.
+
+This review PR is for lead-author consideration. No further LLM evaluation or adoption of experimental changes before that review.

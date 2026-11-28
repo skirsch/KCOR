@@ -1,0 +1,224 @@
+{
+  "forced_alpha": {
+    "points_and_intervals_unchanged": true,
+    "shape_rows": 4,
+    "max_shape_residual": 4.486316754481745e-07,
+    "shape_windows": {
+      "1950/0": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 1.217534814354903e-08,
+          "max_abs_dev": 1.1081666350873376e-07,
+          "drift_per_year": 2.1201179810184472e-07
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -4.4355206487095913e-08,
+          "max_abs_dev": 1.0773743076928494e-07,
+          "drift_per_year": -1.8583382851770226e-06
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -4.0270705650918455e-08,
+          "max_abs_dev": 2.4127573404735675e-07,
+          "drift_per_year": 4.721051408048364e-07
+        }
+      ],
+      "1950/1": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -1.477864734053977e-08,
+          "max_abs_dev": 1.1420162551213642e-07,
+          "drift_per_year": -9.984868522146408e-09
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -7.13973819337077e-08,
+          "max_abs_dev": 1.227356173204991e-07,
+          "drift_per_year": 1.3124137626316484e-07
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -1.9820642365029162e-07,
+          "max_abs_dev": 4.486316754481745e-07,
+          "drift_per_year": 1.1963957251956618e-06
+        }
+      ],
+      "-2/0": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 1.217534814354903e-08,
+          "max_abs_dev": 1.1081666350873376e-07,
+          "drift_per_year": 2.1201179810184472e-07
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -4.4355206487095913e-08,
+          "max_abs_dev": 1.0773743076928494e-07,
+          "drift_per_year": -1.8583382851770226e-06
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -4.0270705650918455e-08,
+          "max_abs_dev": 2.4127573404735675e-07,
+          "drift_per_year": 4.721051408048364e-07
+        }
+      ],
+      "-2/1": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -1.477864734053977e-08,
+          "max_abs_dev": 1.1420162551213642e-07,
+          "drift_per_year": -9.984868522146408e-09
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -7.13973819337077e-08,
+          "max_abs_dev": 1.227356173204991e-07,
+          "drift_per_year": 1.3124137626316484e-07
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -1.9820642365029162e-07,
+          "max_abs_dev": 4.486316754481745e-07,
+          "drift_per_year": 1.1963957251956618e-06
+        }
+      ]
+    }
+  },
+  "identified_only": {
+    "points_and_intervals_unchanged": true,
+    "shape_rows": 4,
+    "max_shape_residual": 0.0001453488220847649,
+    "shape_windows": {
+      "1950/0": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 4.644551579509405e-06,
+          "max_abs_dev": 1.0350215887387076e-05,
+          "drift_per_year": 5.158641163532667e-05
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -1.697716935428618e-05,
+          "max_abs_dev": 2.6922108394687727e-05,
+          "drift_per_year": -0.00034826326264723016
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 7.509565384423823e-07,
+          "max_abs_dev": 1.2302011181748729e-05,
+          "drift_per_year": 3.290062400555323e-05
+        }
+      ],
+      "1950/1": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 4.412457240148955e-06,
+          "max_abs_dev": 1.9143897406894567e-05,
+          "drift_per_year": 0.00010615560421860773
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -9.17831286421164e-05,
+          "max_abs_dev": 0.00014534882208476485,
+          "drift_per_year": -0.0018693463660528977
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 2.4631104690517918e-05,
+          "max_abs_dev": 0.00010037758744757541,
+          "drift_per_year": 0.00025625250892609105
+        }
+      ],
+      "-2/0": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 4.644551579509405e-06,
+          "max_abs_dev": 1.0350215887387076e-05,
+          "drift_per_year": 5.158641163532667e-05
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -1.697716935428618e-05,
+          "max_abs_dev": 2.6922108394687727e-05,
+          "drift_per_year": -0.00034826326264723016
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 7.509565384423823e-07,
+          "max_abs_dev": 1.2302011181748729e-05,
+          "drift_per_year": 3.290062400555323e-05
+        }
+      ],
+      "-2/1": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 4.412457240148955e-06,
+          "max_abs_dev": 1.9143897406894567e-05,
+          "drift_per_year": 0.00010615560421860773
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -9.17831286421164e-05,
+          "max_abs_dev": 0.00014534882208476485,
+          "drift_per_year": -0.0018693463660528977
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 2.4631104690517918e-05,
+          "max_abs_dev": 0.00010037758744757541,
+          "drift_per_year": 0.00025625250892609105
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,622 @@
+{
+  "noiseless": [
+    {
+      "case": "no wave",
+      "target": 1.0,
+      "ratio": [
+        0.9999999999988454,
+        0.9999999999988454
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.004000000000000009,
+            "theta": 4.000000000000018,
+            "seed_theta": 4.000000000000018,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.04847386249125024,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.0,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 19.88263984137791
+          },
+          {
+            "k": 0.004000000000003373,
+            "theta": 0.5000000000080553,
+            "seed_theta": 0.5000000000080553,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.048473862491291014,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.0,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 19.882639841400866
+          }
+        ],
+        [
+          {
+            "k": 0.004000000000000009,
+            "theta": 4.000000000000018,
+            "seed_theta": 4.000000000000018,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.04847386249125024,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.0,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 19.88263984137791
+          },
+          {
+            "k": 0.004000000000003373,
+            "theta": 0.5000000000080553,
+            "seed_theta": 0.5000000000080553,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.048473862491291014,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.0,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 19.882639841400866
+          }
+        ]
+      ]
+    },
+    {
+      "case": "published single shock",
+      "target": 1.0,
+      "ratio": [
+        0.9927172681082168,
+        0.9999999999987242
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.003333333333333331,
+            "theta": 3.9368643155079117,
+            "seed_theta": 3.999999999999993,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.04039488540937508,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.82057340685935
+          },
+          {
+            "k": 0.003902439024393307,
+            "theta": 0.4975274674759922,
+            "seed_theta": 0.5000000000076783,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.04729157316223237,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.98798876577179
+          }
+        ],
+        [
+          {
+            "k": 0.003999999999999995,
+            "theta": 3.999999999999993,
+            "seed_theta": 3.999999999999993,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.048473862491250075,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.997434628413806
+          },
+          {
+            "k": 0.004000000000004599,
+            "theta": 0.5000000000076783,
+            "seed_theta": 0.5000000000076783,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.048473862491305864,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.997434628443145
+          }
+        ]
+      ]
+    },
+    {
+      "case": "several shocks",
+      "target": 1.0,
+      "ratio": [
+        0.9927172681082168,
+        0.9999999999987242
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.003333333333333331,
+            "theta": 3.9368643155079117,
+            "seed_theta": 3.999999999999993,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.04039488540937508,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.82057340685935
+          },
+          {
+            "k": 0.003902439024393307,
+            "theta": 0.4975274674759922,
+            "seed_theta": 0.5000000000076783,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.04729157316223237,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.98798876577179
+          }
+        ],
+        [
+          {
+            "k": 0.003999999999999995,
+            "theta": 3.999999999999993,
+            "seed_theta": 3.999999999999993,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.048473862491250075,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.997434628413806
+          },
+          {
+            "k": 0.004000000000004599,
+            "theta": 0.5000000000076783,
+            "seed_theta": 0.5000000000076783,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.048473862491305864,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": null,
+            "status": "ok",
+            "success": true,
+            "growth": 22.997434628443145
+          }
+        ]
+      ]
+    },
+    {
+      "case": "nonlinear, all pulses in window",
+      "target": 1.0,
+      "ratio": [
+        1.010276697167706,
+        0.9873183229494168
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.003123944229951749,
+            "theta": 3.804478843409754,
+            "seed_theta": 3.8899384867370665,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.037857410758253836,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.05707497745995233,
+            "status": "ok",
+            "success": true,
+            "growth": 23.21679376222166
+          },
+          {
+            "k": 0.0038806470750020394,
+            "theta": 0.49443740428027594,
+            "seed_theta": 0.49748602314996626,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.047027488172680224,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.05105233117555455,
+            "status": "ok",
+            "success": true,
+            "growth": 22.98062879932751
+          }
+        ],
+        [
+          {
+            "k": 0.00385105233713514,
+            "theta": 3.882257896189526,
+            "seed_theta": 3.8899384867370665,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.046668845359224054,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.04996076136451968,
+            "status": "ok",
+            "success": true,
+            "growth": 22.675272145629457
+          },
+          {
+            "k": 0.0039813534881363005,
+            "theta": 0.4972515753050861,
+            "seed_theta": 0.49748602314996626,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.04824789537824452,
+            "true_baseline_at_entry": 0.04847386249125013,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.04988907371433559,
+            "status": "ok",
+            "success": true,
+            "growth": 22.96652621404979
+          }
+        ]
+      ]
+    },
+    {
+      "case": "nonlinear, short first fit",
+      "target": 1.0,
+      "ratio": [
+        0.8851972874005987,
+        0.9728604113978833
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.0031219031748423594,
+            "theta": 2.7880656116274256,
+            "seed_theta": 3.8778741030035335,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.04421058615024826,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.05428761440298944,
+            "status": "ok",
+            "success": true,
+            "growth": 12.307815298921083
+          },
+          {
+            "k": 0.003880630821600246,
+            "theta": 0.39838102300394407,
+            "seed_theta": 0.49742662583568936,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.05495524801608543,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.05099113056720412,
+            "status": "ok",
+            "success": true,
+            "growth": 13.904036392907681
+          }
+        ],
+        [
+          {
+            "k": 0.003846252548206047,
+            "theta": 3.7648169376714047,
+            "seed_theta": 3.8778741030035335,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.05446840280261472,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.0496351733474427,
+            "status": "ok",
+            "success": true,
+            "growth": 13.747140330611845
+          },
+          {
+            "k": 0.00398132488811785,
+            "theta": 0.48663894067651153,
+            "seed_theta": 0.49742662583568936,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.05638121911553188,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.05,
+            "wave_at_exit": 0.0498805526451952,
+            "status": "ok",
+            "success": true,
+            "growth": 14.130640089320584
+          }
+        ]
+      ]
+    },
+    {
+      "case": "nonlinear, partial wave window",
+      "target": 1.0,
+      "ratio": [
+        0.8922594253826828,
+        0.9794528214341319
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.0031219031748423594,
+            "theta": 2.7880656116274256,
+            "seed_theta": 3.8778741030035335,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.04421058615024826,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.02814067618915053,
+            "status": "ok",
+            "success": true,
+            "growth": 12.42728180054045
+          },
+          {
+            "k": 0.003880630821600246,
+            "theta": 0.39838102300394407,
+            "seed_theta": 0.49742662583568936,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.05495524801608543,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.025617141352038908,
+            "status": "ok",
+            "success": true,
+            "growth": 13.927879546030564
+          }
+        ],
+        [
+          {
+            "k": 0.003846252548206047,
+            "theta": 3.7648169376714047,
+            "seed_theta": 3.8778741030035335,
+            "true_k": 0.004,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.05446840280261472,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.025264702443815342,
+            "status": "ok",
+            "success": true,
+            "growth": 13.867298583144885
+          },
+          {
+            "k": 0.00398132488811785,
+            "theta": 0.48663894067651153,
+            "seed_theta": 0.49742662583568936,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.05638121911553188,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.025034068742631498,
+            "status": "ok",
+            "success": true,
+            "growth": 14.15820984908711
+          }
+        ]
+      ]
+    },
+    {
+      "case": "nonlinear, partial window, unequal rates",
+      "target": 1.0538110866028052,
+      "ratio": [
+        0.9401273157492009,
+        1.027413979652732
+      ],
+      "cohorts": [
+        [
+          {
+            "k": 0.0039035632980758254,
+            "theta": 2.9154427098516362,
+            "seed_theta": 3.883243162510299,
+            "true_k": 0.005,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.05528000447715451,
+            "true_baseline_at_entry": 0.07080710655365004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.02882230659166272,
+            "status": "ok",
+            "success": true,
+            "growth": 13.093980011687913
+          },
+          {
+            "k": 0.003880630821600246,
+            "theta": 0.39838102300394407,
+            "seed_theta": 0.49742662583568936,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.05495524801608543,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.025617141352038908,
+            "status": "ok",
+            "success": true,
+            "growth": 13.927879546030564
+          }
+        ],
+        [
+          {
+            "k": 0.00481052446522638,
+            "theta": 3.771163333857928,
+            "seed_theta": 3.883243162510299,
+            "true_k": 0.005,
+            "true_theta": 4.0,
+            "baseline_at_entry": 0.06812386367764493,
+            "true_baseline_at_entry": 0.07080710655365004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.025348674050022415,
+            "status": "ok",
+            "success": true,
+            "growth": 14.546342725809092
+          },
+          {
+            "k": 0.00398132488811785,
+            "theta": 0.48663894067651153,
+            "seed_theta": 0.49742662583568936,
+            "true_k": 0.004,
+            "true_theta": 0.5,
+            "baseline_at_entry": 0.05638121911553188,
+            "true_baseline_at_entry": 0.05664568524292004,
+            "true_wave_at_exit": 0.025,
+            "wave_at_exit": 0.025034068742631498,
+            "status": "ok",
+            "success": true,
+            "growth": 14.15820984908711
+          }
+        ]
+      ]
+    }
+  ],
+  "sampled": [
+    {
+      "case": "several shocks",
+      "repetitions": 200,
+      "people_per_cohort": 50000,
+      "target": 1.0,
+      "mean": [
+        0.9972571018779013,
+        1.005195229212049
+      ],
+      "median": [
+        0.9923329265351009,
+        1.0006745801125358
+      ],
+      "central95": [
+        [
+          0.743602065425444,
+          1.312728744341163
+        ],
+        [
+          0.749228736711859,
+          1.3261450583602257
+        ]
+      ],
+      "median_absolute_error": [
+        0.08689971446867129,
+        0.08886292459805134
+      ],
+      "improved_tied_worse": [
+        104,
+        0,
+        96
+      ],
+      "mean_absolute_error": [
+        0.10724361195558789,
+        0.1086008385405422
+      ],
+      "paired_change_in_mean_absolute_error": 0.001357226584954317,
+      "paired_mc95": [
+        0.00019671579530492812,
+        0.0025177373746037056
+      ]
+    },
+    {
+      "case": "nonlinear, partial wave window",
+      "repetitions": 200,
+      "people_per_cohort": 50000,
+      "target": 1.0,
+      "mean": [
+        191975.86818880046,
+        42125.73842025481
+      ],
+      "median": [
+        0.7989474621609558,
+        0.7946852242777147
+      ],
+      "central95": [
+        [
+          0.0001294341483768121,
+          527.9706458034121
+        ],
+        [
+          0.2357195394699473,
+          12611.764110238586
+        ]
+      ],
+      "median_absolute_error": [
+        0.27505963476035,
+        0.3453945380725318
+      ],
+      "improved_tied_worse": [
+        42,
+        3,
+        155
+      ],
+      "mean_absolute_error": [
+        191975.34810517755,
+        42125.224689359886
+      ],
+      "paired_change_in_mean_absolute_error": -149850.12341581777,
+      "paired_mc95": [
+        -526114.9217249932,
+        226414.67489335765
+      ]
+    },
+    {
+      "case": "nonlinear, partial window, unequal rates",
+      "repetitions": 200,
+      "people_per_cohort": 50000,
+      "target": 1.0538110866028052,
+      "mean": [
+        975602.8775727144,
+        84436.20935897036
+      ],
+      "median": [
+        0.8450056068670935,
+        0.8227198885705258
+      ],
+      "central95": [
+        [
+          0.2049680822787089,
+          8491.785566882818
+        ],
+        [
+          0.2186513243156739,
+          33428.134234114856
+        ]
+      ],
+      "median_absolute_error": [
+        0.29714984286066687,
+        0.34354418293340866
+      ],
+      "improved_tied_worse": [
+        53,
+        0,
+        147
+      ],
+      "mean_absolute_error": [
+        975602.3183969159,
+        84435.69202037167
+      ],
+      "paired_change_in_mean_absolute_error": -891166.6263765442,
+      "paired_mc95": [
+        -2802936.6570840674,
+        1020603.404330979
+      ]
+    }
+  ]
+}

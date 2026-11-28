@@ -1,0 +1,17 @@
+{
+  "workbook": "data/Czech/KCOR_CMR.xlsx",
+  "sheet": "2021_24",
+  "week": 202124,
+  "birth_group": -2,
+  "opening_by_dose": {
+    "0": 5861036,
+    "1": 2205496,
+    "2": 1838302,
+    "3": 88,
+    "4": 11,
+    "5": 0,
+    "6": 0
+  },
+  "total": 9904933,
+  "matches_eligibility_audit": true
+}

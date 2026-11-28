@@ -1,0 +1,296 @@
+{
+  "2021_24": {
+    "point": [
+      1.0161931145964265,
+      1.045599220279928,
+      1.0289375171521211
+    ],
+    "lower": [
+      0.9582016279494828,
+      0.9822487610940359,
+      0.9656753685936179
+    ],
+    "upper": [
+      1.072198781559026,
+      1.1187344793535492,
+      1.1026872088272661
+    ],
+    "insufficient_signal_draws_any_group": 0,
+    "unsuccessful_group_fits": 0,
+    "diagnostics": {
+      "1/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        }
+      },
+      "2/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        }
+      },
+      "2/1": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        }
+      }
+    }
+  },
+  "2022_06": {
+    "point": [
+      1.0069512976531096,
+      1.0164170641358876,
+      1.0094004213558687
+    ],
+    "lower": [
+      0.9623505036796236,
+      0.9697363774736162,
+      0.9571609772636738
+    ],
+    "upper": [
+      1.053076012405421,
+      1.0709923954693268,
+      1.066894700114875
+    ],
+    "insufficient_signal_draws_any_group": 0,
+    "unsuccessful_group_fits": 0,
+    "diagnostics": {
+      "1/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        }
+      },
+      "2/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": true,
+          "bootstrap_draws": 991
+        }
+      },
+      "2/1": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 999
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": true,
+          "bootstrap_draws": 992
+        }
+      }
+    }
+  }
+}

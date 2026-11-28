@@ -1,0 +1,20 @@
+[
+  {
+    "scenario": "no_wave",
+    "rep": 0,
+    "original_and_draws": 6,
+    "max_abs_difference": 4.440892098500626e-16
+  },
+  {
+    "scenario": "nonlinear_wave",
+    "rep": 0,
+    "original_and_draws": 6,
+    "max_abs_difference": 5.262457136723242e-14
+  },
+  {
+    "scenario": "stress",
+    "rep": 34,
+    "original_and_draws": 6,
+    "max_abs_difference": 2.0872192862952943e-14
+  }
+]

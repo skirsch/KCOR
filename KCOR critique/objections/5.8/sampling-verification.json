@@ -1,0 +1,30 @@
+{
+  "retained_theta": 6.86949691687352,
+  "status": "ok",
+  "legacy_flag": true,
+  "sampling_flag": false,
+  "minimum_tail": 0.008999839483016893,
+  "threshold": 0.0008333333333333334,
+  "examples": [
+    {
+      "week": 0.0,
+      "deaths": 0,
+      "risk": 1000,
+      "expected": 1.0,
+      "sd": 0.999499874937461,
+      "pearson": -1.0005003753127737,
+      "tail_probability": 0.7353908495419281,
+      "flag": false
+    },
+    {
+      "week": 1.0,
+      "deaths": 0,
+      "risk": 1000,
+      "expected": 20.0,
+      "sd": 4.427188724235731,
+      "pearson": -4.5175395145262565,
+      "tail_probability": 3.3659347144319145e-09,
+      "flag": true
+    }
+  ]
+}

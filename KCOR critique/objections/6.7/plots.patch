@@ -1,0 +1,71 @@
+--- a/test/sim_grid/code/plot_estimator_bias_vs_theta.py
++++ b/test/sim_grid/code/plot_estimator_bias_vs_theta.py
+@@ -1,11 +1,10 @@
+ #!/usr/bin/env python3
+ """
+-Plot relative bias vs theta_0 for Cox, calibrated shared-frailty proxy, and KCOR asymptote.
++Plot deviations from unity for standard Cox and known-frailty KCOR.
+ 
+ Reads test/sim_grid/out/cox_bias_results.csv (from generate_cox_bias_sim.py).
+ Writes documentation/preprint/figures/fig_estimator_bias_vs_theta.png
+ 
+-Shared-frailty series is an APPROXIMATE REFERENCE from Table joint_frailty null row (see manuscript caption), not a refit at each theta.
+ """
+ 
+ from __future__ import annotations
+@@ -14,14 +13,8 @@
+ from pathlib import Path
+ 
+ import matplotlib.pyplot as plt
+-import numpy as np
+ import pandas as pd
+ 
+-# Proportional bias reduction: gamma-frailty null row of tbl:joint_frailty_comparison
+-# Standard Cox HR 0.87 vs shared-frailty Cox 0.94 -> shrink factor on (HR-1)
+-_COX_NULL = 0.87
+-_SF_NULL = 0.94
+-_KAPPA = (_SF_NULL - 1.0) / (_COX_NULL - 1.0) if abs(_COX_NULL - 1.0) > 1e-12 else 0.5
+ 
+ 
+ def main() -> None:
+@@ -49,25 +42,14 @@
+ 
+     cox_bias = cox_hr - 1.0
+     kcor_bias = kcor - 1.0
+-    sf_hr = 1.0 + _KAPPA * (cox_hr - 1.0)
+-    sf_bias = sf_hr - 1.0
+ 
+     fig, ax = plt.subplots(figsize=(6.5, 4.2))
+     ax.axhline(0.0, color="0.45", lw=0.9, ls="--", zorder=0)
+-    ax.plot(theta, cox_bias, "o-", color="tab:red", lw=2, ms=6, label="Cox HR (bias)")
+-    ax.plot(
+-        theta,
+-        sf_bias,
+-        "s--",
+-        color="tab:purple",
+-        lw=2,
+-        ms=5,
+-        label="Shared-frailty approx. (bias)",
+-    )
+-    ax.plot(theta, kcor_bias, "^-", color="tab:green", lw=2, ms=6, label=r"KCOR asymptote (bias)")
++    ax.plot(theta, cox_bias, "o-", color="tab:red", lw=2, ms=6, label="Cox HR")
++    ax.plot(theta, kcor_bias, "^-", color="tab:green", lw=2, ms=6, label=r"KCOR asymptote")
+     ax.set_xlabel(r"Frailty variance $\theta_0$ (cohort B)")
+-    ax.set_ylabel("Relative bias (estimate $-$ true target)")
+-    ax.set_title("Synthetic null: true HR = 1, true KCOR asymptote = 1")
++    ax.set_ylabel("Difference from 1")
++    ax.set_title("Synthetic null: no treatment effect at fixed frailty")
+     ax.grid(True, ls=":", alpha=0.45)
+     ax.legend(loc="best", framealpha=0.92)
+     fig.tight_layout()
+--- a/test/sim_grid/code/plot_cox_bias_sim.py
++++ b/test/sim_grid/code/plot_cox_bias_sim.py
+@@ -44,7 +44,7 @@
+     plt.figure(figsize=(8, 6))
+     plt.plot(theta, hr, marker="o", linewidth=2, markersize=8, label="Cox HR")
+     plt.fill_between(theta, lo, hi, alpha=0.2, label="95% CI")
+-    plt.axhline(1.0, color="black", linestyle="--", linewidth=1, label="True HR = 1")
++    plt.axhline(1.0, color="black", linestyle="--", linewidth=1, label="Fixed-frailty treatment HR = 1")
+     plt.xlabel("Frailty variance θ (cohort B)", fontsize=12)
+     plt.ylabel("Cox hazard ratio (B vs A)", fontsize=12)
+     plt.title("Cox regression under synthetic null: HR deviates from 1 with increasing frailty", fontsize=13)

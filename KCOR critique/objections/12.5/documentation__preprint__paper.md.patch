@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -728,7 +728,7 @@
+ 
+ We first evaluate KCOR under synthetic settings in which the data-generating process matches the revised working model. The primary synthetic target is no longer only whether $\mathrm{KCOR}(t)$ is flat under a null; it is also whether the estimator recovers the **enrollment-time** frailty variance $\theta_0$ that generated the cohort geometry.
+ 
+-In the multiwave recovery example, weekly deaths equal their model expectations, so the first observed hazard gives the generating baseline rate exactly. With that rate fixed, the example checks recovery of the enrollment-time frailty variance and alignment of the quiet windows. The synthetic negative control also checks whether KCOR remains near 1 under its stated normalized null benchmark. Near-1 behavior in this setting is treated as a diagnostic implication of correct working-model alignment, not as a stand-alone proof of estimator validity. Full design details, recovery grids, and figures are provided in the Supplementary Information, including the $\theta_0$ recovery simulations and the synthetic negative-control figures (Section S4.2.1 and related figures).
++In the multiwave recovery example, weekly deaths equal their model expectations, so the first observed hazard gives the generating baseline rate exactly. With that rate fixed, the example checks recovery of the enrollment-time frailty variance and alignment of the quiet windows. The separate synthetic negative-control figure in SI S4.2.1 illustrates an earlier hazard-relaxation normalization, not validation of the current gamma-frailty estimator. Current-fitter validation is reported separately, including SI S9. Full design details, recovery grids, and figures are provided in the Supplementary Information, including the $\theta_0$ recovery simulations and the synthetic negative-control figures (Section S4.2.1 and related figures).
+ 
+ #### 3.1.2 Empirical negative control using national registry data (Czech Republic)
+ 

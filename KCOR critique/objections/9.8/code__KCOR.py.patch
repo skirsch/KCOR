@@ -1,0 +1,67 @@
+--- m148/code/KCOR.py
++++ m149/code/KCOR.py
+@@ -4780,16 +4780,20 @@
+ 
+             # Preserve an explicit unavailable row at each supported sheet date
+             # when the weighted comparison cannot be calculated.
+-            has_comparison = any(weights.get(yob, 0.) > 0 and {num, den}.issubset(set(group["Dose"]))
+-                                 for yob, group in df_for_iteration.groupby("YearOfBirth"))
+-            if not has_comparison:
++            expected_ages = sorted(int(yob) for yob, group in df_for_iteration.groupby("YearOfBirth")
++                                   if weights.get(yob, 0.) > 0 and {num, den}.issubset(set(group["Dose"])))
++            if not expected_ages:
+                 continue
++            expected_weight = sum(weights[a] for a in expected_ages)
++            expected_label = ",".join(map(str, expected_ages))
+ 
+             def unavailable_pool(dt, status):
+                 return {"mc_id": mc_id_val,
+                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                     "Date": pd.to_datetime(dt), "KCOR": np.nan, "KCOR_anchored": np.nan,
+                     "KCOR_unanchored": np.nan, "anchor_status": status,
++                    "pool_contributors": "", "pool_expected_ages": expected_label,
++                    "pool_retained_weight_fraction": 0., "pool_composition_status": "unavailable",
+                     "CI_lower": np.nan, "CI_upper": np.nan, "EnrollmentDate": sheet_name,
+                     "YearOfBirth": 0, "Dose_num": num, "Dose_den": den}
+ 
+@@ -4957,6 +4961,10 @@
+                             "KCOR": Kpool,
+                             "KCOR_anchored": Kpool,
+                             "anchor_status": "pooled_available_strata",
++                            "pool_contributors": ",".join(map(str, sorted(int(a) for a in contributors))),
++                            "pool_expected_ages": expected_label,
++                            "pool_retained_weight_fraction": float(w_sum / expected_weight),
++                            "pool_composition_status": "complete" if set(contributors)==set(expected_ages) else "partial",
+                             "CI_lower": CI_lower,
+                             "CI_upper": CI_upper,
+                             "EnrollmentDate": sheet_name,
+@@ -5510,6 +5518,7 @@
+         standard_columns = [
+             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
++            "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -9084,7 +9093,8 @@
+                             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged", "CI_analytic_lower", "CI_analytic_upper",
+-                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws",
++                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws",
++                            "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+                             "normalization_status", "risk_history_policy", "gap_assumption_status",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+@@ -9770,6 +9780,11 @@
+                                 "anchor_ratio": row.get("anchor_ratio", np.nan),
+                                 "CI_undefined_anchor_draws": row.get("CI_undefined_anchor_draws", np.nan),
+                                 "CI_missing_draws": row.get("CI_missing_draws", np.nan),
++                                "CI_pool_composition_changed_draws": row.get("CI_pool_composition_changed_draws", np.nan),
++                                "pool_contributors": row.get("pool_contributors", ""),
++                                "pool_expected_ages": row.get("pool_expected_ages", ""),
++                                "pool_retained_weight_fraction": row.get("pool_retained_weight_fraction", np.nan),
++                                "pool_composition_status": row.get("pool_composition_status", ""),
+                                 "CI_unanchored_lower": row.get("CI_unanchored_lower", np.nan),
+                                 "CI_unanchored_upper": row.get("CI_unanchored_upper", np.nan),
+ 

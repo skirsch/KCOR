@@ -1,0 +1,55 @@
+"""Nested population consistency: complete, partial and aggregate-only inputs."""
+from pathlib import Path
+import sys,os,tempfile,io
+from contextlib import redirect_stdout,redirect_stderr
+import pandas as pd,numpy as np
+ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
+from test_round14_aggregate import K,input_frame,total,ending
+from fixed_cohort_history import aggregate_reconciliation
+S='2023_01'
+def written(f,scope,draws=3):
+ os.environ.update(KCOR_BOOTSTRAP_DRAWS=str(draws),KCOR_BOOTSTRAP_WORKERS='2',KCOR_BOOTSTRAP_LAYOUT='disjoint',KCOR_AGGREGATE_SCOPE=scope)
+ K.ENROLLMENT_DATES=[S];K.OVERRIDE_DOSE_PAIRS=[(1,0)];K.OVERRIDE_YOBS=None
+ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+  p=Path(tmp);src=p/'in.xlsx';dst=p/'out.xlsx';f.to_excel(src,sheet_name=S,index=False)
+  with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):K.process_workbook(str(src),str(dst))
+  return pd.read_excel(dst,sheet_name='dose_pairs')
+def scaled(x,k):
+ y=x.copy();y[['Alive','Dead']]*=k;return y
+def check_invalid(o):
+ for age in (-2,-60):
+  a=o[o.YearOfBirth.eq(age)]
+  assert len(a) and a.KCOR.isna().all() and a.KCOR_unanchored.isna().all(),a.tail()
+  assert a.normalization_status.eq('invalid_aggregate_counts').all(),a.normalization_status.unique()
+  assert a.CI_valid_draws.eq(0).all() and a.CI_lower.isna().all() and a.CI_unanchored_valid_draws.eq(0).all()
+def main():
+ f=input_frame(S);f.loc[f.YearOfBirth.eq(1950),'YearOfBirth']=1960
+ older=f[f.YearOfBirth.eq(1940)];young=total(f[f.YearOfBirth.eq(1960)]).assign(YearOfBirth=-60)
+ full=total(f)
+ assert aggregate_reconciliation(pd.concat([f,full,young]))==({},set())
+ assert aggregate_reconciliation(pd.concat([full,young]))==({},set())
+ assert aggregate_reconciliation(pd.concat([older,full,young]),'partial')==({}, {(-2,0),(-2,1),(-60,0),(-60,1)})
+ single_bad=young.copy();single_bad.loc[single_bad.Dose.eq(1),['Alive','Dead']]*=3
+ assert set(aggregate_reconciliation(pd.concat([older,full,single_bad]),'partial')[0])=={(-2,1),(-60,1)}
+
+ wider=scaled(young,6);bad_full=scaled(full,2)
+ # Both totals internally valid but impossible jointly.
+ bad=pd.concat([f,bad_full,wider],ignore_index=True)
+ only=pd.concat([bad_full,wider],ignore_index=True)
+ assert set(aggregate_reconciliation(bad,'partial')[0])=={(-2,0),(-2,1),(-60,0),(-60,1)}
+ assert set(aggregate_reconciliation(only)[0])=={(-2,0),(-2,1),(-60,0),(-60,1)}
+ # Older and unknown birth-year groups must fit in the complement.
+ unknown=scaled(older,.5).assign(YearOfBirth=-1)
+ assert set(aggregate_reconciliation(pd.concat([older,unknown,full,young]),'partial')[0])=={(-2,0),(-2,1),(-60,0),(-60,1)}
+ # In exhaustive scope, the independently reconciled full total stays valid.
+ assert set(aggregate_reconciliation(pd.concat([f,full,wider]))[0])=={(-60,0),(-60,1)}
+ a=written(pd.concat([f,full,young]),'exhaustive')
+ b=written(bad,'partial');c=written(only,'exhaustive',0)
+ check_invalid(b);check_invalid(c)
+ for age in (1940,1960):
+  cols=['KCOR','CI_lower','CI_upper','CI_valid_draws']
+  np.testing.assert_allclose(ending(a,age)[cols].to_numpy(float),ending(b,age)[cols].to_numpy(float),rtol=1e-13)
+ assert ending(a,-2).CI_valid_draws==3 and ending(a,-60).CI_valid_draws==3
+ print('compatible full totals',ending(a,-2)[['KCOR','CI_lower','CI_upper','CI_valid_draws']].to_dict())
+ print('incompatible mixed and aggregate-only totals withheld; unaffected age results identical',ending(b,1940)[['KCOR','CI_lower','CI_upper','CI_valid_draws']].to_dict())
+if __name__=='__main__':main()

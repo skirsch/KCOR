@@ -1,0 +1,11 @@
+--- a/analysis/README.md
++++ b/analysis/README.md
+@@ -1,5 +1,7 @@
+ # Numerical results
+ 
+-Table 8: `table8/replay.py` reproduces the full ordinary workbook and the person-bootstrap results; the stored 999 draws are in `survivor_validation/table8-draws.npz`. Point estimates and the first matched draw were verified against the integrated implementation. Table 9: `positive_control/replay.py` regenerates the fitted workbook points and the full 999-draw intervals. `quiet_windows/scan.py` regenerates the placement scan. The `survivor_validation`, `information`, `contamination` and `alpha` directories contain numerical results of the specified validation designs and theoretical benchmarks.
++Table 8: `table8/replay.py` reproduces the full ordinary workbook and the person-bootstrap results; the current stored draws are in `table8/identified_only-draws.npz` and `table8/forced_alpha-draws.npz`, with corresponding summary JSON files. Point estimates and the first matched draw were verified against the integrated implementation. Table 9: `positive_control/replay.py` regenerates the fitted workbook points and the full 999-draw intervals in `positive_control/results.json`. `python analysis/quiet_windows/scan.py --mode forced_alpha` regenerates the reported placement scan with alpha=1.18 and the marked 2021-41 to 2022-12 wave, writing `quiet_windows/windows.csv`, `quiet_windows/summary.csv` and the manuscript scan figure. Use `--mode off` for the separate proportional scan (outputs suffixed -off). The `survivor_validation`, `information`, `contamination` and `alpha` directories contain numerical results of the specified validation designs and theoretical benchmarks.
+ 
+ The main and supplement Markdown files are authoritative manuscript sources; the combined PDF is a render of both. Historical validation configurations are distinguished from the current method by the manuscript.
++
++From the checkout root, run `make paper` or `make paper-pdf` with GNU Make, Pandoc, a compatible pandoc-crossref, XeLaTeX and the configured fonts installed. The supplied bibliography, style, header, filters and figure files are used directly. Set PAPER_PDF_MAINFONT and PAPER_PDF_MATHFONT if needed. The empirical intuition figure can be regenerated with `make paper-figures`. Publication is a separate `make paper-publish` command.

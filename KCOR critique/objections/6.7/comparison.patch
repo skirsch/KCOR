@@ -1,0 +1,111 @@
+--- a/test/sim_grid/code/generate_sim_grid.py
++++ b/test/sim_grid/code/generate_sim_grid.py
+@@ -1144,26 +1144,6 @@
+         cox_hr_mean = result.get("cox_hr_mean", np.nan)
+         cox_instability = result.get("cox_hr_instability", np.nan)
+         
+-        # Determine truth for null scenarios
+-        if is_null:
+-            truth_kcor = 1.0
+-            truth_rmst_ratio = 1.0
+-            truth_cox_hr = 1.0
+-        else:
+-            # Effect scenarios: truth depends on scenario
+-            if scenario == "hazard_increase":
+-                truth_kcor = None  # Unknown, but > 1 expected
+-                truth_rmst_ratio = None
+-                truth_cox_hr = None
+-            elif scenario == "hazard_decrease":
+-                truth_kcor = None  # Unknown, but < 1 expected
+-                truth_rmst_ratio = None
+-                truth_cox_hr = None
+-            else:
+-                truth_kcor = None
+-                truth_rmst_ratio = None
+-                truth_cox_hr = None
+-        
+         # KCOR row
+         if is_null:
+             kcor_bias = abs(kcor_median - 1.0) if np.isfinite(kcor_median) else np.nan
+@@ -1177,15 +1157,15 @@
+             "label": label,
+             "method": "KCOR",
+             "target_estimand": "Cumulative hazard ratio (depletion-normalized)",
+-            "bias_deviation": kcor_bias if np.isfinite(kcor_bias) else "N/A",
+-            "variance_instability": "Low (stable trajectory)" if np.isfinite(kcor_median) else "N/A",
++            "deviation_from_unity": kcor_bias if np.isfinite(kcor_bias) else "N/A",
++            "variance_instability": "Sampling variation not estimated" if np.isfinite(kcor_median) else "N/A",
+             "interpretability_notes": kcor_notes,
+         })
+         
+         # RMST row
+         if is_null:
+             rmst_bias = abs(rmst_ratio - 1.0) if np.isfinite(rmst_ratio) else np.nan
+-            rmst_notes = "Inherits depletion bias from survival curves"
++            rmst_notes = "Reflects marginal survival differences"
+         else:
+             rmst_bias = np.nan
+             rmst_notes = "Summarizes survival but does not normalize selection geometry"
+@@ -1195,8 +1175,8 @@
+             "label": label,
+             "method": "RMST",
+             "target_estimand": "Restricted mean survival time",
+-            "bias_deviation": rmst_bias if np.isfinite(rmst_bias) else "N/A",
+-            "variance_instability": "Moderate (depends on depletion strength)" if np.isfinite(rmst_ratio) else "N/A",
++            "deviation_from_unity": rmst_bias if np.isfinite(rmst_bias) else "N/A",
++            "variance_instability": "Sampling variation not estimated" if np.isfinite(rmst_ratio) else "N/A",
+             "interpretability_notes": rmst_notes,
+         })
+         
+@@ -1214,8 +1194,8 @@
+                 "label": label,
+                 "method": "Cox (time-varying)",
+                 "target_estimand": "Time-varying hazard ratio",
+-                "bias_deviation": cox_bias if np.isfinite(cox_bias) else "N/A",
+-                "variance_instability": f"HR instability: {cox_instability:.4f}" if np.isfinite(cox_instability) else "N/A",
++                "deviation_from_unity": cox_bias if np.isfinite(cox_bias) else "N/A",
++                "variance_instability": f"Between-window HR SD: {cox_instability:.4f}" if np.isfinite(cox_instability) else "N/A",
+                 "interpretability_notes": cox_notes,
+             })
+     
+--- a/test/sim_grid/out/comparison_table.csv
++++ b/test/sim_grid/out/comparison_table.csv
+@@ -1,19 +1,19 @@
+-scenario,label,method,target_estimand,bias_deviation,variance_instability,interpretability_notes
+-gamma_null,Gamma-Frailty Null,KCOR,Cumulative hazard ratio (depletion-normalized),0.007110465349758899,Low (stable trajectory),Stable under selection-induced depletion
+-gamma_null,Gamma-Frailty Null,RMST,Restricted mean survival time,0.0038754105969356356,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+-gamma_null,Gamma-Frailty Null,Cox (time-varying),Time-varying hazard ratio,0.06930876579600187,HR instability: 0.0440,Time-varying HR improves fit but does not normalize selection geometry
+-hazard_increase,Injected Hazard Increase,KCOR,Cumulative hazard ratio (depletion-normalized),N/A,Low (stable trajectory),Detects injected effects
+-hazard_increase,Injected Hazard Increase,RMST,Restricted mean survival time,N/A,Moderate (depends on depletion strength),Summarizes survival but does not normalize selection geometry
+-hazard_increase,Injected Hazard Increase,Cox (time-varying),Time-varying hazard ratio,N/A,HR instability: 0.1000,Non-PH Cox captures time-varying hazards but inherits depletion structure
+-hazard_decrease,Injected Hazard Decrease,KCOR,Cumulative hazard ratio (depletion-normalized),N/A,Low (stable trajectory),Detects injected effects
+-hazard_decrease,Injected Hazard Decrease,RMST,Restricted mean survival time,N/A,Moderate (depends on depletion strength),Summarizes survival but does not normalize selection geometry
+-hazard_decrease,Injected Hazard Decrease,Cox (time-varying),Time-varying hazard ratio,N/A,HR instability: 0.1501,Non-PH Cox captures time-varying hazards but inherits depletion structure
+-nongamma_null,Non-Gamma Frailty (Lognormal),KCOR,Cumulative hazard ratio (depletion-normalized),0.012601114365844102,Low (stable trajectory),Stable under selection-induced depletion
+-nongamma_null,Non-Gamma Frailty (Lognormal),RMST,Restricted mean survival time,0.0006143486444775137,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+-nongamma_null,Non-Gamma Frailty (Lognormal),Cox (time-varying),Time-varying hazard ratio,0.030512768929434886,HR instability: 0.0485,Time-varying HR improves fit but does not normalize selection geometry
+-contamination,Quiet-Window Contamination,KCOR,Cumulative hazard ratio (depletion-normalized),0.03891069740578268,Low (stable trajectory),Stable under selection-induced depletion
+-contamination,Quiet-Window Contamination,RMST,Restricted mean survival time,0.004942291914169172,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+-contamination,Quiet-Window Contamination,Cox (time-varying),Time-varying hazard ratio,0.06994123460437551,HR instability: 0.0437,Time-varying HR improves fit but does not normalize selection geometry
+-sparse,Sparse Events,KCOR,Cumulative hazard ratio (depletion-normalized),0.009323500584045075,Low (stable trajectory),Stable under selection-induced depletion
+-sparse,Sparse Events,RMST,Restricted mean survival time,0.00027485246938763197,Moderate (depends on depletion strength),Inherits depletion bias from survival curves
+-sparse,Sparse Events,Cox (time-varying),Time-varying hazard ratio,0.018168962714414816,HR instability: 0.0308,Time-varying HR improves fit but does not normalize selection geometry
++scenario,label,method,target_estimand,deviation_from_unity,variance_instability,interpretability_notes
++gamma_null,Gamma-Frailty Null,KCOR,Cumulative hazard ratio (depletion-normalized),0.007110465349758899,Sampling variation not estimated,Stable under selection-induced depletion
++gamma_null,Gamma-Frailty Null,RMST,Restricted mean survival time,0.0038754105969356356,Sampling variation not estimated,Reflects marginal survival differences
++gamma_null,Gamma-Frailty Null,Cox (time-varying),Time-varying hazard ratio,0.06930876579600187,Between-window HR SD: 0.0440,Time-varying HR improves fit but does not normalize selection geometry
++hazard_increase,Injected Hazard Increase,KCOR,Cumulative hazard ratio (depletion-normalized),N/A,Sampling variation not estimated,Detects injected effects
++hazard_increase,Injected Hazard Increase,RMST,Restricted mean survival time,N/A,Sampling variation not estimated,Summarizes survival but does not normalize selection geometry
++hazard_increase,Injected Hazard Increase,Cox (time-varying),Time-varying hazard ratio,N/A,Between-window HR SD: 0.1000,Non-PH Cox captures time-varying hazards but inherits depletion structure
++hazard_decrease,Injected Hazard Decrease,KCOR,Cumulative hazard ratio (depletion-normalized),N/A,Sampling variation not estimated,Detects injected effects
++hazard_decrease,Injected Hazard Decrease,RMST,Restricted mean survival time,N/A,Sampling variation not estimated,Summarizes survival but does not normalize selection geometry
++hazard_decrease,Injected Hazard Decrease,Cox (time-varying),Time-varying hazard ratio,N/A,Between-window HR SD: 0.1501,Non-PH Cox captures time-varying hazards but inherits depletion structure
++nongamma_null,Non-Gamma Frailty (Lognormal),KCOR,Cumulative hazard ratio (depletion-normalized),0.012601114365844102,Sampling variation not estimated,Stable under selection-induced depletion
++nongamma_null,Non-Gamma Frailty (Lognormal),RMST,Restricted mean survival time,0.0006143486444775137,Sampling variation not estimated,Reflects marginal survival differences
++nongamma_null,Non-Gamma Frailty (Lognormal),Cox (time-varying),Time-varying hazard ratio,0.030512768929434886,Between-window HR SD: 0.0485,Time-varying HR improves fit but does not normalize selection geometry
++contamination,Quiet-Window Contamination,KCOR,Cumulative hazard ratio (depletion-normalized),0.03891069740578268,Sampling variation not estimated,Stable under selection-induced depletion
++contamination,Quiet-Window Contamination,RMST,Restricted mean survival time,0.004942291914169172,Sampling variation not estimated,Reflects marginal survival differences
++contamination,Quiet-Window Contamination,Cox (time-varying),Time-varying hazard ratio,0.06994123460437551,Between-window HR SD: 0.0437,Time-varying HR improves fit but does not normalize selection geometry
++sparse,Sparse Events,KCOR,Cumulative hazard ratio (depletion-normalized),0.009323500584045075,Sampling variation not estimated,Stable under selection-induced depletion
++sparse,Sparse Events,RMST,Restricted mean survival time,0.00027485246938763197,Sampling variation not estimated,Reflects marginal survival differences
++sparse,Sparse Events,Cox (time-varying),Time-varying hazard ratio,0.018168962714414816,Between-window HR SD: 0.0308,Time-varying HR improves fit but does not normalize selection geometry

@@ -1,0 +1,12 @@
+{
+  "model": "gpt-6.2-astra",
+  "reasoning_effort": "high",
+  "thread": "01a214c6-caaf-75e1-bb8e-daa612d162da",
+  "parent_thread": null,
+  "edition": "m94",
+  "diff": "original-to-current.diff",
+  "verbatim_handoff": "original-first",
+  "prompt": "The repository edition under scientific review is C:/Users/jasmi/AppData/Local/Temp/kcor-s4-approved/m94. Inspect it read-only with local tools. The combined manuscript and its sources are in documentation/preprint. Use only the specified inputs. No external sources, history search, other reviewers or parent directories. Cite checkable locations. Read the previous reviewer's full answer verbatim at C:/Users/jasmi/AppData/Local/Temp/kcor-s4-approved/turns/2-original-first-answer.md. The changes from the previous edition are at C:/Users/jasmi/AppData/Local/Temp/kcor-s4-approved/turns/original-to-current.diff. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?",
+  "handoff_sha256": "3e6ea970c2501a987d52a4a608a4913a93ec0797f1267ee4489af7cc6008ad97",
+  "sha256": "665ab9ae1bb650e62f9cda5572785567bc2bb3380043f4da40a00749daca226e"
+}

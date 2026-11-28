@@ -1,0 +1,11 @@
+--- m142/analysis/solver_scaling/table8_replay.py
++++ m143/analysis/solver_scaling/table8_replay.py
+@@ -36,7 +36,7 @@
+             hashes[path.relative_to(ROOT).as_posix()] = hashlib.file_digest(f, "sha256").hexdigest()
+     return dict(mode=mode, draws=draws, files=hashes, python=platform.python_version(),
+                 packages={k:importlib.metadata.version(k) for k in ("numpy","scipy","pandas","openpyxl")},
+-                environment={k:v for k,v in sorted(os.environ.items()) if k.startswith("KCOR_") or k in ("DATASET","MONTE_CARLO")})
++                environment={k:v for k,v in sorted(os.environ.items()) if k.startswith(("KCOR_", "SA_", "MC_")) or k in ("DATASET","MONTE_CARLO","SENSITIVITY_ANALYSIS")})
+ 
+ def main():
+     p=argparse.ArgumentParser();p.add_argument("--mode",choices=["identified_only","forced_alpha","both"],default="both");p.add_argument("--draws",type=int,default=999);p.add_argument("--workers",type=int,default=7);p.add_argument("--output-dir",type=Path,default=HERE/"fresh-replay");p.add_argument("--resume",action="store_true");args=p.parse_args();args.output_dir.mkdir(parents=True,exist_ok=True)

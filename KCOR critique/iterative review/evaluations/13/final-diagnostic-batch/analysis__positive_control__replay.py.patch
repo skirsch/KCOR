@@ -1,0 +1,11 @@
+--- a/analysis/positive_control/replay.py
++++ b/analysis/positive_control/replay.py
+@@ -104,7 +104,7 @@
+                            adjusted[80]/adjusted[anchor]])
+             diagnostics.append(dict(k=float(rate), theta=float(applied), raw=float(diag["theta0_raw"]),
+                 status=diag["status"],success=bool(diag["success"]),flag=bool(diag["insufficient_signal"]),
+-                upper_bound=bool(diag["theta_hit_bound"])))
++                upper_bound=bool(diag["theta_hit_bound"]),gap_first_pass=diag.get("gap_first_pass"),gap_seed_status=diag.get("gap_seed_status","not_assessed")))
+         results.append((np.divide(curves[1],curves[0]),diagnostics))
+     return results
+ 

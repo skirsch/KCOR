@@ -1,0 +1,13 @@
+arm,scenario,estimator,alpha_hat,alpha_hat_reported,objective,n_pairs,n_weeks_used,curvature_metric,objective_range,boundary_optimum,identified_curve,identification_status,alpha_min_grid,alpha_max_grid
+historical,all,pairwise,1.19,,3974.037464188727,84,17,0.00015669499021690964,342.82901439391435,0,0,low_curvature,0.7,1.3
+historical,all,collapse,1.185,,1163.6676639871766,41,9,0.00016218990753555636,94.64747664493598,0,0,low_curvature,0.7,1.3
+historical,exclude_flagged,pairwise,1.28,,2516.0827782391952,44,16,0.00011550546086636864,393.9969200775249,0,0,low_curvature,0.7,1.3
+historical,exclude_flagged,collapse,1.23,,850.2181573805032,28,8,0.00013549035738461877,115.16202815878341,0,0,low_curvature,0.7,1.3
+working,all,pairwise,0.75,,3982.894836142017,84,17,4.6575867678152994e-05,380.0649328624377,0,0,low_curvature,0.7,1.3
+working,all,collapse,0.89,,1177.3569169357775,41,9,0.00010729946469699546,75.95938727162161,0,0,low_curvature,0.7,1.3
+working,exclude_flagged,pairwise,0.82,,2614.193616133073,44,16,7.119712246285544e-05,201.35915522824325,0,0,low_curvature,0.7,1.3
+working,exclude_flagged,collapse,0.985,,878.9754433069162,28,8,0.00020458185141400404,42.177691219304734,0,0,low_curvature,0.7,1.3
+exact,all,pairwise,0.7,,3790.813884077012,84,17,,778.3010659889028,1,0,boundary_seeking,0.7,1.3
+exact,all,collapse,0.7,,1132.2131865244783,41,9,,175.29434096162322,1,0,boundary_seeking,0.7,1.3
+exact,exclude_flagged,pairwise,0.7,,2479.430907797448,44,16,,501.17755348907485,1,0,boundary_seeking,0.7,1.3
+exact,exclude_flagged,collapse,0.7,,844.673869455432,28,8,,133.5444193108608,1,0,boundary_seeking,0.7,1.3

@@ -1,0 +1,102 @@
+--- m102/code/kcor_survivor.py
++++ m103/code/kcor_survivor.py
+@@ -197,13 +197,16 @@
+         for a,b in zip(bounds[:-1],bounds[1:]):
+             if a>=last:break
+             self.segments.append((int(a),int(min(b,last)),int(kind[a])))
+-    def predict(self,k,theta,alpha):
++    def predict(self,k,theta,alpha,*,return_exposure_span=False):
+         sv=Survival(theta,alpha); B=W=0.;pred=[];rawgap=[];applied=[];deficits=0
++        exposure_first=exposure_last=None
+         for a,b,kind in self.segments:
+             increments=k*np.diff(self.F[a:b+1])
+             if kind==0:
+                 before=B+np.r_[0.,np.cumsum(increments)]
+                 q=np.diff(sv.hazard(before,np.full(len(before),W)))
++                if exposure_first is None: exposure_first=float(before[0]+W)
++                exposure_last=float(before[-2]+W)
+                 pred.extend(q);B=before[-1]
+             elif kind==1:
+                 # Reconstruct observed survival at quiet re-entry. As in
+@@ -237,7 +240,11 @@
+                     else:
+                         deficits+=int(target<loss-1e-12)
+                         B+=sv.increase(B,W,target,0,inc)
+-        return np.array(pred),rawgap,applied,deficits
++        result=(np.array(pred),rawgap,applied,deficits)
++        if return_exposure_span:
++            span=exposure_last-exposure_first if exposure_first is not None else np.nan
++            return (*result,span)
++        return result
+ 
+ def make_fitter(model,wave,alpha=1.18):
+     base=model._fit_all_window_gamma
+@@ -246,21 +253,39 @@
+         # Identity for no nonlinear wave within the modeled fit history.
+         if not np.any((t>=max(0,wave[0]))&(t<=wave[1])):
+             return base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
+-        initial,diag=base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
+-        # Eligibility must reflect the requested nonlinear model, not the seed fit.
+-        eligible=(np.isfinite(h)&np.isfinite(t)&(t>=0)
+-                  &(quiet|(t<k_anchor_weeks))&~((t>=wave[0])&(t<=wave[1])))
++        # Keep the configured quiet-only gate separate from anchor-only objective rows.
++        valid=np.isfinite(h)&np.isfinite(t)&(t>=0)
++        marked=(t>=wave[0])&(t<=wave[1])
++        quiet_eligible=quiet&valid&~marked
++        eligible=valid&(quiet|(t<k_anchor_weeks))&~marked
++        n_quiet=int(quiet_eligible.sum())
+         n_fit=int(eligible.sum())
+-        if n_fit<3:
++        # The proportional fit is only an initializer. Its quiet gate must use
++        # the same quiet rows as the final fit (not the excluded wave rows).
++        initial,diag=base(h,t,quiet_eligible,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
++        deaths=None if deaths_arr is None else np.asarray(deaths_arr,dtype=float)
++        total=float(np.nansum(np.where(quiet_eligible,np.clip(deaths,0.,None),0.))) if deaths is not None and deaths.shape==h.shape else np.nan
++        minimum=int(model.get_theta_degenerate_fit_config().get("min_quiet_deaths",30))
++        diag.update(n_obs=n_fit,n_fit=n_fit,fit_mask_theta=eligible,
++                    n_quiet_bins=n_quiet,total_quiet_deaths=total,min_quiet_deaths=minimum,
++                    quiet_window_start=float(np.min(t[eligible])) if n_fit else np.nan,
++                    quiet_window_end=float(np.max(t[eligible])) if n_fit else np.nan,
++                    identifiability_flag=n_fit<6)
++        if n_fit<3 or n_quiet<3:
+             diag.update(success=False,status="insufficient_data",
+                         message="nonlinear_fit_too_few_eligible_weeks",
+-                        n_obs=n_fit,n_fit=n_fit,fit_mask_theta=eligible,
+                         k_hat=np.nan,theta0_raw=np.nan,anchor_only=False,
+                         insufficient_signal=True,rmse_hazard=np.nan,
+                         fit_residual_max=np.nan,relRMSE_hazard_fit=np.nan)
+             return (np.nan,np.nan),diag
+-        if diag.get("insufficient_deaths") or not np.isfinite(initial[0]):return initial,diag
+-        p=Profile(h,t,quiet,k_anchor_weeks,gamma_per_week,wave)
++        if np.isfinite(total) and total<minimum:
++            diag.update(insufficient_deaths=True,status="insufficient_deaths",
++                        message=f"INSUFFICIENT_DEATHS: eligible quiet-window deaths {total:.1f} < min_quiet_deaths={minimum}; applied theta=0.0",
++                        success=bool(np.isfinite(initial[0])),theta0_raw=0.,
++                        rmse_hazard=np.nan,fit_residual_max=np.nan,relRMSE_hazard_fit=np.nan)
++            return (initial[0],0.),diag
++        if not np.isfinite(initial[0]):return initial,diag
++        p=Profile(h,t,quiet_eligible,k_anchor_weeks,gamma_per_week,wave)
+         target=p.h[p.fit]
+         # Scale residuals for numerical optimization only (same LS minimum).
+         scale=max(float(target.mean()),1e-8)
+@@ -284,16 +309,17 @@
+         valid=[r for r in candidates if r.success and np.isfinite(r.cost)]
+         r=min(valid or candidates,key=lambda r:r.cost)
+         k,theta=float(np.exp(r.x[0])),float(r.x[1])
+-        pred,gaps,applied,deficits=p.predict(k,theta,alpha)
++        pred,gaps,applied,deficits,span=p.predict(k,theta,alpha,return_exposure_span=True)
+         e=target-pred;rel=float(np.sqrt(np.mean((e/(target+1e-12))**2)))
+         guard=model.get_theta_degenerate_fit_config()
+         bound=theta>=thmax*.999
+         bad=rel>float(guard.get("bad_fit_relrmse_threshold",1e5))
+         flag=bound or bad
++        weak=bool(n_fit<6 or (np.isfinite(span) and span<1e-4))
+         mask=np.zeros_like(quiet);mask[p.idx]=p.fit
+-        diag.update(success=bool(r.success),status="insufficient_signal" if flag else ("ok" if r.success else "error"),message="nonlinear survivor fit",
++        diag.update(success=bool(r.success),status="insufficient_signal" if flag else (("weak_identifiability" if weak else "ok") if r.success else "error"),message="nonlinear survivor fit",
+                     n_obs=len(target),n_fit=len(target),fit_mask_theta=mask,k_hat=k,theta0_raw=theta,
+-                    theta_hit_bound=bound,bad_fit=bad,insufficient_signal=flag,
++                    theta_hit_bound=bound,bad_fit=bad,insufficient_signal=flag,identifiability_flag=weak,
+                     rmse_hazard=float(np.sqrt(np.mean(e**2))),fit_residual_max=float(np.max(abs(e))),relRMSE_hazard_fit=rel,
+                     delta_negative_clamped=any(x<=0 for x in gaps),delta_negative=any(x<=0 for x in gaps),
+                     nonlinear_gap_observed_deficit=gaps,nonlinear_gap_exposure=applied,nonlinear_wave_deficits=deficits,

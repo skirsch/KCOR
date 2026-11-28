@@ -1,0 +1,29 @@
+{
+  "population": 1500,
+  "weeks": 60,
+  "seed": 0,
+  "deaths": 89,
+  "zero_death_weeks": 15,
+  "status": "insufficient_signal",
+  "relRMSE": 507248603.33313054,
+  "expected_deaths_zero_weeks_true": [
+    1.381685251284336,
+    1.4948897462467854
+  ],
+  "zero_probability_true": [
+    0.22410588571188417,
+    0.2509849798180469
+  ],
+  "zero_week_pearson_residual_fitted": [
+    -1.334019130533703,
+    -1.1124354662806353
+  ],
+  "max_abs_pearson_residual": 3.6661380578258833,
+  "pearson_over_df": 1.030359503262091,
+  "fit_theta_raw": 6.86949691687352,
+  "fit_theta_applied": 0.0,
+  "earlier_310_death_example": {
+    "fitted_expected_deaths_first_week": 9.134208051387608,
+    "probability_zero_first_week": 0.0001076107179316909
+  }
+}

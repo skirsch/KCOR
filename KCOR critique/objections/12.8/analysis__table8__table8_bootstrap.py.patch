@@ -1,0 +1,40 @@
+--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -74,14 +74,15 @@
+     early = mr[:, :, :4]
+     from pooling import expected_deaths_weights
+     weights = expected_deaths_weights(early,alive[:, :, :4].sum(axis=(1,2)),K.EPS)
+-    growth = np.empty((3, 3))
++    end_value = np.full((3,3),np.nan)
++    anchor_value = np.full((3,3),np.nan)
+     support_ok = np.zeros((3,3),dtype=bool)
+     flags = 0
+     failed = 0
+     fit_flags = np.zeros((3,3,len(DIAGNOSTIC_CATEGORIES)),dtype=bool)
+     skip = K.DYNAMIC_HVE_SKIP_WEEKS
+     fit = compare.joint_fit if joint else compare.production_fit
+-    for a, d in np.ndindex(growth.shape):
++    for a, d in np.ndindex(end_value.shape):
+         hazard = K.hazard_from_mr(mr[a,d])
+         effective = np.where(time >= skip, hazard, 0.)
+         diagnostic_kwargs = {"risk_arr": alive[a,d]} if diagnostics else {}
+@@ -100,14 +101,16 @@
+             WAVE["start_dt"], WAVE["end_dt"], k, CONFIG["gamma_per_week"], observed_cumhaz=observed)
+         anchor = np.flatnonzero(time[keep] == K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE).item()
+         support_ok[a,d] = np.isfinite(corrected[-1]) and np.isfinite(corrected[anchor])
+-        growth[a,d] = corrected[-1] / corrected[anchor] if support_ok[a,d] and corrected[anchor]>0 else np.nan
++        end_value[a,d] = corrected[-1]
++        anchor_value[a,d] = corrected[anchor]
+     pooled=[]; members=[]
+     expected=np.isfinite(weights)&(weights>0)
+     for n,d in PAIRS:
+         # A zero (undefined) anchor allows available-strata pooling, as in the
+         # ordinary workbook. An exhausted or failed normalization does not.
+-        with np.errstate(divide="ignore",invalid="ignore"):
+-            ratio=growth[:,n]/growth[:,d]
++        reference=K._finite_hazard_ratio(anchor_value[:,n],anchor_value[:,d])
++        raw=K._finite_hazard_ratio(end_value[:,n],end_value[:,d])
++        ratio=K._finite_hazard_ratio(raw,reference)
+         use=expected & np.isfinite(ratio) & (ratio>0)
+         members.append(use)
+         if np.any(expected & ~(support_ok[:,n]&support_ok[:,d])) or not use.any():

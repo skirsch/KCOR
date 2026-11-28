@@ -1,0 +1,117 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1402,8 +1402,12 @@
+     # Prefer the first usable contiguous quiet window; the pooled objective
+     # can still run from the anchor seed if no individual window is usable.
+     anchor_seed = k_fixed
++    seed_measured = True
++    seed_theta_hit_bound = False
++    seed_baseline_hit_bound = False
+     try:
+         if joint_seed and seed_idx.size < 3:
++            seed_measured = False
+             k_fixed = float(np.clip(anchor_seed, 1e-8, .1))
+             theta_seed, seed_ok = float(np.clip(theta0_init, 0., theta0_max)), True
+             H_gom_full = k_fixed * unit_start
+@@ -1417,11 +1421,12 @@
+                 k, th = np.exp(params[0]), params[1]
+                 return (first_obs - weekly_gamma_hazard(k * first_start, k * first_week, th)) / seed_residual_scale
+ 
+-            guess = np.mean(first_obs[:4] / first_week[:4])
+-            seed = least_squares(joint_residual, [np.log(guess), theta0_init],
+-                                 bounds=([np.log(1e-8), 0.0], [np.log(0.1), 100.0]),
++            guess = float(np.clip(np.mean(first_obs[:4] / first_week[:4]), 1e-8, .1))
++            seed = least_squares(joint_residual, [np.log(guess), min(max(theta0_init,0.),theta0_max)],
++                                 bounds=([np.log(1e-8), 0.0], [np.log(0.1), theta0_max]),
+                                  xtol=1e-14, ftol=1e-14, gtol=1e-14, max_nfev=10000)
+             k_fixed, theta_seed, seed_ok = np.exp(seed.x[0]), seed.x[1], seed.success
++            seed_baseline_hit_bound = bool(k_fixed<=1e-8*1.001 or k_fixed>=.1*.999)
+             seed_start = int(seed_idx[0])
+             if account_entry and seed_start > post_idx[0]:
+                 before = post_idx[post_idx < seed_start]
+@@ -1436,12 +1441,17 @@
+             return _fail(k_fixed, f"seed_fit_exception: {e}", int(first_idx.size))
+         seed_ok, theta_seed = False, np.nan
+     if (not seed_ok) or (not np.isfinite(theta_seed)):
++        seed_measured = False
+         if not joint_seed:
+             return _fail(k_fixed, "seed_fit_failed", int(first_idx.size))
+         k_fixed = float(np.clip(anchor_seed, 1e-8, .1))
+         theta_seed = float(np.clip(theta0_init, 0., theta0_max))
+         H_gom_full = k_fixed * unit_start
+     theta = float(theta_seed)
++    seed_theta_hit_bound = bool(seed_measured and theta_seed >= theta0_max*.999)
++    seed_baseline_hit_bound = bool(seed_measured and (seed_baseline_hit_bound or k_fixed<=1e-8*1.001 or k_fixed>=.1*.999))
++    gap_seed_status = ("unavailable_seed" if not seed_measured else
++                       "bounded_seed" if seed_theta_hit_bound or seed_baseline_hit_bound else "ok")
+ 
+     # The reconstructed totals are start-of-week values. At quiet-window
+     # re-entry they include the full preceding gap and exclude the new week.
+@@ -1523,7 +1533,7 @@
+         if _iter == 0:
+             raw_offsets = np.asarray([H0_eff[start] - H_gom_full[start] for start in reentry_indices], float)
+             signed = np.diff(raw_offsets, prepend=0.)
+-            gap_first_pass = [(float(t_r[start]), float(v)) for start, v in zip(reentry_indices, signed)]
++            gap_first_pass = [(float(t_r[start]), float(v)) for start, v in zip(reentry_indices, signed)] if gap_seed_status=="ok" or not reentry_indices else None
+         # 3b: compute incremental deltas at each gap end.
+         deltas = []
+         delta_raw_iter = []
+@@ -1711,6 +1721,9 @@
+             "theta_hit_bound": True,
+             "delta_negative": delta_negative,
+             "gap_first_pass": gap_first_pass,
++        "gap_seed_status": gap_seed_status,
++        "seed_theta_hit_bound": seed_theta_hit_bound,
++        "seed_baseline_hit_bound": seed_baseline_hit_bound,
+             "delta_raw_values": [float(x) for x in delta_raw_values],
+             "delta_applied_values": [float(x) for x in delta_applied_values],
+             "theta0_init": theta0_init_fitted,
+@@ -1758,6 +1771,9 @@
+         "theta_hit_bound": False,
+         "delta_negative": delta_negative,
+         "gap_first_pass": gap_first_pass,
++        "gap_seed_status": gap_seed_status,
++        "seed_theta_hit_bound": seed_theta_hit_bound,
++        "seed_baseline_hit_bound": seed_baseline_hit_bound,
+         "delta_raw_values": [float(x) for x in delta_raw_values],
+         "delta_applied_values": [float(x) for x in delta_applied_values],
+         "theta0_init": theta0_init_fitted,
+@@ -5538,6 +5554,9 @@
+             "Dose": _as_int(dose, default=-1),
+             "k_hat": _as_float(params.get("k_hat", np.nan)),
+             "theta0_init": _as_float(params.get("theta0_init", np.nan)),
++            "gap_seed_status": params.get("gap_seed_status", "not_assessed"),
++            "seed_theta_hit_bound": params.get("seed_theta_hit_bound"),
++            "seed_baseline_hit_bound": params.get("seed_baseline_hit_bound"),
+             "theta0_hat": _as_float(params.get("theta0_hat", params.get("theta_hat", np.nan))),
+             "n_quiet_bins": _as_int(params.get("n_quiet_bins", params.get("n_obs", 0)), default=0),
+             "n_quiet_bins_prewave": _as_int(params.get("n_quiet_bins_prewave", 0), default=0),
+@@ -5589,7 +5608,7 @@
+ 
+     base_cols = [
+         "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
+-        "n_quiet_bins", "n_quiet_bins_prewave", "n_iter"
++        "n_quiet_bins", "n_quiet_bins_prewave", "n_iter", "gap_seed_status", "seed_theta_hit_bound", "seed_baseline_hit_bound"
+     ]
+     wave_cols = []
+     for idx in range(1, max_waves + 1):
+@@ -6855,6 +6874,9 @@
+                     "insufficient_signal": insufficient_signal_flag,
+                     "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
+                     "gap_first_pass": diag.get("gap_first_pass"),
++                    "gap_seed_status": diag.get("gap_seed_status", "not_assessed"),
++                    "seed_theta_hit_bound": diag.get("seed_theta_hit_bound"),
++                    "seed_baseline_hit_bound": diag.get("seed_baseline_hit_bound"),
+                     "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                     "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
+                     "delta_raw_scale": str(diag.get("delta_raw_scale", "baseline_exposure")) if isinstance(diag, dict) else "baseline_exposure",
+@@ -7141,6 +7163,9 @@
+                             "insufficient_signal": insufficient_signal_flag,
+                             "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
+                             "gap_first_pass": diag.get("gap_first_pass"),
++                    "gap_seed_status": diag.get("gap_seed_status", "not_assessed"),
++                    "seed_theta_hit_bound": diag.get("seed_theta_hit_bound"),
++                    "seed_baseline_hit_bound": diag.get("seed_baseline_hit_bound"),
+                     "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                             "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
+                             "delta_raw_scale": str(diag.get("delta_raw_scale", "baseline_exposure")) if isinstance(diag, dict) else "baseline_exposure",

@@ -1,0 +1,95 @@
+# Czech dataset yaml file
+# make KCOR will use this file to run the KCOR analysis.
+
+# Analysis parameters (used by KCOR_CMR.py and KCOR.py)
+# Changing this file will cause KCOR.py to be re-run, but NOT KCOR_CMR.py (since it's rare you change the enrollment dates)
+# KCOR_analysis.xlsx is stored for cases where the COVID correction is and is not applied for comparison purposes.
+
+schema: Czech-1.0
+timezone: local
+observationEndDate: '2025-12-31'    # not used for the Czech dataset because it doesn't go though a converter.
+birthBandYears: 5                   # 5 years age bands for the cohorts.
+
+# see figure 3 in https://pmc.ncbi.nlm.nih.gov/articles/PMC7721859/
+NPH_correction:
+  startDate: '2021-41'   # this is 10/11/2021
+  endDate: '2022-12'     # COVID extends into 3/21/2022
+  mode: identified_only   # primary: inactive unless alpha is identified; forced_alpha is sensitivity-only
+  identified_alpha: null   # no identified Czech exponent
+  forced_alpha: 1.18       # sensitivity-only override used only when mode = forced_alpha
+  neutralization: symmetric_all_cohorts
+
+# The quiet window is used to estimate the theta parameter for the gamma frailty model.
+# Generally, larger windows are better if there are no major epidemic waves or policy shocks.
+# Historical selection rationale in the earlier configuration: CY 2023 showed the least vaccine harm.
+# Retain the configured dates; outcome-independent prespecification has not been established.
+
+
+# KCOR v7: estimate theta(0) from points within these quiet windows (no COVID, no excess mortality)
+theta_estimation_windows:
+    - ['2023-19', '2023-40', '2023 post COVID']
+    - ['2022-22', '2022-25', 'post booster']
+    - ['2021-26', '2021-36', 'post primary']
+    - ['2024-11', '2024-14', 'post 2024']
+
+# KCOR v7: Gompertz + frailty-depletion theta0 fit (see documentation/specs/KCORv7/KCOR_v7_gompertz_instructions.md)
+# k is fixed from mean hazard over k_anchor_weeks after DYNAMIC_HVE_SKIP_WEEKS (in code, not YAML).
+time_varying_theta:
+  gompertz_gamma: 0.085   # per year; biological aging scale for theta fit
+  k_anchor_weeks: 4       # weeks after HVE skip used to pin baseline k
+  k_anchor_tolerance: 0.20  # bounded first-window k fit: [k_anchor*(1-tol), k_anchor*(1+tol)]
+
+# Analysis parameters (used by KCOR_CMR.py and KCOR.py)
+# Enrollment dates for cohort analysis (ISO week format: YYYY-WW)
+enrollmentDates:
+  - '2021-13'
+  - '2021-20'
+  - '2021-24'
+  - '2021-30'
+  - '2022-06'
+  - '2022-26'
+  - '2022-47'
+
+# Dose pairs configuration
+# Maps enrollment date to list of (numerator, denominator) dose pairs
+# If an enrollment date is not specified, uses the default
+dosePairs:
+  default:
+    - [1, 0]
+    - [2, 0]
+    - [2, 1]
+  '2021-13':
+    - [1, 0]
+    - [2, 0]
+    - [2, 1]
+  '2021-20':
+    - [1, 0]
+    - [2, 0]
+    - [2, 1]
+  '2021-24':
+    - [1, 0]
+    - [2, 0]
+    - [2, 1]
+  '2021-30':
+    - [1, 0]
+    - [2, 0]
+    - [2, 1]
+  '2022-06':
+    - [1, 0]
+    - [2, 0]
+    - [3, 2]
+    - [3, 0]
+  '2022-26':
+    - [1, 0]
+    - [2, 0]
+    - [3, 2]
+    - [3, 0]
+  '2022-47':
+    - [1, 0]
+    - [2, 0]
+    - [3, 0]
+    - [3, 2]
+    - [4, 0]
+    - [4, 2]
+    - [4, 3]
+

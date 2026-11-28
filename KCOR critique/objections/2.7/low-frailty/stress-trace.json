@@ -1,0 +1,220 @@
+{
+  "rep": 34,
+  "target": 1.0,
+  "observed_endpoint": 0.15051540971836197,
+  "true_k": 0.002,
+  "true_theta": 0.5,
+  "pooled_original": 812.6750759633238,
+  "pooled_interval": [
+    0.8482839453073511,
+    744.8777676525101
+  ],
+  "weight": 0.6790702356414868,
+  "traces": {
+    "fixed": {
+      "k": 0.001977449604944701,
+      "theta_seed": 19.323598883026666,
+      "theta_final": 0.28543337701839583,
+      "status": "ok",
+      "gap_raw": [
+        0.04843351133586396
+      ],
+      "iterations": [
+        {
+          "parameters": [
+            19.323598883026666
+          ],
+          "residual_sse": 8.471094096822954e-07,
+          "success": true,
+          "iteration": 0,
+          "gap_from_this_theta": 0.34616412179976563
+        },
+        {
+          "parameters": [
+            0.08159905053040349
+          ],
+          "residual_sse": 3.5848387403479936e-06,
+          "success": true,
+          "iteration": 1,
+          "gap_from_this_theta": 0.04709938687969156
+        },
+        {
+          "parameters": [
+            0.2886186379187216
+          ],
+          "residual_sse": 3.5665780418084207e-06,
+          "success": true,
+          "iteration": 2,
+          "gap_from_this_theta": 0.0484545235493683
+        },
+        {
+          "parameters": [
+            0.2853837551953767
+          ],
+          "residual_sse": 3.566848890666727e-06,
+          "success": true,
+          "iteration": 3,
+          "gap_from_this_theta": 0.04843318403574938
+        },
+        {
+          "parameters": [
+            0.2854341786801395
+          ],
+          "residual_sse": 3.5668446688133085e-06,
+          "success": true,
+          "iteration": 4,
+          "gap_from_this_theta": 0.048433516623547224
+        },
+        {
+          "parameters": [
+            0.28543337701839583
+          ],
+          "residual_sse": 3.5668447346236705e-06,
+          "success": true,
+          "iteration": 5,
+          "gap_from_this_theta": 0.04843351133586393
+        },
+        {
+          "parameters": [
+            0.28543337701839583
+          ],
+          "residual_sse": 3.566844733577381e-06,
+          "success": true,
+          "iteration": 6,
+          "gap_from_this_theta": 0.04843351133586393
+        }
+      ]
+    },
+    "joint": {
+      "k": 0.002897833957889786,
+      "theta_seed": 92.0640322468816,
+      "theta_final": 91.84090016891057,
+      "status": "ok",
+      "gap_raw": [
+        370.37616760421605
+      ],
+      "iterations": [
+        {
+          "parameters": [
+            -5.843791732139244,
+            92.0640322468816
+          ],
+          "residual_sse": 4.0994285354766636e-07,
+          "success": true,
+          "iteration": 0,
+          "gap_from_this_theta": 378.967840347176
+        },
+        {
+          "parameters": [
+            91.84595259514934
+          ],
+          "residual_sse": 7.861486563590797e-05,
+          "success": true,
+          "iteration": 1,
+          "gap_from_this_theta": 370.5685149359587
+        },
+        {
+          "parameters": [
+            91.84100790542996
+          ],
+          "residual_sse": 7.86147166518079e-05,
+          "success": true,
+          "iteration": 2,
+          "gap_from_this_theta": 370.38026811139594
+        },
+        {
+          "parameters": [
+            91.84090016891057
+          ],
+          "residual_sse": 7.861471323527334e-05,
+          "success": true,
+          "iteration": 3,
+          "gap_from_this_theta": 370.37616760421565
+        },
+        {
+          "parameters": [
+            91.84090016891057
+          ],
+          "residual_sse": 7.861471316081361e-05,
+          "success": true,
+          "iteration": 4,
+          "gap_from_this_theta": 370.37616760421565
+        }
+      ]
+    }
+  },
+  "profile": [
+    {
+      "theta": 0,
+      "profile_rate": 0.0019762660545520395,
+      "sse": 9.4704387979299e-07
+    },
+    {
+      "theta": 0.5,
+      "profile_rate": 0.0019809090911653724,
+      "sse": 9.413568559694949e-07
+    },
+    {
+      "theta": 4,
+      "profile_rate": 0.0020136517694576478,
+      "sse": 9.022424721671347e-07
+    },
+    {
+      "theta": 10,
+      "profile_rate": 0.0020707143710592484,
+      "sse": 8.381303725269003e-07
+    },
+    {
+      "theta": 25,
+      "profile_rate": 0.002217767115554736,
+      "sse": 6.954979015957393e-07
+    },
+    {
+      "theta": 50,
+      "profile_rate": 0.002471635321804558,
+      "sse": 5.200927498233656e-07
+    },
+    {
+      "theta": 75,
+      "profile_rate": 0.002727116180218868,
+      "sse": 4.273619052403464e-07
+    },
+    {
+      "theta": 100,
+      "profile_rate": 0.0029755869673751124,
+      "sse": 4.1350352919487066e-07
+    }
+  ],
+  "replacements": {
+    "fitted": {
+      "growth": 376509.69577946095,
+      "ordinary_inverted_endpoint": 10975.40338034015,
+      "corrected_endpoint": 4395.525300575636,
+      "pooled_kcor": 812.6750759633238,
+      "pooled_interval": [
+        0.8482839453073511,
+        744.8777676525101
+      ]
+    },
+    "true_theta": {
+      "growth": 19.44382400148337,
+      "ordinary_inverted_endpoint": 0.1563239253262676,
+      "corrected_endpoint": 0.15456075455276916,
+      "pooled_kcor": 0.9971180698368605,
+      "pooled_interval": [
+        0.3540363202892689,
+        1.193300158434591
+      ]
+    },
+    "true_theta_and_rate": {
+      "growth": 19.40487675769781,
+      "ordinary_inverted_endpoint": 0.1563239253262676,
+      "corrected_endpoint": 0.1542511593112782,
+      "pooled_kcor": 0.995761331733898,
+      "pooled_interval": [
+        0.3532907946135253,
+        1.1925066850865116
+      ]
+    }
+  }
+}

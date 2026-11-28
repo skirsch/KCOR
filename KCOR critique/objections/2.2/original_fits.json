@@ -1,0 +1,254 @@
+{
+  "2021_24/two-dose/pseudo-dose-0": {
+    "iteration_1": {
+      "k": 0.0014304786202398697,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.001429309797552581,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/two-dose/pseudo-dose-1": {
+    "iteration_1": {
+      "k": 0.0004451274837118835,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0004447637766975617,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/two-dose/pseudo-dose-2": {
+    "iteration_1": {
+      "k": 0.00015982758659982286,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.00015969699387554585,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/unvaccinated/pseudo-dose-0": {
+    "iteration_1": {
+      "k": 0.0033408766305686906,
+      "theta": 1.0206775649163085,
+      "applied_theta": 1.0206775649163085,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.003383567405817791,
+      "theta": 1.0538993597236637,
+      "applied_theta": 1.0538993597236637,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/unvaccinated/pseudo-dose-1": {
+    "iteration_1": {
+      "k": 0.0013163273279952813,
+      "theta": 3.0719342196719337,
+      "applied_theta": 3.0719342196719337,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0013232978731012892,
+      "theta": 3.105265478496274,
+      "applied_theta": 3.105265478496274,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/unvaccinated/pseudo-dose-2": {
+    "iteration_1": {
+      "k": 0.0005611038869016183,
+      "theta": 8.046452469520405,
+      "applied_theta": 8.046452469520405,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0005660474139486888,
+      "theta": 8.193752545826504,
+      "applied_theta": 8.193752545826504,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/all/pseudo-dose-0": {
+    "iteration_1": {
+      "k": 0.0017829598234120356,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0017818975098113346,
+      "theta": 1e-10,
+      "applied_theta": 1e-10,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/all/pseudo-dose-1": {
+    "iteration_1": {
+      "k": 0.000621791869165925,
+      "theta": 0.10908467974062605,
+      "applied_theta": 0.10908467974062605,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0006212838123297283,
+      "theta": 0.10865180435734594,
+      "applied_theta": 0.10865180435734594,
+      "insufficient_signal": false
+    }
+  },
+  "2021_24/all/pseudo-dose-2": {
+    "iteration_1": {
+      "k": 0.00026125498816955724,
+      "theta": 1.646560050708629,
+      "applied_theta": 1.646560050708629,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0002610415206287961,
+      "theta": 1.6393824331972042,
+      "applied_theta": 1.6393824331972042,
+      "insufficient_signal": false
+    }
+  },
+  "2022_06/two-dose/pseudo-dose-0": {
+    "iteration_1": {
+      "k": 0.0034365021669998416,
+      "theta": 1.455737387486571,
+      "applied_theta": 1.455737387486571,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0034456833062560172,
+      "theta": 1.4591265423663773,
+      "applied_theta": 1.4591265423663773,
+      "insufficient_signal": false
+    }
+  },
+  "2022_06/two-dose/pseudo-dose-1": {
+    "iteration_1": {
+      "k": 0.008099151165327752,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    },
+    "iteration_2": {
+      "k": 0.010075159945768629,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    }
+  },
+  "2022_06/two-dose/pseudo-dose-2": {
+    "iteration_1": {
+      "k": 0.00040750243987441317,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    },
+    "iteration_2": {
+      "k": 0.0004071694757527871,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    }
+  },
+  "2022_06/unvaccinated/pseudo-dose-0": {
+    "iteration_1": {
+      "k": 0.0030164709114034955,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    },
+    "iteration_2": {
+      "k": 0.003014006198262989,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    }
+  },
+  "2022_06/unvaccinated/pseudo-dose-1": {
+    "iteration_1": {
+      "k": 0.00283452712353348,
+      "theta": 11.311916609783777,
+      "applied_theta": 11.311916609783777,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.002969460225782543,
+      "theta": 11.903811837480427,
+      "applied_theta": 11.903811837480427,
+      "insufficient_signal": false
+    }
+  },
+  "2022_06/unvaccinated/pseudo-dose-2": {
+    "iteration_1": {
+      "k": 0.0010035035846993991,
+      "theta": 23.72926559537689,
+      "applied_theta": 23.72926559537689,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.001040139739694425,
+      "theta": 24.567295431038787,
+      "applied_theta": 24.567295431038787,
+      "insufficient_signal": false
+    }
+  },
+  "2022_06/all/pseudo-dose-0": {
+    "iteration_1": {
+      "k": 0.002069331450048436,
+      "theta": 0.43026007965701524,
+      "applied_theta": 0.43026007965701524,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0020676406301701573,
+      "theta": 0.4269939315279648,
+      "applied_theta": 0.4269939315279648,
+      "insufficient_signal": false
+    }
+  },
+  "2022_06/all/pseudo-dose-1": {
+    "iteration_1": {
+      "k": 0.0031586209515403205,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    },
+    "iteration_2": {
+      "k": 0.0035844015407582707,
+      "theta": 0.0,
+      "applied_theta": 0.0,
+      "insufficient_signal": true
+    }
+  },
+  "2022_06/all/pseudo-dose-2": {
+    "iteration_1": {
+      "k": 0.00027751976733901297,
+      "theta": 2.6171428016887135,
+      "applied_theta": 2.6171428016887135,
+      "insufficient_signal": false
+    },
+    "iteration_2": {
+      "k": 0.0002772930102291993,
+      "theta": 2.5960127064744394,
+      "applied_theta": 2.5960127064744394,
+      "insufficient_signal": false
+    }
+  }
+}

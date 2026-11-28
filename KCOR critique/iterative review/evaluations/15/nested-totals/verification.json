@@ -1,0 +1,36 @@
+{
+  "candidate": "m176",
+  "parent": "m175",
+  "synthetic_compatible_full": {
+    "point": 1.002719227352062,
+    "interval": [
+      0.875642043341992,
+      1.093970947151514
+    ],
+    "draws": 3
+  },
+  "synthetic_incompatible_full_and_young": {
+    "point": null,
+    "interval": null,
+    "draws": 0,
+    "status": "invalid_aggregate_counts"
+  },
+  "unaffected_1940": {
+    "point": 1.003326320612442,
+    "interval": [
+      0.8497482072057436,
+      1.264642455908168
+    ],
+    "draws": 3
+  },
+  "actual_source": "Czech 2021_24",
+  "actual_source_post_enrollment_rows": 280140,
+  "actual_source_invalid_totals": [],
+  "actual_source_unsupported_totals": [],
+  "main_archive_files_unchanged": 11,
+  "round15_available_ages_regression": "passed, identical results",
+  "clean_page": 18,
+  "redline_page": 19,
+  "redline_index_page": 81,
+  "distinct_visible_linked_objections": 87
+}

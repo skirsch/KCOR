@@ -1,0 +1,32 @@
+# Round 11 convergence - m156
+
+Two independent blind GPT-6.2 Astra High reviews and one independent targeted Astra High review of m152 against m156. Original question verbatim: "Please examine KCOR closely. What is wrong, if anything, and how would you fix it?" All three found proportional gamma inversion sound under its stated model. No new large simulation reruns or corrections adopted.
+
+## Independently resolved round 10 objections
+
+All ten resolved in their original scope. See [targeted resolution](resolution.md) for individual evidence. Related new issues below do not reopen their original scopes. The full forced-alpha interval refresh remains outstanding from the prior seed implementation.
+
+## New findings (18 consolidated)
+
+- **[11.1](../../../objections/11.1/README.md) - All-ages population depends on redundant input total** (High for affected ordinary workbooks; B). Default display-year filtering removes unknown years before reconstruction. Supplying a correct redundant -2 total changed anchored KCOR 1.177097 to 1.165209 in an equivalent generated input.
+- **[11.2](../../../objections/11.2/README.md) - Dedicated Table 8 replay invents finite ratios after risk-set exhaustion** (High for affected replay histories; R). Extinguishing a required dose-2 subgroup at week 29 yielded dedicated pooled ratios 73.342353 and 72.173637; the ordinary workbook correctly reported unavailable. Published histories unaffected.
+- **[11.3](../../../objections/11.3/README.md) - Pooled geometric mean silently clips representable ratios** (Moderate; B). With one stratum, direct finite KCOR 2.043049e10 became pooled 1e6 despite OK normalization.
+- **[11.4](../../../objections/11.4/README.md) - Ordinary bootstrap loses residual-screen flags** (Moderate; B). A contributing fit with sampling_flag=True and numerical status OK is not counted in CI_point_flagged or flagged draws. Dedicated Table 8 diagnostics retain the distinction.
+- **[11.5](../../../objections/11.5/README.md) - Alpha equals one is not identical to disabling the module** (Moderate, method description; A). Same exact proportional history, enabled marked wave alpha=1 versus module off: fitting masks 50 versus 60 rows, theta 2 versus 5.61408. Inversion identity with same parameters still holds.
+- **[11.6](../../../objections/11.6/README.md) - Dedicated replay lacks sparse-stratum pooling fallback** (Moderate for affected replay histories; R). Zero early deaths in one stratum gives NaN pooled ratios despite successful fits; ordinary workbook uses minimum-positive-rate fallback and finite weights. Published original weights confirmed.
+- **[11.7](../../../objections/11.7/README.md) - Dedicated Table 8 reader truncates fractional person counts** (Moderate for input integrity; R). Internally consistent half-person input is silently cast back to original integers; ordinary bootstrap rejects it. Published input contains integer counts.
+- **[11.8](../../../objections/11.8/README.md) - Hyphenated enrollment sheet name disables bootstrap** (Moderate; B). Point parser accepts 2023-19 and 2023_19, but bootstrap split on underscore only makes hyphenated enrollment intervals unavailable.
+- **[11.9](../../../objections/11.9/README.md) - Workbook About reports outdated methodology and shifted configuration** (Moderate for reproducibility; A). Written About sheet describes v4.1 slope/binomial methods and mismatches field/value rows, e.g. YEAR_RANGE=4 and ENROLLMENT_DATES=0.
+- **[11.10](../../../objections/11.10/README.md) - Cox comparator inference and interpretation under nonproportional hazards** (Moderate; A, B). Conventional model-based Cox Wald errors/p-values under deliberate non-PH are labeled 95% CIs without inferential qualification; comparison table overstates absence of interpretable output and labels departure biased HR without explicit target.
+- **[11.11](../../../objections/11.11/README.md) - Nonfatal outcome scope omits competing death** (Moderate scientific scope; B). Single-event risk recursion does not automatically accommodate death before hospitalization or disease onset.
+- **[11.12](../../../objections/11.12/README.md) - Table 8 and S6 references identify superseded archives** (Low to moderate for reproducibility; A, R). Table 8 caption still cites older primary archive and calls forced-alpha current; SI S6 and analysis README also refer to older primary paths. Printed values unchanged; full forced-alpha intervals remain prior-seed.
+- **[11.13](../../../objections/11.13/README.md) - Cumulative person-time column exports weekly exposure** (Minor numerical export; A). Cumu_Person_Time reports opening risks 20000, 19980, 19959 instead of cumulative 20000, 39980, 59939; cumulative value already calculated.
+- **[11.14](../../../objections/11.14/README.md) - Wave deficit frequency not exported** (Minor diagnostic reporting; A, B). Three-week test: one strict deficit, one baseline equality, one positive excess; skipped_nonpositive_excess=2 but deficit_weeks=1. Workbook reports only skipped count.
+- **[11.15](../../../objections/11.15/README.md) - Finite simulation endpoint labeled asymptote and single deviation labeled bias** (Minor scientific wording; A). Generator defines asymptote as last simulated value, and SI calls single-realization endpoint minus one bias.
+- **[11.16](../../../objections/11.16/README.md) - Pooled row copies one stratum?s frailty parameter** (Minor workbook labeling; B). Weighted geometric mean row carries theta_num/theta_den from first contributor although no pooled frailty is fitted.
+- **[11.17](../../../objections/11.17/README.md) - S4.6 joint simulation has no stated configuration or results** (Minor reproducibility; B). S4.6 points to summary table for parameters and scripts but entry names only design; no documented outputs or runner.
+- **[11.18](../../../objections/11.18/README.md) - Bounded point seed loses gap-detail rows** (Low audit completeness; R). True theta 550 returns unassessed point seed but no per-gap detail row despite known re-entry week 70. Published 54 detail rows unaffected.
+
+## Interpretation
+
+No new core gamma-inversion algebra error was established. Two high-priority defects concern aggregate membership and the dedicated replay endpoint on exhaustion. Most other issues concern data representation, output diagnostics, specific edge cases or reporting precision. Published Czech intervals have not been shown incorrect by these tests. The prior forced-alpha archive limitation is disclosed; no current full rerun is claimed.

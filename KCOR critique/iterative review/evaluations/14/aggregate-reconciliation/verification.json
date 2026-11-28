@@ -1,0 +1,31 @@
+{
+  "candidate": "m173",
+  "parent": "m172",
+  "scope": "exhaustive default; explicit partial",
+  "smoke_draws": 3,
+  "synthetic_complete_endpoint": 1.802100124909151,
+  "synthetic_complete_interval": [
+    1.563328307341816,
+    1.875457834747409
+  ],
+  "malformed_total_point": null,
+  "malformed_total_interval": null,
+  "malformed_total_valid_draws": 0,
+  "individual_1940_endpoint": 1.003326320612442,
+  "individual_1940_interval": [
+    0.8497482072057436,
+    1.264642455908168
+  ],
+  "partial_endpoint": 1.802100124909151,
+  "partial_interval": null,
+  "partial_valid_draws": 0,
+  "actual_s6_rows": 1192,
+  "actual_s6_common_fields": 39,
+  "actual_s6_comparison": "exact",
+  "unchanged_main_archive_files": 11,
+  "clean_page": 18,
+  "redline_page": 19,
+  "redline_index_page": 81,
+  "distinct_visible_linked_objections": 85,
+  "legacy_round7_test": "identical pre-existing final assertion failure in m172 and m173; preceding checks pass"
+}

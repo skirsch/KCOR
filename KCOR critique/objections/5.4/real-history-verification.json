@@ -1,0 +1,20 @@
+{
+  "Czech 2021_24": {
+    "cohorts": 133,
+    "people": 9904933,
+    "aggregate_rows": 2436,
+    "draw_checked": true
+  },
+  "Czech 2022_06": {
+    "cohorts": 133,
+    "people": 9835139,
+    "aggregate_rows": 1960,
+    "draw_checked": true
+  },
+  "FOIA 2022_47": {
+    "cohorts": 90,
+    "people": 9199116,
+    "aggregate_rows": 0,
+    "draw_checked": true
+  }
+}

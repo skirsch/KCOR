@@ -1,0 +1,70 @@
+{
+  "truth": 1.0,
+  "gained_coverage": 2,
+  "lost_coverage": 2,
+  "paired_p": 1.0,
+  "width_difference": [
+    -0.0006446174379623604,
+    -0.0007475335297428611,
+    -0.0005417013461818597
+  ],
+  "approximate": {
+    "covered": 90,
+    "datasets": 100,
+    "coverage": 0.9,
+    "coverage_lower": 0.8237774022598248,
+    "coverage_upper": 0.9509953107785141,
+    "mean_width": [
+      0.08772559563586166,
+      0.08637392390145823,
+      0.08907726737026508
+    ],
+    "mean_point": [
+      0.995645254623022,
+      0.9907238880157211,
+      1.000566621230323
+    ],
+    "rmse": 0.025059514569573182,
+    "prefix_coverage": 0.88,
+    "originals_with_insufficient_signal": 0,
+    "draws_with_insufficient_signal": 0,
+    "failed_fit_calls": 0,
+    "originals_with_clamped_gap": 0
+  },
+  "weekly_survival": {
+    "covered": 90,
+    "datasets": 100,
+    "coverage": 0.9,
+    "coverage_lower": 0.8237774022598248,
+    "coverage_upper": 0.9509953107785141,
+    "mean_width": [
+      0.08708097819789928,
+      0.0857342481565826,
+      0.08842770823921597
+    ],
+    "mean_point": [
+      0.9898185616150293,
+      0.9849317554481516,
+      0.9947053677819071
+    ],
+    "rmse": 0.02653589130270981,
+    "prefix_coverage": 0.89,
+    "originals_with_insufficient_signal": 0,
+    "draws_with_insufficient_signal": 0,
+    "failed_fit_calls": 0,
+    "originals_with_clamped_gap": 0
+  },
+  "median_width": [
+    0.08741877447686724,
+    0.0866544886360413
+  ],
+  "max_width": [
+    0.10199340338692164,
+    0.10095454891634725
+  ],
+  "diagnostics": {
+    "weeks": 617096,
+    "deficits": 0,
+    "max_survival_residual": 2.5847379792054426e-15
+  }
+}

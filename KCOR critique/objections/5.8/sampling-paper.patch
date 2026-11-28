@@ -1,0 +1,11 @@
+--- m110/documentation/preprint/paper.md
++++ m111/documentation/preprint/paper.md
+@@ -419,7 +419,7 @@
+ $$
+ {#eq:si_residuals}
+ 
+-KCOR expects residuals to be small and not systematically time-structured within or across quiet windows. Strongly patterned residuals indicate that the curvature attributed to depletion is instead being driven by unmodeled time-varying hazards.
++KCOR expects residuals to be small and not systematically time-structured within or across quiet windows. For integer death counts and opening risk sets, the fitted integrated weekly hazard $q$ implies $p=1-e^{-q}$, expected deaths $Np$, and binomial variance $Np(1-p)$. Report standardized count residuals and doubled smaller inclusive binomial tail probabilities at the fitted parameters. A tail probability below $0.05/m$ across $m$ eligible count observations is an exploratory flag, not a calibrated goodness-of-fit test or an automatic frailty reset. Other existing eligibility and bound safeguards remain. Strongly patterned residuals indicate that the curvature attributed to depletion is instead being driven by unmodeled time-varying hazards.
+ 
+ 3. **Multi-window stability.** Under valid quiet-window selection, the reconstructed offsets and fitted parameters should be stable to small perturbations of quiet-window boundaries and to omission of individual quiet windows. Large changes under minor perturbations signal that the fitted geometry is being driven by transient dynamics rather than by stable depletion structure.
+ 

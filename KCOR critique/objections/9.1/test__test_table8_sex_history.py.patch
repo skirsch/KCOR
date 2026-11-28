@@ -1,0 +1,65 @@
+--- m143/test/test_table8_sex_history.py
++++ m144/test/test_table8_sex_history.py
+@@ -0,0 +1,62 @@
++"""Validate identifiable source histories before aggregating the overlapping control."""
++from pathlib import Path
++import sys,io
++import numpy as np,pandas as pd
++ROOT=Path(__file__).resolve().parents[1]
++sys.path.insert(0,str(ROOT/'test'));sys.path.insert(0,str(ROOT/'code'))
++from test_round7_workbook import run
++from fixed_cohort_history import invalid_components
++from bootstrap_reporting import histories
++sys.path.insert(0,str(ROOT/"analysis/table8"))
++from table8_bootstrap import read_population
++
++def main():
++    for sheet in ('2021_24','2022_06'):
++        frame=pd.read_excel(ROOT/'analysis/table8/input.xlsx',sheet_name=sheet,parse_dates=['DateDied'])
++        start=pd.Timestamp.fromisocalendar(*map(int,sheet.split('_')),1)
++        frame=frame[frame.DateDied>=start].copy()
++        assert not invalid_components(frame,start,layout='table8')
++        histories(frame,sheet,'table8')
++        read_population(ROOT/'analysis/table8/input.xlsx',sheet)
++        print(sheet,'original source and bootstrap histories accepted',flush=True)
++        if sheet!='2021_24':continue
++        cut=frame.DateDied.max()-pd.Timedelta(weeks=8)
++        mask=frame.YearOfBirth.eq(1960)&frame.Dose.eq(2)&frame.Sex.eq('M')
++        altered=frame[~(mask&frame.DateDied.ge(cut))]
++        bad=invalid_components(altered,start,layout='table8');print('missing suffix',bad,flush=True)
++        assert (1960,2) in bad and any(reason=='truncated positive-risk component' for _,reason in bad[(1960,2)])
++        try:histories(altered,sheet,'table8')
++        except ValueError:pass
++        else:raise AssertionError('bootstrap accepted missing positive-risk suffix')
++        buf=io.BytesIO();altered.to_excel(buf,sheet_name=sheet,index=False);buf.seek(0)
++        try:read_population(buf,sheet)
++        except ValueError:pass
++        else:raise AssertionError('dedicated replay accepted missing positive-risk suffix')
++        out=run(sheet,altered,layout='table8')
++        for age in (1960,0,-2):
++            x=out[out.YearOfBirth.eq(age)&out.Dose_num.eq(2)&out.Dose_den.eq(0)]
++            print(age,x.KCOR.iloc[-1],x.normalization_status.iloc[-1],flush=True)
++            assert len(x) and x.KCOR.isna().all() and x.normalization_status.eq('missing_week_history').all()
++        for age in (1940,1950):
++            x=out[out.YearOfBirth.eq(age)&out.Dose_num.eq(2)&out.Dose_den.eq(0)]
++            assert np.isfinite(x.KCOR.iloc[-1])
++            print('unaffected',age,x.KCOR.iloc[-1],flush=True)
++    # Construct a valid overlapping layout with an exhausted component that
++    # disappears only after its last member dies. Inclusive totals still retain
++    # the other components, so the bootstrap's overlapping cell constraints hold.
++    dates=pd.date_range('2021-06-14',periods=6,freq='7D');parts=[]
++    for age in (1940,1950,1970):
++        for dose in (0,1,2):
++            for sex in ('F','M'):
++                dead=np.ones(len(dates),dtype=int);alive=100-np.arange(len(dates))
++                if (age,dose,sex)==(1940,2,'M'):
++                    dead[2]=alive[2];dead[3:]=0;alive[3:]=0
++                parts.append(pd.DataFrame(dict(YearOfBirth=age,Dose=dose,Sex=sex,DateDied=dates,ISOweekDied=dates.strftime('%G-%V'),Alive=alive,Dead=dead)))
++    base=pd.concat(parts,ignore_index=True)
++    inc=base.groupby(['Dose','Sex','DateDied','ISOweekDied'],as_index=False)[['Alive','Dead']].sum();inc['YearOfBirth']=1960
++    exhausted=pd.concat([base[base.YearOfBirth.ne(1970)],inc],ignore_index=True)
++    exhausted=exhausted[~(exhausted.YearOfBirth.eq(1940)&exhausted.Dose.eq(2)&exhausted.Sex.eq('M')&exhausted.DateDied.gt(dates[2]))]
++    assert not invalid_components(exhausted,dates[0],layout='table8')
++    histories(exhausted,'2021_24','table8')
++    print('genuine component exhaustion accepted by both validators',flush=True)
++if __name__=='__main__':main()

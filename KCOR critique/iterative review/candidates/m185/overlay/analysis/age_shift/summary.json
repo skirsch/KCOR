@@ -1,0 +1,36 @@
+{
+  "input_sha256": "a18dbfad2cc8d4ad9fe325ac75a748be486c10a20548f8ae164292d3f925836f",
+  "enrollment": "2021_24",
+  "reference": "2021-07-19",
+  "end": "2024-10-07",
+  "draws": 999,
+  "ordinary_workbook_verified_draws": [
+    0,
+    1,
+    42
+  ],
+  "pairs": [
+    {
+      "pair": "1/0",
+      "historical_endpoint": 0.9868621855401293,
+      "current_endpoint": 1.0035613023869483,
+      "lower": 0.9473604097811554,
+      "upper": 1.0531570017948373,
+      "pointwise_intervals_including_one": 168,
+      "weeks": 169,
+      "residual_flagged_draws": 987,
+      "failed_draws": 0
+    },
+    {
+      "pair": "2/0",
+      "historical_endpoint": 0.9641697036953005,
+      "current_endpoint": 1.027059255766969,
+      "lower": 0.9641802690941624,
+      "upper": 1.0914134537613325,
+      "pointwise_intervals_including_one": 159,
+      "weeks": 169,
+      "residual_flagged_draws": 950,
+      "failed_draws": 0
+    }
+  ]
+}

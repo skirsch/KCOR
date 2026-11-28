@@ -1,0 +1,46 @@
+--- m101/code/generate_kcor_workflow_figure.py
++++ m102/code/generate_kcor_workflow_figure.py
+@@ -121,7 +121,7 @@
+         [
+             r"• Compute $h_{\mathrm{obs},d}(t_{\mathrm{raw}})$",
+             r"• Apply skip to get $h_d^{\mathrm{eff}}(t)$",
+-            r"• Optional $c_d(t)$ gives $h_d^{\mathrm{adj}}(t)$",
++            r"• Retain observed weekly increments",
+             r"• Accumulate $H_{\mathrm{obs},d}(t)$",
+         ],
+     )
+@@ -172,7 +172,7 @@
+         0.12,
+         "4. Pooled quiet-window refit",
+         [
+-            r"• Refit $\hat{\theta}_{0,d}$ with $\hat{k}_d$ fixed",
++            r"• Jointly refit $\hat{k}_d,\hat{\theta}_{0,d}$",
+             "• Use all aligned quiet windows",
+         ],
+     )
+@@ -207,7 +207,7 @@
+     add_arrow(ax, (0.43, 0.25), (0.43, 0.19))
+     add_arrow(ax, (0.50, 0.145), (0.52, 0.145))
+ 
+-    add_arrow(ax, (0.66, 0.34), (0.66, 0.66), curved=1.25)
++    add_arrow(ax, (0.68, 0.34), (0.68, 0.66), curved=0.25)
+     ax.text(0.695, 0.50, "Iterate to convergence", fontsize=10, color=TEXT, rotation=90, va="center")
+ 
+     # Panel C: optional NPH
+@@ -219,14 +219,13 @@
+         0.22,
+         "Optional epidemic-wave NPH module",
+         [
+-            r"• Specify $c_d(t)$ independently",
+-            r"• Apply before $H_{\mathrm{obs},d}(t)$ accumulation",
++            r"• Specify or identify shared $\alpha$",
++            r"• Use survivor law in fit and inversion",
+             "• Outside the universal KCOR core",
+         ],
+         dashed=True,
+         title_size=10,
+     )
+-    add_arrow(ax, (0.75, 0.57), (0.27, 0.58), curved=0.22)
+ 
+     ax.text(
+         0.05,

@@ -1,0 +1,37 @@
+--- /dev/null
++++ b/test/test_round12_population.py
+@@ -0,0 +1,34 @@
++﻿"""Round 12 population representation and pooled status regression."""
++from pathlib import Path
++import os,sys,tempfile,io
++from contextlib import redirect_stdout,redirect_stderr
++import pandas as pd,numpy as np
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
++from test_round7_workbook import K
++SHEET='2023_19'
++def main():
++    dates=pd.date_range('2023-05-08',periods=20,freq='7D');rows=[]
++    for age in (1950,2021):
++        for dose in (0,1):
++            dead=np.full(20,20)
++            if age==2021 and dose==1:dead[10:]=90
++            alive=20000-np.r_[0,np.cumsum(dead[:-1])]
++            rows.append(pd.DataFrame(dict(YearOfBirth=age,Dose=dose,Sex='F',DateDied=dates,ISOweekDied=dates.strftime('%G-%V'),Alive=alive,Dead=dead)))
++    f=pd.concat(rows,ignore_index=True);g=f.groupby(['Dose','DateDied','ISOweekDied'],as_index=False)[['Alive','Dead']].sum();g['YearOfBirth']=-2;g['Sex']='O'
++    os.environ.update(KCOR_BOOTSTRAP_DRAWS='3',KCOR_BOOTSTRAP_WORKERS='2',KCOR_BOOTSTRAP_LAYOUT='disjoint',KCOR_NPH_MODE='identified_only')
++    K.ENROLLMENT_DATES=[SHEET];K.OVERRIDE_DOSE_PAIRS=[(1,0)];K.OVERRIDE_YOBS=None
++    outputs=[]
++    for z in (f,pd.concat([f,g],ignore_index=True)):
++        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
++            src=Path(tmp)/'in.xlsx';dst=Path(tmp)/'out.xlsx';z.to_excel(src,sheet_name=SHEET,index=False)
++            with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):K.process_workbook(str(src),str(dst))
++            outputs.append(pd.read_excel(dst,sheet_name='dose_pairs'))
++    a,b=outputs
++    for col in ('KCOR','CI_lower','CI_upper','CI_valid_draws'):
++        np.testing.assert_allclose(a[a.YearOfBirth.eq(-2)][col],b[b.YearOfBirth.eq(-2)][col],equal_nan=True,rtol=1e-13)
++    p=a[a.YearOfBirth.eq(-2)].iloc[-1];assert p.CI_valid_draws==3 and np.isfinite(p.KCOR) and p.KCOR>1.1
++    for x in outputs:
++        y=x[x.YearOfBirth.isin([0,-3])]
++        assert y.theta0_status_num.isna().all() and y.theta0_status_den.isna().all()
++    print('post-2020 all-ages parity',p[['KCOR','CI_lower','CI_upper','CI_valid_draws']].to_dict())
++if __name__=='__main__':main()

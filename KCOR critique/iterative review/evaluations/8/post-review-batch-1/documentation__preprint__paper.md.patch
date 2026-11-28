@@ -1,0 +1,52 @@
+--- m135/documentation/preprint/paper.md
++++ m136/documentation/preprint/paper.md
+@@ -76,11 +76,11 @@
+ 
+ ### 1.5 Contribution of this work
+ 
+-This work makes four primary contributions: (i) it formalizes selection-induced depletion under latent frailty heterogeneity as a source of non-proportional hazards and curvature that can bias common survival estimands; (ii) it replaces a single-window constant-baseline fit with a Gompertz-based delta-iteration estimator that targets a cohort-specific enrollment-time frailty variance $\theta_{0,d}$ across aligned quiet windows; (iii) it separates a universal KCOR core from an optional epidemic-wave NPH exponent module with a shared amplification parameter $\alpha$ localized, if at all, from cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale**, and a post-inversion cumulative correction on **frailty-neutral cumulative hazard** (§2.7); and (iv) it validates the revised estimator using a broader stack that includes $\theta_0$ recovery, control analyses, Cox mismatch demonstrations, and explicit failure signaling.
++This work makes four primary contributions: (i) it formalizes selection-induced depletion under latent frailty heterogeneity as a source of non-proportional hazards and curvature that can distort fixed-frailty contrasts inferred from conventional survival summaries; (ii) it replaces a single-window constant-baseline fit with a Gompertz-based delta-iteration estimator that targets a cohort-specific enrollment-time frailty variance $\theta_{0,d}$ across aligned quiet windows; (iii) it separates a universal KCOR core from an optional epidemic-wave NPH exponent module with a shared amplification parameter $\alpha$ localized, if at all, from cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale**, and a post-inversion cumulative correction on **frailty-neutral cumulative hazard** (§2.7); and (iv) it validates the revised estimator using a broader stack that includes $\theta_0$ recovery, control analyses, Cox mismatch demonstrations, and explicit failure signaling.
+ 
+ A central implication is identifiability: in minimal-data retrospective cohorts, interpretability depends not on any one quiet window alone but on a coherent combination of Gompertz curvature, rebased enrollment-time anchoring, consistency across quiet windows, and diagnostics of fit and stability. A common multiplier on individual baseline hazards preserves the frailty variance. Rescaling observed cohort hazards changes the fitted variance (§2.4.4). The optional NPH exponent $\alpha$ is not separately identifiable from cohort-specific multiplicative structure in minimal aggregated data (Limitations §5.4).
+ 
+-Together, these contributions position KCOR not as a replacement for existing survival estimands, but as a prerequisite normalization step that addresses a source of bias arising prior to model fitting in many retrospective cohort studies.
++Together, these contributions position KCOR not as a replacement for existing survival estimands, but as a normalization step for studies targeting depletion-adjusted cumulative contrasts, rather than the observed marginal survival itself.
+ 
+ ### 1.6 Target estimand and scope (non-causal)
+ 
+@@ -172,7 +172,7 @@
+ 
+ Scope and interpretation are summarized in Box 2 (§1.6). A working-model identification proposition for $\theta_{0,d}$ is stated immediately after §2.4.4, together with a diagnostic interpretation disclaimer.
+ 
+-Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables S1–S3). When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported. Checks include:
++Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables S1–S3). When required diagnostics indicate non-identifiability, substantive interpretation is withheld; explicitly flagged numerical outputs may be retained for descriptive illustration or audit. Checks include:
+ 
+ * stability of $(\hat{k}_d,\hat{\theta}_{0,d})$ and the aligned quiet-window geometry under small perturbations,
+ * agreement of the normalized cumulative hazard with its fitted Gompertz shape within the quiet window,
+@@ -337,7 +337,7 @@
+ 
+ #### 2.4.4 Quiet-window validity and identifiability
+ 
+-Frailty parameters are identified using only bins whose corresponding calendar weeks lie inside prespecified quiet windows (defined in ISO-week space). These windows are chosen to avoid sharp external shocks that would confound depletion-geometry identification. In the revised estimator, however, no one quiet window is assumed sufficient on its own. Identification depends on:
++Frailty parameters are fitted using bins within prespecified calendar quiet windows (ISO-week space) and the early post-skip fitting-anchor weeks, which are assumed to follow the baseline working model (section 2.5). Marked wave rows are excluded from quiet residuals when the optional wave model is active. These windows are chosen to avoid sharp external shocks that would confound depletion-geometry identification. In the revised estimator, however, no one quiet window is assumed sufficient on its own. Identification depends on:
+ 
+ 1. adequate Gompertz-plus-frailty fit within quiet windows,
+ 2. consistency of $\hat{\theta}_{0,d}$ across aligned quiet windows after structured offset correction,
+@@ -689,7 +689,7 @@
+ 
+ ### 2.13 Reproducibility and computational implementation
+ 
+-All figures, tables, and simulations can be reproduced from the accompanying code repository. The manuscript is built from `documentation/preprint/paper.md` using the root `Makefile` build target `make paper-pdf`.
++The accompanying repository provides the manuscript, figure assets, executable analyses and archived results. The reproduction scope of each analysis, including historical studies verified from stored draws, is described in SI S7 and `analysis/README.md`. The manuscript is built from `documentation/preprint/paper.md` using the root `Makefile` build target `make paper-pdf`.
+ 
+ Additional environment and runtime details are provided in the Supplementary Information (SI); code and archival links are provided in Code/Data Availability.
+ 
+@@ -907,7 +907,7 @@
+ 
+ This subsection summarizes common operational practices for applying KCOR in retrospective cohort studies and for assessing when resulting contrasts are interpretable under the stated working model.
+ 
+-**Practical guideline.** KCOR should be applied only when curvature diagnostics indicate a well-identified regime (§2.1.2, §5.1); if diagnostics fail, contrasts are not reported.
++**Practical guideline.** KCOR should be applied only when curvature diagnostics indicate a well-identified regime (§2.1.2, §5.1); if required diagnostics fail, substantive interpretation is withheld. Explicitly flagged numerical outputs may be retained for audit, while undefined computations remain unavailable.
+ 
+ Reporting commonly includes:
+ 

@@ -1,0 +1,19 @@
+{
+  "independent_integration_cases": 960,
+  "maximum_absolute_error": 3.613886967457347e-12,
+  "monotonic_comparisons": 184800,
+  "synthetic_theta_cases": [
+    2,
+    20,
+    99
+  ],
+  "synthetic_max_curve_error": 2.531308496145357e-13,
+  "benchmark_max_change": 7.328963991248827e-07,
+  "benchmark_median_before": 0.9305643499974394,
+  "benchmark_median_after": 4.370641249999608,
+  "percentile_boundary_draws": 24,
+  "percentile_draw_max_change": 4.878068858404916e-06,
+  "partial_quantile_max_change": 1.5698738999869732e-06,
+  "partial_quantiles_same_rounded": true,
+  "full_bootstrap_recomputed": false
+}

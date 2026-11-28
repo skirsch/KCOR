@@ -1,0 +1,42 @@
+[
+  {
+    "scenario": "gamma",
+    "point": 0.9999999999999908,
+    "theta_a": 0.9999999999999931,
+    "theta_b": 0.3000000000000107,
+    "status_a": "ok",
+    "status_b": "ok"
+  },
+  {
+    "scenario": "lognormal",
+    "point": 0.9991805343514542,
+    "theta_a": 0.8723781954517497,
+    "theta_b": 0.2898006578389934,
+    "status_a": "ok",
+    "status_b": "ok"
+  },
+  {
+    "scenario": "two_point",
+    "point": 1.0000839216070398,
+    "theta_a": 1.148404002451032,
+    "theta_b": 0.3305181767907709,
+    "status_a": "ok",
+    "status_b": "ok"
+  },
+  {
+    "scenario": "bimodal",
+    "point": 1.000098186525218,
+    "theta_a": 1.140297996661902,
+    "theta_b": 0.327573727055292,
+    "status_a": "ok",
+    "status_b": "ok"
+  },
+  {
+    "scenario": "correlated_gamma",
+    "point": 0.9999999999999908,
+    "theta_a": 0.9999999999999931,
+    "theta_b": 0.3000000000000107,
+    "status_a": "ok",
+    "status_b": "ok"
+  }
+]

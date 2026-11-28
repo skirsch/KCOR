@@ -1,0 +1,25 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -160,7 +160,7 @@
+ | S4.3 | Positive control | Frailty target | Enrollment-time $\theta_{0,d}$ | Estimated separately within each cohort, not fixed in the estimator |
+ | S4.4 | Sensitivity analysis | Perturbations | Skip weeks, quiet-window placement, omitted windows, anchor choice, excess handling, theta propagation scale, optional NPH settings | Probes robustness of the revised estimator |
+ | S4.5 | Adversarial selection geometry | Frailty distribution | Tail-mixture versus mid-quantile sampling | Tests robustness to non-gamma geometry |
+-| S4.6 | Joint frailty + effect | DGP | Frailty heterogeneity plus injected effect | Tests separability of depletion and effect windows |
++| S4.6 | Joint frailty + effect (historical) | DGP | Nominal 2 million per cohort; 260 weeks; variances 0.3 and 0.8; effect multipliers 0.8, 1.2 | Earlier single-window cumulative-hazard fitter; 13 scenarios |
+ 
+ ### S4.1 Reference implementation and default operational settings
+ 
+@@ -239,11 +239,11 @@
+ 
+ This joint simulation combines the selection-induced depletion mechanisms examined in Sections S4.2 and S4.5 with the injected-effect framework of Section S4.3.
+ 
+-Parameter values and scripts for this joint simulation are summarized in Table @tbl:si_sim_params.
++The archived S7 experiment used the earlier single-window cumulative-hazard fitter, not the revised all-window estimator. The generator (`test/sim_grid/code/generate_s7_sim.py`) used 260 weeks, nominal 2 million people per cohort, baseline hazard 0.002/week, frailty variances 0.3 and 0.8, two skipped weeks, and quiet weeks 80--140 (zero-based). It used deterministic expected deaths in a 60-bin gamma quantile approximation (quantiles 0.001--0.999). The 13 scenarios combine step, ramp and bump shapes, multipliers 0.8 and 1.2, and early (10--25) or late (150--190) effect windows, plus a step-harm overlap variant (70--95). Archived trajectories and fit diagnostics are in `test/sim_grid/out/s7_results.xlsx` and `test/sim_grid/out/s7_diagnostics.csv`; both fits reported numerical success in all 13 scenarios. These are historical diagnostic runs, not coverage or current-fitter recovery results.
+ 
+ #### Design
+ 
+-Two fixed cohorts are generated with identical baseline hazards but differing enrollment-time frailty variance. Individual hazards are multiplicatively scaled by a latent frailty term drawn from a gamma distribution with unit mean and cohort-specific variance. A treatment effect is then injected over a prespecified time window that does not overlap the quiet windows used for frailty identification.
++Two fixed cohorts are generated with identical baseline hazards but differing enrollment-time frailty variance. Individual hazards are multiplicatively scaled by a latent frailty term approximating a gamma distribution with unit mean and cohort-specific variance. A treatment effect is then injected over a prespecified time window outside the quiet window in the main grid, or overlapping it in the additional stress variant.
+ 
+ Formally, individual hazards are generated as
+ 

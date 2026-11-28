@@ -1,0 +1,57 @@
+[
+  {
+    "case": "zero-anchor",
+    "k": NaN,
+    "theta": NaN,
+    "status": "insufficient_data",
+    "message": "k_anchor_too_small",
+    "n_fit": 33,
+    "success": false,
+    "quiet_deaths": NaN,
+    "raw_theta": NaN
+  },
+  {
+    "case": "zero-anchor-wave",
+    "k": NaN,
+    "theta": NaN,
+    "status": "insufficient_data",
+    "message": "k_anchor_too_small",
+    "n_fit": 33,
+    "success": false,
+    "quiet_deaths": 310.0,
+    "raw_theta": NaN
+  },
+  {
+    "case": "positive-anchor",
+    "k": 0.0006665055976353286,
+    "theta": 1.9565909289922632,
+    "status": "ok",
+    "message": "ok",
+    "n_fit": 33,
+    "success": true,
+    "quiet_deaths": 310.0,
+    "raw_theta": 1.9565909289922632
+  },
+  {
+    "case": "all-zero",
+    "k": NaN,
+    "theta": NaN,
+    "status": "insufficient_data",
+    "message": "k_anchor_too_small",
+    "n_fit": 33,
+    "success": false,
+    "quiet_deaths": NaN,
+    "raw_theta": NaN
+  },
+  {
+    "case": "below-minimum",
+    "k": NaN,
+    "theta": NaN,
+    "status": "insufficient_data",
+    "message": "k_anchor_too_small",
+    "n_fit": 33,
+    "success": false,
+    "quiet_deaths": NaN,
+    "raw_theta": NaN
+  }
+]

@@ -1,0 +1,49 @@
+--- a/test/test_round16_population_coverage.py
++++ b/test/test_round16_population_coverage.py
+@@ -0,0 +1,46 @@
++"""Round 16.1: disclose the supplied birth-year coverage for both doses."""
++from pathlib import Path
++import os,sys,tempfile,io
++from contextlib import redirect_stdout,redirect_stderr
++import numpy as np,pandas as pd
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
++from test_round14_aggregate import K,input_frame,ending
++S='2023_01'
++def written(f):
++ os.environ.update(KCOR_BOOTSTRAP_DRAWS='3',KCOR_BOOTSTRAP_WORKERS='2',KCOR_BOOTSTRAP_LAYOUT='disjoint',KCOR_AGGREGATE_SCOPE='partial')
++ K.ENROLLMENT_DATES=[S];K.OVERRIDE_DOSE_PAIRS=[(1,0)];K.OVERRIDE_YOBS=None
++ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
++  p=Path(tmp);src=p/'input.xlsx';dst=p/'out.xlsx';f.to_excel(src,sheet_name=S,index=False)
++  with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):K.process_workbook(str(src),str(dst))
++  out=pd.read_excel(dst,sheet_name='dose_pairs',dtype={'population_age_groups_num':str,'population_age_groups_den':str,'population_zero_enrollment_groups_num':str,'population_zero_enrollment_groups_den':str})
++  by=pd.read_excel(dst,sheet_name='by_dose',dtype={'population_age_groups':str,'population_zero_enrollment_groups':str})
++  log=(p/'KCOR_summary.log').read_text(encoding='utf-8')
++  a=out[out.YearOfBirth.eq(-2)].iloc[-1];assert a.population_label=='All available ages'
++  assert '[Population coverage]' in log and a.population_coverage_status in log
++  for side in ('num','den'):
++   dose=a['Dose_'+side];r=by[(by.YearOfBirth.eq(-2))&(by.Dose.eq(dose))].iloc[-1]
++   assert r.population_age_groups==a['population_age_groups_'+side]
++   assert r.population_zero_enrollment_groups==a['population_zero_enrollment_groups_'+side]
++  return out
++def main():
++ f=input_frame(S)
++ for dose in (0,1):
++  ix=f[(f.YearOfBirth.eq(1950))&(f.Dose.eq(dose))].index
++  f.loc[ix[8:],'Dead']*=4;f.loc[ix,'Alive']=20000-np.r_[0,np.cumsum(f.loc[ix,'Dead'].to_numpy()[:-1])]
++ missing=f[~(f.YearOfBirth.eq(1950)&f.Dose.eq(0))].copy()
++ absent=ending(written(missing),-2)
++ assert absent.population_age_groups_num=='1940,1950' and absent.population_age_groups_den=='1940'
++ assert absent.population_coverage_status=='different_supplied_age_groups'
++ assert absent.population_zero_enrollment_groups_den=='none'
++ assert absent.CI_valid_draws==3 and absent.CI_population_scope_changed_draws==0
++ zero=f.copy();zero.loc[zero.YearOfBirth.eq(1950)&zero.Dose.eq(0),['Alive','Dead']]=0
++ known_zero=ending(written(zero),-2)
++ assert known_zero.population_age_groups_num==known_zero.population_age_groups_den=='1940,1950'
++ assert known_zero.population_coverage_status=='same_supplied_age_groups'
++ assert known_zero.population_zero_enrollment_groups_den=='1950'
++ assert known_zero.CI_valid_draws==3 and known_zero.CI_population_scope_changed_draws==0
++ cols=['KCOR','CI_lower','CI_upper','CI_valid_draws']
++ np.testing.assert_allclose(absent[cols].to_numpy(float),known_zero[cols].to_numpy(float),rtol=1e-13)
++ print('omitted group',absent[cols].to_dict(),absent.population_age_groups_num,absent.population_age_groups_den,absent.population_coverage_status)
++ print('explicit zero group',known_zero[cols].to_dict(),known_zero.population_age_groups_den,known_zero.population_zero_enrollment_groups_den,known_zero.population_coverage_status)
++if __name__=='__main__':main()

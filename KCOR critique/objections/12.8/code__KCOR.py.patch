@@ -1,0 +1,109 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4345,22 +4345,40 @@
+     return rows
+ 
+ 
++def _finite_hazard_ratio(numerator, denominator):
++    """Nonnegative finite ratio; no arbitrary near-zero floor.
++
++    A genuine zero numerator is valid. A positive numerator that overflows
++    or underflows to zero is numerically unavailable, not clipped.
++    """
++    num,den=np.broadcast_arrays(np.asarray(numerator,float),np.asarray(denominator,float))
++    valid=np.isfinite(num)&np.isfinite(den)&(num>=0)&(den>0)
++    with np.errstate(divide="ignore",over="ignore",under="ignore",invalid="ignore"):
++        ratio=np.divide(num,den,out=np.full(num.shape,np.nan),where=valid)
++    ratio=np.where(np.isfinite(ratio)&((ratio>0)|(num==0)),ratio,np.nan)
++    return float(ratio) if ratio.ndim==0 else ratio
++
++
+ def _set_kcor_reference(merged):
+     """Keep the two estimands separate, using the actual configured week."""
+     num = merged["CH_num"].to_numpy(float)
+     den = merged["CH_den"].to_numpy(float)
+-    raw = np.divide(num, den, out=np.full(len(merged), np.nan),
+-                    where=np.isfinite(num) & np.isfinite(den) & (den > EPS))
++    raw = _finite_hazard_ratio(num,den)
+     ref = np.flatnonzero((merged["t_num"].to_numpy() == KCOR_NORMALIZATION_WEEKS_EFFECTIVE)
+                          & (merged["t_den"].to_numpy() == KCOR_NORMALIZATION_WEEKS_EFFECTIVE))
+     idx = int(ref[0]) if len(ref) == 1 else None
+     ratio = raw[idx] if idx is not None else np.nan
+-    valid = bool(np.isfinite(ratio) and ratio > EPS)
++    valid = bool(np.isfinite(ratio) and ratio > 0)
+     merged["K_raw"] = raw
+     merged["KCOR_unanchored"] = raw
+-    merged["KCOR_anchored"] = raw / ratio if valid else np.nan
++    merged["KCOR_anchored"] = _finite_hazard_ratio(raw,ratio) if valid else np.nan
+     merged["KCOR"] = merged["KCOR_anchored"]  # backwards-compatible anchored column
+     merged["anchor_status"] = "ok" if valid else ("missing_reference_week" if idx is None else "undefined_reference_ratio")
++    if valid:
++        # Distinguish a valid reference with an unrepresentable later quotient.
++        raw_range_error=np.isfinite(num)&np.isfinite(den)&(num>0)&(den>0)&~np.isfinite(raw)
++        anchored_range_error=np.isfinite(raw)&(raw>0)&~np.isfinite(merged["KCOR_anchored"].to_numpy(float))
++        merged.loc[raw_range_error|anchored_range_error,"anchor_status"]="numerical_range"
+     merged["anchor_date"] = merged["DateDied"].iloc[idx] if idx is not None else pd.NaT
+     merged["anchor_ratio"] = ratio
+     return idx, valid
+@@ -4752,8 +4770,9 @@
+                     continue
+                 c1 = vn_ref["CH"].iloc[0]
+                 c0 = dn_ref["CH"].iloc[0]
+-                if np.isfinite(c1) and np.isfinite(c0) and c1 > 0 and c0 > 0:
+-                    anchors[yob] = c1 / c0
++                ratio = _finite_hazard_ratio(c1,c0)
++                if np.isfinite(ratio) and ratio > 0:
++                    anchors[yob] = ratio
+ 
+             # Preserve an explicit unavailable row at each supported sheet date
+             # when the weighted comparison cannot be calculated.
+@@ -4799,14 +4818,11 @@
+                     if gv_at_dt.empty or gu_at_dt.empty:
+                         continue
+                     denom_ch = gu_at_dt["CH"].iloc[0]
+-                    if denom_ch > 0:
+-                        k = gv_at_dt["CH"].iloc[0] / denom_ch
+-                    else:
++                    k = _finite_hazard_ratio(gv_at_dt["CH"].iloc[0],denom_ch)
++                    k0 = anchors[yob]
++                    kstar = _finite_hazard_ratio(k,k0)
++                    if not (np.isfinite(kstar) and kstar>0):
+                         continue
+-                    k0 = anchors[yob]
+-                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > 0 and k > 0):
+-                        continue
+-                    kstar = k / k0
+                     
+                     # ASMR pooled values should not be scaled; use raw kstar
+                     
+@@ -4930,8 +4946,9 @@
+                 t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                 c1 = gvn["CH"].iloc[t0_idx]
+                 c0 = gdn["CH"].iloc[t0_idx]
+-                if np.isfinite(c1) and np.isfinite(c0) and c1 > 0 and c0 > 0:
+-                    anchors_asmr[yob] = c1 / c0
++                ratio = _finite_hazard_ratio(c1,c0)
++                if np.isfinite(ratio) and ratio > 0:
++                    anchors_asmr[yob] = ratio
+ 
+             for dt in all_dates_asmr:
+                 logs_asmr, wts_asmr = [], []
+@@ -4950,14 +4967,11 @@
+                     gv = gv.iloc[[0]]
+                     gu = gu.iloc[[0]]
+                     denom_ch = gu["CH"].values[0]
+-                    if denom_ch > 0:
+-                        k = (gv["CH"].values[0]) / denom_ch
+-                    else:
++                    k = _finite_hazard_ratio(gv["CH"].values[0],denom_ch)
++                    k0 = anchors_asmr[yob]
++                    kstar = _finite_hazard_ratio(k,k0)
++                    if not (np.isfinite(kstar) and kstar>0):
+                         continue
+-                    k0 = anchors_asmr[yob]
+-                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > 0 and k > 0):
+-                        continue
+-                    kstar = k / k0
+                     logs_asmr.append(np.log(kstar))
+                     wts_asmr.append(weights_asmr.get(yob, 0.0))
+                     contributors_asmr.append(yob)

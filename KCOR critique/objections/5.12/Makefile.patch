@@ -1,0 +1,121 @@
+--- a/Makefile
++++ b/Makefile
+@@ -15,7 +15,7 @@
+ PAPER_MD ?= paper.md
+ PAPER_PDF ?= paper.pdf
+ PAPER_TEX ?= paper.tex
+-PAPER_BIB ?= KCOR_references.json
++PAPER_BIB ?= refs.bib
+ PAPER_BIB_PATH := $(PAPER_DIR)/$(PAPER_BIB)
+ PAPER_CSL ?= american-medical-association.csl
+ # PDF engine (override on CLI if needed). Default: xelatex.
+@@ -25,7 +25,7 @@
+ PAPER_PDF_MATHFONT ?= TeX Gyre Termes Math
+ PAPER_GENERATED_FIGURES := $(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png
+ 
+-.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-tex paper-pdf sim_grid bootstrap_coverage bootstrap cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability CFR CFR-smoke
++.PHONY: all KCOR CMR CMR_from_krf monte_carlo convert validation test clean sensitivity alpha KCOR_variable HVE ASMR ts icd10 icd_population_shift mortality mortality_sensitivity mortality_age mortality_stats mortality_plots mortality_all install install-debian slope-test quiet-window quiet_sim paper paper-publish paper-figures paper-tex paper-pdf sim_grid bootstrap_coverage bootstrap cox-bias cox-bias-figures copy-cox-bias-figures skip-weeks cohort-size rollout help identifiability CFR CFR-smoke
+ 
+ # Dataset namespace (override on CLI: make DATASET=USA)
+ DATASET ?= Czech
+@@ -406,7 +406,7 @@
+ # Default inputs live in documentation/preprint/:
+ # - paper.md (main manuscript)
+ # - supplement.md (Supplementary Information)
+-# - KCOR_references.json
++# - refs.bib
+ # - american-medical-association.csl
+ #
+ # Outputs:
+@@ -417,6 +417,8 @@
+ #   make paper
+ #   make paper PAPER_MD=paper_v7.md PAPER_PDF=paper_v7.pdf PAPER_TEX=paper_v7.tex
+ paper: $(PAPER_DIR)/$(PAPER_PDF) $(PAPER_DIR)/$(PAPER_TEX)
++
++paper-publish: paper
+ 	@echo "Copying paper files to website..."
+ 	@scp $(PAPER_DIR)/$(PAPER_PDF) truenas:/mnt/main/www/skirsch.com/covid/KCOR/KCOR.pdf
+ 	@echo "Paper files copied to website."
+@@ -427,7 +429,7 @@
+ # Optional: include Supplementary Information when building the combined paper outputs.
+ PAPER_SUPP_MD ?= supplement.md
+ 
+-$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_GENERATED_FIGURES) $(wildcard $(PAPER_DIR)/figures/*)
++$(PAPER_DIR)/$(PAPER_TEX): $(PAPER_DIR)/$(PAPER_MD) $(PAPER_DIR)/$(PAPER_SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_DIR)/pandoc-crossref.yaml $(PAPER_DIR)/pagebreak-tables.lua $(wildcard $(PAPER_DIR)/figures/*)
+ 	@echo "Building LaTeX: $(PAPER_DIR)/$(PAPER_MD) -> $(PAPER_DIR)/$(PAPER_TEX)"
+ 	@cd $(PAPER_DIR) && \
+ 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(PAPER_MD)" "$(PAPER_SUPP_MD)"; then \
+@@ -475,7 +477,7 @@
+ supplement-pdf: $(PAPER_DIR)/$(SUPP_PDF)
+ supplement-tex: $(PAPER_DIR)/$(SUPP_TEX)
+ 
+-$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_GENERATED_FIGURES) $(wildcard $(PAPER_DIR)/figures/*)
++$(PAPER_DIR)/$(MAIN_TEX): $(PAPER_DIR)/$(MAIN_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_DIR)/pandoc-crossref.yaml $(PAPER_DIR)/pagebreak-tables.lua $(wildcard $(PAPER_DIR)/figures/*)
+ 	@echo "Building LaTeX: $(PAPER_DIR)/$(MAIN_MD) -> $(PAPER_DIR)/$(MAIN_TEX)"
+ 	@cd $(PAPER_DIR) && \
+ 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(MAIN_MD)"; then \
+@@ -504,7 +506,7 @@
+ 			exit 1; \
+ 		)
+ 
+-$(PAPER_DIR)/$(SUPP_TEX): $(PAPER_DIR)/$(SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(wildcard $(PAPER_DIR)/figures/*)
++$(PAPER_DIR)/$(SUPP_TEX): $(PAPER_DIR)/$(SUPP_MD) $(PAPER_BIB_PATH) $(PAPER_DIR)/$(PAPER_CSL) $(PAPER_DIR)/header.tex $(PAPER_DIR)/pandoc-crossref.yaml $(PAPER_DIR)/pagebreak-tables.lua $(wildcard $(PAPER_DIR)/figures/*)
+ 	@echo "Building LaTeX: $(PAPER_DIR)/$(SUPP_MD) -> $(PAPER_DIR)/$(SUPP_TEX)"
+ 	@cd $(PAPER_DIR) && \
+ 		if grep -n -E '\\\\n\\+|<<<<<<<|=======|>>>>>>>' "$(SUPP_MD)"; then \
+@@ -535,7 +537,7 @@
+ 
+ $(PAPER_DIR)/$(MAIN_PDF): $(PAPER_DIR)/$(MAIN_TEX)
+ 	@echo "Building PDF: $(PAPER_DIR)/$(MAIN_TEX) -> $(PAPER_DIR)/$(MAIN_PDF)"
+-	@cd $(PAPER_DIR) && \
++	@set -e; cd $(PAPER_DIR); \
+ 		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+ 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+ 			exit 1; \
+@@ -543,13 +545,13 @@
+ 		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(MAIN_TEX)" >/dev/null; \
+ 		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(MAIN_TEX)" >/dev/null
+ 
+-$(PAPER_DIR)/figures/fig_kcor_empirical_intuition.png: code/generate_kcor_empirical_intuition_figure.py data/Czech2/kcor_mortality_output/sensitivity/summary_all_configs.csv $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/raw/kcor_hazard_raw.csv) $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/raw/kcor_hazard_adjusted.csv) $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/results/kcor_ratios.csv) | $(VENV_PYTHON)
++paper-figures: code/generate_kcor_empirical_intuition_figure.py data/Czech2/kcor_mortality_output/sensitivity/summary_all_configs.csv $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/raw/kcor_hazard_raw.csv) $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/raw/kcor_hazard_adjusted.csv) $(wildcard data/Czech2/kcor_mortality_output/sensitivity/*/results/kcor_ratios.csv) | $(VENV_PYTHON)
+ 	@mkdir -p $(PAPER_DIR)/figures
+-	$(abspath $(VENV_PYTHON)) code/generate_kcor_empirical_intuition_figure.py --output "$@"
++	$(abspath $(VENV_PYTHON)) code/generate_kcor_empirical_intuition_figure.py --output "$(PAPER_GENERATED_FIGURES)"
+ 
+ $(PAPER_DIR)/$(SUPP_PDF): $(PAPER_DIR)/$(SUPP_TEX)
+ 	@echo "Building PDF: $(PAPER_DIR)/$(SUPP_TEX) -> $(PAPER_DIR)/$(SUPP_PDF)"
+-	@cd $(PAPER_DIR) && \
++	@set -e; cd $(PAPER_DIR); \
+ 		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+ 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+ 			exit 1; \
+@@ -565,14 +567,14 @@
+ # the PDF from the generated .tex and run the engine twice.
+ $(PAPER_DIR)/$(PAPER_PDF): $(PAPER_DIR)/$(PAPER_TEX)
+ 	@echo "Building PDF: $(PAPER_DIR)/$(PAPER_TEX) -> $(PAPER_DIR)/$(PAPER_PDF)"
+-	@cd $(PAPER_DIR) && \
++	@set -e; cd $(PAPER_DIR); \
+ 		if ! command -v "$(PAPER_PDF_ENGINE)" >/dev/null 2>&1; then \
+ 			echo "ERROR: PDF engine '$(PAPER_PDF_ENGINE)' not found. Install it (default expects xelatex) or override PAPER_PDF_ENGINE=<engine>."; \
+ 			exit 1; \
+ 		fi; \
+ 		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(PAPER_TEX)" >/dev/null; \
+ 		"$(PAPER_PDF_ENGINE)" -interaction=nonstopmode -halt-on-error -shell-escape "$(PAPER_TEX)" >/dev/null; \
+-		if [ "$(PAPER_PDF)" != "paper.pdf" ]; then mv -f "paper.pdf" "$(PAPER_PDF)"; fi
++		if [ "$(PAPER_PDF)" != "$(PAPER_TEX:.tex=.pdf)" ]; then mv -f "$(PAPER_TEX:.tex=.pdf)" "$(PAPER_PDF)"; fi
+ 
+ # HVE simulator (not part of default all)
+ HVE:
+@@ -656,9 +658,10 @@
+ 	@echo "  ASMR            - Run ASMR analysis from KCOR_CMR.xlsx (validation/ASMR_analysis)"
+ 	@echo "  icd10           - Run ICD-10 cause of death analysis (data/Czech2/)"
+ 	@echo "  icd_population_shift - Run ICD-10 population structural shift analysis (data/Czech2/)"
+-	@echo "  paper           - Build documentation/preprint/paper.md -> paper.docx + paper.pdf (Pandoc + crossref + citeproc)"
++	@echo "  paper           - Build combined manuscript locally (PDF and LaTeX)"
+ 	@echo "  paper-all       - Build documentation/preprint/{paper,main,supplement}.{pdf,tex}"
+-	@echo "  paper-docx      - Build only documentation/preprint/paper.docx"
++	@echo "  paper-publish   - Build and publish to configured website"
++	@echo "  paper-figures   - Regenerate the empirical intuition figure"
+ 	@echo "  paper-pdf       - Build only documentation/preprint/paper.pdf"
+ 	@echo "  main-pdf        - Build only documentation/preprint/main.pdf"
+ 	@echo "  supplement-pdf  - Build only documentation/preprint/supplement.pdf"

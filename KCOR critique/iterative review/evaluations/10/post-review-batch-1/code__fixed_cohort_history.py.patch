@@ -1,0 +1,33 @@
+--- m152/code/fixed_cohort_history.py
++++ m153/code/fixed_cohort_history.py
+@@ -60,3 +60,30 @@
+         if reason:
+             bad.setdefault(tuple(key[:2]),[]).append((tuple(key),reason))
+     return bad
++
++
++def rectangular_overlap_counts(group, start, horizon):
++    """Build the declared Table 8 rectangle after source-history validation.
++
++    Only omitted trailing zeros following verified complete exhaustion are
++    inserted. An absent group, interior gap or remaining risk is an error.
++    """
++    dates=pd.date_range(start,horizon,freq="7D")
++    idx=pd.MultiIndex.from_product([[1940,1950,1960],[0,1,2],dates],names=["YearOfBirth","Dose","DateDied"])
++    if group.index.has_duplicates or not group.index.isin(idx).all():
++        raise ValueError("unexpected overlapping age-shift layout")
++    result=group.reindex(idx)
++    for age in (1940,1950,1960):
++        for dose in (0,1,2):
++            cells=result.loc[(age,dose)]
++            missing=cells.isna().any(axis=1).to_numpy()
++            if not missing.any():continue
++            first=int(np.flatnonzero(missing)[0])
++            if first==0 or not missing[first:].all() or not cells.iloc[first:].isna().all().all():
++                raise ValueError("incomplete overlapping histories")
++            last=cells.iloc[first-1]
++            if last.Alive!=last.Dead:
++                raise ValueError("truncated positive-risk overlapping history")
++            result.loc[(age,dose,dates[first:]),["Alive","Dead"]]=0
++    if result.isna().any().any():raise ValueError("incomplete overlapping histories")
++    return dates,result

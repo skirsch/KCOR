@@ -1,0 +1,72 @@
+[
+  {
+    "file": "paper.md",
+    "before": "a post-inversion cumulative correction on **frailty-neutral cumulative hazard** (\u00a72.7)",
+    "after": "consistent survivor-law fitting and inversion to obtain the **frailty-neutral cumulative hazard** (\u00a72.7)"
+  },
+  {
+    "file": "paper.md",
+    "before": "(iv) optionally applying the NPH correction to **frailty-neutral cumulative hazard** after inversion when prespecified (\u00a72.7.3), not to raw hazard",
+    "after": "(iv) optionally using the specified NPH survivor law in steps (ii) and (iii) when prespecified (\u00a72.5; \u00a72.7.3), without altering raw hazard"
+  },
+  {
+    "file": "paper.md",
+    "before": "KCOR operates by first estimating depletion geometry ($\\theta_{0,d}$) from prespecified quiet windows, then optionally adjusting wave-period amplification ($\\alpha$) on the **frailty-neutral cumulative-hazard scale after gamma-frailty inversion** (\u00a72.7.3), and finally comparing cumulative outcomes on the normalized scale.",
+    "after": "KCOR operates by estimating depletion geometry ($\\theta_{0,d}$) from prespecified quiet windows, using the specified survivor law for fitting and inversion when optional wave-period amplification ($\\alpha$) is modeled (\u00a72.5; \u00a72.7.3), and comparing cumulative outcomes on the normalized scale."
+  },
+  {
+    "file": "paper.md",
+    "before": "optional NPH-corrected cumulative hazard after inversion (\u00a72.7.3)",
+    "after": "optional NPH-corrected cumulative hazard obtained using the specified survivor law (\u00a72.7.3)"
+  },
+  {
+    "file": "paper.md",
+    "before": "The optional NPH exponent module does **not** alter this accumulation; it adjusts frailty-neutral cumulative hazards **after** gamma-frailty inversion (\u00a72.7.3).",
+    "after": "The optional NPH exponent module does **not** alter this accumulation; fitting and inversion use the specified survivor law (\u00a72.5; \u00a72.7.3)."
+  },
+  {
+    "file": "paper.md",
+    "before": "Optional wave-period NPH correction applies only **after** this inversion to frailty-neutral $\\tilde H_{0,d}(t)$ (\u00a72.5; \u00a72.7.3), never as preprocessing on raw hazard.",
+    "after": "When the optional NPH module is active, fitting and inversion use the specified survivor law (\u00a72.5; \u00a72.7.3), without modifying the raw observed hazards."
+  },
+  {
+    "file": "paper.md",
+    "before": "Throughout \u00a72.7, the **operational NPH correction** (\u00a72.7.3) is applied only to **frailty-neutral cumulative hazard** $\\tilde H_{0,d}(t)$ after gamma-frailty inversion\u2014**not** to raw observed instantaneous hazard.",
+    "after": "Throughout \u00a72.7, the **operational NPH correction** uses the specified survivor law for fitting and inversion (\u00a72.5; \u00a72.7.3) to obtain frailty-neutral cumulative hazard without modifying raw observed instantaneous hazard."
+  },
+  {
+    "file": "paper.md",
+    "before": "**Optional NPH post-inversion correction.** When the primary analysis applies the optional NPH module, repeat the \u00a72.7.3 correction on each replicate's frailty-neutral $\\tilde H_{0,d}(t)$",
+    "after": "**Optional NPH correction.** When the primary analysis applies the optional NPH module, repeat survivor-law fitting and inversion (\u00a72.5; \u00a72.7.3) on each replicate"
+  },
+  {
+    "file": "paper.md",
+    "before": "Any **applied** wave-period correction operates on **frailty-neutral cumulative hazard after inversion** (\u00a72.7.3), not on raw observed hazard.",
+    "after": "Any **applied** wave-period correction uses the specified survivor law for fitting and inversion (\u00a72.5; \u00a72.7.3), not a modification of raw observed hazard."
+  },
+  {
+    "file": "paper.md",
+    "before": ", followed by a post-inversion cumulative correction applied to **frailty-neutral cumulative hazard** (\u00a72.7.3), not to raw observed hazard",
+    "after": ", with the specified survivor law used for fitting and inversion (\u00a72.5; \u00a72.7.3), not to modify raw observed hazard"
+  },
+  {
+    "file": "supplement.md",
+    "before": "the cumulative correction is applied **after** gamma-frailty inversion (main text \u00a72.7)",
+    "after": "the specified survivor law is used for fitting and inversion (main text \u00a72.5; \u00a72.7)"
+  },
+  {
+    "file": "supplement.md",
+    "before": "Supports optional post-inversion NPH correction",
+    "after": "Supports optional NPH correction"
+  },
+  {
+    "file": "supplement.md",
+    "before": "post-inversion correction diagnostics",
+    "after": "NPH correction diagnostics"
+  },
+  {
+    "file": "paper.md",
+    "before": "Apply gamma-frailty inversion (Eq. @eq:normalized-cumhazard) to obtain $\\tilde H_{0,d}(t)$.",
+    "after": "Before the first modeled wave, apply gamma-frailty inversion (Eq. @eq:normalized-cumhazard) to obtain $\\tilde H_{0,d}(t)$."
+  }
+]

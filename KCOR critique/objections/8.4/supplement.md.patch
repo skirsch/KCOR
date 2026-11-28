@@ -1,0 +1,29 @@
+--- m138/documentation/preprint/supplement.md
++++ m139-review/documentation/preprint/supplement.md
+@@ -401,7 +401,7 @@
+ 
+ | Age band (years) | Frailty, dose 0 [95%] | Frailty, dose 2 [95%] | Anchored KCOR [95%] |
+ |---|---:|---:|---:|
+-| 40–49 | 63.87 [29.60, 96.51] | Poorly resolved [0, 100] | 1.507 [0.824, 2.712] |
++| 40–49 | 63.87 [29.60, 96.50] | Poorly resolved [0, 167.90] | 1.507 [0.960, 2.822] |
+ | 50–59 | 26.82 [18.43, 35.48] | Boundary\* [0.00, 0.00] | 1.228 [0.913, 1.824] |
+ | 60–69 | 11.47 [9.37, 13.50] | Boundary\* [0.00, 0.00] | 1.295 [1.086, 1.577] |
+ | 70–79 | 5.16 [4.60, 5.71] | 0.00 [0.00, 0.00] | 1.301 [1.173, 1.441] |
+@@ -411,7 +411,7 @@
+ 
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate little fitted frailty-induced depletion; precision and identification must be assessed separately. At zero variance, the working-model cumulative hazard follows the Gompertz baseline.
+-- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 fitted value is poorly resolved across the entire allowed range. KCOR intervals retain the existing upper-bound zero-variance fallback (287 of 999 dose-2 draws at ages 40–49). Source: `analysis/solver_scaling/s6-all-window.json` and its matched draws; the earlier first-window study is archived separately.
++- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 frailty remains poorly resolved. With the numerical ceiling increased to 500, none of the 999 draws reaches the upper-bound flag threshold in either dose group. The upper tail is no longer truncated at 100; the broad raw variance range is a statistical limitation, not evidence that variance is zero. Source: `analysis/ceiling500/s6-all-window.json` and its matched draws; the previous ceiling and first-window studies are archived separately.
+ - The "All ages" row fits the supplied eligible-population aggregate counts, including unknown birth years.
+ - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied eligible-population total.
+ 
+@@ -450,7 +450,7 @@
+ 
+ **Compute requirements.** The full simulation grid reproduces in approximately 1 hour 26 minutes on a 20-core CPU with 128 GB RAM; smaller subsets reproduce in minutes.
+ 
+-**Reproduction.** Running `make paper` renders the paper and supplement from the manuscript sources and existing figures. Scientific analyses use their separate runners and settings (see `analysis/README.md`). The historical S8 draws and study source scripts are archived; `python analysis/survivor_validation/verify_archive.py` reproduces the stored intervals from those draws, not a new simulation under the current estimator.
++**Reproduction.** Running `make paper` renders the paper and supplement from the manuscript sources and existing figures. Scientific analyses use their separate runners and settings (see `analysis/README.md`). The S6 frailty-resolution table and primary Table 8 column have been refitted at the numerical ceiling of 500; other stored empirical figures and the forced-alpha sensitivity column retain the preceding ceiling-100 replays. The historical S8 draws and study source scripts are archived; `python analysis/survivor_validation/verify_archive.py` reproduces the stored intervals from those draws, not a new simulation under the current estimator.
+ 
+ 
+ 

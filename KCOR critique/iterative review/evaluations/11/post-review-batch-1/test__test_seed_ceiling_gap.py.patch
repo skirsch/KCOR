@@ -1,0 +1,11 @@
+--- a/test/test_seed_ceiling_gap.py
++++ b/test/test_seed_ceiling_gap.py
+@@ -16,7 +16,7 @@
+             for i in range(49):
+                 c=rng.multinomial(N,prob);risk=np.cumsum(c[::-1])[::-1][:-1];_,diag=K.fit_theta0_gompertz(K.hazard_from_mr(c[:-1]/risk),t,quiet,4,gamma,deaths_arr=c[:-1],risk_arr=risk);draws.append({key:diag['gap_first_pass']})
+             s,status=gap_diagnostic({key:d['gap_first_pass']},draws);print('zero gap interval',s,flush=True);assert status[key]=='no_deficit_detected' and s[0]['lower95']<=0<=s[0]['upper95']
+-        else:assert d['seed_theta_hit_bound'] and d['gap_seed_status']=='bounded_seed' and d['gap_first_pass'] is None
++        else:assert d['seed_theta_hit_bound'] and d['gap_seed_status']=='bounded_seed' and len(d['gap_first_pass'])==1 and d['gap_first_pass'][0][0]==70 and np.isnan(d['gap_first_pass'][0][1])
+     # A small configured ceiling also applies to the initial fit.
+     native=K.get_theta_degenerate_fit_config;K.get_theta_degenerate_fit_config=lambda:{**native(),'theta0_max':.25}
+     try:

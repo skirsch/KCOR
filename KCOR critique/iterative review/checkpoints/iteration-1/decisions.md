@@ -1,0 +1,29 @@
+# Review decisions
+
+| Objection | Decision |
+|---|---|
+| 1. Diagnostic and conservativeness claims | Approved. Replace the sentence in section 2.6.2, the opening sentence on original page 38, and the heading and paragraph on overlap in section 5.2. |
+| 2. Proportional wave (α = 1) | Approved. Section 2.7.3 states the identity for every week and restricts division by the wave factor to α ≠ 1. Supplement S2.1 uses the same condition. The implementation already returns the ordinary inverted curve at α = 1. |
+| 2. Nonproportional wave (α ≠ 1) | Applied the post-wave increment correction in section 2.7.3 and supplement S2.1. Conditional survival carries forward the existing terminal in-wave estimate. The empirical in-wave attribution has not been validated by this change. [Verification](rounds/round-02-objection-2-post-wave/verification.md). |
+| 3. Bootstrap resampling unit | Adopt the existing pooled person bootstrap for the real-data Monte Carlo procedure. Section 2.9.1 and the supplement describe sampling eligible people with replacement, retaining death weeks and rebuilding risk sets. Historical intervals have not been recomputed. General coverage calibration and provenance of the empirical negative-control table remain open. [Paired resampling evidence](<../03 - Objection 3/objection3_paper_method/paired_resampling/ASSESSMENT.md>). |
+| 3. Production Monte Carlo | Applied the documented sample-clock and fit-diagnostic repairs in the revised code. Corrected the zero-resample interval summary. Confirmed isolation and percentile endpoints on the Czech audit workbook. Documented the remaining 502/600 production coverage result in section 2.9.1. [Verification](rounds/round-03-objection-3-person-bootstrap/verification.md). |
+| 3. Interval coverage and baseline fitting | Use the §2.4 joint fit of baseline rate and frailty in the first quiet window as the intended default for subsequent analyses and drafts of revised KCOR. Proceed on the working assumption that the project lead will approve. Formal approval still needs to be requested. The ordinary code path currently uses the early-rate fit. In the paired simulation, intervals covered the true ratio in 160/200 datasets with the early-rate fit and 194/200 with the joint fit. [Paired comparison](rounds/round-03-objection-3-person-bootstrap/paired-seed-fit/assessment.md). |
+| 4. Origin of fitted frailty | Replaced the final sentence of the frailty exogeneity paragraph with one sentence stating the evidence needed to distinguish a treatment-induced change in frailty from pre-existing selection. |
+| 4. Empirical age-shift control and Table 8 | Reproduced the historical estimates and intervals. Added the six joint-fit estimates and their 999-draw person-bootstrap intervals to Table 8 and described the 2022 results in §3.1.2. The new column and its intervals already use the intended fitter. The early-rate fit is reported as a comparison. [Verification](rounds/round-03-objection-3-person-bootstrap/table-8-replay.md). |
+| 4. Table 8 discussion | Retain both sets of estimates and intervals in the manuscript. Defer the explanation of the insufficient-signal flags and the lower-tail example for discussion with the project lead. The evidence is preserved in the [review notes](rounds/round-03-objection-3-person-bootstrap/table-8-replay.md). |
+| 5. Cox comparison | Qualified the null treatment hazard ratio as conditional on fixed frailty in the simulation setup and table caption. Named the treatment-effect and cumulative-hazard benchmarks in the results. |
+| 6.1. Constant hazard scaling | Replaced one sentence in section 2.4.4 to distinguish the parameter change under scaling an observed cohort hazard from scaling each individual baseline hazard. Pending the next LLM evaluation. |
+| 6.2. Weekly reconstruction | Applied the exact weekly gamma inversion in both reconstructions in the revised fitter. Sections 2.4.2 and 2.5 give the corresponding paper correction. Recomputed the Table 8 joint-fit column and its intervals. [Verification](rounds/round-06-weekly-inversion/verification.md). |
+| 1 and 6.1. Diagnostic and scaling wording after evaluation | Qualified remaining claims about detectable failure, treatment crossover and attenuation. Distinguished a multiplier on observed hazards from a multiplier on individual baseline hazards in the abstract, main text and assumptions table. |
+| 6.3 and 6.4. Identification and shape | Replaced the curvature equivalence in §2.4.4 with the exact hazard identity at fixed Gompertz slope and its two counterexamples. Section 2.6.2 and the supplement now distinguish the expected Gompertz shape from approximate straightness in historical Czech plots. [Algebraic checks](<../06 - Objection 6/objection6_shape_claims/README.md>). |
+| 2. In-wave interpretation after evaluation | Identified the mean-one survivor-moment proxy and the cumulative rescaling in §2.7.3 and SI §S2.1 as approximations. Estimating exposure during nonlinear waves remains an open method objection. This manuscript edit preserves the evaluated calculations. [Current disposition](open-objections.md). |
+
+## Evaluation findings
+
+| Objection | Decision |
+|---|---|
+| N1. Information given to KCOR in the Cox experiment | Revised §2.11.1 to say the two methods used the same datasets and KCOR used the generating frailty variances for inversion. The reported experiment and its numbers are unchanged. The blue N1 links in the redline identify both edits. [Evaluation finding](evaluations/2026-11-21/repeat-3/A.md) · [Generator](../../test/sim_grid/code/generate_cox_bias_sim.py#L234) |
+
+## Author proposals
+
+- The author proposed showing analytically why ordinary Cox regression departs from 1 in the gamma-frailty experiment, alongside or in place of the simulation. Inclusion in §2.11.1 is open. [Proposed derivation](author-proposals/objection-5-cox-gamma-derivation.md).

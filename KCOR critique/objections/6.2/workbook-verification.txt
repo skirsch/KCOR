@@ -1,0 +1,7 @@
+﻿
+ YearOfBirth     KCOR  flag
+         -60 1.024927 False
+          -2 1.024927 False
+           0 1.024927  True
+        1930 1.024927  True
+        1970 1.024927 False

@@ -1,0 +1,8 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -502,4 +502,4 @@
+ | Forced alpha | 2022_06 | 2/0 | Yes / 986 | No / 93 |
+ | Forced alpha | 2022_06 | 2/1 | No / 986 | No / 90 |
+ 
+-For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/round11/table8-primary/` and archived `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).
++For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/signed_gap/table8-primary/` and archived `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).

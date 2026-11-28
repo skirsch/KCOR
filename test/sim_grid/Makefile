@@ -139,6 +139,10 @@ cox-bias: $(COX_BIAS_RESULTS)
 cox-bias-figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR) $(FIG_KCOR_BIAS)
 	@echo "Generated Cox bias figures: $(FIG_COX_BIAS_HR) $(FIG_COX_BIAS_KCOR) $(FIG_KCOR_BIAS)"
 
+.PHONY: revised-cox-kcor-figure
+revised-cox-kcor-figure:
+	$(PY) "$(ROOT)/KCOR critique/objections/2.1/figure_intervals.py" --verify
+
 # Skip-weeks sensitivity figure
 SKIP_WEEKS_FIG := $(OUT_DIR)/fig_skip_weeks_sensitivity.png
 

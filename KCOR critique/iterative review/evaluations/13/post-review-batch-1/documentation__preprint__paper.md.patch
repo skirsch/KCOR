@@ -1,0 +1,59 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -551,7 +551,7 @@
+ 
+ When an anchored presentation is used, KCOR at each time $t$ is divided by its value at the prespecified reference week $t_0$, as defined in §2.1.1. The primary estimand, however, remains the ratio of (optionally NPH-corrected) depletion-neutralized cumulative hazards rather than an instantaneous hazard ratio.
+ 
+-The workbook reports the unanchored and anchored ratios separately for individual age strata and directly aggregated cohorts; the legacy KCOR column remains anchored. If the prespecified reference week is missing or its ratio is zero or undefined, the anchored estimate is unavailable, rather than replaced by the unanchored ratio. Strictly positive finite reference ratios are accepted without an arbitrary near-zero threshold; unrepresentable numerical ratios are unavailable. The bootstrap counts draws with undefined references separately from missing output rows and does not mix the two estimands. Pooled anchored ratios retain the existing weighted geometric mean of available strata. The fixed within-draw weight of stratum $a$ is proportional to $h_a PT_a(W)$, where $W$ is the first four enrollment weeks (including the stabilization skip), $PT_a(W)$ is total person-weeks across doses, and $h_a$ is the unweighted mean of dose-week mortality rates exceeding $10^{-12}$ in $W$. If none are positive, the workbook uses the smallest rate exceeding that threshold across eligible strata, or $10^{-12}$ if none exists. Weights are normalized over contributing strata (equal weights if all initial weights are zero). This empirical weight is not the pooled deaths-to-person-time rate. The workbook reports the contributing and eligible strata and their retained weight fraction for each point. Pooling weights are recomputed in each bootstrap draw as before, but a draw with a different contributing set cannot provide uncertainty for the point's population. The pooled interval is unavailable if any required draw changes composition; the point and number of changed draws remain reported.
++The workbook reports the unanchored and anchored ratios separately for individual age strata and directly aggregated cohorts; the legacy KCOR column remains anchored. If the prespecified reference week is missing or its ratio is zero or undefined, the anchored estimate is unavailable, rather than replaced by the unanchored ratio. Strictly positive finite reference ratios are accepted without an arbitrary near-zero threshold; unrepresentable numerical ratios are unavailable. An unavailable presentation reference does not invalidate earlier supported unanchored estimates. The bootstrap counts draws with undefined references separately from missing output rows and does not mix the two estimands. Pooled anchored ratios retain the existing weighted geometric mean of available strata. A genuine zero ratio with positive weight contributes zero to the geometric mean, rather than being omitted. The fixed within-draw weight of stratum $a$ is proportional to $h_a PT_a(W)$, where $W$ is the first four enrollment weeks (including the stabilization skip), $PT_a(W)$ is total person-weeks across doses, and $h_a$ is the unweighted mean of dose-week mortality rates exceeding $10^{-12}$ in $W$. If none are positive, the workbook uses the smallest rate exceeding that threshold across eligible strata, or $10^{-12}$ if none exists. Weights are normalized over contributing strata (equal weights if all initial weights are zero). This empirical weight is not the pooled deaths-to-person-time rate. The workbook reports the contributing and eligible strata and their retained weight fraction for each point. Pooling weights are recomputed in each bootstrap draw as before, but a draw with a different contributing set cannot provide uncertainty for the point's population. The pooled interval is unavailable if any required draw changes composition; the point and number of changed draws remain reported.
+ 
+ This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
+ 
+@@ -761,9 +761,9 @@
+ 
+ ### 3.2 Positive controls (injected effects)
+ 
+-Supplementary Section S3 describes the two positive controls. Table 9 reports their fitted week-80 endpoints.
+-
+-The joint-fit week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective. The generator uses a constant individual baseline hazard rather than the Gompertz baseline assumed by the fitter; these controls therefore test detection of the injected mortality contrast, not recovery of the true frailty parameters under baseline misspecification.
++Supplementary Section S3 describes the two positive controls. Table 9 reports their fitted anchored week-80 endpoints, with the end of the fourth accumulating week as the reference.
++
++The joint-fit anchored week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective. The generator uses a constant individual baseline hazard rather than the Gompertz baseline assumed by the fitter; these controls therefore test detection of the injected mortality contrast, not recovery of the true frailty parameters under baseline misspecification.
+ 
+ ### 3.3 Stress tests (frailty misspecification)
+ 
+@@ -779,7 +779,7 @@
+ 
+ **Design.** Two cohorts were simulated under the Gompertz-plus-gamma-frailty DGP with known ground-truth parameters: cohort A (lower frailty, $\theta_{0,A}=0.5$) and cohort B (higher frailty, $\theta_{0,B}=4.0$), with shared baseline scale $k$ calibrated to Czech KCOR_CMR weekly hazard for YoB 1940–1960, dose 0 reference ($h_{\mathrm{ref}}=0.000456$ per week). The two cohorts have identical underlying baseline hazards, so their baseline cumulative hazard ratio is 1. Additive non-frailty contamination was applied **only** to cohort A during rebased quiet-window weeks 4–56. Three contamination types were tested: **Type 1** (decaying dynamic-HVE-style hazard: $g(t)=\epsilon_{\mathrm{dyn}}\exp(-0.05\,t_{\mathrm{rebased}})$); **Type 2** (constant comorbidity-direction hazard: $g(t)=\epsilon_{\mathrm{comorb}}$); and **Type 3** (combined, full $4\times4$ outer product of positive $\epsilon_{\mathrm{dyn}}$ and $\epsilon_{\mathrm{comorb}}$ values, 16 cells). The figures and table use 20 replicates per cell and the original fitter. The first four accumulating weeks supply the baseline rate. Following the simulation design, KCOR is normalized at the end of the fifth accumulating week, so the reference ratio includes the first week of added deaths.
+ 
+-**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR asymptote and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and the fraction of combined simulations with KCOR above 1.
++**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR at the final follow-up week and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and the fraction of combined simulations with KCOR above 1.
+ 
+ *Type 1 (dynamic):* Dynamic contamination reduced the fitted frailty variance in cohort A. Mean KCOR fell from 1.063 [0.998, 1.128] at zero added hazard to 0.782 [0.735, 0.829] at the largest dynamic amplitude (0.005). All 20 endpoints at that amplitude were below 1. Brackets give pointwise 95 percent Monte Carlo confidence intervals.
+ 
+@@ -789,11 +789,11 @@
+ 
+ **Interpretation.** Added deaths enter the frailty fit and cumulative endpoint, and the first contaminated week also enters the normalizing ratio. A sensitivity analysis used the same fitted curves with the workbook reference at the end of week four, immediately before the added deaths. At the largest dynamic amplitude this gave mean KCOR 2.116 [1.992, 2.240]. The direction of the anchored contrast therefore depended on whether its reference included the first contaminated week. The size of any corresponding quiet-window hazard increment in the Czech cohorts remains unknown.
+ 
+-![Mean anchored KCOR asymptote versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
+-
+-![Left and center: mean $\hat\theta_{0,A}$ error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored $\mathrm{KCOR}_\infty>1$ on the combined $4\times4$ grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations.](figures/fig_quiet_contam_theta_error.png){#fig:quiet_contam_theta}
+-
+-| Contamination type | $\epsilon_{\mathrm{dyn}}$ | $\epsilon_{\mathrm{comorb}}$ | $\epsilon/h_{\mathrm{ref}}$ (comorb) | Mean KCOR$_\infty$ | Frac. reps KCOR$>1$ |
++![Mean anchored KCOR at the final follow-up week versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
++
++![Left and center: mean $\hat\theta_{0,A}$ error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored $\mathrm{KCOR}(t_{\rm end};t_0)>1$ on the combined $4\times4$ grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations.](figures/fig_quiet_contam_theta_error.png){#fig:quiet_contam_theta}
++
++| Contamination type | $\epsilon_{\mathrm{dyn}}$ | $\epsilon_{\mathrm{comorb}}$ | $\epsilon/h_{\mathrm{ref}}$ (comorb) | Mean endpoint KCOR | Frac. reps KCOR$>1$ |
+ |---|---|---|---|---|---|
+ | Dynamic only | $5\times10^{-3}$ | 0 | — | 0.782 [0.735, 0.829] | 0.00 |
+ | Comorbidity only | 0 | $1\times10^{-4}$ | 22% | 0.989 [0.916, 1.062] | 0.40 |
+@@ -1170,7 +1170,7 @@
+ 
+ Table: Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts in the declared exit-capable mode, treating residual risk-set losses as nondeath exits. {#tbl:pos_control_summary}
+ 
+-| Scenario | Effect window | Hazard multiplier $r$ | Expected direction | Observed $\mathrm{KCOR}(t)$ at week 80 |
++| Scenario | Effect window | Hazard multiplier $r$ | Expected direction | Observed $\mathrm{KCOR}(80;t_0)$ |
+ |---|---|---:|---|---:|
+ | Benefit | week 20–79 | 0.8 | < 1 | 0.834 [0.774, 0.897] |
+ | Harm | week 20–79 | 1.2 | > 1 | 1.162 [1.087, 1.248] |

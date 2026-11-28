@@ -1,0 +1,146 @@
+[
+  {
+    "enrollment": "2021_24",
+    "group": 0,
+    "pseudo_dose": 0,
+    "theta": 3.1169920331742917e-18,
+    "max_abs_prediction_difference": 0.0,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 0,
+    "pseudo_dose": 1,
+    "theta": 8.968016380186492e-20,
+    "max_abs_prediction_difference": 0.0,
+    "deficit_weeks": 2
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 0,
+    "pseudo_dose": 2,
+    "theta": 1.4851510910506766e-20,
+    "max_abs_prediction_difference": 0.0,
+    "deficit_weeks": 1
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 1,
+    "pseudo_dose": 0,
+    "theta": 0.7459431363786604,
+    "max_abs_prediction_difference": 2.7755575615628914e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 1,
+    "pseudo_dose": 1,
+    "theta": 2.721431613210025,
+    "max_abs_prediction_difference": 1.5126788710517758e-15,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 1,
+    "pseudo_dose": 2,
+    "theta": 6.5114451820538,
+    "max_abs_prediction_difference": 8.673617379884035e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 2,
+    "pseudo_dose": 0,
+    "theta": 0.01482095757926423,
+    "max_abs_prediction_difference": 1.6653345369377348e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 2,
+    "pseudo_dose": 1,
+    "theta": 0.08529551713755637,
+    "max_abs_prediction_difference": 2.0816681711721685e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2021_24",
+    "group": 2,
+    "pseudo_dose": 2,
+    "theta": 1.9324367501453648,
+    "max_abs_prediction_difference": 1.942890293094024e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 0,
+    "pseudo_dose": 0,
+    "theta": 1.1539660654933286,
+    "max_abs_prediction_difference": 2.220446049250313e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 0,
+    "pseudo_dose": 1,
+    "theta": 3.1582928647673687,
+    "max_abs_prediction_difference": 1.5265566588595902e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 0,
+    "pseudo_dose": 2,
+    "theta": 9.19708281588289,
+    "max_abs_prediction_difference": 2.1510571102112408e-16,
+    "deficit_weeks": 1
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 1,
+    "pseudo_dose": 0,
+    "theta": 1.1123253805739814,
+    "max_abs_prediction_difference": 2.498001805406602e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 1,
+    "pseudo_dose": 1,
+    "theta": 2.557489463702632,
+    "max_abs_prediction_difference": 1.8041124150158794e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 1,
+    "pseudo_dose": 2,
+    "theta": 6.0747721587824905,
+    "max_abs_prediction_difference": 1.734723475976807e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 2,
+    "pseudo_dose": 0,
+    "theta": 0.38067772386489157,
+    "max_abs_prediction_difference": 1.734723475976807e-16,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 2,
+    "pseudo_dose": 1,
+    "theta": 8.115836110118457e-17,
+    "max_abs_prediction_difference": 0.0,
+    "deficit_weeks": 0
+  },
+  {
+    "enrollment": "2022_06",
+    "group": 2,
+    "pseudo_dose": 2,
+    "theta": 3.3825747560816923,
+    "max_abs_prediction_difference": 2.5673907444456745e-16,
+    "deficit_weeks": 0
+  }
+]

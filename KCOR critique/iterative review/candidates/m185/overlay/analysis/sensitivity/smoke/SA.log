@@ -1,0 +1,37 @@
+================================================================================
+KCOR v7.6 - Kirsch Cumulative Outcomes Ratio Analysis
+================================================================================
+Analysis Date: 2026-11-26 20:03:27
+Mode: Sensitivity Analysis
+Input File: C:\Users\jasmi\AppData\Local\Temp/kcor-s4-approved/m138/data/Czech/KCOR_CMR.xlsx
+SA Output File: C:/Users/jasmi/AppData/Local/Temp/kcor-s4-approved/m138/analysis/sensitivity/smoke/KCOR_SA.xlsx
+Log File: C:/Users/jasmi/AppData/Local/Temp/kcor-s4-approved/m138/analysis/sensitivity/smoke/SA.log
+(Standard multi-sheet workbook suppressed in SA mode)
+--------------------------------------------------------------------------------
+Configuration Parameters (effective):
+  KCOR_NORMALIZATION_WEEKS = 4
+  DYNAMIC_HVE_SKIP_WEEKS = 2
+  AGE_RANGE             = 10
+  YEAR_RANGE            = (1920, 2009)
+  ENROLLMENT_DATES      = ['2021_24']
+  DEBUG_VERBOSE         = True
+  OVERRIDE_DOSE_PAIRS   = None
+  OVERRIDE_YOBS         = None
+  Reporting date calculation: 1 year from enrollment date
+  NEGATIVE_CONTROL_MODE = 0
+  THETA_ESTIMATION_WINDOWS = 2023-19..2023-40 (2023 post COVID); 2022-22..2022-25 (post booster); 2021-26..2021-36 (post primary); 2024-11..2024-14 (post 2024)
+  THETA_IDENTIFIABILITY = min_quiet_deaths=30, theta0_max=100.0, action=set_zero
+  GOMPERTZ_THETA_FIT     = gamma=0.085/yr, k_anchor_weeks=4, convergence_tol=1e-08, max_iterations=25, gamma_per_week=0.00163462
+  NPH_CORRECTION        = 2021-41..2022-12, identified_only skipped (missing_identified_alpha), neutralization=symmetric_all_cohorts
+  NORMALIZATION_METHOD  = KCOR7 (gamma-frailty inversion)
+================================================================================
+
+[DEBUG] Limiting to age range: 1920-2009
+[DEBUG] Limiting to enrollment dates: ['2021_24']
+[SA] 2021_24: reporting date 2022-06-13, source rows 1687
+[SA] 2021_24 offset 0: ordinary fit complete
+[SA] Creating grid output with 1 cohorts and 3 dose pairs
+[SA] Wrote grid for 2021_24, dose 1 vs 0 to sheet '2021_24_1_vs_0'
+[SA] Wrote grid for 2021_24, dose 2 vs 0 to sheet '2021_24_2_vs_0'
+[SA] Wrote grid for 2021_24, dose 2 vs 1 to sheet '2021_24_2_vs_1'
+[SA] Wrote sensitivity analysis grids to C:\Users\jasmi\AppData\Local\Temp/kcor-s4-approved/m138/analysis/sensitivity/smoke\KCOR_SA.xlsx

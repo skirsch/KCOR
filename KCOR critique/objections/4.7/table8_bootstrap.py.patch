@@ -1,0 +1,20 @@
+--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -48,7 +48,7 @@
+     CONFIG = K.get_gompertz_theta_fit_config()
+     WAVE = K.get_covid_correction_config()
+     GUARD = K.get_theta_degenerate_fit_config()
+-    assert WAVE["apply_correction"] and WAVE["apply_alpha"] == 1.18
++    assert not WAVE["apply_correction"] or WAVE["apply_alpha"] == 1.18
+     DATA = []
+     for dates, counts in populations:
+         time = np.arange(len(dates), dtype=float)
+@@ -91,7 +91,7 @@
+         observed = np.cumsum(effective)[keep]
+         inverted = K.invert_gamma_frailty(observed, theta)
+         corrected, _ = K.apply_nph_correction_post_inversion(
+-            inverted, time[keep], dates[keep], theta, WAVE["apply_alpha"],
++            inverted, time[keep], dates[keep], theta, (WAVE["apply_alpha"] if WAVE["apply_correction"] else 1.),
+             WAVE["start_dt"], WAVE["end_dt"], k, CONFIG["gamma_per_week"], observed_cumhaz=observed)
+         anchor = np.flatnonzero(time[keep] == K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE).item()
+         growth[a, d] = corrected[-1] / corrected[anchor]

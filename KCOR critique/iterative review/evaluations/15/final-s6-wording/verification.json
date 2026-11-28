@@ -1,0 +1,24 @@
+{
+  "candidate": "m177",
+  "parent": "m176",
+  "purpose_sentence_count": 1,
+  "diagnostic_caption_count": 4,
+  "unchanged_code_data_archive_test_config_figure_files": 1260,
+  "clean_pages": 78,
+  "redline_pages": 82,
+  "clean_purpose_page": 68,
+  "clean_caption_pages": [
+    68,
+    69,
+    70,
+    75
+  ],
+  "redline_purpose_page": 73,
+  "redline_caption_pages": [
+    69,
+    70,
+    71,
+    77
+  ],
+  "distinct_visible_linked_objections": 89
+}

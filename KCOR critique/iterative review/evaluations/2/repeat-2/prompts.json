@@ -1,0 +1,21 @@
+{
+  "baseline": [
+    "Your entire review input is the single repo edition at C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/m17. Inspect only this directory read-only via tools, without external sources or conversation history. The combined paper and supplement are under documentation/preprint. Return your full review in your final response, identifying checkable locations. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?",
+    "For archiving, write your final response verbatim as UTF-8 Markdown to C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-first.md, outside the supplied repo. Treat that as an output-only path. Return the same text or confirm the saved response."
+  ],
+  "A": [
+    "Your entire review input is the single repo edition at C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/m42. Inspect only this directory read-only via tools, without external sources or conversation history. The combined paper and supplement are under documentation/preprint. Return your full review, identifying checkable locations, and archive the answer verbatim as UTF-8 Markdown to the output-only path C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-a.md. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?"
+  ],
+  "B": [
+    "The current edition is C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/m42. The cumulative changes are supplied at C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/handoff/changes.diff. Use the revised repo and diff read-only and retain this conversation. The updated combined PDF and input workbook are in the revised repo. Archive your full review verbatim as UTF-8 Markdown to the output-only path C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-b.md. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?"
+  ],
+  "C": [
+    "The scientific repo under review is C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/m42, including documentation/preprint. The previous reviewer's baseline objections are supplied verbatim in C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-first.md. Read that answer and the cumulative changes in C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/handoff/changes.diff. Use only these inputs read-only, without external sources or other conversations. Archive your full review verbatim as UTF-8 Markdown to the output-only path C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-c.md. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?"
+  ],
+  "B-follow": [
+    "Targeted follow-up, separate from the open review. Compare each baseline objection with your saved revised answer. For any specific objection omitted or left ambiguous, answer: Does this specific objection still apply to the revised version? What in the paper or code supports your answer? Check also whether the baseline concerns about outcome-conditioned selection in the illustration and the contamination threshold were answered. Use only the supplied inputs; save your concise response as C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-b-follow.md. Preserve the open response."
+  ],
+  "C-follow": [
+    "Targeted follow-up, separate from the open review. Compare each supplied baseline objection with your saved revised answer. For any specific objection omitted or left ambiguous, answer: Does this specific objection still apply to the revised version? What in the paper or code supports your answer? Check also whether the baseline concerns about outcome-conditioned selection in the illustration and the contamination threshold were answered. Use only the supplied inputs; save your concise response as C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/r2-c-follow.md. Preserve the open response."
+  ]
+}

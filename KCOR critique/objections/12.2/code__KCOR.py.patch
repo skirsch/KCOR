@@ -1,0 +1,11 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -7779,7 +7779,7 @@
+                                         "mode": _nph_diag.get("correction_mode", "unavailable"),
+                                         "wave_points": _nph_diag.get("wave_points", 0),
+                                         "deficit_weeks": _nph_diag.get("deficit_weeks", np.nan),
+-                                        "zero_excess_weeks": _nph_diag.get("skipped_nonpositive_excess", 0)}
++                                        "zero_excess_weeks": _nph_diag.get("skipped_nonpositive_excess", np.nan)}
+                             if _nph_diag.get("correction_mode") not in ("identity", "skipped_missing_params", "no_wave_points"):
+                                 dual_print(
+                                     f"[NPH_POST_INV] enroll={sh} yob={yob} dose={dose} "

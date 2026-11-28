@@ -1,0 +1,45 @@
+--- m145/code/fixed_cohort_history.py
++++ m146/code/fixed_cohort_history.py
+@@ -1,17 +1,29 @@
+ """Validate original fixed-cohort components before any grouping."""
++import os
+ import numpy as np
+ import pandas as pd
++
++def risk_history_policy(layout="disjoint"):
++    """Default to death-only; nondeath exits require an explicit opt-in."""
++    policy = os.environ.get("KCOR_RISK_HISTORY_POLICY", "death_only")
++    if policy not in ("death_only", "allow_exits"):
++        raise ValueError(f"Unknown KCOR_RISK_HISTORY_POLICY: {policy}")
++    if layout == "table8" and policy != "death_only":
++        raise ValueError("Overlapping Table 8 layout requires death-only accounting")
++    return policy
++
+ 
+ def invalid_components(frame, start, horizon=None, layout="disjoint"):
+     """Return (age, dose) groups containing an invalid source history.
+ 
+     A positive residual risk set cannot silently disappear before the sheet
+     horizon. A contiguous suffix missing after complete exhaustion is allowed.
+-    Non-death exits between observed weeks are allowed in the disjoint layout;
+-    the declared overlapping Table 8 layout requires death-only accounting. Unexplained increases
++    Death-only accounting is the default. The disjoint exit-capable sensitivity
++    mode explicitly permits nondeath exits. Unexplained increases
+     and missing weeks are not. Fractional expected counts are permitted here
+     (the person bootstrap independently requires integer history cells).
+     """
++    policy=risk_history_policy(layout)
+     if frame.empty:
+         return {}
+     start=pd.Timestamp(start)
+@@ -41,8 +53,8 @@
+             reason="invalid component risk/death counts"
+         elif np.any(a[1:]>a[:-1]-d[:-1]+tol[:-1]):
+             reason="unexplained component risk-set increase"
+-        elif layout=="table8" and np.any(np.abs(a[1:]-(a[:-1]-d[:-1]))>tol[:-1]):
+-            reason="overlapping component violates death-only accounting"
++        elif policy=="death_only" and np.any(np.abs(a[1:]-(a[:-1]-d[:-1]))>tol[:-1]):
++            reason="component violates death-only accounting (unexplained nondeath loss)"
+         elif dates[-1]<horizon and a[-1]-d[-1]>tol[-1]:
+             reason="truncated positive-risk component"
+         if reason:

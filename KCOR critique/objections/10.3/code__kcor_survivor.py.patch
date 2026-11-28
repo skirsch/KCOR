@@ -1,0 +1,10 @@
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -308,6 +308,7 @@
+         # The proportional initializer's gap model is not the nonlinear model.
+         # Do not present its provisional gap offsets as nonlinear diagnostics.
+         diag["gap_first_pass"]=None
++        diag["gap_seed_status"]="not_applicable"
+         deaths=None if deaths_arr is None else np.asarray(deaths_arr,dtype=float)
+         total=float(np.nansum(np.where(quiet_eligible,np.clip(deaths,0.,None),0.))) if deaths is not None and deaths.shape==h.shape else np.nan
+         minimum=int(model.get_theta_degenerate_fit_config().get("min_quiet_deaths",30))

@@ -1,0 +1,334 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1537,7 +1537,7 @@
+         if _iter == 0:
+             raw_offsets = np.asarray([H0_eff[start] - H_gom_full[start] for start in reentry_indices], float)
+             signed = np.diff(raw_offsets, prepend=0.)
+-            gap_first_pass = [(float(t_r[start]), float(v)) for start, v in zip(reentry_indices, signed)] if gap_seed_status=="ok" or not reentry_indices else None
++            gap_first_pass = [(float(t_r[start]), float(v)) for start, v in zip(reentry_indices, signed)] if gap_seed_status=="ok" or not reentry_indices else [(float(t_r[start]), np.nan) for start in reentry_indices]
+         # 3b: compute incremental deltas at each gap end.
+         deltas = []
+         delta_raw_iter = []
+@@ -4365,7 +4365,7 @@
+       - CH = cumsum(-ln(1 - MR_adj)) where MR_adj = MR × exp(-slope × (t - t0))
+       - KCOR = (cum_hazard_num / cum_hazard_den), anchored to 1 at week KCOR_NORMALIZATION_WEEKS if available
+       - 95% CI uses proper uncertainty propagation: Var[KCOR] = KCOR² * [Var[cumD_num]/cumD_num² + Var[cumD_den]/cumD_den² + Var[baseline_num]/baseline_num² + Var[baseline_den]/baseline_den²]
+-      - ASMR pooling uses fixed baseline weights = sum of PT in the first 4 weeks per age (time-invariant).
++      - ASMR pooling uses fixed expected-deaths weights in the first four enrollment weeks.
+     """
+     out_rows = []
+     # Fast access by (age,dose) - in MC mode, also group by mc_id to preserve separate iterations
+@@ -4684,37 +4684,12 @@
+     asmr_source = df_sorted[df_sorted["YearOfBirth"] > 0].copy()
+     quiet_data = asmr_source[asmr_source["DateDied"].isin(quiet_window_dates)]
+     
+-    # Calculate expected-deaths weights for each age group
+-    for yob, g_age in quiet_data.groupby("YearOfBirth", sort=False):
+-        # Get all doses for this age group in quiet window
+-        age_quiet_data = g_age
+-        
+-        # Calculate smoothed mean mortality rate h_a across all doses in quiet window
+-        # Use 8-week MA smoothing (already applied to MR_smooth column)
+-        smoothed_mrs = age_quiet_data["MR_smooth"].values
+-        valid_mrs = smoothed_mrs[smoothed_mrs > EPS]  # Remove zeros for mean calculation
+-        
+-        if len(valid_mrs) > 0:
+-            h_a = np.mean(valid_mrs)  # Smoothed mean MR in quiet window
+-        else:
+-            # Handle zero deaths with shrinkage - use minimum observed MR across all ages
+-            all_mrs = quiet_data["MR_smooth"][quiet_data["MR_smooth"] > EPS].values
+-            h_a = np.min(all_mrs) if len(all_mrs) > 0 else EPS
+-        
+-        # Calculate person-time PT_a(W) for this age group in quiet window
+-        PT_a = float(age_quiet_data["PT"].sum())
+-        
+-        # Expected-deaths weight: w_a ∝ h_a × PT_a(W)
+-        weights[yob] = h_a * PT_a
+-    
+-    # Normalize weights: w_a = (h_a PT_a(W)) / (Σ_b h_b PT_b(W))
+-    total_weight = sum(weights.values())
+-    if total_weight > 0:
+-        weights = {yob: w / total_weight for yob, w in weights.items()}
+-    else:
+-        # Fallback to equal weights if all weights are zero
+-        weights = {yob: 1.0 / len(weights) for yob in weights.keys()}
+-    
++    from pooling import expected_deaths_weights
++    age_groups=list(quiet_data.groupby("YearOfBirth",sort=False))
++    normalized=expected_deaths_weights([g["MR_smooth"].to_numpy() for _,g in age_groups],
++                                       [g["PT"].sum() for _,g in age_groups],EPS)
++    weights=dict(zip([a for a,_ in age_groups],normalized))
++
+     # Store weights globally for use in KCOR_ns calculation and display
+     global ASMR_WEIGHTS_BY_SHEET
+     ASMR_WEIGHTS_BY_SHEET[sheet_name] = weights.copy()
+@@ -4766,7 +4741,7 @@
+                     continue
+                 c1 = vn_ref["CH"].iloc[0]
+                 c0 = dn_ref["CH"].iloc[0]
+-                if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
++                if np.isfinite(c1) and np.isfinite(c0) and c1 > 0 and c0 > 0:
+                     anchors[yob] = c1 / c0
+ 
+             # Preserve an explicit unavailable row at each supported sheet date
+@@ -4813,18 +4788,18 @@
+                     if gv_at_dt.empty or gu_at_dt.empty:
+                         continue
+                     denom_ch = gu_at_dt["CH"].iloc[0]
+-                    if denom_ch > EPS:
++                    if denom_ch > 0:
+                         k = gv_at_dt["CH"].iloc[0] / denom_ch
+                     else:
+                         continue
+                     k0 = anchors[yob]
+-                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
++                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > 0 and k > 0):
+                         continue
+                     kstar = k / k0
+                     
+                     # ASMR pooled values should not be scaled; use raw kstar
+                     
+-                    logs.append(safe_log(kstar))
++                    logs.append(np.log(kstar))
+                     wts.append(weights.get(yob, 0.0))
+                     contributors.append(yob)
+ 
+@@ -4843,7 +4818,11 @@
+                         if w_sum <= 0:
+                             continue
+                         logK = np.average(logs_arr, weights=wts_arr)
+-                        Kpool = float(safe_exp(logK))
++                        with np.errstate(over="ignore", under="ignore"):
++                            Kpool = float(np.exp(logK))
++                        if not np.isfinite(Kpool) or Kpool <= 0:
++                            pooled_rows.append(unavailable_pool(dt, "pooled_numerical_range"))
++                            continue
+                     
+                         # Bootstrap reporting supplies the only inferential limits.
+                         CI_lower = CI_upper = np.nan
+@@ -4905,8 +4884,8 @@
+                             "YearOfBirth": 0,      # ASMR pooled row
+                             "Dose_num": num,
+                             "Dose_den": den,
+-                            "theta_num": theta_num_pooled,
+-                            "theta_den": theta_den_pooled,
++                            "theta_num": np.nan,
++                            "theta_den": np.nan,
+                             "theta0_status_num": theta0_status_num_pooled,
+                             "theta0_status_den": theta0_status_den_pooled,
+                             "hazard_num": np.nan,  # Pooled ASMR has no per-dose hazards
+@@ -4965,7 +4944,7 @@
+                 t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                 c1 = gvn["CH"].iloc[t0_idx]
+                 c0 = gdn["CH"].iloc[t0_idx]
+-                if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
++                if np.isfinite(c1) and np.isfinite(c0) and c1 > 0 and c0 > 0:
+                     anchors_asmr[yob] = c1 / c0
+ 
+             for dt in all_dates_asmr:
+@@ -4985,15 +4964,15 @@
+                     gv = gv.iloc[[0]]
+                     gu = gu.iloc[[0]]
+                     denom_ch = gu["CH"].values[0]
+-                    if denom_ch > EPS:
++                    if denom_ch > 0:
+                         k = (gv["CH"].values[0]) / denom_ch
+                     else:
+                         continue
+                     k0 = anchors_asmr[yob]
+-                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > EPS and k > EPS):
++                    if not (np.isfinite(k) and np.isfinite(k0) and k0 > 0 and k > 0):
+                         continue
+                     kstar = k / k0
+-                    logs_asmr.append(safe_log(kstar))
++                    logs_asmr.append(np.log(kstar))
+                     wts_asmr.append(weights_asmr.get(yob, 0.0))
+                     contributors_asmr.append(yob)
+ 
+@@ -5011,7 +4990,10 @@
+                         if w_sum_asmr <= 0:
+                             continue
+                         logK_asmr = np.average(logs_arr_asmr, weights=wts_arr_asmr)
+-                        Kpool_asmr = float(safe_exp(logK_asmr))
++                        with np.errstate(over="ignore", under="ignore"):
++                            Kpool_asmr = float(np.exp(logK_asmr))
++                        if not np.isfinite(Kpool_asmr) or Kpool_asmr <= 0:
++                            continue
+                     else:
+                         continue
+                 else:
+@@ -5057,8 +5039,8 @@
+                     "YearOfBirth": -3,      # All Ages ASMR pooled row
+                     "Dose_num": num,
+                     "Dose_den": den,
+-                    "theta_num": theta_num_pooled_asmr,
+-                    "theta_den": theta_den_pooled_asmr,
++                    "theta_num": np.nan,
++                    "theta_den": np.nan,
+                     "theta0_status_num": theta0_status_num_pooled_asmr,
+                     "theta0_status_den": theta0_status_den_pooled_asmr,
+                     "CH_num": np.nan,  # Pooled All Ages ASMR has no per-dose CH
+@@ -6355,11 +6337,6 @@
+ 
+         source_horizon = df["DateDied"].max()
+ 
+-        # Apply debug age filter (skip in MC mode since YearOfBirth=-2 is always used)
+-        if YEAR_RANGE and not MONTE_CARLO_MODE:
+-            start_year, end_year = YEAR_RANGE
+-            df = df[(df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS)) | ((df["YearOfBirth"] >= start_year) & (df["YearOfBirth"] <= end_year))]
+-            dual_print(f"[DEBUG] Filtered to {len(df)} rows for ages {start_year}-{end_year}")
+         
+         # Apply sheet-specific dose filtering
+         if MONTE_CARLO_MODE:
+@@ -6398,6 +6375,23 @@
+                     exit_totals[pair] = exit_totals.get(pair, 0.) + exits
+                 for (age, dose), exits in exit_totals.items():
+                     dual_print(f"[KCOR_NONDEATH_EXITS] EnrollmentDate={sh},yob={age},dose={dose},count={exits:g}")
++
++        # Reconstruct the inclusive population from validated source components
++        # before the display-age filter; an explicit total has the same population.
++        if not MONTE_CARLO_MODE and -2 not in df["YearOfBirth"].values:
++            source = df[_all_age_source_mask(df)]
++            if not source.empty:
++                aggregate = source.groupby(["Dose","DateDied"], as_index=False).agg(
++                    ISOweekDied=("ISOweekDied","first"), Alive=("Alive","sum"), Dead=("Dead","sum"))
++                aggregate["YearOfBirth"] = -2
++                for (age,dose), reasons in list(source_bad.items()):
++                    if ((source.YearOfBirth==age)&(source.Dose==dose)).any():
++                        source_bad.setdefault((-2,dose),[]).extend(reasons)
++                df = pd.concat([df,aggregate],ignore_index=True)
++        if YEAR_RANGE and not MONTE_CARLO_MODE:
++            start_year, end_year = YEAR_RANGE
++            df = df[df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS) | df["YearOfBirth"].between(start_year,end_year)]
++            dual_print(f"[DEBUG] Filtered displayed ages to {start_year}-{end_year}")
+ 
+         # The sensitivity sweep needs only the all-ages output. Once the full
+         # source calendar and every source history have been validated, avoid
+@@ -7830,6 +7824,14 @@
+                                 observed_cumhaz=H_obs[:valid_end],
+                             )
+                             H0[:valid_end] = corrected_prefix
++                            if not MONTE_CARLO_MODE:
++                                report_key = (effective_sheet_name_for_processing, int(yob), int(dose))
++                                if report_key in kcor6_params_map:
++                                    kcor6_params_map[report_key]["wave_deficit_report"] = {
++                                        "mode": _nph_diag.get("correction_mode", "unavailable"),
++                                        "wave_points": _nph_diag.get("wave_points", 0),
++                                        "deficit_weeks": _nph_diag.get("deficit_weeks", np.nan),
++                                        "zero_excess_weeks": _nph_diag.get("skipped_nonpositive_excess", 0)}
+                             if _nph_diag.get("correction_mode") not in ("identity", "skipped_missing_params", "no_wave_points"):
+                                 dual_print(
+                                     f"[NPH_POST_INV] enroll={sh} yob={yob} dose={dose} "
+@@ -7839,7 +7841,8 @@
+                                     f"max_abs_H_change={_nph_diag.get('max_abs_change', float('nan')):.6g} "
+                                     f"wave_points={_nph_diag.get('wave_points', 0)} "
+                                     f"corrected={_nph_diag.get('corrected_points', 0)} "
+-                                    f"skipped_nonpos={_nph_diag.get('skipped_nonpositive_excess', 0)}"
++                                    f"skipped_nonpos={_nph_diag.get('skipped_nonpositive_excess', 0)} "
++                                    f"deficit_weeks={_nph_diag.get('deficit_weeks', 'unavailable')}"
+                                 )
+ 
+                         h0_inc = np.diff(H0, prepend=0.0)
+@@ -7976,6 +7979,7 @@
+                     "t": "first",
+                 }).reset_index().sort_values(["DateDied", "YearOfBirth"]) 
+             )
++            dose_data["cumPT"] = dose_data.groupby("YearOfBirth")["PT"].cumsum()
+             # Collect minimal columns for NC
+             if not dose_data.empty:
+                 tmp = dose_data[["DateDied","YearOfBirth","CH","t"]].copy()
+@@ -8001,7 +8005,7 @@
+                     "adj_cum_hazard": row["CH"],
+                     "Slope": slope_val,
+                     "Cum_deaths": row["cumD_unadj"],
+-                    "Cumu_Person_Time": row["PT"],
++                    "Cumu_Person_Time": row["cumPT"],
+                     "Time_Index": row["t"]
+                 })
+         
+@@ -8154,6 +8158,12 @@
+     if not MONTE_CARLO_MODE:
+         combined.attrs["gap_first_pass"] = {key: params.get("gap_first_pass")
+             for key, params in kcor6_params_map.items() if len(key) == 3}
++        combined.attrs["gap_seed_status"] = {key: params.get("gap_seed_status") for key,params in kcor6_params_map.items() if len(key)==3}
++        from bootstrap_reporting import annotate_residual_screen
++        annotate_residual_screen(combined, kcor6_params_map)
++        combined.attrs["wave_deficit_diagnostics"] = [
++            dict(EnrollmentDate=key[0], YearOfBirth=key[1], Dose=key[2], **params["wave_deficit_report"])
++            for key,params in kcor6_params_map.items() if len(key)==3 and "wave_deficit_report" in params]
+     if return_rows:
+         xls.close()
+         log_file_handle.close()
+@@ -8956,6 +8966,7 @@
+                             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged",
++                            "residual_screen_flag", "residual_screen_unavailable", "CI_residual_flagged_draws", "CI_residual_unavailable_draws",
+                             "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws", "CI_unanchored_method",
+                             "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+                             "normalization_status", "risk_history_policy", "gap_assumption_status",
+@@ -8974,31 +8985,30 @@
+                         # Then write About and optional debug sheet
+                         # Ensure About 'Field' and 'Value' arrays are the same length
+                         # by constructing them explicitly and padding Values as needed
+-                        fields = about_data["Field"]
+-                        values = [
+-                            VERSION,
+-                            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+-                            src_path,
+-                            out_path,
+-                            "",
+-                            "",
+-                            "",
+-                            "",
+-                            f"{KCOR_NORMALIZATION_WEEKS}",
+-                            f"{SLOPE_ANCHOR_T}",
+-                            f"",
+-                            # removed MA params
+-                            f"{YEAR_RANGE}",
+-                            f"{ENROLLMENT_DATES}",
+-                            f"{DEBUG_VERBOSE}",
+-                            f"{OVERRIDE_DOSE_PAIRS}",
+-                            f"{OVERRIDE_YOBS}",
+-                        ]
+-                        if len(values) < len(fields):
+-                            values.extend([""] * (len(fields) - len(values)))
+-                        elif len(values) > len(fields):
+-                            values = values[:len(fields)]
+-                        about_df = pd.DataFrame({"Field": fields, "Value": values})
++                        about_df = pd.DataFrame([
++                            ("VERSION", VERSION), ("Generated", datetime.now().isoformat(timespec="seconds")),
++                            ("Input", src_path), ("Output", out_path),
++                            ("Method", "Joint all-window Gompertz/gamma frailty fit; optional wave correction; anchored cumulative hazard ratio"),
++                            ("Uncertainty", "Person-bootstrap percentile intervals for ordinary fixed-cohort histories; unavailable when unsupported"),
++                            ("KCOR_NORMALIZATION_WEEKS", KCOR_NORMALIZATION_WEEKS),
++                            ("KCOR_NORMALIZATION_WEEKS_EFFECTIVE", KCOR_NORMALIZATION_WEEKS_EFFECTIVE),
++                            ("DYNAMIC_HVE_SKIP_WEEKS", DYNAMIC_HVE_SKIP_WEEKS),
++                            ("SLOPE_ANCHOR_T", SLOPE_ANCHOR_T),
++                            ("YEAR_RANGE", str(YEAR_RANGE)), ("AGE_RANGE", AGE_RANGE),
++                            ("ENROLLMENT_DATES", str(ENROLLMENT_DATES)),
++                            ("DEBUG_VERBOSE", DEBUG_VERBOSE),
++                            ("OVERRIDE_DOSE_PAIRS", str(OVERRIDE_DOSE_PAIRS)), ("OVERRIDE_YOBS", str(OVERRIDE_YOBS)),
++                            ("Dose pairs by enrollment", str({sh:get_dose_pairs(sh) for sh in sheets_to_process})),
++                            ("Gompertz fit", str(get_gompertz_theta_fit_config())),
++                            ("Frailty fit bounds", str(get_theta_degenerate_fit_config())),
++                            ("Quiet windows", str(get_theta_estimation_windows())),
++                            ("NPH", str(get_covid_correction_config())),
++                            ("Risk history policy", os.environ.get("KCOR_RISK_HISTORY_POLICY","death_only")),
++                            ("Bootstrap layout", os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")),
++                            ("Bootstrap draws", os.environ.get("KCOR_BOOTSTRAP_DRAWS","999")),
++                            ("Bootstrap seed", os.environ.get("KCOR_BOOTSTRAP_SEED","33080")),
++                            ("Bootstrap workers", os.environ.get("KCOR_BOOTSTRAP_WORKERS","5"))
++                        ], columns=["Field","Value"])
+                         about_df.to_excel(writer, index=False, sheet_name="About")
+                         # Always write by_dose sheet (trim to used columns)
+                         by_dose_cols = [
+@@ -9078,6 +9088,8 @@
+                             else:
+                                 dual_print("[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | no eligible dose>0 rows")
+                         theta0_diag_df.to_excel(writer, index=False, sheet_name="theta0_diagnostics")
++                        if combined.attrs.get("wave_deficit_diagnostics"):
++                            pd.DataFrame(combined.attrs["wave_deficit_diagnostics"]).to_excel(writer,index=False,sheet_name="wave_deficits")
+                         if "gap_diagnostics" in combined.attrs:
+                             pd.DataFrame(combined.attrs["gap_diagnostics"]).to_excel(writer, index=False, sheet_name="gap_diagnostics")
+                         sampling_rows=[]

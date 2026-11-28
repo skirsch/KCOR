@@ -1,0 +1,8 @@
+--- m138/analysis/README.md
++++ m139-review/analysis/README.md
+@@ -17,3 +17,5 @@
+ The residual-scale change in the proportional solver leaves the least-squares minimizer unaltered. `python test/test_solver_scaling.py` checks 24 exact rare-rate examples. `python analysis/solver_scaling/low_frailty_replay.py <previous-checkout>` reproduces the matched old/new exact grid and 600 sampled null datasets. `python analysis/age_shift/replay.py --draws 999` independently verifies the age-shift replay against ordinary workbook output for the original and two draws.
+ 
+ Czech sensitivity grid (SI S4.4): `python analysis/sensitivity/replay.py` runs the ordinary all-ages estimator with the module off and regenerates all 27 configured comparison grids, 1,323 cells and the selected 2021-24 figure. The seven start offsets refer to 2023-01 with end 2023-52; reference lengths are two through eight accumulating weeks and reporting dates are the current one-year convention. Current files are under `analysis/sensitivity/current/`; the historical v6 workbook remains under `test/sensitivity/out/` and is not the source of the revised figure.
++
++The default numerical frailty ceiling is now 500; near-ceiling estimates are retained and explicitly flagged. The current S6 table uses `ceiling500/s6-all-window.json` and the module-off Table 8 column uses `ceiling500/table8/identified_only-table8.json` (both fresh 999-draw replays). The previously published forced-alpha replay at ceiling 100 is archived under `solver_scaling/`; a fresh ceiling-500 forced-alpha replay is separately in progress.

@@ -1,0 +1,2252 @@
+--- a/analysis/README.md
++++ b/analysis/README.md
+@@ -0,0 +1,5 @@
++# Numerical results
++
++Table 8: `table8/replay.py` reproduces the full ordinary workbook and the person-bootstrap results; the stored 999 draws are in `survivor_validation/table8-draws.npz`. Point estimates and the first matched draw were verified against the integrated implementation. Table 9: `positive_control/replay.py` regenerates the fitted workbook points and the full 999-draw intervals. `quiet_windows/scan.py` regenerates the placement scan. The `survivor_validation`, `information`, `contamination` and `alpha` directories contain numerical results of the specified validation designs and theoretical benchmarks.
++
++The main and supplement Markdown files are authoritative manuscript sources; the combined PDF is a render of both. Historical validation configurations are distinguished from the current method by the manuscript.
+Data/asset analysis/alpha/objective-curves.csv: absent -> 2060265af4a6404053a4613e698d16013e4e3e4f0ca631ffe3b8cf8736900245
+Data/asset analysis/alpha/summary.csv: absent -> 9e6b9ae135303fb7206cd16793954692d7189d7ad960ec61c7b5e61ec0c0294e
+Data/asset analysis/alpha/wider-grid-summary.csv: absent -> 54cbef25e1bab578787414642ee8cd0a7bdc0d05e58d721014323d9b987fc4cc
+Data/asset analysis/contamination/historical-grid.csv: absent -> 78a22333888827855c453f992f1884226fad3461034a18155ae79ef62fcd3e59
+Data/asset analysis/contamination/runs.csv: absent -> 525744d658fe089f7a3ecc4e6a3ace585a41668d0fd6e9f58e1eff93f8a422dc
+Data/asset analysis/information/information-limits.csv: absent -> 21e6e5cfa7849bf950ee3fbd1e22c68912eba5d594324246275def73b7c530fe
+Data/asset analysis/information/planning-grid.csv: absent -> 036d5c0480a4980de98abab75487c81c953ac24c7d4c6e2c30f5100708cfff37
+Data/asset analysis/information/ratio-limits.csv: absent -> 96b0ffeb775cd990b546fae13583e56b8ab4fd12ccd21264e2c8fb49d005762c
+Data/asset analysis/information/synthetic-pooled-comparison.csv: absent -> 911a189e9bede648ceacfd3e5c9b6311fac46087952abea2bd3618923acdd39b
+Data/asset analysis/positive_control/fitted-benefit.xlsx: absent -> 2450bf09ed731fb0d05c93fd6f2e2780c702c99479af76ad14cd1c8cce45576d
+Data/asset analysis/positive_control/fitted-harm.xlsx: absent -> 295eff66f5c7b55a109c4b8f4cd6f16da1d08771ba6425b18ba96497062da8ae
+--- a/analysis/positive_control/replay.py
++++ b/analysis/positive_control/replay.py
+@@ -0,0 +1,175 @@
++"""Run Table 9 on the archived workbook with the all-window joint fitter."""
++from concurrent.futures import ProcessPoolExecutor
++import hashlib
++import json
++import os
++from pathlib import Path
++import shutil
++import subprocess
++import sys
++from tempfile import TemporaryDirectory
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parents[1]
++CODE = ROOT / "code"
++INPUT = ROOT / "test/positive_control/data/KCOR_positive_control.xlsx"
++SCENARIOS = ("benefit", "harm")
++SEED = 33080
++for key in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
++    os.environ[key] = "1"
++os.environ.update(DATASET="positive_control", MONTE_CARLO="0", SA_DOSE_PAIRS="1,0",
++                  PYTHONIOENCODING="utf-8")
++sys.path.insert(0, str(CODE))
++import numpy as np
++import pandas as pd
++import KCOR as model
++
++
++def workbook(scenario, output):
++    # The scenario name belongs to the run; the sheet name identifies enrollment.
++    frame = pd.read_excel(INPUT, sheet_name="2021_24_"+scenario)
++    source = output.with_name("input.xlsx")
++    frame.to_excel(source, sheet_name="2021_24", index=False)
++    os.chdir(output.parent)
++    model.OVERRIDE_DOSE_PAIRS = [(1,0)]
++    fit = model.fit_theta0_gompertz
++    calls=[]
++    def joint_fit(*args, **kwargs):
++        (k,theta),diag=fit(*args,**kwargs,joint_seed=True)
++        calls.append(dict(k=float(k),theta=float(theta),status=diag["status"]))
++        return (k,theta),diag
++    model.fit_theta0_gompertz = joint_fit
++    model.process_workbook(str(source), str(output))
++    output.with_suffix(".json").write_text(json.dumps(calls),encoding="utf8")
++
++
++def read_data():
++    data = []
++    for scenario in SCENARIOS:
++        df = pd.read_excel(INPUT, sheet_name="2021_24_"+scenario, parse_dates=["DateDied"])
++        weekly = df.groupby(["Dose","DateDied"])[["Alive","Dead"]].sum()
++        dates = weekly.loc[0].index
++        assert dates.equals(weekly.loc[1].index) and len(dates) == 150
++        assert (dates.to_series().diff().dropna() == pd.Timedelta(weeks=1)).all()
++        alive, dead = [weekly[c].to_numpy().reshape(2,-1) for c in ("Alive","Dead")]
++        # Counts were rounded separately in the generator. Treat the residual loss
++        # after each week's deaths as a nondeath exit before the following week.
++        exits = alive[:,:-1] - dead[:,:-1] - alive[:,1:]
++        cells = np.column_stack([dead, exits, alive[:,-1]-dead[:,-1]])
++        assert cells.min() >= 0
++        np.testing.assert_array_equal(cells.sum(axis=1), alive[:,0])
++        data.append((alive,dead,cells))
++    np.testing.assert_array_equal(data[0][2][0],data[1][2][0])
++    return dates, data
++
++
++def initialize(dates, data):
++    global DATA, WEEKS, QUIET, CONFIG, GUARD
++    DATA = data
++    WEEKS = np.arange(len(dates))
++    QUIET = model._build_theta_quiet_mask(dates.strftime("%G%V").astype(int).to_numpy(), WEEKS)[0]
++    CONFIG = model.get_gompertz_theta_fit_config()
++    GUARD = model.get_theta_degenerate_fit_config()
++    assert not (model.get_covid_correction_config() or {}).get("apply_correction")
++
++
++def estimates(draw):
++    results=[]
++    for s,(original_alive,original_dead,cells) in enumerate(DATA):
++        curves=[]
++        diagnostics=[]
++        for d in (0,1):
++            if draw:
++                # The control data are identical in both workbooks. Use the same
++                # control draw, and independent treated draws for the two scenarios.
++                rng=np.random.default_rng([SEED,draw,0 if d==0 else s+1])
++                sample=rng.multinomial(cells[d].sum(),cells[d]/cells[d].sum())
++                dead, exits = sample[:len(WEEKS)],sample[len(WEEKS):-1]
++                alive=cells[d].sum()-np.r_[0,np.cumsum(dead[:-1]+exits)]
++            else:
++                alive,dead=original_alive[d],original_dead[d]
++            hazard=model.hazard_from_mr(dead/(alive+model.EPS))
++            skip=model.DYNAMIC_HVE_SKIP_WEEKS
++            effective=np.where(WEEKS>=skip,hazard,0.)
++            (rate,theta),diag=model.fit_theta0_gompertz(effective,WEEKS-skip,QUIET,
++                CONFIG["k_anchor_weeks"],CONFIG["gamma_per_week"],deaths_arr=dead,joint_seed=True)
++            applied=theta if diag["success"] and np.isfinite(theta) and theta>=0 else 0.
++            applied,_,_=model._apply_theta_degenerate_guard(applied,GUARD)
++            total=effective.cumsum()
++            historical=(-np.log1p(-dead/alive)).cumsum()
++            adjusted=model.invert_gamma_frailty(total,applied)
++            anchor=model.KCOR_NORMALIZATION_WEEKS_EFFECTIVE
++            curves.append([historical[80]/historical[4],total[80]/total[anchor],
++                           adjusted[80]/adjusted[anchor]])
++            diagnostics.append(dict(k=float(rate), theta=float(applied), raw=float(diag["theta0_raw"]),
++                status=diag["status"],success=bool(diag["success"]),flag=bool(diag["insufficient_signal"]),
++                upper_bound=bool(diag["theta_hit_bound"])))
++        results.append((np.divide(curves[1],curves[0]),diagnostics))
++    return results
++
++
++def ordinary_points(dates, original):
++    points={}
++    with TemporaryDirectory(prefix="kcor-table9-") as tmp:
++        for s in SCENARIOS:
++            directory=Path(tmp)/s
++            directory.mkdir()
++            path=directory/"fitted.xlsx"
++            result=subprocess.run([sys.executable,"-B",str(Path(__file__).resolve()),"--workbook",s,str(path)],
++                                  cwd=directory,capture_output=True)
++            if result.returncode:
++                raise RuntimeError(result.stderr.decode(errors="replace")[-3000:]+
++                                   result.stdout.decode(errors="replace")[-1000:])
++            df=pd.read_excel(path,sheet_name="dose_pairs")
++            selected=df[(pd.to_datetime(df.Date)==dates[80]) & (df.YearOfBirth==1950) &
++                        (df.Dose_num==1) & (df.Dose_den==0)]
++            points[s]=float(selected.KCOR.item())
++            calls=json.loads(path.with_suffix(".json").read_text(encoding="utf8"))
++            values,diags=original[SCENARIOS.index(s)]
++            np.testing.assert_allclose(points[s],values[-1],rtol=1e-10)
++            for diag in diags:
++                assert any(c["status"]==diag["status"] and
++                           np.allclose([c["k"],c["theta"]],[diag["k"],diag["theta"]],rtol=1e-10,atol=1e-12)
++                           for c in calls)
++            shutil.copyfile(path,HERE/f"fitted-{s}.xlsx")
++    return points
++
++
++def main():
++    dates,data=read_data()
++    initialize(dates,data)
++    original=estimates(0)
++    ordinary=ordinary_points(dates,original)
++    for s,(values,diag) in zip(SCENARIOS,original):
++        print(s,values,diag,"workbook",ordinary[s],flush=True)
++        np.testing.assert_allclose(ordinary[s],values[-1],rtol=1e-10)
++    assert [round(item[0][0],3) for item in original] == [.825,1.107]
++    with ProcessPoolExecutor(4,initializer=initialize,initargs=(dates,data)) as pool:
++        draws=list(pool.map(estimates,range(1,1000),chunksize=8))
++    report=dict(draws=999,seed=SEED,workbook_sha256=hashlib.sha256(INPUT.read_bytes()).hexdigest(),
++                method_sha256=hashlib.sha256((CODE/"KCOR.py").read_bytes()).hexdigest(),
++                anchor=int(model.KCOR_NORMALIZATION_WEEKS_EFFECTIVE),skip=model.DYNAMIC_HVE_SKIP_WEEKS,
++                quiet_indices=WEEKS[QUIET].tolist(),gamma=CONFIG["gamma_per_week"],week80=str(dates[80].date()),
++                scenarios={})
++    for i,s in enumerate(SCENARIOS):
++        vals,diag=original[i]
++        array=np.array([r[i][0] for r in draws])
++        assert np.isfinite(array).all()
++        record=dict(workbook=ordinary[s],fits=diag,rounding_exits=data[i][2][:,150:-1].sum(axis=1).tolist())
++        for j,key in enumerate(("historical_raw","matched_raw","fitted")):
++            record[key]=[vals[j],*np.quantile(array[:,j],[.025,.975])]
++        for d in (0,1):
++            sample=[r[i][1][d] for r in draws]
++            diag[d]["theta_interval"]=np.quantile([x["theta"] for x in sample],[.025,.975]).tolist()
++            diag[d]["k_interval"]=np.quantile([x["k"] for x in sample],[.025,.975]).tolist()
++            diag[d]["flagged_draws"]=sum(x["flag"] for x in sample)
++            diag[d]["unsuccessful_draws"]=sum(not x["success"] for x in sample)
++        report["scenarios"][s]=record
++    (HERE/"results.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf8")
++
++
++if __name__=="__main__":
++    if len(sys.argv)>1 and sys.argv[1]=="--workbook":
++        workbook(sys.argv[2],Path(sys.argv[3]).resolve())
++    else:
++        main()
+--- a/analysis/positive_control/results.json
++++ b/analysis/positive_control/results.json
+@@ -0,0 +1,190 @@
++{
++  "draws": 999,
++  "seed": 33080,
++  "workbook_sha256": "5eb466af2e5f0ad1b5c4bcfd627725811aff9701b22a7ec9364088e62d2b64d0",
++  "method_sha256": "ce2814acb3d31c269649a5bb84095a1c71f14fe8c6fd3d9618f4961ab7ee38c9",
++  "anchor": 5,
++  "skip": 2,
++  "quiet_indices": [
++    81,
++    82,
++    83,
++    84,
++    85,
++    86,
++    87,
++    88,
++    89,
++    90,
++    91,
++    92,
++    93,
++    94,
++    95,
++    96,
++    97,
++    98,
++    99,
++    100,
++    101,
++    102,
++    103,
++    104,
++    105,
++    106,
++    107,
++    108,
++    109,
++    110,
++    111,
++    112,
++    113,
++    114,
++    115,
++    116,
++    117,
++    118,
++    119,
++    120,
++    121,
++    122,
++    123,
++    124,
++    125,
++    126,
++    127,
++    128,
++    129,
++    130,
++    131,
++    132
++  ],
++  "gamma": 0.0016346153846153847,
++  "week80": "2022-12-26",
++  "scenarios": {
++    "benefit": {
++      "workbook": 0.8335933226724037,
++      "fits": [
++        {
++          "k": 0.0019925140421433755,
++          "theta": 1.3925034129925302,
++          "raw": 1.3925034129925302,
++          "status": "ok",
++          "success": true,
++          "flag": false,
++          "upper_bound": false,
++          "theta_interval": [
++            1.0653927062156838,
++            1.7018342405418307
++          ],
++          "k_interval": [
++            0.0018708776224122105,
++            0.0021313629528780876
++          ],
++          "flagged_draws": 0,
++          "unsuccessful_draws": 0
++        },
++        {
++          "k": 0.0019888268633705937,
++          "theta": 1.9452613700792196,
++          "raw": 1.9452613700792196,
++          "status": "ok",
++          "success": true,
++          "flag": false,
++          "upper_bound": false,
++          "theta_interval": [
++            1.590925369276311,
++            2.2773242134306737
++          ],
++          "k_interval": [
++            0.0018528484296181627,
++            0.002127816851716636
++          ],
++          "flagged_draws": 0,
++          "unsuccessful_draws": 0
++        }
++      ],
++      "rounding_exits": [
++        146,
++        152
++      ],
++      "historical_raw": [
++        0.8245963707148335,
++        0.7556228525607673,
++        0.8984004594410694
++      ],
++      "matched_raw": [
++        0.8224570873969926,
++        0.7439653688118437,
++        0.9014011515505432
++      ],
++      "fitted": [
++        0.8335933226724036,
++        0.7741168308021195,
++        0.8970546973966541
++      ]
++    },
++    "harm": {
++      "workbook": 1.161701094901553,
++      "fits": [
++        {
++          "k": 0.0019925140421433755,
++          "theta": 1.3925034129925302,
++          "raw": 1.3925034129925302,
++          "status": "ok",
++          "success": true,
++          "flag": false,
++          "upper_bound": false,
++          "theta_interval": [
++            1.0653927062156838,
++            1.7018342405418307
++          ],
++          "k_interval": [
++            0.0018708776224122105,
++            0.0021313629528780876
++          ],
++          "flagged_draws": 0,
++          "unsuccessful_draws": 0
++        },
++        {
++          "k": 0.0019968078591925376,
++          "theta": 1.7637213856314058,
++          "raw": 1.7637213856314058,
++          "status": "ok",
++          "success": true,
++          "flag": false,
++          "upper_bound": false,
++          "theta_interval": [
++            1.4235057999545873,
++            2.112977227923537
++          ],
++          "k_interval": [
++            0.001860830143213642,
++            0.002138021203462779
++          ],
++          "flagged_draws": 0,
++          "unsuccessful_draws": 0
++        }
++      ],
++      "rounding_exits": [
++        146,
++        154
++      ],
++      "historical_raw": [
++        1.1069838521251363,
++        1.012037528076225,
++        1.2090674860201662
++      ],
++      "matched_raw": [
++        1.1131553867839203,
++        1.012495060515728,
++        1.229152316397592
++      ],
++      "fitted": [
++        1.1617010949015534,
++        1.0865181945913978,
++        1.248454046592935
++      ]
++    }
++  }
++}
+--- a/analysis/quiet_windows/scan.py
++++ b/analysis/quiet_windows/scan.py
+@@ -69,7 +69,8 @@
+                                        rtol=1e-5, atol=1e-8)
+             (k, theta), diag = KCOR.fit_theta0_gompertz(
+                 effective, t_rebased, quiet, cfg["k_anchor_weeks"], cfg["gamma_per_week"],
+-                deaths_arr=deaths, joint_seed=True)
++                deaths_arr=deaths, joint_seed=True,
++                iso_week=pd.DatetimeIndex(group.monday).strftime('%G%V').astype(int))
+             applied, degenerate, _ = KCOR._apply_theta_degenerate_guard(theta, guard)
+             passed = bool(diag["success"] and diag["status"] == "ok" and not degenerate)
+             rows.append(dict(yob_decade=decade, dose=dose, window_start_iso=w.start_iso,
+Data/asset analysis/quiet_windows/windows.csv: ab9c427d04ed558c57bb79465966333b5fc97552946c48be5ab9b8ff61e5c9cd -> 676df842f7ca8b04960a4296a9e3750749b4899939495479a18c4a4a01f42536
+Data/asset analysis/survivor_validation/main-full-intervals.csv: absent -> f7bf6890a947c42ea64c0eaa5bc8faa3456a2b97f0b34a2d798e72dbc4112090
+--- a/analysis/survivor_validation/main-full-results.json
++++ b/analysis/survivor_validation/main-full-results.json
+@@ -0,0 +1,107 @@
++{
++  "truth": 1.0,
++  "gained_coverage": 5,
++  "lost_coverage": 5,
++  "paired_p": 1.0,
++  "width_difference": [
++    0.0014492486165114248,
++    0.0013087021729388207,
++    0.0015897950600840289
++  ],
++  "gamma_working_fit": {
++    "covered": 90,
++    "datasets": 100,
++    "coverage": 0.9,
++    "coverage_lower": 0.8237774022598248,
++    "coverage_upper": 0.9509953107785141,
++    "mean_width": [
++      0.08708097819789928,
++      0.0857342481565826,
++      0.08842770823921597
++    ],
++    "mean_point": [
++      0.9898185616150293,
++      0.9849317554481516,
++      0.9947053677819071
++    ],
++    "rmse": 0.02653589130270981,
++    "prefix_coverage": 0.89,
++    "originals_with_insufficient_signal": 0,
++    "draws_with_insufficient_signal": 0,
++    "failed_fit_calls": 0,
++    "originals_with_clamped_gap": 0
++  },
++  "nonlinear_survivor_fit": {
++    "covered": 90,
++    "datasets": 100,
++    "coverage": 0.9,
++    "coverage_lower": 0.8237774022598248,
++    "coverage_upper": 0.9509953107785141,
++    "mean_width": [
++      0.08853022681441072,
++      0.08718250533387426,
++      0.08987794829494719
++    ],
++    "mean_point": [
++      1.0009322374140777,
++      0.9959576096373068,
++      1.0059068651908485
++    ],
++    "rmse": 0.024962730641858957,
++    "prefix_coverage": 0.89,
++    "originals_with_insufficient_signal": 0,
++    "draws_with_insufficient_signal": 0,
++    "failed_fit_calls": 0,
++    "originals_with_clamped_gap": 0
++  },
++  "mean_theta": {
++    "gamma_working_fit": [
++      [
++        4.263355806840974,
++        4.232195489626407,
++        4.294516124055542
++      ],
++      [
++        0.5431132651486859,
++        0.5160655682374062,
++        0.5701609620599655
++      ],
++      [
++        4.344703855535261,
++        4.258234315645028,
++        4.431173395425494
++      ],
++      [
++        0.5170726273232863,
++        0.45581835361586437,
++        0.5783269010307082
++      ]
++    ],
++    "nonlinear_survivor_fit": [
++      [
++        4.014786156593241,
++        3.9849972003191394,
++        4.044575112867341
++      ],
++      [
++        0.5063259928351124,
++        0.4810292002781137,
++        0.531622785392111
++      ],
++      [
++        4.05705557038705,
++        3.9757636469136806,
++        4.138347493860419
++      ],
++      [
++        0.48101100182533896,
++        0.4238663938680502,
++        0.5381556097826278
++      ]
++    ]
++  },
++  "median_width": [
++    0.0866544886360413,
++    0.08823655906732719
++  ]
++}
+--- a/analysis/survivor_validation/mixed-results.json
++++ b/analysis/survivor_validation/mixed-results.json
+@@ -0,0 +1,742 @@
++{
++  "noiseless": [
++    {
++      "case": "nonlinear, all pulses in window",
++      "target": 1.0,
++      "ratio": [
++        1.0189843807643992,
++        0.9999999997763159
++      ],
++      "cohorts": [
++        [
++          {
++            "k": 0.0039923547657025734,
++            "theta": 4.172193612153779,
++            "seed_theta": 3.8899384867370665,
++            "true_k": 0.004,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.04838121398223842,
++            "true_baseline_at_entry": 0.04847386249125013,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.050693956552914955,
++            "status": "ok",
++            "success": true,
++            "growth": 23.5141925354469
++          },
++          {
++            "k": 0.003996181814135958,
++            "theta": 0.5205391513354556,
++            "seed_theta": 0.49748602314996626,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.04842759193711523,
++            "true_baseline_at_entry": 0.04847386249125013,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.05007468956237661,
++            "status": "ok",
++            "success": true,
++            "growth": 23.07610693483598
++          }
++        ],
++        [
++          {
++            "k": 0.003999999998307258,
++            "theta": 3.9999999976054212,
++            "seed_theta": 3.8899384867370665,
++            "true_k": 0.004,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.04847386247073669,
++            "true_baseline_at_entry": 0.04847386249125013,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.05000000000911964,
++            "status": "ok",
++            "success": true,
++            "growth": 22.997434623270053
++          },
++          {
++            "k": 0.004000000000000304,
++            "theta": 0.500000000000515,
++            "seed_theta": 0.49748602314996626,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.048473862491253815,
++            "true_baseline_at_entry": 0.04847386249125013,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.049999999999998254,
++            "status": "ok",
++            "success": true,
++            "growth": 22.99743462841421
++          }
++        ]
++      ]
++    },
++    {
++      "case": "nonlinear, short first fit",
++      "target": 1.0,
++      "ratio": [
++        1.2039427986582176,
++        0.9999999998337196
++      ],
++      "cohorts": [
++        [
++          {
++            "k": 0.007245137430986467,
++            "theta": 7.622437586060047,
++            "seed_theta": 3.8778741030035335,
++            "true_k": 0.004,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.10260144361433941,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.04979309694984096,
++            "status": "ok",
++            "success": true,
++            "growth": 22.406213327087055
++          },
++          {
++            "k": 0.006088037279152698,
++            "theta": 1.9792121930194868,
++            "seed_theta": 0.49742662583568936,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.08621526086551175,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.04387273540483096,
++            "status": "ok",
++            "success": true,
++            "growth": 18.610695916831396
++          }
++        ],
++        [
++          {
++            "k": 0.003999999998665805,
++            "theta": 3.999999998460633,
++            "seed_theta": 3.8778741030035335,
++            "true_k": 0.004,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.05664568522402594,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.05000000000841751,
++            "status": "ok",
++            "success": true,
++            "growth": 14.17006543488295
++          },
++          {
++            "k": 0.004000000000000495,
++            "theta": 0.500000000000155,
++            "seed_theta": 0.49742662583568936,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.056645685242927055,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.05,
++            "wave_at_exit": 0.04999999999999555,
++            "status": "ok",
++            "success": true,
++            "growth": 14.170065437239154
++          }
++        ]
++      ]
++    },
++    {
++      "case": "nonlinear, partial wave window",
++      "target": 1.0,
++      "ratio": [
++        1.2027824913484073,
++        0.9989512466924754
++      ],
++      "cohorts": [
++        [
++          {
++            "k": 0.007245137430986467,
++            "theta": 7.622437586060047,
++            "seed_theta": 3.8778741030035335,
++            "true_k": 0.004,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.10260144361433941,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.021429565086810105,
++            "status": "ok",
++            "success": true,
++            "growth": 22.40889191173671
++          },
++          {
++            "k": 0.006088037279152698,
++            "theta": 1.9792121930194868,
++            "seed_theta": 0.49742662583568936,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.08621526086551175,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.020434402447204424,
++            "status": "ok",
++            "success": true,
++            "growth": 18.630876382823548
++          }
++        ],
++        [
++          {
++            "k": 0.003929146495852365,
++            "theta": 3.9525461047551844,
++            "seed_theta": 3.8778741030035335,
++            "true_k": 0.004,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.05564229891934382,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.025276652002486646,
++            "status": "ok",
++            "success": true,
++            "growth": 14.168614953888621
++          },
++          {
++            "k": 0.00399070866698415,
++            "theta": 0.49878552939641824,
++            "seed_theta": 0.49742662583568936,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.05651410676154429,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.025045778400400665,
++            "status": "ok",
++            "success": true,
++            "growth": 14.183489935871108
++          }
++        ]
++      ]
++    },
++    {
++      "case": "nonlinear, partial window, unequal rates",
++      "target": 1.0538110866028052,
++      "ratio": [
++        1.1765119721491988,
++        1.0504972323576938
++      ],
++      "cohorts": [
++        [
++          {
++            "k": 0.008204104369135977,
++            "theta": 6.701769719961966,
++            "seed_theta": 3.883243162510299,
++            "true_k": 0.005,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.1161817784485354,
++            "true_baseline_at_entry": 0.07080710655365004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.021337587089662536,
++            "status": "ok",
++            "success": true,
++            "growth": 21.919449116023664
++          },
++          {
++            "k": 0.006088037279152698,
++            "theta": 1.9792121930194868,
++            "seed_theta": 0.49742662583568936,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.08621526086551175,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.020434402447204424,
++            "status": "ok",
++            "success": true,
++            "growth": 18.630876382823548
++          }
++        ],
++        [
++          {
++            "k": 0.004914118920839883,
++            "theta": 3.956206026467586,
++            "seed_theta": 3.883243162510299,
++            "true_k": 0.005,
++            "true_theta": 4.0,
++            "baseline_at_entry": 0.06959090840904347,
++            "true_baseline_at_entry": 0.07080710655365004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.0253320748316505,
++            "status": "ok",
++            "success": true,
++            "growth": 14.899716922805803
++          },
++          {
++            "k": 0.00399070866698415,
++            "theta": 0.49878552939641824,
++            "seed_theta": 0.49742662583568936,
++            "true_k": 0.004,
++            "true_theta": 0.5,
++            "baseline_at_entry": 0.05651410676154429,
++            "true_baseline_at_entry": 0.05664568524292004,
++            "true_wave_at_exit": 0.025,
++            "wave_at_exit": 0.025045778400400665,
++            "status": "ok",
++            "success": true,
++            "growth": 14.183489935871108
++          }
++        ]
++      ]
++    }
++  ],
++  "sampled": [
++    {
++      "case": "nonlinear, all pulses in window",
++      "truth": 1.0,
++      "mean_ci": [
++        [
++          1.0222017399246817,
++          1.0178701916747248,
++          1.0265332881746385
++        ],
++        [
++          1.0101772071869697,
++          0.9915864426832429,
++          1.0287679716906963
++        ]
++      ],
++      "central95": [
++        [
++          0.9664636606984948,
++          1.0832149203869228
++        ],
++        [
++          0.8041476742700618,
++          1.3357351447051469
++        ]
++      ],
++      "paired_abs_error_change": [
++        0.07229635954483499,
++        0.06074678888552603,
++        0.08384593020414395
++      ],
++      "improved_tied_worse": [
++        39,
++        0,
++        161
++      ],
++      "parameters_mean_ci": [
++        [
++          [
++            [
++              0.004004820138378467,
++              0.003982832772015091,
++              0.004026807504741842
++            ],
++            [
++              4.1912761023508525,
++              4.143394399487053,
++              4.239157805214652
++            ],
++            [
++              23.62265364242475,
++              23.561621776664406,
++              23.683685508185096
++            ]
++          ],
++          [
++            [
++              0.0040012855751586475,
++              0.003983367368554294,
++              0.004019203781763001
++            ],
++            [
++              0.5292204268605669,
++              0.4995253003536098,
++              0.558915553367524
++            ],
++            [
++              23.122294313678058,
++              23.04824832617783,
++              23.196340301178285
++            ]
++          ]
++        ],
++        [
++          [
++            [
++              0.004030454781304157,
++              0.00396518714035174,
++              0.004095722422256574
++            ],
++            [
++              4.006952588979079,
++              3.884731884673692,
++              4.129173293284466
++            ],
++            [
++              23.306385113713716,
++              22.953495572004563,
++              23.65927465542287
++            ]
++          ],
++          [
++            [
++              0.004026659423453087,
++              0.003988652611531693,
++              0.004064666235374481
++            ],
++            [
++              0.5317751548279515,
++              0.4764430290187214,
++              0.5871072806371815
++            ],
++            [
++              23.199143931214042,
++              22.9598762891771,
++              23.438411573250985
++            ]
++          ]
++        ]
++      ],
++      "failures": [
++        0,
++        0
++      ]
++    },
++    {
++      "case": "nonlinear, short first fit",
++      "truth": 1.0,
++      "mean_ci": [
++        [
++          1.211307017848704,
++          1.205432448379908,
++          1.2171815873175
++        ],
++        [
++          1.0039909279003805,
++          0.9929494992701984,
++          1.0150323565305626
++        ]
++      ],
++      "central95": [
++        [
++          1.1399771342465161,
++          1.2995275127185917
++        ],
++        [
++          0.8774317245907348,
++          1.1644361895168849
++        ]
++      ],
++      "paired_abs_error_change": [
++        -0.1479957000521671,
++        -0.15675293154749928,
++        -0.13923846855683494
++      ],
++      "improved_tied_worse": [
++        197,
++        0,
++        3
++      ],
++      "parameters_mean_ci": [
++        [
++          [
++            [
++              0.007243823962220031,
++              0.00720686343114705,
++              0.007280784493293012
++            ],
++            [
++              7.630398314614386,
++              7.584594345364368,
++              7.676202283864403
++            ],
++            [
++              22.49020953125687,
++              22.40192291274234,
++              22.5784961497714
++            ]
++          ],
++          [
++            [
++              0.006115176960694065,
++              0.006092330711279546,
++              0.0061380232101085844
++            ],
++            [
++              1.9975048330879668,
++              1.9781555392804455,
++              2.016854126895488
++            ],
++            [
++              18.573885450790403,
++              18.525978183874578,
++              18.621792717706228
++            ]
++          ]
++        ],
++        [
++          [
++            [
++              0.0039616487458559125,
++              0.0039121406416225005,
++              0.0040111568500893246
++            ],
++            [
++              3.9084497681602013,
++              3.839788639682181,
++              3.9771108966382216
++            ],
++            [
++              14.10746225842198,
++              13.988150017995821,
++              14.22677449884814
++            ]
++          ],
++          [
++            [
++              0.0039931703802055,
++              0.003961629757758469,
++              0.00402471100265253
++            ],
++            [
++              0.4882894761940062,
++              0.45828658963210783,
++              0.5182923627559046
++            ],
++            [
++              14.086506086858119,
++              13.989445409249194,
++              14.183566764467043
++            ]
++          ]
++        ]
++      ],
++      "failures": [
++        0,
++        0
++      ]
++    },
++    {
++      "case": "nonlinear, partial wave window",
++      "truth": 1.0,
++      "mean_ci": [
++        [
++          1.204382555052895,
++          1.1985742189018866,
++          1.2101908912039034
++        ],
++        [
++          0.9998679840909588,
++          0.9878546627386854,
++          1.0118813054432323
++        ]
++      ],
++      "central95": [
++        [
++          1.134706017546076,
++          1.2835074935
++        ],
++        [
++          0.8597330485991549,
++          1.2014362745495215
++        ]
++      ],
++      "paired_abs_error_change": [
++        -0.13812494433502454,
++        -0.14733958907942732,
++        -0.12891029959062175
++      ],
++      "improved_tied_worse": [
++        190,
++        0,
++        10
++      ],
++      "parameters_mean_ci": [
++        [
++          [
++            [
++              0.007280149718958951,
++              0.007245715408561581,
++              0.007314584029356321
++            ],
++            [
++              7.632016760754499,
++              7.585393423170259,
++              7.678640098338739
++            ],
++            [
++              22.418595049755123,
++              22.322894647303794,
++              22.51429545220645
++            ]
++          ],
++          [
++            [
++              0.0060793547428094515,
++              0.00605501798904413,
++              0.006103691496574773
++            ],
++            [
++              1.9661792131065507,
++              1.9485666492794333,
++              1.9837917769336681
++            ],
++            [
++              18.619328096334865,
++              18.574682231193048,
++              18.66397396147668
++            ]
++          ]
++        ],
++        [
++          [
++            [
++              0.003956741294011499,
++              0.0039020753182400863,
++              0.004011407269782912
++            ],
++            [
++              3.9306021513605014,
++              3.8575095143931315,
++              4.003694788327871
++            ],
++            [
++              14.169867095926774,
++              14.04201729303597,
++              14.297716898817578
++            ]
++          ],
++          [
++            [
++              0.004003196161008147,
++              0.003965798162050874,
++              0.004040594159965419
++            ],
++            [
++              0.493411048321854,
++              0.4586637864697416,
++              0.5281583101739664
++            ],
++            [
++              14.212655856328807,
++              14.108591193747808,
++              14.316720518909806
++            ]
++          ]
++        ]
++      ],
++      "failures": [
++        0,
++        0
++      ]
++    },
++    {
++      "case": "nonlinear, partial window, unequal rates",
++      "truth": 1.0538110866028052,
++      "mean_ci": [
++        [
++          1.1784291885233447,
++          1.1727907497082737,
++          1.1840676273384156
++        ],
++        [
++          1.0460892255341856,
++          1.0347871796583892,
++          1.057391271409982
++        ]
++      ],
++      "central95": [
++        [
++          1.1066337700625655,
++          1.2599680921461487
++        ],
++        [
++          0.8988258179526596,
++          1.2061961585998566
++        ]
++      ],
++      "paired_abs_error_change": [
++        -0.0590326865008129,
++        -0.06822161785675163,
++        -0.04984375514487418
++      ],
++      "improved_tied_worse": [
++        165,
++        0,
++        35
++      ],
++      "parameters_mean_ci": [
++        [
++          [
++            [
++              0.00816419977661934,
++              0.008126583365237574,
++              0.008201816188001107
++            ],
++            [
++              6.695613165604953,
++              6.655710236091345,
++              6.735516095118561
++            ],
++            [
++              21.960484768481184,
++              21.87643350046584,
++              22.044536036496527
++            ]
++          ],
++          [
++            [
++              0.0060842737900478495,
++              0.006059921507591927,
++              0.006108626072503772
++            ],
++            [
++              1.9731789736155636,
++              1.9552531103163127,
++              1.9911048369148145
++            ],
++            [
++              18.64252382096173,
++              18.59429629782345,
++              18.69075134410001
++            ]
++          ]
++        ],
++        [
++          [
++            [
++              0.004846932800406038,
++              0.0047914543751751875,
++              0.004902411225636889
++            ],
++            [
++              3.873925057262777,
++              3.816938043325391,
++              3.930912071200163
++            ],
++            [
++              14.838744336792013,
++              14.71866780401654,
++              14.958820869567486
++            ]
++          ],
++          [
++            [
++              0.004000852917023824,
++              0.003965706364110859,
++              0.004035999469936789
++            ],
++            [
++              0.4966370467289907,
++              0.4637602410288224,
++              0.529513852429159
++            ],
++            [
++              14.221823044534931,
++              14.119733241697613,
++              14.323912847372249
++            ]
++          ]
++        ]
++      ],
++      "failures": [
++        0,
++        0
++      ]
++    }
++  ]
++}
+Data/asset analysis/survivor_validation/stress-intervals.csv: absent -> 282fcb6f0157b0d205344f7f0dccbc1685f06ba7f5f6ea84a37b42995d3e64a6
+--- a/analysis/survivor_validation/stress-results.json
++++ b/analysis/survivor_validation/stress-results.json
+@@ -0,0 +1,119 @@
++{
++  "truth": 1.0,
++  "gained_coverage": 0,
++  "lost_coverage": 0,
++  "paired_p": 1.0,
++  "width_difference": [
++    0.0080129831651106,
++    0.007064234738884912,
++    0.008961731591336288
++  ],
++  "gamma_working_fit": {
++    "covered": 48,
++    "datasets": 50,
++    "coverage": 0.96,
++    "coverage_lower": 0.8628623743960313,
++    "coverage_upper": 0.9951185665738638,
++    "mean_width": [
++      0.3193376371621897,
++      0.2990275719699508,
++      0.33964770235442865
++    ],
++    "mean_point": [
++      1.0306788087424805,
++      1.0087810758044018,
++      1.0525765416805593
++    ],
++    "rmse": 0.08221527735833833,
++    "prefix_coverage": 0.96,
++    "originals_with_insufficient_signal": 0,
++    "draws_with_insufficient_signal": 241,
++    "failed_fit_calls": 0,
++    "originals_with_clamped_gap": 0
++  },
++  "nonlinear_survivor_fit": {
++    "covered": 48,
++    "datasets": 50,
++    "coverage": 0.96,
++    "coverage_lower": 0.8628623743960313,
++    "coverage_upper": 0.9951185665738638,
++    "mean_width": [
++      0.32735062032730033,
++      0.3068846621306982,
++      0.34781657852390246
++    ],
++    "mean_point": [
++      1.0401903652193312,
++      1.017885990994756,
++      1.0624947394439064
++    ],
++    "rmse": 0.08747297359993314,
++    "prefix_coverage": 0.96,
++    "originals_with_insufficient_signal": 0,
++    "draws_with_insufficient_signal": 241,
++    "failed_fit_calls": 0,
++    "originals_with_clamped_gap": 47
++  },
++  "expected_counts": [
++    0.9999999999555662,
++    0.9999999999378889,
++    0.999999999990811,
++    0,
++    0,
++    0,
++    4.00000000104746,
++    0.4999999999999203,
++    4.000000000328088,
++    0.4999999999980673
++  ],
++  "median_width": [
++    0.3109363971218924,
++    0.31746250867280756
++  ],
++  "mean_theta": {
++    "gamma_working_fit": [
++      [
++        4.127229759651719,
++        3.807456617406775,
++        4.4470029018966635
++      ],
++      [
++        0.4986971706517334,
++        0.3362536407032682,
++        0.6611407006001986
++      ],
++      [
++        4.032394596460193,
++        3.373751411064439,
++        4.691037781855948
++      ],
++      [
++        0.9359880312390403,
++        0.5656579609886014,
++        1.3063181014894791
++      ]
++    ],
++    "nonlinear_survivor_fit": [
++      [
++        3.9139270079431974,
++        3.6079888386587236,
++        4.219865177227671
++      ],
++      [
++        0.4697889667726905,
++        0.31598471714110277,
++        0.6235932164042782
++      ],
++      [
++        3.8092579035422798,
++        3.1849516449081063,
++        4.433564162176453
++      ],
++      [
++        0.883163650152852,
++        0.5319876869687191,
++        1.234339613336985
++      ]
++    ]
++  }
++}
+Data/asset analysis/survivor_validation/table8-comparison.csv: absent -> 76c6cd38de7ec11f9f945656eb0102e285a8cb0414a7cdabaeffe7fdd5e3a6f2
+Data/asset analysis/survivor_validation/table8-draws.npz: absent -> 0a4cabaee891513784fd3e5f3ec2ddc49ce21b1b21729011acdc65ba0738f0b9
+--- a/analysis/survivor_validation/workbook-verification.json
++++ b/analysis/survivor_validation/workbook-verification.json
+@@ -0,0 +1,27 @@
++{
++  "expected": [
++    [
++      1.0127714002341273,
++      1.0330854495939743,
++      1.0200578821194506
++    ],
++    [
++      1.0125518983933395,
++      1.055656903002352,
++      1.0425706619852366
++    ]
++  ],
++  "actual": [
++    [
++      1.012771400234127,
++      1.033085449593974,
++      1.0200578821194504
++    ],
++    [
++      1.0125518983933393,
++      1.0556569030023517,
++      1.0425706619852364
++    ]
++  ],
++  "max_abs_difference": 2.220446049250313e-16
++}
+--- a/analysis/table8/table8_bootstrap.json
++++ b/analysis/table8/table8_bootstrap.json
+@@ -20,55 +20,46 @@
+   "summary": {
+     "2021_24": {
+       "joint": [
+-        1.0083165247447765,
+-        1.031238297453854,
+-        1.0227327155179566
+-      ],
+-      "fixed": [
+-        1.0113598477362327,
+-        1.028022487240436,
+-        1.0164754805537317
++        1.0127714002341273,
++        1.0330854495939743,
++        1.0200578821194506
+       ],
+       "original_insufficient_signal": 0,
+       "people": 2511927,
+       "lower": [
+-        0.9553215105479369,
+-        0.9711417859493755,
+-        0.9617850297986626
++        0.9555123395841019,
++        0.9703810075534238,
++        0.9577584970074111
+       ],
+       "upper": [
+-        1.0561725685470862,
+-        1.0943427012699738,
+-        1.0868444070163386
++        1.0682730543471688,
++        1.105603693164502,
++        1.0940825411826607
+       ],
+-      "draws_with_insufficient_signal": 307,
++      "draws_with_insufficient_signal": 0,
+       "unsuccessful_stratum_fits": 0
+     },
+     "2022_06": {
+       "joint": [
+-        1.046203612860373,
+-        1.0677027443809315,
+-        1.0205496628536572
++        1.0125518983933395,
++        1.055656903002352,
++        1.0425706619852366
+       ],
+-      "fixed": [
+-        1.0073327814661046,
+-        1.012919914718309,
+-        1.005546462256567
+-      ],
+-      "original_insufficient_signal": 4,
++      "original_insufficient_signal": 0,
+       "people": 2450449,
+       "lower": [
+-        0.3218007770328593,
+-        0.3351367576016181,
+-        0.8224251723850494
++        0.9575742404928032,
++        0.9962645423156893,
++        0.9753687583470757
+       ],
+       "upper": [
+-        1.2679788113922426,
+-        1.2130364315807494,
+-        1.2082789036450985
++        1.0753894098375567,
++        1.1210709294102015,
++        1.1094765039288976
+       ],
+-      "draws_with_insufficient_signal": 999,
++      "draws_with_insufficient_signal": 0,
+       "unsuccessful_stratum_fits": 0
+     }
+-  }
+-}
++  },
++  "provenance": "Matched full 999-draw survivor-model run; integrated workbook and first matched draw independently reproduced."
++}--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -82,7 +82,8 @@
+         hazard = K.hazard_from_mr(np.clip(mr[a, d], 0, .999))
+         effective = np.where(time >= skip, hazard, 0.)
+         (k, theta), diag = fit(effective, time-skip, quiet, CONFIG["k_anchor_weeks"],
+-                               CONFIG["gamma_per_week"], deaths_arr=dead[a, d])
++                               CONFIG["gamma_per_week"], deaths_arr=dead[a, d],
++                               iso_week=pd.DatetimeIndex(dates).strftime("%G%V").astype(int))
+         failed += int(not diag["success"])
+         flags += int(bool(diag.get("insufficient_signal")))
+         theta = theta if diag["success"] and np.isfinite(theta) and theta >= 0 else 0.
+@@ -145,7 +146,6 @@
+     # reporting-date values from the full ordinary-mode joint-fit workbook.
+     reference = [[1.00906808859867, 1.0317663863960909, 1.0224943173348615],
+                  [1.0503159510304514, 1.0574772450702619, 1.0068182283938316]]
+-    fixed = [estimate(i, 0, joint=False)[0] for i in range(2)]
+     print("Joint-fit points:", [x[0] for x in point], flush=True)
+     tasks = [(i, j) for j in range(1, args.draws+1) for i in range(2)]
+     results = [[] for _ in SHEETS]
+@@ -162,7 +162,7 @@
+     for i, sheet in enumerate(SHEETS):
+         values = np.array([r[0] for r in results[i]])
+         assert values.shape == (args.draws, 3) and np.isfinite(values).all()
+-        summary[sheet] = dict(joint=point[i][0], fixed=fixed[i], original_insufficient_signal=point[i][1],
++        summary[sheet] = dict(joint=point[i][0], original_insufficient_signal=point[i][1],
+                               people=int(populations[i][1].sum()), lower=np.quantile(values, .025, axis=0).tolist(),
+                               upper=np.quantile(values, .975, axis=0).tolist(),
+                               draws_with_insufficient_signal=sum(r[1]>0 for r in results[i]),
+Data/asset code/KCOR.py: 52fe5d94b6b24924a1f7b79720fcd4603b2de2995fea25d5b943d2ceafd4f78e -> ce2814acb3d31c269649a5bb84095a1c71f14fe8c6fd3d9618f4961ab7ee38c9
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -0,0 +1,290 @@
++"""Weekly inversion for the optional NPH module.
++
++Use the existing KCOR reference rate, wave dates and post-wave continuation.
++If a week cannot support a positive wave increment, retain prior wave exposure
++and recover that week's baseline increment from conditional survival.
++"""
++from functools import lru_cache
++
++import numpy as np
++from scipy.optimize import brentq
++from scipy.special import gammaincinv, logsumexp, roots_legendre
++
++
++@lru_cache(maxsize=256)
++def gamma_quadrature(theta):
++    # Same probability-space quadrature as the existing post-wave solver.
++    nodes, weights = roots_legendre(32)
++    edges = np.array([0.0, 1e-10, 1e-8, 1e-6, 1e-5, 1e-4, .001, .01, .1, .5])
++    half_width = np.diff(edges)[:, None] / 2
++    probs = (edges[:-1, None] + half_width * (nodes + 1)).ravel()
++    weights = (half_width * weights).ravel()
++    z = theta * gammaincinv(1 / theta, np.r_[probs, 1 - probs])
++    return z, np.tile(weights, 2)
++
++
++def cumulative_hazard(baseline, wave, theta, alpha):
++    """Negative log survival under the starting gamma law."""
++    gamma_hazard = np.log1p(theta * baseline) / theta
++    if wave == 0:
++        return gamma_hazard
++    z, weights = gamma_quadrature(theta)
++    powers = wave * np.power(z / (1 + theta * baseline), alpha)
++    lost = np.dot(weights, -np.expm1(-powers))
++    log_wave = np.log1p(-lost) if lost < .5 else logsumexp(-powers, b=weights)
++    return gamma_hazard - log_wave
++
++
++def solve_increase(hazard, target, initial_upper):
++    lower = hazard(0.0)
++    if target <= lower:
++        return 0.0
++    upper = max(initial_upper, 1e-10)
++    while hazard(upper) < target:
++        upper *= 2
++        if not np.isfinite(upper):
++            raise ArithmeticError("Could not bracket the weekly exposure")
++    return brentq(lambda x: hazard(x) - target, 0, upper, xtol=1e-14)
++
++
++def make_correction(model):
++    original = model.apply_nph_correction_post_inversion
++
++    def correct(H0, t_vals, dates, theta_applied, alpha, start_dt, end_dt,
++                k_hat, gamma_per_week, t_rebased=None, observed_cumhaz=None):
++        theta = float(theta_applied)
++        H0 = np.asarray(H0, dtype=float)
++        t_r = np.asarray(t_vals, dtype=float) - model.DYNAMIC_HVE_SKIP_WEEKS if t_rebased is None else np.asarray(t_rebased)
++        dates = np.asarray(dates, dtype="datetime64[ns]")
++        mask = (dates >= np.datetime64(start_dt)) & (dates <= np.datetime64(end_dt)) & (t_r >= 0)
++        indices = np.flatnonzero(mask)
++        if (abs(alpha - 1) <= model.NPH_IDENTITY_TOL or theta < model.KCOR6_THETA_EPS
++                or not np.isfinite(theta) or not len(indices)
++                or not (np.isfinite(k_hat) and k_hat > 0 and np.isfinite(gamma_per_week))):
++            return original(H0, t_vals, dates, theta, alpha, start_dt, end_dt, k_hat,
++                            gamma_per_week, t_rebased=t_r, observed_cumhaz=observed_cumhaz)
++
++        observed = (np.log1p(theta * H0) / theta if observed_cumhaz is None
++                    else np.asarray(observed_cumhaz, dtype=float))
++        first, last = indices[0], indices[-1]
++        baseline = float(H0[first - 1]) if first else 0.0
++        wave = 0.0
++        entry_loss = cumulative_hazard(baseline, wave, theta, alpha)
++        entry_observed = observed[first - 1] if first else 0.0
++        baseline_path = k_hat * model.safe_exp(gamma_per_week * t_r) * model._gompertz_week_factor(gamma_per_week)
++        output = H0.copy()
++        baseline_values, wave_values = [], []
++        deficits = 0
++        max_residual = 0.0
++        for i in indices:
++            target = entry_loss + observed[i] - entry_observed
++            planned = baseline + baseline_path[i]
++            planned_loss = cumulative_hazard(planned, wave, theta, alpha)
++            if target > planned_loss:
++                baseline = planned
++                wave += solve_increase(
++                    lambda x: cumulative_hazard(baseline, wave + x, theta, alpha),
++                    target, target - planned_loss)
++            else:
++                deficits += int(target < planned_loss - 1e-12)
++                baseline += solve_increase(
++                    lambda x: cumulative_hazard(baseline + x, wave, theta, alpha),
++                    target, baseline_path[i])
++            output[i] = baseline + wave
++            baseline_values.append(baseline)
++            wave_values.append(wave)
++            max_residual = max(max_residual, abs(cumulative_hazard(baseline, wave, theta, alpha) - target))
++
++        if last + 1 < len(output):
++            tail = slice(last + 1, None)
++            increases = model.post_wave_baseline_increases(
++                observed[tail] - observed[last], theta, alpha, baseline, wave)
++            output[tail] = output[last] + increases
++
++        new_wave = np.diff(wave_values, prepend=0)
++        diag = dict(correction_mode="weekly_survival", wave_points=len(indices),
++                    corrected_points=int(np.count_nonzero(new_wave > 0)),
++                    skipped_nonpositive_excess=int(np.count_nonzero(new_wave == 0)),
++                    deficit_weeks=deficits, max_survival_residual=max_residual,
++                    wave_exposure_path=wave_values, baseline_exposure_path=baseline_values,
++                    post_wave_exposure=wave, post_wave_baseline=baseline,
++                    max_abs_change=float(np.max(np.abs(output - H0))),
++                    post_wave_level_shift=float(output[last] - H0[last]),
++                    any_nonmonotone_fixed=False, f_min=float("nan"), f_max=float("nan"))
++        return output, diag
++
++    return correct
++
++
++from scipy.linalg import eigh_tridiagonal
++from scipy.special import gammaln
++from scipy.optimize import least_squares
++import math
++
++# Numerically stable, normalized gamma quadrature. Same integral as 1.2.
++@lru_cache(maxsize=256)
++def nodes(theta):
++    j=np.arange(1,64.)
++    z,v=eigh_tridiagonal(1+2*theta*np.arange(64.),np.sqrt(theta*j*(1+theta*(j-1))))
++    return z,v[0]**2
++
++class Survival:
++    def __init__(self,theta,alpha):
++        self.th=theta;self.a=alpha
++        if theta>=1e-5 and alpha!=1:
++            z,w=nodes(float(theta));self.za=np.maximum(z,0.)**alpha;self.w=w
++            self.m1=np.exp(alpha*np.log(theta)+gammaln(1/theta+alpha)-gammaln(1/theta))
++            self.m2=np.exp(2*alpha*np.log(theta)+gammaln(1/theta+2*alpha)-gammaln(1/theta))
++    def hazard(self,B,W):
++        if np.isscalar(B) and np.isscalar(W):
++            th,a=self.th,self.a
++            if th<1e-5:
++                return B+W-th/2*((B+a*W)**2-a*(a-1)*W)
++            if W==0 or a==1:
++                return math.log1p(th*(B+W))/th
++            scale=1+th*B;u=W/scale**a
++            v=u*self.za
++            expectation=1-u*self.m1+u*u*self.m2/2+float(np.dot(np.expm1(-v)+v-v*v/2,self.w))
++            if expectation>1e-6 and u*self.m1<2 and math.isfinite(expectation):
++                return math.log1p(th*B)/th-math.log(expectation)
++            return cumulative_hazard(float(B),float(W),th,a)
++        B,W=np.broadcast_arrays(np.asarray(B,dtype=float),np.asarray(W,dtype=float))
++        shape=B.shape;B=B.ravel();W=W.ravel();th=self.th;a=self.a
++        if th<1e-5:
++            out=B+W-th/2*((B+a*W)**2-a*(a-1)*W)
++        elif a==1:
++            out=np.log1p(th*(B+W))/th
++        else:
++            scale=1+th*B;u=W/scale**a
++            # Exact first two noninteger moments; integrate smooth remainder.
++            v=u[:,None]*self.za
++            remainder=(np.expm1(-v)+v-v*v/2)@self.w
++            expectation=1-u*self.m1+u*u*self.m2/2+remainder
++            out=np.log1p(th*B)/th
++            good=(expectation>1e-6)&(u*self.m1<2.)&np.isfinite(expectation)
++            out[good]-=np.log(expectation[good])
++            for i in np.flatnonzero(~good):
++                out[i]=cumulative_hazard(float(B[i]),float(W[i]),th,a)
++        out=out.reshape(shape)
++        return float(out) if not shape else out
++    def increase(self,B,W,target,axis,guess):
++        # Solve cumulative survival on the monotone indicated exposure axis.
++        base=self.hazard(B,W)
++        if target<=base+1e-15:return 0.
++        def f(x):return self.hazard(B+x,W)-target if axis==0 else self.hazard(B,W+x)-target
++        upper=max(guess,1e-10)
++        while f(upper)<0:
++            upper*=2
++            if not np.isfinite(upper) or upper>1e150:raise ArithmeticError("exposure not bracketed")
++        return brentq(f,0.,upper,xtol=1e-12,rtol=1e-13)
++
++class Profile:
++    def __init__(self,h,t,quiet,anchors,gamma,wave):
++        self.idx=np.flatnonzero(np.isfinite(h)&np.isfinite(t)&(t>=0))
++        self.h=h[self.idx];self.t=t[self.idx]
++        self.obs=np.r_[0.,np.cumsum(np.maximum(self.h,0.))]
++        self.F=np.expm1(gamma*np.r_[self.t,self.t[-1]+1])/gamma
++        assert np.allclose(np.diff(self.t),1.)
++        self.wave=(self.t>=wave[0])&(self.t<=wave[1])
++        self.fit=(quiet[self.idx]|(self.t<anchors))&~self.wave
++        self.segments=[]
++        kind=np.where(self.wave,2,np.where(self.fit,0,1))
++        bounds=np.r_[0,np.flatnonzero(np.diff(kind)!=0)+1,len(kind)]
++        # Only data through final fitting week matter, unless wave is later.
++        last=np.flatnonzero(self.fit)[-1]+1 if self.fit.any() else 0
++        for a,b in zip(bounds[:-1],bounds[1:]):
++            if a>=last:break
++            self.segments.append((int(a),int(min(b,last)),int(kind[a])))
++    def predict(self,k,theta,alpha):
++        sv=Survival(theta,alpha); B=W=0.;pred=[];rawgap=[];applied=[];deficits=0
++        for a,b,kind in self.segments:
++            increments=k*np.diff(self.F[a:b+1])
++            if kind==0:
++                before=B+np.r_[0.,np.cumsum(increments)]
++                q=np.diff(sv.hazard(before,np.full(len(before),W)))
++                pred.extend(q);B=before[-1]
++            elif kind==1:
++                # Reconstruct observed survival at quiet re-entry. As in
++                # proportional KCOR, nonpositive additional gap exposure is zero.
++                B+=float(increments.sum())
++                target=self.obs[b];raw=target-sv.hazard(B,W)
++                extra=sv.increase(B,W,target,0,max(raw,1e-10))
++                rawgap.append(raw);applied.append(extra);B+=extra
++            else:
++                # At wave opening, the observed pre-wave survival implies an
++                # exact proportional accumulated exposure (same as trial 1.2).
++                # If the wave starts at modeled origin this is zero.
++                B=np.expm1(theta*self.obs[a])/theta if theta else self.obs[a]
++                W=0.
++                # A sufficient no-deficit condition: with positive alpha, prior
++                # wave selection cannot increase the mean surviving frailty.
++                # If observations exceed the no-wave conditional baseline in
++                # every week, every sequential W increment is nonnegative.
++                # Then one exact solve at exit equals the weekly recursion.
++                path=B+np.r_[0.,np.cumsum(increments)]
++                baseline_only=np.diff(sv.hazard(path,np.zeros(len(path))))
++                if np.all(self.h[a:b]>=baseline_only):
++                    B=float(path[-1])
++                    W=sv.increase(B,0.,self.obs[b],1,max(self.obs[b]-sv.hazard(B,0.),1e-10))
++                    continue
++                for j,inc in zip(range(a,b),increments):
++                    planned=B+inc;target=self.obs[j+1]
++                    loss=sv.hazard(planned,W)
++                    if target>loss:
++                        B=planned;W+=sv.increase(B,W,target,1,max(target-loss,1e-10))
++                    else:
++                        deficits+=int(target<loss-1e-12)
++                        B+=sv.increase(B,W,target,0,inc)
++        return np.array(pred),rawgap,applied,deficits
++
++def make_fitter(model,wave,alpha=1.18):
++    base=model._fit_all_window_gamma
++    def fit(h_arr,t_rebased,quiet_mask,k_anchor_weeks,gamma_per_week,theta0_init=1.,deaths_arr=None,**kwargs):
++        h=np.asarray(h_arr);t=np.asarray(t_rebased);quiet=np.asarray(quiet_mask,bool)
++        # Identity for no nonlinear wave within the modeled fit history.
++        if abs(alpha-1)<=model.NPH_IDENTITY_TOL or not np.any((t>=max(0,wave[0]))&(t<=wave[1])):
++            return base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
++        initial,diag=base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
++        if diag.get("insufficient_deaths") or not np.isfinite(initial[0]):return initial,diag
++        p=Profile(h,t,quiet,k_anchor_weeks,gamma_per_week,wave)
++        if not p.fit.any() or len(p.h[p.fit])<3:return initial,diag
++        target=p.h[p.fit]
++        # Scale residuals for numerical optimization only (same LS minimum).
++        scale=max(float(target.mean()),1e-8)
++        def residual(x):
++            k,th=np.exp(x[0]),x[1]
++            try:
++                pred,_,_,_=p.predict(k,th,alpha)
++                e=(target-pred)/scale
++                if np.isfinite(e).all():return e
++            except (ArithmeticError,ValueError,OverflowError,FloatingPointError):
++                pass
++            return np.full(len(target),1e6)
++        thmax=float(model.get_theta_degenerate_fit_config().get("theta0_max",100.))
++        k0=float(np.clip(initial[0],1e-8,.1));th0=float(np.clip(initial[1],0.,thmax)) if np.isfinite(initial[1]) else .5
++        candidates=[]
++        for th in (th0,.5):
++            if candidates and abs(th-th0)<1e-7:continue
++            r=least_squares(residual,[np.log(k0),th],bounds=([np.log(1e-8),0.],[np.log(.1),thmax]),
++                              ftol=1e-10,xtol=1e-10,gtol=1e-10,max_nfev=200)
++            candidates.append(r)
++        valid=[r for r in candidates if r.success and np.isfinite(r.cost)]
++        r=min(valid or candidates,key=lambda r:r.cost)
++        k,theta=float(np.exp(r.x[0])),float(r.x[1])
++        pred,gaps,applied,deficits=p.predict(k,theta,alpha)
++        e=target-pred;rel=float(np.sqrt(np.mean((e/(target+1e-12))**2)))
++        guard=model.get_theta_degenerate_fit_config()
++        bound=theta>=thmax*.999
++        bad=rel>float(guard.get("bad_fit_relrmse_threshold",1e5))
++        flag=bound or bad
++        mask=np.zeros_like(quiet);mask[p.idx]=p.fit
++        diag.update(success=bool(r.success),status="insufficient_signal" if flag else ("ok" if r.success else "error"),message="nonlinear survivor fit",
++                    n_obs=len(target),n_fit=len(target),fit_mask_theta=mask,k_hat=k,theta0_raw=theta,
++                    theta_hit_bound=bound,bad_fit=bad,insufficient_signal=flag,
++                    rmse_hazard=float(np.sqrt(np.mean(e**2))),fit_residual_max=float(np.max(abs(e))),relRMSE_hazard_fit=rel,
++                    delta_negative_clamped=any(x<=0 for x in gaps),delta_negative=any(x<=0 for x in gaps),
++                    nonlinear_gap_observed_deficit=gaps,nonlinear_gap_exposure=applied,nonlinear_wave_deficits=deficits,
++                    trial_nfev=sum(x.nfev for x in candidates))
++        return (k,0. if flag else theta),diag
++    return fit
++
+Data/asset documentation/preprint/figures/fig_alpha_czech_objective.png: cb34a47dea9a2d55494a7f640b76e064e00be34853f237fed37aea96c0a3ddeb -> e5fd9ab29bf01fa71d1a5cf29547390a2dac284a3d334c346964900a8513d5aa
+Data/asset documentation/preprint/figures/fig_quiet_contam_kcor_asymptote.png: 67613d1a61344d96d57e466a58a1db53c523abd211ed9e274c0f0225f7475acb -> 99f01a1d15adbfb049cdd5b2e6555ab4f0b09c8ede9fb1e4ae88e968cb2b9503
+Data/asset documentation/preprint/figures/fig_quiet_contam_theta_error.png: 4469abe57fa298aa57d7a49157afc53ad9793b2a8be37851ab942e5b41283699 -> 19df9a2794897b6019f9f18c5900f95681900d622a2b40326cefe9b4fb9f436a
+Data/asset documentation/preprint/figures/fig_si_quiet_window_theta_scan_czech_2021_24.png: 35be2ea2f162b1d53c86643373b9d66a2765f4a9dd5213c23f63621c72986d7b -> 41f796986af0ca5aef77a9b954fa7ba8b4141ef5de96c24967de40845655e2e0
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -12,7 +12,7 @@
+ 
+ ## Abstract
+ 
+-We propose KCOR, a framework for retrospective cohort comparison with irreversible outcomes under latent frailty heterogeneity. Selection-induced depletion can generate non-proportional hazards and curvature in observed cumulative hazards, biasing standard survival estimands in retrospective cohort studies using registry and administrative data. KCOR is a depletion-neutralized cohort comparison framework that uses a gamma-frailty working model with a Gompertz baseline to estimate a separate enrollment-time frailty variance $\theta_{0,d}$ for each cohort after a prespecified stabilization skip. The core estimator proceeds in four steps. It fits a seed $(k_d,\theta_{0,d}^{(0)})$ in the nearest quiet window, reconstructs the effective cumulative hazard over the full trajectory, aligns multiple quiet windows through persistent wave-offset terms, and refits $\theta_{0,d}$ jointly across all prespecified quiet windows within that cohort before applying gamma-frailty inversion. In epidemic-wave applications, KCOR also includes an optional non-proportional-hazard (NPH) exponent module that models cross-cohort hazard amplification as a function of depletion geometry and localizes a single shared exponent $\alpha$ using cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale** under minimal aggregated data. The fitted frailty variance depends on the scale of the observed cohort hazard, while $\alpha$ is not separately identifiable from cohort-specific multiplicative effects if that external scale is not fixed. Wave-period NPH adjustment is applied after inversion only to **frailty-neutral cumulative hazard**, not to raw observed hazard (§2.7.3). Because identification comes from relative cohort behavior rather than absolute hazard levels, $\alpha$ is invariant to unknown common wave amplitudes under the working model once the external scale is specified. This extension remains optional, diagnostic, and assumption-dependent rather than part of the universal KCOR core. Across $\theta_0$ recovery simulations, negative and positive controls, and Cox comparison exercises, KCOR remains a diagnostic and descriptive framework: it targets cumulative contrasts after depletion normalization rather than counterfactual effects. This revised architecture replaces the earlier quiet-window fit under a flatter baseline specification with a more explicit identification strategy for retrospective cohort comparisons under selection-induced hazard curvature. We illustrate the method using national COVID-era registry data as a worked example.
++We propose KCOR, a framework for retrospective cohort comparison with irreversible outcomes under latent frailty heterogeneity. Selection-induced depletion can generate non-proportional hazards and curvature in observed cumulative hazards, biasing standard survival estimands in retrospective cohort studies using registry and administrative data. KCOR is a depletion-neutralized cohort comparison framework that uses a gamma-frailty working model with a Gompertz baseline to estimate a separate enrollment-time frailty variance $\theta_{0,d}$ for each cohort after a prespecified stabilization skip. The core estimator proceeds in four steps. It fits a seed $(k_d,\theta_{0,d}^{(0)})$ in the nearest quiet window, reconstructs the effective cumulative hazard over the full trajectory, aligns multiple quiet windows through persistent wave-offset terms, and jointly refits $k_d$ and $\theta_{0,d}$ across all prespecified quiet windows within that cohort before applying gamma-frailty inversion. In epidemic-wave applications, KCOR also includes an optional non-proportional-hazard (NPH) exponent module that models cross-cohort hazard amplification as a function of depletion geometry and localizes a single shared exponent $\alpha$ using cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale** under minimal aggregated data. The fitted frailty variance depends on the scale of the observed cohort hazard, while $\alpha$ is not separately identifiable from cohort-specific multiplicative effects if that external scale is not fixed. For a specified nonlinear exponent, the fitting and correction use the same survivor law; the raw observed hazard is not rescaled (§2.7.3). Because identification comes from relative cohort behavior rather than absolute hazard levels, $\alpha$ is invariant to unknown common wave amplitudes under the working model once the external scale is specified. This extension remains optional, diagnostic, and assumption-dependent rather than part of the universal KCOR core. Across $\theta_0$ recovery simulations, negative and positive controls, and Cox comparison exercises, KCOR remains a diagnostic and descriptive framework: it targets cumulative contrasts after depletion normalization rather than counterfactual effects. This revised architecture replaces the earlier quiet-window fit under a flatter baseline specification with a more explicit identification strategy for retrospective cohort comparisons under selection-induced hazard curvature. We illustrate the method using national COVID-era registry data as a worked example.
+ 
+ ## 1. Introduction
+ 
+@@ -360,82 +360,27 @@
+ 
+ Accordingly, KCOR recovers a **geometry-consistent representation** of depletion dynamics rather than a uniquely identified biological or mechanistic frailty parameter.
+ 
+-### 2.5 Estimating $\theta_{0,d}$ by delta iteration
+-
+-KCOR estimates $(\hat{k}_d,\hat{\theta}_{0,d})$ independently for each cohort $d$ using a structured four-step procedure. Throughout this section, let $h_d^{\mathrm{adj}}(t)$ denote the preprocessed hazard used for accumulation and fitting: $h_d^{\mathrm{adj}}(t)=h_d^{\mathrm{eff}}(t)$ after the stabilization skip (§2.7) only. The optional NPH module applies **after** gamma-frailty inversion in cumulative-hazard space relative to the fitted Gompertz baseline path (§2.7.3) and does not enter $h_d^{\mathrm{adj}}(t)$. Pooling in this procedure occurs only across prespecified quiet windows within the same cohort; there is no shared $\theta_0$ parameter across cohorts.
+-
+-Let $W_{0,d}$ denote the nearest quiet window after enrollment and let $\bigcup_j W_{j,d}$ denote the union of all prespecified quiet windows for cohort $d$, both evaluated on rebased time with $t_{\mathrm{rebased}} \ge 0$.
+-
+-**Intuition.** The estimator reconstructs the latent baseline trajectory across the full follow-up, then aligns quiet windows by accounting for persistent cumulative deviations introduced by wave periods before the final frailty refit. Additivity is specified in cumulative-hazard space, where independent hazard contributions accumulate over time under the working model, making persistent offsets interpretable as additive deviations in $H(t)$.
+-
+-**Step 1: joint seed fit in the nearest quiet window.**  
+-Write $s=t_{\mathrm{rebased}}$ for the start of week $t$, and write $G(s;k)$ for the cumulative Gompertz baseline in §2.4.3 at scale $k$. For a cumulative offset $a$ held fixed within the week, the predicted observed weekly hazard is
+-
+-$$
+-q_d(t;k,\theta,a)=\frac{1}{\theta}\log\!\left(1+\frac{\theta [G(s+1;k)-G(s;k)]}{1+\theta [G(s;k)+a]}\right).
+-$$
+-
+-At $\theta=0$ this equals $G(s+1;k)-G(s;k)$. Both fitting steps compare this week-long increment with the observed weekly increment.
+-
+-Estimate $(k_d,\theta_{0,d}^{(0)})$ from the nearest quiet window by nonlinear least squares in hazard space:
+-
+-$$
+-(\hat{k}_d,\hat{\theta}_{0,d}^{(0)})
+-=
+-\arg\min_{k_d>0,\ \theta_{0,d}\ge0}
+-\sum_{t \in W_{0,d}}
+-\left[
+-h_d^{\mathrm{adj}}(t)-
+-q_d(t;k_d,\theta_{0,d},0)
+-\right]^2 .
++### 2.5 Joint baseline and frailty estimation across quiet windows
++
++For each cohort independently, estimate one common Gompertz baseline scale $k_d$ and enrollment-time frailty variance $\theta_d\ge0$, with fixed slope $\gamma$. Weekly observed hazards use the stabilization skip only. Let $G(s;k)=k(e^{\gamma s}-1)/\gamma$ denote cumulative baseline exposure at the start of rebased week $s$. For a proportional offset $a$ the exact integrated weekly prediction is
++
++$$
++q(s;k,\theta,a)=\frac{1}{\theta}\log\left(1+\frac{\theta[G(s+1;k)-G(s;k)]}{1+\theta[G(s;k)+a]}\right).
++$$
++
++At $\theta=0$ use the continuous limit. The first-window joint fit provides an initialization, not a fixed final baseline rate. For each candidate pair, reconstruct proportional cumulative exposure from observed survival, $H_{\mathrm{eff}}(s)=\operatorname{expm1}(\theta H_{\mathrm{obs}}(s))/\theta$, using the linear limit at zero. At quiet re-entry, including entry to the first quiet window if preceded by a gap, reconstruct raw cumulative offset $H_{\mathrm{eff}}(s)-G(s;k)$; the incremental offset relative to the preceding raw offset is constrained nonnegative. Record signed deficits diagnostically. At initial entry following proportional shock, the effective rate $r$ and observed survival identify the entry-aware seed rate through $k=r\exp(\theta H_{\rm obs}(s))/(1+\theta r F(s))$ with $F(s)=G(s;1)$.
++
++The objective jointly refits both parameters:
++
++$$
++(\hat k_d,\hat\theta_d)=\arg\min_{k>0,\theta\ge0}
++\sum_{s\in\mathcal Q_d}\{h_d^{\rm eff}(s)-q_d(s;k,\theta,a_d(s;k,\theta))\}^2 .
+ $$
+ {#eq:nls-objective}
+ 
+-This objective anchors the Gompertz scale parameter $\hat{k}_d$ close to enrollment and avoids identifying $\theta_{0,d}$ from a late, already depleted population.
+-
+-**Step 2: reconstruct the effective cumulative hazard over the full trajectory.**  
+-Given the current iterate $\hat{\theta}_{0,d}^{(m)}$, reconstruct the effective individual-level hazard and cumulative hazard over **all** observed weeks by applying the discrete-time version of the gamma-frailty hazard inversion from §2.4.2:
+-
+-$$
+-h_{0,d}^{\mathrm{eff}}(t)=\left(1+\theta H_{0,d}^{\mathrm{eff}}(t)\right)\frac{\operatorname{expm1}(\theta h_d^{\mathrm{adj}}(t))}{\theta},
+-\qquad
+-H_{0,d}^{\mathrm{eff}}(t+1)=H_{0,d}^{\mathrm{eff}}(t)+h_{0,d}^{\mathrm{eff}}(t),
+-$$
+-
+-starting from $H_{0,d}^{\mathrm{eff}}(0)=0$. Here $\theta=\hat{\theta}_{0,d}^{(m)}$ and $h_d^{\mathrm{adj}}(t)$ is the observed integrated hazard for that week after the stabilization skip. We evaluate $\operatorname{expm1}(x)=e^x-1$ for numerical stability. At $\theta=0$ the limiting increment equals $h_d^{\mathrm{adj}}(t)$.
+-
+-This recursion reconstructs the hidden baseline trajectory over all observed weeks rather than only inside the fit window. It should be read as the working-model inversion step implied by the gamma-frailty geometry, not as a model-free update rule.
+-
+-**Step 3: compute persistent wave offsets.**  
+-At the start of the first quiet week after each gap, denoted by $t_i$, compute the incremental offset
+-
+-$$
+-\delta_{i,d}
+-=
+-\left[H_{0,d}^{\mathrm{eff}}(t_i)-H_{\mathrm{gom},d}(t_i)\right]-\sum_{j<i}\delta_{j,d},
+-\qquad
+-\Delta_d(t)=\sum_{i:\,t_i\le t}\delta_{i,d}.
+-$$
+-
+-This offset calculation summarizes how wave periods shift later quiet windows through persistent cumulative deviations. It encodes the structural assumption that wave effects are additive in cumulative-hazard space and persist after the wave ends. Implausible offset behavior is treated diagnostically; detailed fallback rules are provided in the Supplementary Information.
+-
+-**Step 4: pooled refit across all quiet windows.**  
+-Holding $\hat{k}_d$ fixed, refit $\theta_{0,d}$ across the union of all quiet windows:
+-
+-$$
+-\hat{\theta}_{0,d}
+-=
+-\arg\min_{\theta_{0,d}\ge0}
+-\sum_{t \in \bigcup_j W_{j,d}}
+-\left[
+-h_d^{\mathrm{adj}}(t)-
+-q_d(t;\hat{k}_d,\theta_{0,d},\Delta_d(t))
+-\right]^2 .
+-$$
+-
+-This pooled refit updates $\theta_{0,d}$ using all aligned quiet-window information on a common reconstructed geometry. The reconstruction and pooled refit are iterated to convergence, which in the reference implementation typically occurs within a small number of iterations. When curvature is weak, the delta structure is inapplicable, or events are too sparse, the estimator may collapse toward the $\theta_{0,d}\to0$ limit; this is interpreted as weak identifiability rather than as evidence for or against any particular cohort.
+-
+-All analyses use a prespecified reference implementation with fixed operational defaults; full derivations, convergence notes, and edge-case rules are provided in Supplementary Section S4.
++Here $\mathcal Q_d$ includes the designated quiet and early fitting-anchor rows used by the implementation. The offsets are reconstructed inside the objective, not treated as fixed values. Optimize in log $k$ and nonnegative $\theta$; compare the first-window initialization with a second start at $\theta=0.5$. The implementation retains event-count, parameter-bound and residual diagnostics. No-common-signal and failed fits are flagged; zero-variance fallback is not evidence that frailty is absent.
++
++When a specified nonlinear wave is active, use the full survival law $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$ of §2.7.3 for both fitting and inversion. For every candidate $k,\theta$, carry proportional gap exposures and the marked wave exposure through the history, predict quiet-week increments $\log L(B_s,W_s)-\log L(B_{s+1},W_{s+1})$, and minimize the same weekly least-squares objective. Marked wave rows reconstruct exposure rather than contributing quiet residuals, even if they overlap the early fitting anchors. Unmarked nonlinear shocks cannot be distinguished from other mortality changes by counts alone. This route assumes a supplied exponent; the proportional route is used when the module is off or $\alpha=1$.
+ 
+ ### 2.6 Normalization (depletion-neutralized cumulative hazards)
+ 
+@@ -569,52 +514,25 @@
+ 
+ #### 2.7.3 Application of the NPH correction once $\alpha$ is specified
+ 
+-Applying the NPH correction **after** gamma-frailty inversion ensures that wave-period excess is defined relative to a **frailty-neutral** baseline path in cumulative-hazard space. Applying the correction to raw observed hazards would confound depletion geometry with wave-period amplification and yield mis-scaled excess.
+-
+-The NPH module **does not** modify quiet-window estimation of $\theta_{0,d}$ or $\hat k_d$; depletion geometry is identified from prespecified quiet windows **before** any wave-period cumulative correction.
+-
+-Once $\alpha$ has been specified or localized, the correction is applied **after** Eq. @eq:normalized-cumhazard to $\tilde H_{0,d}(t)$. For $\alpha\ne1$, the implementation approximates the in-wave factor with a mean-one gamma moment evaluated at the propagated scale. The distribution of frailty among survivors generally has a different mean, and a nonlinear wave also changes its shape. Dividing accumulated excess by the current week's factor is an empirical approximation. The resulting wave exposure is the input to the post-wave equation. In discrete weekly time (§2.3), let $t_{0,d}$ index the first rebased week inside the prespecified NPH window for cohort $d$. Define a **no-wave** frailty-neutral reference cumulative hazard $H_{\mathrm{ref},d}(t)$ using the cumulative hazard just before the first modeled wave week (zero at the start of modeled follow-up) and the fitted baseline increment for that week
+-
+-$$
+-H_{\mathrm{ref},d}(t_{0,d})=\tilde H_{0,d}(t_{0,d}-1)+\hat{k}_d\,\exp\!\left(\gamma\,t_{\mathrm{rebased}}(t_{0,d})\right)
+-$$
+-
+-and, for subsequent weeks $t$ inside the same window, accumulating fitted Gompertz weekly increments with $\Delta t=1$:
+-
+-$$
+-H_{\mathrm{ref},d}(t)=H_{\mathrm{ref},d}(t-1)+\hat{k}_d\,\exp\!\left(\gamma\, t_{\mathrm{rebased}}(t)\right),
+-$$
+-
+-where $t_{\mathrm{rebased}}(t)$ is the rebased time index at week $t$ and $\hat{k}_d,\gamma$ are the fitted quiet-window Gompertz parameters. The reference path is only used for weeks whose calendar dates fall inside the prespecified NPH date window.
+-
+-When $\alpha=1$, both baseline and wave hazards are proportional to individual frailty. Ordinary gamma inversion then recovers their combined cumulative hazard under the working model. The identity case is $H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)$ for every week $t$. The wave-induced excess in cumulative-hazard space is $\Delta H_{\mathrm{wave},d}(t)=\tilde H_{0,d}(t)-H_{\mathrm{ref},d}(t)$. Only **wave-attributable** excess strictly above the frailty-neutral Gompertz baseline path is rescaled: when $\Delta H_{\mathrm{wave},d}(t)>0$,
+-
+-$$
+-H_{\mathrm{corr},d}(t)=H_{\mathrm{ref},d}(t)+\frac{\Delta H_{\mathrm{wave},d}(t)}{F_d(t;\alpha)}\qquad(\alpha\ne1),
+-$$
+-
+-and when $\Delta H_{\mathrm{wave},d}(t)\le 0$ the corrected path equals $\tilde H_{0,d}(t)$ at that week. The implementation enforces that $H_{\mathrm{corr},d}(t)$ is **non-decreasing** in event time (cumulative maximum repair) so corrected trajectories remain valid cumulative-hazard geometry.
+-
+-At the last wave boundary $e$, retain the baseline and wave contributions from the in-window calculation. When the cumulative excess is positive, set $B_e=H_{\mathrm{ref},d}(e)$ and $W_e=\Delta H_{\mathrm{wave},d}(e)/F_d(e;\alpha)$ before the cumulative maximum repair. Otherwise set $B_e=\tilde H_{0,d}(e)$ and $W_e=0$. Here $W_e$ is the estimated wave hazard at reference frailty $Z=1$. The exponent and exposure are held fixed after wave exit.
+-
+-Let $Z$ have the starting mean-one gamma distribution for cohort $d$. Write $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$. For each later week $t$, solve for the baseline increase $u(t)$ since wave exit using the observed survival relative to that boundary.
+-
+-$$
+-\frac{L(B_e+u(t),W_e)}{L(B_e,W_e)}
+-=\exp\!\left[-\bigl(H_{\mathrm{obs},d}(t)-H_{\mathrm{obs},d}(e)\bigr)\right].
+-$$
+-
+-At wave exit $u(e)=0$. The left side decreases strictly as $u$ increases. Set $H_{\mathrm{corr},d}(t)=H_{\mathrm{corr},d}(e)+u(t)$ and difference this curve to obtain weekly increments. This retains the wave contribution in the all-cause comparison and accounts for selection of survivors through wave exit. The post-wave equation is exact conditional on the exit exposures and the starting frailty model. Accuracy with fitted inputs depends on the in-wave attribution.
+-
+-Weekly corrected hazard increments are obtained by differencing $H_{\mathrm{corr},d}(t)$ if a hazard stream is required; the downstream KCOR contrast uses $H_{\mathrm{corr},d}(t)$ in place of $\tilde H_{0,d}(t)$ when the module is active (§2.8). 
++Let $Z$ have the starting mean-one gamma law, and define $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$ for proportional exposure $B$ and additional wave exposure $W$. At $\alpha=1$ ordinary gamma inversion returns $B+W$ exactly. At wave entry, use the preceding inverted cumulative hazard for $B$ and set $W=0$.
++
++For each modeled wave week, let $q$ be its observed integrated hazard and $b=G(s+1;\hat k)-G(s;\hat k)$. Solve the monotone scalar equation
++
++$$
++\frac{L(B+b,W+w)}{L(B,W)}=e^{-q}
++$$
++
++for a nonnegative wave increment $w$. If mortality is below the fitted conditional baseline, no such nonnegative increment exists at the planned $b$. In those weeks keep prior wave exposure, assign no additional wave exposure, and solve instead for a smaller nonnegative proportional increment from the observed survival. Count these deficit weeks and report their frequency. This is an attribution convention, not evidence of negative wave exposure or an estimator of both unknown hazards without a baseline assumption.
++
++Update the cumulative exposures week by week and output $H_{\rm corr}=B+W$. After wave exit $e$, hold $W_e$ fixed and solve $L(B_e+u,W_e)/L(B_e,W_e)=\exp[-(H_{\rm obs}(t)-H_{\rm obs}(e))]$ for the subsequent proportional exposure $u(t)$. This retains total reference-frailty cumulative mortality while accounting for changing survivor frailty. Numerical exactness is conditional on the working survival model, fitted inputs, dates, and attribution rules. The same law is used to fit quiet mortality following nonlinear selection.
+ 
+ #### 2.7.4 Practical workflow for the optional NPH module
+ 
+-1. Estimate cohort-specific depletion geometry from prespecified quiet windows to obtain $\hat\theta_{0,d}$ and $\hat k_d$.
++1. Initialize the cohort-specific baseline and frailty fit. For a supplied nonlinear exponent refit using the nonlinear survivor law.
+ 2. Obtain or prespecify **externally supplied VE or other prespecified intervention-effect scale** for the relevant wave-period hazard contrast (not from the same contrasts used to localize $\alpha$).
+ 3. Using observed excess hazards during NPH periods together with the fixed external scale, localize $\alpha$ via §2.7.2, if diagnostics support identification.
+ 4. Apply gamma-frailty inversion (Eq. @eq:normalized-cumhazard) to obtain $\tilde H_{0,d}(t)$.
+-5. During the NPH window, construct the discrete Gompertz reference path and correct only strictly positive wave excess using $F_d(t;\alpha)$ as in §2.7.3. After wave exit, apply the conditional survival equation to subsequent weeks.
++5. During the NPH window solve weekly conditional survival for exposure increments as in §2.7.3. After wave exit, hold wave exposure fixed and solve the conditional survival equation.
+ 6. Continue with the standard KCOR pipeline on the corrected cumulative-hazard scale (§2.8).
+ 7. If identification diagnostics fail, report $\alpha$ as not identified and treat the NPH module as inactive.
+ 
+@@ -669,6 +587,15 @@
+ Coverage depends on the resampling procedure and the estimator refitted in each draw. The historical pilot used weekly Poisson resampling and compared its intervals with a KCOR estimate fitted to one reference dataset. Four scenarios reused the same expected death counts across simulated datasets, so their reported coverage cannot establish how often intervals contain the population value across independently sampled cohorts.
+ 
+ The bootstrap is used as a **variance-propagation** device for the aggregated process rather than a universally calibrated inferential procedure. Two person-bootstrap studies used one million people, unequal cohort frailties, and no wave adjustment. With the joint initial fit specified in section 2.4, the nominal 95 percent interval contained the true week-52 ratio in 189 of 200 datasets. In a separate study the production fitter fixed the baseline rate from early weeks. Its percentile interval contained the true ratio in 502 of 600 datasets, although all 600 original fits passed the study diagnostics. The studies used different designs and do not isolate the effect of the fitter. Both coverage studies predate the week-boundary fitting equations in section 2.5. Reported percentile intervals are **conditional on passing identifiability diagnostics**. **Inference is therefore interpreted conditional on diagnostic acceptance.**
++
++
++#### Model-conditional information and precision
++
++For integrated hazard $q_i$, conditional event probability $p_i=1-e^{-q_i}$ and expected risk set $Y_i$, the conditional binomial information for $\beta=(\log k,\theta,\text{unknown gap exposures})$ is
++$$
++I(\beta)=\sum_i Y_i\frac{1-p_i}{p_i}\nabla q_i\nabla q_i^T.
++$$
++The model-conditional regular variance bound for log KCOR follows by propagating the gradient through $I^{-1}$, including nuisance covariance. Include all quiet weeks and survival transitions across gaps, also before the first quiet window; treat alpha as fixed. This is not an individual-dataset CI or a boundary-valid coverage guarantee. In a contiguous low-mortality window of $L$ weeks with approximately constant weekly rate $k$, profiling the unknown baseline gives $\operatorname{SE}(\theta)\gtrsim\sqrt{12/[Nk^3 L(L^2-1)]}$. Low volume and short windows impede frailty resolution; exact multi-window calculations account for their timing and gaps. Frailty precision and endpoint precision need not coincide. In a matched short-window 50,000-person two-stratum simulation, the theoretical KCOR interval was [0.877,1.140]; the all-window fitter median person-bootstrap width was 0.315, compared with 213.056 for the first-window joint fit. The local approximation does not capture nonnegative boundary bias. Overlapping empirical strata require a dependence model for a pooled bound.
+ 
+ ### 2.10 Algorithm summary and reproducibility checklist
+ 
+@@ -817,7 +744,7 @@
+ 
+ ![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ is expected to be approximately horizontal under the pseudo-null, subject to sampling stochasticity. Curves are shown as anchored $\mathrm{KCOR}(t; t_0)$, i.e., $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$, which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+ 
+-Table @tbl:neg_control_summary provides numeric summaries. For the revised estimates, the fit used week-boundary hazard increments (§2.5). Baseline rate and frailty were fitted jointly in the first quiet window, with the Czech wave exponent fixed at 1.18. Each of 999 person-bootstrap draws per enrollment preserved subgroup membership and week of death, refitted the cohorts, and recomputed the pooling weights. The intervals give the 2.5th and 97.5th percentiles. Compared with v4.3, the two 2022 comparisons involving pseudo-dose 2 moved closer to 1, while the pseudo-dose 1 versus 0 estimate moved from 0.9858 to 1.0462. All six joint-fit intervals included 1. Holding the revised configuration fixed and estimating the baseline rate from the early weeks gave 2022 ratios of 1.0073, 1.0129 and 1.0055 for comparisons 1 versus 0, 2 versus 0 and 2 versus 1, respectively. All three were closer to 1 than their joint-fit counterparts.
++Table @tbl:neg_control_summary reports the original v4.3 estimates and the jointly fitted all-window survivor-model estimates, using the same reporting date and input workbook. The configured Czech exponent 1.18 is a sensitivity value, not an identified parameter. Each of 999 person-bootstrap draws per enrollment reconstructs risk sets, refits each group, and recalculates pooling weights. All six sensitivity intervals include one; the 2022 widths decrease relative to the earlier first-window joint fitter, though they increase compared with the all-window gamma-working fit with exact inversion. The empirical age-shift contrasts have no known exact target; intervals including one do not establish equivalence. For the full survivor-model run all 18,000 contributing fits succeeded without insufficient-signal flags.
+ 
+ <!--
+ NOTE: The empirical negative control is built from real-world data where non-proportional external hazards (e.g., epidemic waves) can create small deviations from an idealized null.
+@@ -826,9 +753,9 @@
+ 
+ ### 3.2 Positive controls (injected effects)
+ 
+-Positive controls (injected harm/benefit) are provided in Supplementary Section S3. They test whether, after the same preprocessing and $\theta_0$ estimation pipeline, KCOR deviates in the expected direction and with magnitude broadly consistent with the injected effect (up to discretization and sampling noise).
+-
+-In positive-control simulations with injected multiplicative hazard shifts, KCOR detects both harm and benefit in the expected direction, with estimated $\mathrm{KCOR}(t)$ trajectories tracking the imposed effects. This complements the null validations by showing that the revised estimator is not only flattening trajectories indiscriminately; it can also preserve post-normalization divergence when an effect is present.
++Supplementary Section S3 describes the two positive controls. Table 9 reports their fitted week-80 endpoints.
++
++The joint-fit week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective.
+ 
+ ### 3.3 Stress tests (frailty misspecification)
+ 
+@@ -848,35 +775,37 @@
+ 
+ #### 3.3.2 Quiet-window contamination stress test
+ 
+-Positive controls in §3.2 inject multiplicative hazard shifts in an **effect** window to test whether KCOR detects a true contrast. A distinct and important concern is whether **non-frailty** additive curvature confined to the **quiet** window itself could bias $\hat\theta_{0,d}$ sufficiently to shift anchored KCOR away from a true null—and in particular whether it could produce sign reversal (KCOR $>1$ when the true contrast is null). We ran a synthetic experiment to bound this empirically.
+-
+-**Design.** Two cohorts were simulated under the Gompertz-plus-gamma-frailty DGP with known ground-truth parameters: cohort A (lower frailty, $\theta_{0,A}=0.5$) and cohort B (higher frailty, $\theta_{0,B}=4.0$), with shared baseline scale $k$ calibrated to Czech KCOR_CMR weekly hazard for YoB 1940–1960, dose 0 reference ($h_{\mathrm{ref}}=0.000456$ per week). The true cumulative contrast is null by construction (identical baseline hazard). Additive non-frailty contamination was applied **only** to cohort A during rebased quiet-window weeks 4–56. Three contamination types were tested: **Type 1** (decaying dynamic-HVE-style hazard: $g(t)=\epsilon_{\mathrm{dyn}}\exp(-0.05\,t_{\mathrm{rebased}})$); **Type 2** (constant comorbidity-direction hazard: $g(t)=\epsilon_{\mathrm{comorb}}$); and **Type 3** (combined, full $4\times4$ outer product of positive $\epsilon_{\mathrm{dyn}}$ and $\epsilon_{\mathrm{comorb}}$ values, 16 cells). Each cell used 20 stochastic replicates with the production pipeline (`fit_theta0_gompertz`, inversion, anchored KCOR).
+-
+-**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR asymptote and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and combined sign-reversal frequency.
+-
+-*Type 1 (dynamic):* Contamination drove $\hat\theta_{0,A}$ to the floor (error $\approx -0.5$, i.e., $\hat\theta_{0,A}\to0$) and KCOR **below** null in the mean as $\epsilon_{\mathrm{dyn}}$ increases—reaching mean KCOR $\approx0.78$ at $\epsilon_{\mathrm{dyn}}=5\times10^{-3}$, with all replicates at or below 1 at that amplitude. For smaller positive $\epsilon_{\mathrm{dyn}}$, a minority of replicates can still exceed 1 even though the **mean** asymptote stays below 1 (Table @tbl:quiet_contam and `quiet_contamination_agg.csv`). Dynamic HVE-style contamination under-corrects cohort A, biasing KCOR toward apparent benefit, not harm.
+-
+-*Type 2 (comorbidity):* KCOR increased monotonically with $\epsilon_{\mathrm{comorb}}$. Sign reversal (mean KCOR $>1$) first occurred at $\epsilon_{\mathrm{comorb}}\approx3\times10^{-4}$, which equals $66\%$ of $h_{\mathrm{ref}}$—a constant additive weekly hazard two-thirds the size of baseline all-cause mortality for this age stratum. The comorbidity-direction contrasts documented for Czech vaccination cohorts (e.g.\ Šmíd et al., 2024) do not support a hazard increment of that magnitude from measured comorbidity imbalance alone.
+-
+-*Type 3 (combined):* The joint reversal-frequency heatmap (Figure @fig:quiet_contam_theta, right panel) shows cross-cell variation. At $\epsilon_{\mathrm{comorb}}=3\times10^{-4}$ ($66\%$ of $h_{\mathrm{ref}}$), mean KCOR and reversal fractions can already be elevated for some dynamic levels (e.g.\ $\epsilon_{\mathrm{dyn}}=5\times10^{-4}$: mean KCOR $1.02$, $60\%$ of replicates with $\mathrm{KCOR}_\infty>1$; Table @tbl:quiet_contam). At $\epsilon_{\mathrm{comorb}}=10^{-4}$ ($22\%$ of $h_{\mathrm{ref}}$), reversal fractions stay at or below $40\%$ across the tested $\epsilon_{\mathrm{dyn}}$ grid. Nearly universal reversal within the joint grid requires larger comorbidity-style increments—notably $\epsilon_{\mathrm{comorb}}\ge10^{-3}$ ($219\%$ of $h_{\mathrm{ref}}$) in the illustrative cells in Table @tbl:quiet_contam. Positive dynamic amplitudes on the Type 1 sweep yield mean KCOR below 1 in the aggregated file (with replicate-level exceedances possible at small $\epsilon_{\mathrm{dyn}}$).
+-
+-**Interpretation.** Substantial apparent harm on the anchored scale requires additive quiet-window perturbations on the order of a large fraction of—or multiples of—baseline weekly mortality, well above plausible magnitudes for the mechanisms often cited as residual confounders. The dynamic-HVE mechanism biases KCOR in the *opposite* direction (toward apparent benefit). Because the dynamic-HVE and comorbidity contamination components act in opposite directions, the net bias direction is an empirical question; neither universal conservatism nor universal overstatement can be assumed without empirically bounding the magnitude of both components independently. These results bound the contamination hypothesis empirically and support the adequacy of the working model for the reported Czech cohorts.
+-
+-![Mean anchored KCOR asymptote versus contamination magnitude. Left: Type 1 (dynamic HVE style)—mean KCOR falls as $\epsilon_{\mathrm{dyn}}$ increases among positive amplitudes (largest tested: mean $\approx0.78$); small $\epsilon_{\mathrm{dyn}}$ can still leave a minority of replicates above 1. Center: Type 2 (comorbidity style)—KCOR increases; sign reversal threshold at $\epsilon_{\mathrm{comorb}}\approx3\times10^{-4}=66\%$ of $h_{\mathrm{ref}}$. Right: Type 3 combined heatmap—mean KCOR asymptote on the $4\times4$ joint grid. Error bars are $\pm1$ SD across 20 replicates. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
+-
+-![Left and center: mean $\hat\theta_{0,A}$ error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored $\mathrm{KCOR}_\infty>1$ on the combined $4\times4$ grid (joint contamination).](figures/fig_quiet_contam_theta_error.png){#fig:quiet_contam_theta}
++Positive controls in §3.2 inject multiplicative hazard shifts in an **effect** window to test whether KCOR detects a true contrast. This stress test asks whether adding mortality unrelated to frailty within a quiet fitting window distorts the frailty estimate and can raise anchored KCOR above 1 when the cohorts share the same underlying baseline hazard.
++
++**Design.** Two cohorts were simulated under the Gompertz-plus-gamma-frailty DGP with known ground-truth parameters: cohort A (lower frailty, $\theta_{0,A}=0.5$) and cohort B (higher frailty, $\theta_{0,B}=4.0$), with shared baseline scale $k$ calibrated to Czech KCOR_CMR weekly hazard for YoB 1940–1960, dose 0 reference ($h_{\mathrm{ref}}=0.000456$ per week). The two cohorts have identical underlying baseline hazards, so their baseline cumulative hazard ratio is 1. Additive non-frailty contamination was applied **only** to cohort A during rebased quiet-window weeks 4–56. Three contamination types were tested: **Type 1** (decaying dynamic-HVE-style hazard: $g(t)=\epsilon_{\mathrm{dyn}}\exp(-0.05\,t_{\mathrm{rebased}})$); **Type 2** (constant comorbidity-direction hazard: $g(t)=\epsilon_{\mathrm{comorb}}$); and **Type 3** (combined, full $4\times4$ outer product of positive $\epsilon_{\mathrm{dyn}}$ and $\epsilon_{\mathrm{comorb}}$ values, 16 cells). The figures and table use 20 replicates per cell and the original fitter. The first four accumulating weeks supply the baseline rate. Following the simulation design, KCOR is normalized at the end of the fifth accumulating week, so the reference ratio includes the first week of added deaths.
++
++**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR asymptote and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and the fraction of combined simulations with KCOR above 1.
++
++*Type 1 (dynamic):* Dynamic contamination reduced the fitted frailty variance in cohort A. Mean KCOR fell from 1.063 [0.998, 1.128] at zero added hazard to 0.782 [0.735, 0.829] at the largest dynamic amplitude (0.005). All 20 endpoints at that amplitude were below 1. Brackets give pointwise 95 percent Monte Carlo confidence intervals.
++
++*Type 2 (comorbidity):* With 200 datasets per level, mean KCOR was 1.050 [1.034, 1.066] at zero added hazard and 1.060 [1.045, 1.076] at an added weekly hazard of 0.0003. The difference was 0.010 [-0.012, 0.032]. The smallest tested addition whose mean increase over zero had an interval wholly above zero was 0.001 per week, with a difference of 0.179 [0.154, 0.204]. Brackets give pointwise 95 percent Monte Carlo confidence intervals. Mean KCOR already exceeded 1 at zero added hazard.
++
++*Type 3 (combined):* Mean KCOR exceeded 1 in 8 of the 16 combined cells. The heatmaps show the mean and the fraction of replicates above 1 for each combination.
++
++**Interpretation.** Added deaths enter the frailty fit and cumulative endpoint, and the first contaminated week also enters the normalizing ratio. A sensitivity analysis used the same fitted curves with the workbook reference at the end of week four, immediately before the added deaths. At the largest dynamic amplitude this gave mean KCOR 2.116 [1.992, 2.240]. The direction of the anchored contrast therefore depended on whether its reference included the first contaminated week. The size of any corresponding quiet-window hazard increment in the Czech cohorts remains unknown.
++
++![Mean anchored KCOR asymptote versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
++
++![Left and center: mean $\hat\theta_{0,A}$ error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored $\mathrm{KCOR}_\infty>1$ on the combined $4\times4$ grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations.](figures/fig_quiet_contam_theta_error.png){#fig:quiet_contam_theta}
+ 
+ | Contamination type | $\epsilon_{\mathrm{dyn}}$ | $\epsilon_{\mathrm{comorb}}$ | $\epsilon/h_{\mathrm{ref}}$ (comorb) | Mean KCOR$_\infty$ | Frac. reps KCOR$>1$ |
+ |---|---|---|---|---|---|
+-| Dynamic only | $5\times10^{-3}$ | 0 | — | 0.782 | 0.00 |
+-| Comorbidity only | 0 | $1\times10^{-4}$ | 22% | 0.989 | 0.40 |
+-| Comorbidity only | 0 | $3\times10^{-4}$ | 66% | 1.062 | 0.65 |
+-| Comorbidity only | 0 | $1\times10^{-3}$ | 219% | 1.194 | 1.00 |
+-| Combined | $5\times10^{-4}$ | $3\times10^{-4}$ | 66% | 1.016 | 0.60 |
+-| Combined | $1\times10^{-3}$ | $3\times10^{-4}$ | 66% | 0.992 | 0.50 |
+-| Combined | $5\times10^{-4}$ | $1\times10^{-3}$ | 219% | 1.188 | 1.00 |
+-
+-Table: Selected cells from quiet-window contamination experiment. $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, enrollment sheet `2021_24`). For positive $\epsilon_{\mathrm{dyn}}$ on the Type 1 sweep, mean KCOR stays below 1 in the aggregated runs; comorbidity-only **mean** reversal first appears near $\epsilon_{\mathrm{comorb}}=3\times10^{-4}$. Full grid in `test/quiet_window_contamination/out/quiet_contamination_agg.csv`. {#tbl:quiet_contam}
++| Dynamic only | $5\times10^{-3}$ | 0 | — | 0.782 [0.735, 0.829] | 0.00 |
++| Comorbidity only | 0 | $1\times10^{-4}$ | 22% | 0.989 [0.916, 1.062] | 0.40 |
++| Comorbidity only | 0 | $3\times10^{-4}$ | 66% | 1.062 [1.003, 1.120] | 0.65 |
++| Comorbidity only | 0 | $1\times10^{-3}$ | 219% | 1.194 [1.129, 1.259] | 1.00 |
++| Combined | $5\times10^{-4}$ | $3\times10^{-4}$ | 66% | 1.016 [0.965, 1.068] | 0.60 |
++| Combined | $1\times10^{-3}$ | $3\times10^{-4}$ | 66% | 0.992 [0.944, 1.040] | 0.50 |
++| Combined | $5\times10^{-4}$ | $1\times10^{-3}$ | 219% | 1.188 [1.122, 1.254] | 1.00 |
++
++Table: Selected cells from quiet-window contamination experiment. $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, enrollment sheet `2021_24`). Results use the fifth accumulating week as the reference. Brackets give pointwise 95 percent Monte Carlo confidence intervals for the means from 20 simulations per cell. Full grid in `analysis/contamination/historical-grid.csv`. {#tbl:quiet_contam}
++
++**Population-size experiment.** Keeping the original contamination generator, timing and fifth accumulating-week reference, 200 simulations at each level for 50,000, 500,000 and 5,000,000 people per cohort used the all-window fit. Zero-addition mean KCOR was respectively 1.0494 [1.0305,1.0684], 1.0090 [1.0027,1.0153], and 1.0013 [0.9993,1.0033]. At 5M the smallest tested addition (0.0001) shifted the mean by +0.01969 [0.01698,0.02240]. These Monte Carlo intervals concern means, not individual endpoints. The nonnegative variance boundary and sampled reference contribute to the smaller population bias; this benchmark does not locate a universal contamination threshold. Earlier figures and the selected grid above refer to the historical smaller-population fitter.
+ 
+ Additional validation results—including full simulation grids, quiet-window robustness catalogs, dynamic-selection checks, and extended comparator analyses—are provided in the Supplementary Information (SI).
+ 
+@@ -896,23 +825,17 @@
+ 
+ These results confirm that the estimation procedure is capable of recovering $\alpha$ when the working model holds and sufficient cross-cohort variation is present.
+ 
+-#### 3.4.2 Czech registry application
+-
+-We next applied the same estimation procedure to the Czech primary analysis using pooled cohorts over the main wave period.
+-
+-Figure @fig:alpha_czech_objective shows the corresponding objective functions for the pairwise and collapse estimators. Both exhibit interior minima in the vicinity of $\alpha \approx 1.18$--1.19, and the two estimators are numerically close (pairwise 1.190, collapse 1.185), indicating a consistent preferred region under the working model.
+-
+-![Objective functions for $\alpha$ under the pooled Czech primary specification. The absolute scales of the two objectives differ by construction, so each curve is shifted so that its minimum is zero for visual comparability. Both estimators exhibit interior minima near $\alpha \approx 1.18$--1.19, but the curves remain shallow by the prespecified curvature criterion, indicating a preferred region rather than a strongly identified point estimate.](figures/fig_alpha_czech_objective.png){#fig:alpha_czech_objective}
+-
+-However, the objective functions are shallow, with normalized curvature metrics well below the prespecified identifiability threshold. In particular, curvature values of approximately $7.8\times 10^{-4}$ and $8.4\times 10^{-4}$ indicate that the data provide limited information to localize $\alpha$ precisely.
+-
+-Accordingly, while the pooled analysis suggests a region of plausible $\alpha$ values, it does not satisfy the criteria required to report $\alpha$ as identified.
++#### 3.4.2 Empirical pooled Czech registry application
++
++The historical illustrative pooled objectives (not supplied an external intervention-effect scale) had minima 1.190 and 1.185. Replaying the same data and objective with the all-window fit and with the nonlinear survivor fit refitted at each candidate exponent yields both minima at the lower boundary 1.00, on the original 1.00–1.30 grid. The wider diagnostic grid 0.70–1.30 gives both exact-survivor minima at its lower boundary. Forty-eight eligible cohort histories amount to 10.36 million overlapping enrollment memberships, but the positive raw-excess filter retains only 62 cohort-week rows across eight cohorts. The historical raw excess is the observed hazard difference from dose zero, not independently measured wave exposure.
++
++![Comparison of historical and updated illustrative objective profiles; lower-boundary optima do not identify an exponent.](figures/fig_alpha_czech_objective.png){#fig:alpha_czech_objective}
+ 
+ #### 3.4.3 Diagnostics and identifiability of $\alpha$
+ 
+ We evaluated identifiability using bootstrap, leave-one-out, and sensitivity analyses.
+ 
+-Bootstrap resampling shows substantial dispersion and strong boundary-seeking behavior, with a large fraction of resampled estimates accumulating at the limits of the search grid. Leave-one-out analysis reveals instability, with several cohort omissions producing large shifts in the estimated optimum.
++In the historical replay, bootstrap resampling shows substantial dispersion and strong boundary-seeking behavior, with a large fraction of resampled estimates accumulating at the limits of the search grid. Leave-one-out analysis reveals instability, with several cohort omissions producing large shifts in the estimated optimum.
+ 
+ Sensitivity analyses across anchor choice, excess-hazard definition, and time segmentation further demonstrate inconsistency. In particular, certain configurations produce boundary-seeking optima or materially different estimates, and segmented analyses show reduced agreement relative to the pooled specification. These diagnostic patterns are summarized in Figure @fig:alpha_czech_diagnostics.
+ 
+@@ -924,7 +847,7 @@
+ 
+ Across all prespecified criteria, objective curvature, estimator agreement, stability under resampling, and robustness to specification, the Czech pooled analysis fails to meet the threshold required for identification.
+ 
+-We therefore report $\alpha$ as **not identified** for this dataset. The observed region near $\alpha \approx 1.18$--1.19 should be interpreted as a model-dependent preference rather than a reliably estimated parameter.
++We report $\alpha$ as **not identified**. The historical preference near 1.18–1.19 is not reproduced by the improved fitter. A value of 1.18 is retained only for sensitivity analyses.
+ 
+ This outcome is consistent with the role of the identifiability diagnostics: the procedure may locate a shallow optimum even when the data do not contain sufficient information to support a stable estimate, and in such cases the appropriate conclusion is non-identification rather than point estimation.
+ 
+@@ -1217,7 +1140,7 @@
+ | 4 | Select prespecified quiet windows in calendar ISO-week space | Quiet-window sets $W_{j,d}$ | Yes | Overlay quiet windows on hazard plots |
+ | 5 | Seed-fit $(\hat{k}_d,\hat{\theta}_{0,d}^{(0)})$ in the nearest quiet window | Initial fitted parameters | Yes (estimation procedure) | Seed-fit residuals and plausibility |
+ | 6 | Reconstruct $H_{0,d}^{\mathrm{eff}}(t)$ and compute persistent offsets $\delta_{i,d}$, $\Delta_d(t)$ | Aligned depletion geometry | Yes (offset rules) | Offset plausibility and multi-window coherence |
+-| 7 | Refit $\hat{\theta}_{0,d}$ across all quiet windows, then invert the gamma-frailty identity | Depletion-neutralized cumulative hazards | Yes | Residuals, stability, post-normalization linearity |
++| 7 | Jointly refit $\hat{k}_d,\hat{\theta}_{0,d}$ across all quiet windows, then invert the gamma-frailty identity | Depletion-neutralized cumulative hazards | Yes | Residuals, stability, post-normalization linearity |
+ | 8 | Compute $\mathrm{KCOR}(t)$ and anchored variants when used | $\mathrm{KCOR}(t)$ curve | Yes (horizon / anchor) | Near-flat under negative controls as a diagnostic check; coherent under positive controls |
+ | 9 | Uncertainty | CI / intervals | Yes | Coverage and bootstrap stability |
+ 
+@@ -1234,23 +1157,23 @@
+ | 10.0 | 0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
+ | 20.0 | 0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
+ 
+-Table: Example end-of-window $\mathrm{KCOR}(t)$ values from the empirical negative control (pooled/ASMR summaries). The historical estimates and analytic intervals were reproduced with KCOR v4.3. The joint-fit estimates and person-bootstrap intervals use the same input and reporting date (December 26, 2022). (Source: `test/negative_control/out/KCOR_summary.log`) {#tbl:neg_control_summary}
+-
+-| Enrollment | Dose comparison | KCOR (pooled/ASMR) | 95% CI | Joint fit [95% CI] |
++Table: Example end-of-window $\mathrm{KCOR}(t)$ values from the empirical negative control (pooled/ASMR summaries). The historical estimates and analytic intervals were reproduced with KCOR v4.3. The all-window survivor-model sensitivity estimates and person-bootstrap intervals use the same input and reporting date (December 26, 2022). (Source: `test/negative_control/out/KCOR_summary.log`) {#tbl:neg_control_summary}
++
++| Enrollment | Dose comparison | KCOR (pooled/ASMR) | 95% CI | All-window survivor fit [95% CI] |
+ |---|---|---:|---|---|
+-| 2021_24 | 1 vs 0 | 1.0097 | [0.992, 1.027] | 1.0083 [0.955, 1.056] |
+-| 2021_24 | 2 vs 0 | 1.0213 | [1.000, 1.043] | 1.0312 [0.971, 1.094] |
+-| 2021_24 | 2 vs 1 | 1.0115 | [0.991, 1.033] | 1.0227 [0.962, 1.087] |
+-| 2022_06 | 1 vs 0 | 0.9858 | [0.970, 1.002] | 1.0462 [0.322, 1.268] |
+-| 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] | 1.0677 [0.335, 1.213] |
+-| 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] | 1.0205 [0.822, 1.208] |
+-
+-Table: Positive control results comparing injected hazard multipliers to detected KCOR deviations. Both scenarios indicate KCOR deviating from 1.0 in the expected direction, consistent with the estimator detecting injected effects. {#tbl:pos_control_summary}
++| 2021_24 | 1 vs 0 | 1.0097 | [0.992, 1.027] | 1.0128 [0.956, 1.068] |
++| 2021_24 | 2 vs 0 | 1.0213 | [1.000, 1.043] | 1.0331 [0.970, 1.106] |
++| 2021_24 | 2 vs 1 | 1.0115 | [0.991, 1.033] | 1.0201 [0.958, 1.094] |
++| 2022_06 | 1 vs 0 | 0.9858 | [0.970, 1.002] | 1.0126 [0.958, 1.075] |
++| 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] | 1.0557 [0.996, 1.121] |
++| 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] | 1.0426 [0.975, 1.109] |
++
++Table: Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts, treating residual risk-set losses as nondeath exits. {#tbl:pos_control_summary}
+ 
+ | Scenario | Effect window | Hazard multiplier $r$ | Expected direction | Observed $\mathrm{KCOR}(t)$ at week 80 |
+ |---|---|---:|---|---:|
+-| Benefit | week 20–80 | 0.8 | < 1 | 0.825 |
+-| Harm | week 20–80 | 1.2 | > 1 | 1.107 |
++| Benefit | week 20–79 | 0.8 | < 1 | 0.834 [0.774, 0.897] |
++| Harm | week 20–79 | 1.2 | > 1 | 1.162 [1.087, 1.248] |
+ 
+ 
+ 
+Data/asset documentation/preprint/paper.pdf: 654579218381aec3644e5e3d62e739f174052c75a5ea168b0368bda2313436f9 -> 10bf8fa72b3a411576653b5417702fb2b94352771ae9077d72406b4f88213771
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -89,7 +89,7 @@
+ \frac{F_i(t;\alpha)}{F_j(t;\alpha)}.
+ $$
+ 
+-**Post-inversion correction.** For $\alpha\ne1$ the in-wave calculation uses a mean-one gamma moment as a proxy for the survivor moment. Rescaling cumulative excess by this time-varying proxy gives an approximate wave exposure (main text §2.7.3). For $\alpha=1$, $H_{\mathrm{corr},d}(t)=\tilde H_{0,d}(t)$ throughout follow-up. The following rescaling applies only for $\alpha\ne1$. In discrete weekly bins, a Gompertz reference path starts from the cumulative hazard before the first modeled wave week and includes that week's fitted baseline increment, only strictly positive excess above that path is divided by $F_d(t;\alpha)$, and the corrected cumulative hazard is enforced to be non-decreasing. After wave exit, hold the estimated cumulative wave exposure fixed and recover each baseline increase from survival conditional on reaching wave exit (main text §2.7.3).
++**Cumulative correction.** With a supplied nonlinear exponent, fit quiet mortality and invert the observed wave using the same survival law. Solve weekly survival for added exposure with the fitted baseline; when a week falls below that baseline, retain prior wave exposure and solve for a smaller proportional increment. At exit, hold the recovered wave exposure fixed. Ordinary gamma inversion is exact for alpha = 1. See main text §2.7.3 for the equation and limitation of attribution.
+ 
+ **Identification with fixed external scale.** Under minimal aggregated data, $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects unless **externally supplied VE or other prespecified intervention-effect scale** is fixed and not estimated from the same wave-period contrasts used to localize $\alpha$ (main text §2.7.2). Given a fixed scale $x$ relating frailty-neutral excess hazards between cohorts $A$ and $B$,
+ 
+@@ -138,9 +138,9 @@
+ 
+ with $r>1$ for harm and $0<r<1$ for benefit.
+ 
+-After gamma-frailty normalization (inversion), KCOR should deviate from 1 in the correct direction and with magnitude broadly consistent with the injected effect (up to discretization and sampling noise). Figure @fig:pos_control_injected and main-text Table 9 illustrate this behavior.
+-
+-![Positive control validation: KCOR tracks injected effects in the expected direction. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. Bottom row shows $\mathrm{KCOR}(t)$ deviating from 1.0 in the expected direction during the effect window.  X-axis units are weeks since enrollment.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
++The figure shows the historical positive-control comparison. Main-text Table 9 gives the fitted week-80 ratios and intervals.
++
++![Historical positive-control comparison. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. The lower panels show anchored cumulative hazard ratios reproducible directly from the raw counts. Table 9 gives the fitted endpoints.  X-axis units are weeks since enrollment.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
+ 
+ ## S4. Control-test specifications and simulation parameters
+ 
+@@ -172,7 +172,7 @@
+ | Quiet-period selection | Quiet windows | Prespecified ISO-week intervals spanning follow-up | Used jointly after alignment, not one at a time |
+ | Early-period stabilization (dynamic HVE) | `SKIP_WEEKS` | 2 | Weeks $t < \mathrm{SKIP\_WEEKS}$ are excluded from accumulation; time is then rebased |
+ | Gompertz slope | `\gamma` | Fixed implementation value | Same value used throughout the estimator |
+-| Frailty estimation | Fit method | Seed Gompertz fit + delta iteration + pooled refit | Estimates $(k_d,\theta_{0,d})$ separately within each cohort in the main path |
++| Frailty estimation | Fit method | All-window joint baseline and frailty fit with profiled gaps; nonlinear survivor law for supplied nonlinear exponent | Estimates $(k_d,\theta_{0,d})$ separately within each cohort in the main path |
+ | Anchoring | `NORMALIZATION_WEEKS` | 4 | Reference window for anchored KCOR plots |
+ | NPH module | Optional NPH exponent model | Off by default | Enabled only when cross-cohort NPH signal is plausible and diagnostics support identification of $\alpha$ |
+ 
+@@ -279,7 +279,7 @@
+ 
+ ### S5.2 Residual analysis
+ 
+-Fit residuals should be examined in hazard space. The weekly prediction is defined in Step 1 of main-text §2.5. Define residuals:
++Fit residuals should be examined in hazard space. The integrated weekly prediction is defined in main-text §2.5. Define residuals:
+ 
+ $$
+ r_{d}(t)=h_d^{\mathrm{adj}}(t)-q_d(t;\hat{k}_d,\hat{\theta}_{0,d},\Delta_d(t)).
+@@ -303,9 +303,9 @@
+ 
+ To assess whether diagnostically valid quiet windows are rare or fragile in applied registry data, we performed a systematic scan of quiet-window placements in the Czech Republic 2021–2024 cohort (enrollment ISO week 2021-24). We re-estimated the revised frailty parameters $(\hat{k}_d,\hat{\theta}_{0,d})$ across a sequence of overlapping quiet windows of fixed duration, holding all other settings fixed.
+ 
+-Specifically, we considered 12-month windows beginning at successive monthly offsets between April 2022 and April 2023 (inclusive). For each placement we fitted baseline rate and frailty jointly to that quiet window using the revised weekly equation (§2.5). The final refit used the window plus the four early post-skip anchor weeks. We retained the original enrollment time scale throughout. The pass rate counts fits accepted by the pipeline across all 13 attempted windows per group, including failures in the denominator. Results are shown for two birth-decade strata (1940s and 1950s), and for dose groups $d \in \{0,1,2\}$.
+-
+-Figure @fig:si_quiet_window_theta_scan shows fitted $\hat{\theta}_{0,d}$ as a function of quiet-window midpoint date. All six groups passed the pipeline diagnostics in all 13 windows (78 of 78 fits). The estimated frailty variance still depended on window placement. For dose 1 it ranged from effectively zero to 7.70 in the 1940s birth cohort and to 14.51 in the 1950s cohort. The windows overlap, so these counts describe sensitivity to placement within the same data.
++Specifically, we considered 12-month windows beginning at successive monthly offsets between April 2022 and April 2023 (inclusive). For each placement we jointly fitted baseline rate and frailty using the same survivor law as the main method, with supplied sensitivity alpha=1.18. The quiet fit includes the four early post-skip anchors outside the marked wave. We retained the original enrollment time scale throughout. The pass rate counts fits accepted by the pipeline across all 13 attempted windows per group, including failures in the denominator. Results are shown for two birth-decade strata (1940s and 1950s), and for dose groups $d \in \{0,1,2\}$.
++
++Figure @fig:si_quiet_window_theta_scan shows fitted $\hat{\theta}_{0,d}$ as a function of quiet-window midpoint date. All six groups passed the pipeline diagnostics in all 13 windows (78 of 78 fits). The estimated frailty variance still depended on window placement. For dose 1 the fitted ranges were 0.00–1.56 in the 1940s and 0.00–0.00 in the 1950s. The windows overlap, so these counts describe sensitivity to placement within the same data.
+ 
+ ![Quiet-window robustness scan: fitted enrollment-time frailty variance $\hat{\theta}_{0,d}$ vs. quiet-window midpoint date for the Czech 2021–2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Rows show birth decade and columns show dose. Each dot gives the fitted frailty variance for one window. All 78 fits passed.](figures/fig_si_quiet_window_theta_scan_czech_2021_24.png){#fig:si_quiet_window_theta_scan}
+ 
+@@ -452,3 +452,8 @@
+ 
+ **Reproduction.** Running `make paper` (or the repository's top-level build command) regenerates all artifacts from a clean checkout.
+ 
++
++
++## S8. Joint-fit and nonlinear survivor-model validation
++
++The main sampled nonlinear-wave experiment (100 independent datasets, 199 resamples) gives mean KCOR 1.00093 [0.99596,1.00591] with the consistent model, versus 0.98982 [0.98493,0.99471] with the gamma working fit and exact inversion; coverage is 90/100 [82.4%,95.1%] for both. In the stress design (50 datasets, 99 resamples), coverage is 48/50 [86.3%,99.5%]; mean with consistent model is 1.04019 [1.01789,1.06249]. In the noiseless labeled controls both original baseline and frailty are recovered. The proportional entry correction changes sampled mean from 1.20386 [1.19425,1.21347] to 0.99774 [0.99321,1.00228]. The actual pre-entry and wave allocation is unknown in registry controls. Earlier validation figures and tables not rerun under the updated estimator illustrate their stated historical configurations.

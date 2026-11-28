@@ -1,0 +1,38 @@
+{
+  "candidate": "m175",
+  "parent": "m174",
+  "full": {
+    "point": 2.208448522319807,
+    "interval": [
+      1.897007277667677,
+      2.282762318779794
+    ],
+    "draws": 3,
+    "label": "All Ages"
+  },
+  "partial": {
+    "point": 1.003326320612442,
+    "interval": [
+      0.8497482072057436,
+      1.264642455908168
+    ],
+    "draws": 3,
+    "label": "All available ages"
+  },
+  "exhaustive_one_supplied_dose": "exact match to full",
+  "partial_supplied_full_total": {
+    "point": 2.208448522319807,
+    "interval": null,
+    "draws": 0,
+    "label": "All Ages"
+  },
+  "mixed_partial_full_scope": "no all-ages contrast reported",
+  "s6_existing_rows": 1192,
+  "s6_existing_fields": 40,
+  "s6_point_parity": "exact",
+  "unchanged_main_archive_files": 11,
+  "clean_page": 18,
+  "redline_page": 19,
+  "redline_index_page": 81,
+  "distinct_visible_linked_objections": 86
+}

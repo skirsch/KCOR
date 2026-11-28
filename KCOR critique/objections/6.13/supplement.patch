@@ -1,0 +1,56 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -71,7 +71,7 @@
+ 
+ ### S2.1 Optional NPH exponent model: estimator and failure signatures
+ 
+-The optional NPH module extends KCOR only for prespecified periods in which an external hazard may interact with frailty in a non-proportional manner. Under the working model, excess hazard for cohort $d$ is represented as
++The optional NPH module extends KCOR only for prespecified periods in which an external hazard may interact with frailty in a non-proportional manner. Under the working model, the instantaneous wave component for cohort $d$, conditional on actual survivors, is represented as
+ 
+ $$
+ h_{\mathrm{excess},d}(t)=A(t)\,F_d(t;\alpha),
+@@ -81,7 +81,7 @@
+ 
+ where $A(t)$ is an unknown common amplitude and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. When $\alpha=1$, amplification is proportional to baseline risk and the NPH module is effectively inactive. The exponent $\alpha$ should be interpreted as a model-calibrated summary of frailty-dependent amplification under the working model, not as a uniquely identified biological or mechanistic constant.
+ 
+-Because $A(t)$ is common across cohorts, absolute excess hazards are not directly comparable. However, cross-cohort ratios eliminate the unknown common amplitude:
++Because $A(t)$ is common across cohorts, cross-cohort ratios of instantaneous wave components eliminate the unknown common amplitude:
+ 
+ $$
+ \frac{h_{\mathrm{excess},i}(t)}{h_{\mathrm{excess},j}(t)}
+@@ -91,7 +91,7 @@
+ 
+ **Cumulative correction.** With a supplied nonlinear exponent, fit quiet mortality and invert the observed wave using the same survival law. Solve weekly survival for added exposure with the fitted baseline; when a week falls below that baseline, retain prior wave exposure and solve for a smaller proportional increment. At exit, hold the recovered wave exposure fixed. Ordinary gamma inversion is exact for alpha = 1. See main text §2.7.3 for the equation and limitation of attribution.
+ 
+-**Identification with fixed external scale.** Under minimal aggregated data, $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects unless **externally supplied VE or other prespecified intervention-effect scale** is fixed and not estimated from the same wave-period contrasts used to localize $\alpha$ (main text §2.7.2). Given a fixed scale $x$ relating frailty-neutral excess hazards between cohorts $A$ and $B$,
++**Identification with fixed external scale.** The instantaneous identity does not automatically hold for weekly integrated excess or a no-wave subtraction; the latter compares different survivor populations. Under minimal aggregated data, $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects unless **externally supplied VE or other prespecified intervention-effect scale** is fixed and not estimated from the same wave-period contrasts used to localize $\alpha$ (main text §2.7.2). Given a fixed scale $x$ relating frailty-neutral excess hazards between cohorts $A$ and $B$,
+ 
+ $$
+ \frac{\Delta h_A^{\mathrm{obs}}(t)}{\Delta h_B^{\mathrm{obs}}(t)}
+@@ -99,7 +99,7 @@
+ (1-x)\,\frac{F_A(t;\alpha)}{F_B(t;\alpha)}.
+ $$
+ 
+-With **externally supplied VE or other prespecified intervention-effect scale** fixed as in main text §2.7.2, the operational **pairwise estimator** minimizes discrepancies between observed log excess-hazard ratios and $\log(1-x)+\log F_i(t;\alpha)-\log F_j(t;\alpha)$, in the same spirit as
++With **externally supplied VE or other prespecified intervention-effect scale** fixed as in main text §2.7.2, the **pairwise objective**, using a measured instantaneous component or a justified approximation, minimizes discrepancies between log excess-hazard ratios and $\log(1-x)+\log F_i(t;\alpha)-\log F_j(t;\alpha)$, in the same spirit as
+ 
+ $$
+ \sum_{i<j,t}
+@@ -109,7 +109,7 @@
+ \right]^2,
+ $$
+ 
+-but with the appropriate $\log(1-x)$ offset absorbed into the target or the residual as implemented in the reference code. The **collapse estimator** minimizes
++with the appropriate $\log(1-x)$ offset absorbed into the target or the residual. The **collapse estimator** minimizes
+ 
+ $$
+ \operatorname{Var}_d\!\left[
+@@ -119,7 +119,7 @@
+ 
+ under the same fixed-scale restriction.
+ 
+-Agreement between the two estimators is treated as supportive of identification under the working model; disagreement is diagnostic rather than something to be averaged away. Additional robustness checks vary the excess-hazard handling rule, baseline anchor choice, and theta propagation scale.
++Agreement is a consistency check, not independent evidence of identification: at a given time with equal weights, the sum of squared pairwise residual differences equals the number of cohorts times the centered sum of squares. Different weighting or exclusions can change the pooled optimum. Disagreement is diagnostic. The historical weekly approximation has not been validated for identification under the full survivor law. Additional robustness checks vary the excess-hazard handling rule, baseline anchor choice, and theta propagation scale.
+ 
+ Failure of NPH identification manifests through observable signatures: flat objective curves, boundary-seeking estimates, strong dependence on arbitrary settings, or disagreement between the pairwise and collapse estimators. These patterns are treated as evidence of weak signal or model misspecification rather than as valid estimates of $\alpha$.
+ 

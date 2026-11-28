@@ -1,0 +1,17 @@
+--- a/analysis/s6/window-omission.py
++++ b/analysis/s6/window-omission.py
+@@ -1,4 +1,4 @@
+-﻿import importlib.util,json,sys
++import importlib.util,json,sys
+ from pathlib import Path
+ import numpy as np,pandas as pd
+ root=Path(sys.argv[1])
+@@ -11,7 +11,7 @@
+ weeks=np.sort(raw.week.unique());m.initialize(root,weeks)
+ K=m.precision.K;cfg=m.precision.CFG
+ windows=[(202319,202340),(202222,202225),(202126,202136),(202411,202414)]
+-saved=json.loads((root/'analysis/solver_scaling/s6-all-window.json').read_text(encoding='utf8'))
++saved=json.loads((root/'analysis/gap_assessment/s6/s6-all-window.json').read_text(encoding='utf8'))
+ rows=[];summary=[]
+ for band in m.BANDS:
+     vals=[]

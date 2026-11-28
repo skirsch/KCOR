@@ -1,0 +1,34 @@
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -138,6 +138,8 @@
+     def hazard(self,B,W):
+         if np.isscalar(B) and np.isscalar(W):
+             th,a=self.th,self.a
++            if a==1:
++                return math.log1p(th*(B+W))/th if th else B+W
+             if th<1e-5:
+                 return B+W-th/2*((B+a*W)**2-a*(a-1)*W)
+             if W==0 or a==1:
+@@ -150,10 +152,10 @@
+             return cumulative_hazard(float(B),float(W),th,a)
+         B,W=np.broadcast_arrays(np.asarray(B,dtype=float),np.asarray(W,dtype=float))
+         shape=B.shape;B=B.ravel();W=W.ravel();th=self.th;a=self.a
+-        if th<1e-5:
++        if a==1:
++            out=np.log1p(th*(B+W))/th if th else B+W
++        elif th<1e-5:
+             out=B+W-th/2*((B+a*W)**2-a*(a-1)*W)
+-        elif a==1:
+-            out=np.log1p(th*(B+W))/th
+         else:
+             scale=1+th*B;u=W/scale**a
+             # Exact first two noninteger moments; integrate smooth remainder.
+@@ -242,7 +244,7 @@
+     def fit(h_arr,t_rebased,quiet_mask,k_anchor_weeks,gamma_per_week,theta0_init=1.,deaths_arr=None,**kwargs):
+         h=np.asarray(h_arr);t=np.asarray(t_rebased);quiet=np.asarray(quiet_mask,bool)
+         # Identity for no nonlinear wave within the modeled fit history.
+-        if abs(alpha-1)<=model.NPH_IDENTITY_TOL or not np.any((t>=max(0,wave[0]))&(t<=wave[1])):
++        if not np.any((t>=max(0,wave[0]))&(t<=wave[1])):
+             return base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
+         initial,diag=base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
+         # Eligibility must reflect the requested nonlinear model, not the seed fit.

@@ -1,0 +1,181 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -317,7 +317,7 @@
+         return False
+ 
+ 
+-def year_of_birth_label(yob):
++def year_of_birth_label(yob, available_ages=False):
+     try:
+         yob_int = int(yob)
+     except (TypeError, ValueError):
+@@ -325,9 +325,9 @@
+     if yob_int == 0:
+         return "ASMR (direct)"
+     if yob_int == -3:
+-        return "All Ages ASMR"
++        return "All available ages ASMR" if available_ages else "All Ages ASMR"
+     if yob_int == -2:
+-        return "All Ages"
++        return "All available ages" if available_ages else "All Ages"
+     if yob_int == POST_1960_COHORT_YOB:
+         return "-60 (born 1960+)"
+     if yob_int == -1:
+@@ -6178,6 +6178,7 @@
+     xls = pd.ExcelFile(src_path)
+     all_out = []
+     pair_deaths_all = []
++    available_ages_by_sheet = {}
+     by_dose_nc_all = []
+     
+     # Auto-derive enrollment dates from sheet names if not explicitly set
+@@ -6444,10 +6445,21 @@
+                 for (age, dose), exits in exit_totals.items():
+                     dual_print(f"[KCOR_NONDEATH_EXITS] EnrollmentDate={sh},yob={age},dose={dose},count={exits:g}")
+ 
+-        # Reconstruct the inclusive population from validated source components
+-        # before the display-age filter; an explicit total has the same population.
+-        if not MONTE_CARLO_MODE and -2 not in df["YearOfBirth"].values:
+-            source = df[_all_age_source_mask(df)]
++        # Complete extracts may reconstruct a missing total dose by dose.
++        # Partial extracts without a supplied inclusive total represent only
++        # the available disjoint ages; never mix those with supplied full totals.
++        supplied_total = df.YearOfBirth.eq(-2)
++        available_only = not MONTE_CARLO_MODE and layout=="disjoint" and total_scope=="partial" and not supplied_total.any()
++        available_ages_by_sheet[effective_sheet_name] = available_only
++        def population_label(age):
++            return year_of_birth_label(age, available_only or (age==-3 and total_scope=="partial"))
++        reconstruct_missing = not supplied_total.any() or (layout=="disjoint" and total_scope=="exhaustive")
++        if not MONTE_CARLO_MODE and reconstruct_missing:
++            if supplied_total.any():
++                missing_doses = ~df.Dose.isin(df.loc[supplied_total,"Dose"])
++                source = df[missing_doses & ((df.YearOfBirth>0)|(df.YearOfBirth==-1))]
++            else:
++                source = df[_all_age_source_mask(df)]
+             if not source.empty:
+                 aggregate = source.groupby(["Dose","DateDied"], as_index=False).agg(
+                     ISOweekDied=("ISOweekDied","first"), Alive=("Alive","sum"), Dead=("Dead","sum"))
+@@ -8062,6 +8074,7 @@
+                     "EnrollmentDate": effective_sheet_name,
+                     "Date": row["DateDied"].date(),
+                     "YearOfBirth": row["YearOfBirth"],
++                    "population_label": population_label(row["YearOfBirth"]),
+                     "Dose": dose,
+                     "ISOweek": row["ISOweekDied"],
+                     "Dead": row["Dead"],
+@@ -8144,6 +8157,7 @@
+             out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history", "invalid_aggregate_counts", "risk_set_exhausted"]), "KCOR_ns"] = np.nan
+         out_sh["risk_history_policy"] = history_policy
+         out_sh["aggregate_scope"] = total_scope
++        out_sh["population_label"] = out_sh.YearOfBirth.map(population_label)
+         all_out.append(out_sh)
+         
+         # For Monte Carlo mode: collect KCOR values at the cohort reporting date for summary
+@@ -8208,6 +8222,7 @@
+         # Collect per-pair deaths details for new output sheet
+         pair_details = build_kcor_o_deaths_details(df, effective_sheet_name)
+         if not pair_details.empty:
++            pair_details["population_label"] = pair_details.YearOfBirth.map(population_label)
+             pair_deaths_all.append(pair_details)
+ 
+     # Combine all results
+@@ -8536,7 +8551,7 @@
+                             kcor_ns_str = "-" if not (isinstance(kcor_ns_val, (int, float)) and np.isfinite(kcor_ns_val)) else f"{kcor_ns_val:.4f}"
+ 
+                         # Age label for output
+-                        age_label = year_of_birth_label(age)
++                        age_label = year_of_birth_label(age, available_ages_by_sheet.get(sheet_name,False))
+ 
+                         # KCOR6 mode: suppress slope parameter extraction/printing (no slope6/slope8).
+                         if kcor6_enabled_effective:
+@@ -8689,7 +8704,7 @@
+                         kb_den = np.nan
+                         tau_den = np.nan
+                     
+-                    age_label = year_of_birth_label(age)
++                    age_label = year_of_birth_label(age, available_ages_by_sheet.get(sheet_name,False))
+                     
+                     # Format ka, kb values for numerator and denominator (3 significant digits)
+                     def format_param(val):
+@@ -8983,10 +8998,10 @@
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged",
+                             "residual_screen_flag", "residual_screen_unavailable", "CI_residual_flagged_draws", "CI_residual_unavailable_draws",
+-                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws", "CI_unanchored_method", "CI_unanchored_flagged_draws", "CI_unanchored_point_flagged",
++                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_population_scope_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws", "CI_unanchored_method", "CI_unanchored_flagged_draws", "CI_unanchored_point_flagged",
+                             "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+                             "normalization_status", "unanchored_normalization_status", "unanchored_abnormal_fit", "risk_history_policy", "aggregate_scope", "gap_assumption_status",
+-                            "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
++                            "EnrollmentDate", "YearOfBirth", "population_label", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+                             "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
+@@ -9029,7 +9044,7 @@
+                         about_df.to_excel(writer, index=False, sheet_name="About")
+                         # Always write by_dose sheet (trim to used columns)
+                         by_dose_cols = [
+-                            "EnrollmentDate","Date","YearOfBirth","Dose","ISOweek",
++                            "EnrollmentDate","Date","YearOfBirth","population_label","Dose","ISOweek",
+                             "Dead","Alive","MR","hazard","cum_hazard","adj_cum_hazard","Cum_deaths","Cumu_Person_Time","Time_Index"
+                         ]
+                         debug_trim = debug_df[[c for c in by_dose_cols if c in debug_df.columns]].copy()
+@@ -9049,6 +9064,7 @@
+                         # Cohort-level theta0 diagnostics (one row per EnrollmentDate/YoB/Dose[/mc_id]).
+                         theta0_diag_df = build_theta0_diagnostics_rows(kcor6_params_map)
+                         if not theta0_diag_df.empty:
++                            theta0_diag_df["population_label"] = [year_of_birth_label(age,available_ages_by_sheet.get(sh,False)) for sh,age in zip(theta0_diag_df.EnrollmentDate,theta0_diag_df.YearOfBirth)]
+                             # Validation: ratio must be NaN for dose=0 rows.
+                             dose0_bad_ratio = theta0_diag_df[
+                                 (theta0_diag_df.get("Dose", np.nan) == 0)
+@@ -9105,17 +9121,22 @@
+                             else:
+                                 dual_print("[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | no eligible dose>0 rows")
+                         theta0_diag_df.to_excel(writer, index=False, sheet_name="theta0_diagnostics")
++                        def label_diagnostic_population(rows):
++                            detail=pd.DataFrame(rows)
++                            if {"EnrollmentDate","YearOfBirth"}<=set(detail.columns):
++                                detail["population_label"]=[year_of_birth_label(age,available_ages_by_sheet.get(sh,False)) for sh,age in zip(detail.EnrollmentDate,detail.YearOfBirth)]
++                            return detail
+                         if combined.attrs.get("wave_deficit_diagnostics"):
+-                            pd.DataFrame(combined.attrs["wave_deficit_diagnostics"]).to_excel(writer,index=False,sheet_name="wave_deficits")
++                            label_diagnostic_population(combined.attrs["wave_deficit_diagnostics"]).to_excel(writer,index=False,sheet_name="wave_deficits")
+                         if "gap_diagnostics" in combined.attrs:
+-                            pd.DataFrame(combined.attrs["gap_diagnostics"]).to_excel(writer, index=False, sheet_name="gap_diagnostics")
++                            label_diagnostic_population(combined.attrs["gap_diagnostics"]).to_excel(writer, index=False, sheet_name="gap_diagnostics")
+                         sampling_rows=[]
+                         for key,params in kcor6_params_map.items():
+                             if not isinstance(params,dict):continue
+                             for row in params.get("sampling_diagnostic",{}).get("sampling_weeks",[]):
+                                 sampling_rows.append(dict(EnrollmentDate=key[0],YearOfBirth=key[-2],Dose=key[-1],mc_id=key[1] if len(key)==4 else None,**row))
+                         if sampling_rows:
+-                            pd.DataFrame(sampling_rows).to_excel(writer,index=False,sheet_name="sampling_diagnostics")
++                            label_diagnostic_population(sampling_rows).to_excel(writer,index=False,sheet_name="sampling_diagnostics")
+ 
+                         # Manufacturer histories use the same validated point and interval path.
+                         for name, rows in manufacturer_results.items():
+@@ -9279,7 +9300,7 @@
+                         age_group = "ASMR (direct)"
+                         yob_label = "All"
+                     elif year_of_birth == -2:
+-                        age_group = "All Ages"
++                        age_group = yob_data["population_label"].iloc[0] if "population_label" in yob_data else "All Ages"
+                         yob_label = -2
+                     elif year_of_birth == POST_1960_COHORT_YOB:
+                         age_group = "-60 (born 1960+)"
+@@ -9537,7 +9558,7 @@
+                         # Add data rows for each age group
+                         for _, row in dose_data.iterrows():
+                             age = row["YearOfBirth"]
+-                            age_label = year_of_birth_label(age)
++                            age_label = row.get("population_label",year_of_birth_label(age))
+                             
+                             # Check if abnormal fit flag is present
+                             abnormal_fit_flag = row.get("abnormal_fit", False) if "abnormal_fit" in row.index else False
+@@ -9578,6 +9599,7 @@
+                                 "CI_undefined_anchor_draws": row.get("CI_undefined_anchor_draws", np.nan),
+                                 "CI_missing_draws": row.get("CI_missing_draws", np.nan),
+                                 "CI_pool_composition_changed_draws": row.get("CI_pool_composition_changed_draws", np.nan),
++                                "CI_population_scope_changed_draws": row.get("CI_population_scope_changed_draws", np.nan),
+                                 "pool_contributors": row.get("pool_contributors", ""),
+                                 "pool_expected_ages": row.get("pool_expected_ages", ""),
+                                 "pool_retained_weight_fraction": row.get("pool_retained_weight_fraction", np.nan),

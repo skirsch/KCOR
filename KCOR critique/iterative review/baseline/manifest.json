@@ -1,0 +1,42 @@
+﻿[
+    {
+        "path":  "documentation/preprint/paper.md",
+        "sha256":  "1c555dea99c35d5d65b9e4420a31af676d19677ac2cf8cf4c63c4b7967b9bb2a"
+    },
+    {
+        "path":  "documentation/preprint/supplement.md",
+        "sha256":  "dc24e25ef100937b715ed002fe1efd5bbd2d55184fad312eecb70d2d06036e90"
+    },
+    {
+        "path":  "documentation/preprint/main.pdf",
+        "sha256":  "b790df0260f80bc1d154081dc2e1f9b1e8731768fe27f2922cd4b0cd6a55a5b9"
+    },
+    {
+        "path":  "documentation/preprint/supplement.pdf",
+        "sha256":  "84b3bccb276c7038ade19283f5c5846a5ac89e92ca2bcb282f907475b45b311a"
+    },
+    {
+        "path":  "code/KCOR.py",
+        "sha256":  "3d9e0320739baa3d11b1058e8b134335f7edcd9a0d7df6ec22234c2abf1f49ef"
+    },
+    {
+        "path":  "code/KCOR_CMR.py",
+        "sha256":  "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666"
+    },
+    {
+        "path":  "code/Makefile",
+        "sha256":  "fb36efdf96419a0193bebdb568a26c0074fa4ae156c2799b63ee1b86da3317d1"
+    },
+    {
+        "path":  "documentation/preprint/BUILD_README.md",
+        "sha256":  "d86da141db7d2c78aac9355cdcf6fbe3e20e3a07a8bbeb45f9b765b6e7389445"
+    },
+    {
+        "path":  "repository_revision",
+        "sha256":  "82f546cd5cc1af2ea99e4501a1aa92d0c9335f78"
+    },
+    {
+        "path":  "build_note",
+        "sha256":  "Documentation gives paper-pdf and paper-tex commands; baseline/revised paths have not yet been wired to isolated build targets."
+    }
+]

@@ -1,0 +1,85 @@
+--- m147/code/KCOR.py
++++ m148/code/KCOR.py
+@@ -1461,6 +1461,7 @@
+     delta_negative = False
+     delta_raw_values = []
+     delta_applied_values = []
++    gap_first_pass = None
+     history = []
+     converged = False
+     theta0_init_fitted = float(theta_seed)
+@@ -1517,6 +1518,12 @@
+             h0_i = (1.0 + theta * H_running) * (np.expm1(theta * hi) / theta if theta != 0 else hi)
+             H_running += max(h0_i, 0.0)
+ 
++        # Separate diagnostic: signed changes in the raw cumulative offset
++        # at first pass, before the nonnegative constraint is applied.
++        if _iter == 0:
++            raw_offsets = np.asarray([H0_eff[start] - H_gom_full[start] for start in reentry_indices], float)
++            signed = np.diff(raw_offsets, prepend=0.)
++            gap_first_pass = [(float(t_r[start]), float(v)) for start, v in zip(reentry_indices, signed)]
+         # 3b: compute incremental deltas at each gap end.
+         deltas = []
+         delta_raw_iter = []
+@@ -1703,6 +1710,7 @@
+             "bad_fit": False,
+             "theta_hit_bound": True,
+             "delta_negative": delta_negative,
++            "gap_first_pass": gap_first_pass,
+             "delta_raw_values": [float(x) for x in delta_raw_values],
+             "delta_applied_values": [float(x) for x in delta_applied_values],
+             "theta0_init": theta0_init_fitted,
+@@ -1749,6 +1757,7 @@
+         "bad_fit": False,
+         "theta_hit_bound": False,
+         "delta_negative": delta_negative,
++        "gap_first_pass": gap_first_pass,
+         "delta_raw_values": [float(x) for x in delta_raw_values],
+         "delta_applied_values": [float(x) for x in delta_applied_values],
+         "theta0_init": theta0_init_fitted,
+@@ -7002,6 +7011,7 @@
+                     "delta_negative": bool(diag.get("delta_negative", False)) if isinstance(diag, dict) else False,
+                     "insufficient_signal": insufficient_signal_flag,
+                     "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
++                    "gap_first_pass": diag.get("gap_first_pass"),
+                     "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                     "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
+                     "delta_raw_scale": str(diag.get("delta_raw_scale", "baseline_exposure")) if isinstance(diag, dict) else "baseline_exposure",
+@@ -7287,7 +7297,8 @@
+                             "delta_negative": bool(diag.get("delta_negative", False)) if isinstance(diag, dict) else False,
+                             "insufficient_signal": insufficient_signal_flag,
+                             "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
+-                            "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
++                            "gap_first_pass": diag.get("gap_first_pass"),
++                    "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                             "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
+                             "delta_raw_scale": str(diag.get("delta_raw_scale", "baseline_exposure")) if isinstance(diag, dict) else "baseline_exposure",
+                             "shape_quiet_weeks": t_vals[np.asarray(quiet_mask, bool) & fit_mask].tolist(),
+@@ -8268,6 +8279,9 @@
+     
+     # Now sort after ensuring Date is datetime type
+     combined = combined.sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
++    if not MONTE_CARLO_MODE:
++        combined.attrs["gap_first_pass"] = {key: params.get("gap_first_pass")
++            for key, params in kcor6_params_map.items() if len(key) == 3}
+     if return_rows:
+         xls.close()
+         log_file_handle.close()
+@@ -9071,7 +9085,7 @@
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged", "CI_analytic_lower", "CI_analytic_upper",
+                             "CI_undefined_anchor_draws", "CI_missing_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws",
+-                            "normalization_status", "risk_history_policy",
++                            "normalization_status", "risk_history_policy", "gap_assumption_status",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -9191,6 +9205,8 @@
+                             else:
+                                 dual_print("[THETA0_DIAG] mean k_hat_vs_dose0_ratio by dose | no eligible dose>0 rows")
+                         theta0_diag_df.to_excel(writer, index=False, sheet_name="theta0_diagnostics")
++                        if "gap_diagnostics" in combined.attrs:
++                            pd.DataFrame(combined.attrs["gap_diagnostics"]).to_excel(writer, index=False, sheet_name="gap_diagnostics")
+                         sampling_rows=[]
+                         for key,params in kcor6_params_map.items():
+                             if not isinstance(params,dict):continue

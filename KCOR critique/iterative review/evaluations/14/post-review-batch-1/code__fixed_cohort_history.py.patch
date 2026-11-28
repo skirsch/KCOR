@@ -1,0 +1,11 @@
+--- a/code/fixed_cohort_history.py
++++ b/code/fixed_cohort_history.py
+@@ -5,6 +5,8 @@
+ 
+ def risk_history_policy(layout="disjoint"):
+     """Default to death-only; nondeath exits require an explicit opt-in."""
++    if layout not in ("disjoint", "table8"):
++        raise ValueError(f"Unknown KCOR_BOOTSTRAP_LAYOUT: {layout}")
+     policy = os.environ.get("KCOR_RISK_HISTORY_POLICY", "death_only")
+     if policy not in ("death_only", "allow_exits"):
+         raise ValueError(f"Unknown KCOR_RISK_HISTORY_POLICY: {policy}")

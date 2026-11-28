@@ -1,34 +1,45 @@
-# KCOR review work: independent objections and software fixes
+# KCOR critique
 
-This is the entry point for reviewing the six objections and the proposed responses. Each row gives the original concern, what the investigation established, and the decision or work that remains. The numbered folders contain the supporting evidence and drafts. The [original independent review](KCOR_Independent_Review_EN.md) preserves the starting assessment.
+**Current package: [m185, round 21 status](CURRENT-STATE.md).** Use the [full objection lineage](OBJECTION-LINEAGE.md) for rounds through 21.
 
-## Objections
+**Start with the [lead-author presentation](PR-PRESENTATION.md) or the [three-minute simplified briefing](PR-BRIEFING.md).** The [detailed scientific evidence](PR-SCIENTIFIC-EVIDENCE.md) supports its conclusions. The numbered investigations are now all under [objections/](objections/).
 
-| Original objection | What we found and how to address it | Decision or work remaining |
-|---|---|---|
-| [1. Interpretation and diagnostic checks](<01 - Objection 1/README.md>) — Can KCOR tell pre-existing frailty differences apart from other sources of changing mortality? | Withdrew the broad objection. The paper already defines a conditional, descriptive comparison and acknowledges the ambiguity. The remaining concern is that some passages overstate how reliably checks detect quiet-window contamination or how conservatively KCOR behaves when assumptions fail. | Qualify those claims using the proposed framing, or provide evidence for the stronger wording. |
-| [2. Optional epidemic-wave correction](<02 - Objection 2/README.md>) — Does the correction account for waves that hit frail people disproportionately? | Documented the mismatch between the written formula and the software when wave risk is proportional to frailty. Derived the error in weekly estimates after a nonlinear wave and proposed a standalone survival correction that uses the wave exponent obtained through the paper's existing procedure and takes cumulative wave exposure as an input. | Decide whether to adopt the correction and verify its implementation against known inputs. |
-| [3. Uncertainty intervals](<03 - Objection 3/README.md>) — Is the resampling procedure appropriate and do 95% intervals include the truth about 95% of the time? | **Recommend dropping resampling of raw blocks of weeks and using person resampling.** Moving blocks makes the expected death fraction at a target week an average of the rates at eligible source weeks. Those rates change over follow-up even in quiet periods as baseline risk and the survivor mix evolve. Rebuilding the number at risk still leaves the wrong rate attached to the target week. Coverage of **94.5% versus 19%** on the same 200 datasets with the paper's fit corroborates the argument. [Mathematical explanation](<03 - Objection 3/objection3_paper_method/block_bootstrap_operationalization/WHY_BLOCK_PLACEMENT_MATTERS.md>) | **On hold pending the lead author's decision on the recommendation.** When the method is settled, check that the fitting and resampling described in the paper match the workflow that produced its reported intervals, or regenerate them. |
-| [4. Validation controls](<04 - Objection 4/README.md>) — Do flat curves and the controls support the conclusions drawn from them? | Drafted wording that limits what a flat adjusted curve can say about where frailty came from and acknowledges the two Czech control endpoints of **1.076** and **1.091**. The positive controls support detection of the particular effects injected. | Adopt the proposed wording and keep claims about the positive controls within the scenarios tested. |
-| [5. Validation targets and the Cox comparison](<05 - Objection 5/README.md>) — Is each method judged against the right benchmark? | Confirmed that the quiet-window contamination test defines a valid baseline null of 1. Proposed clarifying what 1 means for Cox and KCOR, since the two methods summarize different quantities in that example. | Revise the interpretation and figure labels. A claim that one method estimates a common target more accurately would require a comparison on that same target. |
-| [6. Mathematical statements](<06 - Objection 6/README.md>) — Are the claims about scaling, weekly inversion, curvature, and corrected curve shape correct? | Prepared corrections for all four claims. In an isolated check, the exact weekly inversion changed 28 of 720 simulated fit decisions and zero of 108 Czech replayed fits. The manuscript and software patches are available for review. | Review and adopt the paired software and manuscript patches so the description matches the weekly calculation. |
+The folder ID is `x.y`. The first number identifies the review series and the second identifies the objection within it. Series 1 contains the six original PR #5 objections. Series 2 contains findings N1–N10 from the first three-path LLM evaluation. An ID stays with its objection when a later edition revisits it.
 
-## Standalone software bugs
+Series 3 records the [multi-edition evaluation](<iterative review/evaluations/3/README.md>). Three specific follow-ups have their own entries: [3.1 · Zero-offset frailty reset](objections/3.1/README.md), [3.2 · Rate recovered after a prior shock](objections/3.2/README.md), and [3.3 · Positive-control pipeline](objections/3.3/README.md). Their numbers identify where the evidence was consolidated; the individual records trace earlier reports.
 
-[Monte Carlo sample isolation](<07 - Bugs/monte_carlo_sample_isolation/README.md>) is an independently reviewable software-fix package. It includes an explanation, exact PR patch, standalone regression test, and retained verification summary. It covers the shared sample clock and related omission of sample-specific diagnostics. These defects matter independently of whether objection 3 is accepted.
+| PR #5 objections | November 2026 evaluation findings |
+|---|---|
+| [1.1 Diagnostics and bias direction](objections/1.1/README.md) | [2.1 Information given to KCOR in the Cox experiment](objections/2.1/README.md) |
+| [1.2 Wave correction](objections/1.2/README.md) | [2.2 Weekly hazard used in fitting](objections/2.2/README.md) |
+| [1.3 Uncertainty intervals and fitting](objections/1.3/README.md) | [2.3 Final week of a gap](objections/2.3/README.md) |
+| [1.4 Validation controls and Table 8](objections/1.4/README.md) | [2.4 First week of a wave](objections/2.4/README.md) |
+| [1.5 Cox comparison and its target](objections/1.5/README.md) | [2.5 Quiet-window robustness scan](objections/2.5/README.md) |
+| [1.6 Scaling, weekly inversion and curve shape](objections/1.6/README.md) | [2.6 Positive-control injection](objections/2.6/README.md) |
+|  | [2.7 Contamination threshold](objections/2.7/README.md) |
+|  | [2.8 Reference anchor](objections/2.8/README.md) |
+|  | [2.9 Subgroup fitting and pooling](objections/2.9/README.md) |
+|  | [2.10 Selection of empirical examples](objections/2.10/README.md) |
 
-[Baseline-rate fit specification mismatch](<07 - Bugs/k_fit_spec_mismatch/README.md>) records a separate confirmed difference between the paper's joint baseline-rate/frailty Step 1 and the tested implementation's fixed early baseline-rate read. Its classification as a code bug or manuscript correction depends on which algorithm the authors intend. It is not part of PR #4.
+| To find | Open |
+|---|---|
+| Which objections share a cause and where the evidence separates them | [Root causes and links between objections](<iterative review/root-causes.md>) |
+| The paper as originally reviewed and the two original critiques | [78-page manuscript](original-review/KCOR.pdf) · [original review](original-review/KCOR_Review_EN.md) · [independent review](original-review/KCOR_Independent_Review_EN.md) |
+| The six PR #5 objections, their evidence and the proposed software fixes | [PR #5 evidence index](PR5-evidence.md). Its recommendations describe the stage before the revisions. |
+| What we have changed, what is deferred, and what needs approval | [Revision decisions](<iterative review/decisions.md>) · [checks by objection](<revision-records.md>) |
+| The selectable editions of the method and the current paper | [Revision workspace](<iterative review/README.md>) · [clean PDF](<iterative review/KCOR-clean.pdf>) · [cumulative redline](<iterative review/KCOR-redline.pdf>) |
+| How to run independent LLM evaluations and judge convergence | [Evaluation procedure and run archive](<iterative review/evaluations/README.md>) |
+| Ideas proposed by the author | [Proposed Cox derivation](<iterative review/author-proposals/objection-5-cox-gamma-derivation.md>) |
 
-[Weekly reconstruction](<07 - Bugs/weekly_reconstruction/README.md>) contains the isolated software patch and verification for the weekly inversion issue in Objection 6.
+Each numbered folder brings together the finding and its available evidence or revision record. [Software fixes](software-fixes/) are tracked separately. [Path migration notes](PATH_MIGRATION.md) locate files referenced by older evidence manifests.
 
-The live [PR #4](https://github.com/skirsch/KCOR/pull/4) already contains its reviewer note, fix, and regression test. It was open and unmerged when checked on 2026-11-13. Local copies are pinned to the PR head recorded in the bug package.
+## Forthcoming PR briefing
 
-## Evidence and separation
+[PR presentation: scientific findings and changes](PR-PRESENTATION.md) is the lead-author briefing, ordered from major results to minor manuscript corrections. [Internal working notes](WORKING-NOTES.md) preserve the review process, pending work and deferred scientific discussion. Both are maintained as the revision progresses. The review PR presents the evidence and candidate choices without adopting the experimental changes.
 
-The [evidence archive index](EVIDENCE_ARCHIVES.md) links the large generated batches and explains how to restore their original paths for reproduction.
+[Proposed PR structure and draft description](PR-STRUCTURE.md) — planned presentation, change groups, remaining decisions, and source/artifact map. Preparation only.
 
-The objection folders now contain the older scripts, study modules, and retained outputs. Each result folder has an explanatory README, and the original evidence files were preserved. [Path migration notes](PATH_MIGRATION.md) explain how to read the old path labels recorded in immutable manifests. Some historical replay scripts also recorded source hashes or absolute paths before the move; those records remain historical rather than being silently rewritten.
 
-The historical folder [`objection3_production_fix/`](<07 - Bugs/objection3_production_fix/README.md>) is the preparation and verification archive for the standalone bug package. Its name reflects where the bugs were discovered, not their scope. Some preparation documents predate PR submission; use the new package's provenance and the live PR for submission status.
+## Series 4 — hypothetical integrated PR #6
 
-Keep future experiments isolated, record the exact source revision and configuration, retain counterevidence, and state whether a proposal changes software behavior, statistical estimation, or manuscript wording. A successful software regression does not establish interval calibration. A model-violation stress test does not by itself refute a conditional model. Proposed changes can be accepted or rejected separately from the retained numerical evidence.
+[Evaluation round 4](<iterative review/evaluations/4/README.md>) tests a separate post-approval edition. [Convergence and new findings](<iterative review/evaluations/4/convergence.md>) and [numbered records 4.1–4.9](objections/README.md#series-4--hypothetical-integrated-pr-6) are separate from the draft PR's implemented and experimental sources. No post-review correction adopted.

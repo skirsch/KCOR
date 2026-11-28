@@ -1,0 +1,16 @@
+{
+  "clean": {
+    "pages": 78,
+    "red_text_pages": [],
+    "approved_text_present": true
+  },
+  "redline": {
+    "pages": 78,
+    "red_text_pages": [
+      14,
+      37,
+      38
+    ],
+    "approved_text_present": true
+  }
+}

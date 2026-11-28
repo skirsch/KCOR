@@ -1,0 +1,20 @@
+{
+  "benefit": {
+    "current_point": 0.8335933225924581,
+    "archived_point_interval": [
+      0.8335933226724036,
+      0.7741168308021195,
+      0.8970546973966541
+    ],
+    "absolute_point_difference": 7.994549466872058e-11
+  },
+  "harm": {
+    "current_point": 1.161701095221836,
+    "archived_point_interval": [
+      1.1617010949015534,
+      1.0865181945913978,
+      1.248454046592935
+    ],
+    "absolute_point_difference": 3.202826892589883e-10
+  }
+}

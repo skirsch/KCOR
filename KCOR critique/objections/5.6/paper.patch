@@ -1,0 +1,11 @@
+--- m107/documentation/preprint/paper.md
++++ m108/documentation/preprint/paper.md
+@@ -218,6 +218,8 @@
+ Censoring or reclassification due to cohort transitions (e.g., moving between exposure groups over time) is not permitted, because such transitions alter the frailty composition of the cohort in a time-dependent manner. Allowing transitions would introduce additional, endogenous selection that changes cohort mortality trajectories in unpredictable ways, confounding depletion effects that KCOR is designed to normalize.
+ 
+ This fixed-cohort design is intentional. It avoids immortal-time artifacts and prevents outcome-driven switching rules from creating time-dependent selection that is difficult to diagnose under minimal covariate availability. Extensions that allow switching or censoring are treated as sensitivity analyses (§5.2) because they change the estimand and introduce additional identification requirements.
++
++Population eligibility criteria are application-specific and are not prescribed by KCOR. Their choice, including any criteria based on post-enrollment information, determines the population to which the resulting contrast applies and may introduce selection bias.
+ 
+ Conceptual requirements of the KCOR framework are distinguished from operational defaults, which are reported separately for reproducibility (Supplementary Section S4).
+ 

@@ -1,0 +1,95 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4340,8 +4340,15 @@
+             affected &= direct | pooled
+             rows.loc[affected, "normalization_status"] = status
+             rows.loc[affected, "abnormal_fit"] = True
+-            cols = [c for c in ("KCOR","KCOR_unanchored","KCOR_anchored","CI_lower","CI_upper") if c in rows]
++            cols = [c for c in ("KCOR","KCOR_anchored","CI_lower","CI_upper") if c in rows]
+             rows.loc[affected, cols] = np.nan
++            # An unavailable presentation reference does not invalidate an
++            # otherwise supported earlier unanchored hazard ratio.
++            unanchored_affected = affected
++            if status not in ("missing_week_history","invalid_risk_history","normalization_failed"):
++                unanchored_affected = affected & pd.to_datetime(rows["Date"]).isin(dates.index)
++            if "KCOR_unanchored" in rows:
++                rows.loc[unanchored_affected,"KCOR_unanchored"] = np.nan
+     return rows
+ 
+ 
+@@ -4821,12 +4828,12 @@
+                     k = _finite_hazard_ratio(gv_at_dt["CH"].iloc[0],denom_ch)
+                     k0 = anchors[yob]
+                     kstar = _finite_hazard_ratio(k,k0)
+-                    if not (np.isfinite(kstar) and kstar>0):
++                    if not (np.isfinite(kstar) and kstar>=0):
+                         continue
+                     
+                     # ASMR pooled values should not be scaled; use raw kstar
+                     
+-                    logs.append(np.log(kstar))
++                    logs.append(np.log(kstar) if kstar>0 else -np.inf)
+                     wts.append(weights.get(yob, 0.0))
+                     contributors.append(yob)
+ 
+@@ -4835,7 +4842,7 @@
+                 if logs and sum(wts) > 0:
+                     logs_arr = np.array(logs, dtype=float)
+                     wts_arr = np.array(wts, dtype=float)
+-                    valid_mask = np.isfinite(logs_arr) & (wts_arr > 0)
++                    valid_mask = (np.isfinite(logs_arr) | np.isneginf(logs_arr)) & (wts_arr > 0)
+                     if np.any(valid_mask):
+                         logs_arr = logs_arr[valid_mask]
+                         wts_arr = wts_arr[valid_mask]
+@@ -4847,7 +4854,7 @@
+                         logK = np.average(logs_arr, weights=wts_arr)
+                         with np.errstate(over="ignore", under="ignore"):
+                             Kpool = float(np.exp(logK))
+-                        if not np.isfinite(Kpool) or Kpool <= 0:
++                        if not np.isfinite(Kpool) or (Kpool == 0 and not np.isneginf(logs_arr).any()):
+                             pooled_rows.append(unavailable_pool(dt, "pooled_numerical_range"))
+                             continue
+                     
+@@ -4970,9 +4977,9 @@
+                     k = _finite_hazard_ratio(gv["CH"].values[0],denom_ch)
+                     k0 = anchors_asmr[yob]
+                     kstar = _finite_hazard_ratio(k,k0)
+-                    if not (np.isfinite(kstar) and kstar>0):
++                    if not (np.isfinite(kstar) and kstar>=0):
+                         continue
+-                    logs_asmr.append(np.log(kstar))
++                    logs_asmr.append(np.log(kstar) if kstar>0 else -np.inf)
+                     wts_asmr.append(weights_asmr.get(yob, 0.0))
+                     contributors_asmr.append(yob)
+ 
+@@ -4980,7 +4987,7 @@
+                 if logs_asmr and sum(wts_asmr) > 0:
+                     logs_arr_asmr = np.array(logs_asmr, dtype=float)
+                     wts_arr_asmr = np.array(wts_asmr, dtype=float)
+-                    valid_mask_asmr = np.isfinite(logs_arr_asmr) & (wts_arr_asmr > 0)
++                    valid_mask_asmr = (np.isfinite(logs_arr_asmr) | np.isneginf(logs_arr_asmr)) & (wts_arr_asmr > 0)
+                     if np.any(valid_mask_asmr):
+                         logs_arr_asmr = logs_arr_asmr[valid_mask_asmr]
+                         wts_arr_asmr = wts_arr_asmr[valid_mask_asmr]
+@@ -4992,7 +4999,7 @@
+                         logK_asmr = np.average(logs_arr_asmr, weights=wts_arr_asmr)
+                         with np.errstate(over="ignore", under="ignore"):
+                             Kpool_asmr = float(np.exp(logK_asmr))
+-                        if not np.isfinite(Kpool_asmr) or Kpool_asmr <= 0:
++                        if not np.isfinite(Kpool_asmr) or (Kpool_asmr == 0 and not np.isneginf(logs_arr_asmr).any()):
+                             continue
+                     else:
+                         continue
+@@ -6308,6 +6315,12 @@
+         else:
+             enrollment_date = df["DateDied"].min()
+ 
++        if not MONTE_CARLO_MODE and os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")=="disjoint":
++            future = df["YearOfBirth"] > pd.Timestamp(enrollment_date).year
++            if future.any():
++                xls.close()
++                log_file_handle.close()
++                raise ValueError(f"Birth year after enrollment in {sh}: {sorted(df.loc[future,'YearOfBirth'].unique())}")
+         source_horizon = df["DateDied"].max()
+ 
+         

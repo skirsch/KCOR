@@ -1,0 +1,73 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1336,7 +1336,14 @@
+     first_quiet_mask[first_seg_start:first_seg_end + 1] = True
+     first_quiet_mask &= quiet_only_mask
+     first_idx = np.where(first_quiet_mask)[0]
+-    if first_idx.size < 3:
++    # The first segment is diagnostic geometry, not a prerequisite for a seed.
++    seed_idx = first_idx
++    if joint_seed and seed_idx.size < 3:
++        for start, end in segments[1:]:
++            if end-start+1 >= 3:
++                seed_idx = np.arange(start, end+1)
++                break
++    if not joint_seed and first_idx.size < 3:
+         return _fail(k_fixed, "first_quiet_window_too_small", int(first_idx.size))
+ 
+     H_gom_full = k_fixed * unit_start
+@@ -1376,12 +1383,18 @@
+         max_abs_local = float(np.nanmax(np.abs(resid_local))) if resid_local.size else np.nan
+         return th_hat, rmse_local, rel_local, max_abs_local, bool(res.success)
+ 
+-    # Seed the fit on the first quiet window.
++    # Prefer the first usable contiguous quiet window; the pooled objective
++    # can still run from the anchor seed if no individual window is usable.
++    anchor_seed = k_fixed
+     try:
+-        if joint_seed:
+-            first_start = unit_start[first_idx]
+-            first_week = unit_week[first_idx]
+-            first_obs = h_arr[first_idx]
++        if joint_seed and seed_idx.size < 3:
++            k_fixed = float(np.clip(anchor_seed, 1e-8, .1))
++            theta_seed, seed_ok = float(np.clip(theta0_init, 0., theta0_max)), True
++            H_gom_full = k_fixed * unit_start
++        elif joint_seed:
++            first_start = unit_start[seed_idx]
++            first_week = unit_week[seed_idx]
++            first_obs = h_arr[seed_idx]
+ 
+             def joint_residual(params):
+                 k, th = np.exp(params[0]), params[1]
+@@ -1392,18 +1405,25 @@
+                                  bounds=([np.log(1e-8), 0.0], [np.log(0.1), 100.0]),
+                                  xtol=1e-14, ftol=1e-14, gtol=1e-14, max_nfev=10000)
+             k_fixed, theta_seed, seed_ok = np.exp(seed.x[0]), seed.x[1], seed.success
+-            if account_entry and first_seg_start > post_idx[0]:
+-                before = post_idx[post_idx < first_seg_start]
++            seed_start = int(seed_idx[0])
++            if account_entry and seed_start > post_idx[0]:
++                before = post_idx[post_idx < seed_start]
+                 observed = float(np.sum(h_arr[before]))
+-                log_ratio = theta_seed * observed - np.log1p(theta_seed * k_fixed * unit_start[first_seg_start])
++                log_ratio = theta_seed * observed - np.log1p(theta_seed * k_fixed * unit_start[seed_start])
+                 k_fixed = np.exp(min(np.log(0.1), np.log(k_fixed) + max(0., log_ratio)))
+             H_gom_full = k_fixed * unit_start
+         else:
+             theta_seed, _, _, _, seed_ok = _fit_theta(first_quiet_mask, theta0_init, Delta=None)
+     except Exception as e:
+-        return _fail(k_fixed, f"seed_fit_exception: {e}", int(first_idx.size))
++        if not joint_seed:
++            return _fail(k_fixed, f"seed_fit_exception: {e}", int(first_idx.size))
++        seed_ok, theta_seed = False, np.nan
+     if (not seed_ok) or (not np.isfinite(theta_seed)):
+-        return _fail(k_fixed, "seed_fit_failed", int(first_idx.size))
++        if not joint_seed:
++            return _fail(k_fixed, "seed_fit_failed", int(first_idx.size))
++        k_fixed = float(np.clip(anchor_seed, 1e-8, .1))
++        theta_seed = float(np.clip(theta0_init, 0., theta0_max))
++        H_gom_full = k_fixed * unit_start
+     theta = float(theta_seed)
+ 
+     # The reconstructed totals are start-of-week values. At quiet-window

@@ -1,0 +1,14 @@
+# Quiet-window placement and the dose 1 versus 0 endpoint
+
+**All four ranges in [repetition 1, evaluated-edition handoff](repeat-1/evaluated-handoff.md) reproduce.** The same observed Czech deaths and risk sets yield anchored endpoint ratios on both sides of one when only the accepted quiet-window placement changes. Six of 13 placements give an anchored ratio below one for 1940s births. For 1950s births, only one does, at 0.9922. The unanchored endpoint is below one in every placement for both decades.
+
+| Actual birth years | Unanchored endpoint, min–max | Anchored endpoint, min–max | Window start ISO week at min / max |
+|---|---:|---:|---|
+| 1940–1949 | 0.315332–0.627621 | 0.700579–1.367690 | 2022-W39 / 2023-W05 |
+| 1950–1959 | 0.263202–0.465553 | 0.992220–1.725194 | 2022-W44 / 2023-W09 and W13 give the same displayed maximum |
+
+**Reconstruction.** Enrollment was ISO week 2021-W24. For each decade and dose, sum deaths and start-of-week risk sets across birth years before calculating weekly log hazards. Skip W24–W25 and accumulate from W26 through the endpoint, 2024-W16 (week beginning 15 April). For each of the 13 matched windows, apply the stored dose-specific \(\theta\) values to the same cumulative hazards using the core gamma inverse. Divide the dose 1 result by the dose 0 result. For the anchored column, divide again by that placement's dose 1/0 ratio at the end of the fourth accumulating week, 2021-W29 (week beginning 19 July). The optional wave correction was off. These are point estimates with no sampling interval. [Manuscript §§2.1.1, 2.5 and 2.7](../../revised/documentation/preprint/paper.md) · [Window scan and data preparation](../../../2.5/scan.py)
+
+**Relationship to the deferred figure.** Figure S5 plots fitted frailty for six decade–dose groups over 13 overlapping windows, each lasting 12 months, with monthly starts from April 2022 through April 2023. All 78 fits passed. This calculation pairs the 52 dose 0 and dose 1 fits by placement within each decade and measures the downstream effect for one horizon. It establishes sensitivity of that particular contrast. It leaves open the source of the pattern in the six panels, sampling uncertainty, and the behavior of other contrasts, horizons or wave settings. The Table 8 age-shift control uses a different cohort construction. [Supplement §S5.4](../../revised/documentation/preprint/supplement.md) · [Deferred figure discussion](../../decisions.md#deferred-discussion-after-the-objection-review)
+
+Run `py -3.11 -B window_contrast.py <path-to-m83>` from this directory to print all 26 results. The replay checks the frozen input hashes, reads the saved applied variances, reconstructs observed hazards from the pinned workbook, and compares its inversion with the frozen production function. Earlier workbook verification covers all 78 underlying fits. [Replay](window_contrast.py) · [Stored fit verification](../../../2.5/verification.md)

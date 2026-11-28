@@ -1,0 +1,30 @@
+[
+  {
+    "path": "documentation/preprint/paper.md",
+    "sha256": "690815ef6012f65de5f7f631b06f369245e3ce37f7b2cf7207d846d71fe230ce"
+  },
+  {
+    "path": "documentation/preprint/supplement.md",
+    "sha256": "f97e77459b10f576bc8b0c626592c3cd0126ac276dae0e2b319bc247b88856f1"
+  },
+  {
+    "path": "code/KCOR.py",
+    "sha256": "52fe5d94b6b24924a1f7b79720fcd4603b2de2995fea25d5b943d2ceafd4f78e"
+  },
+  {
+    "path": "code/KCOR_CMR.py",
+    "sha256": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666"
+  },
+  {
+    "path": "documentation/preprint/figures/fig_si_quiet_window_theta_scan_czech_2021_24.png",
+    "sha256": "35be2ea2f162b1d53c86643373b9d66a2765f4a9dd5213c23f63621c72986d7b"
+  },
+  {
+    "path": "documentation/preprint/figures/fig_cox_bias_kcor_vs_theta.png",
+    "sha256": "ef2b2989f00d4e5e7bd48021f89b527849be816026987331ada04b14e139bb31"
+  },
+  {
+    "path": "test/test_nph_post_window_continuity.py",
+    "sha256": "b71842e05aee02584dbe59309146bd1f62842d6f2023ffe3874bf80e2407708f"
+  }
+]

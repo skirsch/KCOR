@@ -1,0 +1,11 @@
+--- a/test/sim_grid/code/plot_estimator_bias_vs_theta.py
++++ b/test/sim_grid/code/plot_estimator_bias_vs_theta.py
+@@ -46,7 +46,7 @@
+     fig, ax = plt.subplots(figsize=(6.5, 4.2))
+     ax.axhline(0.0, color="0.45", lw=0.9, ls="--", zorder=0)
+     ax.plot(theta, cox_bias, "o-", color="tab:red", lw=2, ms=6, label="Cox HR")
+-    ax.plot(theta, kcor_bias, "^-", color="tab:green", lw=2, ms=6, label=r"KCOR asymptote")
++    ax.plot(theta, kcor_bias, "^-", color="tab:green", lw=2, ms=6, label="Week-52 KCOR")
+     ax.set_xlabel(r"Frailty variance $\theta_0$ (cohort B)")
+     ax.set_ylabel("Difference from 1")
+     ax.set_title("Synthetic null: no treatment effect at fixed frailty")

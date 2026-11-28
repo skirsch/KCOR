@@ -1,0 +1,19 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1455,9 +1455,13 @@
+ 
+     # The reconstructed totals are start-of-week values. At quiet-window
+     # re-entry they include the full preceding gap and exclude the new week.
+-    reentry_indices = [start for start, _ in segments[1:]]
+-    if account_entry and joint_seed and first_seg_start > post_idx[0]:
+-        reentry_indices.insert(0, first_seg_start)
++    # Re-entry geometry uses every modeled baseline bin, including anchors.
++    # Quiet-only segments above remain the seed and eligibility definition.
++    modeled_idx = np.flatnonzero(fit_mask_theta)
++    reentry_indices = [int(right) for left, right in zip(modeled_idx[:-1], modeled_idx[1:])
++                       if right > left + 1]
++    if account_entry and joint_seed and modeled_idx[0] > post_idx[0]:
++        reentry_indices.insert(0, int(modeled_idx[0]))
+ 
+     h_fit = h_arr[fit_mask_theta]
+     week_fit = k_fixed * unit_week[fit_mask_theta]

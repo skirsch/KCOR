@@ -1,0 +1,71 @@
+{
+  "k": 0.001095055570517728,
+  "theta": 4.910999955472825,
+  "reported_raw": [
+    0.008346399013309375
+  ],
+  "reported_applied": [
+    0.008346399013309375
+  ],
+  "expected_raw": 0.00834639901330937,
+  "status": "ok",
+  "exact_shape": {
+    "mean": 3.1920929078294153e-18,
+    "sd": 5.952227247350279e-18,
+    "max_abs_dev": 1.9081958235744878e-17,
+    "drift_per_year": -1.2545003041566185e-17,
+    "n_bins": 43,
+    "shape_windows": [
+      {
+        "start_week": 2.0,
+        "end_week": 14.0,
+        "n_bins": 13,
+        "mean_residual": 0.0,
+        "max_abs_dev": 0.0,
+        "drift_per_year": 0.0
+      },
+      {
+        "start_week": 25.0,
+        "end_week": 54.0,
+        "n_bins": 30,
+        "mean_residual": 4.575333167888829e-18,
+        "max_abs_dev": 1.9081958235744878e-17,
+        "drift_per_year": -1.2545003041566185e-17
+      }
+    ]
+  },
+  "perturbed_shape": {
+    "mean": 0.010813953488372096,
+    "sd": 0.01026611581844785,
+    "max_abs_dev": 0.029999999999999992,
+    "drift_per_year": 0.05199999999999996,
+    "n_bins": 43,
+    "shape_windows": [
+      {
+        "start_week": 2.0,
+        "end_week": 14.0,
+        "n_bins": 13,
+        "mean_residual": 0.0,
+        "max_abs_dev": 0.0,
+        "drift_per_year": 0.0
+      },
+      {
+        "start_week": 25.0,
+        "end_week": 54.0,
+        "n_bins": 30,
+        "mean_residual": 0.015500000000000005,
+        "max_abs_dev": 0.029999999999999992,
+        "drift_per_year": 0.05199999999999996
+      }
+    ]
+  },
+  "nonlinear": {
+    "raw": [
+      0.003914300161909849
+    ],
+    "applied": [
+      0.004291324864820843
+    ],
+    "raw_scale": "observed_log_survival"
+  }
+}

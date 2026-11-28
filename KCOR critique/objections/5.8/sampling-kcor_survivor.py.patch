@@ -1,0 +1,17 @@
+--- m110/code/kcor_survivor.py
++++ m111/code/kcor_survivor.py
+@@ -314,12 +314,12 @@
+         guard=model.get_theta_degenerate_fit_config()
+         bound=theta>=thmax*.999
+         bad=rel>float(guard.get("bad_fit_relrmse_threshold",1e5))
+-        flag=bound or bad
++        flag=bound
+         weak=bool(n_fit<6 or (np.isfinite(span) and span<1e-4))
+         mask=np.zeros_like(quiet);mask[p.idx]=p.fit
+         diag.update(success=bool(r.success),status="insufficient_signal" if flag else (("weak_identifiability" if weak else "ok") if r.success else "error"),message="nonlinear survivor fit",
+                     n_obs=len(target),n_fit=len(target),fit_mask_theta=mask,k_hat=k,theta0_raw=theta,
+-                    theta_hit_bound=bound,bad_fit=bad,insufficient_signal=flag,identifiability_flag=weak,
++                    theta_hit_bound=bound,bad_fit=False,legacy_relative_error_flag=bad,fitted_weekly_hazard=pred.copy(),insufficient_signal=flag,identifiability_flag=weak,
+                     rmse_hazard=float(np.sqrt(np.mean(e**2))),fit_residual_max=float(np.max(abs(e))),relRMSE_hazard_fit=rel,
+                     delta_negative_clamped=any(x<=0 for x in gaps),delta_negative=any(x<=0 for x in gaps),
+                     nonlinear_gap_observed_deficit=gaps,nonlinear_gap_exposure=applied,nonlinear_wave_deficits=deficits,

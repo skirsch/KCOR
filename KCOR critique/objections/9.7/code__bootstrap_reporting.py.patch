@@ -1,0 +1,114 @@
+--- m147/code/bootstrap_reporting.py
++++ m148/code/bootstrap_reporting.py
+@@ -155,7 +155,9 @@
+     try:
+         with TemporaryDirectory(prefix="kcor-person-draw-") as tmp, redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+             out=K.process_workbook(INPUT,str(Path(tmp)/"unused.xlsx"),bootstrap_frames=frames,return_rows=True)
+-        return keyframe(out),None
++        result=keyframe(out)
++        result.attrs["gap_first_pass"] = out.attrs.get("gap_first_pass", {})
++        return result,None
+     except (ValueError,ArithmeticError) as e:
+         return None,f"{type(e).__name__}: {e}"
+ 
+@@ -176,8 +178,63 @@
+     return bad
+ 
+ 
++def gap_diagnostic(point, draws):
++    """Pointwise 95% percentile intervals for signed first-pass gap offsets.
++
++    Missing/incomplete draws are not treated as a pass. No fits or intervals
++    are changed by these assumption diagnostics.
++    """
++    summary=[];status={}
++    n=len(draws)
++    for key,gaps in point.items():
++        if gaps is None:
++            status[key]="not_assessed";continue
++        if not gaps:
++            status[key]="no_gaps";continue
++        status[key]="no_deficit_detected"
++        for week,value in gaps:
++            sample=np.asarray([dict(d.get(key) or []).get(week,np.nan) for d in draws],float)
++            finite=int(np.isfinite(sample).sum())
++            complete=bool(n and finite==n and np.isfinite(value))
++            lower,upper=np.quantile(sample,[.025,.975]) if complete else (np.nan,np.nan)
++            flag="violation" if complete and upper<0 else ("no_deficit_detected" if complete else "not_assessed")
++            if flag=="violation":status[key]=flag
++            elif flag=="not_assessed" and status[key]!="violation":status[key]=flag
++            summary.append(dict(EnrollmentDate=key[0],YearOfBirth=key[1],Dose=key[2],rebased_reentry_week=week,
++                signed_first_pass_offset=value,lower95=float(lower),upper95=float(upper),valid_draws=finite,requested_draws=n,status=flag))
++    return summary,status
++
++
++def annotate_gap_diagnostic(model,out,point,draws,log):
++    summary,status=gap_diagnostic(point,draws)
++    out.attrs["gap_diagnostics"]=summary
++    out["gap_assumption_status"]="not_assessed"
++    out["abnormal_fit"]=out["abnormal_fit"].astype(object)
++    # Direct comparison uses its two fits; pooled comparisons use the
++    # positive-weight paired ages, matching the original point population.
++    for (sheet,age,num,den),idx in out.groupby(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den"],sort=False).groups.items():
++        if age==0:
++            weights=model.ASMR_WEIGHTS_BY_SHEET.get(sheet,{})
++            paired=set(out.loc[(out.EnrollmentDate==sheet)&(out.Dose_num==num)&(out.Dose_den==den),"YearOfBirth"])
++            ages=[a for a,w in weights.items() if w>0 and a in paired and a>0]
++        else:ages=[age]
++        states=[status.get((sheet,a,d),"not_assessed") for a in ages for d in (num,den)]
++        state=("violation" if "violation" in states else "not_assessed" if not states or "not_assessed" in states else "no_deficit_detected" if "no_deficit_detected" in states else "no_gaps")
++        out.loc[idx,"gap_assumption_status"]=state
++        if state=="violation":
++            out.loc[idx,"abnormal_fit"]=True
++            out.loc[idx,"CI_point_flagged"]=True
++            if "CI_method" in out:
++                use=out.index.isin(idx)&out.CI_method.eq("person_bootstrap_percentile")
++                out.loc[use,"CI_method"]="person_bootstrap_with_fit_flags"
++    for row in summary:
++        if row["status"]=="violation":log(f"[KCOR_GAP_ASSUMPTION_VIOLATION] {row}")
++    return out
++
++
+ def attach(model,frame,src,sheets,log):
+     out=frame.copy()
++    point_gaps=frame.attrs.get("gap_first_pass",{})
+     out["CI_analytic_lower"]=out["CI_lower"];out["CI_analytic_upper"]=out["CI_upper"]
+     out["CI_lower"]=np.nan;out["CI_upper"]=np.nan
+     out["CI_method"]="unavailable";out["CI_valid_draws"]=0
+@@ -187,20 +244,20 @@
+     layout=os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")
+     draws=int(os.environ.get("KCOR_BOOTSTRAP_DRAWS","999"))
+     if draws<=0:
+-        log("[BOOTSTRAP] disabled; analytic intervals separately labeled");return out
++        log("[BOOTSTRAP] disabled; analytic intervals separately labeled");return annotate_gap_diagnostic(model,out,point_gaps,[],log)
+     hist={};sheet_indices={sh:i for i,sh in enumerate(sheets)}
+     for sh in sheets:
+         try:
+             hist[sh]=histories(pd.read_excel(src,sheet_name=sh),sh,layout)
+         except (ValueError,TypeError,KeyError) as e:
+             log(f"[BOOTSTRAP] {sh} unavailable: {e}")
+-    if not hist:return out
++    if not hist:return annotate_gap_diagnostic(model,out,point_gaps,[],log)
+     keys=keyframe(out).index
+     supported=keys.get_level_values("EnrollmentDate").isin(hist)
+     settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","MONTE_CARLO_MODE")}
+     settings["ENROLLMENT_DATES"]=list(hist)
+     seed=int(os.environ.get("KCOR_BOOTSTRAP_SEED","33080"))
+-    values=[];flags=[];raw_values=[];invalid_anchors=[];missing=[]
++    values=[];flags=[];raw_values=[];invalid_anchors=[];missing=[];gap_draws=[]
+     with ProcessPoolExecutor(max_workers=int(os.environ.get("KCOR_BOOTSTRAP_WORKERS","5")),initializer=init_worker,initargs=(hist,settings,seed,str(Path(src).resolve()),sheet_indices)) as pool:
+         for i,(v,error) in enumerate(pool.map(worker,range(1,draws+1),chunksize=1),1):
+             if error:
+@@ -214,6 +271,7 @@
+                 invalid=anchor.isin(["undefined_reference_ratio","missing_reference_week","pooled_no_valid_reference"]).to_numpy(bool)
+                 absent=~keys.isin(v.index)
+                 bad=pd.Series(flagged(v),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
++            gap_draws.append({} if error else v.attrs.get("gap_first_pass",{}))
+             values.append(val);flags.append(bad);raw_values.append(raw);invalid_anchors.append(invalid);missing.append(absent)
+             if i%100==0:log(f"[BOOTSTRAP] {i}/{draws}")
+     a=np.asarray(values);count=np.isfinite(a).sum(axis=0);out["CI_valid_draws"]=count
+@@ -234,4 +292,4 @@
+         flagged_rows=good & ((out["CI_flagged_draws"]>0)|out["CI_point_flagged"]).to_numpy()
+         out.loc[flagged_rows,"CI_method"]="person_bootstrap_with_fit_flags"
+     log(f"[BOOTSTRAP] {draws} person draws; {int(good.sum())}/{len(out)} rows received full intervals")
+-    return out+    return annotate_gap_diagnostic(model,out,point_gaps,gap_draws,log)

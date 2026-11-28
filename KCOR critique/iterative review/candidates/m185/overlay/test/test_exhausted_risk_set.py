@@ -1,0 +1,53 @@
+"""9.6: preserve supported prefix and withhold after zero opening risk."""
+from pathlib import Path
+import os,sys,io,tempfile
+from contextlib import redirect_stdout,redirect_stderr
+import numpy as np,pandas as pd
+ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'test'));sys.path.insert(0,str(ROOT/'code'))
+from test_source_component_history import fixture
+from test_round7_workbook import run,K
+from bootstrap_reporting import histories,draw_history
+
+def pair(out,age):return out[out.YearOfBirth.eq(age)&out.Dose_num.eq(1)&out.Dose_den.eq(0)]
+def main():
+    f=fixture();sheet='2021_24';cut=pd.Timestamp('2022-04-04');mask=f.YearOfBirth.eq(1950)&f.Dose.eq(1)
+    # Declared exit-mode counterexample: everyone exits after previous week.
+    x=f.copy();x.loc[mask&x.DateDied.ge(cut),['Alive','Dead']]=0
+    os.environ['KCOR_RISK_HISTORY_POLICY']='allow_exits'
+    try:
+        h=histories(x,sheet,'disjoint');draw=draw_history(h,np.random.default_rng(26))
+        for mode in ('identified_only','forced_alpha'):
+            out=run(sheet,x,mode=mode);short=run(sheet,x[x.DateDied.lt(cut)],mode=mode)
+            for age in (1950,0):
+                a=pair(out,age);before=a[pd.to_datetime(a.Date).lt(cut)];after=a[pd.to_datetime(a.Date).ge(cut)]
+                assert len(after) and after.KCOR.isna().all() and after.KCOR_unanchored.isna().all() and after.normalization_status.eq('risk_set_exhausted').all(),(mode,age,after[['KCOR','normalization_status']].tail())
+                assert np.isfinite(before.KCOR.iloc[-1]);print(mode,age,'last supported',before.KCOR.iloc[-1],flush=True)
+                if age==1950:
+                    # The comparator may use its additional valid follow-up to
+                    # fit. Only the exhausted numerator must match its prefix.
+                    np.testing.assert_allclose(before.theta_num.to_numpy(),pair(short,age).theta_num.to_numpy(),equal_nan=True,rtol=1e-10,atol=1e-12)
+                    np.testing.assert_allclose(before.adj_cum_hazard_num.to_numpy(),pair(short,age).adj_cum_hazard_num.to_numpy(),equal_nan=True,rtol=1e-10,atol=1e-12)
+            for age in (-2,1940):assert np.isfinite(pair(out,age).KCOR.iloc[-1]),(mode,age)
+        y=run(sheet,draw);a=pair(y,1950);assert a[pd.to_datetime(a.Date).ge(cut)].KCOR.isna().all()
+        # Actual written workbook bootstrap: exercise availability propagation,
+        # not inference (only five draws).
+        os.environ.update(KCOR_BOOTSTRAP_DRAWS="5",KCOR_BOOTSTRAP_WORKERS="2",KCOR_NPH_MODE="identified_only")
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as t:
+            src=Path(t)/"input.xlsx";dst=Path(t)/"out.xlsx";x.to_excel(src,sheet_name=sheet,index=False)
+            with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):K.process_workbook(str(src),str(dst))
+            a=pair(pd.read_excel(dst,sheet_name="dose_pairs"),1950);before=a[pd.to_datetime(a.Date).lt(cut)];after=a[pd.to_datetime(a.Date).ge(cut)]
+            assert after.KCOR.isna().all() and after.CI_lower.isna().all() and after.CI_upper.isna().all() and after.CI_valid_draws.eq(0).all()
+            assert before.CI_lower.notna().any() and before.CI_upper.notna().any()
+            print('written workbook: supported prior intervals, zero valid draws after exhaustion',flush=True)
+        os.environ['KCOR_BOOTSTRAP_DRAWS']='0' 
+    finally:os.environ.pop('KCOR_RISK_HISTORY_POLICY',None)
+    # Actual death-only exhaustion: all remaining members die in the previous
+    # week. Both explicit zeros and omitted zero suffix remain unsupported.
+    dead=f.copy();at=mask&dead.DateDied.eq(cut-pd.Timedelta(weeks=1));dead.loc[at,'Dead']=dead.loc[at,'Alive'];dead.loc[mask&dead.DateDied.ge(cut),['Alive','Dead']]=0
+    omitted=dead[~(mask&dead.DateDied.ge(cut))]
+    for y in (dead,omitted):
+        histories(y,sheet,'disjoint');out=run(sheet,y)
+        a=pair(out,1950);after=a[pd.to_datetime(a.Date).ge(cut)];assert len(after) and after.KCOR.isna().all() and after.normalization_status.eq('risk_set_exhausted').all(),after[['KCOR','normalization_status']].tail()
+        assert np.isfinite(pair(out,-2).KCOR.iloc[-1]) and np.isfinite(pair(out,1940).KCOR.iloc[-1])
+    print('explicit and omitted genuinely exhausted suffixes withheld; direct all-ages aggregate remains supported',flush=True)
+if __name__=='__main__':main()

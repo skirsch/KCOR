@@ -1,0 +1,22 @@
+{
+  "fresh_refit_subset": 300,
+  "fresh_point_difference": 0.0,
+  "fresh_parameter_difference": 0.0,
+  "group_flag_differences": 0,
+  "pair_flag_differences": 0,
+  "all_pair_counts_verified": true,
+  "primary_inclusive_2021_residual_counts": [
+    987,
+    950,
+    973
+  ],
+  "input_sha256": "a18dbfad2cc8d4ad9fe325ac75a748be486c10a20548f8ae164292d3f925836f",
+  "forced_archived_params_sha256": "d140ec5187d091347d34a9a191da09cd1b4e98e5ae5051b4253be1a2f8a3a73d",
+  "replay_sources_sha256": {
+    "code/KCOR.py": "b3d6666fc79b89e64d889a2f5a52e471e86cebbf4239efd22a275b6e1123fa42",
+    "code/kcor_survivor.py": "82e6b43546c81f52543bb0b54f6fc188a8c988f9084afaaa4a2d62f987c09e5f",
+    "analysis/table8/table8_bootstrap.py": "e522984ed19f03e7b21bc333f9c6ce7d7b5e1c7fd8c9b93a2da3b242350cefea",
+    "analysis/solver_scaling/table8_replay.py": "27445a158390a5e8926b33f7dfc780bd2c9dce3b4014a320617fa7d68c2b4114",
+    "analysis/solver_scaling/forced_alpha_diagnostic_archive.py": "ce920fe1dede1c099ccb7311b37551cc1db1d6999c14e74c8f121c3f046e8f35"
+  }
+}

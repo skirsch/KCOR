@@ -1,0 +1,2 @@
+* -text
+overlay/data/Czech/KCOR_CMR.xlsx filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,11 @@
+--- m106/documentation/preprint/supplement.md
++++ m107/documentation/preprint/supplement.md
+@@ -267,7 +267,7 @@
+ - **Number of fit points**: pooled observations across quiet windows.
+ - **Offset diagnostics**: number, sign, and stability of reconstructed $\delta_i$ terms when the delta path is used.
+ 
+-For real-data Monte Carlo intervals, the resampling unit is one eligible person at enrollment. Each draw retains the complete record and contributes to the counts for its original cohort and follow-up weeks (main text §2.9.1).
++For real-data Monte Carlo intervals, the resampling unit is one eligible person at enrollment. Each draw retains the complete record and contributes to the counts for its original cohort and follow-up weeks. Ordinary intervals condition on the observed birth-year and dose enrollment sizes; the overlapping age-shift control instead resamples the pooled disjoint components before rebuilding the overlapping groups (main text §2.9.1).
+ 
+ Example diagnostic output from the reference implementation:
+ 

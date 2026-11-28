@@ -1,0 +1,111 @@
+{
+  "model": "gpt-6.2-astra",
+  "reasoning_effort": "high",
+  "repetitions": [
+    {
+      "baseline": {
+        "reviewer": "/root/cycle1_initial",
+        "fresh": true,
+        "sha256": "379b6a99fed5609b61a09000012291bb385d7fc21db6a66f92f8ace0e8bdb8d1"
+      },
+      "A": {
+        "reviewer": "/root/cycle1_blind",
+        "fresh": true,
+        "sha256": "5e21a17ea86cbb7160dc4df403c6a9aec08155482354c00cdf7461ae1a087537"
+      },
+      "B": {
+        "reviewer": "/root/cycle1_initial",
+        "fresh": false,
+        "sha256": "f4de4358479ddef47bf3feccfc6ec7d299d08ccfeff9d7d7446c81f7fe7cbcc2",
+        "baseline_response_sha256": "379b6a99fed5609b61a09000012291bb385d7fc21db6a66f92f8ace0e8bdb8d1"
+      },
+      "C": {
+        "reviewer": "/root/cycle1_handoff",
+        "fresh": true,
+        "sha256": "8f938ca1b5c088adf8a2a9beacc2683bfd34cf71edc8e4561fd217daa2adc649",
+        "baseline_response_sha256": "379b6a99fed5609b61a09000012291bb385d7fc21db6a66f92f8ace0e8bdb8d1"
+      },
+      "B-follow": {
+        "reviewer": "/root/cycle1_initial",
+        "fresh": false,
+        "sha256": "d2b36df13695441fecbab2a6023322193b0df1be68ec1202930cd9f706132666"
+      },
+      "C-follow": {
+        "reviewer": "/root/cycle1_handoff",
+        "fresh": false,
+        "sha256": "f76838e739e19799fc042b2c29c1796e44fc6d625f02f6695481f594911bfc30"
+      }
+    },
+    {
+      "baseline": {
+        "reviewer": "/root/cycle2_initial",
+        "fresh": true,
+        "sha256": "a68c648b020f17215eb3164f242f289ea1041703b3ec566fa117f52e60efb988"
+      },
+      "A": {
+        "reviewer": "/root/cycle2_blind",
+        "fresh": true,
+        "sha256": "fc21eefe1d33410593de1e5cb56c17b49c51d7ea81aee0aa3611972b117832dd"
+      },
+      "B": {
+        "reviewer": "/root/cycle2_initial",
+        "fresh": false,
+        "sha256": "8eb26a4b4794c92843c1b5975c0b9d5e417c97910dbca6c6e269732007f21276",
+        "baseline_response_sha256": "a68c648b020f17215eb3164f242f289ea1041703b3ec566fa117f52e60efb988"
+      },
+      "C": {
+        "reviewer": "/root/cycle2_handoff",
+        "fresh": true,
+        "sha256": "f702825020bcdd8dba2864868cf1270c36516317c57331c7d08a92274d53d6b7",
+        "baseline_response_sha256": "a68c648b020f17215eb3164f242f289ea1041703b3ec566fa117f52e60efb988"
+      },
+      "B-follow": {
+        "reviewer": "/root/cycle2_initial",
+        "fresh": false,
+        "sha256": "e136d1c130be7dc594e681faca00143dca94df8187abfecb6d81897ad12dc396"
+      },
+      "C-follow": {
+        "reviewer": "/root/cycle2_handoff",
+        "fresh": false,
+        "sha256": "67c3aa67ed15184355e2ec7e1c3fea8c4204cde76bd4e319c94db27fca3dd620"
+      }
+    },
+    {
+      "baseline": {
+        "reviewer": "/root/cycle3_initial",
+        "fresh": true,
+        "sha256": "7980625505f60ce864b3b18a3c9d92fe3bd0062045d54982378509f4e6735cda"
+      },
+      "A": {
+        "reviewer": "/root/cycle3_blind",
+        "fresh": true,
+        "sha256": "5a17550663b2fce1f708c30fbdfc3136e9af98a397dc342b22ceac03d42ac7f6"
+      },
+      "B": {
+        "reviewer": "/root/cycle3_initial",
+        "fresh": false,
+        "sha256": "e8bcc9b27bf86f77a80e3558849b898bf960597d053b18df3fb1a934188ec4ea",
+        "baseline_response_sha256": "7980625505f60ce864b3b18a3c9d92fe3bd0062045d54982378509f4e6735cda"
+      },
+      "C": {
+        "reviewer": "/root/cycle3_handoff",
+        "fresh": true,
+        "sha256": "fc2a6e5e7a126068fcf15cba1ea6286b1ae292d029da6a64b94f339bdd48c8b1",
+        "baseline_response_sha256": "7980625505f60ce864b3b18a3c9d92fe3bd0062045d54982378509f4e6735cda"
+      },
+      "B-follow": {
+        "reviewer": "/root/cycle3_initial",
+        "fresh": false,
+        "sha256": "a2f2129bb1a7e22b622da438826c5d4e8e373092eea80cc6d02efee16312d183"
+      },
+      "C-follow": {
+        "reviewer": "/root/cycle3_handoff",
+        "fresh": false,
+        "sha256": "3ad2601c72f7e618f329d1642f170aae2800bc0711c0623c29b77e84e5422ea9"
+      }
+    }
+  ],
+  "input_manifest_sha256": "b82c47783715d2a985236c6213bd3619c09472275adc27fce045c2823a0587e0",
+  "diff_sha256": "9d38e30ffe046649d3ca1c754a9420b60e0df856dd8787754ef0f4db7164931b",
+  "overlays_sha256": "f41923376c25b49d27b596bb62ab778c5ccf84e222aa42e7ac0027a86fcc0938"
+}

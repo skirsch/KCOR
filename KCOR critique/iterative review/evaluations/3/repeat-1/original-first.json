@@ -1,0 +1,10 @@
+{
+  "model": "gpt-6.2-astra",
+  "reasoning_effort": "high",
+  "thread": "/root/r3_original_1",
+  "parent_thread": null,
+  "edition": "m17",
+  "diff": null,
+  "prompt": "Independent scientific review. Your sole input is the repository edition C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/m17. Inspect that directory only, read-only, with local tools. Its paper and supplement are in documentation/preprint. No external sources, parent workspace, prior reviews or other agents. Give checkable locations. Save your open response verbatim to the output-only path C:/Users/jasmi/AppData/Local/Temp/kcor-mat-c7b1b85449/series3-original-1.md. Please examine KCOR closely. What is wrong, if anything, and how would you fix it?",
+  "sha256": "21379a577d1a7ab01938637b02cbbe511d097853674b09d8ebbb0e4733f47d9a"
+}

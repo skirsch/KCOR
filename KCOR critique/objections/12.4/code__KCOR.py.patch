@@ -1,0 +1,46 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1405,6 +1405,7 @@
+     seed_measured = True
+     seed_theta_hit_bound = False
+     seed_baseline_hit_bound = False
++    diagnostic_log_rate = None
+     try:
+         if joint_seed and seed_idx.size < 3:
+             seed_measured = False
+@@ -1432,6 +1433,9 @@
+                 before = post_idx[post_idx < seed_start]
+                 observed = float(np.sum(h_arr[before]))
+                 log_ratio = theta_seed * observed - np.log1p(theta_seed * k_fixed * unit_start[seed_start])
++                # Signed entry-rate identity is used only for gap diagnostics.
++                # Keep the original nonnegative entry constraint for the fit.
++                diagnostic_log_rate = np.log(k_fixed) + log_ratio
+                 k_fixed = np.exp(min(np.log(0.1), np.log(k_fixed) + max(0., log_ratio)))
+             H_gom_full = k_fixed * unit_start
+         else:
+@@ -1450,8 +1454,15 @@
+     theta = float(theta_seed)
+     seed_theta_hit_bound = bool(seed_measured and theta_seed >= theta0_max*.999)
+     seed_baseline_hit_bound = bool(seed_measured and (seed_baseline_hit_bound or k_fixed<=1e-8*1.001 or k_fixed>=.1*.999))
++    diagnostic_rate = k_fixed
++    diagnostic_rate_bounded = False
++    if seed_measured and diagnostic_log_rate is not None:
++        diagnostic_rate_bounded = not (np.isfinite(diagnostic_log_rate)
++                                      and np.log(1e-8*1.001) < diagnostic_log_rate < np.log(.1*.999))
++        if not diagnostic_rate_bounded:
++            diagnostic_rate = float(np.exp(diagnostic_log_rate))
+     gap_seed_status = ("unavailable_seed" if not seed_measured else
+-                       "bounded_seed" if seed_theta_hit_bound or seed_baseline_hit_bound else "ok")
++                       "bounded_seed" if seed_theta_hit_bound or seed_baseline_hit_bound or diagnostic_rate_bounded else "ok")
+ 
+     # The reconstructed totals are start-of-week values. At quiet-window
+     # re-entry they include the full preceding gap and exclude the new week.
+@@ -1535,7 +1546,7 @@
+         # Separate diagnostic: signed changes in the raw cumulative offset
+         # at first pass, before the nonnegative constraint is applied.
+         if _iter == 0:
+-            raw_offsets = np.asarray([H0_eff[start] - H_gom_full[start] for start in reentry_indices], float)
++            raw_offsets = np.asarray([H0_eff[start] - diagnostic_rate * unit_start[start] for start in reentry_indices], float)
+             signed = np.diff(raw_offsets, prepend=0.)
+             gap_first_pass = [(float(t_r[start]), float(v)) for start, v in zip(reentry_indices, signed)] if gap_seed_status=="ok" or not reentry_indices else [(float(t_r[start]), np.nan) for start in reentry_indices]
+         # 3b: compute incremental deltas at each gap end.

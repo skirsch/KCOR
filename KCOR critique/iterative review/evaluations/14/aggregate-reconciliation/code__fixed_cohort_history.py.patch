@@ -1,0 +1,73 @@
+--- a/code/fixed_cohort_history.py
++++ b/code/fixed_cohort_history.py
+@@ -13,6 +13,70 @@
+     if layout == "table8" and policy != "death_only":
+         raise ValueError("Overlapping Table 8 layout requires death-only accounting")
+     return policy
++
++
++def aggregate_scope(layout="disjoint"):
++    """Declare whether supplied inclusive totals partition the displayed strata."""
++    scope = os.environ.get("KCOR_AGGREGATE_SCOPE", "exhaustive")
++    if scope not in ("exhaustive", "partial"):
++        raise ValueError(f"Unknown KCOR_AGGREGATE_SCOPE: {scope}")
++    if layout == "table8" and scope != "exhaustive":
++        raise ValueError("Table 8 requires the declared overlapping layout")
++    return scope
++
++
++def aggregate_reconciliation(frame, scope="exhaustive"):
++    """Return invalid total histories and totals unsupported by joint resampling.
++
++    A sole total is a population in its own right. With displayed components,
++    the exhaustive converter layout requires exact equality. An explicitly
++    partial extract may contain a larger, internally valid supplied total;
++    its missing member strata cannot be jointly resampled.
++    """
++    aggregate = frame[frame.YearOfBirth.isin([-2,-60])]
++    base = frame[~frame.YearOfBirth.isin([-2,-60])]
++    invalid = {}
++    unsupported = set()
++    if aggregate.empty or base.empty:
++        return invalid, unsupported
++    cols = ["Alive","Dead"] + (["Dead_COVID"] if "Dead_COVID" in frame else [])
++    for (age,dose), template in aggregate.groupby(["YearOfBirth","Dose"],sort=False):
++        key=(age,dose)
++        source=base[base.Dose.eq(dose)]
++        if age==-60:
++            source=source[source.YearOfBirth.ge(1960)]
++        reason=None
++        if template.DateDied.duplicated().any():
++            reason="duplicate supplied aggregate week"
++        elif ("Sex" in template and not template.Sex.eq("O").all() and (source.Sex.nunique()!=1 or not template.Sex.eq(source.Sex.iloc[0]).all())):
++            reason="unexpected supplied aggregate sex layout"
++        elif "DCCI" in template and not template.DCCI.eq(-1).all() and (source.DCCI.nunique()!=1 or not template.DCCI.eq(source.DCCI.iloc[0]).all()):
++            reason="unexpected supplied aggregate comorbidity layout"
++        elif ((base.YearOfBirth<=0)&(base.YearOfBirth!=-1)).any():
++            reason="unrecognized overlapping strata with converter totals"
++        else:
++            observed=template.set_index("DateDied")[cols].sort_index()
++            expected=source.groupby("DateDied")[cols].sum().sort_index()
++            observed,expected=observed.align(expected,fill_value=0)
++            a,b=observed.to_numpy(float),expected.to_numpy(float)
++            if not (np.isfinite(a).all() and np.isfinite(b).all()):
++                reason="nonfinite supplied or component counts"
++            elif not np.array_equal(a,b):
++                if scope=="partial" and np.all(a>=b):
++                    remainder=a-b
++                    alive,dead=remainder[:,0],remainder[:,1]
++                    loss=alive[:-1]-dead[:-1]-alive[1:]
++                    exits= risk_history_policy()=="allow_exits"
++                    if np.any(dead>alive) or np.any(loss<0) or (not exits and np.any(loss!=0)):
++                        reason="supplied partial total has an inconsistent undisplayed population"
++                    else:
++                        unsupported.add(key)
++                else:
++                    reason=f"aggregate {age} does not match disjoint source counts"
++        if reason:
++            invalid[key]=[(key,reason)]
++            unsupported.add(key)
++    return invalid,unsupported
+ 
+ 
+ def invalid_components(frame, start, horizon=None, layout="disjoint"):

@@ -1,0 +1,26 @@
+--- m103/code/KCOR.py
++++ m104/code/KCOR.py
+@@ -1252,13 +1252,19 @@
+     scale = unit_week[anchor_idx]
+     k_terms = h_arr[anchor_idx] / np.where(scale > EPS, scale, EPS)
+     k_terms = k_terms[np.isfinite(k_terms)]
+-    if k_terms.size == 0:
+-        return _fail(np.nan, "k_anchor_too_small", int(np.count_nonzero(fit_mask_theta)))
+-    k_fixed = float(np.average(k_terms))
++    k_fixed = float(np.average(k_terms)) if k_terms.size else np.nan
++    quiet_only_mask = quiet & post_skip
++    if (not np.isfinite(k_fixed) or k_fixed <= EPS) and joint_seed:
++        # In a joint fit the early rate is only an initializer. Zero early
++        # deaths are valid observations; keep them in the objective and seed
++        # from eligible quiet weeks instead.
++        quiet_terms = h_arr[quiet_only_mask] / unit_week[quiet_only_mask]
++        quiet_terms = quiet_terms[np.isfinite(quiet_terms)]
++        if quiet_terms.size and np.mean(quiet_terms) > EPS:
++            k_fixed = float(np.clip(np.mean(quiet_terms), 1e-8, .1))
+     if not np.isfinite(k_fixed) or k_fixed <= EPS:
+         return _fail(np.nan, "k_anchor_too_small", int(np.count_nonzero(fit_mask_theta)))
+ 
+-    quiet_only_mask = quiet & post_skip
+     quiet_idx = np.where(quiet_only_mask)[0]
+     if quiet_idx.size < 3:
+         return _fail(k_fixed, "n_fit<3", int(quiet_idx.size))

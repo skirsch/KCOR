@@ -1,0 +1,18 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -1192,13 +1192,13 @@
+ | S7 benefit (r=0.8) | 0.8 | 0.83 | 0.82 | -2.1% | No (detects effect) | No (detects effect) | No (detects effect) |
+ 
+ 
+-Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window. {#tbl:comparison_estimands}
++Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. The Cox comparison fits separate prespecified intervals, retaining everyone at risk at interval entry and censoring at its end; deterministic expected deaths are rounded cumulatively. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window. {#tbl:comparison_estimands}
+ 
+ | Method | Target estimand | Deviation from null (selection-only scenarios) | Variance/instability | Interpretability notes |
+ |--------|----------------|--------------------------------|---------------------|------------------------|
+ | **KCOR** | Cumulative hazard ratio (depletion-normalized) | Near zero (median KCOR $\approx 1.0$) | Low (stable trajectory) | Stable under selection-induced depletion; normalization precedes comparison |
+ | **RMST** | Restricted mean survival time | Non-zero (depends on depletion strength) | Moderate (depends on depletion strength) | Summarizes survival differences that may reflect depletion rather than treatment effect; does not normalize selection geometry |
+-| **Cox** | Time-varying hazard ratio | Non-zero under frailty heterogeneity | Moderate (HR instability across time windows) | Improves fit to non-proportional hazards but does not normalize selection geometry; inherits depletion structure |
++| **Cox** | Interval-specific hazard ratios | Mean HR 1.069 in the gamma-frailty null | Between-window HR SD 0.044 in that scenario | Captures time-varying hazards; does not normalize selection geometry |
+ 
+ 
+ \newpage

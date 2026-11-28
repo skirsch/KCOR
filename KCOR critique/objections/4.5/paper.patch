@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -368,7 +368,7 @@
+ q(s;k,\theta,a)=\frac{1}{\theta}\log\left(1+\frac{\theta[G(s+1;k)-G(s;k)]}{1+\theta[G(s;k)+a]}\right).
+ $$
+ 
+-At $\theta=0$ use the continuous limit. The first-window joint fit provides an initialization, not a fixed final baseline rate. For each candidate pair, reconstruct proportional cumulative exposure from observed survival, $H_{\mathrm{eff}}(s)=\operatorname{expm1}(\theta H_{\mathrm{obs}}(s))/\theta$, using the linear limit at zero. At quiet re-entry, including entry to the first quiet window if preceded by a gap, reconstruct raw cumulative offset $H_{\mathrm{eff}}(s)-G(s;k)$; the incremental offset relative to the preceding applied cumulative offset is constrained nonnegative. Record signed deficits diagnostically. At initial entry following proportional shock, the effective rate $r$ and observed survival identify the entry-aware seed rate through $k=r\exp(\theta H_{\rm obs}(s))/(1+\theta r F(s))$ with $F(s)=G(s;1)$.
++At $\theta=0$ use the continuous limit. The first usable contiguous quiet-window joint fit provides an initialization, not a fixed final baseline rate. If no single quiet window can supply a usable seed, or if seed fitting fails, initialize from the early rate estimate and default frailty and proceed with the same pooled objective, subject to the overall data sufficiency checks. For each candidate pair, reconstruct proportional cumulative exposure from observed survival, $H_{\mathrm{eff}}(s)=\operatorname{expm1}(\theta H_{\mathrm{obs}}(s))/\theta$, using the linear limit at zero. At quiet re-entry, including entry to the first quiet window if preceded by a gap, reconstruct raw cumulative offset $H_{\mathrm{eff}}(s)-G(s;k)$; the incremental offset relative to the preceding applied cumulative offset is constrained nonnegative. Record signed deficits diagnostically. At initial entry following proportional shock, the effective rate $r$ and observed survival identify the entry-aware seed rate through $k=r\exp(\theta H_{\rm obs}(s))/(1+\theta r F(s))$ with $F(s)=G(s;1)$.
+ 
+ The objective jointly refits both parameters:
+ 

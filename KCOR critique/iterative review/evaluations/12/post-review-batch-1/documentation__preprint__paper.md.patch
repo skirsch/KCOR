@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -671,7 +671,7 @@
+ 
+ A compact summary of observed week-52 KCOR deviation from one as a function of frailty variance $\theta_0$ is provided in the Supplementary Information (Figure S2).
+ 
+-![Cox regression produces non-unit hazard ratios under a *synthetic null treatment effect at fixed frailty* as frailty heterogeneity increases. Hazard ratios (with nominal model-based 95% Wald intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
++![Cox regression produces non-unit hazard ratios under a *synthetic null treatment effect at fixed frailty* as frailty heterogeneity increases. Hazard ratios (with nominal model-based 95% Wald intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). The systematic departure from HR=1 reflects differential frailty depletion and associated non-proportional hazards; individual estimates also vary due to sampling.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
+ 
+ ![$\mathrm{KCOR}(t)$ stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, week-52 $\mathrm{KCOR}$ values remain near 1 across $\theta_0$, which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
+ 

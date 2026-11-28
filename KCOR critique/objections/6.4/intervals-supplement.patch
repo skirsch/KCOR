@@ -1,0 +1,38 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -395,22 +395,22 @@
+ 
+ These raw contrasts reflect both selection and depletion effects and are not interpreted causally.
+ 
+-Table: Estimated enrollment-time gamma-frailty variance by age in calendar year 2024 and dose for Czech cohorts enrolled in 2021-24, using the current all-window fit with the optional NPH module off. {#tbl:si_frailty_variance}
+-
+-| Age band (years) | Fitted frailty variance (Dose 0) | Fitted frailty variance (Dose 2) |
+-|---|---:|---:|
+-| 40–49 | 63.87 | 71.83 |
+-| 50–59 | 26.82 | 0.00 |
+-| 60–69 | 11.47 | 0.00 |
+-| 70–79 | 5.16 | 0.00 |
+-| 80–89 | 1.70 | 0.00 |
+-| 90–99 | 0.51 | 0.00 |
+-| All ages (full population) | 31.06 | 0.00 |
++Table: Fitted enrollment-time frailty by age in calendar year 2024 and anchored dose-2/dose-0 KCOR through week 2024-16, with 95% person-bootstrap percentile intervals (999 draws; all-window fit; NPH module off). Frailty intervals describe the raw constrained estimates. {#tbl:si_frailty_variance}
++
++| Age band (years) | Frailty, dose 0 [95%] | Frailty, dose 2 [95%] | Anchored KCOR [95%] |
++|---|---:|---:|---:|
++| 40–49 | 63.87 [29.60, 96.51] | Poorly resolved [0, 100] | 1.507 [0.824, 2.712] |
++| 50–59 | 26.82 [18.43, 35.48] | Boundary\* [0.00, 0.00] | 1.228 [0.913, 1.824] |
++| 60–69 | 11.47 [9.37, 13.50] | Boundary\* [0.00, 0.00] | 1.295 [1.086, 1.577] |
++| 70–79 | 5.16 [4.60, 5.71] | 0.00 [0.00, 0.00] | 1.301 [1.173, 1.441] |
++| 80–89 | 1.70 [1.45, 1.94] | 0.00 [0.00, 0.00] | 1.204 [1.108, 1.312] |
++| 90–99 | 0.51 [0.39, 0.62] | 0.00 [0.00, 0.00] | 1.012 [0.919, 1.114] |
++| All ages | 31.06 [29.38, 32.65] | 0.00 [0.00, 0.28] | 1.136 [1.086, 1.189] |
+ 
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate weak identifiability or effectively linear cumulative hazards under the working model.
+-- Each entry reports the fitted variance rounded to two decimal places; the stored results retain full precision.
+-- The "All ages (full population)" row fits the supplied aggregate counts, including unknown birth years.
++- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 fitted value is poorly resolved across the entire allowed range. KCOR intervals retain the existing upper-bound zero-variance fallback (287 of 999 dose-2 draws at ages 40–49). Source: `analysis/s6/all-age-precision.json` and its matched draws.
++- The "All ages" row fits the supplied full-population aggregate counts, including unknown birth years.
+ - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied full-population total.
+ 
+ **Diagnostic checks:**

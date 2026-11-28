@@ -1,0 +1,26 @@
+--- /dev/null
++++ b/test/test_round13_batch.py
+@@ -0,0 +1,23 @@
++﻿from pathlib import Path
++import os,sys,numpy as np,pandas as pd
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
++from test_round7_workbook import K,run,input_frame
++def main():
++ t=np.arange(52.);dates=np.datetime64('2022-01-03')+np.arange(52)*np.timedelta64(7,'D');g=.085/52;k=.01;X=k*np.expm1(g*(t+1))/g
++ for th,alpha in [(0.,1.18),(.5,1.)]:
++  H=np.log1p(th*X)/th if th else X
++  y,d=K.apply_nph_correction_post_inversion(X,t,dates,th,alpha,dates[1],dates[50],k,g,t_rebased=t,observed_cumhaz=H)
++  assert d['wave_points']==50 and d['skipped_nonpositive_excess']==50 and d['deficit_weeks']==0;np.testing.assert_array_equal(y,X)
++ f=input_frame('2023_01');f.loc[(f.YearOfBirth==1940)&(f.Dose==1)&(f.DateDied==sorted(f.DateDied.unique())[2]),'Dead']=0
++ for _,z in f.groupby(['YearOfBirth','Dose']):f.loc[z.index,'Alive']=20000-np.r_[0,np.cumsum(z.Dead.to_numpy()[:-1])]
++ o=run('2023_01',f);p=o[(o.YearOfBirth==0)&(o.Date==sorted(o.Date.unique())[2])].iloc[0];assert p.KCOR==0 and p.pool_contributors=='1940,1950'
++ print('zero pool',p.KCOR,p.pool_contributors)
++ invalid=f.copy();invalid.loc[invalid.YearOfBirth==1940,'YearOfBirth']=2099
++ try:run('2023_01',invalid)
++ except ValueError as e:assert 'Birth year after enrollment' in str(e)
++ else:raise AssertionError('future births accepted')
++ # Exhaust at the anchor, retain earlier unanchored contrast.
++ f=input_frame('2023_01');ix=f[(f.YearOfBirth==1940)&(f.Dose==1)].index;anchor=K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE;f.loc[ix[anchor],'Dead']=f.loc[ix[anchor],'Alive'];f.loc[ix[anchor+1:],['Alive','Dead']]=0
++ o=run('2023_01',f);p=o[o.YearOfBirth.eq(1940)].sort_values('Date');assert p.KCOR.isna().all() and np.isfinite(p.iloc[anchor-1].KCOR_unanchored) and p.iloc[anchor:].KCOR_unanchored.isna().all()
++ print('unanchored prefix',p.iloc[anchor-1].KCOR_unanchored)
++if __name__=='__main__':main()

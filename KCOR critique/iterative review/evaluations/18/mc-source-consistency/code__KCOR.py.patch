@@ -1,0 +1,331 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4327,6 +4327,76 @@
+     return components
+ 
+ 
++def _prepare_mc_population(frame, enrollment_date, layout, total_scope, dual_print, sheet):
++    """Validate and select direct aggregate populations before MC display filtering.
++
++    Each replicate has its own source calendar and source coverage. The
++    ordinary source-history and inclusive-total reconciliation rules apply
++    to the original rows, not the display subset. Return one supplied or
++    reconstructed all-ages history per dose, never both.
++    """
++    from fixed_cohort_history import invalid_components, aggregate_reconciliation
++    source_bad, aggregate_bad, available, coverage = {}, {}, {}, {}
++    prepared = []
++    has_id = "mc_id" in frame.columns
++    groups = frame.groupby("mc_id", sort=False) if has_id else [(None, frame)]
++    for draw, raw in groups:
++        raw = raw.copy()
++        totals = raw.YearOfBirth.isin(SPECIAL_AGGREGATE_YOBS)
++        # MC aggregate rows may omit optional stratum metadata; their
++        # inclusive label already identifies those fields as aggregate.
++        for col, inclusive in [("Sex", "O"), ("DCCI", -1)]:
++            if col in raw:
++                raw.loc[totals & raw[col].isna(), col] = inclusive
++        bad = invalid_components(raw, enrollment_date, raw.DateDied.max(), layout)
++        bad_totals = {}
++        if layout == "disjoint":
++            bad_totals, _ = aggregate_reconciliation(raw, total_scope)
++            if total_scope == "exhaustive":
++                for (age, dose), reasons in list(bad.items()):
++                    if age in SPECIAL_AGGREGATE_YOBS:
++                        continue
++                    for total_age in (-2, -60):
++                        if (total_age == -60 and age < 1960) or not ((raw.YearOfBirth == total_age) & (raw.Dose == dose)).any():
++                            continue
++                        bad_totals.setdefault((total_age, dose), []).extend(reasons)
++            for key, reasons in bad_totals.items():
++                bad.setdefault(key, []).extend(reasons)
++        supplied = raw.YearOfBirth.eq(-2)
++        components = raw[(raw.YearOfBirth > 0) | raw.YearOfBirth.eq(-1)]
++        available[draw] = layout == "disjoint" and total_scope == "partial" and not supplied.any()
++        coverage[draw] = {}
++        if available[draw]:
++            for dose, part in components.groupby("Dose"):
++                ages = sorted(int(a) for a in part.YearOfBirth.unique())
++                opening = part[part.DateDied.eq(pd.Timestamp(enrollment_date))].groupby("YearOfBirth").Alive.sum()
++                zeros = sorted(int(a) for a, n in opening.items() if n == 0)
++                coverage[draw][dose] = (",".join(map(str, ages)) or "none", ",".join(map(str, zeros)) or "none")
++        if MC_INCLUDE_AGGREGATES:
++            if supplied.any():
++                missing = components[~components.Dose.isin(raw.loc[supplied, "Dose"])] if layout == "disjoint" and total_scope == "exhaustive" else components.iloc[:0]
++            else:
++                missing = raw[raw.YearOfBirth.eq(1960)] if layout == "table8" else components
++            if not missing.empty:
++                aggregate = missing.groupby(["Dose", "DateDied"], as_index=False).agg(
++                    ISOweekDied=("ISOweekDied", "first"), Alive=("Alive", "sum"), Dead=("Dead", "sum"))
++                aggregate["YearOfBirth"] = -2
++                if has_id:
++                    aggregate["mc_id"] = draw
++                for (age, dose), reasons in list(bad.items()):
++                    if ((missing.YearOfBirth == age) & (missing.Dose == dose)).any():
++                        bad.setdefault((-2, dose), []).extend(reasons)
++                raw = pd.concat([raw, aggregate], ignore_index=True)
++        prefix = (draw,) if has_id else ()
++        for key, reasons in bad.items():
++            source_bad[prefix + key] = reasons
++            dual_print(f"[WARN] KCOR_SOURCE_HISTORY,EnrollmentDate={sheet},mc_id={draw},yob={key[0]},dose={key[1]},reason={reasons}")
++        for key, reasons in bad_totals.items():
++            aggregate_bad[prefix + key] = reasons
++        prepared.append(raw)
++    return (pd.concat(prepared, ignore_index=True) if prepared else frame, source_bad, aggregate_bad, available, coverage)
++
++
+ def _flag_unavailable_normalization(rows, frame, sheet):
+     """Do not report a different contrast by dropping a failed contributor."""
+     if rows.empty or "normalization_status" not in frame:
+@@ -5660,7 +5730,7 @@
+     # Dictionary comprehension handles both 2-tuple (non-MC) and 3-tuple (MC) keys
+     by_age_dose = {key: g.sort_values("DateDied") for key, g in df_ns.groupby(groupby_cols_ns, sort=False)}
+     dose_pairs = get_dose_pairs(sheet_name)
+-    for yob in [y for y in df_ns["YearOfBirth"].unique() if y != -2]:
++    for yob in [y for y in df_ns["YearOfBirth"].unique() if y != -2 or MONTE_CARLO_MODE]:
+         for num, den in dose_pairs:
+             # In MC mode, process each mc_id separately
+             mc_id_values_ns = [None]
+@@ -5720,6 +5790,11 @@
+                 out.rename(columns={"ISOweekDied_num":"ISOweekDied","DateDied":"Date"}, inplace=True)
+                 out["Date"] = pd.to_datetime(out["Date"]).apply(lambda x: x.date())
+                 out_rows.append(out)
++
++    # MC all-ages histories were prepared from the complete source and were
++    # paired above, using the same replicate-specific path as each age.
++    if MONTE_CARLO_MODE:
++        return pd.concat(out_rows, ignore_index=True) if out_rows else pd.DataFrame()
+ 
+     # -------- All Ages rows (YearOfBirth = -2) for KCOR_ns --------
+     # Aggregate all ages together as a single cohort (no age grouping) for non-slope-corrected KCOR
+@@ -6354,13 +6429,6 @@
+         if MONTE_CARLO_MODE and "YearOfBirth" not in df.columns:
+             df["YearOfBirth"] = -2
+         
+-        # In MC mode, keep the requested raw birth-year range plus optional aggregate rows.
+-        # Ordinary source population eligibility is defined by the input, not a fixed calendar cutoff.
+-        if MONTE_CARLO_MODE:
+-            aggregate_mask = df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS) if MC_INCLUDE_AGGREGATES else pd.Series(False, index=df.index)
+-            df = df[aggregate_mask | ((df["YearOfBirth"] >= MC_YOB_START) & (df["YearOfBirth"] <= MC_YOB_END))]
+-            dual_print(f"[DEBUG] Monte Carlo mode: Filtered to YOB {MC_YOB_START}-{MC_YOB_END} (aggregates={MC_INCLUDE_AGGREGATES}): {len(df)} rows")
+-
+         # Filter to start from enrollment date
+         if MONTE_CARLO_MODE:
+             # In MC mode, all iterations share a single enrollment cohort (default 2022_06; override via MC_ENROLLMENT_DATE)
+@@ -6421,7 +6489,17 @@
+         # Normal fixed-cohort sheets have one declared calendar horizon.
+         source_bad = {}
+         aggregate_bad = {}
+-        if not MONTE_CARLO_MODE:
++        mc_available, mc_coverage, mc_horizons = {}, {}, {}
++        if MONTE_CARLO_MODE:
++            df, source_bad, aggregate_bad, mc_available, mc_coverage = _prepare_mc_population(
++                df, enrollment_date, layout, total_scope, dual_print, sh)
++            mc_horizons = df.groupby("mc_id").DateDied.max().to_dict() if "mc_id" in df else {None: df.DateDied.max()}
++            # This only limits individual age/ASMR reporting, not the direct
++            # aggregate source just prepared from the complete raw history.
++            aggregate_mask = df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS) if MC_INCLUDE_AGGREGATES else pd.Series(False, index=df.index)
++            df = df[aggregate_mask | df.YearOfBirth.between(MC_YOB_START, MC_YOB_END)]
++            dual_print(f"[DEBUG] Monte Carlo mode: Display YOB {MC_YOB_START}-{MC_YOB_END} (aggregates={MC_INCLUDE_AGGREGATES}): {len(df)} rows")
++        else:
+             from fixed_cohort_history import invalid_components, aggregate_reconciliation
+             source_bad = invalid_components(df, enrollment_date, source_horizon, layout)
+             if layout=="disjoint":
+@@ -6471,18 +6549,27 @@
+                 zeros=sorted(int(a) for a,n in opening.items() if n==0)
+                 coverage[dose_id]=(",".join(map(str,ages)) or "none",",".join(map(str,zeros)) or "none")
+         available_coverage_by_sheet[effective_sheet_name]=coverage
+-        def coverage_for(age,dose):
+-            return coverage.get(dose,("none","none")) if age==-2 and available_only else ("","")
++        def source_draw(draw):
++            # Legacy one-iteration sheets may receive their mc_id only when
++            # reporting rows; the validated source was keyed by None.
++            return None if None in mc_available else draw
++        def is_available(draw=None):
++            return mc_available.get(source_draw(draw), False) if MONTE_CARLO_MODE else available_only
++        def coverage_for(age,dose,draw=None):
++            if age != -2 or not is_available(draw):
++                return ("", "")
++            return (mc_coverage.get(source_draw(draw),{}) if MONTE_CARLO_MODE else coverage).get(dose,("none","none"))
+         def add_pair_coverage(rows):
++            draws = rows.mc_id if MONTE_CARLO_MODE and "mc_id" in rows else [None] * len(rows)
+             for side in ("num","den"):
+-                entries=[coverage_for(age,dose) for age,dose in zip(rows.YearOfBirth,rows["Dose_"+side])]
++                entries=[coverage_for(age,dose,draw) for age,dose,draw in zip(rows.YearOfBirth,rows["Dose_"+side],draws)]
+                 rows["population_age_groups_"+side]=[x[0] for x in entries]
+                 rows["population_zero_enrollment_groups_"+side]=[x[1] for x in entries]
+-            applies=rows.YearOfBirth.eq(-2)&available_only
++            applies=rows.YearOfBirth.eq(-2)&np.asarray([is_available(draw) for draw in draws],dtype=bool)
+             rows["population_coverage_status"]=np.where(applies,np.where(rows.population_age_groups_num.eq(rows.population_age_groups_den),"same_supplied_age_groups","different_supplied_age_groups"),"")
+             return rows
+-        def population_label(age):
+-            return year_of_birth_label(age, available_only or (age==-3 and total_scope=="partial"))
++        def population_label(age,draw=None):
++            return year_of_birth_label(age, is_available(draw) or (age==-3 and total_scope=="partial"))
+         reconstruct_missing = not supplied_total.any() or (layout=="disjoint" and total_scope=="exhaustive")
+         if not MONTE_CARLO_MODE and reconstruct_missing:
+             if supplied_total.any():
+@@ -6569,6 +6656,25 @@
+                         "DateDied": dates, "ISOweekDied": dates.strftime("%G-%V"), "Alive": 0, "Dead": 0}))
+             if exhausted_suffixes:
+                 df = pd.concat([df, *exhausted_suffixes], ignore_index=True)
++        else:
++            # The same verified-exhaustion rule, using each replicate's own
++            # raw-source reporting horizon rather than another run's horizon.
++            exhausted_suffixes = []
++            groups = ["mc_id", "YearOfBirth", "Dose"] if "mc_id" in df else ["YearOfBirth", "Dose"]
++            for key, group in df.groupby(groups, sort=False):
++                draw = key[0] if len(key) == 3 else None
++                age, dose = key[-2:]
++                last = group.sort_values("DateDied").iloc[-1]
++                horizon = mc_horizons.get(draw)
++                if horizon is not None and last.DateDied < horizon and last.Alive == last.Dead:
++                    dates = pd.date_range(last.DateDied + pd.Timedelta(weeks=1), horizon, freq="7D")
++                    suffix = pd.DataFrame({"YearOfBirth": age, "Dose": dose, "DateDied": dates,
++                                           "ISOweekDied": dates.strftime("%G-%V"), "Alive": 0, "Dead": 0})
++                    if len(key) == 3:
++                        suffix["mc_id"] = draw
++                    exhausted_suffixes.append(suffix)
++            if exhausted_suffixes:
++                df = pd.concat([df, *exhausted_suffixes], ignore_index=True)
+         df = df.sort_values(["YearOfBirth","Dose","DateDied"]).reset_index(drop=True)
+         # person-time proxy and MR (internal probability per week)
+         df["PT"]   = df["Alive"].astype(float).clip(lower=0.0)
+@@ -6582,13 +6688,21 @@
+                         if not _complete_week_history(g.sort_values("DateDied")["t"])}
+         # Translate invalid source cells into their fitted age group.
+         risk_accounting_bad = set()
+-        for (age, dose) in source_bad:
++        for key, reasons in source_bad.items():
++            age, dose = key[-2:]
++            if MONTE_CARLO_MODE and age not in SPECIAL_AGGREGATE_YOBS and not MC_YOB_START <= age <= MC_YOB_END:
++                # A hidden component has already invalidated its reconstructed
++                # or exhaustive total. It cannot invalidate a displayed bucket
++                # merely because the two ages share that bucket's label.
++                continue
+             bucket = age
+             if kcor6_enabled_effective and int(AGE_RANGE or 1) > 1 and age >= 0:
+                 bucket = (int(age) // int(AGE_RANGE)) * int(AGE_RANGE)
+-            calendar_bad.add((bucket, dose))
+-            if any("death-only accounting" in reason for _, reason in source_bad[(age, dose)]):
+-                risk_accounting_bad.add((bucket, dose))
++            bucket_key = key[:-2] + (bucket, dose)
++            calendar_bad.add(bucket_key)
++            if any("death-only accounting" in reason or (MONTE_CARLO_MODE and reason in (
++                    "invalid component risk/death counts", "unexplained component risk-set increase")) for _, reason in reasons):
++                risk_accounting_bad.add(bucket_key)
+         # If reconstructing an aggregate, an absent component week cannot
+         # become an apparently valid aggregate count.
+         aggregate_source = df[_all_age_source_mask(df, missing_only=True)]
+@@ -7024,7 +7138,7 @@
+                 if MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES:
+                     raise StopIteration
+                 # Fit the same supplied or reconstructed cohort used for normalization.
+-                all_ages_mask = _all_age_source_mask(df)
++                all_ages_mask = df.YearOfBirth.eq(-2) if MONTE_CARLO_MODE else _all_age_source_mask(df)
+                 df_for_all_ages = df[all_ages_mask].copy()
+                 if not df_for_all_ages.empty:
+                     # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+@@ -7569,7 +7683,7 @@
+         
+         # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing.
+         build_all_ages_hazard = not (MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES)
+-        if build_all_ages_hazard:
++        if build_all_ages_hazard and not MONTE_CARLO_MODE:
+             df_for_agg = df[_all_age_source_mask(df, missing_only=True)].copy()
+             if not df_for_agg.empty:
+                 groupby_cols = ["Dose", "DateDied"]
+@@ -8188,7 +8302,10 @@
+             out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history", "invalid_aggregate_counts", "risk_set_exhausted"]), "KCOR_ns"] = np.nan
+         out_sh["risk_history_policy"] = history_policy
+         out_sh["aggregate_scope"] = total_scope
+-        out_sh["population_label"] = out_sh.YearOfBirth.map(population_label)
++        if MONTE_CARLO_MODE and "mc_id" in out_sh:
++            out_sh["population_label"] = [population_label(age, draw) for age, draw in zip(out_sh.YearOfBirth, out_sh.mc_id)]
++        else:
++            out_sh["population_label"] = out_sh.YearOfBirth.map(population_label)
+         out_sh = add_pair_coverage(out_sh)
+         all_out.append(out_sh)
+         
+@@ -8225,6 +8342,9 @@
+                                     "Dose_num": row["Dose_num"],
+                                     "Dose_den": row["Dose_den"],
+                                     "YearOfBirth": row["YearOfBirth"],
++                                    "population_label": row["population_label"],
++                                    "population_age_groups_num": row["population_age_groups_num"],
++                                    "population_age_groups_den": row["population_age_groups_den"],
+                                     "Date": row["Date"],
+                                     "KCOR": row["KCOR"],
+                                     "CI_lower": row.get("CI_lower", np.nan),
+@@ -8245,6 +8365,9 @@
+                                 "Dose_num": row["Dose_num"],
+                                 "Dose_den": row["Dose_den"],
+                                 "YearOfBirth": row["YearOfBirth"],
++                                "population_label": row["population_label"],
++                                "population_age_groups_num": row["population_age_groups_num"],
++                                "population_age_groups_den": row["population_age_groups_den"],
+                                 "Date": row["Date"],
+                                 "KCOR": row["KCOR"],
+                                 "CI_lower": row.get("CI_lower", np.nan),
+@@ -9343,7 +9466,8 @@
+                         age_group = "ASMR (direct)"
+                         yob_label = "All"
+                     elif year_of_birth == -2:
+-                        age_group = yob_data["population_label"].iloc[0] if "population_label" in yob_data else "All Ages"
++                        label_rows = yob_data[yob_data.mc_id.eq(mc_id)] if mc_id is not None else yob_data
++                        age_group = label_rows["population_label"].iloc[0] if "population_label" in label_rows and not label_rows.empty else "All Ages"
+                         yob_label = -2
+                     elif year_of_birth == POST_1960_COHORT_YOB:
+                         age_group = "-60 (born 1960+)"
+@@ -9815,19 +9939,29 @@
+                 if not is_special_aggregate_yob(yob) and int(yob) != -3
+             ]
+         
+-        # Iterate through each YearOfBirth value
++        # For partial direct totals, preserve the population identity in the
++        # summary instead of mixing full and different available-age targets.
++        population_groups = []
+         for yob in unique_yobs:
++            group = pair_data[pair_data.YearOfBirth.eq(yob)]
++            if yob == -2 and all(c in group for c in ("population_label", "population_age_groups_num", "population_age_groups_den")):
++                for signature, part in group.groupby(["population_label", "population_age_groups_num", "population_age_groups_den"], sort=False, dropna=False):
++                    population_groups.append((yob, signature, part))
++            else:
++                population_groups.append((yob, ("", "", ""), group))
++        for yob, signature, yob_data in population_groups:
+             # Format age label
+             if yob in (0, -1, -2, POST_1960_COHORT_YOB):
+                 age_label = year_of_birth_label(yob)
+             else:
+                 age_label = f"Year {yob}"
+             
++            if yob == -2 and signature[0]:
++                age_label = signature[0]
++                if signature[1] or signature[2]:
++                    age_label += f" (dose {dose_num}: {signature[1]}; dose {dose_den}: {signature[2]})"
+             dual_print(f"\nDose combination: {dose_num} vs {dose_den} - {age_label}")
+             dual_print("-" * 60)
+-            
+-            # Filter to this YearOfBirth
+-            yob_data = pair_data[pair_data["YearOfBirth"] == yob]
+             
+             if yob_data.empty:
+                 dual_print("  No data available for this age group")
+@@ -9848,7 +9982,7 @@
+             
+             # Store KCOR values for statistics stage (convert to numpy array to avoid pandas reference issues)
+             kcor_values = yob_data_unique["KCOR"].values.copy()
+-            dose_combo_stats[(dose_num, dose_den, yob)] = {
++            dose_combo_stats[(dose_num, dose_den, yob, signature)] = {
+                 "kcor_values": kcor_values,
+                 "iterations": yob_data_unique["Iteration"].values.copy(),
+                 "num_iterations": len(yob_data_unique),
+@@ -9883,7 +10017,7 @@
+         yob_keys_sorted = sorted(yob_keys, key=age_sort_key_for_key)
+         
+         for key in yob_keys_sorted:
+-            dose_num_key, dose_den_key, yob = key
++            dose_num_key, dose_den_key, yob, _signature = key
+             stats = dose_combo_stats[key]
+             kcor_values = stats["kcor_values"]
+             iterations = stats["iterations"]

@@ -1,0 +1,44 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -161,12 +161,12 @@
+ 
+ KCOR is therefore a constructed cumulative contrast defined on a depletion-normalized scale rather than a directly observable quantity in the raw data.
+ 
+-For visualization, an **anchored KCOR** is sometimes reported to show post-reference divergence:
++For visualization, an **anchored KCOR** is sometimes reported to show changes relative to the reference ratio:
+ $$
+ \mathrm{KCOR}(t; t_0) = \mathrm{KCOR}(t)/\mathrm{KCOR}(t_0),
+ $$
+ with prespecified $t_0$ (e.g., 4 weeks).
+-Anchoring is used only when explicitly stated to remove pre-existing level differences and emphasize post-reference divergence.
++Anchoring is used only when explicitly stated to compare the cumulative ratio with its reference value; both cumulative hazards retain their pre-reference contributions.
+ 
+ #### 2.1.2 Identification versus diagnostics
+ 
+@@ -720,7 +720,7 @@
+ 
+ Throughout, curvature in cumulative-hazard plots reflects selection-induced depletion or external hazard structure, while agreement with the fitted Gompertz shape after normalization is consistent with the working model.
+ 
+-In vaccinated–unvaccinated comparisons, large early differences in $\mathrm{KCOR}(t)$ may reflect baseline risk selection rather than intervention-attributable effects; in such cases, $\mathrm{KCOR}(t; t_0)$ is emphasized to report deviations relative to an early post-enrollment reference while preserving time-varying divergence.
++In vaccinated–unvaccinated comparisons, large early differences in $\mathrm{KCOR}(t)$ may reflect baseline risk selection rather than intervention-attributable effects; in such cases, $\mathrm{KCOR}(t; t_0)$ is emphasized to report deviations relative to an early post-enrollment reference.
+ 
+ ### 3.1 Negative controls (selection-only null)
+ 
+@@ -748,7 +748,7 @@
+ 
+ Figure @fig:neg_control_10yr provides a representative illustration; additional age-shift variants are provided in the Supplementary Information (SI).
+ 
+-![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ is expected to be approximately horizontal under the pseudo-null, subject to sampling stochasticity. Curves are shown as anchored $\mathrm{KCOR}(t; t_0)$, i.e., $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$, which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
++![Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, $\mathrm{KCOR}(t)$ is expected to be approximately horizontal under the pseudo-null, subject to sampling stochasticity. Curves are shown as anchored $\mathrm{KCOR}(t; t_0)$, i.e., $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$, which shows the change in the cumulative ratio relative to its reference value. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+ 
+ Table @tbl:neg_control_summary reports the historical v4.3 estimates, the current module-off primary estimates, and the forced-alpha sensitivity estimates, on the same input, reporting date and 999 matched person-bootstrap draws per enrollment. The configured Czech exponent 1.18 is a sensitivity value, not an identified parameter. The primary Czech configuration leaves the optional module inactive. The historical configuration documented a preference for the 2023 period because it showed the least vaccine harm; the chronology of that choice is unknown. The dates are retained, and the empirical illustrations should not be interpreted as outcome-independent validation of window selection. All twelve current intervals include one. The empirical age-shift contrasts have no known exact target; intervals including one do not establish equivalence. No draws had insufficient-signal flags or unsuccessful contributing fits in either run.
+ 
+@@ -889,7 +889,7 @@
+ 
+ ### 4.2 What KCOR estimates
+ 
+-*Table @tbl:positioning clarifies that KCOR differs from non-proportional hazards methods not in flexibility, but in estimand and direction of inference.* The contrast with RMST-style and other model-free cumulative summaries, and the motivation for a depletion-neutralized cumulative estimand, are discussed in §2.1. KCOR normalizes selection-induced depletion under the working model and then compares depletion-neutralized cumulative hazards; $\mathrm{KCOR}(t)$ summarizes cumulative outcome accumulation rather than instantaneous hazard ratios. It is descriptive rather than causal, and interpretability is conditional on the stated assumptions and prespecified diagnostics (seed-fit quality, post-normalization linearity, multi-window consistency, and parameter stability). When diagnostics fail, contrasts are not reported and results are treated as non-identifiable rather than as substantive cumulative effects. Anchored KCOR is used only when explicitly stated to remove pre-existing level differences and emphasize post-reference divergence.
++*Table @tbl:positioning clarifies that KCOR differs from non-proportional hazards methods not in flexibility, but in estimand and direction of inference.* The contrast with RMST-style and other model-free cumulative summaries, and the motivation for a depletion-neutralized cumulative estimand, are discussed in §2.1. KCOR normalizes selection-induced depletion under the working model and then compares depletion-neutralized cumulative hazards; $\mathrm{KCOR}(t)$ summarizes cumulative outcome accumulation rather than instantaneous hazard ratios. It is descriptive rather than causal, and interpretability is conditional on the stated assumptions and prespecified diagnostics (seed-fit quality, post-normalization linearity, multi-window consistency, and parameter stability). When diagnostics fail, contrasts are not reported and results are treated as non-identifiable rather than as substantive cumulative effects. Anchored KCOR is used only when explicitly stated to compare the cumulative ratio with its reference value; both cumulative hazards retain their pre-reference contributions.
+ 
+ Cumulative contrasts are particularly informative in settings where early hazard ratios attenuate over time due to depletion of high-risk individuals, leading instantaneous hazard-based summaries to obscure long-horizon risk differences.
+ 

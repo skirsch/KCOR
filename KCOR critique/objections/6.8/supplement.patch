@@ -1,0 +1,20 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -200,7 +200,7 @@
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+-This construction ensures that dose comparisons are within the same underlying vaccination category, preserving a pseudo-null while inducing 10–20 year age differences.
++This construction compares age groups within the same underlying vaccination category (or all categories pooled). Flatness requires proportional underlying depletion-neutralized hazard trajectories, not merely equal treatment status.
+ 
+ This contrasts with the synthetic negative control (Section S4.2.1), where strong, deliberately induced frailty heterogeneity requires gamma-frailty normalization to recover the null.
+ 
+@@ -332,7 +332,7 @@
+ **Additional empirical negative-control variant (20-year age shift).**  
+ For completeness, the more extreme 20-year age-shift negative control referenced in the main text is included:
+ 
+-![Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, $\mathrm{KCOR}(t)$ shows little systematic drift, which is consistent with the estimator handling selection-induced curvature in this pseudo-null construction. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). Uncertainty bands (95% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
++![Empirical negative control with a 20-year age shift: birth years 1950–1959 versus 1930–1939, all vaccination statuses pooled, enrolled in ISO week 2021-24. The all-window joint fitter is used with the optional NPH module inactive. Curves show anchored $\mathrm{KCOR}(t;t_0)$ from the end of the fourth accumulating week after the two-week skip (ISO week 2021-29) through 2024-41. Shading shows pointwise 95% percentile intervals from 999 matched person-bootstrap draws of the disjoint components, refitting the estimator in each draw. The oldest age group triggered the exploratory residual screen in the original fit; 950 of 999 draws flagged at least one contributing fit. All draws were numerically successful and retained. Flatness is expected if the normalized hazard trajectories are proportional. Data source: Czech registry age-shift control. X-axis: weeks since enrollment.](figures/fig3_neg_control_20yr_age_diff.png){#fig:neg_control_20yr}
+ 
+ ## S6. Extended Czech empirical application
+ 

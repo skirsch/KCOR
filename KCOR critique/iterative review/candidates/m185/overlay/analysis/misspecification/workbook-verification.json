@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "gamma",
+    "direct": 0.9354096992617595,
+    "workbook": 0.9354096992617595,
+    "max_diff": 0.0
+  },
+  {
+    "scenario": "lognormal",
+    "direct": 1.0167641064483979,
+    "workbook": 1.0167641064483979,
+    "max_diff": 0.0
+  },
+  {
+    "scenario": "two_point",
+    "direct": 1.0495195322765702,
+    "workbook": 1.0495195322765702,
+    "max_diff": 0.0
+  },
+  {
+    "scenario": "bimodal",
+    "direct": 1.0062074617519252,
+    "workbook": 1.006207461751925,
+    "max_diff": 2.220446049250313e-16
+  },
+  {
+    "scenario": "correlated_gamma",
+    "direct": 1.0901861102840542,
+    "workbook": 1.0901861102840544,
+    "max_diff": 2.220446049250313e-16
+  }
+]

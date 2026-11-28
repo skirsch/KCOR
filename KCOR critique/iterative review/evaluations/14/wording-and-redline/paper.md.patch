@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -974,7 +974,7 @@
+ 
+ KCOR analyses commonly exclude an initial post-enrollment window to exclude dynamic Healthy Vaccinee Effect artifacts. If an intervention induces an acute mortality effect concentrated entirely within this skipped window, that transient signal will not be captured by the primary analysis. This limitation is addressed by reporting sensitivity analyses with reduced or zero skip-weeks and/or by separately evaluating a prespecified acute-risk window.
+ 
+-In degenerate scenarios where an intervention induces a purely proportional hazard shift that does not alter depletion geometry that remains constant over time and does not alter depletion-driven curvature, KCOR's curvature-based contrast may have limited ability to distinguish such effects from residual baseline level differences under minimal-data constraints. Such cases are pathological in the sense that they produce no detectable depletion signature; in practice, KCOR diagnostics and control tests help identify when curvature-based inference is not informative.
++An intervention that produces a constant multiplicative hazard effect throughout follow-up is not separately identifiable from the cohort-specific baseline rate. The unanchored KCOR can retain this level difference, whereas anchoring removes a constant normalized hazard ratio. Internal diagnostics cannot distinguish these observationally equivalent explanations.
+ 
+ Simulation results in §3.4 illustrate that when key assumptions are violated—such as non-gamma frailty geometry, contamination of the quiet window by external shocks, or extreme event sparsity—frailty normalization may become weakly identified. In such regimes, KCOR's diagnostics, including poor cumulative-hazard fit and departures from the expected Gompertz shape, can signal that curvature-based inference is unreliable without model generalization or revised window selection.
+ 

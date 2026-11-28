@@ -1,0 +1,26 @@
+﻿# Round 21 — targeted resolution review of m185 against m184
+
+**Disposition:** The three round-20 findings are corrected in their approved scope. I found no demonstrated new defect in the changed batched MC paths that affects the ordinary S6 point estimator or the archived empirical results. This is targeted verification, not a fresh blind review or a general bootstrap validation.
+
+I read the two round-20 blind reviews, the resolution and convergence records, all three objection records and the implementation evidence; compared the frozen source directly; independently re-ran the original failing examples and regression tests using scratch workbooks and distinct Python processes. Neither frozen candidate was modified.
+
+## Individual resolutions
+
+| Item | Independent disposition | Evidence |
+|---|---|---|
+| 20.1 | **Resolved** | Exact original example reproduced in m184: all five All Ages endpoints on 2023-05-15 were 1.456776 with both theta statuses NOT_IDENTIFIED and normalization_status=ok; all were shown as 'ok' and both [1.4568, 1.4568] intervals were unqualified. The same written-workbook fixture in m185 gives the same five numeric endpoints and both intervals, but all five are labeled fit_flagged (audit-only), the original is flagged, all 4/4 numerical draws remain included, and both intervals explicitly say audit-only, not evidence of identification. The new regression independently passed the clear-fit counterpart and isolated original-only/draw-only flags. Residual flags and unavailable counts are separate; gap-assumption interval screen explicitly not assessed. |
+| 20.2 | **Resolved** | Independently recreated the one-age, two-dose, 40-week death-only fixture with 100,000 people each and a dose-1 wave in zero-based weeks 8–14, quiet dates 2023-14 to 2023-35. Using the regression helper/configuration the old truthful-label endpoint was 1.754700 and the shifted-label endpoint was 1.947664, both status ok. These are not the exact earlier blind-B numbers (configuration sensitivity), but independently reproduce the same metadata-only failure. In m185 the truthful result was exactly 1.754700, while the shifted label invalidated the affected group with invalid_iso_calendar and withheld anchored, unanchored and raw comparator values. The new written-workbook regression independently passed shifted unique, duplicate, malformed and missing label cases, precise age/aggregate/replicate isolation, equivalent formatting and absent optional column; missing-draw suppression retained. |
+| 20.3 | **Resolved** | Exact source diff is one sentence in paper.md section 2.6 at line 396; no formulas changed. It now states “the hazard curvature attributable to frailty depletion has been factored out, while the baseline hazard level is retained.” pdftotext independently confirms this exact replacement in the clean PDF p. 13, and redline PDF p. 14 shows the deleted old phrase and new wording prefixed [20.3]. The language agrees with the gamma inversion and avoids calling k a frailty parameter. |
+
+## Executed verification
+
+- python -B work/kcor-review-candidates/m185/test/test_round20_mc_diagnostics_calendar.py — all six reported groups passed, including well-identified and independently injected original/draw flag controls.
+- python -B work/kcor-review-candidates/m185/test/test_round19_mc_reader.py — all three original endpoint/roster, metadata and fractional raw comparator groups passed.
+- python -B work/kcor-review-candidates/m185/test/test_round18_mc_sources.py — all five source-total layouts, hidden-age accounting, invalid source isolation, partial coverage, unequal horizons and aggregate-opt-out groups passed.
+- Ran ordinary_s6_parity.py from evaluations/18/mc-source-consistency with each candidate in separate processes. Both produced 1,192 rows × 46 columns, last All Ages KCOR 1.1355510686037023. The complete frames passed pd.testing.assert_frame_equal(check_exact=True, check_dtype=True) and attributes were equal.
+
+The calendar correction validates the optional label at source age/dose resolution before aggregation, records the discordance without erasing calendar rows, and derives the actual fit mask and grouping calendar from DateDied. Normalization status propagates to affected direct and positive-weight pooled comparisons. Flagged fits remain numerical audit outputs, not selectively excluded bootstrap samples. These are intentional choices, not introduced defects. Withholding dependent contrasts on contradictory supplied data is the approved behavior, not a regression on valid inputs.
+
+No full person bootstrap, calibration study, expensive comprehensive rerun, or new empirical claims. This verification is confined to the current batched MC format, not a promise that every historical workbook layout is supported. The paper's working-model assumptions and prior disclosed limitations are unchanged.
+
+**Additional independently executed valid-MC parity:** Separate processes exported the same m185 five-iteration, three-age, 40-week fixture with selected frozen m184 and m185 helpers. Before the two newly added diagnostic columns, all 1,000 rows × 45 existing fields matched exactly (including dtypes); all five All Ages endpoints equal 1.754700159085343. m185 adds two residual diagnostic columns, for 47 columns. This is deterministic parity, not MC coverage evidence.

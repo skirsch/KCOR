@@ -1,0 +1,24 @@
+--- m142/code/kcor_survivor.py
++++ m143/code/kcor_survivor.py
+@@ -341,13 +341,16 @@
+                 pass
+             return np.full(len(target),1e6)
+         thmax=float(model.get_theta_degenerate_fit_config().get("theta0_max",500.))
+-        k0=float(np.clip(initial[0],1e-8,.1));th0=float(np.clip(initial[1],0.,thmax)) if np.isfinite(initial[1]) else .5
++        k0=float(np.clip(initial[0],1e-8,.1));th0=float(np.clip(initial[1],0.,thmax)) if np.isfinite(initial[1]) else min(.5,thmax)
+         candidates=[]
+-        for th in (th0,.5):
++        for th in (th0,min(.5,thmax)):
+             if candidates and abs(th-th0)<1e-7:continue
+-            r=least_squares(residual,[np.log(k0),th],bounds=([np.log(1e-8),0.],[np.log(.1),thmax]),
+-                              ftol=1e-10,xtol=1e-10,gtol=1e-10,max_nfev=200)
+-            candidates.append(r)
++            try:
++                r=least_squares(residual,[np.log(k0),th],bounds=([np.log(1e-8),0.],[np.log(.1),thmax]),
++                                  ftol=1e-10,xtol=1e-10,gtol=1e-10,max_nfev=200)
++                candidates.append(r)
++            except (ValueError, ArithmeticError):
++                if not candidates:raise
+         valid=[r for r in candidates if r.success and np.isfinite(r.cost)]
+         r=min(valid or candidates,key=lambda r:r.cost)
+         k,theta=float(np.exp(r.x[0])),float(r.x[1])

@@ -1,0 +1,3 @@
+# Historical S8 generation sources
+
+The preserved original scripts are under their historical numbered paths and hashed in source-manifest.json. The generating study and extension are 3.2/nonlinear-survivor-fit/replay.py and extend_main.py; 1.3/multiwindow-coverage/study.py establishes the shared synthetic design and matched seed streams. The original scripts depend on historical working-tree estimator editions and archived inputs, not the present estimator; this source archive is not a standalone simulation runner. The matching historical draws are provided one directory above, with verify_archive.py to reproduce the exact reported intervals and summary statistics.

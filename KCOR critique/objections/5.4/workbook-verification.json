@@ -1,0 +1,16 @@
+{
+  "supported_enrollment": "2021_24",
+  "unsupported_enrollment": "2021_20",
+  "supported_rows": 401,
+  "supported_rows_with_intervals": 377,
+  "unsupported_rows": 401,
+  "unsupported_rows_with_intervals": 0,
+  "draws": 5,
+  "interval_rows_by_age": {
+    "-60": 94,
+    "-2": 94,
+    "0": 1,
+    "1950": 94,
+    "1960": 94
+  }
+}

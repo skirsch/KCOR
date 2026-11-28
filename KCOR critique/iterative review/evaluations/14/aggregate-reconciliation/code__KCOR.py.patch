@@ -1,0 +1,103 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4328,7 +4328,7 @@
+         status_by_date = g.set_index("DateDied")["normalization_status"]
+         for status, dates in status_by_date.groupby(status_by_date):
+             affected = (rows["Dose_num"] == dose) | (rows["Dose_den"] == dose)
+-            if status == "risk_set_exhausted" or (status not in ("missing_week_history", "invalid_risk_history", "normalization_failed") and not (
++            if status == "risk_set_exhausted" or (status not in ("missing_week_history", "invalid_risk_history", "invalid_aggregate_counts", "normalization_failed") and not (
+                     g.loc[g.normalization_status.eq(status), "t"] <= KCOR_NORMALIZATION_WEEKS_EFFECTIVE).any()):
+                 affected &= pd.to_datetime(rows["Date"]).isin(dates.index)
+             if mc:
+@@ -4347,7 +4347,7 @@
+             # An unavailable presentation reference does not invalidate an
+             # otherwise supported earlier unanchored hazard ratio.
+             unanchored_affected = affected
+-            if status not in ("missing_week_history","invalid_risk_history","normalization_failed"):
++            if status not in ("missing_week_history","invalid_risk_history","invalid_aggregate_counts","normalization_failed"):
+                 unanchored_affected = affected & pd.to_datetime(rows["Date"]).isin(dates.index)
+             rows.loc[unanchored_affected,"unanchored_normalization_status"] = status
+             rows.loc[unanchored_affected,"unanchored_abnormal_fit"] = True
+@@ -6021,8 +6021,10 @@
+     global SLOPE8_QUANTILE_TAU, KCOR_NORMALIZATION_WEEKS, KCOR_NORMALIZATION_WEEKS_EFFECTIVE  # SA overrides
+     global SLOPE6_QUANTILE_TAU  # SA overrides (linear fit tau used for YOB>=threshold and YOB=-2)
+     global OVERRIDE_YOBS  # SA overrides
+-    from fixed_cohort_history import risk_history_policy
+-    history_policy = risk_history_policy(os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
++    from fixed_cohort_history import risk_history_policy, aggregate_scope
++    layout = os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint")
++    history_policy = risk_history_policy(layout)
++    total_scope = aggregate_scope(layout)
+     output_dir = os.path.dirname(out_path)
+     if not output_dir:
+         output_dir = "."
+@@ -6120,6 +6122,7 @@
+     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
+     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
+     dual_print(f"  KCOR_RISK_HISTORY_POLICY = {history_policy}")
++    dual_print(f"  KCOR_AGGREGATE_SCOPE = {total_scope}")
+     # Legacy quiet-anchor config removed
+     dual_print(f"  Reporting date calculation: 1 year from enrollment date")
+     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
+@@ -6408,9 +6411,22 @@
+         # Validate source cells before age bucketing or sex/DCCI aggregation.
+         # Normal fixed-cohort sheets have one declared calendar horizon.
+         source_bad = {}
++        aggregate_bad = {}
+         if not MONTE_CARLO_MODE:
+-            from fixed_cohort_history import invalid_components
+-            source_bad = invalid_components(df, enrollment_date, source_horizon, os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
++            from fixed_cohort_history import invalid_components, aggregate_reconciliation
++            source_bad = invalid_components(df, enrollment_date, source_horizon, layout)
++            if layout=="disjoint":
++                aggregate_bad, _ = aggregate_reconciliation(df,total_scope)
++                if total_scope=="exhaustive":
++                    for (age,dose), reasons in list(source_bad.items()):
++                        if age in SPECIAL_AGGREGATE_YOBS:
++                            continue
++                        for total_age in (-2,-60):
++                            if (total_age==-60 and age<1960) or not ((df.YearOfBirth==total_age)&(df.Dose==dose)).any():
++                                continue
++                            aggregate_bad.setdefault((total_age,dose),[]).extend(reasons)
++                for key,reasons in aggregate_bad.items():
++                    source_bad.setdefault(key,[]).extend(reasons)
+             for key, reasons in source_bad.items():
+                 dual_print(f"[WARN] KCOR_SOURCE_HISTORY,EnrollmentDate={sh},yob={key[0]},dose={key[1]},reason={reasons}")
+             if history_policy == "allow_exits":
+@@ -7815,7 +7831,7 @@
+ 
+                     t_vals = g_sorted["t"].to_numpy(dtype=float)
+                     if key in calendar_bad or not _complete_week_history(t_vals):
+-                        norm_status[idx] = "invalid_risk_history" if key in risk_accounting_bad else "missing_week_history"
++                        norm_status[idx] = ("invalid_aggregate_counts" if key in aggregate_bad else "invalid_risk_history" if key in risk_accounting_bad else "missing_week_history")
+                         dual_print(f"[WARN] KCOR_{norm_status[idx[0]].upper()},EnrollmentDate={sh},yob={yob},dose={dose}")
+                         continue
+                     try:
+@@ -8125,8 +8141,9 @@
+                 how="left"
+             )
+         if "normalization_status" in out_sh and "KCOR_ns" in out_sh:
+-            out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history", "risk_set_exhausted"]), "KCOR_ns"] = np.nan
++            out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history", "invalid_aggregate_counts", "risk_set_exhausted"]), "KCOR_ns"] = np.nan
+         out_sh["risk_history_policy"] = history_policy
++        out_sh["aggregate_scope"] = total_scope
+         all_out.append(out_sh)
+         
+         # For Monte Carlo mode: collect KCOR values at the cohort reporting date for summary
+@@ -8968,7 +8985,7 @@
+                             "residual_screen_flag", "residual_screen_unavailable", "CI_residual_flagged_draws", "CI_residual_unavailable_draws",
+                             "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws", "CI_unanchored_method", "CI_unanchored_flagged_draws", "CI_unanchored_point_flagged",
+                             "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+-                            "normalization_status", "unanchored_normalization_status", "unanchored_abnormal_fit", "risk_history_policy", "gap_assumption_status",
++                            "normalization_status", "unanchored_normalization_status", "unanchored_abnormal_fit", "risk_history_policy", "aggregate_scope", "gap_assumption_status",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -9004,6 +9021,7 @@
+                             ("NPH", str(get_covid_correction_config())),
+                             ("Risk history policy", os.environ.get("KCOR_RISK_HISTORY_POLICY","death_only")),
+                             ("Bootstrap layout", os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")),
++                            ("Aggregate scope", total_scope),
+                             ("Bootstrap draws", os.environ.get("KCOR_BOOTSTRAP_DRAWS","999")),
+                             ("Bootstrap seed", os.environ.get("KCOR_BOOTSTRAP_SEED","33080")),
+                             ("Bootstrap workers", os.environ.get("KCOR_BOOTSTRAP_WORKERS","5"))

@@ -1,0 +1,8 @@
+--- a/analysis/README.md
++++ b/analysis/README.md
+@@ -7,3 +7,5 @@
+ From the checkout root, run `make paper` or `make paper-pdf` with GNU Make, Pandoc, a compatible pandoc-crossref, XeLaTeX and the configured fonts installed. The supplied bibliography, style, header, filters and figure files are used directly. Set PAPER_PDF_MAINFONT and PAPER_PDF_MATHFONT if needed. The empirical intuition figure can be regenerated with `make paper-figures`. Publication is a separate `make paper-publish` command.
+ 
+ Supplementary S6.1.2: `python analysis/s6/replay.py` regenerates the Czech age-band raw hazards, fitted frailty and diagnostic tables from the specified 2021_24 CMR sheet; full-precision outputs and input hash are stored in `analysis/s6/results.json`.
++
++The S6 frailty and anchored KCOR intervals use `python analysis/s6/all-age-precision.py . --draws 999`; its JSON and CSV contain all matched draws and the first-window comparison.

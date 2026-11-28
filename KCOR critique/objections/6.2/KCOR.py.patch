@@ -1,0 +1,141 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4610,6 +4610,20 @@
+             
+                 out_rows.append(out)
+ 
++    # Use the exact per-age reporting flags, restricted to contributors at
++    # this date and draw, when constructing pooled rows.
++    from bootstrap_reporting import flagged
++    flagged_age_rows = set()
++    for age_rows in out_rows:
++        for row in age_rows.loc[flagged(age_rows)].itertuples(index=False):
++            draw = None if pd.isna(row.mc_id) else row.mc_id
++            flagged_age_rows.add((row.YearOfBirth, row.Dose_num, row.Dose_den,
++                                  pd.Timestamp(row.Date), draw))
++
++    def contributor_flag(ages, num, den, date, mc_id):
++        draw = None if pd.isna(mc_id) else mc_id
++        return any((age, num, den, pd.Timestamp(date), draw) in flagged_age_rows for age in ages)
++
+     # -------- ASMR pooled rows (YearOfBirth = 0) --------
+     # Expected-deaths weights using pooled quiet baseline window
+     # w_a ∝ h_a × PT_a(W) where h_a = smoothed mean MR in quiet window W
+@@ -4724,6 +4738,7 @@
+ 
+             for dt in all_dates:
+                 logs, wts, var_terms = [], [], []
++                contributors = []
+                 for yob, g_age in df_for_iteration.groupby("YearOfBirth", sort=False):
+                     if yob not in anchors:
+                         continue
+@@ -4755,6 +4770,7 @@
+                     
+                     logs.append(safe_log(kstar))
+                     wts.append(weights.get(yob, 0.0))
++                    contributors.append(yob)
+                     Dv = float(gv["cumD_adj"].values[0])
+                     Du = float(gu["cumD_adj"].values[0])
+                     if Dv > EPS and Du > EPS:
+@@ -4769,6 +4785,7 @@
+                 if np.any(valid_mask):
+                     logs_arr = logs_arr[valid_mask]
+                     wts_arr = wts_arr[valid_mask]
++                    contributors = np.asarray(contributors)[valid_mask].tolist()
+                     # Re-normalize weights among valid ages to avoid implicit down-weighting
+                     w_sum = wts_arr.sum()
+                     if w_sum <= 0:
+@@ -4832,22 +4849,7 @@
+                         CI_lower = np.nan
+                         CI_upper = np.nan
+                     
+-                    # Check if any contributing age group had abnormal fit
+-                    abnormal_fit_pooled = False
+-                    if slope6_params_map is not None:
+-                        for yob_check in df_sorted["YearOfBirth"].unique():
+-                            if yob_check not in anchors:
+-                                continue
+-                            params_num_check = slope6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+-                            params_den_check = slope6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+-                            if isinstance(params_num_check, dict) and params_num_check.get("abnormal_fit", False):
+-                                abnormal_fit_pooled = True
+-                                break
+-                            if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
+-                                abnormal_fit_pooled = True
+-                                break
+-                    # Set abnormal_fit: blank if normal fit, True if abnormal
+-                    abnormal_fit_pooled_value = True if abnormal_fit_pooled else ""
++                    abnormal_fit_pooled_value = contributor_flag(contributors, num, den, dt, mc_id_val) or ""
+                     
+                     # Debug: Check for suspiciously large pooled KCOR values
+                     if Kpool > 10:
+@@ -4867,9 +4869,7 @@
+                         # For pooled rows, we need to aggregate theta across age groups
+                         # Use weighted average or take from highest-weight age group
+                         # For simplicity, use theta from first contributing age group
+-                        for yob_check in df_sorted["YearOfBirth"].unique():
+-                            if yob_check not in anchors:
+-                                continue
++                        for yob_check in contributors:
+                             params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                             params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                             if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled):
+@@ -4967,6 +4967,7 @@
+ 
+             for dt in all_dates_asmr:
+                 logs_asmr, wts_asmr, var_terms_asmr = [], [], []
++                contributors_asmr = []
+                 for yob, g_age in df_for_iteration_asmr.groupby("YearOfBirth", sort=False):
+                     # Skip special ages
+                     if yob <= 0:
+@@ -4991,6 +4992,7 @@
+                     kstar = k / k0
+                     logs_asmr.append(safe_log(kstar))
+                     wts_asmr.append(weights_asmr.get(yob, 0.0))
++                    contributors_asmr.append(yob)
+                     Dv = float(gv["cumD_adj"].values[0])
+                     Du = float(gu["cumD_adj"].values[0])
+                     if Dv > EPS and Du > EPS:
+@@ -5004,6 +5006,7 @@
+                     if np.any(valid_mask_asmr):
+                         logs_arr_asmr = logs_arr_asmr[valid_mask_asmr]
+                         wts_arr_asmr = wts_arr_asmr[valid_mask_asmr]
++                        contributors_asmr = np.asarray(contributors_asmr)[valid_mask_asmr].tolist()
+                         # Re-normalize weights among valid ages to avoid implicit down-weighting
+                         w_sum_asmr = wts_arr_asmr.sum()
+                         if w_sum_asmr <= 0:
+@@ -5073,22 +5076,7 @@
+                     CI_lower_asmr = np.nan
+                     CI_upper_asmr = np.nan
+                 
+-                # Check if any contributing age group had abnormal fit
+-                abnormal_fit_pooled_asmr = False
+-                if slope6_params_map is not None:
+-                    for yob_check in df_sorted["YearOfBirth"].unique():
+-                        if yob_check <= 0 or yob_check not in anchors_asmr:
+-                            continue
+-                        params_num_check = slope6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+-                        params_den_check = slope6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+-                        if isinstance(params_num_check, dict) and params_num_check.get("abnormal_fit", False):
+-                            abnormal_fit_pooled_asmr = True
+-                            break
+-                        if isinstance(params_den_check, dict) and params_den_check.get("abnormal_fit", False):
+-                            abnormal_fit_pooled_asmr = True
+-                            break
+-                # Set abnormal_fit: blank if normal fit, True if abnormal
+-                abnormal_fit_pooled_value_asmr = True if abnormal_fit_pooled_asmr else ""
++                abnormal_fit_pooled_value_asmr = contributor_flag(contributors_asmr, num, den, dt, mc_id_val_asmr) or ""
+                 
+                 # Extract theta_num and theta_den from KCOR6 params map for pooled rows
+                 theta_num_pooled_asmr = np.nan
+@@ -5097,9 +5085,7 @@
+                 theta0_status_den_pooled_asmr = ""
+                 if kcor6_params_map is not None:
+                     # Use theta from first contributing age group
+-                    for yob_check in df_sorted["YearOfBirth"].unique():
+-                        if yob_check <= 0 or yob_check not in anchors_asmr:
+-                            continue
++                    for yob_check in contributors_asmr:
+                         params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+                         params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+                         if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled_asmr):

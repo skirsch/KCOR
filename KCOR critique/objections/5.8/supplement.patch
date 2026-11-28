@@ -1,0 +1,11 @@
+--- m109/documentation/preprint/supplement.md
++++ m110/documentation/preprint/supplement.md
+@@ -265,7 +265,7 @@
+ - **RMSE in hazard space**: Root mean squared error between observed and model-predicted hazards over the pooled quiet-window fit set.
+ - **Fitted parameters**: baseline scale parameter and cohort-specific enrollment-time frailty variance $\theta_{0,d}$.
+ - **Number of fit points**: pooled observations across quiet windows.
+-- **Offset diagnostics**: number, sign, and stability of reconstructed $\delta_i$ terms when the delta path is used.
++- **Offset diagnostics**: number, sign, and stability of reconstructed $\delta_i$ terms when the delta path is used. Report final-fit rather than initialization offsets. With a nonlinear survivor law, the raw gap discrepancy is in observed cumulative-hazard units and the applied increment is in baseline-exposure units.
+ 
+ For real-data Monte Carlo intervals, the resampling unit is one eligible person at enrollment. Each draw retains the complete record and contributes to the counts for its original cohort and follow-up weeks. Ordinary intervals condition on the observed birth-year and dose enrollment sizes; the overlapping age-shift control instead resamples the pooled disjoint components before rebuilding the overlapping groups (main text §2.9.1).
+ 

@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -988,7 +988,7 @@
+ 
+ ### 5.3 Data requirements and external validation
+ 
+-In finite samples, KCOR precision is driven primarily by the number of events observed over follow-up. In simulation (selection-only null), cohorts of approximately 5,000 per arm yielded stable KCOR estimates with narrow uncertainty, whereas smaller cohorts exhibited appreciable Monte Carlo variability and occasional spurious deviations. Reporting event counts and conducting a simple cohort-size sensitivity check are recommended when applying KCOR to sparse outcomes.
++KCOR precision depends on event counts during the fitting and reference periods and across follow-up. Frailty resolution also depends on the baseline mortality rate, frailty variance, and duration and placement of informative quiet windows (Section 2.9). Reporting event counts, fitted-parameter resolution and person-bootstrap KCOR intervals is recommended for sparse outcomes.
+ 
+ **External validation across interventions.** A natural next step is to apply KCOR to other vaccines and interventions where large-scale individual-level event timing data are available. Many RCTs are underpowered for all-cause mortality and typically do not provide record-level timing needed for KCOR-style hazard-space normalization, while large observational studies often publish only aggregated effect estimates. Where sufficiently detailed time-to-event data exist (registries, integrated health systems, or open individual-level datasets), cross-intervention comparisons can help characterize how often selection-induced depletion dominates observed hazard curvature and how frequently post-normalization trajectories remain stable under negative controls.
+ 

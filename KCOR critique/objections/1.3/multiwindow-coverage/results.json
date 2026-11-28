@@ -1,0 +1,116 @@
+{
+  "no_wave": {
+    "truth": 1.0,
+    "fixed": {
+      "covered": 78,
+      "datasets": 100,
+      "coverage": 0.78,
+      "coverage_lower": 0.686080346213682,
+      "coverage_upper": 0.8566964232501946,
+      "mean_width": [
+        0.04092815485096526,
+        0.039453338568762215,
+        0.0424029711331683
+      ],
+      "mean_point": [
+        1.0097749458592127,
+        1.0079595509300854,
+        1.01159034078834
+      ],
+      "rmse": 0.013357391448911292,
+      "prefix_coverage": 0.76,
+      "originals_with_insufficient_signal": 0,
+      "draws_with_insufficient_signal": 0,
+      "failed_fit_calls": 0,
+      "originals_with_clamped_gap": 99
+    },
+    "joint": {
+      "covered": 94,
+      "datasets": 100,
+      "coverage": 0.94,
+      "coverage_lower": 0.8739700654191771,
+      "coverage_upper": 0.9776651139286836,
+      "mean_width": [
+        0.0744247561675901,
+        0.07329064401804056,
+        0.07555886831713965
+      ],
+      "mean_point": [
+        1.0025140905122039,
+        0.9986866891026167,
+        1.006341491921791
+      ],
+      "rmse": 0.019356503878238167,
+      "prefix_coverage": 0.93,
+      "originals_with_insufficient_signal": 0,
+      "draws_with_insufficient_signal": 0,
+      "failed_fit_calls": 0,
+      "originals_with_clamped_gap": 100
+    },
+    "gained_coverage": 17,
+    "lost_coverage": 1,
+    "paired_p": 0.00014495849609375,
+    "width_difference": [
+      0.033496601316624866,
+      0.032182944374374904,
+      0.03481025825887483
+    ]
+  },
+  "nonlinear_wave": {
+    "truth": 1.0,
+    "fixed": {
+      "covered": 88,
+      "datasets": 100,
+      "coverage": 0.88,
+      "coverage_lower": 0.7997643163799613,
+      "coverage_upper": 0.9364310974389741,
+      "mean_width": [
+        0.05224684459916886,
+        0.05121137454064233,
+        0.05328231465769539
+      ],
+      "mean_point": [
+        1.0064442138866745,
+        1.003608139602598,
+        1.009280288170751
+      ],
+      "rmse": 0.015613441296912564,
+      "prefix_coverage": 0.87,
+      "originals_with_insufficient_signal": 0,
+      "draws_with_insufficient_signal": 0,
+      "failed_fit_calls": 0,
+      "originals_with_clamped_gap": 0
+    },
+    "joint": {
+      "covered": 92,
+      "datasets": 100,
+      "coverage": 0.92,
+      "coverage_lower": 0.848442364135579,
+      "coverage_upper": 0.9648284374821919,
+      "mean_width": [
+        0.07793603199527838,
+        0.07675507544352367,
+        0.07911698854703308
+      ],
+      "mean_point": [
+        0.9979532381619539,
+        0.9935939333639258,
+        1.0023125429599822
+      ],
+      "rmse": 0.021955386000641643,
+      "prefix_coverage": 0.91,
+      "originals_with_insufficient_signal": 0,
+      "draws_with_insufficient_signal": 0,
+      "failed_fit_calls": 0,
+      "originals_with_clamped_gap": 0
+    },
+    "gained_coverage": 8,
+    "lost_coverage": 4,
+    "paired_p": 0.3876953125,
+    "width_difference": [
+      0.025689187396109515,
+      0.024767442702053062,
+      0.02661093209016597
+    ]
+  }
+}

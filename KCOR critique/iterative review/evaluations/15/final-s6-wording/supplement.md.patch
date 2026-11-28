@@ -1,0 +1,37 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -324,11 +324,11 @@
+ 
+ This subsection examines $\mathrm{KCOR}(t)$ under narrow age stratification by repeating the same fixed-cohort comparison in three five-year birth bands spanning advanced ages (1930–1934, 1940–1944, 1950–1954). The trajectories and pointwise intervals illustrate how the normalized contrasts vary across age strata under the current estimator; they are descriptive rather than a formal validation of stability.
+ 
+-![Birth band 1930–1934: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws).](figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png){#fig:si_yob1930}
+-
+-![Birth band 1940–1944: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws).](figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png){#fig:si_yob1940}
+-
+-![Birth band 1950–1954: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws).](figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png){#fig:si_yob1950}
++![Birth band 1930–1934: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws). The signed-gap diagnostic was not assessed for these illustrative curves.](figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png){#fig:si_yob1930}
++
++![Birth band 1940–1944: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws). The signed-gap diagnostic was not assessed for these illustrative curves.](figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png){#fig:si_yob1940}
++
++![Birth band 1950–1954: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws). The signed-gap diagnostic was not assessed for these illustrative curves.](figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png){#fig:si_yob1950}
+ 
+ **Additional empirical negative-control variant (20-year age shift).**  
+ For completeness, the more extreme 20-year age-shift negative control referenced in the main text is included:
+@@ -341,7 +341,7 @@
+ 
+ The Czech example illustrates numerical fits and diagnostic outcomes; it does not establish that all pre-specified identification criteria were satisfied. Substantive implications follow only if the identification assumptions hold. Throughout this subsection, observed divergences are interpreted strictly as properties of the estimator under real-world selection, not as intervention effects.
+ 
+-Unless otherwise noted, KCOR curves in the Czech analyses are shown anchored at $t_0 = 4$ weeks for interpretability.
++The purpose of this worked example is to illustrate anchored KCOR. Unless otherwise noted, KCOR curves in the Czech analyses are shown anchored at $t_0 = 4$ weeks for interpretability.
+ 
+ #### S6.1.1 Illustrative empirical context: COVID-19 mortality data
+ 
+@@ -443,7 +443,7 @@
+ 
+ Figure @fig:si_allages shows $\mathrm{KCOR}(t)$ trajectories for dose 2 and dose 3 relative to dose 0 for an all-ages analysis. An all-ages analysis is presented as a high-heterogeneity stress test, since aggregation across age induces substantial baseline hazard and frailty variation.
+ 
+-![All-ages stress test: $\mathrm{KCOR}(t)$ trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws).](figures/kcor_realdata_allages_enroll2022w26_eval2023.png){#fig:si_allages}
++![All-ages stress test: $\mathrm{KCOR}(t)$ trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and followed through October 7, 2024. KCOR curves are anchored at $t_0 = 4$ weeks (i.e., plotted as $\mathrm{KCOR}(t; t_0)$). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. The horizontal axis shows calendar dates; shaded bands are pointwise 95% person-bootstrap intervals (999 draws). The signed-gap diagnostic was not assessed for these illustrative curves.](figures/kcor_realdata_allages_enroll2022w26_eval2023.png){#fig:si_allages}
+ 
+ ## S7. Computational environment and runtime notes
+ 

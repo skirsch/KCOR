@@ -1,0 +1,24 @@
+[
+  {
+    "file": "KCOR.xlsx",
+    "archive_sha256": "21f3b2a60dd0efc7bdcd602db810cdbd41b54dc46913c82a7de80629da9c36a3",
+    "active_sha256": "d2fbba56deb055dd4f0da72d87b667d84a3b4e18908010139713ca475c9439f5",
+    "changed_tabs": [
+      "MFG_MP_2021_24_D2_decades",
+      "MFG_MP_2022_06_D3_decades",
+      "MFG_MP_2022_47_D4_decades"
+    ],
+    "other_package_parts_identical": 13
+  },
+  {
+    "file": "KCOR_CMR.xlsx",
+    "archive_sha256": "b736e53c4d84d709c68ff364f2a415483e3d26b35669debd8bdae3f82c7a6c9c",
+    "active_sha256": "2c456001f2bc05460e414bb3734580ce6bf39acc10f624828638db01c0d73317",
+    "changed_tabs": [
+      "2022_47_MFG_D4",
+      "2022_06_MFG_D3",
+      "2021_24_MFG_D2"
+    ],
+    "other_package_parts_identical": 23
+  }
+]

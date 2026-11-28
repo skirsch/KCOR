@@ -1,0 +1,8 @@
+--- a/README.md
++++ b/README.md
+@@ -5,3 +5,5 @@
+ ### Inclusive population totals
+ 
+ The ordinary disjoint layout defaults to `KCOR_AGGREGATE_SCOPE=exhaustive`: supplied inclusive totals must equal the corresponding disjoint weekly counts. Use `KCOR_AGGREGATE_SCOPE=partial` only for an explicitly incomplete age extract with an independently supplied valid wider total. The wider point can be reported, but its joint bootstrap interval is unavailable when constituent strata are absent. Unrelated supported age-group intervals remain available. The declared overlapping Table 8 layout is unchanged.
++
++In partial scope, a reconstructed aggregate from available disjoint age groups is labeled **All available ages** (population_label), not All Ages. An inclusive total and a partial subset are not mixed across doses. In exhaustive scope, a missing dose-specific total is reconstructed from the complete disjoint components.

@@ -1,0 +1,11 @@
+--- m150/analysis/solver_scaling/gap_diagnostic_replay.py
++++ m151/analysis/solver_scaling/gap_diagnostic_replay.py
+@@ -38,7 +38,7 @@
+     np.savez_compressed(a.output/"identified_only-draws.npz",points=vals,flags=flags,parameters=params)
+     report={}
+     for i,sheet in enumerate(T.SHEETS):
+-        lo,hi=np.quantile(vals[i,1:],[.025,.975],axis=0);report[sheet]=dict(point=vals[i,0].tolist(),lower=lo.tolist(),upper=hi.tolist(),flagged_draws=int((flags[i,1:,0]>0).sum()),failed=int(flags[i,:,1].sum()))
++        lo,hi=np.quantile(vals[i,1:],[.025,.975],axis=0);report[sheet]=dict(point=vals[i,0].tolist(),lower=lo.tolist(),upper=hi.tolist(),insufficient_signal_draws_any_group=int((flags[i,1:,0]>0).sum()),unsuccessful_group_fits=int(flags[i,:,1].sum()))
+     (a.output/"identified_only-table8.json").write_text(json.dumps(report,indent=2))
+     summary,status=gap_diagnostic(gaps,draws);pd.DataFrame(summary).to_csv(a.output/'gap-diagnostics.csv',index=False)
+     counts=pd.DataFrame(summary).status.value_counts().to_dict();result=dict(draws=a.draws,comparisons=len(summary),status_counts=counts,max_point_difference=maximum,changed_draws=changed,cohort_status={str(k):v for k,v in status.items()});(a.output/'summary.json').write_text(json.dumps(result,indent=2));print(result,flush=True)

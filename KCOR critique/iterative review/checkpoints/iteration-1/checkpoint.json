@@ -1,0 +1,15 @@
+{
+  "revised/documentation/preprint/paper.md": "63735f00e11800195a58a3e02af6bb181802b459bafd0efbf626bb649747c26f",
+  "revised/documentation/preprint/supplement.md": "b512b0023057dbd6bcf84566e399d39a7a748e26f00c6859167508addded0806",
+  "revised/code/KCOR.py": "10692b74a85a7cb45d5a80ac0d98601d1371bd1c755931d1067d616da1c234c9",
+  "revised/code/KCOR_CMR.py": "b8df84f4f2c1bcb254c3ffecffa716ce76bb5aba605cf9f31c0f0475f2e3e666",
+  "revised/manifest.json": "6f3e1af4ea7662ce3f99953aa0936d677f2b4316f5905fbc5bc24e71e918dd63",
+  "KCOR-clean.pdf": "be2f3b1ec963cd5e339579bfb9269f64845ac3b3400fa965ddb5426cedf27b7e",
+  "KCOR-redline.pdf": "fa8331df3dfee857e93ce694a0d44d826b3a042617215a792e72d20e716ab518",
+  "build_pdfs.py": "bd7d3a62a2e11db42fc20229427e7ef8a0c48f9eda768a97e92f08a28084c29a",
+  "pr5_text_edits.py": "e2405b44fd42b2908f8b40576f338bdd3f7ed5445c0e96ba5d61eda133769fe8",
+  "review_links.py": "ac6620499667536f807483ab574359ce5b9c2d0c4e43a6d587fa886aef23776e",
+  "decisions.md": "2a62a953b5f55f91ec3b2bb8bdc145a843e1b6bf3bf92894bc2f70fea4cd7b48",
+  "open-objections.md": "9873d4b982beaad4f2072a16efb7c4c985a34ab18034028cab17ce9a3e6f709b",
+  "rounds/round-06-weekly-inversion/table8_bootstrap.json": "7e02690d5a76ae9a8b77a18b2c36d7d5112a27852186d44b4e1a619b52af55b3"
+}

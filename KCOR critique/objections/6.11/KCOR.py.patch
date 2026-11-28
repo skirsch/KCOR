@@ -1,0 +1,34 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -7077,6 +7077,8 @@
+                     theta0_status = "INSUFFICIENT_DEATHS"
+                 elif insufficient_signal_flag:
+                     theta0_status = "INSUFFICIENT_SIGNAL"
++                elif diag.get("k_hit_bound", False):
++                    theta0_status = "BASELINE_RATE_BOUND"
+                 else:
+                     theta0_status = "OK"
+ 
+@@ -7359,6 +7361,8 @@
+                             theta0_status = "INSUFFICIENT_DEATHS"
+                         elif insufficient_signal_flag:
+                             theta0_status = "INSUFFICIENT_SIGNAL"
++                        elif diag.get("k_hit_bound", False):
++                            theta0_status = "BASELINE_RATE_BOUND"
+                         else:
+                             theta0_status = "OK"
+                         params_dict = {
+@@ -10201,6 +10205,13 @@
+         result,diag=_fit_all_window_gamma(h_arr, t_rebased, quiet_mask, k_anchor_weeks,
+                                  gamma_per_week, theta0_init, deaths_arr,
+                                  joint_seed=True, account_entry=True)
++    # Report a baseline-rate constraint without resetting the fitted variance.
++    k = result[0]
++    k_hit_bound = bool(diag.get("success") and np.isfinite(k)
++                       and (k <= 1e-8 * 1.001 or k >= 0.1 * 0.999))
++    diag["k_hit_bound"] = k_hit_bound
++    if k_hit_bound and diag.get("status") == "ok":
++        diag["status"] = "baseline_rate_bound"
+     _sampling_diagnostics(deaths_arr,risk_arr,t,diag)
+     return result,diag
+ 

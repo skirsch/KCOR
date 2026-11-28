@@ -1,0 +1,260 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -927,8 +927,15 @@
+     We use log1p for numerical stability when mr is small.
+     """
+     mr_arr = np.asarray(mr, dtype=float)
+-    mr_arr = np.clip(mr_arr, 0.0, 1.0 - EPS)
+-    return -np.log1p(-mr_arr)
++    invalid = (mr_arr < 0.0) | (mr_arr > 1.0)
++    exhausted = mr_arr == 1.0
++    if np.any(invalid | exhausted):
++        warnings.warn("Invalid or exhausted weekly risk set; finite hazard unavailable", RuntimeWarning)
++    with np.errstate(divide="ignore", invalid="ignore"):
++        hazard = -np.log1p(-mr_arr)
++    # Infinity marks an explicitly invalid/exhausted observation, distinct from
++    # a missing observation in the legacy aggregation path.
++    return np.where(invalid | exhausted, np.inf, hazard)
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -1006,23 +1013,19 @@
+     H_arr = np.asarray(H_obs, dtype=float)
+     theta = float(theta)
+     if theta < KCOR6_THETA_EPS:
+-        return H_arr.copy()
+-
+-    # Numerical guardrail: cap theta so theta*H does not overflow expm1.
+-    # This preserves monotonicity while preventing hard failures in extreme fits.
+-    finite_H = H_arr[np.isfinite(H_arr)]
+-    if finite_H.size > 0:
+-        max_H = float(np.nanmax(np.abs(finite_H)))
+-    else:
+-        max_H = 0.0
+-    if max_H > EPS:
+-        max_theta_for_exp = 80.0 / max_H
+-        if np.isfinite(max_theta_for_exp) and max_theta_for_exp > 0.0:
+-            theta = min(theta, max_theta_for_exp)
+-
+-    z = theta * H_arr
+-    z = np.clip(z, -80.0, 80.0)
+-    return np.expm1(z) / max(theta, KCOR6_THETA_EPS)
++        return np.where(np.isfinite(H_arr), H_arr, np.nan)
++
++    # Evaluate the inverse at the fitted variance. Only unrepresentable
++    # values are unavailable; later follow-up cannot change earlier values.
++    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
++        z = theta * H_arr
++        result = np.expm1(z) / theta
++        large = (z > 700.0) & np.isfinite(z)
++        result = np.where(large, np.exp(z - np.log(theta)), result)
++    failed = np.isinf(result) | np.isinf(H_arr)
++    if np.any(failed):
++        warnings.warn("Gamma inversion exceeds numerical range or risk set is exhausted", RuntimeWarning)
++    return np.where(failed, np.nan, result)
+ 
+ 
+ def gamma_moment_alpha(theta, alpha):
+@@ -3551,7 +3554,7 @@
+                 "PT": "sum"
+             }).reset_index()
+             all_ages_agg["MR"] = np.where(all_ages_agg["PT"] > 0,
+-                                          all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
++                                          all_ages_agg["Dead"] / all_ages_agg["PT"],
+                                           np.nan)
+             all_ages_agg["hazard"] = hazard_from_mr(all_ages_agg["MR"])
+             all_ages_agg = all_ages_agg.sort_values(["Dose", "DateDied"])
+@@ -5840,7 +5843,7 @@
+     }).reset_index()
+     
+     # Recompute MR from aggregated counts
+-    all_ages_agg_ns["MR"] = np.where(all_ages_agg_ns["PT"] > 0, all_ages_agg_ns["Dead"] / (all_ages_agg_ns["PT"] + EPS), np.nan)
++    all_ages_agg_ns["MR"] = np.where(all_ages_agg_ns["PT"] > 0, all_ages_agg_ns["Dead"] / all_ages_agg_ns["PT"], np.nan)
+     
+     # Sort and compute time index
+     all_ages_agg_ns = all_ages_agg_ns.sort_values(["Dose", "DateDied"])
+@@ -6382,7 +6385,7 @@
+                     df_sa = df_sa.sort_values(["Dose", "DateDied"]).reset_index(drop=True)
+                     df_sa["PT"] = df_sa["Alive"].astype(float).clip(lower=0.0)
+                     df_sa["Dead"] = df_sa["Dead"].astype(float).clip(lower=0.0)
+-                    df_sa["MR"] = np.where(df_sa["PT"] > 0, df_sa["Dead"] / (df_sa["PT"] + EPS), np.nan)
++                    df_sa["MR"] = np.where(df_sa["PT"] > 0, df_sa["Dead"] / df_sa["PT"], np.nan)
+                     df_sa["t"] = df_sa.groupby(["Dose"]).cumcount().astype(float)
+ 
+                     # Apply moving average smoothing (adds MR_smooth; currently passthrough)
+@@ -6413,7 +6416,7 @@
+                         g_sorted = g.sort_values("DateDied").reset_index(drop=True)
+                         t_vals = g_sorted["t"].to_numpy(dtype=float)
+                         mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+-                        h_raw = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
++                        h_raw = hazard_from_mr(mr_vals)
+                         h_eff_obs = np.where(t_vals >= float(skip_weeks), h_raw, 0.0)
+                         H_obs = np.cumsum(h_eff_obs)
+                         iso_parts = g_sorted["DateDied"].dt.isocalendar()
+@@ -6518,7 +6521,7 @@
+                             H0 = invert_gamma_frailty(H_obs, theta)
+                             h0_inc = np.diff(H0, prepend=0.0)
+                             h0_inc = np.where(t_vals >= float(skip_weeks), h0_inc, 0.0)
+-                            h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
++                            h0_inc = np.where(np.maximum.accumulate(~np.isfinite(h0_inc)), np.nan, h0_inc)
+                             h0_inc = np.clip(h0_inc, 0.0, None)
+                             CH = np.cumsum(h0_inc)
+ 
+@@ -6747,7 +6750,7 @@
+         # person-time proxy and MR (internal probability per week)
+         df["PT"]   = df["Alive"].astype(float).clip(lower=0.0)
+         df["Dead"] = df["Dead"].astype(float).clip(lower=0.0)
+-        df["MR"]   = np.where(df["PT"] > 0, df["Dead"]/(df["PT"] + EPS), np.nan)
++        df["MR"]   = np.where(df["PT"] > 0, df["Dead"]/df["PT"], np.nan)
+         time_group_cols = ["YearOfBirth", "Dose"]
+         if MONTE_CARLO_MODE and "mc_id" in df.columns:
+             time_group_cols = ["mc_id"] + time_group_cols
+@@ -6876,7 +6879,7 @@
+                 t_vals = g_sorted["t"].to_numpy(dtype=float)
+                 mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                 dead_vals = g_sorted["Dead"].to_numpy(dtype=float) if "Dead" in g_sorted.columns else np.zeros_like(t_vals, dtype=float)
+-                hazard_obs = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
++                hazard_obs = hazard_from_mr(mr_vals)
+                 hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
+                 H_obs = np.cumsum(hazard_eff)
+                 
+@@ -7186,7 +7189,7 @@
+                     all_ages = all_ages.sort_values(sort_cols).reset_index(drop=True)
+                     all_ages["PT"] = all_ages["Alive"].astype(float).clip(lower=0.0)
+                     all_ages["Dead"] = all_ages["Dead"].astype(float).clip(lower=0.0)
+-                    all_ages["MR"] = np.where(all_ages["PT"] > 0, all_ages["Dead"] / (all_ages["PT"] + EPS), np.nan)
++                    all_ages["MR"] = np.where(all_ages["PT"] > 0, all_ages["Dead"] / all_ages["PT"], np.nan)
+                     all_ages["t"] = all_ages.groupby(groupby_t).cumcount().astype(float)
+ 
+                     iso_parts_all = all_ages["DateDied"].dt.isocalendar()
+@@ -7210,7 +7213,7 @@
+                         t_vals = g_sorted["t"].to_numpy(dtype=float)
+                         mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+                         dead_vals = g_sorted["Dead"].to_numpy(dtype=float) if "Dead" in g_sorted.columns else np.zeros_like(t_vals, dtype=float)
+-                        hazard_obs = hazard_from_mr(np.clip(mr_vals, 0.0, 0.999))
++                        hazard_obs = hazard_from_mr(mr_vals)
+                         hazard_eff = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), hazard_obs, 0.0)
+                         H_obs = np.cumsum(hazard_eff)
+ 
+@@ -7684,8 +7687,8 @@
+         # Czech-specific MR correction removed; use raw MR moving forward
+         mr_used = df["MR"]
+ 
+-        # Clip to avoid log(0) and ensure numerical stability
+-        df["hazard_raw"] = hazard_from_mr(np.clip(mr_used, 0.0, 0.999))
++        # Exact integrated hazard, with exhausted risk sets flagged.
++        df["hazard_raw"] = hazard_from_mr(mr_used)
+         
+         # Optional NPH correction: apply configured wave preprocessing before inversion
+         covid_cfg = get_covid_correction_config()
+@@ -7715,7 +7718,7 @@
+                 }).reset_index()
+                 all_ages_agg["MR"] = np.where(
+                     all_ages_agg["PT"] > 0,
+-                    all_ages_agg["Dead"] / (all_ages_agg["PT"] + EPS),
++                    all_ages_agg["Dead"] / all_ages_agg["PT"],
+                     np.nan
+                 )
+                 sort_cols = ["Dose", "DateDied"]
+@@ -7726,7 +7729,7 @@
+                 all_ages_agg = all_ages_agg.sort_values(sort_cols)
+                 all_ages_agg["t"] = all_ages_agg.groupby(groupby_for_t).cumcount().astype(float)
+                 all_ages_agg["YearOfBirth"] = -2
+-                all_ages_agg["hazard_raw"] = hazard_from_mr(np.clip(all_ages_agg["MR"].to_numpy(dtype=float), 0.0, 0.999))
++                all_ages_agg["hazard_raw"] = hazard_from_mr(all_ages_agg["MR"].to_numpy(dtype=float))
+                 all_ages_agg["MR_adj"] = all_ages_agg["MR"]
+                 all_ages_agg["slope"] = 0.0
+                 all_ages_agg["scale_factor"] = 1.0
+@@ -8005,8 +8008,8 @@
+                     h_raw = np.nan_to_num(
+                         g_sorted["hazard_raw"].to_numpy(dtype=float),
+                         nan=0.0,
+-                        posinf=0.0,
+-                        neginf=0.0,
++                        posinf=np.inf,
++                        neginf=np.inf,
+                     )
+ 
+                     # Observed cumulative hazard (skip-week rule)
+@@ -8032,24 +8035,27 @@
+                     # NPH correction is applied after gamma-frailty inversion in
+                     # cumulative-hazard space, relative to the fitted no-wave Gompertz
+                     # baseline path.  Only cohorts with a valid k_hat are corrected.
+-                    if covid_cfg is not None and bool(covid_cfg.get("apply_correction", False)):
++                    invalid_points = np.flatnonzero(~np.isfinite(H0))
++                    valid_end = int(invalid_points[0]) if invalid_points.size else len(H0)
++                    if covid_cfg is not None and bool(covid_cfg.get("apply_correction", False)) and valid_end:
+                         alpha_nph = float(covid_cfg["apply_alpha"])
+                         nph_k_hat = float(params.get("k_hat", np.nan)) if isinstance(params, dict) else np.nan
+                         nph_gamma = _gcf_nph["gamma_per_week"]
+                         t_reb = t_vals - float(DYNAMIC_HVE_SKIP_WEEKS)
+-                        H0, _nph_diag = apply_nph_correction_post_inversion(
+-                            H0,
+-                            t_vals,
+-                            g_sorted["DateDied"].to_numpy(),
++                        corrected_prefix, _nph_diag = apply_nph_correction_post_inversion(
++                            H0[:valid_end],
++                            t_vals[:valid_end],
++                            g_sorted["DateDied"].to_numpy()[:valid_end],
+                             theta,
+                             alpha_nph,
+                             covid_cfg["start_dt"],
+                             covid_cfg["end_dt"],
+                             nph_k_hat,
+                             nph_gamma,
+-                            t_rebased=t_reb,
+-                            observed_cumhaz=H_obs,
++                            t_rebased=t_reb[:valid_end],
++                            observed_cumhaz=H_obs[:valid_end],
+                         )
++                        H0[:valid_end] = corrected_prefix
+                         if _nph_diag.get("correction_mode") not in ("identity", "skipped_missing_params", "no_wave_points"):
+                             dual_print(
+                                 f"[NPH_POST_INV] enroll={sh} yob={yob} dose={dose} "
+@@ -8065,14 +8071,18 @@
+                     h0_inc = np.diff(H0, prepend=0.0)
+                     # Enforce skip-week rule and numeric safety
+                     h0_inc = np.where(t_vals >= float(DYNAMIC_HVE_SKIP_WEEKS), h0_inc, 0.0)
+-                    h0_inc = np.nan_to_num(h0_inc, nan=0.0, posinf=0.0, neginf=0.0)
++                    h0_inc = np.where(np.maximum.accumulate(~np.isfinite(h0_inc)), np.nan, h0_inc)
+                     h0_inc = np.clip(h0_inc, 0.0, None)
+ 
++                    unavailable = ~np.isfinite(h0_inc)
++                    if unavailable.any():
++                        dual_print(f"[WARN] KCOR_NUMERICAL_RANGE,EnrollmentDate={sh},yob={yob},dose={dose},first_week={t_vals[np.flatnonzero(unavailable)[0]]}")
+                     Hobs_all[idx] = H_obs
+                     hadj_all[idx] = h0_inc
+ 
+                 # Overwrite hazard_adj with KCOR6 baseline-hazard increments
+                 df["hazard_adj"] = hadj_all
++                df["numerical_range_unavailable"] = ~np.isfinite(hadj_all)
+ 
+                 # For outputs: CH_actual becomes observed cumulative hazard H_obs
+                 df["CH_actual"] = Hobs_all
+@@ -8908,7 +8918,7 @@
+                         agg = agg.sort_values(["Decade","MFG","DateDied"])\
+                                  .reset_index(drop=True)
+                         agg["PT"] = agg["Alive"].astype(float).clip(lower=0.0)
+-                        agg["MR"] = np.where(agg["PT"] > 0, agg["Dead"]/(agg["PT"] + EPS), np.nan)
++                        agg["MR"] = np.where(agg["PT"] > 0, agg["Dead"]/agg["PT"], np.nan)
+                         agg["t"] = agg.groupby(["Decade","MFG"]).cumcount().astype(float)
+                         agg["hazard_raw"] = hazard_from_mr(agg["MR"].to_numpy())
+                         agg["hazard_eff"] = np.where(agg["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), agg["hazard_raw"], 0.0)
+@@ -9045,7 +9055,7 @@
+                         "",
+                         "4. KCOR Computation (v4.1):",
+                         "   - Step 1: MR_adj = MR × exp(-slope × (t - t0))",
+-                        "   - Step 2: hazard = -ln(1 - MR_adj) [clipped to 0.999]",
++                        "   - Step 2: hazard = -ln(1 - MR_adj); exhausted risk sets flagged",
+                         "   - Step 3: CH = cumsum(hazard)",
+                         "   - KCOR = CH_v / CH_u",
+                         "",
+@@ -9327,7 +9337,7 @@
+                                 # Compute MR and hazards
+                                 grouped["PT"] = grouped["Alive"].astype(float).clip(lower=0.0)
+                                 grouped["Dead"] = grouped["Dead"].astype(float).clip(lower=0.0)
+-                                grouped["MR"] = np.where(grouped["PT"] > 0, grouped["Dead"]/(grouped["PT"] + EPS), np.nan)
++                                grouped["MR"] = np.where(grouped["PT"] > 0, grouped["Dead"]/grouped["PT"], np.nan)
+                                 grouped["t"] = grouped.groupby(["YearOfBirth","MFG"]).cumcount().astype(float)
+                                 grouped["hazard_raw"] = hazard_from_mr(grouped["MR"].to_numpy())
+                                 grouped["hazard_eff"] = np.where(grouped["t"] >= float(DYNAMIC_HVE_SKIP_WEEKS), grouped["hazard_raw"], 0.0)

@@ -1,0 +1,25 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -7169,8 +7169,11 @@
+             try:
+                 if MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES:
+                     raise StopIteration
+-                # Build all-ages from individual birth years only; exclude existing aggregate/sentinel rows.
+-                df_for_all_ages = df[df["YearOfBirth"] > 0].copy()
++                # Fit the same supplied or reconstructed cohort used for normalization.
++                all_ages_mask = df["YearOfBirth"] == -2
++                if not all_ages_mask.any():
++                    all_ages_mask = (df["YearOfBirth"] > 0) | (df["YearOfBirth"] == -1)
++                df_for_all_ages = df[all_ages_mask].copy()
+                 if not df_for_all_ages.empty:
+                     # CRITICAL FIX: Include mc_id in groupby for Monte Carlo mode
+                     groupby_all_ages_agg = ["Dose", "DateDied"]
+@@ -7705,7 +7708,7 @@
+         # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing.
+         build_all_ages_hazard = not (MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES)
+         if build_all_ages_hazard and -2 not in df["YearOfBirth"].values:
+-            df_for_agg = df[df["YearOfBirth"] > 0].copy()
++            df_for_agg = df[(df["YearOfBirth"] > 0) | (df["YearOfBirth"] == -1)].copy()
+             if not df_for_agg.empty:
+                 groupby_cols = ["Dose", "DateDied"]
+                 if MONTE_CARLO_MODE and "mc_id" in df_for_agg.columns:

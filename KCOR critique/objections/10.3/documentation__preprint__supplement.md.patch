@@ -1,0 +1,17 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -483,7 +483,7 @@
+ 
+ ## S10. Table 8 contributing-fit diagnostics
+ 
+-For each pooled comparison, a diagnostic flag means that at least one positively weighted subgroup fit for either dose triggered that diagnostic. The point flag and number of flagged bootstrap draws out of 999 are reported separately. The proportional analysis was freshly refitted with opening risk sets supplied to the diagnostic routine. For the forced-alpha sensitivity, the same routine and survivor-model prediction were evaluated at the archived fitted parameters on the original matched death histories; 300 fresh matched refits independently reproduced the archived parameters, points and all diagnostic flags exactly. No draw was excluded, and all reported Table 8 point estimates and percentile intervals are unchanged.
++For each pooled comparison, a diagnostic flag means that at least one positively weighted subgroup fit for either dose triggered that diagnostic. The point flag and number of flagged bootstrap draws out of 999 are reported separately. The proportional analysis was freshly refitted with opening risk sets supplied to the diagnostic routine and the shared seed and pooled ceiling. For the forced-alpha sensitivity, the same routine and survivor-model prediction were evaluated at the archived fitted parameters on the original matched death histories; 300 fresh matched refits under the preceding seed implementation independently reproduced the archived parameters, points and all diagnostic flags exactly. No draw was excluded. The refreshed primary Table 8 point estimates and percentile intervals are unchanged at displayed precision; the forced-alpha intervals remain archived from the preceding seed implementation.
+ 
+ Table: Table 8 diagnostic flags by comparison. Point flag / number of draws (out of 999). {#tbl:si_table8_diagnostics}
+ 
+@@ -502,4 +502,4 @@
+ | Forced alpha | 2022_06 | 2/0 | Yes / 986 | No / 93 |
+ | Forced alpha | 2022_06 | 2/1 | No / 986 | No / 90 |
+ 
+-For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).
++For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/seed_ceiling/table8-primary/` and archived `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).

@@ -1,0 +1,3 @@
+# Round 18 scientific context (not active objections)
+
+The fixed-slope sensitivity independently reproduced earlier results; the oldest group crosses one in point sensitivity, but its original interval includes one. No alternate bootstrap was performed. Known limitations concerning eligibility, alpha identification, outcome-informed window choice, age-shift exact target and residual flags are already disclosed. Preserve earlier author intent and editorial dispositions, including the rejected request to restyle model-consistent negative-control wording. [Blind A](../blind-a.md) | [Blind B](../blind-b.md).

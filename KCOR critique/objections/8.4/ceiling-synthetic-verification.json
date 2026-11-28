@@ -1,0 +1,12 @@
+[
+  {
+    "cap": 200,
+    "datasets": 600,
+    "max_kcor_abs_difference": 1.8281170621747833e-07
+  },
+  {
+    "cap": 500,
+    "datasets": 600,
+    "max_kcor_abs_difference": 2.0927027977180046e-07
+  }
+]

@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -522,7 +522,7 @@
+ \frac{L(B+b,W+w)}{L(B,W)}=e^{-q}
+ $$
+ 
+-for a nonnegative wave increment $w$. If mortality is below the fitted conditional baseline, no such nonnegative increment exists at the planned $b$. In those weeks keep prior wave exposure, assign no additional wave exposure, and solve instead for a smaller nonnegative proportional increment from the observed survival. Count these deficit weeks and report their frequency. This is an attribution convention, not evidence of negative wave exposure or an estimator of both unknown hazards without a baseline assumption.
++for a nonnegative wave increment $w$. If mortality is below the fitted conditional baseline, no such nonnegative increment exists at the planned $b$. In those weeks keep prior wave exposure, assign no additional wave exposure, and solve instead for a smaller nonnegative proportional increment from the observed survival. Count these deficit weeks and report their frequency. This is an attribution convention, not evidence of negative wave exposure or an estimator of both unknown hazards without a baseline assumption. The nonlinear wave correction assumes that the configured wave interval corresponds to a period of genuinely elevated mortality. Applying it to periods without appreciable excess mortality can cause sampling fluctuations to be attributed to wave exposure, potentially introducing bias.
+ 
+ Update the cumulative exposures week by week and output $H_{\rm corr}=B+W$. After wave exit $e$, hold $W_e$ fixed and solve $L(B_e+u,W_e)/L(B_e,W_e)=\exp[-(H_{\rm obs}(t)-H_{\rm obs}(e))]$ for the subsequent proportional exposure $u(t)$. This retains total reference-frailty cumulative mortality while accounting for changing survivor frailty. Numerical exactness is conditional on the working survival model, fitted inputs, dates, and attribution rules. The same law is used to fit quiet mortality following nonlinear selection.
+ 

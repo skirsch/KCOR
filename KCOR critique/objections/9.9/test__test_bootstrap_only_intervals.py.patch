@@ -1,0 +1,28 @@
+--- m149/test/test_bootstrap_only_intervals.py
++++ m150/test/test_bootstrap_only_intervals.py
+@@ -0,0 +1,25 @@
++"""9.9: no count-based intervals and reference-week bootstrap independent of them."""
++from pathlib import Path
++import sys,os
++import numpy as np,pandas as pd
++ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'test'))
++from test_source_component_history import fixture
++from test_pool_composition import written,sparse,pair
++from test_round7_workbook import run,K
++
++def main():
++    f=fixture();out=run('2021_24',f)
++    assert out.CI_lower.isna().all() and out.CI_upper.isna().all()
++    assert not any(c.startswith('CI_analytic') for c in out.columns)
++    x=written(f,19);assert not any(c.startswith('CI_analytic') for c in x.columns)
++    anchor=pd.Timestamp('2021-06-14')+pd.Timedelta(weeks=K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE)
++    for age in (1940,1950,0,-2):
++        p=pair(x,age);a=p[pd.to_datetime(p.Date).eq(anchor)].iloc[0]
++        assert a.KCOR==1 and a.CI_lower==1 and a.CI_upper==1 and a.CI_valid_draws==19,(age,a.to_dict())
++        print('anchor',age,a.KCOR,a.CI_lower,a.CI_upper,a.CI_valid_draws,flush=True)
++    y=written(sparse(0),19);a=pair(y,1950).iloc[-1]
++    assert pd.isna(a.KCOR) and pd.isna(a.CI_lower) and pd.isna(a.CI_upper)
++    assert np.isfinite(a.KCOR_unanchored) and np.isfinite(a.CI_unanchored_lower) and np.isfinite(a.CI_unanchored_upper) and a.CI_unanchored_method.startswith('person_bootstrap')
++    print('undefined anchor, independently available unanchored',a[['KCOR_unanchored','CI_unanchored_lower','CI_unanchored_upper','CI_unanchored_method']].to_dict(),flush=True)
++    z=written(f,0);assert z.CI_lower.isna().all() and z.CI_upper.isna().all() and z.CI_method.eq('unavailable').all();print('disabled bootstrap has no bounds',flush=True)
++if __name__=='__main__':main()

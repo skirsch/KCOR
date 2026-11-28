@@ -1,0 +1,133 @@
+--- a/test/sim_grid/code/generate_sim_grid.py
++++ b/test/sim_grid/code/generate_sim_grid.py
+@@ -644,7 +644,8 @@
+     # Using trapezoidal rule
+     dt = 1.0  # Weekly resolution
+     # Use trapz for compatibility with older numpy versions
+-    rmst = np.trapz(S_t, dx=dt)
++    integrate = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
++    rmst = integrate(S_t, dx=dt)
+     
+     return float(rmst)
+ 
+@@ -658,10 +659,10 @@
+     config: SimConfig,
+ ) -> Dict:
+     """
+-    Fit time-varying Cox model with treatment × time interaction.
++    Fit interval-specific Cox hazard ratios.
+     
+     Converts aggregated cohort data to approximate individual-level format
+-    and fits Cox model with time-varying coefficient.
++    and fits a separate Cox model within each prespecified interval.
+     
+     Args:
+         scenario_data: Scenario data with cohorts
+@@ -671,7 +672,6 @@
+         Dictionary with HR(t) summary or instability metrics
+     """
+     try:
+-        import statsmodels.api as sm
+         from statsmodels.duration.hazard_regression import PHReg
+     except ImportError:
+         return {
+@@ -690,46 +690,24 @@
+         alive = cohort["alive"]
+         dead = cohort["dead"]
+         
+-        n_initial = int(alive[0])
++        n_initial = int(round(float(alive[0])))
+         if n_initial <= 0:
+             continue
+-        
+-        # Create individual records
+-        person_id = 0
+-        for t in range(len(weeks)):
+-            if t == 0:
+-                n_at_risk = n_initial
+-            else:
+-                n_at_risk = int(alive[t])
+-            
+-            n_deaths = int(dead[t])
+-            
+-            # Distribute deaths uniformly within week [t, t+1)
+-            # Use deterministic midpoint for reproducibility (no random sampling needed)
+-            if n_deaths > 0 and n_at_risk > 0:
+-                for i in range(n_deaths):
+-                    # Death time: uniform spacing within week for reproducibility
+-                    death_time = float(t) + (i + 0.5) / max(n_deaths, 1)
+-                    rows.append({
+-                        "time": death_time,
+-                        "event": 1,
+-                        "cohort": dose,
+-                        "time_cohort": death_time * dose,  # Interaction term
+-                    })
+-                    person_id += 1
+-            
+-            # Censoring: survivors at end of follow-up
+-            if t == len(weeks) - 1:
+-                n_survivors = n_at_risk - n_deaths
+-                for _ in range(n_survivors):
+-                    rows.append({
+-                        "time": float(t + 1),
+-                        "event": 0,
+-                        "cohort": dose,
+-                        "time_cohort": float(t + 1) * dose,
+-                    })
+-                    person_id += 1
+-    
++
++        # The historical generator uses fractional expected deaths. Round
++        # cumulative deaths once so the reconstructed records conserve people.
++        cumulative = np.rint(np.cumsum(dead)).astype(np.int64)
++        deaths = np.diff(cumulative, prepend=0)
++        if np.any(deaths < 0) or cumulative[-1] > n_initial:
++            raise ValueError("invalid simulated death history")
++        for t, n_deaths in enumerate(deaths):
++            for i in range(n_deaths):
++                # Retain the original deterministic within-week spacing.
++                death_time = float(t) + (i + 0.5) / n_deaths
++                rows.append({"time": death_time, "event": 1, "cohort": dose})
++        for _ in range(n_initial - int(cumulative[-1])):
++            rows.append({"time": float(len(weeks)), "event": 0, "cohort": dose})
++
+     if len(rows) == 0:
+         return {
+             "cox_hr_mean": np.nan,
+@@ -740,7 +718,7 @@
+     
+     df = pd.DataFrame(rows)
+     
+-    # Fit Cox model with time × treatment interaction
++    # Fit separate interval-specific Cox models.
+     try:
+         # Simple approach: fit separate models at different time windows
+         # to assess time-varying behavior
+@@ -753,15 +731,23 @@
+         
+         hr_values = []
+         for t_start, t_end in time_windows:
+-            df_window = df[(df["time"] >= t_start) & (df["time"] < t_end)]
++            t_end = min(t_end, config.n_weeks)
++            if t_end <= t_start:
++                continue
++            # Every person alive at the start contributes risk time. Anyone
++            # surviving the interval is censored at its end.
++            df_window = df[df["time"] >= t_start]
+             if len(df_window) < 10:
+                 continue
+-            
++            terminal = df_window["time"].to_numpy()
++            status = df_window["event"].to_numpy() * (terminal < t_end)
++            if not status.any() or df_window["cohort"].nunique() < 2:
++                continue
+             exog = df_window[["cohort"]].astype(float).to_numpy()
+             model = PHReg(
+-                df_window["time"].to_numpy(),
++                np.minimum(terminal, t_end) - t_start,
+                 exog,
+-                status=df_window["event"].to_numpy()
++                status=status
+             )
+             res = model.fit(disp=False)
+             

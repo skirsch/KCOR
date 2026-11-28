@@ -1,0 +1,11 @@
+--- m146/documentation/preprint/paper.md
++++ m147/documentation/preprint/paper.md
+@@ -404,7 +404,7 @@
+ $$
+ \tilde H_{0,d}(t)=H_{\mathrm{obs},d}(t),
+ $$
+-which is the observed cumulative hazard computed as the sum of negative log weekly survival probabilities, rather than the Nelson–Aalen sum of weekly death fractions. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates negligible detectable depletion curvature. Weekly death fractions below one are converted without clipping. Exhausted risk sets and inversions outside the representable numerical range are flagged as unavailable; the inversion retains the fitted variance.
++which is the observed cumulative hazard computed as the sum of negative log weekly survival probabilities, rather than the Nelson–Aalen sum of weekly death fractions. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates negligible detectable depletion curvature. Weekly death fractions below one are converted without clipping. Exhausted risk sets and inversions outside the representable numerical range are flagged as unavailable; the inversion retains the fitted variance. From the first week with zero people at risk at its opening, the cohort hazard is undefined: subsequent weeks are excluded from fitting and the affected contrast and its interval are unavailable. Earlier supported estimates are retained; directly aggregated cohorts with positive opening risk remain eligible.
+ 
+ #### 2.6.2 Internal diagnostics and 'self-check' behavior
+ 

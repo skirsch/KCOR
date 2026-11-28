@@ -1,0 +1,119 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -355,27 +355,27 @@
+ $$
+ {#eq:si_theta_near_zero}
+ 
+-These values should be interpreted as **descriptive outputs of the revised estimator**, not as validation evidence. They summarize how much depletion curvature the estimator attributes to each cohort at rebased enrollment time under the working model, conditional on the diagnostics for that analysis.
++These values should be interpreted as **descriptive outputs of the revised estimator**, not as validation evidence. They summarize how much depletion curvature the estimator attributes to each cohort at rebased enrollment time under the working model, with diagnostic results shown below.
+ 
+ As a consequence, KCOR normalization leaves some cohorts' cumulative hazards nearly unchanged, while substantially increasing the depletion-neutralized baseline cumulative hazard for others. This behavior is consistent with curvature-driven normalization rather than cohort identity. The pattern is visible directly in depletion-neutralized versus observed cumulative hazard plots and is summarized quantitatively in the fitted-parameter logs (see `KCOR_summary.log`).
+ 
+-In these Czech quiet windows the normalized curves appear approximately straight in event time. The model reference is the fitted cumulative Gompertz curve with the window offset (main text §2.6.2). Deviations can reflect baseline misspecification or time-varying risk.
+-
+-Table @tbl:si_diagnostic_gate summarizes these diagnostic checks across age strata.
+-
+-Table: Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass. {#tbl:si_diagnostic_gate}
+-
+-| Age band (years) | Quiet window valid | Post-normalization linearity | Parameter stability | KCOR reported |
+-| ---------------- | ------------------ | ---------------------------- | ------------------- | ------------- |
+-| 40–49            | Yes                | Yes                          | Yes                 | Yes           |
+-| 50–59            | Yes                | Yes                          | Yes                 | Yes           |
+-| 60–69            | Yes                | Yes                          | Yes                 | Yes           |
+-| 70–79            | Yes                | Yes                          | Yes                 | Yes           |
+-| 80–89            | Yes                | Yes                          | Yes                 | Yes           |
+-| 90–99            | Yes                | Yes                          | Yes                 | Yes           |
+-| All ages         | Yes                | Yes                          | Yes                 | Yes           |
+-
+-In this application, all examined age strata satisfied the prespecified diagnostic criteria; this indicates internal consistency of the working model in this dataset but does not constitute validation of the estimator. KCOR results are not reported for any age stratum where diagnostics indicate non-identifiability.
++The normalized cumulative trajectories are assessed against the fitted Gompertz curve with window offsets (main text §2.6.2). Deviations can reflect baseline misspecification or time-varying risk.
++
++Table @tbl:si_diagnostic_gate reports the numerical fitting status and exploratory residual screen for the six age bands and full aggregate, using the current module-off all-window fitter. All 14 fits were numerically accepted, and six had residual-screen flags. Window-omission stability was not evaluated in this replay.
++
++Table: Numerical fitting status and weekly death-count residual flags for the Czech 2021-24 application (ages in calendar year 2024). {#tbl:si_diagnostic_gate}
++
++| Age band (years) | Dose 0 fit status | Dose 2 fit status | Dose 0 residual flag | Dose 2 residual flag |
++|---|---|---|---|---|
++| 40–49 | OK | OK | No | No |
++| 50–59 | OK | OK | No | No |
++| 60–69 | OK | OK | No | No |
++| 70–79 | OK | OK | No | Yes |
++| 80–89 | OK | OK | Yes | Yes |
++| 90–99 | OK | OK | No | Yes |
++| All ages (full population) | OK | OK | Yes | Yes |
++
++Source: `analysis/s6/replay.py` and `analysis/s6/results.json`. The residual screen is exploratory and the fitted parameters are retained.
+ 
+ **Interpretation:** In this application, some cohorts exhibit larger fitted $\hat{\theta}_{0,d}$ than others, indicating stronger estimated depletion curvature at rebased enrollment time under the working model:
+ 
+@@ -395,46 +395,44 @@
+ 
+ These raw contrasts reflect both selection and depletion effects and are not interpreted causally.
+ 
+-Table: Estimated enrollment-time gamma-frailty variance by age band and vaccination status for Czech cohorts enrolled in 2021_24. {#tbl:si_frailty_variance}
++Table: Estimated enrollment-time gamma-frailty variance by age in calendar year 2024 and dose for Czech cohorts enrolled in 2021-24, using the current all-window fit with the optional NPH module off. {#tbl:si_frailty_variance}
+ 
+ | Age band (years) | Fitted frailty variance (Dose 0) | Fitted frailty variance (Dose 2) |
+-| ---------------- | -----------------: | -----------------: |
+-| 40–49            |               16.79 |           $2.66 \times 10^{-6}$ |
+-| 50–59            |               23.02 |           $1.87 \times 10^{-4}$ |
+-| 60–69            |               13.13 |           $7.01 \times 10^{-18}$ |
+-| 70–79            |                6.98 |           $3.46 \times 10^{-17}$ |
+-| 80–89            |                2.97 |           $2.03 \times 10^{-11}$ |
+-| 90–99            |                0.80 |           $8.66 \times 10^{-16}$ |
+-| All ages (full population) |                4.98 |           $1.02 \times 10^{-11}$ |
++|---|---:|---:|
++| 40–49 | 63.87 | 71.83 |
++| 50–59 | 26.82 | 0.00 |
++| 60–69 | 11.47 | 0.00 |
++| 70–79 | 5.16 | 0.00 |
++| 80–89 | 1.70 | 0.00 |
++| 90–99 | 0.51 | 0.00 |
++| All ages (full population) | 31.06 | 0.00 |
+ 
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate weak identifiability or effectively linear cumulative hazards under the working model.
+-- Each entry reports a single fitted enrollment-time gamma-frailty variance for the specified age band and vaccination status within the 2021_24 enrollment cohort.
+-- The "All ages (full population)" row corresponds to an independent fit over the full pooled age range, included as a global diagnostic.
+-- Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40+ (YOB $\le 1980$) where event counts are stable.
++- Each entry reports the fitted variance rounded to two decimal places; the stored results retain full precision.
++- The "All ages (full population)" row fits the supplied aggregate counts, including unknown birth years.
++- Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied full-population total.
+ 
+ **Diagnostic checks:**
+-- **Interpretation is conditional on diagnostics:** these values are shown only for strata passing the prespecified diagnostic gate above.
++- **Interpretation is conditional on diagnostics:** the numerical status and descriptive residual flags are listed above.
+ - **Weak-identification boundary:** estimates near zero are treated as low-curvature or weak-identification outputs, not as substantive evidence for or against any cohort story.
+ - **Age coherence remains descriptive:** variation across age bands is reported descriptively and may reflect the interaction of baseline hazard, follow-up length, and depletion geometry.
+ - **Stability:** sign reversals, boundary pathologies, or major sensitivity to window perturbation would count against interpretability.
+ - **Falsifiability:** failure of any one of these checks would constitute evidence against model adequacy for that application.
+ 
+-Table: Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.) {#tbl:si_raw_hazards}
++Table: Ratio of observed cumulative mortality hazards for dose 0 versus dose 2, Czech cohorts enrolled in 2021-24 (age in calendar year 2024). The full-population row includes unknown birth years. {#tbl:si_raw_hazards}
+ 
+ | Age band (years) | Dose 0 cumulative hazard | Dose 2 cumulative hazard | Ratio |
+-| ---------------- | ----------------------: | -----------------------: | ----: |
+-| 40–49            |               0.005260 |                0.004117 | 1.2776 |
+-| 50–59            |               0.014969 |                0.009582 | 1.5622 |
+-| 60–69            |               0.045475 |                0.023136 | 1.9655 |
+-| 70–79            |               0.123097 |                0.057675 | 2.1343 |
+-| 80–89            |               0.307169 |                0.167345 | 1.8355 |
+-| 90–99            |               0.776341 |                0.517284 | 1.5008 |
+-| All ages (full population) |               0.023160 |                0.073323 | 0.3159 |
+-
+-This table reports unadjusted cumulative hazards derived directly from the raw data, prior to any frailty normalization or depletion correction, and is shown to illustrate the magnitude and direction of selection-induced curvature addressed by KCOR.
+-
+-Values reflect raw cumulative outcome differences prior to KCOR normalization and are not interpreted causally due to cohort non-exchangeability. Cumulative hazards were integrated from cohort enrollment through the end of available follow-up for the 2021_24 enrollment window (through week 2024-16), identically for Dose 0 and Dose 2 cohorts.
++|---|---:|---:|---:|
++| 40–49 | 0.005259 | 0.004117 | 1.2776 |
++| 50–59 | 0.014968 | 0.009582 | 1.5621 |
++| 60–69 | 0.045467 | 0.023134 | 1.9654 |
++| 70–79 | 0.123042 | 0.057663 | 2.1338 |
++| 80–89 | 0.306825 | 0.167247 | 1.8346 |
++| 90–99 | 0.774155 | 0.516352 | 1.4993 |
++| All ages (full population) | 0.019867 | 0.073304 | 0.2710 |
++
++The cumulative hazards sum the weekly negative log survival probabilities after the two-week stabilization skip (2021-26 through 2024-16 inclusive), before frailty normalization. The age bands use the supplied five-year birth groups combined into ten-year bands. Source: `data/Czech/KCOR_CMR.xlsx`, sheet `2021_24`; replay and results in `analysis/s6/`. The raw contrasts are descriptive.
+ 
+ #### S6.1.3 Illustrative application to national registry mortality data
+ 

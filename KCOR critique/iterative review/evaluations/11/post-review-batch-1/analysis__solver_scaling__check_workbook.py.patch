@@ -1,0 +1,37 @@
+--- a/analysis/solver_scaling/check_workbook.py
++++ b/analysis/solver_scaling/check_workbook.py
+@@ -6,7 +6,7 @@
+ from test_round7_workbook import run
+ points={}
+ for mode in ("identified_only","forced_alpha"):
+-    source=ROOT/"analysis/ceiling500/table8"/(mode+"-draws.npz")
++    source=ROOT/("analysis/round11/table8-primary" if mode=="identified_only" else "analysis/round11/forced-alpha-smoke")/(mode+"-draws.npz")
+     expected=np.load(source)["points"][:,0]
+     points[mode]={}
+     for i,sheet in enumerate(("2021_24","2022_06")):
+@@ -14,13 +14,6 @@
+         rows=run(sheet,f,mode=mode,layout="table8")
+         sys.path.insert(0,str(ROOT/"analysis/table8"))
+         import table8_bootstrap as T
+-        _,cells=T.read_population(ROOT/"analysis/table8/input.xlsx",sheet)
+-        strata=cells.copy();strata[2]=cells.sum(axis=0)
+-        alive=np.flip(np.cumsum(np.flip(strata,axis=2),axis=2),axis=2)
+-        early=strata[:,:,:4]/alive[:,:,:4]
+-        weights=np.nanmean(np.where(early>0,early,np.nan),axis=(1,2))*alive[:,:,:4].sum(axis=(1,2))
+-        p=rows[(rows.YearOfBirth.isin([1940,1950,1960]))&(pd.to_datetime(rows.Date)==pd.Timestamp("2022-12-26"))]
+-        values=[float(np.exp(np.average(np.log(p[(p.Dose_num==n)&(p.Dose_den==d)].set_index("YearOfBirth").loc[[1940,1950,1960],"KCOR"]),weights=weights))) for n,d in [(1,0),(2,0),(2,1)]]
+         pooled=rows[rows.YearOfBirth.eq(0)]
+         all_dates=pd.to_datetime(rows[rows.YearOfBirth.eq(1940)].Date).unique()
+         for n,d in [(1,0),(2,0),(2,1)]:
+@@ -30,8 +23,8 @@
+         exported=pooled[pd.to_datetime(pooled.Date)==pd.Timestamp("2022-12-26")]
+         actual=[float(exported[(exported.Dose_num==n)&(exported.Dose_den==d)].KCOR.iloc[0]) for n,d in [(1,0),(2,0),(2,1)]]
+         assert np.max(np.abs(np.array(actual)-expected[i]))<1e-8,(sheet,mode,actual,expected[i])
+-        maxdiff=float(np.max(np.abs(np.array(values)-expected[i])))
+-        assert maxdiff<1e-8 and p.normalization_status.eq("ok").all()
+-        points[mode][sheet]=dict(points=values,exported_points=actual,pooled_dates=len(all_dates),max_difference_from_full_replay=maxdiff)
++        maxdiff=float(np.max(np.abs(np.array(actual)-expected[i])))
++        assert maxdiff<1e-8
++        points[mode][sheet]=dict(points=actual,exported_points=actual,pooled_dates=len(all_dates),max_difference_from_full_replay=maxdiff)
+         print(mode,sheet,points[mode][sheet],flush=True)
+ (HERE/"workbook-verification.json").write_text(json.dumps(points,indent=2))

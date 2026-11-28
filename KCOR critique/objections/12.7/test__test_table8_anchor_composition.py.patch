@@ -1,0 +1,38 @@
+--- /dev/null
++++ b/test/test_table8_anchor_composition.py
+@@ -0,0 +1,35 @@
++﻿"""12.7: paper-specific Table 8 replay matches ordinary available-strata rules."""
++from pathlib import Path
++import os,sys,numpy as np,pandas as pd
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code'),str(ROOT/'analysis/table8')]
++from test_round7_workbook import run
++import table8_bootstrap as T
++def frame(dates,cells):
++    c=cells.copy();c[2]+=c[0]+c[1];alive=np.cumsum(c[:,:,::-1],axis=2)[:,:,::-1][:,:,:-1]
++    return pd.concat([pd.DataFrame(dict(DateDied=dates,ISOweekDied=dates.strftime('%G-%V'),YearOfBirth=age,Dose=d,Sex='F',Alive=alive[a,d],Dead=c[a,d,:-1])) for a,age in enumerate([1940,1950,1960]) for d in range(3)],ignore_index=True)
++def main():
++    os.environ['KCOR_NPH_MODE']='identified_only'
++    pops=[T.read_population(ROOT/'analysis/table8/input.xlsx',s) for s in T.SHEETS]
++    dates,base=pops[0]
++    for kind in ('undefined_anchor','exhaustion','one_anchor_death'):
++        c=base.copy()
++        if kind=='exhaustion':c[0,2,29]+=c[0,2,30:].sum();c[0,2,30:]=0
++        else:
++            c[0,2,-1]+=c[0,2,:6].sum();c[0,2,:6]=0
++            if kind=='one_anchor_death':c[0,2,4]=1;c[0,2,-1]-=1
++        T.initialize([(dates,c),pops[1]],'revised')
++        p,_,_,m=T.estimate(0,0,return_composition=True)
++        row=run(T.SHEETS[0],frame(dates,c),layout='table8')
++        actual=row[(row.YearOfBirth==0)&(pd.to_datetime(row.Date)==T.REPORT)]
++        ordinary=[actual[(actual.Dose_num==n)&(actual.Dose_den==d)].KCOR.iloc[0] for n,d in T.PAIRS]
++        np.testing.assert_allclose(p,ordinary,rtol=1e-8,equal_nan=True)
++        print(kind,'points',p,'members',m.tolist(),flush=True)
++        if kind=='undefined_anchor':
++            assert m[1].tolist()==[False,True,True] and m[2].tolist()==[False,True,True]
++        if kind=='one_anchor_death':
++            rs=[T.estimate(0,j,return_composition=True) for j in range(9)]
++            v=np.array([a[0] for a in rs]);members=np.array([a[-1] for a in rs])
++            matched,lo,hi,changed,valid=T.composition_intervals(v,members)
++            assert changed[1]>0 and changed[2]>0 and np.isnan(lo[1:]).all() and np.isnan(hi[1:]).all()
++            print('changed composition draws',changed,'valid',valid,'intervals',lo,hi,flush=True)
++if __name__=='__main__':main()

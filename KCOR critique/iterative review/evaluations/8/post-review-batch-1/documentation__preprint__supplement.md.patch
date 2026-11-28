@@ -1,0 +1,27 @@
+--- m135/documentation/preprint/supplement.md
++++ m136/documentation/preprint/supplement.md
+@@ -59,13 +59,13 @@
+ 
+ | Criterion | Condition | Consequence if violated |
+ |---|---|---|
+-| I1 Diagnostic sufficiency | All required diagnostics pass. | KCOR interpretable |
++| I1 Diagnostic sufficiency | All required diagnostics pass. | Substantive interpretability not established |
+ | I2 Information in quiet windows | The observed hazard trajectory distinguishes the baseline rate from the frailty variance with sufficient precision under the specified Gompertz model. | $\theta_{0,d}$ weakly identified |
+ | I3 Multi-window coherence | Quiet windows remain consistent after alignment. | Interpretation limited |
+ | I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identifiable |
+ | I5 Anchoring validity | Post-normalization behavior is stable in the reference quiet window. | Anchoring invalid |
+ | I6 NPH signal sufficiency | When the optional NPH module is used, cross-cohort differences in depletion geometry and excess hazard are strong enough to localize $\alpha$ jointly with a prespecified **externally supplied VE or other prespecified intervention-effect scale**. | $\alpha$ weakly identified; objectives flatten or estimators disagree |
+-| I7 Conservative failure rule | A required diagnostic fails. | Substantive interpretability not established; flagged outputs may be shown for audit |
++| I7 Conservative failure rule | Required identification diagnostics are satisfied. | Substantive interpretability not established; flagged outputs may be shown for audit |
+ 
+ When diagnostics indicate non-identifiability, substantive interpretation is withheld; explicitly flagged numerical outputs may be retained for descriptive illustration or audit; this does not invalidate the KCOR estimator itself. In minimal aggregated data, identifiability of $\theta_{0,d}$ from curvature remains conditional on the working model rather than assumption-free: additive or sharply time-varying components can distort curvature, and heterogeneous multiplicative effects across cohorts can perturb depletion paths, with diagnostics intended to surface these failure modes. When the optional NPH module is used, identifiability of $\alpha$ is likewise conditional: it depends on cross-cohort separation in depletion geometry, stable excess-hazard measurement, and a prespecified **externally supplied VE or other prespecified intervention-effect scale** (main text §2.7.2); $\alpha$ is not separately identifiable from cohort-specific multiplicative effects under minimal data if that scale is not fixed externally (main text §5.4). The common external intensity is not directly observed.
+ 
+@@ -410,7 +410,7 @@
+ | All ages | 31.06 [29.38, 32.65] | 0.00 [0.00, 0.28] | 1.136 [1.086, 1.189] |
+ 
+ **Notes:**
+-- The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate weak identifiability or effectively linear cumulative hazards under the working model.
++- The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate little fitted frailty-induced depletion; precision and identification must be assessed separately. At zero variance, the working-model cumulative hazard follows the Gompertz baseline.
+ - Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 fitted value is poorly resolved across the entire allowed range. KCOR intervals retain the existing upper-bound zero-variance fallback (287 of 999 dose-2 draws at ages 40–49). Source: `analysis/solver_scaling/s6-all-window.json` and its matched draws; the earlier first-window study is archived separately.
+ - The "All ages" row fits the supplied eligible-population aggregate counts, including unknown birth years.
+ - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied eligible-population total.

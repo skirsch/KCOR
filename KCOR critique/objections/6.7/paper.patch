@@ -1,0 +1,104 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -99,7 +99,7 @@
+ 
+ ### 1.7 Paper organization and supporting information (SI)
+ 
+-The main text introduces the KCOR estimator, provides a canonical demonstration of Cox bias under frailty-driven depletion, and presents two primary validation examples (a negative control and a stress test). Additional validations—including positive controls—along with extended diagnostics, empirical registry-based nulls, and detailed simulation specifications are provided in the Supplementary Information (SI; Sections S2 and S4.2–S4.3; Tables S1–S3).
++The main text introduces the KCOR estimator, provides a demonstration of Cox estimates under frailty-driven depletion, and presents two primary validation examples (a negative control and a stress test). Additional validations—including positive controls—along with extended diagnostics, empirical registry-based nulls, and detailed simulation specifications are provided in the Supplementary Information (SI; Sections S2 and S4.2–S4.3; Tables S1–S3).
+ 
+ ## 2. Methods
+ 
+@@ -617,16 +617,16 @@
+ 
+ ### 2.11 Relationship to Cox proportional hazards
+ 
+-Cox proportional hazards models estimate an instantaneous hazard ratio under the assumption that hazards differ by a time-invariant multiplicative factor. Under selection on frailty with latent heterogeneity, this assumption is typically violated, yielding time-varying hazard ratios induced purely by depletion dynamics. This reflects an estimand mismatch: Cox targets an instantaneous hazard ratio conditional on survival, whereas KCOR targets a cumulative hazard contrast after depletion normalization. The resulting Cox bias is structural: it arises from conditioning on survival in the presence of latent heterogeneity and cannot be removed by increasing sample size or covariate adjustment alone. KCOR operates on Nelson–Aalen–type cumulative hazards without individual-level frailty observables.
++Cox proportional hazards models estimate an instantaneous hazard ratio under the assumption that hazards differ by a time-invariant multiplicative factor. Under selection on frailty with latent heterogeneity, this assumption is typically violated, yielding time-varying hazard ratios induced purely by depletion dynamics. This reflects an estimand mismatch: Cox targets an instantaneous hazard ratio conditional on survival, whereas KCOR targets a cumulative hazard contrast after depletion normalization. An ordinary cohort-only Cox fit can therefore depart from the fixed-frailty treatment-effect benchmark even in large samples. KCOR operates on Nelson–Aalen–type cumulative hazards without individual-level frailty observables.
+ 
+ Accordingly, Cox results are presented here as a diagnostic demonstration of estimand mismatch, not as a competing intervention-effect estimator. This limitation is consistent with earlier work by Deeks showing that increasing covariate adjustment in non-randomized analyses can exacerbate bias and imprecision when selection effects and measurement error dominate. Deeks further noted that, despite the widespread reliance on covariate adjustment in non-randomized studies, there is no empirical evidence that such adjustment reduces bias on average [@deeks2003].
+ 
+ Even when Cox models are extended with shared frailty to accommodate heterogeneity, they continue to estimate instantaneous hazard ratios conditional on survival. KCOR instead uses a cohort-level working model with Gompertz curvature, cohort-specific enrollment-time $\theta_{0,d}$, and quiet-window alignment to normalize selection-induced depletion geometry before computing a cumulative contrast on the depletion-neutralized scale.
+ 
+ **Distinction from shared-frailty Cox models.**  
+-Cox models with shared frailty incorporate unobserved heterogeneity as a random effect during partial-likelihood maximization, but continue to estimate an instantaneous hazard ratio conditional on survival. Frailty variance is treated as a nuisance parameter and depletion geometry is absorbed into the fitted hazard ratio trajectory. KCOR differs fundamentally: enrollment-time frailty variance $\theta_{0,d}$ is estimated explicitly from aligned quiet-window geometry under a Gompertz working model and is then analytically inverted *prior* to comparison. The resulting estimand is a cumulative hazard contrast on a depletion-neutralized scale, rather than a conditional instantaneous hazard ratio. Shared-frailty Cox **remains conditional on survival** and **does not adjust for depletion-induced selection effects in marginal cumulative comparisons** in the sense targeted by KCOR. Consequently, even when shared-frailty Cox models reduce bias relative to standard Cox regression, they do not target the same estimand as KCOR and may still exhibit residual non-null behavior under selection-only regimes (Table @tbl:joint_frailty_comparison).
+-
+-#### 2.11.1 Demonstration: Cox bias under frailty heterogeneity with no treatment effect
++Shared-frailty Cox models include a random effect shared by members of a cluster and estimate hazard ratios conditional on that effect. KCOR instead estimates cohort-specific enrollment-time frailty variance from aligned quiet-window geometry and inverts depletion before comparing cumulative hazards. These are distinct estimands.
++
++#### 2.11.1 Demonstration: Cox estimates under frailty heterogeneity with no treatment effect
+ 
+ A controlled synthetic experiment was conducted in which the **true effect is known to be zero by construction**, isolating latent frailty heterogeneity as the sole driver of depletion-induced non-proportional hazards. Cox and KCOR were applied to the same simulated datasets.
+ 
+@@ -652,7 +652,7 @@
+ 
+ **Expected behavior under the null.**
+ 
+-Because the data-generating process includes **no treatment effect**, the appropriate benchmark is null cumulative behavior. In this setting:
++Because the data-generating process includes **no treatment effect**, the fixed-frailty treatment hazard ratio and the depletion-normalized cumulative ratio both have benchmark 1; marginal hazards and survival need not coincide. In this setting:
+ 
+ * **Cox regression** is expected to produce apparent non-null hazard ratios as $\theta_0$ increases, reflecting differential selection-induced depletion and violation of proportional hazards induced by frailty heterogeneity.
+ * **KCOR** is expected to remain centered near unity with negligible post-normalization slope across all $\theta_0$, which would be consistent with the expected null behavior under the working model and therefore serves as a diagnostic check rather than as proof of correctness.
+@@ -661,21 +661,21 @@
+ 
+ Across increasing values of $\theta_0$, Cox regression produced progressively larger apparent deviations from a hazard ratio of 1. The direction and magnitude of the apparent effect depended on the follow-up horizon and degree of frailty heterogeneity. In contrast, $\mathrm{KCOR}(t)$ trajectories remained stable and centered near unity, with post-normalization slopes approximately zero across the simulated conditions examined here.
+ 
+-These results show that frailty heterogeneity alone can induce spurious hazard ratios in Cox regression, while KCOR behaves close to the null benchmark expected under the same working-model conditions.
++These results show that frailty heterogeneity alone can induce non-unit Cox hazard ratios despite the null treatment effect at fixed frailty, while KCOR behaves close to the null benchmark expected under the same working-model conditions.
+ 
+ The standard Cox estimate departs progressively farther from the null treatment-effect benchmark as frailty variance increases on this grid. KCOR remains close to its cumulative-hazard target of 1 across the same parameter range.
+ 
+ Table @tbl:cox_bias_demo reports numerical summaries of the Cox-vs-KCOR behavior across the frailty grid. Small residual deviations in the asymptotic level are expected under extreme frailty heterogeneity and are negligible relative to the distortions observed under Cox; the diagnostic criterion is slope stability rather than exact unity. 
+ 
+-Figure @fig:estimator_bias_vs_theta summarizes **relative bias** (estimate minus true target) for standard Cox, an **approximate reference curve** for shared-frailty Cox constructed from null-case bias in Table @tbl:joint_frailty_comparison (see caption—not a refit at each $\theta_0$), and KCOR asymptotes on the same $\theta_0$ grid. This approximation is included to illustrate **expected bias attenuation** relative to standard Cox; a full simulation of shared-frailty Cox across the $\theta_0$ grid is left for future work. Additional Cox HR results from the same synthetic-null grid are shown in Figure @fig:cox_bias_hr.
++Figure @fig:estimator_bias_vs_theta summarizes deviations from unity for standard Cox and KCOR asymptotes on the same frailty grid. Additional Cox HR results from the same synthetic-null grid are shown in Figure @fig:cox_bias_hr.
+ 
+ A compact summary of KCOR bias as a function of frailty variance $\theta_0$ is provided in the Supplementary Information (Figure S2).
+ 
+-![Cox regression produces spurious non-null hazard ratios under a *synthetic null* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
++![Cox regression produces non-unit hazard ratios under a *synthetic null treatment effect at fixed frailty* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
+ 
+ ![$\mathrm{KCOR}(t)$ stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, $\mathrm{KCOR}(t)$ asymptotes remain near 1 across $\theta_0$, which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
+ 
+-![Estimator bias as a function of enrollment-time frailty variance $\theta_0$ on the synthetic-null grid (true hazard ratio 1; true KCOR asymptote 1). **Cox:** standard Cox hazard ratio bias, $\widehat{\mathrm{HR}}-1$. **KCOR:** asymptotic $\mathrm{KCOR}$ bias, $\widehat{\mathrm{KCOR}}_\infty-1$. **Shared-frailty (approx.):** the shared-frailty Cox curve is an **approximate reference** constructed from the null-case bias observed in Table @tbl:joint_frailty_comparison (proportional attenuation of each standard Cox $\widehat{\mathrm{HR}}$ toward 1 using the ratio of deviations from 1 in that table’s gamma-frailty null row), **not** a full re-estimation of shared-frailty Cox at each frailty level. Generated by `test/sim_grid/code/plot_estimator_bias_vs_theta.py`.](figures/fig_estimator_bias_vs_theta.png){#fig:estimator_bias_vs_theta}
++![Deviations from the fixed-frailty treatment-effect and depletion-normalized cumulative benchmarks, respectively. **Cox:** standard Cox hazard ratio minus 1, $\widehat{\mathrm{HR}}-1$. **KCOR:** asymptotic $\mathrm{KCOR}$ minus 1, $\widehat{\mathrm{KCOR}}_\infty-1$. The generating frailty variances are supplied for KCOR inversion. Generated by `test/sim_grid/code/plot_estimator_bias_vs_theta.py`.](figures/fig_estimator_bias_vs_theta.png){#fig:estimator_bias_vs_theta}
+ 
+ **Interpretation.**
+ 
+@@ -1107,7 +1107,7 @@
+ | Time-varying Cox                       | Instantaneous hazard            | Time-varying $\beta(t)$      | No                                   | HR(t)                    | Fits depletion as signal          |
+ | Flexible parametric survival (splines) | Survival / hazard shape         | Baseline hazard        | No                                   | Smooth hazard / survival | Absorbs depletion curvature       |
+ | Additive hazards (Aalen)               | Hazard differences              | Additive hazard        | No                                   | $\Delta h(t)$            | Still conditional on survival     |
+-| RMST                                   | Mean survival                   | Survival curve         | No                                   | RMST                     | Inherits depletion bias           |
++| RMST                                   | Mean survival                   | Survival curve         | No                                   | RMST                     | Reflects marginal survival differences |
+ | Frailty regression                     | Heterogeneity- adjusted HR       | Random effects         | Partial                              | HR                       | Frailty treated as nuisance       |
+ | **KCOR (this work)**                   | **Cumulative outcome contrast** | **Depletion geometry** | **Yes (targeted)**                   | **$\mathrm{KCOR}(t)$**              | Diagnostics flag failure          |
+ 
+@@ -1183,21 +1183,13 @@
+ 
+ 
+ 
+-Table: Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds. {#tbl:joint_frailty_comparison}
+-
+-| Scenario | True effect (r) | Cox HR | Shared frailty Cox HR | KCOR drift/year | Cox indicates null? | Frailty-Cox indicates null? | KCOR indicates null? |
+-|----------|-----------------|--------|----------------------|-----------------|---------------------|---------------------------|---------------------|
+-| Gamma-frailty null | 1.0 (null) | 0.87 | 0.94 | < 0.5% | No (HR $\neq 1$) | No (HR $\neq 1$) | Yes (flat) |
+-| S7 harm (r=1.2) | 1.2 | 1.18 | 1.19 | +1.8% | No (detects effect) | No (detects effect) | No (detects effect) |
+-| S7 benefit (r=0.8) | 0.8 | 0.83 | 0.82 | -2.1% | No (detects effect) | No (detects effect) | No (detects effect) |
+-
+-
+-Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. The Cox comparison fits separate prespecified intervals, retaining everyone at risk at interval entry and censoring at its end; deterministic expected deaths are rounded cumulatively. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window. {#tbl:comparison_estimands}
+-
+-| Method | Target estimand | Deviation from null (selection-only scenarios) | Variance/instability | Interpretability notes |
++
++Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains near unity under these selection-only regimes, while RMST reflects marginal survival differences and interval-specific Cox reflects survivor hazard differences. These estimands can differ despite a fixed-frailty treatment null. All methods were applied to identical simulation outputs. The Cox comparison fits separate prespecified intervals, retaining everyone at risk at interval entry and censoring at its end; deterministic expected deaths are rounded cumulatively. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window. {#tbl:comparison_estimands}
++
++| Method | Target estimand | Deviation from unity (selection-only scenarios) | Sampling or across-window variation | Interpretability notes |
+ |--------|----------------|--------------------------------|---------------------|------------------------|
+-| **KCOR** | Cumulative hazard ratio (depletion-normalized) | Near zero (median KCOR $\approx 1.0$) | Low (stable trajectory) | Stable under selection-induced depletion; normalization precedes comparison |
+-| **RMST** | Restricted mean survival time | Non-zero (depends on depletion strength) | Moderate (depends on depletion strength) | Summarizes survival differences that may reflect depletion rather than treatment effect; does not normalize selection geometry |
++| **KCOR** | Cumulative hazard ratio (depletion-normalized) | Near zero (median KCOR $\approx 1.0$) | Sampling variation not estimated | Stable under selection-induced depletion; normalization precedes comparison |
++| **RMST** | Restricted mean survival time | Non-zero (depends on depletion strength) | Sampling variation not estimated | Summarizes survival differences that may reflect depletion rather than treatment effect; does not normalize selection geometry |
+ | **Cox** | Interval-specific hazard ratios | Mean HR 1.069 in the gamma-frailty null | Between-window HR SD 0.044 in that scenario | Captures time-varying hazards; does not normalize selection geometry |
+ 
+ 

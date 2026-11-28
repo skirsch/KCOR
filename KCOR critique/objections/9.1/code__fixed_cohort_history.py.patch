@@ -1,0 +1,39 @@
+--- m143/code/fixed_cohort_history.py
++++ m144/code/fixed_cohort_history.py
+@@ -7,7 +7,8 @@
+ 
+     A positive residual risk set cannot silently disappear before the sheet
+     horizon. A contiguous suffix missing after complete exhaustion is allowed.
+-    Non-death exits between observed weeks are allowed; unexplained increases
++    Non-death exits between observed weeks are allowed in the disjoint layout;
++    the declared overlapping Table 8 layout requires death-only accounting. Unexplained increases
+     and missing weeks are not. Fractional expected counts are permitted here
+     (the person bootstrap independently requires integer history cells).
+     """
+@@ -19,14 +20,13 @@
+     bad={}
+     if layout=="table8":
+         # Known age-shift input has intentionally relabelled overlapping rows,
+-        # without original constituent IDs. Validate constant multiplicity
+-        # within the declared pseudo-cohort and its combined risk history.
++        # without original constituent IDs. Combine indistinguishable rows only;
++        # preserve identifiable sex/DCCI histories until validation is complete.
+         for key,g in frame.groupby(keys,sort=False,dropna=False):
+             counts=g.groupby("DateDied").size()
+             if counts.nunique()>1:
+                 bad.setdefault(tuple(key[:2]),[]).append((tuple(key),"inconsistent age-shift source-row multiplicity"))
+-        frame=frame.groupby(["YearOfBirth","Dose","DateDied"],as_index=False)[["Alive","Dead"]].sum()
+-        keys=["YearOfBirth","Dose"]
++        frame=frame.groupby(keys+["DateDied"],as_index=False,dropna=False)[["Alive","Dead"]].sum()
+ 
+     for key,g in frame.groupby(keys,sort=False,dropna=False):
+         x=g.sort_values("DateDied")
+@@ -41,6 +41,8 @@
+             reason="invalid component risk/death counts"
+         elif np.any(a[1:]>a[:-1]-d[:-1]+tol[:-1]):
+             reason="unexplained component risk-set increase"
++        elif layout=="table8" and np.any(np.abs(a[1:]-(a[:-1]-d[:-1]))>tol[:-1]):
++            reason="overlapping component violates death-only accounting"
+         elif dates[-1]<horizon and a[-1]-d[-1]>tol[-1]:
+             reason="truncated positive-risk component"
+         if reason:

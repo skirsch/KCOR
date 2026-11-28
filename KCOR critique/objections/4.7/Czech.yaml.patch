@@ -1,0 +1,21 @@
+--- a/data/Czech/Czech.yaml
++++ b/data/Czech/Czech.yaml
+@@ -14,14 +14,15 @@
+ NPH_correction:
+   startDate: '2021-41'   # this is 10/11/2021
+   endDate: '2022-12'     # COVID extends into 3/21/2022
+-  mode: forced_alpha   # options are off, identified_only, forced_alpha
+-  identified_alpha: 1.18   # set only when an audited production-readable identified alpha exists
++  mode: identified_only   # primary: inactive unless alpha is identified; forced_alpha is sensitivity-only
++  identified_alpha: null   # no identified Czech exponent
+   forced_alpha: 1.18       # sensitivity-only override used only when mode = forced_alpha
+   neutralization: symmetric_all_cohorts
+ 
+ # The quiet window is used to estimate the theta parameter for the gamma frailty model.
+ # Generally, larger windows are better if there are no major epidemic waves or policy shocks.
+-# to be conservative, we use the CY 2023 because it showed the least vaccine harm.
++# Historical selection rationale in the earlier configuration: CY 2023 showed the least vaccine harm.
++# Retain the configured dates; outcome-independent prespecification has not been established.
+ 
+ 
+ # KCOR v7: estimate theta(0) from points within these quiet windows (no COVID, no excess mortality)

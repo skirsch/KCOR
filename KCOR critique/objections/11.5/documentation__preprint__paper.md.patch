@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -472,7 +472,7 @@
+ h_{\mathrm{excess},d}(t)\propto E_d[z^{\alpha}\mid t].
+ $$
+ 
+-Under the gamma-frailty working model, this moment depends on the cohort's current depletion state, so the NPH module links external-hazard amplification to cumulative-hazard geometry rather than to a cohort-specific scalar multiplier. When $\alpha=1$, amplification is proportional to baseline risk and the NPH module is effectively inactive. The parameters $\theta_{0,d}$ and $\alpha$ are conceptually distinct: $\theta_{0,d}$ governs how each cohort depletes over time, while $\alpha$ governs how external hazards interact with that depletion.
++Under the gamma-frailty working model, this moment depends on the cohort's current depletion state, so the NPH module links external-hazard amplification to cumulative-hazard geometry rather than to a cohort-specific scalar multiplier. When $\alpha=1$, amplification is proportional to baseline risk and, for the same fitted parameters, the wave inversion reduces to the proportional gamma inversion. Enabling the module can still change the fit by excluding marked wave weeks from baseline estimation. The parameters $\theta_{0,d}$ and $\alpha$ are conceptually distinct: $\theta_{0,d}$ governs how each cohort depletes over time, while $\alpha$ governs how external hazards interact with that depletion.
+ 
+ Because $A(t)$ is common across cohorts, ratios of the instantaneous wave components eliminate the unknown common amplitude:
+ 

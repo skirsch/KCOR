@@ -1,0 +1,63 @@
+--- a/test/test_round14_aggregate.py
++++ b/test/test_round14_aggregate.py
+@@ -0,0 +1,60 @@
++"""Exhaustive vs explicitly partial supplied population reconciliation."""
++from pathlib import Path
++import os,sys,tempfile,io
++from contextlib import redirect_stdout,redirect_stderr
++import pandas as pd,numpy as np
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
++from test_round7_workbook import K,input_frame
++from fixed_cohort_history import aggregate_reconciliation,aggregate_scope
++from bootstrap_reporting import histories
++S='2023_01'
++def written(f,scope='exhaustive'):
++ os.environ.update(KCOR_BOOTSTRAP_DRAWS='3',KCOR_BOOTSTRAP_WORKERS='2',KCOR_BOOTSTRAP_LAYOUT='disjoint',KCOR_AGGREGATE_SCOPE=scope)
++ K.ENROLLMENT_DATES=[S];K.OVERRIDE_DOSE_PAIRS=[(1,0)];K.OVERRIDE_YOBS=None
++ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
++  src=Path(tmp)/'in.xlsx';dst=Path(tmp)/'out.xlsx';f.to_excel(src,sheet_name=S,index=False)
++  with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):K.process_workbook(str(src),str(dst))
++  return pd.read_excel(dst,sheet_name='dose_pairs')
++def total(f):
++ return f.groupby(['Dose','DateDied','ISOweekDied'],as_index=False)[['Alive','Dead']].sum().assign(YearOfBirth=-2,Sex='O')
++def ending(o,age):
++ return o[o.YearOfBirth.eq(age)].sort_values('Date').iloc[-1]
++def main():
++ f=input_frame(S);ix=f[(f.YearOfBirth==1950)&(f.Dose==1)].index
++ f.loc[ix[8:],'Dead']*=3
++ f.loc[ix,'Alive']=20000-np.r_[0,np.cumsum(f.loc[ix,'Dead'].to_numpy()[:-1])]
++ full=total(f);visible=f[f.YearOfBirth.eq(1940)];wrong=total(visible)
++ malformed=pd.concat([f,wrong],ignore_index=True)
++ partial=pd.concat([visible,full],ignore_index=True)
++ assert set(aggregate_reconciliation(malformed)[0])=={(-2,0),(-2,1)}
++ assert aggregate_reconciliation(partial,'partial')==( {}, {(-2,0),(-2,1)})
++ assert set(aggregate_reconciliation(partial)[0])=={(-2,0),(-2,1)}
++ assert not aggregate_reconciliation(pd.concat([f,full]))[0]
++ assert set(aggregate_reconciliation(malformed,'partial')[0])=={(-2,0),(-2,1)}
++ born=f.copy();born.loc[born.YearOfBirth.eq(1950),'YearOfBirth']=1960
++ t60=total(born[born.YearOfBirth.eq(1960)]).assign(YearOfBirth=-60)
++ all_born=total(born)
++ assert aggregate_reconciliation(pd.concat([born,all_born,t60]))==({},set())
++ t60.loc[t60.Dose.eq(1),'Alive']+=1
++ assert set(aggregate_reconciliation(pd.concat([born,all_born,t60]))[0])=={(-60,1)}
++ os.environ['KCOR_AGGREGATE_SCOPE']=' typo '
++ try:aggregate_scope()
++ except ValueError:pass
++ else:raise AssertionError('invalid aggregate scope accepted')
++ os.environ.pop('KCOR_AGGREGATE_SCOPE')
++
++ a=written(f);b=written(pd.concat([f,full],ignore_index=True));c=written(malformed);d=written(partial,'partial')
++ cols=['KCOR','CI_lower','CI_upper','CI_valid_draws']
++ for age in [1940,1950,-2]:
++  np.testing.assert_allclose(ending(a,age)[cols].to_numpy(float),ending(b,age)[cols].to_numpy(float),rtol=1e-13)
++ for age in [1940,1950]:
++  np.testing.assert_allclose(ending(a,age)[cols].to_numpy(float),ending(c,age)[cols].to_numpy(float),rtol=1e-13)
++ bad=c[c.YearOfBirth.eq(-2)]
++ assert len(bad) and bad.KCOR.isna().all() and bad.KCOR_unanchored.isna().all() and bad.CI_valid_draws.eq(0).all() and bad.CI_unanchored_valid_draws.eq(0).all(),bad.tail()
++ assert bad.normalization_status.eq('invalid_aggregate_counts').all(),bad.normalization_status.unique()
++ p=ending(d,-2);assert np.isclose(p.KCOR,ending(a,-2).KCOR,rtol=1e-13) and pd.isna(p.CI_lower) and p.CI_valid_draws==0 and p.CI_unanchored_valid_draws==0 and p.aggregate_scope=='partial',p
++ np.testing.assert_allclose(ending(a,1940)[cols].to_numpy(float),ending(d,1940)[cols].to_numpy(float),rtol=1e-13)
++ print('valid full population',ending(a,-2)[cols].to_dict())
++ print('malformed total withheld; individual 1940',ending(c,1940)[cols].to_dict())
++ print('partial independent total',p[cols].to_dict(),'visible individual intervals unchanged')
++if __name__=='__main__':main()

@@ -1,0 +1,20 @@
+{
+  "records_100k.csv": {
+    "otherwise_eligible": 85600,
+    "excluded_any": 7091,
+    "excluded_future_only": 3002,
+    "future_only_no_prior_first_four_dose": 2935,
+    "excluded_undated_only": 0,
+    "future_only_before_date_consistency_check": 3002,
+    "no_prior_before_date_consistency_check": 2935
+  },
+  "Otevrena-data-NR-26-30-COVID-19-prehled-populace-2024-01.csv.gz": {
+    "otherwise_eligible": 10779090,
+    "excluded_any": 874157,
+    "excluded_future_only": 363033,
+    "future_only_no_prior_first_four_dose": 354604,
+    "excluded_undated_only": 0,
+    "future_only_before_date_consistency_check": 363037,
+    "no_prior_before_date_consistency_check": 354608
+  }
+}

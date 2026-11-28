@@ -1,0 +1,2224 @@
+{
+  "nodes": {
+    "1.1": {
+      "title": "Objection 1: correction interpretation and diagnostics",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "1.2": {
+      "title": "Objection 2: optional epidemic-wave correction",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "1.3": {
+      "title": "Objection 3: uncertainty calibration",
+      "status": "Status: on hold pending the lead author's decision on the recommendation to drop resampling blocks of raw weeks. The reason comes from the application. Even in a quiet period under the gamma-frailty model, the expected death rate changes with baseline risk and with who is still alive. Moving a block to a different point in follow-up mixes death rates from different times and alters the trajectory used to fit frailty. Correct survivor counts within the resample still leave the rates at the wrong times. Person resampling keeps death weeks in place and rebuilds counts and risk sets. The [block placement check](objection3_paper_method/block_bootstrap_operationalization/WHY_BLOCK_PLACEMENT_MATTERS.md) illustrates the problem even when the starting counts match the model exactly.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "1.4": {
+      "title": "Objection 4: strength of validation arguments",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "1.5": {
+      "title": "Objection 5: consistent validation target",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "1.6": {
+      "title": "Objection 6: mathematical statements and approximations",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "2.1": {
+      "title": "2.1 Information given to KCOR in the Cox experiment",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.5"
+      ]
+    },
+    "2.2": {
+      "title": "2.2 Weekly hazard used in fitting",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.6"
+      ]
+    },
+    "2.3": {
+      "title": "2.3 Final week of a gap",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2"
+      ]
+    },
+    "2.4": {
+      "title": "2.4 First week of a wave",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2"
+      ]
+    },
+    "2.5": {
+      "title": "2.5 Quiet-window robustness scan",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.1",
+        "1.4"
+      ]
+    },
+    "2.6": {
+      "title": "2.6 Positive-control injection",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.5"
+      ]
+    },
+    "2.7": {
+      "title": "2.7 Contamination threshold",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3"
+      ]
+    },
+    "2.8": {
+      "title": "2.8 Reference anchor",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.5",
+        "2.7"
+      ]
+    },
+    "2.9": {
+      "title": "2.9 Subgroup fitting and pooling",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3"
+      ]
+    },
+    "2.10": {
+      "title": "2.10 Selection of empirical examples",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.4"
+      ]
+    },
+    "3.1": {
+      "title": "3.1 · A quiet gap can reset a positive frailty estimate",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3",
+        "2.7"
+      ]
+    },
+    "3.2": {
+      "title": "3.2 · A shock before the first quiet window changes the rate recovered by the seed fit",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2",
+        "2.3"
+      ]
+    },
+    "3.3": {
+      "title": "3.3 · Table 9's positive-control pipeline",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.6"
+      ]
+    },
+    "4.1": {
+      "title": "4.1 — Nonlinear fit eligibility",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2",
+        "3.2"
+      ]
+    },
+    "4.2": {
+      "title": "4.2 — Fitted discontinuity at alpha=1",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2"
+      ]
+    },
+    "4.3": {
+      "title": "4.3 — Wave deficit attribution and sampling bias",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2"
+      ]
+    },
+    "4.4": {
+      "title": "4.4 — Raw gap offsets and recovery from deficits",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.3",
+        "3.1"
+      ]
+    },
+    "4.5": {
+      "title": "4.5 — First-window seed eligibility",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "3.2"
+      ]
+    },
+    "4.6": {
+      "title": "4.6 — Ordinary output versus refitted uncertainty",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3",
+        "2.9"
+      ]
+    },
+    "4.7": {
+      "title": "4.7 — Czech alpha configuration and reporting",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2",
+        "1.4"
+      ]
+    },
+    "4.8": {
+      "title": "4.8 — Positive-control fitted frailty under misspecification",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.6",
+        "3.3"
+      ]
+    },
+    "4.9": {
+      "title": "4.9 — Remaining paper and configuration alignment",
+      "status": "See objection record; no uniform status line.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.1",
+        "2.5"
+      ]
+    },
+    "5.1": {
+      "title": "The final mask excludes wave rows, but their deaths and quiet-bin counts still contribute to the seed-based minimum-death/wea...",
+      "status": "Status: corrected in m103, m102 frozen.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "4.1"
+      ]
+    },
+    "5.2": {
+      "title": "Zero early mortality prevents pooled optimization despite later positive quiet data. Separate an initialization from a requir...",
+      "status": "Status: initialization correction implemented in m104; m103 frozen.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "4.5"
+      ]
+    },
+    "5.3": {
+      "title": "Undefined/zero reference ratio silently becomes 1 and a reported anchored ratio becomes an unanchored one; primary and option...",
+      "status": "Status: corrected in m105; m104 preserved.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.8"
+      ]
+    },
+    "5.4": {
+      "title": "Standard converter emits sex O, DCCI and overlapping aggregates that default bootstrap rejects. A single unsupported sheet ca...",
+      "status": "Status: corrected in m106; m105 preserved.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "4.6"
+      ]
+    },
+    "5.5": {
+      "title": "Ordinary bootstrap holds birth-year/dose sizes fixed, while paper describes pooled resampling with variable sizes; Table 8 ac...",
+      "status": "Status: corrected in m107; m106 preserved.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3",
+        "4.6"
+      ]
+    },
+    "5.6": {
+      "title": "Converter's non-mRNA product exclusion examines later doses before constructing earlier enrollment cohorts. Verify original p...",
+      "status": "Status: addressed by clarification in m108; m107 preserved. Application-specific study design, not a defect of the general KCOR estimator.",
+      "disposition": null,
+      "returns": [],
+      "related": []
+    },
+    "5.7": {
+      "title": "All-ages output recomputes ordinary inversion after conditional survivor correction; also a potential missing draw identifier...",
+      "status": "Status: corrected in m109; m108 preserved.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2",
+        "4.6"
+      ]
+    },
+    "5.8": {
+      "title": "Proportional gap diagnostic reports pre-optimization offsets rather than final offsets; shape diagnostics use straight elapse...",
+      "status": "Status: first two diagnostic inconsistencies corrected in m110; m109 preserved. Zero-death safeguard remains a separate decision.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "3.1",
+        "4.4"
+      ]
+    },
+    "5.9": {
+      "title": "Common Gompertz slope misspecification need not cancel to first order. Both provide counterexamples; confirm actual sensitivi...",
+      "status": "Status: addressed in candidate m114. Section 2.4.3 explains why similar percentage changes in the two normalized cumulative hazards have little effect on KCOR and quantifies the effect in the specified 40-week example. This folder holds the full derivation.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.1"
+      ]
+    },
+    "5.10": {
+      "title": "Historical moment surrogate and cancellation of current wave intensity do not establish invariance to previous wave history.",
+      "status": "Status: manuscript qualification implemented in m115; m114 preserved. The abstract and §2.7.1 distinguish cancellation of current common wave intensity from the effect of earlier wave exposure on survivors. §3.4.1 identifies the historical amplification formula used for synthetic recovery and limits the empirical non-identification finding to the Czech application. The broader alpha estimation investigation remains deferred. [Main-text patch](paper.patch).",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "4.7"
+      ]
+    },
+    "5.11": {
+      "title": "Death-fraction clipping, horizon-wide inversion cap, flagged fallback and secondary analytic interval limitations. The cap is...",
+      "status": "Status: the two approved numerical corrections are implemented in m116; m115 is preserved. Finite weekly death fractions below one use the exact log survival transformation. A fraction of one or outside the valid range raises a warning. The gamma inverse uses the fitted variance independently at each time and evaluates large positive exponents in log space when needed. Unrepresentable results are unavailable rather than clipped. Normalization preserves the valid prefix, including nonlinear correction on that prefix, and logs the first unavailable week per cohort.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "4.6",
+        "4.9"
+      ]
+    },
+    "5.12": {
+      "title": "Quiet scan relies on changed default rather than explicit forced alpha; preprint Makefile references missing assets and publi...",
+      "status": "Status: addressed in m117, preserving m116. The scan explicitly selects the marked wave (2021-41 through 2022-12) and alpha=1.18, checks the nonlinear fitter's reported law, and uses a separate `--mode off` output for the proportional fit. Both modes reproduce 78 attempted and 78 accepted fits. The forced-alpha fit reproduces all 78 saved frailty variances exactly and its plotted figure is byte-identical. [Numerical check](scan-verification.json), [forced results](windows.csv), [module-off results](windows-off.csv), [scan patch](scan.patch).",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.5",
+        "4.7"
+      ]
+    },
+    "6.1": {
+      "title": "6.1 ? All-ages fit population differs from normalized population",
+      "status": "Status: implemented in m118.",
+      "disposition": null,
+      "returns": [
+        "5.7"
+      ],
+      "related": [
+        "5.7"
+      ]
+    },
+    "6.2": {
+      "title": "6.2 ? Incorrect propagation of aggregate diagnostic flags",
+      "status": "Status: implemented in m118.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "5.4",
+        "5.7"
+      ]
+    },
+    "6.3": {
+      "title": "6.3 ? Numerical fit acceptance reported as passing all diagnostics",
+      "status": "Status: scan and its manuscript claims corrected in m119. All 78 numerical acceptances and 63 exploratory residual flags independently reproduced in forced-alpha and module-off modes; the reported forced-alpha frailty estimates match m118 exactly. The plotted markers distinguish accepted fits with and without residual flags; no fit is rejected because of this screen. Per-placement results retain the minimum tail probability and the flagged-week diagnostic records. The separate historical S6 diagnostic-gate table is included in objection 6.4 for provenance verification.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.5",
+        "5.8"
+      ]
+    },
+    "6.4": {
+      "title": "6.4 ? Historical SI S6.1.2 numbers lack a reproducible matching configuration",
+      "status": "Status: corrected in m120 with a reproducible replay of the three supplementary tables. m119 is preserved.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.4",
+        "5.12"
+      ]
+    },
+    "6.5": {
+      "title": "6.5 ? The 5,000-per-arm precision claim relies on deterministic simulations",
+      "status": "Status: addressed in m122, preserving m121. Section 5.3 replaces the unsupported approximately 5,000-per-arm claim with a reference to the existing Section 2.9 information analysis and event-count, reference-period, window-placement and frailty-resolution requirements. The original deterministic cohort-size simulation is retained as historical evidence. No new simulation or estimator change was needed.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3",
+        "2.7"
+      ]
+    },
+    "6.6": {
+      "title": "6.6 ? Time-window Cox comparator omits at-risk survivors",
+      "status": "Status: addressed in m123, preserving m122.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.5",
+        "2.1"
+      ]
+    },
+    "6.7": {
+      "title": "6.7 ? RMST/Cox targets and shared-frailty comparative evidence",
+      "status": "Status: addressed in m124, preserving m123.",
+      "disposition": null,
+      "returns": [
+        "2.1",
+        "1.5"
+      ],
+      "related": [
+        "1.5",
+        "2.1"
+      ]
+    },
+    "6.8": {
+      "title": "6.8 ? Age-shift control captions claim missing interval bands and guaranteed flatness",
+      "status": "Status: addressed in m125, preserving m124.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.4",
+        "2.10"
+      ]
+    },
+    "6.9": {
+      "title": "6.9 ? Anchoring interpretation overstates post-reference isolation",
+      "status": "Status: implemented in m118.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "2.8",
+        "5.3"
+      ]
+    },
+    "6.10": {
+      "title": "6.10 ? Five-year age bands labeled single birth years",
+      "status": "Status: implemented in m118.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "5.12"
+      ]
+    },
+    "6.11": {
+      "title": "6.11 ? Active baseline-rate bounds not flagged",
+      "status": "Status: implemented in m118.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "5.11"
+      ]
+    },
+    "6.12": {
+      "title": "6.12 ? Nonlinear survival quadrature is not monotonic at a branch switch",
+      "status": "Status: addressed in m126, preserving m125.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.2",
+        "5.11"
+      ]
+    },
+    "6.13": {
+      "title": "6.13 ? Instantaneous wave moment identity versus weekly observed excess",
+      "status": "Status: claim qualification addressed in m127, preserving m126; the broader alpha-localization investigation remains deferred.",
+      "disposition": null,
+      "returns": [
+        "5.10"
+      ],
+      "related": [
+        "4.7",
+        "5.10"
+      ]
+    },
+    "6.14": {
+      "title": "6.14 ? Actual post-enrollment manufacturer eligibility exclusion",
+      "status": "Status: addressed by application-specific disclosure in m128, preserving m127. Sensitivity to alternative eligibility remains an application-level question, not a general KCOR estimator defect.",
+      "disposition": null,
+      "returns": [
+        "5.6"
+      ],
+      "related": [
+        "5.6"
+      ]
+    },
+    "7.1": {
+      "title": "7.1 - Unreported normalization fallback after numerical failure",
+      "status": "Status: addressed in m129, preserving m128 (approved batch of straightforward corrections).",
+      "disposition": "Round 8 independent disposition: resolved within original scope; see [resolution review](../../iterative%20review/evaluations/8/resolution.md).",
+      "returns": [],
+      "related": [
+        "5.11",
+        "6.12"
+      ]
+    },
+    "7.2": {
+      "title": "7.2 - ISO enrollment and missing-week calendar handling",
+      "status": "Status: addressed in m129, preserving m128 (approved batch of straightforward corrections).",
+      "disposition": "Round 8 independent disposition: partial; remaining concrete issue tracked in [8.1](../8.1/README.md).",
+      "returns": [],
+      "related": [
+        "4.6",
+        "6.9"
+      ]
+    },
+    "7.3": {
+      "title": "7.3 - Absolute solver tolerance causes incorrect frailty on noiseless rare-event data",
+      "status": "Status: Addressed in m130 (approved), preserving m129.",
+      "disposition": "Round 8 independent disposition: resolved within original scope; see [resolution review](../../iterative%20review/evaluations/8/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.7",
+        "6.11"
+      ]
+    },
+    "7.4": {
+      "title": "7.4 - Double-counted overlapping age-shift aggregate",
+      "status": "Status: addressed in m129, preserving m128 (approved batch of straightforward corrections).",
+      "disposition": "Round 8 independent disposition: resolved within original scope; see [resolution review](../../iterative%20review/evaluations/8/resolution.md).",
+      "returns": [],
+      "related": [
+        "5.3",
+        "6.1"
+      ]
+    },
+    "7.5": {
+      "title": "7.5 - Archived age-shift control and current restricted Czech CMR are different populations",
+      "status": "Status: addressed in m131 on top of completed m130; preview superseded.",
+      "disposition": "Round 8 independent disposition: resolved within original scope; see [resolution review](../../iterative%20review/evaluations/8/resolution.md).",
+      "returns": [
+        "6.14"
+      ],
+      "related": [
+        "5.6",
+        "6.8",
+        "6.14"
+      ]
+    },
+    "7.6": {
+      "title": "7.6 - Czech diagnostic pass overstates the actual checks",
+      "status": "Status: implemented in m132 (manuscript and reproducible diagnostic evidence; estimator unchanged).",
+      "disposition": "Round 8 independent disposition: partial; remaining concrete issue tracked in [8.9](../8.9/README.md).",
+      "returns": [
+        "6.3"
+      ],
+      "related": [
+        "4.9",
+        "5.11",
+        "6.3"
+      ]
+    },
+    "7.7": {
+      "title": "7.7 - Supplementary Figure S10 uses an unmatched trajectory and time range",
+      "status": "Status: addressed in m133; all four figures regenerated with current estimator and 999 person-bootstrap draws. No core method changes.",
+      "disposition": "Round 8 independent disposition: resolved within original scope; see [resolution review](../../iterative%20review/evaluations/8/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.4",
+        "6.10"
+      ]
+    },
+    "7.8": {
+      "title": "7.8 - Paper build and archived-study reproducibility claims",
+      "status": "Status: addressed in m129, preserving m128 (approved batch of straightforward corrections).",
+      "disposition": "Round 8 independent disposition: partial; remaining concrete issue tracked in [8.10](../8.10/README.md).",
+      "returns": [],
+      "related": [
+        "6.4",
+        "6.6"
+      ]
+    },
+    "7.9": {
+      "title": "7.9 - Fitting includes early anchor rows outside designated quiet windows",
+      "status": "Status: addressed in m134; one approved sentence added to Section 2.5. No fitter changes.",
+      "disposition": "Round 8 independent disposition: partial; remaining concrete issue tracked in [8.11](../8.11/README.md).",
+      "returns": [
+        "3.2"
+      ],
+      "related": [
+        "3.2",
+        "4.5"
+      ]
+    },
+    "7.10": {
+      "title": "7.10 - Historical alpha diagnostics named as current",
+      "status": "Status: addressed in m129, preserving m128 (approved batch of straightforward corrections).",
+      "disposition": "Round 8 independent disposition: resolved within original scope; see [resolution review](../../iterative%20review/evaluations/8/resolution.md).",
+      "returns": [
+        "6.13"
+      ],
+      "related": [
+        "4.7",
+        "5.10",
+        "6.13"
+      ]
+    },
+    "7.11": {
+      "title": "7.11 - Remaining abstract and comparison-table bias/conditioning language",
+      "status": "Status: addressed in m135; paper wording only, estimator and simulations unchanged.",
+      "disposition": "Round 8 independent disposition: partial; remaining concrete issue tracked in [8.12](../8.12/README.md).",
+      "returns": [
+        "6.7"
+      ],
+      "related": [
+        "1.5",
+        "2.1",
+        "6.7"
+      ]
+    },
+    "8.1": {
+      "title": "8.1 - Incomplete source-component histories",
+      "status": "Status: implemented in m137, preserving m136. Independent review not yet repeated.",
+      "disposition": "Round 9 independent disposition: partial; see [9.1](../9.1/README.md). [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [
+        "7.2"
+      ],
+      "related": [
+        "2.9",
+        "4.6",
+        "7.2"
+      ]
+    },
+    "8.2": {
+      "title": "8.2 - Weighted pooled workbook series exports only its final date",
+      "status": "Status: implemented in m136 (approved straightforward-correction batch; m135 preserved). Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.9",
+        "4.6",
+        "7.4"
+      ]
+    },
+    "8.3": {
+      "title": "8.3 - Sensitivity sweep double-counts overlapping populations",
+      "status": "Status: implemented in m138, preserving m137. Independent review not yet repeated.",
+      "disposition": "Round 9 independent disposition: partial; see [9.2](../9.2/README.md). [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "5.7",
+        "6.1",
+        "7.4"
+      ]
+    },
+    "8.4": {
+      "title": "8.4 - Upper-bound frailty fallback can erase an accurate fit",
+      "status": "Status: approved candidate implementation (cap 500 and retain/flag near-ceiling fits); all empirical replays integrated in m142. Original m138 preserved. Independent review and lead-author approval pending.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "3.1",
+        "5.11",
+        "7.3"
+      ]
+    },
+    "8.5": {
+      "title": "8.5 - Overgeneralized necessity of an external effect scale for alpha",
+      "status": "Status: implemented in m140 (wording only), preserving m139-review. Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "4.7",
+        "5.10",
+        "6.13",
+        "7.10"
+      ]
+    },
+    "8.6": {
+      "title": "8.6 - Mean frailty and stabilization-skip null benchmark",
+      "status": "Status: implemented in m141 (wording only); m140 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.1",
+        "1.5",
+        "6.9",
+        "7.11"
+      ]
+    },
+    "8.7": {
+      "title": "8.7 - Frailty-misspecification experiments overclaimed",
+      "status": "Status: implemented in m142; m141 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.4",
+        "1.5",
+        "4.8"
+      ]
+    },
+    "8.8": {
+      "title": "8.8 - Sensitivity figure provenance, scales and robustness claim",
+      "status": "Status: implemented jointly with 8.3 in m138, preserving m137. Independent review not yet repeated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.5",
+        "8.3"
+      ]
+    },
+    "8.9": {
+      "title": "8.9 - Diagnostic reporting guidance and reversed SI decision-table consequence",
+      "status": "Status: implemented in m136 (approved straightforward-correction batch; m135 preserved). Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [
+        "7.6"
+      ],
+      "related": [
+        "5.8",
+        "6.3",
+        "7.6"
+      ]
+    },
+    "8.10": {
+      "title": "8.10 - Reproducibility scope and Table 8 cached replay",
+      "status": "Status: implemented in m136 (approved straightforward-correction batch; m135 preserved). Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: partial; see [9.3](../9.3/README.md). [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [
+        "7.8"
+      ],
+      "related": [
+        "5.12",
+        "7.3",
+        "7.8"
+      ]
+    },
+    "8.11": {
+      "title": "8.11 - Early anchor assumption contradicted elsewhere",
+      "status": "Status: implemented in m136 (approved straightforward-correction batch; m135 preserved). Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [
+        "7.9"
+      ],
+      "related": [
+        "3.2",
+        "4.5",
+        "7.9"
+      ]
+    },
+    "8.12": {
+      "title": "8.12 - Remaining bias and prerequisite wording",
+      "status": "Status: implemented in m136 (approved straightforward-correction batch; m135 preserved). Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [
+        "7.11"
+      ],
+      "related": [
+        "1.5",
+        "6.7",
+        "7.11"
+      ]
+    },
+    "8.13": {
+      "title": "8.13 - Near-zero frailty confused with linear cumulative hazard",
+      "status": "Status: implemented in m136 (approved straightforward-correction batch; m135 preserved). Independent closure not yet evaluated.",
+      "disposition": "Round 9 independent disposition: partial; see [9.4](../9.4/README.md). [Resolution](../../iterative%20review/evaluations/9/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.6",
+        "2.2"
+      ]
+    },
+    "9.1": {
+      "title": "9.1 - Missing sex suffix in overlapping control",
+      "status": "Status: implemented in m144; m143 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: partial; see [10.1](../10.1/README.md). [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [
+        "8.1"
+      ],
+      "related": [
+        "7.2"
+      ]
+    },
+    "9.2": {
+      "title": "9.2 - Sensitivity selection changes calendar horizon",
+      "status": "Status: implemented in m145; m144 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [
+        "8.3"
+      ],
+      "related": [
+        "7.2",
+        "8.2"
+      ]
+    },
+    "9.3": {
+      "title": "9.3 - Table 8 resume ignores anchor override",
+      "status": "Status: implemented in m143; m142 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [
+        "8.10"
+      ],
+      "related": [
+        "7.8"
+      ]
+    },
+    "9.4": {
+      "title": "9.4 - Near-zero fitted variance still described as weak identification",
+      "status": "Status: implemented in m143; m142 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: partial; see [10.2](../10.2/README.md). [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [
+        "8.13"
+      ],
+      "related": [
+        "1.6",
+        "2.2"
+      ]
+    },
+    "9.5": {
+      "title": "9.5 - Unexplained nondeath risk-set losses accepted",
+      "status": "Status: implemented in m146; m145 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "4.6",
+        "7.2",
+        "8.1"
+      ]
+    },
+    "9.6": {
+      "title": "9.6 - Finite contrast after cohort has no people at risk",
+      "status": "Status: implemented in m147; m146 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "7.1",
+        "8.1",
+        "9.5"
+      ]
+    },
+    "9.7": {
+      "title": "9.7 - Protective proportional gap is clipped to zero excess",
+      "status": "Status: implemented in m148 as a diagnostic-only correction; m147 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.3",
+        "3.1",
+        "4.4"
+      ]
+    },
+    "9.8": {
+      "title": "9.8 - Pool silently drops positively weighted ages across draws",
+      "status": "Status: implemented in m149; m148 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.9",
+        "4.6",
+        "5.3",
+        "8.2"
+      ]
+    },
+    "9.9": {
+      "title": "9.9 - Legacy analytical variance uses wrong anchored contrast",
+      "status": "Status: implemented in m150; m149 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.3",
+        "4.6",
+        "4.8"
+      ]
+    },
+    "9.10": {
+      "title": "9.10 - Table 8 generic flag counts omit residual flags",
+      "status": "Status: implemented in m151; m150 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "4.6",
+        "7.6",
+        "8.9"
+      ]
+    },
+    "9.11": {
+      "title": "9.11 - Valid small frailty ceiling breaks supplementary fit start",
+      "status": "Status: implemented in m143; m142 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.4"
+      ]
+    },
+    "9.12": {
+      "title": "9.12 - Forced-alpha origin inside ongoing nonlinear wave",
+      "status": "Status: implemented in m152 (wording only); m151 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.2",
+        "4.7",
+        "5.10",
+        "7.10"
+      ]
+    },
+    "9.13": {
+      "title": "9.13 - Age-related depletion explanation confuses absolute and relative variance",
+      "status": "Status: implemented in m143; m142 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.6",
+        "8.13"
+      ]
+    },
+    "9.14": {
+      "title": "9.14 - Current Table 8 verifier reads previous numerical ceiling",
+      "status": "Status: implemented in m143; m142 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.4",
+        "8.10"
+      ]
+    },
+    "9.15": {
+      "title": "9.15 - Abstract overstates alpha localization",
+      "status": "Status: implemented in m143; m142 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 10 independent disposition: resolved within stated scope. [Resolution](../../iterative%20review/evaluations/10/resolution.md).",
+      "returns": [],
+      "related": [
+        "7.10",
+        "8.5"
+      ]
+    },
+    "9.16": {
+      "title": "9.16 - Retrospective Czech eligibility interpretation",
+      "status": "Status: previously disclosed application-specific limitation; no population change adopted. Any further treatment of the interpretation is distinct from the general estimator corrections.",
+      "disposition": "Round 10 independent disposition: intended population and disclosure retained; narrow wording qualification [10.10](../10.10/README.md).",
+      "returns": [
+        "6.14"
+      ],
+      "related": [
+        "5.6",
+        "7.5"
+      ]
+    },
+    "10.1": {
+      "title": "10.1 - Verified exhaustion suffix rejected by overlapping bootstrap",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [
+        "9.1"
+      ],
+      "related": [
+        "8.1",
+        "9.6"
+      ]
+    },
+    "10.2": {
+      "title": "10.2 - Remaining main-text near-zero frailty identification claims",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [
+        "9.4"
+      ],
+      "related": [
+        "1.6",
+        "2.2",
+        "8.13"
+      ]
+    },
+    "10.3": {
+      "title": "10.3 - Hard-coded seed ceiling falsely flags a baseline gap",
+      "status": "Status: implemented in m154; m153 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.4",
+        "9.7",
+        "9.11"
+      ]
+    },
+    "10.4": {
+      "title": "10.4 - Anchor and quiet union can create a nonexistent gap",
+      "status": "Status: implemented in m155; m154 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.3",
+        "3.1",
+        "8.11",
+        "9.7"
+      ]
+    },
+    "10.5": {
+      "title": "10.5 - Nonlinear fit inherits proportional initializer gap diagnostic",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.2",
+        "9.7",
+        "9.12"
+      ]
+    },
+    "10.6": {
+      "title": "10.6 - Spawned bootstrap workers lose effective age grouping",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "4.6",
+        "9.8"
+      ]
+    },
+    "10.7": {
+      "title": "10.7 - Direction of depletion distortion overgeneralized",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.1",
+        "1.5",
+        "8.12"
+      ]
+    },
+    "10.8": {
+      "title": "10.8 - Pooling weight formula not fully specified",
+      "status": "Status: documented in m156; m155 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.9",
+        "8.2",
+        "9.8"
+      ]
+    },
+    "10.9": {
+      "title": "10.9 - Diagnostics cannot guarantee failure in unsuitable designs",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.4",
+        "8.9",
+        "9.7"
+      ]
+    },
+    "10.10": {
+      "title": "10.10 - Fixed-cohort wording still overstates avoidance of immortal-time artifacts",
+      "status": "Status: implemented in m153; m152 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 11 independent disposition: resolved in original scope on m156. [Targeted review](../../iterative%20review/evaluations/11/resolution.md).",
+      "returns": [
+        "9.16"
+      ],
+      "related": [
+        "6.14",
+        "7.5"
+      ]
+    },
+    "11.1": {
+      "title": "11.1 - All-ages population depends on redundant input total",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: partial; original unknown-year fixture resolved; post-2020 cutoff still breaks representation invariance (12.1). [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.1",
+        "9.2",
+        "10.1"
+      ]
+    },
+    "11.2": {
+      "title": "11.2 - Dedicated Table 8 replay invents finite ratios after risk-set exhaustion",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.1",
+        "9.1",
+        "10.1"
+      ]
+    },
+    "11.3": {
+      "title": "11.3 - Pooled geometric mean silently clips representable ratios",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.8",
+        "10.8"
+      ]
+    },
+    "11.4": {
+      "title": "11.4 - Ordinary bootstrap loses residual-screen flags",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "3.1",
+        "9.10",
+        "10.5"
+      ]
+    },
+    "11.5": {
+      "title": "11.5 - Alpha equals one is not identical to disabling the module",
+      "status": "Status: documented in m158; m157 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.2",
+        "4.1",
+        "4.2",
+        "10.5"
+      ]
+    },
+    "11.6": {
+      "title": "11.6 - Dedicated replay lacks sparse-stratum pooling fallback",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.9",
+        "9.8",
+        "10.8"
+      ]
+    },
+    "11.7": {
+      "title": "11.7 - Dedicated Table 8 reader truncates fractional person counts",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.1",
+        "10.1"
+      ]
+    },
+    "11.8": {
+      "title": "11.8 - Hyphenated enrollment sheet name disables bootstrap",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.1",
+        "10.6"
+      ]
+    },
+    "11.9": {
+      "title": "11.9 - Workbook About reports outdated methodology and shifted configuration",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.10",
+        "9.10"
+      ]
+    },
+    "11.10": {
+      "title": "11.10 - Cox comparator inference and interpretation under nonproportional hazards",
+      "status": "Status: documented in m159; m158 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.5",
+        "2.1",
+        "7.11",
+        "8.12"
+      ]
+    },
+    "11.11": {
+      "title": "11.11 - Nonfatal outcome scope omits competing death",
+      "status": "Status: documented in m160; m159 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.1",
+        "5.6",
+        "6.14"
+      ]
+    },
+    "11.12": {
+      "title": "11.12 - Table 8 and S6 references identify superseded archives",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.10",
+        "10.3",
+        "10.8"
+      ]
+    },
+    "11.13": {
+      "title": "11.13 - Cumulative person-time column exports weekly exposure",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.2",
+        "9.5"
+      ]
+    },
+    "11.14": {
+      "title": "11.14 - Wave deficit frequency not exported",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: partial; nonlinear reporting resolved; identity/zero-frailty diagnostics remain (12.2). [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "4.3",
+        "5.10",
+        "10.5"
+      ]
+    },
+    "11.15": {
+      "title": "11.15 - Finite simulation endpoint labeled asymptote and single deviation labeled bias",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: partial; text and main figures corrected; SI image axis remains (12.3). [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.1",
+        "7.11",
+        "8.12"
+      ]
+    },
+    "11.16": {
+      "title": "11.16 - Pooled row copies one stratum?s frailty parameter",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.9",
+        "10.8"
+      ]
+    },
+    "11.17": {
+      "title": "11.17 - S4.6 joint simulation has no stated configuration or results",
+      "status": "Status: documented in m161; m160 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.8",
+        "8.9",
+        "9.3"
+      ]
+    },
+    "11.18": {
+      "title": "11.18 - Bounded point seed loses gap-detail rows",
+      "status": "Status: implemented in m157; m156 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 12 independent disposition: resolved in original scope on m161. [Targeted review](../../iterative%20review/evaluations/12/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.7",
+        "10.3"
+      ]
+    },
+    "12.1": {
+      "title": "12.1 - Post-2020 births excluded before all-ages reconstruction",
+      "status": "Status: implemented in m162; m161 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [
+        "11.1"
+      ],
+      "related": [
+        "9.1",
+        "9.2",
+        "11.1"
+      ]
+    },
+    "12.2": {
+      "title": "12.2 - Identity wave branches miscount marked weeks and strict deficits",
+      "status": "Status: implemented in m163; m162 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: partial; original strict-deficit and denominator examples pass, exact equality rounding remains (13.1). [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [
+        "11.14"
+      ],
+      "related": [
+        "4.3",
+        "5.10",
+        "11.5",
+        "11.14"
+      ]
+    },
+    "12.3": {
+      "title": "12.3 - SI figure still labels finite deviation as asymptotic bias",
+      "status": "Status: implemented in m162; m161 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [
+        "11.15"
+      ],
+      "related": [
+        "2.1",
+        "11.15"
+      ]
+    },
+    "12.4": {
+      "title": "12.4 - Protective first gap falsely localizes deficit to later ordinary gap",
+      "status": "Status: implemented in m164; m163 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "3.1",
+        "9.7",
+        "10.3",
+        "11.18"
+      ]
+    },
+    "12.5": {
+      "title": "12.5 - Historical synthetic negative control misattributed to current gamma estimator",
+      "status": "Status: documented in m165; m164 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.10",
+        "9.3",
+        "11.17"
+      ]
+    },
+    "12.6": {
+      "title": "12.6 - Complete registry enrollment does not imply little frailty depletion",
+      "status": "Status: implemented in m162; m161 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.4",
+        "10.2",
+        "11.1"
+      ]
+    },
+    "12.7": {
+      "title": "12.7 - Undefined anchor differs between dedicated replay and ordinary pooling",
+      "status": "Status: implemented in m166; m165 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.8",
+        "11.2",
+        "11.6"
+      ]
+    },
+    "12.8": {
+      "title": "12.8 - Tiny positive references accepted by pool but rejected by direct row",
+      "status": "Status: implemented in m167; m166 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.8",
+        "11.3"
+      ]
+    },
+    "12.9": {
+      "title": "12.9 - Pooled parameter status still copied from one stratum",
+      "status": "Status: implemented in m162; m161 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "10.8",
+        "11.4",
+        "11.16"
+      ]
+    },
+    "12.10": {
+      "title": "12.10 - Cox caption attributes individual deviations solely to depletion",
+      "status": "Status: implemented in m162; m161 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.1",
+        "11.10",
+        "11.15"
+      ]
+    },
+    "12.11": {
+      "title": "12.11 - Historical S7 mixture mass and initial risk disagree",
+      "status": "Status: implemented in m162; m161 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 13 independent disposition: resolved in original scope on m167. [Targeted review](../../iterative%20review/evaluations/13/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.8",
+        "9.1",
+        "11.17"
+      ]
+    },
+    "13.1": {
+      "title": "13.1 - Floating-point roundoff creates spurious positive wave exposures",
+      "status": "Status: implemented in m168; m167 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [
+        "12.2"
+      ],
+      "related": [
+        "11.14",
+        "12.2"
+      ]
+    },
+    "13.2": {
+      "title": "13.2 - Impossible future literal birth years enter inclusive population",
+      "status": "Status: implemented in m168; m167 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.1",
+        "11.1",
+        "12.1"
+      ]
+    },
+    "13.3": {
+      "title": "13.3 - Pooled geometric mean drops genuine zero ratios before reference",
+      "status": "Status: implemented in m168; m167 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.8",
+        "11.3",
+        "12.8"
+      ]
+    },
+    "13.4": {
+      "title": "13.4 - Table 9 benefit control meets the gap-assumption audit-only rule",
+      "status": "Status: implemented in persistent m169; independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.4",
+        "2.6",
+        "9.7",
+        "12.4"
+      ]
+    },
+    "13.5": {
+      "title": "13.5 - S6 Czech application lacks signed gap intervals",
+      "status": "Status: implemented in persistent m169; independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.4",
+        "9.7",
+        "10.3",
+        "12.4"
+      ]
+    },
+    "13.6": {
+      "title": "13.6 - Broken reference erases valid earlier unanchored KCOR",
+      "status": "Status: implemented in m168; m167 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.2",
+        "9.1",
+        "12.8"
+      ]
+    },
+    "13.7": {
+      "title": "13.7 - Table 9 labels anchored values as unanchored KCOR",
+      "status": "Status: implemented in m168; m167 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.8",
+        "9.8",
+        "13.4"
+      ]
+    },
+    "13.8": {
+      "title": "13.8 - Historical contamination finite endpoint called asymptote",
+      "status": "Status: implemented in m168; m167 preserved. Independent closure not yet evaluated.",
+      "disposition": "Round 14 independent disposition: resolved in original scope on m169. [Targeted review](../../iterative%20review/evaluations/14/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.7",
+        "11.15",
+        "12.3"
+      ]
+    },
+    "14.1": {
+      "title": "14.1 - Manufacturer workbook reports pre-enrollment unadjusted ratio as KCOR",
+      "status": "Status: Implemented in m171; targeted regression and converter verification completed. Historical full manufacturer inputs require regeneration; independent review pending.",
+      "disposition": "Round 15 independent disposition: Partial at delivery: corrected code independently verified, but distributed historical manufacturer artifacts remain superseded. See [15.1](../15.1/README.md). [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.1",
+        "12.8",
+        "13.6"
+      ]
+    },
+    "14.2": {
+      "title": "14.2 - Manufacturer converter counts deaths outside exact enrollment dose group",
+      "status": "Status: Implemented in m171; targeted regression and converter verification completed. Historical full manufacturer inputs require regeneration; independent review pending.",
+      "disposition": "Round 15 independent disposition: Partial at delivery: corrected code independently verified, but distributed historical manufacturer artifacts remain superseded. See [15.1](../15.1/README.md). [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.2",
+        "9.1",
+        "14.1"
+      ]
+    },
+    "14.3": {
+      "title": "14.3 - Constant intervention multiplier aliases baseline rate for any frailty variance",
+      "status": "Status: Implemented in m172; independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.6",
+        "10.9",
+        "11.11"
+      ]
+    },
+    "14.4": {
+      "title": "14.4 - Inconsistent supplied all-ages total silently changes point population",
+      "status": "Status: Implemented in m173; targeted regression and actual S6 point parity verified. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Original single-total example resolved; general aggregate coverage and nested-total consistency remain partial. See [15.2](../15.2/README.md) and [15.3](../15.3/README.md). [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.1",
+        "12.1",
+        "13.2"
+      ]
+    },
+    "14.5": {
+      "title": "14.5 - Optional negative-control report substitutes earlier available endpoint",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.2",
+        "12.8",
+        "13.6"
+      ]
+    },
+    "14.6": {
+      "title": "14.6 - Sensitivity sweep rejects small positive references",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.8",
+        "12.8"
+      ]
+    },
+    "14.7": {
+      "title": "14.7 - Redundant opening-risk PT column disables bootstrap",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.1",
+        "11.8"
+      ]
+    },
+    "14.8": {
+      "title": "14.8 - Failed presentation reference falsely flags supported unanchored interval",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.4",
+        "13.6"
+      ]
+    },
+    "14.9": {
+      "title": "14.9 - Unknown layout string can bypass ordinary future-year guard",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "12.1",
+        "13.2"
+      ]
+    },
+    "14.10": {
+      "title": "14.10 - Historical contamination default rerun labels and bars differ from published figure",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.7",
+        "12.3",
+        "13.8"
+      ]
+    },
+    "14.11": {
+      "title": "14.11 - Distributed TeX remains stale relative to current PDF and Markdown",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.12",
+        "13.7",
+        "13.8"
+      ]
+    },
+    "14.12": {
+      "title": "14.12 - Missing S6 gap offsets serialized as nonstandard JSON NaN",
+      "status": "Status: Implemented in m170; targeted regression or artifact verification completed. Independent round review pending.",
+      "disposition": "Round 15 independent disposition: Resolved in original scope by the independent round-15 review. [Resolution review](../../iterative%20review/evaluations/15/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.18",
+        "13.5"
+      ]
+    },
+    "15.1": {
+      "title": "15.1 - Historical manufacturer workbooks still distribute superseded outputs",
+      "status": "Status: Implemented in m174; targeted artifact verification complete.",
+      "disposition": "Round 16 independent disposition: Resolved in the original scope by independent targeted round-16 review. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [
+        "14.1",
+        "14.2"
+      ],
+      "related": [
+        "14.1",
+        "14.2"
+      ]
+    },
+    "15.2": {
+      "title": "15.2 - Partial extract silently constructs an all-ages result from displayed strata",
+      "status": "Status: Implemented in m175; targeted regression and S6 point parity verified.",
+      "disposition": "Round 16 independent disposition: Resolved in the original scope by independent targeted round-16 review. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.1",
+        "12.1",
+        "13.2",
+        "14.4"
+      ]
+    },
+    "15.3": {
+      "title": "15.3 - Nested inclusive totals can describe impossible populations",
+      "status": "Status: Implemented in m176; targeted workbook and actual Czech source validation completed.",
+      "disposition": "Round 16 independent disposition: Original integer examples resolved; fractional-count regression and partial cause-count validation gap remain (16.3 and 16.4). [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.2"
+      ]
+    },
+    "15.4": {
+      "title": "15.4 - Worked S6 example omits the declared primary unanchored contrast",
+      "status": "Status: Dismissed as a requested change of estimand; original intent confirmed by user. Purpose sentence implemented in m177.",
+      "disposition": "Round 16 independent disposition: Closed by user-confirmed original intent; approved purpose statement verified. Blind A repeated the additional-table recommendation, but it is not a defect in the intended anchored illustration. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "6.9",
+        "13.6",
+        "14.3"
+      ]
+    },
+    "15.5": {
+      "title": "15.5 - Illustrative S6/S5.6 figure replays do not assess signed gap assumptions",
+      "status": "Status: Implemented in m177; caption-only diagnostic disclosure.",
+      "disposition": "Round 16 independent disposition: Resolved in the original scope by independent targeted round-16 review. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "9.7",
+        "13.5"
+      ]
+    },
+    "15.6": {
+      "title": "15.6 - Negative-control model-consistency wording overstates what is demonstrated",
+      "status": "Status: Dismissed by user; no correction adopted.",
+      "disposition": "Round 16 independent disposition: User-dismissed editorial preference remains closed; no edit required. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.1",
+        "9.7",
+        "13.5"
+      ]
+    },
+    "15.7": {
+      "title": "15.7 - NPH sequential shorthand could imply inconsistent survivor fitting",
+      "status": "Status: Dismissed by user; no correction adopted.",
+      "disposition": "Round 16 independent disposition: User-dismissed editorial preference remains closed; no edit required. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.2",
+        "4.2",
+        "5.10"
+      ]
+    },
+    "15.8": {
+      "title": "15.8 - Figure reference timing described only as four weeks",
+      "status": "Status: Dismissed by user; no correction adopted.",
+      "disposition": "Round 16 independent disposition: User-dismissed editorial preference remains closed; no edit required. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.8",
+        "13.7"
+      ]
+    },
+    "15.9": {
+      "title": "15.9 - Within-bin hazard wording unnecessarily requires a constant hazard",
+      "status": "Status: Dismissed by user; no correction adopted.",
+      "disposition": "Round 16 independent disposition: User-dismissed editorial preference remains closed; no edit required. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.6",
+        "2.2"
+      ]
+    },
+    "15.10": {
+      "title": "15.10 - Seed diagnostic bound wording is too broad",
+      "status": "Status: Dismissed by user; no correction adopted.",
+      "disposition": "Round 16 independent disposition: User-dismissed editorial preference remains closed; no edit required. [Resolution](../../iterative%20review/evaluations/16/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.4",
+        "10.3",
+        "12.4"
+      ]
+    },
+    "16.1": {
+      "title": "16.1 - Partial aggregate may silently compare different age-group coverage across doses",
+      "status": "Status: Implemented in m179; targeted point/interval and coverage-label verification completed.",
+      "disposition": "Round 17 independent disposition: Resolved in original scope. Coverage reporting and bootstrap mismatch handling verified. [Verification](../../iterative%20review/evaluations/17/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.1",
+        "14.4",
+        "15.2"
+      ]
+    },
+    "16.2": {
+      "title": "16.2 - Monte Carlo pooling weights depend on other replicates in the same workbook",
+      "status": "Status: Implemented in m180; targeted MC workbook and ordinary-parity verification completed.",
+      "disposition": "Round 17 independent disposition: Resolved in original scope. Replicate-specific pooled weights and calendar verified; separate mixed-total availability issue recorded as 17.1. [Verification](../../iterative%20review/evaluations/17/resolution.md).",
+      "returns": [],
+      "related": [
+        "2.9",
+        "10.8"
+      ]
+    },
+    "16.3": {
+      "title": "16.3 - Nested-total validator rejects valid fractional counts from floating-point roundoff",
+      "status": "Status: Implemented in m178; targeted verification complete.",
+      "disposition": "Round 17 independent disposition: Resolved in original scope. Nested complement fractional reconciliation verified; separate exhaustive sum issue recorded as 17.2. [Verification](../../iterative%20review/evaluations/17/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.3"
+      ]
+    },
+    "16.4": {
+      "title": "16.4 - Partial hidden population can have more cause-specific deaths than all deaths",
+      "status": "Status: Implemented in m178; targeted verification complete.",
+      "disposition": "Round 17 independent disposition: Resolved in original scope. Hidden cause-specific feasibility checks verified. [Verification](../../iterative%20review/evaluations/17/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.3"
+      ]
+    },
+    "16.5": {
+      "title": "16.5 - Window-omission ancillary CSV contains superseded full-fit intervals",
+      "status": "Status: Implemented in m178; targeted verification complete.",
+      "disposition": "Round 17 independent disposition: Resolved in original scope. All seven ancillary interval pairs match current archive. [Verification](../../iterative%20review/evaluations/17/resolution.md).",
+      "returns": [],
+      "related": [
+        "11.12",
+        "14.11"
+      ]
+    },
+    "17.1": {
+      "title": "17.1 - A supplied Monte Carlo total suppresses another replicate?s direct all-ages output",
+      "status": "Status: Implemented and verified in persistent m181; independent review pending.",
+      "disposition": "Round 18 independent disposition: Original cross-replicate omission resolved; new one-dose reconstruction regression remains (18.1). [Verification](../../iterative%20review/evaluations/18/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.2",
+        "16.2"
+      ]
+    },
+    "17.2": {
+      "title": "17.2 - Exhaustive fractional total reconciliation rejects floating-point roundoff",
+      "status": "Status: Implemented and verified in persistent m181; independent review pending.",
+      "disposition": "Round 18 independent disposition: Resolved. Valid fractional total accepted and material fractional and integer inconsistencies rejected. [Verification](../../iterative%20review/evaluations/18/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.3",
+        "16.3"
+      ]
+    },
+    "17.3": {
+      "title": "17.3 - Incorrect stress-test section reference",
+      "status": "Status: Implemented and verified in persistent m181; independent review pending.",
+      "disposition": "Round 18 independent disposition: Resolved. Correct section number and redline verified. [Verification](../../iterative%20review/evaluations/18/resolution.md).",
+      "returns": [],
+      "related": [
+        "16.5"
+      ]
+    },
+    "18.1": {
+      "title": "18.1 - Monte Carlo display filtering mixes population coverage in direct all-ages comparisons",
+      "status": "Status: Implemented and verified in persistent m182; independent review pending.",
+      "disposition": "Round 19 independent disposition: Original scope resolved according to targeted reviewer progress before usage-limit interruption. [Recovered progress](../../iterative%20review/evaluations/19/resolution-progress.md).",
+      "returns": [
+        "17.1"
+      ],
+      "related": [
+        "16.1",
+        "16.2",
+        "17.1"
+      ]
+    },
+    "18.2": {
+      "title": "18.2 - Monte Carlo aggregate validation bypasses exhaustive source reconciliation",
+      "status": "Status: Implemented and verified in persistent m182; independent review pending.",
+      "disposition": "Round 19 independent disposition: Original scope resolved according to targeted reviewer progress before usage-limit interruption. [Recovered progress](../../iterative%20review/evaluations/19/resolution-progress.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.3",
+        "16.4",
+        "17.2",
+        "18.1"
+      ]
+    },
+    "18.3": {
+      "title": "18.3 - Monte Carlo all-ages raw comparator loses replicate identity",
+      "status": "Status: Implemented and verified in persistent m182; independent review pending.",
+      "disposition": "Round 19 independent disposition: Original scope resolved according to targeted reviewer progress before usage-limit interruption. [Recovered progress](../../iterative%20review/evaluations/19/resolution-progress.md).",
+      "returns": [],
+      "related": [
+        "16.2",
+        "17.1",
+        "18.1"
+      ]
+    },
+    "18.4": {
+      "title": "18.4 - Partial Monte Carlo aggregates report incorrect full-age labels and no coverage",
+      "status": "Status: Implemented and verified in persistent m182; independent review pending.",
+      "disposition": "Round 19 independent disposition: Original scope resolved according to targeted reviewer progress before usage-limit interruption. [Recovered progress](../../iterative%20review/evaluations/19/resolution-progress.md).",
+      "returns": [],
+      "related": [
+        "16.1",
+        "17.1",
+        "18.1"
+      ]
+    },
+    "18.5": {
+      "title": "18.5 - Optional nonlinear fitting described as only a post-inversion correction",
+      "status": "Status: Implemented and verified in persistent m183; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.2",
+        "11.5",
+        "12.2"
+      ]
+    },
+    "19.1": {
+      "title": "19.1 - Monte Carlo confidence interval mixes reporting dates and drops unavailable draws",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "8.2",
+        "14.5",
+        "16.2",
+        "18.3"
+      ]
+    },
+    "19.2": {
+      "title": "19.2 - Monte Carlo converter truncates configured birth-year range",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "17.1",
+        "18.1",
+        "18.4"
+      ]
+    },
+    "19.3": {
+      "title": "19.3 - Missing Monte Carlo dose category aborts an otherwise valid draw",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "18.2",
+        "19.1",
+        "19.2"
+      ]
+    },
+    "19.4": {
+      "title": "19.4 - Changed Monte Carlo configuration can reuse stale generated data",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "18.4",
+        "19.2"
+      ]
+    },
+    "19.5": {
+      "title": "19.5 - Table 8 overlapping input point validation permits impossible nested populations",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.4",
+        "15.3",
+        "16.4",
+        "18.2"
+      ]
+    },
+    "19.6": {
+      "title": "19.6 - Raw comparator cutoff rejects extremely small positive ratios",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "12.8",
+        "13.6",
+        "17.2",
+        "18.3"
+      ]
+    },
+    "19.7": {
+      "title": "19.7 - Monte Carlo source population and capped dose labels omit their scope",
+      "status": "Status: Implemented and verified in persistent m184; independent review pending.",
+      "disposition": "Round 20 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/20/resolution.md).",
+      "returns": [],
+      "related": [
+        "16.1",
+        "18.4",
+        "19.2"
+      ]
+    },
+    "20.1": {
+      "title": "20.1 - Monte Carlo summary conceals flagged frailty fits",
+      "status": "Status: Implemented and verified in persistent m185; independent review pending.",
+      "disposition": "Round 21 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/21/resolution.md).",
+      "returns": [],
+      "related": [
+        "3.1",
+        "16.1",
+        "18.3",
+        "19.1"
+      ]
+    },
+    "20.2": {
+      "title": "20.2 - Contradictory Monte Carlo ISO week labels alter fitted results",
+      "status": "Status: Implemented and verified in persistent m185; independent review pending.",
+      "disposition": "Round 21 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/21/resolution.md).",
+      "returns": [],
+      "related": [
+        "14.5",
+        "18.1",
+        "18.2",
+        "19.1"
+      ]
+    },
+    "20.3": {
+      "title": "20.3 - Baseline rate k is incorrectly called a gamma frailty parameter",
+      "status": "Status: Implemented and verified in persistent m185; independent review pending.",
+      "disposition": "Round 21 independent disposition: Resolved in approved scope. [Targeted resolution](../../iterative%20review/evaluations/21/resolution.md).",
+      "returns": [],
+      "related": [
+        "1.1",
+        "18.5"
+      ]
+    },
+    "21.1": {
+      "title": "21.1 - Ordinary standalone summary omits residual and gap diagnostics",
+      "status": "Status: Open; correction not adopted.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "11.4",
+        "15.5",
+        "19.1",
+        "20.1"
+      ]
+    },
+    "21.2": {
+      "title": "21.2 - Ancillary negative-control summary reports unidentified fallback fits as ok",
+      "status": "Status: Open; correction not adopted.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3",
+        "20.1",
+        "21.1"
+      ]
+    },
+    "21.3": {
+      "title": "21.3 - Ordinary output can retain a contradictory ISO week label",
+      "status": "Status: Open; correction not adopted.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "14.5",
+        "20.2"
+      ]
+    },
+    "21.4": {
+      "title": "21.4 - Legacy method description and missing interval method fallback",
+      "status": "Status: Open; correction not adopted.",
+      "disposition": null,
+      "returns": [],
+      "related": [
+        "1.3",
+        "18.5",
+        "20.3"
+      ]
+    }
+  },
+  "families": {
+    "Reference-frailty estimand, scope and benchmark": [
+      "1.1",
+      "1.5",
+      "1.6",
+      "2.1",
+      "2.6",
+      "2.8",
+      "4.8",
+      "5.3",
+      "6.6",
+      "6.7",
+      "6.9",
+      "7.11",
+      "8.6",
+      "8.12",
+      "8.13",
+      "10.7",
+      "11.10",
+      "11.11",
+      "11.15",
+      "12.3",
+      "12.6",
+      "12.10",
+      "13.7",
+      "13.8",
+      "14.3",
+      "15.4",
+      "15.8",
+      "15.9"
+    ],
+    "Nonlinear wave correction, entry and alpha": [
+      "1.2",
+      "2.4",
+      "3.2",
+      "4.1",
+      "4.2",
+      "4.3",
+      "4.4",
+      "4.7",
+      "5.1",
+      "5.10",
+      "6.12",
+      "6.13",
+      "7.10",
+      "8.5",
+      "9.7",
+      "9.12",
+      "9.15",
+      "10.4",
+      "10.5",
+      "11.5",
+      "11.14",
+      "12.2",
+      "13.1",
+      "15.7",
+      "18.5"
+    ],
+    "Frailty fitting, information and numerical safeguards": [
+      "1.3",
+      "2.2",
+      "2.3",
+      "2.7",
+      "3.1",
+      "4.5",
+      "5.2",
+      "5.9",
+      "5.11",
+      "6.5",
+      "6.11",
+      "7.1",
+      "7.3",
+      "7.9",
+      "8.4",
+      "8.11",
+      "9.4",
+      "9.11",
+      "9.13",
+      "10.2",
+      "10.3",
+      "11.18",
+      "12.4",
+      "15.10",
+      "20.3"
+    ],
+    "Population, risk sets, aggregation and uncertainty delivery": [
+      "2.9",
+      "4.6",
+      "5.4",
+      "5.5",
+      "5.6",
+      "5.7",
+      "6.1",
+      "6.2",
+      "6.14",
+      "7.2",
+      "7.4",
+      "7.5",
+      "8.1",
+      "8.2",
+      "8.3",
+      "9.1",
+      "9.2",
+      "9.5",
+      "9.6",
+      "9.8",
+      "9.9",
+      "9.16",
+      "10.1",
+      "10.6",
+      "10.8",
+      "10.10",
+      "11.1",
+      "11.2",
+      "11.3",
+      "11.6",
+      "11.7",
+      "11.8",
+      "11.13",
+      "11.16",
+      "12.1",
+      "12.7",
+      "12.8",
+      "12.9",
+      "13.2",
+      "13.3",
+      "13.6",
+      "14.1",
+      "14.2",
+      "14.4",
+      "14.5",
+      "14.6",
+      "14.7",
+      "14.8",
+      "14.9",
+      "15.1",
+      "15.2",
+      "15.3",
+      "16.1",
+      "16.2",
+      "16.3",
+      "16.4",
+      "17.1",
+      "17.2",
+      "18.1",
+      "18.2",
+      "18.3",
+      "18.4",
+      "19.1",
+      "19.2",
+      "19.3",
+      "19.5",
+      "19.6",
+      "19.7",
+      "20.1",
+      "20.2",
+      "21.1",
+      "21.3"
+    ],
+    "Validation design, diagnostics, provenance and reproducibility": [
+      "1.4",
+      "2.5",
+      "2.10",
+      "3.3",
+      "4.9",
+      "5.8",
+      "5.12",
+      "6.3",
+      "6.4",
+      "6.8",
+      "6.10",
+      "7.6",
+      "7.7",
+      "7.8",
+      "8.7",
+      "8.8",
+      "8.9",
+      "8.10",
+      "9.3",
+      "9.10",
+      "9.14",
+      "10.9",
+      "11.4",
+      "11.9",
+      "11.12",
+      "11.17",
+      "12.5",
+      "12.11",
+      "13.4",
+      "13.5",
+      "14.10",
+      "14.11",
+      "14.12",
+      "15.5",
+      "15.6",
+      "16.5",
+      "17.3",
+      "19.4",
+      "21.2",
+      "21.4"
+    ]
+  }
+}

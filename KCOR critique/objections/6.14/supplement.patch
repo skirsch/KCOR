@@ -1,0 +1,58 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -196,7 +196,7 @@
+ 
+ #### S4.2.2 Empirical negative control: age-shift construction
+ 
+-The empirical negative control (main-text Figure 6 and SI Figure S9) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are full-population strata rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_{0,d}$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
++The empirical negative control (main-text Figure 6 and SI Figure S9) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are complete strata within the restricted study population rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_{0,d}$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+@@ -345,6 +345,8 @@
+ #### S6.1.1 Illustrative empirical context: COVID-19 mortality data
+ 
+ The COVID-19 vaccination period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, making it a useful illustration for the KCOR framework. During this period, vaccine uptake was voluntary, rapidly time-varying, and correlated with baseline health status, creating clear examples of selection-induced non-proportional hazards. The Czech Republic national mortality registry data exemplify this regime: voluntary uptake led to asymmetric selection at enrollment and to visibly different cohort hazard geometry over follow-up. Under the revised estimator, those differences are summarized through fitted $\theta_{0,d}$ values, aligned quiet-window behavior, depletion-normalized cumulative trajectories, and, when invoked, optional NPH diagnostics for the shared amplification exponent $\alpha$. The Czech application remains illustrative rather than validating; any NPH output should be interpreted as descriptive and model-calibrated rather than as direct biological evidence. While these examples illustrate KCOR's application, the method is general and applies to any retrospective cohort comparison where selection induces differential depletion dynamics.
++
++**Czech population eligibility.** The converter (`code/KCOR_CMR.py`) restricts recorded birth-band starts to 1920 through 2005, retaining unknown birth years, and excludes records with a product code other than Pfizer-BioNTech or Moderna among the first four doses, across the available vaccination history. The all-ages summaries refer to this eligible population. The rule includes post-enrollment products; at enrollment 2021-24, 363,033 otherwise eligible individuals had a disqualifying product in the enrollment week or later and none before enrollment. Of these, 354,604 had no earlier recorded dose among the first four. These counts quantify the potential for retrospective survivor selection, not its effect on KCOR. The alternative enrollment-time eligibility definition has not been evaluated.
+ 
+ #### S6.1.2 Descriptive frailty-normalization behavior in the Czech application
+ 
+@@ -373,7 +375,7 @@
+ | 70–79 | OK | OK | No | Yes |
+ | 80–89 | OK | OK | Yes | Yes |
+ | 90–99 | OK | OK | No | Yes |
+-| All ages (full population) | OK | OK | Yes | Yes |
++| All ages (eligible population) | OK | OK | Yes | Yes |
+ 
+ Source: `analysis/s6/replay.py` and `analysis/s6/results.json`. The residual screen is exploratory and the fitted parameters are retained.
+ 
+@@ -410,8 +412,8 @@
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate weak identifiability or effectively linear cumulative hazards under the working model.
+ - Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 fitted value is poorly resolved across the entire allowed range. KCOR intervals retain the existing upper-bound zero-variance fallback (287 of 999 dose-2 draws at ages 40–49). Source: `analysis/s6/all-age-precision.json` and its matched draws.
+-- The "All ages" row fits the supplied full-population aggregate counts, including unknown birth years.
+-- Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied full-population total.
++- The "All ages" row fits the supplied eligible-population aggregate counts, including unknown birth years.
++- Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied eligible-population total.
+ 
+ **Diagnostic checks:**
+ - **Interpretation is conditional on diagnostics:** the numerical status and descriptive residual flags are listed above.
+@@ -420,7 +422,7 @@
+ - **Stability:** sign reversals, boundary pathologies, or major sensitivity to window perturbation would count against interpretability.
+ - **Falsifiability:** failure of any one of these checks would constitute evidence against model adequacy for that application.
+ 
+-Table: Ratio of observed cumulative mortality hazards for dose 0 versus dose 2, Czech cohorts enrolled in 2021-24 (age in calendar year 2024). The full-population row includes unknown birth years. {#tbl:si_raw_hazards}
++Table: Ratio of observed cumulative mortality hazards for dose 0 versus dose 2, Czech cohorts enrolled in 2021-24 (age in calendar year 2024). The eligible-population row includes unknown birth years. {#tbl:si_raw_hazards}
+ 
+ | Age band (years) | Dose 0 cumulative hazard | Dose 2 cumulative hazard | Ratio |
+ |---|---:|---:|---:|
+@@ -430,7 +432,7 @@
+ | 70–79 | 0.123042 | 0.057663 | 2.1338 |
+ | 80–89 | 0.306825 | 0.167247 | 1.8346 |
+ | 90–99 | 0.774155 | 0.516352 | 1.4993 |
+-| All ages (full population) | 0.019867 | 0.073304 | 0.2710 |
++| All ages (eligible population) | 0.019867 | 0.073304 | 0.2710 |
+ 
+ The cumulative hazards sum the weekly negative log survival probabilities after the two-week stabilization skip (2021-26 through 2024-16 inclusive), before frailty normalization. The age bands use the supplied five-year birth groups combined into ten-year bands. Source: `data/Czech/KCOR_CMR.xlsx`, sheet `2021_24`; replay and results in `analysis/s6/`. The raw contrasts are descriptive.
+ 

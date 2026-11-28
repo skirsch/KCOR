@@ -1,0 +1,179 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -307,7 +307,12 @@
+ 
+ # Global dictionary to store ASMR weights per sheet (computed in build_kcor_rows)
+ # Key: sheet_name, Value: dict mapping YearOfBirth to weight
+-ASMR_WEIGHTS_BY_SHEET = {}
++ASMR_WEIGHTS_BY_SHEET = {}  # Ordinary: sheet; batched MC: (sheet, mc_id).
++
++
++def _asmr_weights_for(sheet, mc_id=None):
++    key=sheet if mc_id is None or pd.isna(mc_id) else (sheet,mc_id)
++    return ASMR_WEIGHTS_BY_SHEET.get(key,{})
+ 
+ 
+ def is_special_aggregate_yob(yob):
+@@ -4336,7 +4341,7 @@
+             direct = rows["YearOfBirth"] == yob
+             # A pooled comparison requires both source dose groups and positive
+             # weight. Do not renormalize over the remaining groups on failure.
+-            weights = ASMR_WEIGHTS_BY_SHEET.get(sheet, {})
++            weights = _asmr_weights_for(sheet,draw)
+             paired = rows["Dose_num"].isin(group.Dose) & rows["Dose_den"].isin(group.Dose)
+             pooled = (rows["YearOfBirth"] == 0) & paired & (yob > 0) & (weights.get(yob, 0.) > 0)
+             affected &= direct | pooled
+@@ -4714,54 +4719,49 @@
+         return any((age, num, den, pd.Timestamp(date), draw) in flagged_age_rows for age in ages)
+ 
+     # -------- ASMR pooled rows (YearOfBirth = 0) --------
+-    # Expected-deaths weights using pooled quiet baseline window
+-    # w_a ∝ h_a × PT_a(W) where h_a = smoothed mean MR in quiet window W
+-    weights = {}
++    # Expected-deaths weights retain the existing four-week formula,
++    # but independent MC replicates must never share observations.
+     df_sorted = df.sort_values("DateDied")
+-    
+-    # Define quiet baseline window W using the agreed range: first 4 distinct weeks from the sheet start
+-    quiet_window_dates = df_sorted.drop_duplicates(subset=["DateDied"]).head(4)["DateDied"].tolist()
+-    asmr_source = df_sorted[df_sorted["YearOfBirth"] > 0].copy()
+-    quiet_data = asmr_source[asmr_source["DateDied"].isin(quiet_window_dates)]
+-    
+-    from pooling import expected_deaths_weights
+-    age_groups=list(quiet_data.groupby("YearOfBirth",sort=False))
+-    normalized=expected_deaths_weights([g["MR_smooth"].to_numpy() for _,g in age_groups],
+-                                       [g["PT"].sum() for _,g in age_groups],EPS)
+-    weights=dict(zip([a for a,_ in age_groups],normalized))
+-
+-    # Store weights globally for use in KCOR_ns calculation and display
+-    global ASMR_WEIGHTS_BY_SHEET
+-    ASMR_WEIGHTS_BY_SHEET[sheet_name] = weights.copy()
+-    
+-    # Debug: Show expected-deaths weights (suppress in MC mode)
+-    if DEBUG_VERBOSE and not MONTE_CARLO_MODE:
+-        print(f"\n[DEBUG] Expected-deaths weights for ASMR pooling:")
+-        for yob in sorted(weights.keys()):
+-            print(f"  Age {yob}: weight = {weights[yob]:.6f}")
+-        print(f"  Total weight: {sum(weights.values()):.6f}")
+-        print()
+-
+-    pooled_rows = []
+-    all_dates = sorted(df_sorted["DateDied"].unique())
+-
+-    # In MC mode, process each mc_id separately to preserve separate iterations
+     mc_id_values = [None]
+     if MONTE_CARLO_MODE and "mc_id" in df_sorted.columns:
+-        mc_id_values = sorted(df_sorted["mc_id"].dropna().unique().tolist())
+-        if not mc_id_values:
+-            mc_id_values = [None]
+-
++        mc_id_values = sorted(df_sorted["mc_id"].dropna().unique().tolist()) or [None]
++        df_sorted = df.sort_values(["DateDied","YearOfBirth","Dose","mc_id"])
++    from pooling import expected_deaths_weights
++    global ASMR_WEIGHTS_BY_SHEET
++    # Discard obsolete cached replicate keys for this enrollment.
++    for key in list(ASMR_WEIGHTS_BY_SHEET):
++        if key==sheet_name or (isinstance(key,tuple) and key[0]==sheet_name):
++            del ASMR_WEIGHTS_BY_SHEET[key]
++    iteration_frames={}
++    for draw in mc_id_values:
++        part=df_sorted if draw is None else df_sorted[df_sorted.mc_id.eq(draw)]
++        iteration_frames[draw]=part
++        quiet_window_dates=part.drop_duplicates(subset=["DateDied"]).head(4)["DateDied"].tolist()
++        quiet_data=part[(part.YearOfBirth>0)&part.DateDied.isin(quiet_window_dates)]
++        age_groups=list(quiet_data.groupby("YearOfBirth",sort=False))
++        normalized=expected_deaths_weights([g["MR_smooth"].to_numpy() for _,g in age_groups],
++                                           [g["PT"].sum() for _,g in age_groups],EPS)
++        weights=dict(zip([age for age,_ in age_groups],normalized))
++        key=sheet_name if draw is None else (sheet_name,draw)
++        ASMR_WEIGHTS_BY_SHEET[key]=weights.copy()
++    if DEBUG_VERBOSE and not MONTE_CARLO_MODE:
++        weights=_asmr_weights_for(sheet_name)
++        print("\n[DEBUG] Expected-deaths weights for ASMR pooling:")
++        for yob in sorted(weights):
++            print(f"  Age {yob}: weight = {weights[yob]:.6f}")
++        print(f"  Total weight: {sum(weights.values()):.6f}\n")
++
++    pooled_rows = []
+     dose_pairs = get_dose_pairs(sheet_name)
+     for num, den in dose_pairs:
+         # Process each mc_id separately in MC mode
+         for mc_id_val in mc_id_values:
+-            # Filter to this iteration's data
+-            df_for_iteration = asmr_source
+-            if mc_id_val is not None:
+-                df_for_iteration = asmr_source[asmr_source["mc_id"] == mc_id_val]
+-                if df_for_iteration.empty:
+-                    continue
++            iteration_frame=iteration_frames[mc_id_val]
++            df_for_iteration=iteration_frame[iteration_frame.YearOfBirth>0]
++            if df_for_iteration.empty:
++                continue
++            weights=_asmr_weights_for(sheet_name,mc_id_val)
++            all_dates=sorted(iteration_frame.DateDied.unique())
+             
+             # Per-age anchors at t0 for this (num,den) and iteration
+             anchors = {}
+@@ -4796,7 +4796,7 @@
+ 
+             def unavailable_pool(dt, status):
+                 return {"mc_id": mc_id_val,
+-                    "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
++                    "ISOweekDied": iteration_frame.loc[iteration_frame["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                     "Date": pd.to_datetime(dt), "KCOR": np.nan, "KCOR_anchored": np.nan,
+                     "KCOR_unanchored": np.nan, "anchor_status": status,
+                     "pool_contributors": "", "pool_expected_ages": expected_label,
+@@ -4882,7 +4882,7 @@
+                         date_val = pd.to_datetime(dt) if isinstance(dt, pd.Timestamp) else pd.to_datetime(dt)
+                         asmr_row = {
+                             "mc_id": mc_id_val,
+-                            "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
++                            "ISOweekDied": iteration_frame.loc[iteration_frame["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                             "Date": date_val,  # Add Date column for filtering at reporting date
+                             "KCOR": Kpool,
+                             "KCOR_anchored": Kpool,
+@@ -4921,28 +4921,17 @@
+     # This is different from -2 All Ages which aggregates raw data first
+     # Uses the same weights as ASMR pooling but pools all individual birth years
+     all_ages_asmr_rows = []
+-    all_dates_asmr = sorted(df_sorted["DateDied"].unique())
+-    
+-    # Use the same ASMR weights that were computed above
+-    weights_asmr = ASMR_WEIGHTS_BY_SHEET.get(sheet_name, {})
+-    
+-    # In MC mode, process each mc_id separately
+-    mc_id_values_asmr = [None]
+-    if MONTE_CARLO_MODE and "mc_id" in df_sorted.columns:
+-        mc_id_values_asmr = sorted(df_sorted["mc_id"].dropna().unique().tolist())
+-        if not mc_id_values_asmr:
+-            mc_id_values_asmr = [None]
+-    
++    mc_id_values_asmr = mc_id_values
++
+     dose_pairs_asmr = get_dose_pairs(sheet_name)
+     for num, den in dose_pairs_asmr:
+         # Process each mc_id separately in MC mode
+         for mc_id_val_asmr in mc_id_values_asmr:
+-            # Filter to this iteration's data
+-            df_for_iteration_asmr = df_sorted
+-            if mc_id_val_asmr is not None:
+-                df_for_iteration_asmr = df_sorted[df_sorted["mc_id"] == mc_id_val_asmr]
+-                if df_for_iteration_asmr.empty:
+-                    continue
++            df_for_iteration_asmr=iteration_frames[mc_id_val_asmr]
++            if df_for_iteration_asmr.empty:
++                continue
++            weights_asmr=_asmr_weights_for(sheet_name,mc_id_val_asmr)
++            all_dates_asmr=sorted(df_for_iteration_asmr.DateDied.unique())
+             
+             # Per-age anchors at t0 for this (num,den) and iteration
+             anchors_asmr = {}
+@@ -5017,7 +5006,7 @@
+                 date_val_asmr = pd.to_datetime(dt).date()
+                 all_ages_asmr_rows.append({
+                     "mc_id": mc_id_val_asmr,
+-                    "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
++                    "ISOweekDied": df_for_iteration_asmr.loc[df_for_iteration_asmr["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                     "Date": date_val_asmr,
+                     "KCOR": Kpool_asmr,
+                     "CI_lower": CI_lower_asmr,

@@ -1,0 +1,17 @@
+{
+  "parent": "m181",
+  "candidate": "m182",
+  "tests": {
+    "round18_mc_sources": "PASS",
+    "round16_mc_pooling": "PASS",
+    "round17_mc_totals": "PASS",
+    "ordinary_s6_frames": "PASS exact 1192x46",
+    "round7_workbook": "same pre-existing last assertion failure in parent and candidate"
+  },
+  "ordinary_s6_shape": [
+    1192,
+    46
+  ],
+  "ordinary_s6_endpoint": 1.1355510686037023,
+  "full_bootstrap_rerun": false
+}

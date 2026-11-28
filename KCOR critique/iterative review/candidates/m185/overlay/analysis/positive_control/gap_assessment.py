@@ -1,0 +1,22 @@
+"""Matched Table 9 gap diagnostics; preserve original numerical archive."""
+from pathlib import Path
+import argparse,json
+from concurrent.futures import ProcessPoolExecutor
+import numpy as np,pandas as pd
+import replay as R
+from bootstrap_reporting import gap_diagnostic
+def main():
+    p=argparse.ArgumentParser();p.add_argument("output",type=Path);p.add_argument("--workers",type=int,default=6);a=p.parse_args();a.output.mkdir(parents=True,exist_ok=True)
+    dates,data=R.read_data();R.initialize(dates,data);point=R.estimates(0)
+    with ProcessPoolExecutor(a.workers,initializer=R.initialize,initargs=(dates,data)) as pool:
+        results=list(pool.map(R.estimates,range(1,1000),chunksize=8))
+    def records(x):
+        return {(s,1950,d):x[i][1][d]["gap_first_pass"] for i,s in enumerate(R.SCENARIOS) for d in (0,1)}
+    seed={(s,1950,d):point[i][1][d]["gap_seed_status"] for i,s in enumerate(R.SCENARIOS) for d in (0,1)}
+    summary,status=gap_diagnostic(records(point),[records(x) for x in results],seed)
+    pd.DataFrame(summary).to_csv(a.output/"table9-gap-diagnostics.csv",index=False)
+    (a.output/"table9-gap-status.json").write_text(json.dumps({str(k):v for k,v in status.items()},indent=2))
+    vals=np.array([point]+results,dtype=object) if False else np.array([[x[i][0] for i in range(2)] for x in [point]+results],float)
+    np.savez_compressed(a.output/"table9-points-draws.npz",points=vals)
+    print(pd.DataFrame(summary).to_string(index=False),flush=True)
+if __name__=="__main__":main()
