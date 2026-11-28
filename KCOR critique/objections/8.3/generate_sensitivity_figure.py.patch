@@ -1,0 +1,98 @@
+--- m137/code/generate_sensitivity_figure.py
++++ m138/code/generate_sensitivity_figure.py
+@@ -28,7 +28,7 @@
+     The SA output has sheets named like '2021_24_1_vs_0', '2021_24_2_vs_0', etc.
+     Each sheet contains a grid of KCOR values with:
+     - Rows: baseline weeks (normalization week count)
+-    - Columns: quiet-start offsets (weeks from 2022-24)
++    - Columns: quiet-start offsets (weeks from 2023-01)
+     """
+     xls = pd.ExcelFile(xlsx_path)
+     
+@@ -82,7 +82,7 @@
+     n_cols = min(3, n_grids)
+     n_rows = (n_grids + n_cols - 1) // n_cols
+     
+-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4 * n_cols, 3.5 * n_rows))
++    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.4 * n_cols, 3.9 * n_rows), layout="constrained")
+     
+     if n_grids == 1:
+         axes = np.array([[axes]])
+@@ -103,13 +103,9 @@
+         global_vmin = min(all_values)
+         global_vmax = max(all_values)
+         # Center colormap at 1.0, symmetric around 1.0
+-        if global_vmin < 1.0 < global_vmax:
+-            max_dev = max(abs(global_vmin - 1.0), abs(global_vmax - 1.0))
+-            unified_vmin = 1.0 - max_dev
+-            unified_vmax = 1.0 + max_dev
+-        else:
+-            unified_vmin = global_vmin
+-            unified_vmax = global_vmax
++        max_dev = max(abs(global_vmin - 1.0), abs(global_vmax - 1.0), 1e-6)
++        unified_vmin = 1.0 - max_dev
++        unified_vmax = 1.0 + max_dev
+     else:
+         unified_vmin = 0.95
+         unified_vmax = 1.05
+@@ -124,7 +120,7 @@
+         
+         # Use unified color scale for all panels
+         # Only show colorbar on the last panel
+-        cbar = (idx == n_grids - 1)
++        cbar = False
+         
+         sns.heatmap(
+             df, 
+@@ -142,7 +138,7 @@
+         
+         ax.set_title(key, fontsize=12, fontweight='bold')
+         ax.set_xlabel('Quiet-window start offset (weeks)', fontsize=12)
+-        ax.set_ylabel('Baseline weeks', fontsize=12)
++        ax.set_ylabel('Reference weeks', fontsize=12)
+         ax.tick_params(labelsize=10)
+         
+         # Simplify x-axis labels: convert "offset_-12w" format to "-12, -8, -4, 0, +4, +8, +12"
+@@ -183,23 +179,11 @@
+         col = idx % n_cols
+         axes[row, col].set_visible(False)
+     
+-    # Add legend explaining axes (add as text annotation)
+-    # Place legend in the first subplot's corner
+-    if n_grids > 0:
+-        first_ax = axes[0, 0] if n_rows > 1 else axes[0]
+-        legend_text = (
+-            'X-axis: Quiet-window start offset (weeks)\n'
+-            'Y-axis: Baseline weeks\n'
+-            'Color: KCOR(t) value (centered at 1.0)'
+-        )
+-        first_ax.text(0.02, 0.98, legend_text, transform=first_ax.transAxes,
+-                     fontsize=10, verticalalignment='top',
+-                     bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+-    
+-    fig.suptitle('Sensitivity Analysis: KCOR Robustness to Parameter Choices', 
+-                 fontsize=14, fontweight='bold')
+-    fig.tight_layout()
+-    
++    # One colorbar with a common symmetric scale, without obscuring cells.
++    scalar = plt.cm.ScalarMappable(norm=plt.Normalize(unified_vmin, unified_vmax), cmap="RdBu_r")
++    fig.colorbar(scalar, ax=axes.ravel().tolist(), label="Anchored KCOR", shrink=0.8)
++    fig.suptitle('Sensitivity Analysis: Anchored KCOR', fontsize=14, fontweight='bold')
++
+     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+     fig.savefig(output_path, dpi=200, bbox_inches='tight')
+     plt.close(fig)
+@@ -291,10 +275,13 @@
+         help="Figure style: heatmap, distribution, or both"
+     )
+     
++    parser.add_argument("--cohort", help="Display only the specified enrollment sheet (e.g. 2021_24)")
+     args = parser.parse_args()
+     
+     # Read sensitivity data
+     results = read_sensitivity_output(args.input)
++    if args.cohort:
++        results = {key: data for key, data in results.items() if data["cohort"] == args.cohort}
+     
+     if not results:
+         print(f"Error: No valid sensitivity data found in {args.input}")

@@ -1,0 +1,9 @@
+{
+  "old_error": "nonstandard/overlapping strata require explicit history layout",
+  "bad_error": "aggregate -2 does not match disjoint source counts",
+  "disjoint_people": 216000,
+  "draws_checked": 10,
+  "aggregate_identity": true,
+  "old_simple_draw_identical": true,
+  "table8_draw_identical": true
+}

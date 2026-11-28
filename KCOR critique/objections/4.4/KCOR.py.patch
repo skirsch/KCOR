@@ -1,0 +1,41 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -1494,7 +1494,7 @@
+             else:
+                 delta_i = float(delta_i_raw)
+             deltas.append(delta_i)
+-            cumulative_prev = cumulative_i
++            cumulative_prev += delta_i
+ 
+         delta_raw_values = delta_raw_iter.copy()
+         delta_applied_values = deltas.copy()
+@@ -1519,8 +1519,9 @@
+                 prev = 0.
+                 for start in reentry_indices:
+                     raw = inv[start] - k*unit_start[start]
+-                    offset[start:] += max(raw-prev,0.)
+-                    prev = raw
++                    increment = max(raw-prev,0.)
++                    offset[start:] += increment
++                    prev += increment
+             pred = weekly_gamma_hazard(k*unit_start[fit_mask_theta]+offset[fit_mask_theta], k*unit_week[fit_mask_theta], th)
+             return h_fit-pred
+         try:
+@@ -1602,7 +1603,7 @@
+             cumulative_i = float(H0_eff[start] - H_gom_full[start])
+             delta_i_raw = cumulative_i - cumulative_prev
+             di = float(max(delta_i_raw, 0.0))
+-            cumulative_prev = cumulative_i
++            cumulative_prev += di
+             Delta[start:] += di
+         H_eff_final = H_gom_full[fit_mask_theta] + Delta[fit_mask_theta]
+ 
+@@ -10201,7 +10202,7 @@
+             if active.any():
+                 wave = (float(t[active][0]), float(t[active][-1]))
+                 alpha = cfg["apply_alpha"]
+-    if wave is not None and alpha is not None and abs(alpha-1.) > NPH_IDENTITY_TOL:
++    if wave is not None and alpha is not None:
+         model = SimpleNamespace(**globals())
+         fit = _survivor_module().make_fitter(model, wave, float(alpha))
+         return fit(h_arr, t_rebased, quiet_mask, k_anchor_weeks, gamma_per_week,

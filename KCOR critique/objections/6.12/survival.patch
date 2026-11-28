@@ -1,0 +1,240 @@
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -6,33 +6,120 @@
+ """
+ from functools import lru_cache
+ 
++import math
+ import numpy as np
+ from scipy.optimize import brentq
+ from scipy.special import gammaincinv, logsumexp, roots_legendre
+ 
+ 
+-@lru_cache(maxsize=256)
+-def gamma_quadrature(theta):
+-    # Same probability-space quadrature as the existing post-wave solver.
+-    nodes, weights = roots_legendre(32)
++@lru_cache(maxsize=None)
++def _probability_rule(order):
++    nodes, weights = roots_legendre(order)
+     edges = np.array([0.0, 1e-10, 1e-8, 1e-6, 1e-5, 1e-4, .001, .01, .1, .5])
+     half_width = np.diff(edges)[:, None] / 2
+     probs = (edges[:-1, None] + half_width * (nodes + 1)).ravel()
+     weights = (half_width * weights).ravel()
+-    z = theta * gammaincinv(1 / theta, np.r_[probs, 1 - probs])
+-    return z, np.tile(weights, 2)
++    return np.r_[probs, 1 - probs], np.tile(weights, 2)
++
++
++@lru_cache(maxsize=256)
++def gamma_quadrature(theta, order=32):
++    # Probability-space rule with extra resolution in both tails.
++    probs, weights = _probability_rule(order)
++    z = theta * gammaincinv(1 / theta, probs)
++    return z, weights
++
++
++# All three stages (fit, weekly correction, post-wave inversion) use this
++# positive-weight integral. Increasing wave exposure decreases survival at
++# every quadrature node. Order refinement is accepted only after convergence.
++SURVIVAL_ATOL = 2e-13
++SURVIVAL_RTOL = 2e-12
++SURVIVAL_ORDERS = (32, 64, 128, 256, 512)
++
++@lru_cache(maxsize=256)
++def _wave_nodes(theta, alpha, order):
++    z, weights = gamma_quadrature(theta, order)
++    return np.power(z, alpha), weights
++
++
++def _wave_log_at_order(u, theta, alpha, order):
++    za, weights = _wave_nodes(theta, alpha, order)
++    powers = u[:, None] * za
++    lost = (-np.expm1(-powers)) @ weights
++    result = np.empty_like(lost)
++    small = lost < .5
++    result[small] = np.log1p(-lost[small])
++    result[~small] = logsumexp(-powers[~small], b=weights, axis=1)
++    return result
++
++
++def _wave_log_scalar(u, theta, alpha):
++    if u == 0.:
++        return 0.
++    prev = None
++    for order in SURVIVAL_ORDERS:
++        za, weights = _wave_nodes(theta, alpha, order)
++        powers = u * za
++        lost = float(np.dot(weights, -np.expm1(-powers)))
++        cur = math.log1p(-lost) if lost < .5 else float(logsumexp(-powers, b=weights))
++        if prev is not None and math.isfinite(cur) and math.isfinite(prev) and abs(cur-prev) <= SURVIVAL_ATOL + SURVIVAL_RTOL*abs(cur):
++            return cur
++        prev = cur
++    raise ArithmeticError("Gamma survival quadrature did not converge")
++
++
++def wave_log_survival(baseline, wave, theta, alpha):
++    """Log of the remaining wave term under baseline-tilted gamma frailty."""
++    if np.isscalar(baseline) and np.isscalar(wave):
++        if theta == 0:
++            return -float(wave)
++        if alpha == 1:
++            return -math.log1p(theta*wave/(1+theta*baseline))/theta
++        return _wave_log_scalar(wave/(1+theta*baseline)**alpha, theta, alpha)
++    B, W = np.broadcast_arrays(np.asarray(baseline, float), np.asarray(wave, float))
++    if theta == 0:
++        out = -W
++    elif alpha == 1:
++        out = -np.log1p(theta * W / (1 + theta * B)) / theta
++    else:
++        shape = B.shape
++        u = (W / np.power(1 + theta * B, alpha)).ravel()
++        out = np.zeros_like(u)
++        pending = np.flatnonzero(u != 0.)
++        if len(pending):
++            prev = _wave_log_at_order(u[pending], theta, alpha, SURVIVAL_ORDERS[0])
++            for order in SURVIVAL_ORDERS[1:]:
++                cur = _wave_log_at_order(u[pending], theta, alpha, order)
++                good = np.isfinite(cur) & np.isfinite(prev) & (
++                    np.abs(cur - prev) <= SURVIVAL_ATOL + SURVIVAL_RTOL * np.abs(cur))
++                out[pending[good]] = cur[good]
++                pending = pending[~good]
++                if not len(pending):
++                    break
++                prev = cur[~good]
++            if len(pending):
++                raise ArithmeticError("Gamma survival quadrature did not converge")
++        out = out.reshape(shape)
++    return float(out) if out.ndim == 0 else out
+ 
+ 
+ def cumulative_hazard(baseline, wave, theta, alpha):
+-    """Negative log survival under the starting gamma law."""
+-    gamma_hazard = np.log1p(theta * baseline) / theta
+-    if wave == 0:
+-        return gamma_hazard
+-    z, weights = gamma_quadrature(theta)
+-    powers = wave * np.power(z / (1 + theta * baseline), alpha)
+-    lost = np.dot(weights, -np.expm1(-powers))
+-    log_wave = np.log1p(-lost) if lost < .5 else logsumexp(-powers, b=weights)
+-    return gamma_hazard - log_wave
++    """Negative log survival under the starting gamma law, scalar or array."""
++    if np.isscalar(baseline) and np.isscalar(wave):
++        if theta == 0:
++            return float(baseline + wave)
++        if alpha == 1:
++            return math.log1p(theta*(baseline+wave))/theta
++        return math.log1p(theta*baseline)/theta - wave_log_survival(baseline, wave, theta, alpha)
++    B, W = np.broadcast_arrays(np.asarray(baseline, float), np.asarray(wave, float))
++    if theta == 0:
++        out = B + W
++    elif alpha == 1:
++        out = np.log1p(theta * (B + W)) / theta
++    else:
++        out = np.log1p(theta * B) / theta - wave_log_survival(B, W, theta, alpha)
++    return float(out) if out.ndim == 0 else out
+ 
+ 
+ def solve_increase(hazard, target, initial_upper):
+@@ -116,59 +203,14 @@
+     return correct
+ 
+ 
+-from scipy.linalg import eigh_tridiagonal
+-from scipy.special import gammaln
+ from scipy.optimize import least_squares
+-import math
+-
+-# Numerically stable, normalized gamma quadrature. Same integral as 1.2.
+-@lru_cache(maxsize=256)
+-def nodes(theta):
+-    j=np.arange(1,64.)
+-    z,v=eigh_tridiagonal(1+2*theta*np.arange(64.),np.sqrt(theta*j*(1+theta*(j-1))))
+-    return z,v[0]**2
++
+ 
+ class Survival:
+     def __init__(self,theta,alpha):
+-        self.th=theta;self.a=alpha
+-        if theta>=1e-5 and alpha!=1:
+-            z,w=nodes(float(theta));self.za=np.maximum(z,0.)**alpha;self.w=w
+-            self.m1=np.exp(alpha*np.log(theta)+gammaln(1/theta+alpha)-gammaln(1/theta))
+-            self.m2=np.exp(2*alpha*np.log(theta)+gammaln(1/theta+2*alpha)-gammaln(1/theta))
++        self.th=float(theta);self.a=float(alpha)
+     def hazard(self,B,W):
+-        if np.isscalar(B) and np.isscalar(W):
+-            th,a=self.th,self.a
+-            if a==1:
+-                return math.log1p(th*(B+W))/th if th else B+W
+-            if th<1e-5:
+-                return B+W-th/2*((B+a*W)**2-a*(a-1)*W)
+-            if W==0 or a==1:
+-                return math.log1p(th*(B+W))/th
+-            scale=1+th*B;u=W/scale**a
+-            v=u*self.za
+-            expectation=1-u*self.m1+u*u*self.m2/2+float(np.dot(np.expm1(-v)+v-v*v/2,self.w))
+-            if expectation>1e-6 and u*self.m1<2 and math.isfinite(expectation):
+-                return math.log1p(th*B)/th-math.log(expectation)
+-            return cumulative_hazard(float(B),float(W),th,a)
+-        B,W=np.broadcast_arrays(np.asarray(B,dtype=float),np.asarray(W,dtype=float))
+-        shape=B.shape;B=B.ravel();W=W.ravel();th=self.th;a=self.a
+-        if a==1:
+-            out=np.log1p(th*(B+W))/th if th else B+W
+-        elif th<1e-5:
+-            out=B+W-th/2*((B+a*W)**2-a*(a-1)*W)
+-        else:
+-            scale=1+th*B;u=W/scale**a
+-            # Exact first two noninteger moments; integrate smooth remainder.
+-            v=u[:,None]*self.za
+-            remainder=(np.expm1(-v)+v-v*v/2)@self.w
+-            expectation=1-u*self.m1+u*u*self.m2/2+remainder
+-            out=np.log1p(th*B)/th
+-            good=(expectation>1e-6)&(u*self.m1<2.)&np.isfinite(expectation)
+-            out[good]-=np.log(expectation[good])
+-            for i in np.flatnonzero(~good):
+-                out[i]=cumulative_hazard(float(B[i]),float(W[i]),th,a)
+-        out=out.reshape(shape)
+-        return float(out) if not shape else out
++        return cumulative_hazard(B,W,self.th,self.a)
+     def increase(self,B,W,target,axis,guess):
+         # Solve cumulative survival on the monotone indicated exposure axis.
+         base=self.hazard(B,W)
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -253,7 +253,7 @@
+ import time
+ import statsmodels.api as sm
+ from scipy.optimize import brentq, least_squares, minimize
+-from scipy.special import betaln, gammaincinv, gammaln, logsumexp, roots_legendre
++from scipy.special import betaln, gammaln
+ 
+ # Dependencies: pandas, numpy, openpyxl, statsmodels, scipy
+ 
+@@ -2467,24 +2467,11 @@
+     if wave_end == 0.0 or alpha == 1.0:
+         return (exit_scale + theta * wave_end) * np.expm1(theta * observed) / theta
+ 
+-    # Integrate over gamma probabilities with extra resolution in both tails.
+-    # Symmetric subintervals keep the upper quantiles away from rounded p=1.
+-    nodes, weights = roots_legendre(32)
+-    edges = np.array([0.0, 1e-10, 1e-8, 1e-6, 1e-5, 1e-4, 0.001, 0.01, 0.1, 0.5])
+-    half_width = np.diff(edges)[:, None] / 2.0
+-    probs = (edges[:-1, None] + half_width * (nodes + 1.0)).ravel()
+-    half_weights = (half_width * weights).ravel()
+-    probs = np.concatenate((probs, 1.0 - probs))
+-    weights = np.tile(half_weights, 2)
+-    z = theta * gammaincinv(1.0 / theta, probs)
++    # Use the same accuracy-controlled integral as the fit and weekly inverse.
++    wave_log = _survivor_module().wave_log_survival
+ 
+     def wave_log_survival(baseline):
+-        scaled = z / (1.0 + theta * baseline)
+-        powers = wave_end * np.power(scaled, alpha)
+-        lost = np.dot(weights, -np.expm1(-powers))
+-        if lost < 0.5:
+-            return np.log1p(-lost)
+-        return logsumexp(-powers, b=weights)
++        return wave_log(baseline, wave_end, theta, alpha)
+ 
+     log_wave_exit = wave_log_survival(baseline_end)
+ 

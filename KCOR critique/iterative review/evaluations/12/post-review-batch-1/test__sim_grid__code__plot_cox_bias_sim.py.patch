@@ -1,0 +1,20 @@
+--- a/test/sim_grid/code/plot_cox_bias_sim.py
++++ b/test/sim_grid/code/plot_cox_bias_sim.py
+@@ -91,7 +91,7 @@
+     out_path: str
+ ) -> None:
+     """
+-    Plot KCOR bias (asymptote - 1) vs frailty variance theta.
++    Plot observed week-52 KCOR minus one vs frailty variance theta.
+     
+     Args:
+         csv_path: Path to CSV with simulation results
+@@ -106,7 +106,7 @@
+     plt.plot(theta, kcor_bias, marker="o", linewidth=2, markersize=8, label="Observed KCOR deviation")
+     plt.axhline(0.0, color="black", linestyle="--", linewidth=1, label="Null deviation = 0")
+     plt.xlabel("Frailty variance θ (cohort B)", fontsize=12)
+-    plt.ylabel("Bias in KCOR asymptote (KCOR − 1)", fontsize=12)
++    plt.ylabel("Observed week-52 KCOR minus one", fontsize=12)
+     plt.title("Observed KCOR deviation under synthetic null", fontsize=13)
+     plt.grid(True, alpha=0.3)
+     plt.legend(fontsize=10)

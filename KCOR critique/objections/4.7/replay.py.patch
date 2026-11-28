@@ -1,0 +1,10 @@
+--- a/analysis/table8/replay.py
++++ b/analysis/table8/replay.py
+@@ -16,6 +16,7 @@
+ def write_workbook(source, workbook):
+     os.chdir(source.parent)
+     os.environ["MONTE_CARLO"] = "0"
++    os.environ["KCOR_BOOTSTRAP_DRAWS"] = "0"  # this runner performs its own matched bootstrap below
+     study.compare.initialize("revised")
+     module = study.compare.adapter.K
+     module.OVERRIDE_DOSE_PAIRS = list(study.PAIRS)

@@ -1,0 +1,64 @@
+--- m152/test/test_round10_batch.py
++++ m153/test/test_round10_batch.py
+@@ -0,0 +1,61 @@
++"""Round 10 straightforward regression checks: exhaustion, nonlinear gap labels, age grouping."""
++from pathlib import Path
++import os,sys,io,tempfile
++from contextlib import redirect_stdout,redirect_stderr
++import numpy as np,pandas as pd
++ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'test'));sys.path.insert(0,str(ROOT/'code'))
++from test_round7_workbook import run,K
++from bootstrap_reporting import histories,draw_history
++from fixed_cohort_history import invalid_components
++sys.path.insert(0,str(ROOT/'analysis/table8'));from table8_bootstrap import read_population
++SHEET='2021_24'
++def overlap_fixture():
++    dates=pd.date_range('2021-06-14',periods=56,freq='7D');rows=[]
++    for age in (1940,1950,1970):
++        for dose in (0,1,2):
++            for sex in ('M','F'):
++                dead=np.full(len(dates),12);alive=10000-np.r_[0,np.cumsum(dead[:-1])]
++                if (age,dose)==(1940,2):dead[29]=alive[29];dead[30:]=0;alive[30:]=0
++                rows.append(pd.DataFrame(dict(YearOfBirth=age,Dose=dose,Sex=sex,DateDied=dates,ISOweekDied=dates.strftime('%G-%V'),Alive=alive,Dead=dead)))
++    f=pd.concat(rows,ignore_index=True);inc=f.groupby(['Dose','Sex','DateDied','ISOweekDied'],as_index=False)[['Alive','Dead']].sum();inc['YearOfBirth']=1960
++    return pd.concat([f[f.YearOfBirth.ne(1970)],inc],ignore_index=True)
++def written(f,layout,pairs,draws):
++    os.environ.update(KCOR_BOOTSTRAP_DRAWS=str(draws),KCOR_BOOTSTRAP_WORKERS='2',KCOR_BOOTSTRAP_LAYOUT=layout,KCOR_NPH_MODE='identified_only')
++    K.ENROLLMENT_DATES=[SHEET];K.OVERRIDE_DOSE_PAIRS=pairs;K.OVERRIDE_YOBS=None
++    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as t:
++        src=Path(t)/'input.xlsx';dst=Path(t)/'out.xlsx';f.to_excel(src,sheet_name=SHEET,index=False)
++        with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):K.process_workbook(str(src),str(dst))
++        return pd.read_excel(dst,sheet_name='dose_pairs')
++def exhaustion():
++    f=overlap_fixture();dates=sorted(f.DateDied.unique());g=f[~(f.YearOfBirth.eq(1940)&f.Dose.eq(2)&f.DateDied.ge(dates[30]))];start=pd.Timestamp(dates[0]);assert not invalid_components(g,start,layout='table8')
++    h=[histories(x,SHEET,'table8') for x in (f,g)];np.testing.assert_array_equal(h[0][2],h[1][2]);
++    for x in (f,g):
++        buf=io.BytesIO();x.to_excel(buf,sheet_name=SHEET,index=False);buf.seek(0);_,c=read_population(buf,SHEET);np.testing.assert_array_equal(c,h[0][2])
++    pd.testing.assert_frame_equal(draw_history(h[0],np.random.default_rng(15)),draw_history(h[1],np.random.default_rng(15)))
++    a,b=[written(x,'table8',[(2,0)],3) for x in (f,g)];sel=lambda x:x[x.YearOfBirth.eq(1950)].iloc[-1]
++    for col in ['KCOR','CI_lower','CI_upper','CI_valid_draws']:assert sel(a)[col]==sel(b)[col],(col,sel(a)[col],sel(b)[col])
++    assert sel(a).CI_valid_draws==3 and pd.notna(sel(a).CI_lower);print('overlap exhaustion encodings agree',sel(a)[['KCOR','CI_lower','CI_upper','CI_valid_draws']].to_dict(),flush=True)
++    for x in (f[~(f.YearOfBirth.eq(1940)&f.Dose.eq(0)&f.DateDied.ge(dates[30]))],f[~(f.YearOfBirth.eq(1940)&f.Dose.eq(0)&f.DateDied.eq(dates[10]))]):
++        try:histories(x,SHEET,'table8')
++        except ValueError:pass
++        else:raise AssertionError('missing positive-risk data accepted')
++def age_grouping():
++    from test_source_component_history import fixture
++    f=fixture();f.loc[f.YearOfBirth.eq(1950),'YearOfBirth']=1945
++    mask=f.YearOfBirth.eq(1945)&f.Dose.eq(1)&f.Sex.eq('M');idx=f[mask].sort_values('DateDied').index;d=np.full(len(idx),40);f.loc[idx,'Dead']=d;f.loc[idx,'Alive']=30000-np.r_[0,np.cumsum(d[:-1])]
++    K.AGE_RANGE=5
++    try:
++        out=written(f,'disjoint',[(1,0)],3);h=histories(f,SHEET,'disjoint');draws=[]
++        for j in range(1,4):
++            sample=draw_history(h,np.random.default_rng([33080,j,0]));rows=run(SHEET,sample);draws.append([rows[rows.YearOfBirth.eq(a)].KCOR.iloc[-1] for a in (1940,1945)])
++        for j,a in enumerate((1940,1945)):
++            p=out[out.YearOfBirth.eq(a)].iloc[-1];expected=np.quantile(np.asarray(draws)[:,j],[.025,.975]);np.testing.assert_allclose([p.CI_lower,p.CI_upper],expected,rtol=1e-10);assert p.CI_valid_draws==3
++            print('five-year stratum',a,p[['KCOR','CI_lower','CI_upper','CI_valid_draws']].to_dict(),flush=True)
++    finally:K.AGE_RANGE=10
++
++def nonlinear():
++    t=np.arange(45,dtype=float);gamma=.085/52;B=.002*np.expm1(gamma*np.arange(46))/gamma;W=.006*np.clip(np.arange(46)-10,0,10);mod=K._survivor_module();h=np.diff(mod.cumulative_hazard(B,W,4.,1.18));quiet=(t<10)|(t>19)
++    (_,th),diag=K.fit_theta0_gompertz(h,t,quiet,4,gamma,wave=(10,19),alpha=1.18)
++    assert abs(th-4)<1e-5 and diag['gap_first_pass']==[] and not diag['nonlinear_gap_exposure'];print('marked wave, no unmarked gap:',th,diag['gap_first_pass'],flush=True)
++    quiet[(t>=25)&(t<=28)]=False;(_,th),diag=K.fit_theta0_gompertz(h,t,quiet,4,gamma,wave=(10,19),alpha=1.18);assert diag['success'] and diag['gap_first_pass'] is None;print('marked wave, unmarked gap unassessed:',th,flush=True)
++if __name__=='__main__':exhaustion();age_grouping();nonlinear()

@@ -112,6 +112,10 @@ Actual Czech schedules were evaluated under reference theta=0.5. Example theoret
 
 [Full derivation, numerical verification, cohort tables and observation-duration planning grid](objections/2.7/low-frailty/theoretical-limits/README.md)
 
+### Numerical ceiling versus statistical resolution (8.4; decision pending)
+
+The March 25, 2026 bound safeguard intentionally substituted zero on a near-ceiling fit. In the exact-model case theta=99.95, the raw estimate is correct but the fallback yields anchored KCOR 0.314 instead of 1. Retaining the fitted value restores 1; for true theta=120 under cap 100 it restores only 0.790. A wider-cap diagnostic recovers 120, but is not an automatic production change. On the matched Czech S6 draws the youngest band changes from 1.507 [0.824,2.712] to 1.507 [0.946,2.790]; all other intervals and Table 8 are unchanged. The genuine low-information problem remains. Matched ceiling refits (100, 200, 500) reduce youngest dose-2 bound hits from 287/999 to 7/999 to zero. With cap 500, the raw frailty range is [0,167.90] and KCOR is 1.507 [0.960,2.822]; the other six displayed KCOR intervals remain unchanged at reported precision. The 600 matched low-frailty synthetic cases are unchanged. [Evidence and decision](objections/8.4/README.md).
+
 ## 3. Why the original contamination experiment had KCOR above one
 
 The earlier 200-run experiment averaged KCOR 1.050 with zero added weekly mortality under the original fitter. The two cohorts have equal generating baseline rates, so the target is 1. Neither shifting the intended contamination nor supplying true parameters to the normal fitter is a solution to the statistical question.
@@ -257,7 +261,7 @@ The historical curvature checks fail. With the exact model, all leave-one-cohort
 
 The exact survivor law also makes later quiet mortality potentially informative through survivor selection. A separate ideal model-conditional Fisher diagnostic, using the more recent restricted dose-0/2 selection, gives local alpha standard errors about 0.92-1.35 in the four 2021 enrollments and extremely weak information in 2022. Neither this temporal-shape diagnostic nor the historical empirical objective replay supports identification from the available design.
 
-[Historical pooled replay, numerical tables and profiles](objections/1.4/alpha-pooled-replay/README.md) | [Temporal alpha information diagnostic](objections/1.4/alpha-information/README.md)
+[Historical pooled replay, numerical tables and profiles](objections/1.4/alpha-pooled-replay/README.md) | [Temporal alpha information diagnostic](objections/1.4/alpha-information/README.md) | [Round 8 longitudinal identification counterexample](objections/8.5/README.md)
 
 ## 5. Implemented mathematical, software and validation corrections
 
@@ -295,3 +299,11 @@ These edits tighten mathematical interpretation and align the text with the impl
 The individual objection records identify exact manuscript passages and supporting tests. The cumulative redline shows the actual edits, with links to their objections.
 
 **Manuscript evidence:** [Clean revised manuscript](<iterative review/KCOR-clean.pdf>) ? [Cumulative redline](<iterative review/KCOR-redline.pdf>) ? [Original PR #5 evidence](PR5-evidence.md) ? [Numbered corrections](revision-records.md).
+
+## 7. Matched frailty-law validation (8.7)
+
+A missing historical comparison was completed using the current fitter on 500 independent synthetic datasets (five frailty structures). Mean anchored KCOR was 0.994--1.005 with all Monte Carlo intervals containing the known null 1; percentile coverage was 92--99%, with Wilson intervals all including 95%. No numerical failures. The clustered comparison is design-specific, not evidence for arbitrary dependence. [Results and evidence](objections/8.7/README.md).
+
+## 8. Source integrity, uncertainty and diagnostics
+
+The existing estimator is retained. Default risk-set accounting is death-only; all seven Czech enrollment sheets satisfy it. Zero opening risk terminates observable support, and pooling preserves available-strata point estimates while withholding bootstrap intervals if contributor membership changes. Incorrect analytical intervals have been removed from current outputs; the refitted bootstrap supplies independent anchored and unanchored intervals. All 54 primary Table 8 first-pass signed-gap diagnostic intervals were complete and none was wholly negative. Residual flags are distinct: at least one subgroup was flagged in 999/999 primary draws per comparison and 986--999/999 forced-alpha draws, with no unsuccessful fits, insufficient signal or upper-bound flags. All Table 8 points and percentile limits are unchanged; the residual flags limit model-adequacy interpretation, not numerical convergence. The 2022 forced-alpha sensitivity is explicitly conditional on fresh gamma frailty at its mid-wave origin. [Source history](objections/9.5/README.md), [gap diagnostic](objections/9.7/README.md), [pooling](objections/9.8/README.md), [uncertainty](objections/9.9/README.md), [diagnostic counts](objections/9.10/README.md), [mid-wave assumption](objections/9.12/README.md).

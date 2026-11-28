@@ -1,0 +1,24 @@
+--- m142/test/test_theta_ceiling.py
++++ m143/test/test_theta_ceiling.py
+@@ -23,4 +23,20 @@
+     (k,theta),d=K.fit_theta0_gompertz(np.diff(H),t,quiet,4,gamma,deaths_arr=np.full(len(t),1000),wave=(15,24),alpha=1)
+     assert d['success'] and abs(theta-truth)<.05 and d['theta_hit_bound'] and d['status']=='theta_upper_bound'
+     print('marked alpha=1 wave',theta,d['status'],flush=True)
+-if __name__=='__main__':main()
++def small_ceiling():
++    native=K.get_theta_degenerate_fit_config
++    K.get_theta_degenerate_fit_config=lambda:{**native(), 'theta0_max':.25}
++    try:
++        t=np.arange(80,dtype=float); g=.085/52
++        G=.002*np.expm1(g*np.arange(81))/g; truth=.1
++        for wave in (False,True):
++            W=.05*np.clip((np.arange(81)-15)/10,0,1) if wave else 0.
++            H=np.log1p(truth*(G+W))/truth
++            quiet=(t<15)|(t>=25) if wave else np.ones(len(t),bool)
++            kw=dict(deaths_arr=np.full(len(t),1000),wave=(15,24),alpha=1) if wave else {}
++            (k,theta),d=K.fit_theta0_gompertz(np.diff(H),t,quiet,4,g,**kw)
++            assert d['success'] and abs(theta-truth)<1e-4
++            print('small ceiling',wave,k,theta,d['status'],flush=True)
++    finally:
++        K.get_theta_degenerate_fit_config=native
++if __name__=='__main__':main();small_ceiling()

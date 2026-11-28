@@ -1,0 +1,44 @@
+{
+  "2022_47": {
+    "rows": 159390,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  },
+  "2022_26": {
+    "rows": 193200,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  },
+  "2022_06": {
+    "rows": 225400,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  },
+  "2021_30": {
+    "rows": 270480,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  },
+  "2021_24": {
+    "rows": 280140,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  },
+  "2021_20": {
+    "rows": 286580,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  },
+  "2021_13": {
+    "rows": 297850,
+    "invalid_groups": 0,
+    "nondeath_loss_groups": 0,
+    "examples": "[]"
+  }
+}

@@ -1,0 +1,105 @@
+--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -60,7 +60,7 @@
+         DATA.append((dates.to_numpy(), time, quiet, keep, counts))
+ 
+ 
+-def estimate(index, draw, joint=True, diagnostics=False):
++def estimate(index, draw, joint=True, diagnostics=False, return_composition=False):
+     dates, time, quiet, keep, disjoint = DATA[index]
+     counts = disjoint.copy()
+     if draw:
+@@ -75,6 +75,7 @@
+     from pooling import expected_deaths_weights
+     weights = expected_deaths_weights(early,alive[:, :, :4].sum(axis=(1,2)),K.EPS)
+     growth = np.empty((3, 3))
++    support_ok = np.zeros((3,3),dtype=bool)
+     flags = 0
+     failed = 0
+     fit_flags = np.zeros((3,3,len(DIAGNOSTIC_CATEGORIES)),dtype=bool)
+@@ -98,22 +99,49 @@
+             inverted, time[keep], dates[keep], theta, (WAVE["apply_alpha"] if WAVE["apply_correction"] else 1.),
+             WAVE["start_dt"], WAVE["end_dt"], k, CONFIG["gamma_per_week"], observed_cumhaz=observed)
+         anchor = np.flatnonzero(time[keep] == K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE).item()
+-        growth[a,d] = corrected[-1] / corrected[anchor] if np.isfinite(corrected[-1]) and np.isfinite(corrected[anchor]) and corrected[anchor]>0 else np.nan
+-    pooled=[]
++        support_ok[a,d] = np.isfinite(corrected[-1]) and np.isfinite(corrected[anchor])
++        growth[a,d] = corrected[-1] / corrected[anchor] if support_ok[a,d] and corrected[anchor]>0 else np.nan
++    pooled=[]; members=[]
++    expected=np.isfinite(weights)&(weights>0)
+     for n,d in PAIRS:
+-        use=weights>0
+-        ratio=growth[use,n]/growth[use,d]
+-        pooled.append(float(np.exp(np.average(np.log(ratio),weights=weights[use]))) if use.any() and np.all(np.isfinite(ratio)&(ratio>0)) else np.nan)
++        # A zero (undefined) anchor allows available-strata pooling, as in the
++        # ordinary workbook. An exhausted or failed normalization does not.
++        with np.errstate(divide="ignore",invalid="ignore"):
++            ratio=growth[:,n]/growth[:,d]
++        use=expected & np.isfinite(ratio) & (ratio>0)
++        members.append(use)
++        if np.any(expected & ~(support_ok[:,n]&support_ok[:,d])) or not use.any():
++            pooled.append(np.nan)
++        else:
++            with np.errstate(over="ignore",under="ignore"):
++                value=float(np.exp(np.average(np.log(ratio[use]),weights=weights[use])))
++            pooled.append(value if np.isfinite(value) and value>0 else np.nan)
++    members=np.asarray(members,dtype=bool)
++    result=(pooled,flags,failed)
+     if diagnostics:
+-        contributors=np.isfinite(weights)&(weights>0.)
+-        pair_flags=np.stack([fit_flags[contributors][:,[n,d],:].any(axis=(0,1)) for n,d in PAIRS])
+-        return pooled, flags, failed, fit_flags, pair_flags
+-    return pooled, flags, failed
++        pair_flags=np.stack([fit_flags[use][:,[n,d],:].any(axis=(0,1)) for use,(n,d) in zip(members,PAIRS)])
++        result+=(fit_flags,pair_flags)
++    return result+(members,) if return_composition else result
++
++
++def composition_intervals(values, members):
++    """Use all draws or report unavailable; do not condition on a changed population."""
++    raw=np.asarray(values,float)
++    members=np.asarray(members,bool)
++    matched=raw.copy()
++    changed=np.any(members[1:]!=members[0],axis=-1) & np.isfinite(raw[0])
++    matched[1:][changed]=np.nan
++    valid=np.isfinite(matched[1:]).sum(axis=0)
++    lo=np.full(raw.shape[1],np.nan);hi=lo.copy()
++    good=(valid==len(raw)-1)&np.isfinite(raw[0])&(len(raw)>1)
++    if good.any():
++        lo[good],hi[good]=np.quantile(matched[1:,good],[.025,.975],axis=0)
++    return matched,lo,hi,changed.sum(axis=0),valid
+ 
+ 
+ def one_draw(task):
+     index, draw = task
+-    return index, draw, estimate(index, draw)
++    return index, draw, estimate(index, draw, return_composition=True)
+ 
+ 
+ def workbook_points(path, populations):
+@@ -140,7 +168,7 @@
+         parser.error("Use replay.py to generate the matching workbook")
+     weekly_update = "revised"
+     initialize(populations, weekly_update)
+-    point = [estimate(i, 0) for i in range(2)]
++    point = [estimate(i, 0, return_composition=True) for i in range(2)]
+     # Permanent regression check against the six independently reconstructed
+     # reporting-date values from the full ordinary-mode joint-fit workbook.
+     reference = [[1.00906808859867, 1.0317663863960909, 1.0224943173348615],
+@@ -159,11 +187,12 @@
+     print("All six original estimates match the workbook.", flush=True)
+     summary = {}
+     for i, sheet in enumerate(SHEETS):
+-        values = np.array([r[0] for r in results[i]])
+-        assert values.shape == (args.draws, 3) and np.isfinite(values).all()
++        values = np.array([point[i][0]]+[r[0] for r in results[i]])
++        members=np.array([point[i][-1]]+[r[-1] for r in results[i]])
++        _,lo,hi,changed,valid=composition_intervals(values,members)
+         summary[sheet] = dict(joint=point[i][0], original_insufficient_signal=point[i][1],
+-                              people=int(populations[i][1].sum()), lower=np.quantile(values, .025, axis=0).tolist(),
+-                              upper=np.quantile(values, .975, axis=0).tolist(),
++                              people=int(populations[i][1].sum()), lower=lo.tolist(),upper=hi.tolist(),
++                              point_contributors=members[0].tolist(),composition_changed_draws=changed.tolist(),valid_draws=valid.tolist(),
+                               draws_with_insufficient_signal=sum(r[1]>0 for r in results[i]),
+                               unsuccessful_stratum_fits=sum(r[2] for r in results[i]))
+     report = dict(input_blob=INPUT_BLOB, seed=SEED, draws_per_enrollment=args.draws,

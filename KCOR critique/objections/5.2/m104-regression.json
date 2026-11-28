@@ -1,0 +1,57 @@
+[
+  {
+    "case": "zero-anchor",
+    "k": 0.0006085237574349148,
+    "theta": 0.0,
+    "status": "insufficient_signal",
+    "message": "INSUFFICIENT_SIGNAL: BAD_FIT relRMSE_hazard_fit=1.50108e+08 > threshold=100000; applied theta=0.0",
+    "n_fit": 33,
+    "success": true,
+    "quiet_deaths": 310.0,
+    "raw_theta": 3.760918154727847e-25
+  },
+  {
+    "case": "zero-anchor-wave",
+    "k": 0.0006085237574960218,
+    "theta": 0.0,
+    "status": "insufficient_signal",
+    "message": "nonlinear survivor fit",
+    "n_fit": 33,
+    "success": true,
+    "quiet_deaths": 310.0,
+    "raw_theta": 1.9706050394882075e-19
+  },
+  {
+    "case": "positive-anchor",
+    "k": 0.0006665055976353286,
+    "theta": 1.9565909289922632,
+    "status": "ok",
+    "message": "ok",
+    "n_fit": 33,
+    "success": true,
+    "quiet_deaths": 310.0,
+    "raw_theta": 1.9565909289922632
+  },
+  {
+    "case": "all-zero",
+    "k": NaN,
+    "theta": NaN,
+    "status": "insufficient_data",
+    "message": "k_anchor_too_small",
+    "n_fit": 33,
+    "success": false,
+    "quiet_deaths": NaN,
+    "raw_theta": NaN
+  },
+  {
+    "case": "below-minimum",
+    "k": 2.2988599620855756e-05,
+    "theta": 0.0,
+    "status": "insufficient_deaths",
+    "message": "INSUFFICIENT_DEATHS: quiet-window deaths 11.0 < min_quiet_deaths=30; applied theta=0.0",
+    "n_fit": 33,
+    "success": true,
+    "quiet_deaths": 11.0,
+    "raw_theta": 0.0
+  }
+]

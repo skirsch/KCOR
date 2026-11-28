@@ -1,0 +1,35 @@
+{
+  "enrollment": "2021_24",
+  "draws": 3,
+  "total_rows": 5745,
+  "rows_with_intervals": 4539,
+  "rows_with_3_valid_draws": 4647,
+  "aggregate_and_unknown_age": {
+    "-60": {
+      "rows": 522,
+      "rows_with_intervals": 504,
+      "rows_with_3_valid_draws": 516
+    },
+    "-2": {
+      "rows": 522,
+      "rows_with_intervals": 504,
+      "rows_with_3_valid_draws": 516
+    },
+    "0": {
+      "rows": 3,
+      "rows_with_intervals": 3,
+      "rows_with_3_valid_draws": 3
+    },
+    "-1": {
+      "rows": 0,
+      "rows_with_intervals": 0,
+      "rows_with_3_valid_draws": 0
+    }
+  },
+  "bootstrap_methods": {
+    "person_bootstrap_percentile": 2688,
+    "person_bootstrap_with_fit_flags": 1851,
+    "unavailable": 1206
+  },
+  "note": "Unknown-age people included in reconstructed all-ages totals; ordinary reporting does not emit separate age -1 rows."
+}

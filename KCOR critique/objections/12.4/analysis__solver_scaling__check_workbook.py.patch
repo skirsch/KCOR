@@ -1,0 +1,11 @@
+--- a/analysis/solver_scaling/check_workbook.py
++++ b/analysis/solver_scaling/check_workbook.py
+@@ -6,7 +6,7 @@
+ from test_round7_workbook import run
+ points={}
+ for mode in ("identified_only","forced_alpha"):
+-    source=ROOT/("analysis/round11/table8-primary" if mode=="identified_only" else "analysis/round11/forced-alpha-smoke")/(mode+"-draws.npz")
++    source=ROOT/("analysis/signed_gap/table8-primary" if mode=="identified_only" else "analysis/round11/forced-alpha-smoke")/(mode+"-draws.npz")
+     expected=np.load(source)["points"][:,0]
+     points[mode]={}
+     for i,sheet in enumerate(("2021_24","2022_06")):

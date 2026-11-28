@@ -1,0 +1,10 @@
+{
+  "identified_only": {
+    "max_absolute_paired_difference": 5.459658103390552e-08,
+    "changed_flag_cells": 0
+  },
+  "forced_alpha": {
+    "max_absolute_paired_difference": 2.5353343197531686e-05,
+    "changed_flag_cells": 0
+  }
+}

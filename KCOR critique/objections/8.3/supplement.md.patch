@@ -1,0 +1,15 @@
+--- m137/documentation/preprint/supplement.md
++++ m138/documentation/preprint/supplement.md
+@@ -218,9 +218,9 @@
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+-Output grids show KCOR(t) values for each parameter combination.
+-
+-![Sensitivity analysis summary showing $\mathrm{KCOR}(t)$ values across parameter grid. Heatmaps display $\mathrm{KCOR}(t)$ estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, $\mathrm{KCOR}(t)$ varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons.](figures/fig_sensitivity_overview.png){#fig:sensitivity_overview}
++The Czech all-ages sweep uses the current ordinary estimator, the supplied non-overlapping all-ages population and the module-off configuration. The seven quiet-window start offsets (-12 to +12 weeks relative to 2023-01, in four-week steps; end fixed at 2023-52) are crossed with reference lengths of two to eight accumulating weeks. Reporting is one year after each enrollment, rounded to the nearest calendar Monday. All 1,323 point estimates across 27 configured comparisons are available; 15 comparisons have grid values on both sides of one (overall range 0.699-1.603). In the three displayed 2021-24 comparisons, shifting the quiet-window start at a fixed reference changes KCOR by at most 0.011, while changing the reference at a fixed quiet window changes it by up to 0.147. These are point sensitivities, not confidence intervals. Full grids, fit statuses and the reproduction script are in `analysis/sensitivity/`.
++
++![Anchored KCOR point sensitivity for the three Czech 2021-24 all-ages dose comparisons on June 13, 2022, using the current ordinary estimator. Rows vary reference length and columns vary the quiet-window start offset. All panels use a shared color scale centered at one. The display is a subset of the full 27-comparison sweep; the cells are point estimates, not uncertainty intervals.](figures/fig_sensitivity_overview.png){#fig:sensitivity_overview}
+ 
+ ### S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)
+ 

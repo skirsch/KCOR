@@ -1,0 +1,61 @@
+--- a/analysis/quiet_windows/scan.py
++++ b/analysis/quiet_windows/scan.py
+@@ -2,6 +2,7 @@
+ import argparse
+ import os
+ import hashlib
++import json
+ import io
+ from pathlib import Path
+ import subprocess
+@@ -89,7 +90,10 @@
+                              fit_weeks=diag["n_fit"], old_pass=int(previous["pass"]), passed=int(passed),
+                              k=k, theta_seed=diag["theta0_init"], theta_raw=diag["theta0_raw"],
+                              theta_applied=applied, status=diag["status"], success=diag["success"],
+-                             message=diag["message"], degenerate=degenerate, rmse=diag["rmse_hazard"]))
++                             message=diag["message"], degenerate=degenerate, rmse=diag["rmse_hazard"],
++                             sampling_flag=diag.get("sampling_flag", False) if diag.get("sampling_n",0)>0 else np.nan,
++                             sampling_min_tail=diag.get("sampling_min_tail", np.nan),
++                             sampling_flagged_weeks=json.dumps([v for v in diag.get("sampling_weeks",[]) if v["flag"]])))
+     results = pd.DataFrame(rows)
+     assert len(results) == len(old) == 78 and not results.duplicated(keys).any()
+     return results
+@@ -100,8 +104,12 @@
+     for (decade, dose), group in rows.groupby(["yob_decade", "dose"]):
+         row = 0 if decade == 1940 else 1
+         ax = axes[row, dose]
+-        for value, marker, color in [(1, "o", "#1d5265"), (0, "x", "#983b20")]:
+-            selected = group[group.passed == value]
++        categories = [(group.passed.eq(1) & group.sampling_flag.eq(False), "o", "#1d5265"),
++                      (group.passed.eq(1) & group.sampling_flag.eq(True), "o", "#bd7422"),
++                      (group.passed.eq(1) & group.sampling_flag.isna(), "s", "#777777"),
++                      (group.passed.eq(0), "x", "#983b20")]
++        for mask, marker, color in categories:
++            selected = group[mask]
+             ax.scatter(pd.to_datetime(selected.midpoint), selected.theta_raw, marker=marker, s=21, color=color)
+         ax.grid(axis="y", alpha=.23)
+         ax.set_axisbelow(True)
+@@ -114,8 +122,12 @@
+         ax.tick_params(labelsize=8)
+     fig.supxlabel("Quiet-window midpoint", fontsize=10)
+     handles = [Line2D([], [], marker=m, color=c, linestyle="none", label=l) for m,c,l in
+-               [("o", "#1d5265", "Diagnostic pass"), ("x", "#983b20", "Diagnostic failure")]]
+-    fig.legend(handles=handles, loc="outside upper center", ncols=2, frameon=False)
++               [("o", "#1d5265", "Accepted, no residual flag"),
++                ("o", "#bd7422", "Accepted, residual flag"),
++                ("x", "#983b20", "Fit not accepted")]]
++    if rows.sampling_flag.isna().any():
++        handles.insert(2, Line2D([], [], marker="s", color="#777777", linestyle="none", label="Screen unavailable"))
++    fig.legend(handles=handles, loc="outside upper center", ncols=2, frameon=False, fontsize=8)
+     output.parent.mkdir(parents=True, exist_ok=True)
+     fig.savefig(output, dpi=180)
+     plt.close(fig)
+@@ -127,7 +139,7 @@
+     args = parser.parse_args()
+     rows = scan(args.mode)
+     summary = rows.groupby(["yob_decade", "dose"], as_index=False).agg(
+-        attempted=("passed", "size"), historical_passed=("old_pass", "sum"), revised_passed=("passed", "sum"))
++        attempted=("passed", "size"), historical_passed=("old_pass", "sum"), revised_passed=("passed", "sum"), residual_flagged=("sampling_flag", "sum"), residual_screened=("sampling_flag", "count"))
+     assert len(summary) == 6 and (summary.attempted == 13).all()
+     summary["pass_rate"] = summary.revised_passed / summary.attempted
+     suffix = "" if args.mode == "forced_alpha" else "-off"

@@ -1,0 +1,14 @@
+--- m136/code/bootstrap_reporting.py
++++ m137/code/bootstrap_reporting.py
+@@ -27,6 +27,11 @@
+     frame=frame.copy();frame["DateDied"]=pd.to_datetime(frame.DateDied)
+     frame=frame[frame.DateDied>=start]
+     if not len(frame):raise ValueError("no post-enrollment rows")
++    from fixed_cohort_history import invalid_components
++    bad=invalid_components(frame,start,layout=layout)
++    if bad:
++        raise ValueError(f"invalid source component histories: {bad}")
++
+     if layout=="table8":
+         group=frame.groupby(["YearOfBirth","Dose","DateDied"])[["Alive","Dead"]].sum().reset_index()
+         if sorted(group.YearOfBirth.unique())!=[1940,1950,1960] or sorted(group.Dose.unique())!=[0,1,2]:

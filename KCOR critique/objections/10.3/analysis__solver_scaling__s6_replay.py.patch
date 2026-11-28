@@ -1,0 +1,30 @@
+--- a/analysis/solver_scaling/s6_replay.py
++++ b/analysis/solver_scaling/s6_replay.py
+@@ -54,7 +54,9 @@
+     parser=argparse.ArgumentParser(description=__doc__)
+     parser.add_argument("candidate",type=Path);parser.add_argument("--draws",type=int,default=999)
+     parser.add_argument("--workers",type=int,default=6)
++    parser.add_argument("--output-dir",type=Path,default=HERE)
+     args=parser.parse_args()
++    args.output_dir.mkdir(parents=True,exist_ok=True)
+     source=args.candidate/"data/Czech/KCOR_CMR.xlsx"
+     raw=pd.read_excel(source,sheet_name="2021_24",usecols=["YearOfBirth","Dose","ISOweekDied","Alive","Dead"])
+     raw["week"]=raw.ISOweekDied.astype(str).str.replace("-","",regex=False).str[:6].astype(int)
+@@ -112,7 +114,7 @@
+             if pos%args.draws==0:
+                 print("COMPLETED",pos,"of",len(BANDS)*args.draws,flush=True)
+                 # Persist completed groups to survive interruptions.
+-                pd.DataFrame(rows).to_csv(HERE/"s6-all-window-draws.csv",index=False)
++                pd.DataFrame(rows).to_csv(args.output_dir/"s6-all-window-draws.csv",index=False)
+     frame=pd.DataFrame(rows);assert len(frame)==len(BANDS)*args.draws
+     def percentiles(x):
+         a=np.asarray(x,float);finite=a[np.isfinite(a)]
+@@ -136,7 +138,7 @@
+         ratios.append(dict(birth_band=int(band),mode=mode,point=b["growth"]/a["growth"],
+                            interval=percentiles(group.kcor),valid=int(group.kcor.notna().sum())))
+     result=dict(draws=args.draws,seed=20261126,params=results,ratios=ratios,points=points)
+-    (HERE/"s6-all-window.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
++    (args.output_dir/"s6-all-window.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+     print("DONE",len(frame),flush=True)
+ 
+ if __name__=="__main__":main()

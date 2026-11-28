@@ -1,0 +1,11 @@
+--- a/test/sim_grid/code/plot_cox_bias_sim.py
++++ b/test/sim_grid/code/plot_cox_bias_sim.py
+@@ -43,7 +43,7 @@
+ 
+     plt.figure(figsize=(8, 6))
+     plt.plot(theta, hr, marker="o", linewidth=2, markersize=8, label="Cox HR")
+-    plt.fill_between(theta, lo, hi, alpha=0.2, label="95% CI")
++    plt.fill_between(theta, lo, hi, alpha=0.2, label="Nominal model-based 95% CI")
+     plt.axhline(1.0, color="black", linestyle="--", linewidth=1, label="Fixed-frailty treatment HR = 1")
+     plt.xlabel("Frailty variance θ (cohort B)", fontsize=12)
+     plt.ylabel("Cox hazard ratio (B vs A)", fontsize=12)

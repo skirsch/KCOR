@@ -1,0 +1,41 @@
+--- a/test/quiet_window_contamination/run_contamination_test.py
++++ b/test/quiet_window_contamination/run_contamination_test.py
+@@ -493,7 +493,7 @@
+             ax_i.set_ylabel(r"$\epsilon_{\mathrm{comorb}}$")
+             cbar = fig_a.colorbar(im, ax=ax_i, fraction=0.046, pad=0.04)
+             cbar.set_label(
+-                r"Frac. reps ($\mathrm{KCOR}_{\infty}>1$)",
++                r"Frac. reps ($\mathrm{KCOR}_{\rm end}>1$)",
+                 rotation=90,
+                 labelpad=12,
+             )
+@@ -515,11 +515,14 @@
+         if data is not None:
+             xs = [float(r[xkey]) for r in data]
+             ys = [r["KCOR_asymptote_mean"] for r in data]
+-            yerr = [r["KCOR_asymptote_std"] for r in data]
++            yerr = ([np.asarray(ys)-np.asarray([r["lower95"] for r in data]),
++                     np.asarray([r["upper95"] for r in data])-np.asarray(ys)]
++                    if all(np.isfinite(r.get("lower95",np.nan)) and np.isfinite(r.get("upper95",np.nan)) for r in data)
++                    else [r["KCOR_asymptote_std"] for r in data])
+             ax_i.errorbar(xs, ys, yerr=yerr, fmt="o-", capsize=3)
+             ax_i.axhline(1.0, color="black", ls="--", lw=1)
+             ax_i.set_xlabel(xkey)
+-            ax_i.set_ylabel("mean KCOR asymptote (anchored)")
++            ax_i.set_ylabel("mean endpoint KCOR (anchored)")
+             ax_i.set_title(title)
+         else:
+             matk = np.full((len(EPSILON_COMORB_POS), len(EPSILON_DYNAMIC_POS)), np.nan)
+@@ -535,10 +538,10 @@
+             ax_i.set_xlabel(r"$\epsilon_{\mathrm{dyn}}$")
+             ax_i.set_ylabel(r"$\epsilon_{\mathrm{comorb}}$")
+             cbar_b = fig_b.colorbar(im, ax=ax_i, fraction=0.046, pad=0.04)
+-            cbar_b.set_label("Mean KCOR asymptote (anchored)", rotation=90, labelpad=12)
++            cbar_b.set_label("Mean endpoint KCOR (anchored)", rotation=90, labelpad=12)
+             cbar_b.ax.yaxis.set_major_formatter(mticker.ScalarFormatter(useOffset=False))
+             cbar_b.ax.yaxis.get_offset_text().set_visible(False)
+-            ax_i.set_title("Combined: KCOR asymptote")
++            ax_i.set_title("Combined: endpoint KCOR")
+     fig_b.tight_layout()
+     fig_b.savefig(out_dir / "fig_quiet_contam_kcor_asymptote.png", dpi=150)
+     plt.close(fig_b)

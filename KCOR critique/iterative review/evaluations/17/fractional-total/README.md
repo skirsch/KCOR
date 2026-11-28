@@ -1,0 +1,10 @@
+# 17.2 - Exhaustive fractional total reconciliation
+
+Implemented in persistent m181, parent m180. The exhaustive equality comparison now uses the same 16-machine-epsilon scale-aware tolerance already employed for fractional nested complements; integer-valued operands retain zero tolerance and exact equality. The common tolerance helper is shared with complement feasibility, leaving that earlier check unchanged. A mathematically equal supplied total is not incorrectly classified as partial/unsupported solely due to roundoff. No fitter, estimator, manuscript, or numerical archive changes.
+
+## Verification
+
+- `python -B test/test_round17_fractional_totals.py` passed. A complete, valid 20-week fractional expected-count fixture reproduces the reported 4.547473508864641e-13-person maximum sum difference. The actual written workbook restores the all-ages endpoint: reconstructed and supplied totals both produce exactly 1.003222772976552 at the output precision. This is a point-only fixture, not an integer person-bootstrap sample; no interval is defined. A material 0.001-person fractional difference and a one-person integer difference are rejected. The written workbook with the material discrepancy withholds the all-ages result while unrelated displayed groups and the compatible supplied younger total retain their points. An otherwise matching partial declaration also distinguishes truly omitted population from rounding.
+- `python -B test/test_round15_nested_totals.py` passed. Compatible integer totals retained KCOR 1.002719227352062 [0.875642043341992, 1.093970947151514] with 3/3 draws; incompatible mixed and aggregate-only totals withheld while unaffected age result retained KCOR 1.003326320612442 [0.8497482072057436, 1.264642455908168] with 3/3 draws. These three-draw intervals exercise reporting mechanics, not statistical calibration.
+
+Changed candidate files: `code/fixed_cohort_history.py`, `test/test_round17_fractional_totals.py`. No full bootstrap or scientific campaign rerun. Independent resolution review pending.

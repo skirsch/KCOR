@@ -1,0 +1,383 @@
+--- m137/code/KCOR.py
++++ m138/code/KCOR.py
+@@ -6315,313 +6315,77 @@
+     # KCOR6 is the only active normalization method, so this is not used in normal/MC/SA runs.
+     baseline_window = ("2022-01", SLOPE_FIT_END_ISO)
+     
+-    # --- Sensitivity Analysis (SA) mode: KCOR6-only sweep over baseline weeks × quiet-start offsets ---
+-    # We early-return here to avoid running the (very large) normal workbook processing loop in SA mode.
++    # Sensitivity sweeps reuse the actual ordinary workbook calculation.
+     if _is_sa_mode():
+-        original_norm_weeks = KCOR_NORMALIZATION_WEEKS
+-        original_norm_weeks_effective = KCOR_NORMALIZATION_WEEKS_EFFECTIVE
+-        original_override_yobs = OVERRIDE_YOBS
++        from contextlib import redirect_stdout, redirect_stderr
++        from tempfile import TemporaryDirectory
++        import io
++        global _DATASET_THETA_ESTIMATION_WINDOWS_CACHE
++        original_dates = ENROLLMENT_DATES
++        original_yobs = OVERRIDE_YOBS
++        original_windows = _DATASET_THETA_ESTIMATION_WINDOWS_CACHE
++        original_sa = os.environ.get("SENSITIVITY_ANALYSIS")
++        original_debug = SLOPE_DEBUG_FILE
++        baseline_weeks_values = _parse_int_values_or_range(os.environ.get("SA_BASELINE_WEEKS", "")) or [2,3,4,5,6,7,8]
++        baseline_weeks_values = sorted({int(x) for x in baseline_weeks_values if int(x)>0})
++        quiet_start_offsets = _parse_int_values_or_range(os.environ.get("SA_QUIET_START_OFFSETS", "")) or [-12,-8,-4,0,4,8,12]
++        start = datetime.fromisocalendar(*map(int,KCOR6_QUIET_START_ISO.split("-")),1)
++        end_iso = KCOR6_QUIET_END_ISO
++        results, details = {}, []
+         try:
+-            baseline_weeks_values = [2, 3, 4, 5, 6, 7, 8]
+-            quiet_start_offsets = [-12, -8, -4, 0, 4, 8, 12]
+-
+-            # Optional overrides for fast SA runs
+-            _env_baseline = str(os.environ.get("SA_BASELINE_WEEKS", "")).strip()
+-            if _env_baseline:
+-                parsed_baseline = _parse_int_values_or_range(_env_baseline)
+-                if parsed_baseline:
+-                    baseline_weeks_values = [int(x) for x in parsed_baseline if int(x) > 0]
+-                    dual_print(f"[SA] Overriding baseline weeks via SA_BASELINE_WEEKS={_env_baseline} -> {baseline_weeks_values}")
+-                else:
+-                    dual_print(f"[SA] Warning: Could not parse SA_BASELINE_WEEKS={_env_baseline}. Using defaults: {baseline_weeks_values}")
+-
+-            _env_offsets = str(os.environ.get("SA_QUIET_START_OFFSETS", "")).strip()
+-            if _env_offsets:
+-                parsed_offsets = _parse_int_values_or_range(_env_offsets)
+-                if parsed_offsets:
+-                    quiet_start_offsets = [int(x) for x in parsed_offsets]
+-                    dual_print(f"[SA] Overriding quiet start offsets via SA_QUIET_START_OFFSETS={_env_offsets} -> {quiet_start_offsets}")
+-                else:
+-                    dual_print(f"[SA] Warning: Could not parse SA_QUIET_START_OFFSETS={_env_offsets}. Using defaults: {quiet_start_offsets}")
+-
+-            baseline_weeks_values = sorted({int(x) for x in baseline_weeks_values if int(x) > 0})
+-            quiet_start_offsets = [int(x) for x in quiet_start_offsets]
+-
+-            sa_results = {}
+-            skip_weeks = int(DYNAMIC_HVE_SKIP_WEEKS)
+-            _sa_gompertz_cfg = get_gompertz_theta_fit_config()
+-
+-            # Respect SA_COHORTS via ENROLLMENT_DATES override (set near the top-level env override block)
+-            cohorts_to_process = ENROLLMENT_DATES if ENROLLMENT_DATES else sheets_to_process
+-            OVERRIDE_YOBS = [-2]  # force all-ages only for SA
+-
+-            dual_print(f"[SA] Starting sensitivity analysis (KCOR6)")
+-            dual_print(f"[SA] Cohorts: {cohorts_to_process}")
+-            dual_print(f"[SA] Baseline weeks: {baseline_weeks_values}")
+-            dual_print(f"[SA] Quiet-start offsets (weeks from {KCOR6_QUIET_START_ISO}): {quiet_start_offsets}")
+-            dual_print(f"[SA] Quiet-window end fixed: {KCOR6_QUIET_END_ISO}")
+-
+-            # Quiet-start baseline date (Monday of KCOR6_QUIET_START_ISO)
+-            try:
+-                y0, w0 = [int(x) for x in str(KCOR6_QUIET_START_ISO).split("-")]
+-                quiet_start_base_dt = datetime.fromisocalendar(int(y0), int(w0), 1)
+-            except Exception:
+-                quiet_start_base_dt = None
+-
+-            def _quiet_start_int_for_offset(offset_weeks: int) -> int:
+-                try:
+-                    if quiet_start_base_dt is None:
+-                        return int(KCOR6_QUIET_START_INT)
+-                    dt = quiet_start_base_dt + timedelta(weeks=int(offset_weeks))
+-                    iso = dt.isocalendar()
+-                    return iso_to_int(int(iso.year), int(iso.week))
+-                except Exception:
+-                    return int(KCOR6_QUIET_START_INT)
+-            for sh in cohorts_to_process:
+-                try:
+-                    dual_print(f"[SA] Processing cohort {sh}")
+-                    df_sa_raw = pd.read_excel(src_path, sheet_name=sh)
+-                    df_sa_raw["DateDied"] = pd.to_datetime(df_sa_raw["DateDied"])
+-
+-                    # Filter out unreasonably large birth years (keep -1, -2)
+-                    if "YearOfBirth" in df_sa_raw.columns:
+-                        df_sa_raw = df_sa_raw[df_sa_raw["YearOfBirth"] <= 2020]
+-                    if df_sa_raw.empty:
+-                        continue
+-
+-                    # Parse enrollment date to filter start
+-                    if "_" in sh:
+-                        try:
+-                            year_str, week_str = sh.split("_")
+-                            enrollment_date = datetime.fromisocalendar(int(year_str), int(week_str), 1)
+-                            df_sa_raw = df_sa_raw[df_sa_raw["DateDied"] >= enrollment_date]
+-                        except Exception:
+-                            pass
+-
+-                    # Limit to valid doses for this cohort
+-                    dose_pairs_sa = get_dose_pairs(sh)
+-                    max_dose_sa = max(max(pair) for pair in dose_pairs_sa) if dose_pairs_sa else 0
+-                    valid_doses_sa = list(range(max_dose_sa + 1))
+-                    df_sa_raw = df_sa_raw[df_sa_raw["Dose"].isin(valid_doses_sa)]
+-
+-                    # Optional speed-up: if user restricted SA_DOSE_PAIRS, only keep the doses we need
+-                    if OVERRIDE_DOSE_PAIRS is not None:
+-                        needed_doses = sorted({int(d) for pair in OVERRIDE_DOSE_PAIRS for d in pair})
+-                        df_sa_raw = df_sa_raw[df_sa_raw["Dose"].isin(needed_doses)]
+-                        if DEBUG_VERBOSE:
+-                            dual_print(f"[SA] Restricting cohort {sh} to doses {needed_doses} (from SA_DOSE_PAIRS)")
+-
+-                    if df_sa_raw.empty:
+-                        continue
+-
+-                    # Aggregate across sexes AND ages to compute the all-ages cohort only (YearOfBirth=-2)
+-                    df_sa = df_sa_raw.groupby(["Dose", "DateDied"]).agg({
+-                        "ISOweekDied": "first",
+-                        "Alive": "sum",
+-                        "Dead": "sum",
+-                    }).reset_index()
+-                    df_sa["YearOfBirth"] = -2
+-
+-                    df_sa = df_sa.sort_values(["Dose", "DateDied"]).reset_index(drop=True)
+-                    df_sa["PT"] = df_sa["Alive"].astype(float).clip(lower=0.0)
+-                    df_sa["Dead"] = df_sa["Dead"].astype(float).clip(lower=0.0)
+-                    df_sa["MR"] = np.where(df_sa["PT"] > 0, df_sa["Dead"] / df_sa["PT"], np.nan)
+-                    df_sa["t"] = df_sa.groupby(["Dose"]).cumcount().astype(float)
+-
+-                    # Apply moving average smoothing (adds MR_smooth; currently passthrough)
+-                    df_sa = apply_moving_average(df_sa)
+-
+-                    # Reporting date for this cohort (1 year from enrollment)
+-                    target_str = get_reporting_date(sh)
+-                    if target_str:
+-                        try:
+-                            target_dt = pd.to_datetime(target_str)
+-                        except Exception:
+-                            target_dt = None
+-                    else:
+-                        target_dt = None
+-                    dates_sorted = df_sa.drop_duplicates(subset=["DateDied"]).sort_values("DateDied")
+-                    if dates_sorted.empty:
+-                        continue
+-                    if target_dt is not None:
+-                        diffs = (dates_sorted["DateDied"] - target_dt).abs()
+-                        idxmin = diffs.idxmin()
+-                        report_date = dates_sorted.loc[idxmin, "DateDied"]
+-                    else:
+-                        report_date = dates_sorted["DateDied"].max()
+-
+-                    # Precompute observed cumulative hazard series per dose (independent of theta/offset)
+-                    per_dose = {}
+-                    for dose, g in df_sa.groupby("Dose", sort=False):
+-                        g_sorted = g.sort_values("DateDied").reset_index(drop=True)
+-                        t_vals = g_sorted["t"].to_numpy(dtype=float)
+-                        mr_vals = g_sorted["MR"].to_numpy(dtype=float)
+-                        h_raw = hazard_from_mr(mr_vals)
+-                        h_eff_obs = np.where(t_vals >= float(skip_weeks), h_raw, 0.0)
+-                        H_obs = np.cumsum(h_eff_obs)
+-                        iso_parts = g_sorted["DateDied"].dt.isocalendar()
+-                        iso_int = (iso_parts.year.astype(int) * 100 + iso_parts.week.astype(int)).to_numpy(dtype=int)
+-                        per_dose[int(dose)] = {
+-                            "DateDied": g_sorted["DateDied"].to_numpy(),
+-                            "t": t_vals,
+-                            "H_obs": H_obs,
+-                            "h_eff_obs": h_eff_obs,
+-                            "dead": g_sorted["Dead"].to_numpy(dtype=float) if "Dead" in g_sorted.columns else np.zeros_like(t_vals, dtype=float),
+-                            "iso_int": iso_int,
+-                        }
+-
+-                    # Dose pairs to compute (optionally restricted)
+-                    dose_pairs_use = dose_pairs_sa
+-                    if OVERRIDE_DOSE_PAIRS is not None:
+-                        dose_pairs_use = [p for p in dose_pairs_sa if p in OVERRIDE_DOSE_PAIRS]
+-
+-                    # Compute CH series per (offset, dose) by fitting theta on the quiet window.
+-                    ch_by_offset = {}
+-                    for off in quiet_start_offsets:
+-                        qs_int = int(_quiet_start_int_for_offset(int(off)))
+-                        ch_by_dose = {}
+-                        for dose_i, d in per_dose.items():
+-                            t_vals = d["t"]
+-                            H_obs = d["H_obs"]
+-                            h_eff_obs = d["h_eff_obs"]
+-                            dead_vals = d["dead"]
+-                            iso_int = d["iso_int"]
+-
+-                            quiet_mask_sa = (iso_int >= qs_int) & (iso_int <= int(KCOR6_QUIET_END_INT)) & (t_vals >= float(skip_weeks))
+-                            t_rebased_sa = t_vals - float(skip_weeks)
+-                            (_k_hat, theta_hat), diag = fit_theta0_gompertz(
+-                                h_eff_obs,
+-                                t_rebased_sa,
+-                                quiet_mask_sa,
+-                                _sa_gompertz_cfg["k_anchor_weeks"],
+-                                _sa_gompertz_cfg["gamma_per_week"],
+-                                deaths_arr=dead_vals,
+-                                iso_week=iso_int,
+-                            )
+-                            if isinstance(diag, dict) and bool(diag.get("delta_negative_clamped", False)):
+-                                dual_print(
+-                                    f"[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
+-                                )
+-                            if isinstance(diag, dict) and bool(diag.get("insufficient_signal", False)):
+-                                dual_print(
+-                                    f"[KCOR7_INSUFFICIENT_SIGNAL] enroll={str(sh)}, yob=SA, dose={int(dose_i)}"
+-                                )
+-                            if isinstance(diag, dict) and bool(diag.get("insufficient_deaths", False)):
+-                                qd = float(diag.get("total_quiet_deaths", np.nan))
+-                                qd_str = f"{qd:.1f}" if np.isfinite(qd) else "nan"
+-                                dual_print(
+-                                    f"[KCOR7_INSUFFICIENT_DEATHS] enroll={str(sh)}, yob=SA, dose={int(dose_i)}, "
+-                                    f"quiet_deaths={qd_str} -> theta0_applied=0.0"
+-                                )
+-                            if isinstance(diag, dict) and bool(diag.get("bad_fit", False)):
+-                                rel = float(diag.get("relRMSE_hazard_fit", np.nan))
+-                                rel_str = f"{rel:.6g}" if np.isfinite(rel) else "nan"
+-                                dual_print(
+-                                    f"[KCOR7_BAD_FIT] enroll={str(sh)}, yob=SA, dose={int(dose_i)}, "
+-                                    f"relRMSE_hazard_fit={rel_str} -> theta0_applied=0.0"
+-                                )
+-                            fit_mask = diag.get("fit_mask_theta") if isinstance(diag, dict) else None
+-                            if fit_mask is None or np.asarray(fit_mask).shape != t_vals.shape:
+-                                fit_mask = np.asarray(quiet_mask_sa, dtype=bool)
+-                            else:
+-                                fit_mask = np.asarray(fit_mask, dtype=bool)
+-                            theta = 0.0
+-                            if isinstance(diag, dict) and bool(diag.get("success", False)) and np.isfinite(theta_hat) and float(theta_hat) >= 0.0:
+-                                theta = float(theta_hat)
+-                            try:
+-                                H_fit = H_obs[fit_mask]
+-                                if len(H_fit) >= 2 and np.isfinite(H_fit[-1]) and np.isfinite(H_fit[0]):
+-                                    hspan_hobs = float(H_fit[-1] - H_fit[0])
+-                                else:
+-                                    hspan_hobs = np.nan
+-                                rmse_h = diag.get("rmse_hazard", np.nan) if isinstance(diag, dict) else np.nan
+-                                if np.isfinite(rmse_h) and np.isfinite(hspan_hobs):
+-                                    relrmse_hspan = float(rmse_h / max(hspan_hobs, EPS))
+-                                else:
+-                                    relrmse_hspan = np.nan
+-                            except Exception:
+-                                relrmse_hspan = np.nan
+-                            theta_pre_degenerate = float(theta)
+-                            theta, sa_deg_flag, _ = _apply_theta_degenerate_guard(theta, theta_degen_cfg)
+-                            if sa_deg_flag:
+-                                _log_kcor7_degenerate_or_unidentifiable(
+-                                    sa_deg_flag,
+-                                    theta_pre_degenerate,
+-                                    _k_hat,
+-                                    _sa_gompertz_cfg["gamma_per_week"],
+-                                    float(theta_degen_cfg.get("theta0_max", 100.0)),
+-                                    str(sh),
+-                                    "SA",
+-                                    int(dose_i),
+-                                    relrmse_hspan,
+-                                    theta,
+-                                    dual_print,
+-                                )
+-
+-                            H0 = invert_gamma_frailty(H_obs, theta)
+-                            h0_inc = np.diff(H0, prepend=0.0)
+-                            h0_inc = np.where(t_vals >= float(skip_weeks), h0_inc, 0.0)
+-                            h0_inc = np.where(np.maximum.accumulate(~np.isfinite(h0_inc)), np.nan, h0_inc)
+-                            h0_inc = np.clip(h0_inc, 0.0, None)
+-                            CH = np.cumsum(h0_inc)
+-
+-                            ch_by_dose[dose_i] = {"DateDied": d["DateDied"], "CH": CH, "t": d["t"]}
+-                        ch_by_offset[int(off)] = ch_by_dose
+-
+-                    # Pre-merge K_raw series per (offset, dose_pair), then baseline-normalize per baseline weeks.
+-                    merged_by_offset_pair = {}
+-                    for off in quiet_start_offsets:
+-                        ch_by_dose = ch_by_offset.get(int(off), {})
+-                        for (dose_num, dose_den) in dose_pairs_use:
+-                            dn, dd = int(dose_num), int(dose_den)
+-                            if dn not in ch_by_dose or dd not in ch_by_dose:
+-                                continue
+-                            df_num = pd.DataFrame({"DateDied": ch_by_dose[dn]["DateDied"], "CH_num": ch_by_dose[dn]["CH"], "t_num": ch_by_dose[dn]["t"]})
+-                            df_den = pd.DataFrame({"DateDied": ch_by_dose[dd]["DateDied"], "CH_den": ch_by_dose[dd]["CH"], "t_den": ch_by_dose[dd]["t"]})
+-                            merged = pd.merge(df_num, df_den, on="DateDied", how="inner").sort_values("DateDied").reset_index(drop=True)
+-                            if merged.empty:
+-                                continue
+-                            valid = merged["CH_den"] > EPS
+-                            merged["K_raw"] = np.where(valid, merged["CH_num"] / merged["CH_den"], np.nan)
+-                            merged_by_offset_pair[(int(off), dn, dd)] = merged
+-
+-                    for baseline_weeks in baseline_weeks_values:
+-                        t0_idx = int(baseline_weeks) + skip_weeks - 1
+-                        for off in quiet_start_offsets:
+-                            for (dose_num, dose_den) in dose_pairs_use:
+-                                dn, dd = int(dose_num), int(dose_den)
+-                                merged = merged_by_offset_pair.get((int(off), dn, dd))
+-                                if merged is None or merged.empty:
+-                                    continue
+-                                ref = merged.loc[(merged["t_num"] == t0_idx) & (merged["t_den"] == t0_idx), "K_raw"]
+-                                baseline_k_raw = ref.iloc[0] if len(ref) == 1 else np.nan
+-                                if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+-                                    continue
+-                                kcor_series = np.where(np.isfinite(merged["K_raw"]), merged["K_raw"] / baseline_k_raw, np.nan)
+-
+-                                diffs = (merged["DateDied"] - report_date).abs().to_numpy()
+-                                idxmin = int(np.argmin(diffs)) if len(diffs) > 0 else -1
+-                                kcor_val = float(kcor_series[idxmin]) if 0 <= idxmin < len(kcor_series) else np.nan
+-                                if np.isfinite(kcor_val):
+-                                    sa_results[(sh, dn, dd, int(baseline_weeks), int(off))] = kcor_val
+-
+-                except Exception as e:
+-                    dual_print(f"[SA] Error processing cohort {sh}: {e}")
+-                    continue
+-
+-            create_sa_grid_output(sa_results, out_path, dual_print, baseline_weeks_values, quiet_start_offsets)
+-
+-        except Exception as e:
+-            print(f"\n❌ Error creating SA workbook: {e}")
+-            import traceback
+-            traceback.print_exc()
++            os.environ["SENSITIVITY_ANALYSIS"]="0"
++            OVERRIDE_YOBS=[-2]
++            for sh in sheets_to_process:
++                raw=pd.read_excel(src_path,sheet_name=sh)
++                raw["DateDied"]=pd.to_datetime(raw["DateDied"])
++                # Same explicit aggregate selector as the ordinary estimator.
++                source=raw[_all_age_source_mask(raw)].copy()
++                if source.empty:
++                    raise ValueError(f"No supported all-ages source in {sh}")
++                ENROLLMENT_DATES=[sh]
++                report_date=pd.Timestamp(get_reporting_date(sh))
++                dual_print(f"[SA] {sh}: reporting date {report_date.date()}, source rows {len(source)}")
++                for off in quiet_start_offsets:
++                    iso=(start+timedelta(weeks=int(off))).isocalendar()
++                    start_iso=f"{iso.year}-{iso.week:02d}"
++                    _DATASET_THETA_ESTIMATION_WINDOWS_CACHE=[dict(start_iso=start_iso,end_iso=end_iso,
++                        start_int=iso_label_to_int(start_iso),end_int=iso_label_to_int(end_iso),label="SA shifted quiet window")]
++                    with TemporaryDirectory() as temp:
++                        with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):
++                            rows=process_workbook(src_path,os.path.join(temp,"ordinary.xlsx"),
++                                "ordinary.log",bootstrap_frames={sh:source},return_rows=True)
++                    rows=rows[rows.YearOfBirth.eq(-2)].copy()
++                    for num,den in get_dose_pairs(sh):
++                        pair=rows[rows.Dose_num.eq(num)&rows.Dose_den.eq(den)]
++                        endpoint=pair[pd.to_datetime(pair.Date).eq(report_date)]
++                        for bw in baseline_weeks_values:
++                            # Re-anchor the same ordinary unanchored trajectory.
++                            date=_parse_enrollment_date(sh)+timedelta(weeks=int(bw)+DYNAMIC_HVE_SKIP_WEEKS-1)
++                            ref=pair[pd.to_datetime(pair.Date).eq(date)]
++                            value=np.nan;status="unavailable"
++                            if len(endpoint)==len(ref)==1:
++                                a=float(endpoint.KCOR_unanchored.iloc[0]);b=float(ref.KCOR_unanchored.iloc[0])
++                                if np.isfinite(a) and np.isfinite(b) and b>EPS and endpoint.normalization_status.eq("ok").all() and ref.normalization_status.eq("ok").all():
++                                    value=a/b;status="ok"
++                            results[(sh,num,den,int(bw),int(off))]=value
++                            details.append(dict(enrollment=sh,dose_num=num,dose_den=den,reference_weeks=int(bw),
++                                quiet_start_offset=int(off),quiet_start=start_iso,quiet_end=end_iso,
++                                report_date=str(report_date.date()),reference_date=str(pd.Timestamp(date).date()),
++                                kcor=value,status=status,
++                                fit_num=endpoint.theta0_status_num.iloc[0] if len(endpoint)==1 else "",
++                                fit_den=endpoint.theta0_status_den.iloc[0] if len(endpoint)==1 else ""))
++                    dual_print(f"[SA] {sh} offset {off}: ordinary fit complete")
++            create_sa_grid_output(results,out_path,dual_print,baseline_weeks_values,quiet_start_offsets)
++            pd.DataFrame(details).to_csv(os.path.join(output_dir,"KCOR_SA_cells.csv"),index=False)
+         finally:
+-            # Restore globals even if SA sweep fails mid-run
+-            KCOR_NORMALIZATION_WEEKS = original_norm_weeks
+-            KCOR_NORMALIZATION_WEEKS_EFFECTIVE = original_norm_weeks_effective
+-            OVERRIDE_YOBS = original_override_yobs
++            ENROLLMENT_DATES=original_dates
++            OVERRIDE_YOBS=original_yobs
++            _DATASET_THETA_ESTIMATION_WINDOWS_CACHE=original_windows
++            SLOPE_DEBUG_FILE=original_debug
++            if original_sa is None: os.environ.pop("SENSITIVITY_ANALYSIS",None)
++            else: os.environ["SENSITIVITY_ANALYSIS"]=original_sa
++            xls.close()
+             log_file_handle.close()
+-
+         return pd.DataFrame()
+ 
+     for sh in sheets_to_process:

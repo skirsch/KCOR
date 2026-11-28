@@ -1,5 +1,7 @@
 # Open objections to the corrected KCOR edition
 
+**Latest: [Round 7 convergence](evaluations/7/convergence.md).** Six new and five returning issues, indexed [7.1](../objections/7.1/README.md)-[7.11](../objections/7.11/README.md). Earlier sections below retain historical dispositions. The round-6 candidate m128 remains frozen; no fixes or PR updates were made during the evaluation.
+
 The starting point for the next revision is the [evaluated paper and method](evaluations/2/README.md). The archive pins the files, including the working-tree corrections through PR #5 item 6.2. The identifiers below let us discuss one discrepancy at a time. An entry records an objection, not approval of a proposed fix.
 
 ## Multi-edition evaluation of iteration 2
@@ -99,3 +101,8 @@ After the remaining 1.4 reporting discussion, stop the iterative LLM evaluation 
 
 
 **Final 1.4 alpha replay:** [historical pooled Czech objective](../objections/1.4/alpha-pooled-replay/README.md) reproduced exactly; new all-window and exact-model optima reach the lower boundary and fail identification. Forced-alpha and final Table 8 reporting remain lead-author decisions. No further LLM review iteration or PR.
+
+
+## Series 4 hypothetical post-approval evaluation
+
+See [convergence and new objection dispositions](evaluations/4/convergence.md). The actual PR remains a draft. The new high-priority issues concern false success after nonlinear row exclusion, the fitted discontinuity at alpha=1, and the bias of one-sided wave attribution. Raw gap clamping, short seed eligibility, ordinary interval reporting, configuration and minor manuscript alignment are separately recorded.

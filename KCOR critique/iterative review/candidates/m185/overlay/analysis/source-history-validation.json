@@ -1,0 +1,22 @@
+{
+  "analysis/table8/input.xlsx:2021_24": {
+    "rows": 9396,
+    "declared_layout": "table8",
+    "invalid_groups": {}
+  },
+  "analysis/table8/input.xlsx:2022_06": {
+    "rows": 7560,
+    "declared_layout": "table8",
+    "invalid_groups": {}
+  },
+  "data/Czech/KCOR_CMR.xlsx:2021_24": {
+    "rows": 280140,
+    "declared_layout": "disjoint",
+    "invalid_groups": {}
+  },
+  "data/Czech/KCOR_CMR.xlsx:2022_26": {
+    "rows": 193200,
+    "declared_layout": "disjoint",
+    "invalid_groups": {}
+  }
+}

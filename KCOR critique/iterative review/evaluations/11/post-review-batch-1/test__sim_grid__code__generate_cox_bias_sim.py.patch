@@ -1,0 +1,11 @@
+--- a/test/sim_grid/code/generate_cox_bias_sim.py
++++ b/test/sim_grid/code/generate_cox_bias_sim.py
+@@ -222,7 +222,7 @@
+         post_start_week: Week after which to compute slope
+     
+     Returns:
+-        kcor_asymptote: KCOR at final time
++        kcor_asymptote: legacy CSV field name for the finite follow-up endpoint (not a time limit)
+         kcor_slope: Slope of KCOR(t) on t_grid for t >= post_start_week (simple OLS)
+     """
+     dfA = df[df["cohort"] == 0]

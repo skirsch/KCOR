@@ -1,0 +1,45 @@
+--- m149/code/bootstrap_reporting.py
++++ m150/code/bootstrap_reporting.py
+@@ -226,6 +226,9 @@
+                 if "CI_method" in out:
+                     use=out.index.isin(subidx)&out.CI_method.eq("person_bootstrap_percentile")
+                     out.loc[use,"CI_method"]="person_bootstrap_with_fit_flags"
++                if "CI_unanchored_method" in out:
++                    use=out.index.isin(subidx)&out.CI_unanchored_method.eq("person_bootstrap_percentile")
++                    out.loc[use,"CI_unanchored_method"]="person_bootstrap_with_fit_flags"
+     for row in summary:
+         if row["status"]=="violation":log(f"[KCOR_GAP_ASSUMPTION_VIOLATION] {row}")
+     return out
+@@ -234,17 +237,17 @@
+ def attach(model,frame,src,sheets,log):
+     out=frame.copy()
+     point_gaps=frame.attrs.get("gap_first_pass",{})
+-    out["CI_analytic_lower"]=out["CI_lower"];out["CI_analytic_upper"]=out["CI_upper"]
+     out["CI_lower"]=np.nan;out["CI_upper"]=np.nan
+     out["CI_method"]="unavailable";out["CI_valid_draws"]=0
+     out["CI_flagged_draws"]=0;out["CI_point_flagged"]=flagged(out)
+     out["CI_undefined_anchor_draws"]=0;out["CI_missing_draws"]=0
+     out["CI_pool_composition_changed_draws"]=0
+     out["CI_unanchored_lower"]=np.nan;out["CI_unanchored_upper"]=np.nan;out["CI_unanchored_valid_draws"]=0
++    out["CI_unanchored_method"]="unavailable"
+     layout=os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")
+     draws=int(os.environ.get("KCOR_BOOTSTRAP_DRAWS","999"))
+     if draws<=0:
+-        log("[BOOTSTRAP] disabled; analytic intervals separately labeled");return annotate_gap_diagnostic(model,out,point_gaps,[],log)
++        log("[BOOTSTRAP] disabled; intervals unavailable");return annotate_gap_diagnostic(model,out,point_gaps,[],log)
+     hist={};sheet_indices={sh:i for i,sh in enumerate(sheets)}
+     for sh in sheets:
+         try:
+@@ -293,9 +296,11 @@
+     raw_good=(raw_count==draws)&np.isfinite(out["KCOR_unanchored"].to_numpy(float))
+     if raw_good.any():
+         out.loc[raw_good,["CI_unanchored_lower","CI_unanchored_upper"]]=np.quantile(raw_a[:,raw_good],[.025,.975],axis=0).T
++        out.loc[raw_good,"CI_unanchored_method"]="person_bootstrap_percentile"
++        raw_flagged=raw_good & ((out["CI_flagged_draws"]>0)|out["CI_point_flagged"]).to_numpy()
++        out.loc[raw_flagged,"CI_unanchored_method"]="person_bootstrap_with_fit_flags"
+     # Do not silently condition the interval on a subset of successful draws.
+     good=(count==draws)&np.isfinite(out["KCOR"].to_numpy())
+-    good &= out["CI_analytic_lower"].notna().to_numpy()
+     if good.any():
+         out.loc[good,["CI_lower","CI_upper"]]=np.quantile(a[:,good],[.025,.975],axis=0).T
+         out.loc[good,"CI_method"]="person_bootstrap_percentile"

@@ -1,0 +1,49 @@
+--- a/test/test_round16_batch.py
++++ b/test/test_round16_batch.py
+@@ -0,0 +1,46 @@
++"""Round 16 straightforward fixes: fractional complements, cause counts, archive."""
++from pathlib import Path
++import os,sys,csv,json
++import pandas as pd,numpy as np
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
++from test_round15_nested_totals import written,check_invalid,input_frame,total,ending
++from fixed_cohort_history import aggregate_reconciliation
++S='2023_01'
++def main():
++ f=input_frame(S);f.loc[f.YearOfBirth.eq(1950),'YearOfBirth']=1960
++ young=total(f[f.YearOfBirth.eq(1960)]).assign(YearOfBirth=-60);full=total(f)
++ integer=pd.concat([full,young],ignore_index=True)
++ frac=integer.copy();frac[['Alive','Dead']]=frac[['Alive','Dead']]/10
++ assert aggregate_reconciliation(frac)==({},set())
++ # A real fractional discrepancy must still fail, rather than treating any
++ # non-integer population as exempt from count reconciliation.
++ wrong=frac.copy();ix=wrong.index[wrong.YearOfBirth.eq(-60)&wrong.Dose.eq(1)][5];wrong.loc[ix,"Alive"]+=.001
++ assert set(aggregate_reconciliation(wrong)[0])=={(-2,1),(-60,1)}
++ a=written(integer,'exhaustive',0);b=written(frac,'exhaustive',0)
++ for age in (-2,-60):
++  ar=ending(a,age);br=ending(b,age)
++  np.testing.assert_allclose(ar.KCOR,br.KCOR,rtol=1e-10)
++  assert br.normalization_status=='ok'
++  print('fractional supported',age,br.KCOR,'interval unavailable (point-only)')
++ # Source-specific counts can be individually feasible while the unreported
++ # constituent has more cause-specific deaths than all-cause deaths.
++ visible=f[f.YearOfBirth.eq(1960)].copy();visible['Dead_COVID']=0
++ wider=total(visible).assign(YearOfBirth=-60,Dead_COVID=1)
++ wider['Alive']+=100
++ supplied=wider.assign(YearOfBirth=-2)
++ bad=pd.concat([visible,wider,supplied],ignore_index=True)
++ assert set(aggregate_reconciliation(bad,'partial')[0])=={(-2,0),(-2,1),(-60,0),(-60,1)}
++ check_invalid(written(bad,'partial',0))
++ good=bad.copy();good['Dead_COVID']=0
++ assert aggregate_reconciliation(good,'partial')==({}, {(-2,0),(-2,1),(-60,0),(-60,1)})
++ print('PASS partial cause-count contradiction, valid complement retained')
++ p=ROOT/'analysis/s6/window-omission.csv'
++ ref=json.loads((ROOT/'analysis/gap_assessment/s6/s6-all-window.json').read_text())
++ ratios={x['birth_band']:x for x in ref['ratios'] if x['mode']=='all'}
++ with p.open(newline='',encoding='utf-8') as stream:
++  for r in csv.DictReader(stream):
++   x=ratios[int(r['birth_band'])]
++   assert float(r['ci_low'])==x['interval'][0] and float(r['ci_high'])==x['interval'][2]
++   assert abs(float(r['full'])-x['point'])<1e-7
++ print('PASS seven current interval pairs')
++if __name__=='__main__':main()

@@ -66,3 +66,31 @@ The [nonlinear survivor-law fit experiment](../objections/3.2/nonlinear-survivor
 ### 1.4: nonlinear exponent identification
 
 [Historical pooled replay](../objections/1.4/alpha-pooled-replay/README.md) distinguishes frailty-model consistency from information about alpha. Despite 10.36 million overlapping enrollment memberships, the historical positive-excess objective retains 62 rows from eight cohorts; the raw excess contrast also lacks the specified external effect scale. Correcting survivor moments does not identify alpha: both optima move to the boundary, including after flagged-cohort exclusion. This is a different information limitation from weak low-frailty curvature, although both can affect the fitted inputs.
+
+
+### Series 4: hypothetical integrated PR #6
+
+[Convergence](evaluations/4/convergence.md) separates new fit-eligibility/branch consistency defects (4.1, 4.2, 4.5), one-sided exposure reconstruction under sampling noise (4.3, 4.4), and ordinary reporting mismatch (4.6, 4.7, 4.9) from low-frailty statistical resolution and baseline-model dependence. [Independent counterexamples](evaluations/4/counterexamples.json) verify the new mechanisms.
+
+
+### Series 7: additional numerical and reporting defects
+
+[Convergence](evaluations/7/convergence.md) identifies actual error-path fallback (7.1, related to 5.11/6.12), calendar misalignment (7.2), and rare-rate absolute solver tolerance (7.3). The last is distinct from the theoretical information limit: noiseless data identifies theta, but the optimizer stops before the optimum. Overlapping synthetic population aggregation (7.4) is distinct from the previous real-population aggregate mismatch (6.1). Czech vintage mismatch (7.5), diagnostic claims (7.6), figure/study provenance (7.7-7.8), early-anchor quiet assumption (7.9), historical alpha summary (7.10) and estimand framing (7.11) are recorded separately.
+
+### 7.3 follow-up: solver convergence versus statistical information
+
+[Matched results](../objections/7.3/README.md) isolate and correct the premature rare-rate convergence by a fixed positive residual scale. Exact recovery is restored (24 cases), but full Table 8, S6, age-shift intervals and the original 600 matched zero-contamination datasets are essentially unchanged. The 50k no-contamination mean KCOR remains 1.0495 [1.0306, 1.0684]; the true 0.5 frailty mean remains 1.548 [1.253, 1.843]. Thus 7.3 is an optimizer defect, not the finite-sample frailty limitation in 2.7. The scale correction is adopted in m130.
+
+## Round 8 (m135)
+
+- Population, calendar and output path alignment: 8.1, 8.2, 8.3.
+- Numerical bounds versus statistical information: 8.4 (noiseless fallback counterexample, not the low-frailty information problem itself).
+- Reference frailty, structural identification and model interpretation: 8.5, 8.6, 8.11, 8.12, 8.13.
+- Evidence scope, provenance and diagnostic reporting: 8.7, 8.8, 8.9, 8.10.
+- Details and individual links: [round 8 convergence](evaluations/8/convergence.md).
+
+### 8.4: numerical ceiling versus statistical information
+
+[The bound-policy trial](../objections/8.4/README.md) distinguishes the original intentional low-signal safeguard from erasing a genuinely identified high frailty estimate. In exact data theta 99.95 recovers to numerical precision, but the cap-proximity rule produces KCOR 0.314 instead of 1. Retaining raw constrained estimates changes the youngest S6 interval but does not resolve its frailty uncertainty. Table 8 is unaffected. Lead-author decision pending; no production change.
+
+Expanded ceiling tests at 200 and 500 remove nearly all/all observed high-bound S6 fits without changing the low-frailty null bias. Both wider caps give the same central youngest raw variance interval [0,167.90]; the original [0,100] was constrained. This is separate from statistical information. [Matched results](../objections/8.4/README.md).

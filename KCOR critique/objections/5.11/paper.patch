@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -404,7 +404,7 @@
+ $$
+ \tilde H_{0,d}(t)=H_{\mathrm{obs},d}(t),
+ $$
+-which is the observed cumulative hazard computed as the sum of negative log weekly survival probabilities, rather than the Nelson–Aalen sum of weekly death fractions. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates negligible detectable depletion curvature. The cumulative inverter also limits the applied variance to $80/\max_t |H_{\mathrm{obs},d}(t)|$ when its exponent would exceed 80 in magnitude, and clips the exponent to $[-80,80]$. When this guard activates, the returned result is a numerical approximation rather than the exact inverse at the fitted variance.
++which is the observed cumulative hazard computed as the sum of negative log weekly survival probabilities, rather than the Nelson–Aalen sum of weekly death fractions. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates negligible detectable depletion curvature. Weekly death fractions below one are converted without clipping. Exhausted risk sets and inversions outside the representable numerical range are flagged as unavailable; the inversion retains the fitted variance.
+ 
+ #### 2.6.2 Internal diagnostics and 'self-check' behavior
+ 

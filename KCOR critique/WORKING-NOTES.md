@@ -70,3 +70,11 @@ Ordinary Cox partial likelihood estimates a single risk-set-weighted ratio betwe
 ## 5. PR preparation
 
 [Proposed PR structure and draft description](PR-STRUCTURE.md) records the final objection disposition, proposed commit groups, artifact map and preparation status. Further alpha investigation is deferred. The review package is prepared on a separate branch for lead-author consideration.
+
+
+## 6. Evaluation round 4
+
+At the author's request, a hypothetical approved integration of PR #6 was evaluated independently. The [results](<iterative review/evaluations/4/convergence.md>) and [new numbered issues](objections/4.1/README.md) are local records, separate from the already-open draft PR. No further integrated changes have been adopted.
+
+### Deferred alpha investigation (round 8)
+Return to [8.5](objections/8.5/README.md) and [temporal alpha information notes](objections/1.4/alpha-information/README.md). Joint longitudinal identification can be possible under special constraints; test practical information and actual data assumptions rather than assuming an external effect scale is mathematically necessary. Existing Czech conclusion and estimator unchanged.

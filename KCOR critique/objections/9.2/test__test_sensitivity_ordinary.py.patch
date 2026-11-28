@@ -1,0 +1,20 @@
+--- m144/test/test_sensitivity_ordinary.py
++++ m145/test/test_sensitivity_ordinary.py
+@@ -53,5 +53,17 @@
+                     assert len(point)==1 and abs(point.iloc[0]-value)<1e-10,(mode,i,bw,point,value)
+             assert np.max(np.abs(np.array(all_values)-all_values[0]))<1e-10
+             print(mode, 'all reference lengths match ordinary calculation; redundant aggregates invariant',flush=True)
++            # Keep the full disjoint data and remove only the supplied total's
++            # last positive-risk week. Source horizon must not shrink in SA.
++            f=variants[1];f=f[~(f.YearOfBirth.eq(-2)&f.DateDied.eq(f.DateDied.max()))]
++            dest=t/f'{mode}-missing-total';dest.mkdir();src=dest/'input.xlsx';f.to_excel(src,sheet_name=SHEET,index=False)
++            K._DATASET_THETA_ESTIMATION_WINDOWS_CACHE=saved
++            K.KCOR_NORMALIZATION_WEEKS=4;K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE=4+K.DYNAMIC_HVE_SKIP_WEEKS-1
++            run(src,dest,mode,True)
++            cells=pd.read_csv(dest/'KCOR_SA_cells.csv');assert len(cells)==3 and cells.status.eq('unavailable').all() and cells.kcor.isna().all(),cells
++            K._DATASET_THETA_ESTIMATION_WINDOWS_CACHE=[window]
++            rows=run(src,dest,mode,False)
++            point=rows[rows.YearOfBirth.eq(-2)&rows.Dose_num.eq(1)&rows.Dose_den.eq(0)&pd.to_datetime(rows.Date).eq(pd.Timestamp(K.get_reporting_date(SHEET)))];assert len(point)==1 and point.KCOR.isna().all() and point.normalization_status.eq('missing_week_history').all(),point
++            print(mode,'incomplete supplied total unavailable for all reference lengths',flush=True)
+     K._DATASET_THETA_ESTIMATION_WINDOWS_CACHE=saved
+ if __name__=='__main__':main()

@@ -1,0 +1,11 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -2148,7 +2148,7 @@
+         return None
+     start_str = _DATASET_COVID_CORRECTION_CACHE.get("startDate")
+     end_str = _DATASET_COVID_CORRECTION_CACHE.get("endDate")
+-    correction_mode = str(_DATASET_COVID_CORRECTION_CACHE.get("mode", "identified_only")).strip()
++    correction_mode = str(os.environ.get("KCOR_NPH_MODE") or _DATASET_COVID_CORRECTION_CACHE.get("mode", "identified_only")).strip()
+     neutralization = str(
+         _DATASET_COVID_CORRECTION_CACHE.get("neutralization", "symmetric_all_cohorts")
+     ).strip()

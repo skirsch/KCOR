@@ -1,0 +1,99 @@
+--- a/analysis/quiet_windows/scan.py
++++ b/analysis/quiet_windows/scan.py
+@@ -1,4 +1,6 @@
+ """Replay the Czech quiet-window scan with the iteration 2 joint fitter."""
++import argparse
++import os
+ import hashlib
+ import io
+ from pathlib import Path
+@@ -21,6 +23,7 @@
+ sys.path.insert(0, str(OLD / "code"))
+ import quiet_window_scan_theta_czech_2021_24 as historical
+ sys.path.insert(0, str(ROOT / "code"))
++os.environ["DATASET"] = "Czech"
+ import KCOR
+ 
+ 
+@@ -41,7 +44,9 @@
+     return groups[groups.Alive > 0]
+ 
+ 
+-def scan():
++def scan(mode="forced_alpha"):
++    if mode not in ("forced_alpha", "off"):
++        raise ValueError(f"Unknown scan mode: {mode}")
+     windows, origin = historical.build_windows()
+     old = pd.read_csv(OLD / "out/quiet_window_scan_theta_czech_2021_24_yob1940_50.csv")
+     keys = ["yob_decade", "dose", "window_start_iso"]
+@@ -55,10 +60,15 @@
+         deaths = group.Dead.to_numpy(float)
+         alive = group.Alive.to_numpy(float)
+         t_rebased = time - KCOR.DYNAMIC_HVE_SKIP_WEEKS
+-        hazard = KCOR.hazard_from_mr(np.clip(deaths / (alive + KCOR.EPS), 0, .999))
++        hazard = KCOR.hazard_from_mr(deaths / alive)
+         effective = np.where(t_rebased >= 0, hazard, 0.)
+         historical_H = np.cumsum(-np.log1p(-np.clip(deaths / alive, 0, 1-1e-12)))
+         weeks = group.monday.map(lambda d: historical.abs_week_index(d, origin)).to_numpy()
++        dates = pd.to_datetime(group.monday)
++        wave_mask = (dates >= pd.Timestamp("2021-10-11")) & (dates <= pd.Timestamp("2022-03-21"))
++        marked = t_rebased[np.asarray(wave_mask) & (t_rebased >= 0)]
++        wave = (float(marked[0]), float(marked[-1])) if mode == "forced_alpha" else None
++        alpha = 1.18 if wave is not None else None
+         for w in windows:
+             quiet = (weeks >= w.start_abs) & (weeks < w.end_abs)
+             previous = old.loc[(decade, dose, w.start_iso)]
+@@ -69,11 +79,12 @@
+                                        rtol=1e-5, atol=1e-8)
+             (k, theta), diag = KCOR.fit_theta0_gompertz(
+                 effective, t_rebased, quiet, cfg["k_anchor_weeks"], cfg["gamma_per_week"],
+-                deaths_arr=deaths, joint_seed=True,
+-                iso_week=pd.DatetimeIndex(group.monday).strftime('%G%V').astype(int))
++                deaths_arr=deaths, risk_arr=alive, joint_seed=True, wave=wave, alpha=alpha)
++            if mode == "forced_alpha" and diag["success"]:
++                assert diag["message"] == "nonlinear survivor fit", diag
+             applied, degenerate, _ = KCOR._apply_theta_degenerate_guard(theta, guard)
+             passed = bool(diag["success"] and diag["status"] == "ok" and not degenerate)
+-            rows.append(dict(yob_decade=decade, dose=dose, window_start_iso=w.start_iso,
++            rows.append(dict(mode=mode, alpha=alpha, yob_decade=decade, dose=dose, window_start_iso=w.start_iso,
+                              window_end_iso=w.end_iso, midpoint=w.midpoint, quiet_weeks=int(quiet.sum()),
+                              fit_weeks=diag["n_fit"], old_pass=int(previous["pass"]), passed=int(passed),
+                              k=k, theta_seed=diag["theta0_init"], theta_raw=diag["theta0_raw"],
+@@ -84,7 +95,7 @@
+     return results
+ 
+ 
+-def figure(rows):
++def figure(rows, output=FIGURE):
+     fig, axes = plt.subplots(2, 3, figsize=(8, 4.7), sharex=True, sharey=True, layout="constrained")
+     for (decade, dose), group in rows.groupby(["yob_decade", "dose"]):
+         row = 0 if decade == 1940 else 1
+@@ -105,18 +116,22 @@
+     handles = [Line2D([], [], marker=m, color=c, linestyle="none", label=l) for m,c,l in
+                [("o", "#1d5265", "Diagnostic pass"), ("x", "#983b20", "Diagnostic failure")]]
+     fig.legend(handles=handles, loc="outside upper center", ncols=2, frameon=False)
+-    FIGURE.parent.mkdir(parents=True, exist_ok=True)
+-    fig.savefig(FIGURE, dpi=180)
++    output.parent.mkdir(parents=True, exist_ok=True)
++    fig.savefig(output, dpi=180)
+     plt.close(fig)
+ 
+ 
+ if __name__ == "__main__":
+-    rows = scan()
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--mode", choices=["forced_alpha", "off"], default="forced_alpha")
++    args = parser.parse_args()
++    rows = scan(args.mode)
+     summary = rows.groupby(["yob_decade", "dose"], as_index=False).agg(
+         attempted=("passed", "size"), historical_passed=("old_pass", "sum"), revised_passed=("passed", "sum"))
+     assert len(summary) == 6 and (summary.attempted == 13).all()
+     summary["pass_rate"] = summary.revised_passed / summary.attempted
+-    rows.to_csv(HERE / "windows.csv", index=False)
+-    summary.to_csv(HERE / "summary.csv", index=False)
++    suffix = "" if args.mode == "forced_alpha" else "-off"
++    rows.to_csv(HERE / f"windows{suffix}.csv", index=False)
++    summary.to_csv(HERE / f"summary{suffix}.csv", index=False)
+     print(summary.to_string(index=False), flush=True)
+-    figure(rows)
++    figure(rows, FIGURE if args.mode == "forced_alpha" else HERE / "quiet-window-scan-off.png")

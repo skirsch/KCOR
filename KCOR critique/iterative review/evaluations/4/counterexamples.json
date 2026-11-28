@@ -1,0 +1,132 @@
+{
+  "no_nonlinear_fit_rows": {
+    "eligible": 0,
+    "reported_n_fit": 12,
+    "success": true,
+    "status": "ok",
+    "frailty": 2.000000000003776
+  },
+  "short_first_window": {
+    "total_quiet": 33,
+    "first_window": 2,
+    "status": "insufficient_data",
+    "success": false,
+    "message": "first_quiet_window_too_small"
+  },
+  "alpha_limit": [
+    {
+      "alpha": 1.0,
+      "k": 0.009278647242400366,
+      "theta": 17.251766982190485,
+      "n_fit": 54,
+      "status": "ok"
+    },
+    {
+      "alpha": 1.0000001,
+      "k": 0.0020000000094831847,
+      "theta": 2.000000008082294,
+      "n_fit": 50,
+      "status": "ok"
+    },
+    {
+      "alpha": 1.000001,
+      "k": 0.0020000000948378082,
+      "theta": 2.00000008082213,
+      "n_fit": 50,
+      "status": "ok"
+    },
+    {
+      "alpha": 1.18,
+      "k": 0.002017155607093134,
+      "theta": 2.016696708817382,
+      "n_fit": 50,
+      "status": "ok"
+    }
+  ],
+  "marked_zero_wave": [
+    {
+      "N": 5000,
+      "theta": 1.0,
+      "alpha": 1.18,
+      "true_B": 0.001,
+      "true_W": 0.0,
+      "prob": 0.9999999999999752,
+      "mean_B": 0.0008243578692763092,
+      "mean_W": 0.00016137330314574408,
+      "mean_corrected": 0.0009857311724220535,
+      "mean_proportional": 0.0010002002401279823
+    },
+    {
+      "N": 5000,
+      "theta": 1.0,
+      "alpha": 2.0,
+      "true_B": 0.001,
+      "true_W": 0.0,
+      "prob": 0.9999999999999752,
+      "mean_B": 0.0008243578692763092,
+      "mean_W": 8.812130773875827e-05,
+      "mean_corrected": 0.0009124791770150675,
+      "mean_proportional": 0.0010002002401279823
+    },
+    {
+      "N": 50000,
+      "theta": 1.0,
+      "alpha": 1.18,
+      "true_B": 0.001,
+      "true_W": 0.0,
+      "prob": 0.9999999999999304,
+      "mean_B": 0.00094360149861986,
+      "mean_W": 5.177141033374011e-05,
+      "mean_corrected": 0.0009953729089536,
+      "mean_proportional": 0.001000020020401054
+    },
+    {
+      "N": 50000,
+      "theta": 1.0,
+      "alpha": 2.0,
+      "true_B": 0.001,
+      "true_W": 0.0,
+      "prob": 0.9999999999999304,
+      "mean_B": 0.00094360149861986,
+      "mean_W": 2.8247869013342144e-05,
+      "mean_corrected": 0.0009718493676332019,
+      "mean_proportional": 0.001000020020401054
+    },
+    {
+      "N": 500000,
+      "theta": 1.0,
+      "alpha": 1.18,
+      "true_B": 0.001,
+      "true_W": 0.0,
+      "prob": 0.9999999999999075,
+      "mean_B": 0.0009821404123629253,
+      "mean_W": 1.6389933765814476e-05,
+      "mean_corrected": 0.00099853034612874,
+      "mean_proportional": 0.0010000020020038871
+    },
+    {
+      "N": 500000,
+      "theta": 1.0,
+      "alpha": 2.0,
+      "true_B": 0.001,
+      "true_W": 0.0,
+      "prob": 0.9999999999999075,
+      "mean_B": 0.0009821404123629253,
+      "mean_W": 8.94073959606379e-06,
+      "mean_corrected": 0.0009910811519589888,
+      "mean_proportional": 0.0010000020020038871
+    }
+  ],
+  "gap_offset_example": {
+    "raw": [
+      0.0,
+      -0.001,
+      0.0
+    ],
+    "applied": [
+      0.0,
+      0.0,
+      0.001
+    ]
+  }
+}

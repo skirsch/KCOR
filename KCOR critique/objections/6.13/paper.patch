@@ -1,0 +1,98 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -458,15 +458,15 @@
+ 
+ In some settings, especially COVID-era mortality analyses, external hazards interact with cohort-specific frailty in a non-proportional manner. In such cases, scalar rescaling is not rich enough to align trajectories across cohorts because amplification may depend on depletion geometry itself. KCOR therefore treats NPH as an **optional exponent module**, not as part of the universal KCOR core.
+ 
+-Because $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects in minimal aggregated data, application of this module requires **externally supplied VE or other prespecified intervention-effect scale**, not learned from the same KCOR wave-period contrasts used to identify $\alpha$. KCOR does not estimate that intervention scale from the same aggregated wave-period contrasts used to localize $\alpha$. This separation matters because frailty-dependent amplification and intervention-associated hazard reduction can otherwise generate similar cross-cohort excess-hazard ratios, producing flat objectives and boundary-seeking estimates.
+-
+-Let the stabilized hazard during an NPH period be represented schematically as
++Because $\alpha$ is not separately identifiable from cohort-specific multiplicative intervention effects in minimal aggregated data, localizing $\alpha$ with this module requires **externally supplied VE or other prespecified intervention-effect scale**, not learned from the same KCOR wave-period contrasts used to identify $\alpha$. KCOR does not estimate that intervention scale from the same aggregated wave-period contrasts used to localize $\alpha$. This separation matters because frailty-dependent amplification and intervention-associated hazard reduction can otherwise generate similar cross-cohort excess-hazard ratios, producing flat objectives and boundary-seeking estimates.
++
++Let the instantaneous hazard during an NPH period be represented schematically as
+ 
+ $$
+ h_d(t) = h_{0,d}(t) + A(t)\,E_d[z^{\alpha}\mid t],
+ $$
+ 
+-where $A(t)$ is an unknown common external intensity, $z$ denotes latent frailty under the gamma-frailty working model, and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. Equivalently, the excess-hazard component satisfies
++where $A(t)$ is an unknown common external intensity, $z$ denotes latent frailty under the gamma-frailty working model, and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. Here the baseline component is conditional on the same actual survivors as the wave component. Equivalently, the instantaneous excess-hazard component satisfies
+ 
+ $$
+ h_{\mathrm{excess},d}(t)\propto E_d[z^{\alpha}\mid t].
+@@ -474,7 +474,7 @@
+ 
+ Under the gamma-frailty working model, this moment depends on the cohort's current depletion state, so the NPH module links external-hazard amplification to cumulative-hazard geometry rather than to a cohort-specific scalar multiplier. When $\alpha=1$, amplification is proportional to baseline risk and the NPH module is effectively inactive. The parameters $\theta_{0,d}$ and $\alpha$ are conceptually distinct: $\theta_{0,d}$ governs how each cohort depletes over time, while $\alpha$ governs how external hazards interact with that depletion.
+ 
+-Because $A(t)$ is common across cohorts, absolute excess hazards are not directly comparable across cohorts. However, ratios eliminate the unknown common amplitude:
++Because $A(t)$ is common across cohorts, ratios of the instantaneous wave components eliminate the unknown common amplitude:
+ 
+ $$
+ \frac{h_{\mathrm{excess},i}(t)}{h_{\mathrm{excess},j}(t)}
+@@ -482,7 +482,7 @@
+ \frac{E_i[z^{\alpha}\mid t]}{E_j[z^{\alpha}\mid t]}.
+ $$
+ 
+-Earlier wave exposure still influences the survivor distributions. This cancellation is the geometric core for relating observed cross-cohort excess structure to $F_d(t;\alpha)$ once an **externally supplied VE or other prespecified intervention-effect scale** is fixed (§2.7.2). Identification of $\alpha$ still requires sufficient cross-cohort variation in depletion state and excess-hazard measurement; when cohorts are too similar, objectives flatten. Failure of identification manifests as flat objective functions, boundary-seeking estimates, or disagreement between estimators; such patterns are treated as weak signal or model misspecification rather than as valid $\alpha$ estimates.
++Earlier wave exposure still influences the survivor distributions. Subtracting a projected no-wave hazard does not in general isolate the wave component, because the no-wave survivor distribution differs from the actual one. Ratios of weekly integrated wave components need not cancel the common time-varying intensity; proportional survivor moments within the week suffice for cancellation. This cancellation is the geometric core for relating observed cross-cohort excess structure to $F_d(t;\alpha)$ once an **externally supplied VE or other prespecified intervention-effect scale** is fixed (§2.7.2). Identification of $\alpha$ still requires sufficient cross-cohort variation in depletion state and excess-hazard measurement; when cohorts are too similar, objectives flatten. Failure of identification manifests as flat objective functions, boundary-seeking estimates, or disagreement between estimators; such patterns are treated as weak signal or model misspecification rather than as valid $\alpha$ estimates.
+ 
+ #### 2.7.2 Identification of $\alpha$ given an externally supplied intervention-effect scale
+ 
+@@ -494,7 +494,7 @@
+ \Delta h_A^{\mathrm{true}}(t) = (1-x)\,\Delta h_B^{\mathrm{true}}(t),
+ $$
+ 
+-where $\Delta h_d^{\mathrm{true}}(t)$ denotes frailty-neutral excess hazard during the NPH period for cohort $d$. Under the gamma-frailty working model, the **observed** excess hazard satisfies
++where $\Delta h_d^{\mathrm{true}}(t)$ denotes frailty-neutral excess hazard during the NPH period for cohort $d$. Under the gamma-frailty working model, the **instantaneous wave component** among actual survivors satisfies
+ 
+ $$
+ \Delta h_d^{\mathrm{obs}}(t)=\Delta h_d^{\mathrm{true}}(t)\,F_d(t;\alpha),
+@@ -510,9 +510,9 @@
+ (1-x)\,\frac{F_A(t;\alpha)}{F_B(t;\alpha)}.
+ $$
+ 
+-This relation localizes $\alpha$, if at all, from the mismatch between the observed cross-cohort excess-hazard ratio and the ratio predicted from the prespecified scale $(1-x)$ together with the cohort-specific depletion geometry encoded in $F_d(t;\alpha)$. Equivalently, $\alpha$ is chosen so that the model-implied amplification ratio matches the observed excess ratio after adjustment for the external scale.
+-
+-Operationally, pairwise or collapse objective functions analogous to those in Supplementary Information §S2.1 are evaluated with $x$ (hence $(1-x)$) treated as **fixed external input** rather than estimated jointly from the same contrasts. If diagnostics indicate weak localization, estimator disagreement, or boundary-seeking behavior, $\alpha$ is treated as not identified.
++This relation can localize $\alpha$, if at all, when the instantaneous wave components can be measured or adequately approximated. With weekly mortality counts, its use in the historical localization objectives is approximate; subtracting a no-wave projection or another cohort's hazard does not supply the required component.
++
++Pairwise or collapse objective functions (SI §S2.1) can be evaluated under this approximation with $x$ (hence $(1-x)$) fixed externally. The weekly approximation has not been validated for identification under the full survivor law. Estimation directly from weekly survival with a shared wave exposure and the specified external scale remains open; inversion at a supplied $\alpha$ is addressed separately. If diagnostics indicate weak localization, estimator disagreement, or boundary-seeking behavior, $\alpha$ is treated as not identified.
+ 
+ #### 2.7.3 Application of the NPH correction once $\alpha$ is specified
+ 
+@@ -532,7 +532,7 @@
+ 
+ 1. Initialize the cohort-specific baseline and frailty fit. For a supplied nonlinear exponent refit using the nonlinear survivor law.
+ 2. Obtain or prespecify **externally supplied VE or other prespecified intervention-effect scale** for the relevant wave-period hazard contrast (not from the same contrasts used to localize $\alpha$).
+-3. Using observed excess hazards during NPH periods together with the fixed external scale, localize $\alpha$ via §2.7.2, if diagnostics support identification.
++3. When instantaneous wave components are measured or their approximation is justified, use the fixed external scale to localize $\alpha$ via §2.7.2, if diagnostics support identification.
+ 4. Apply gamma-frailty inversion (Eq. @eq:normalized-cumhazard) to obtain $\tilde H_{0,d}(t)$.
+ 5. During the NPH window solve weekly conditional survival for exposure increments as in §2.7.3. After wave exit, hold wave exposure fixed and solve the conditional survival equation.
+ 6. Continue with the standard KCOR pipeline on the corrected cumulative-hazard scale (§2.8).
+@@ -819,7 +819,7 @@
+ 
+ ### 3.4 Estimation of the NPH exponent $\alpha$
+ 
+-The optional NPH module is a **prespecified generalization** of the core pipeline, validated synthetically when cross-cohort depletion geometry carries identifying signal. We evaluated estimation of the NPH exponent $\alpha$ using a staged validation framework consisting of synthetic recovery, pooled empirical estimation, and diagnostic sensitivity analyses. Throughout, $\alpha$ is treated as a parameter of the working model describing how excess hazard scales with latent frailty, rather than as a causal or biological quantity. **When $\alpha$ is not identified, the cumulative correction on frailty-neutral cumulative hazard (§2.7.3) is not applied for inference—that outcome is a successful diagnostic, not a method failure.** The empirical pooled exercise in §3.4.2 is **illustrative**: under Methods §2.7.2, localization of $\alpha$ in minimal aggregated data requires **externally supplied VE or other prespecified intervention-effect scale** not learned from the same wave-period contrasts.
++The optional NPH module is a **prespecified generalization** of the core pipeline. The localization experiments below use the historical amplification formula or weekly excess proxies, not direct estimation from the full weekly survivor law. We evaluated estimation of the NPH exponent $\alpha$ using a staged validation framework consisting of synthetic recovery, pooled empirical estimation, and diagnostic sensitivity analyses. Throughout, $\alpha$ is treated as a parameter of the working model describing how excess hazard scales with latent frailty, rather than as a causal or biological quantity. **When $\alpha$ is not identified, the cumulative correction on frailty-neutral cumulative hazard (§2.7.3) is not applied for inference—that outcome is a successful diagnostic, not a method failure.** The empirical pooled exercise in §3.4.2 is **illustrative**: under Methods §2.7.2, localization of $\alpha$ in minimal aggregated data requires **externally supplied VE or other prespecified intervention-effect scale** not learned from the same wave-period contrasts.
+ 
+ #### 3.4.1 Synthetic validation of $\alpha$
+ 
+@@ -833,7 +833,7 @@
+ 
+ #### 3.4.2 Empirical pooled Czech registry application
+ 
+-The historical illustrative pooled objectives (not supplied an external intervention-effect scale) had minima 1.190 and 1.185. Replaying the same data and objective with the all-window fit and with the nonlinear survivor fit refitted at each candidate exponent yields both minima at the lower boundary 1.00, on the original 1.00–1.30 grid. The wider diagnostic grid 0.70–1.30 gives both exact-survivor minima at its lower boundary. Forty-eight eligible cohort histories amount to 10.36 million overlapping enrollment memberships, but the positive raw-excess filter retains only 62 cohort-week rows across eight cohorts. The historical raw excess is the observed hazard difference from dose zero, not independently measured wave exposure.
++The historical illustrative pooled objectives (not supplied an external intervention-effect scale) had minima 1.190 and 1.185. Replaying the same data and objective with the all-window fit and with the nonlinear survivor fit refitted at each candidate exponent yields both minima at the lower boundary 1.00, on the original 1.00–1.30 grid. The wider diagnostic grid 0.70–1.30 gives both exact-survivor minima at its lower boundary. Forty-eight eligible cohort histories amount to 10.36 million overlapping enrollment memberships, but the positive raw-excess filter retains only 62 cohort-week rows across eight cohorts. The historical raw excess is the observed hazard difference from dose zero, not an independently measured instantaneous wave component.
+ 
+ ![Comparison of historical and updated illustrative objective profiles; lower-boundary optima do not identify an exponent.](figures/fig_alpha_czech_objective.png){#fig:alpha_czech_objective}
+ 
+@@ -851,7 +851,7 @@
+ 
+ #### 3.4.4 Summary of identification status
+ 
+-Across all prespecified criteria, objective curvature, estimator agreement, stability under resampling, and robustness to specification, the Czech pooled analysis fails to meet the threshold required for identification.
++The Czech pooled analysis fails to meet the identification criteria of objective curvature, stability under resampling, and robustness to specification. Pairwise and collapse objectives use the same underlying residuals, so their agreement is not independent evidence of identification.
+ 
+ We report $\alpha$ as **not identified**. The historical preference near 1.18–1.19 is not reproduced by the improved fitter. A value of 1.18 is retained only for sensitivity analyses.
+ 

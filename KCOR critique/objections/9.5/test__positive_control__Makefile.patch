@@ -1,0 +1,11 @@
+--- m145/test/positive_control/Makefile
++++ m146/test/positive_control/Makefile
+@@ -38,7 +38,7 @@
+ # Run KCOR analysis on positive control data
+ $(POS_CTRL_OUT): $(POS_CTRL_DATA) $(ROOT)/code/KCOR.py
+ 	@mkdir -p $(OUT_DIR)
+-	cd $(ROOT)/code && $(PY) KCOR.py \
++	cd $(ROOT)/code && KCOR_RISK_HISTORY_POLICY=allow_exits $(PY) KCOR.py \
+ 		../test/positive_control/data/KCOR_positive_control.xlsx \
+ 		../test/positive_control/out/KCOR_processed_positive_control.xlsx \
+ 		"Positive Control" \

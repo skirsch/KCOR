@@ -1,0 +1,136 @@
+--- a/code/KCOR_CMR.py
++++ b/code/KCOR_CMR.py
+@@ -1689,121 +1689,18 @@
+             print(f"  ERROR: Failed to write summary sheet: {e}")
+             print(f"  Traceback: {traceback.format_exc()}")
+         
+-        # Write MFG-specific per-week series for doses 2,3,4 as auxiliary sheets
+-        try:
+-            def build_mfg_out_for_dose(dose_num: int, mfg_label: str) -> pd.DataFrame:
+-                # Subset individuals whose dose{d} manufacturer matches label
+-                mcol = {2: 'Dose2_MFG', 3: 'Dose3_MFG', 4: 'Dose4_MFG'}.get(dose_num)
+-                if not mcol:
+-                    return pd.DataFrame()
+-                # Get a_var from the helper function's scope - we need to reconstruct it
+-                # For now, use a_copy and filter by manufacturer
+-                a_var_local = a_copy.copy()
+-                _bypass_freeze = str(os.environ.get('BYPASS_FREEZE','')).strip().lower() in ('1','true','yes')
+-                if not _bypass_freeze:
+-                    for _col in ['Date_FirstDose','Date_SecondDose','Date_ThirdDose','Date_FourthDose','Date_FifthDose','Date_SixthDose']:
+-                        if _col in a_var_local.columns:
+-                            a_var_local.loc[a_var_local[_col] >= enrollment_date, _col] = pd.NaT
+-                
+-                sub = a_var_local[(a_var_local[mcol] == mfg_label)].copy()
+-                if sub.empty:
+-                    return pd.DataFrame()
+-                # Deaths per week for those at dose==dose_num at week start
+-                wk_monday = pd.to_datetime(sub['WeekOfDeath'] + '-1', format='%G-%V-%u', errors='coerce')
+-                d_w = (
+-                    (dose_num == 1) & (sub['Date_FirstDose'].notna() & (sub['Date_FirstDose'] < wk_monday))
+-                ) | (
+-                    (dose_num == 2) & (sub['Date_SecondDose'].notna() & (sub['Date_SecondDose'] < wk_monday))
+-                ) | (
+-                    (dose_num == 3) & (sub['Date_ThirdDose'].notna() & (sub['Date_ThirdDose'] < wk_monday))
+-                ) | (
+-                    (dose_num == 4) & (sub['Date_FourthDose'].notna() & (sub['Date_FourthDose'] < wk_monday))
+-                )
+-                sub = sub.assign(_at_dose_week=np.where(d_w, dose_num, 0))
+-                mask_deaths_sub = sub['DateOfDeath'].notnull() & sub['WeekOfDeath'].notna() & (sub['_at_dose_week'] == dose_num)
+-                deaths_sub = (
+-                    sub[mask_deaths_sub]
+-                      .groupby(['WeekOfDeath','YearOfBirth','Sex','DCCI'])
+-                      .size()
+-                      .reset_index(name='dead')
+-                )
+-                obs = deaths_sub.rename(columns={'WeekOfDeath':'ISOweekDied'})
+-                obs['ISOweekDied'] = obs['ISOweekDied'].astype(str)
+-                # Build nodose grid and attach WeekIdx
+-                weeks_df2 = pd.DataFrame({'ISOweekDied': all_weeks})
+-                nodose2 = sub[['YearOfBirth','Sex','DCCI']].drop_duplicates().copy()
+-                weeks_df2['__k'] = 1
+-                nodose2['__k'] = 1
+-                grid2 = weeks_df2.merge(nodose2, on='__k', how='left').drop(columns='__k')
+-                grid2['WeekIdx'] = grid2['ISOweekDied'].map(week_index).astype(int)
+-                # Attach deaths
+-                out2 = grid2.merge(obs, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+-                out2['dead'] = out2['dead'].fillna(0).astype(int)
+-                # Transitions into dose d and out to d+1 for this subset
+-                date_col_d = {1:'Date_FirstDose',2:'Date_SecondDose',3:'Date_ThirdDose',4:'Date_FourthDose'}[dose_num]
+-                date_col_next = {1:'Date_SecondDose',2:'Date_ThirdDose',3:'Date_FourthDose',4:'Date_FifthDose'}.get(dose_num)
+-                # Inflow to d
+-                wk_in = sub[date_col_d].dt.strftime('%G-%V')
+-                t_in = sub.loc[wk_in.notna(), ['YearOfBirth','Sex','DCCI']].copy()
+-                t_in['ISOweekDied'] = wk_in[wk_in.notna()].values
+-                t_in = t_in.groupby(['ISOweekDied','YearOfBirth','Sex','DCCI']).size().reset_index(name='trans_in')
+-                # Outflow to d+1 (if next dose exists)
+-                if date_col_next in sub.columns:
+-                    wk_out = sub[date_col_next].dt.strftime('%G-%V')
+-                    t_out = sub.loc[wk_out.notna(), ['YearOfBirth','Sex','DCCI']].copy()
+-                    t_out['ISOweekDied'] = wk_out[wk_out.notna()].values
+-                    t_out = t_out.groupby(['ISOweekDied','YearOfBirth','Sex','DCCI']).size().reset_index(name='trans_out')
+-                else:
+-                    t_out = pd.DataFrame(columns=['ISOweekDied','YearOfBirth','Sex','DCCI','trans_out'])
+-                # Merge transitions onto grid and compute cumulative prev (shifted)
+-                trans2 = grid2.merge(t_in, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+-                trans2 = trans2.merge(t_out, on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+-                trans2[['trans_in','trans_out']] = trans2[['trans_in','trans_out']].fillna(0).astype(int)
+-                trans2 = trans2.sort_values(['YearOfBirth','Sex','DCCI','WeekIdx'])
+-                cum_in_prev = trans2.groupby(['YearOfBirth','Sex','DCCI'])['trans_in'].cumsum().shift(fill_value=0)
+-                cum_out_prev = trans2.groupby(['YearOfBirth','Sex','DCCI'])['trans_out'].cumsum().shift(fill_value=0)
+-                out2 = out2.merge(trans2[['ISOweekDied','YearOfBirth','Sex','DCCI']].assign(cum_in_prev=cum_in_prev, cum_out_prev=cum_out_prev),
+-                                  on=['ISOweekDied','YearOfBirth','Sex','DCCI'], how='left')
+-                out2[['cum_in_prev','cum_out_prev']] = out2[['cum_in_prev','cum_out_prev']].fillna(0).astype(int)
+-                # Cumulative prior-week deaths per combo
+-                out2 = out2.sort_values(['YearOfBirth','Sex','DCCI','WeekIdx'])
+-                out2['cumDead_prev'] = (
+-                    out2.groupby(['YearOfBirth','Sex','DCCI'])['dead']
+-                        .cumsum()
+-                        .shift(fill_value=0)
+-                )
+-                # Alive for dose d, mfg label
+-                out2['Alive'] = np.maximum(out2['cum_in_prev'] - out2['cum_out_prev'] - out2['cumDead_prev'], 0).astype(int)
+-                # First week boundary: 0 alive (since no prior inflow)
+-                first_mask2 = out2['ISOweekDied'] == all_weeks[0]
+-                out2.loc[first_mask2, 'Alive'] = 0
+-                out2['Dead'] = out2['dead'].astype(int)
+-                out2['Dose'] = dose_num
+-                out2['MFG'] = mfg_label
+-                out2['DateDied'] = pd.to_datetime(out2['ISOweekDied'] + '-1', format='%G-%V-%u').dt.strftime('%Y-%m-%d')
+-                return out2[['ISOweekDied','DateDied','YearOfBirth','Sex','DCCI','Dose','MFG','Alive','Dead']]
+-
+-            # For specific doses per enrollment, create M/P sheets
+-            d_targets = []
+-            if enroll_date_str in ('2021-24','2021_24'):
+-                d_targets.append(2)
+-            if enroll_date_str in ('2022-06','2022_06'):
+-                d_targets.append(3)
+-            if enroll_date_str in ('2022-47','2022_47'):
+-                d_targets.append(4)
+-            for dnum in d_targets:
+-                frames = []
+-                for lab in ['P','M','O']:
+-                    dfm = build_mfg_out_for_dose(dnum, lab)
+-                    if not dfm.empty:
+-                        frames.append(dfm)
+-                if frames:
+-                    mfg_sheet = f"{sheet_name}_MFG_D{dnum}"
+-                    pd.concat(frames, ignore_index=True).to_excel(excel_writer, sheet_name=mfg_sheet, index=False)
+-                    print(f"  Wrote manufacturer-specific sheet: {mfg_sheet}")
+-        except Exception as e:
+-            print(f"CAUTION: Failed to write MFG-specific sheets: {e}")
+-        
++        # Partition the same fixed enrollment population by manufacturer.
++        from manufacturer_history import TARGETS, build_history, reconcile
++        if sheet_name in TARGETS and str(os.environ.get("BYPASS_FREEZE","")).strip().lower() not in ("1","true","yes"):
++            dnum = TARGETS[sheet_name]
++            history = (build_history(alive_at_enroll, enrollment_date, all_weeks, dnum)
++                       if f"Dose{dnum}_MFG" in alive_at_enroll else pd.DataFrame())
++            if not history.empty:
++                reconcile(history, out, enrollment_date, dnum)
++                mfg_sheet = f"{sheet_name}_MFG_D{dnum}"
++                history.to_excel(excel_writer, sheet_name=mfg_sheet, index=False)
++                print(f"  Wrote manufacturer-specific sheet: {mfg_sheet}")
++
+         print(f"Added sheet {sheet_name} to {excel_out_path}")
+         print(f"Completed enrollment date {enroll_date_str} at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+         print("=" * 60)

@@ -1,0 +1,26 @@
+{
+  "draws": 19,
+  "reference_point": 1,
+  "reference_interval": [
+    1,
+    1
+  ],
+  "reference_ages": [
+    1940,
+    1950,
+    0,
+    -2
+  ],
+  "undefined_anchor": {
+    "anchored_point": null,
+    "anchored_interval": null,
+    "unanchored_point": 0.8930090073178371,
+    "unanchored_interval": [
+      0.7793663124423102,
+      0.9511508079161572
+    ],
+    "method": "person_bootstrap_percentile"
+  },
+  "disabled_bootstrap": "all intervals unavailable",
+  "legacy_columns_removed": true
+}

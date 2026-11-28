@@ -1,0 +1,125 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -6179,6 +6179,7 @@
+     all_out = []
+     pair_deaths_all = []
+     available_ages_by_sheet = {}
++    available_coverage_by_sheet = {}
+     by_dose_nc_all = []
+     
+     # Auto-derive enrollment dates from sheet names if not explicitly set
+@@ -6451,6 +6452,28 @@
+         supplied_total = df.YearOfBirth.eq(-2)
+         available_only = not MONTE_CARLO_MODE and layout=="disjoint" and total_scope=="partial" and not supplied_total.any()
+         available_ages_by_sheet[effective_sheet_name] = available_only
++        # Coverage describes the raw supplied source groups, before bucketing
++        # or display filtering. An explicit zero opening risk is a recorded
++        # group, not a missing age/dose cell.
++        coverage={}
++        if available_only:
++            components=df[(df.YearOfBirth>0)|(df.YearOfBirth==-1)]
++            for dose_id,part in components.groupby("Dose"):
++                ages=sorted(int(a) for a in part.YearOfBirth.unique())
++                opening=part[part.DateDied.eq(pd.Timestamp(enrollment_date))].groupby("YearOfBirth").Alive.sum()
++                zeros=sorted(int(a) for a,n in opening.items() if n==0)
++                coverage[dose_id]=(",".join(map(str,ages)) or "none",",".join(map(str,zeros)) or "none")
++        available_coverage_by_sheet[effective_sheet_name]=coverage
++        def coverage_for(age,dose):
++            return coverage.get(dose,("none","none")) if age==-2 and available_only else ("","")
++        def add_pair_coverage(rows):
++            for side in ("num","den"):
++                entries=[coverage_for(age,dose) for age,dose in zip(rows.YearOfBirth,rows["Dose_"+side])]
++                rows["population_age_groups_"+side]=[x[0] for x in entries]
++                rows["population_zero_enrollment_groups_"+side]=[x[1] for x in entries]
++            applies=rows.YearOfBirth.eq(-2)&available_only
++            rows["population_coverage_status"]=np.where(applies,np.where(rows.population_age_groups_num.eq(rows.population_age_groups_den),"same_supplied_age_groups","different_supplied_age_groups"),"")
++            return rows
+         def population_label(age):
+             return year_of_birth_label(age, available_only or (age==-3 and total_scope=="partial"))
+         reconstruct_missing = not supplied_total.any() or (layout=="disjoint" and total_scope=="exhaustive")
+@@ -8075,6 +8098,8 @@
+                     "Date": row["DateDied"].date(),
+                     "YearOfBirth": row["YearOfBirth"],
+                     "population_label": population_label(row["YearOfBirth"]),
++                    "population_age_groups": coverage_for(row["YearOfBirth"],dose)[0],
++                    "population_zero_enrollment_groups": coverage_for(row["YearOfBirth"],dose)[1],
+                     "Dose": dose,
+                     "ISOweek": row["ISOweekDied"],
+                     "Dead": row["Dead"],
+@@ -8158,6 +8183,7 @@
+         out_sh["risk_history_policy"] = history_policy
+         out_sh["aggregate_scope"] = total_scope
+         out_sh["population_label"] = out_sh.YearOfBirth.map(population_label)
++        out_sh = add_pair_coverage(out_sh)
+         all_out.append(out_sh)
+         
+         # For Monte Carlo mode: collect KCOR values at the cohort reporting date for summary
+@@ -8223,7 +8249,7 @@
+         pair_details = build_kcor_o_deaths_details(df, effective_sheet_name)
+         if not pair_details.empty:
+             pair_details["population_label"] = pair_details.YearOfBirth.map(population_label)
+-            pair_deaths_all.append(pair_details)
++            pair_deaths_all.append(add_pair_coverage(pair_details))
+ 
+     # Combine all results
+     combined = pd.concat(all_out, ignore_index=True)
+@@ -8552,6 +8578,9 @@
+ 
+                         # Age label for output
+                         age_label = year_of_birth_label(age, available_ages_by_sheet.get(sheet_name,False))
++                        if age==-2 and available_ages_by_sheet.get(sheet_name,False):
++                            row=age_data.iloc[0]
++                            dual_print(f"    [Population coverage] dose {dose_num}: {row.population_age_groups_num} (recorded zero: {row.population_zero_enrollment_groups_num}); dose {dose_den}: {row.population_age_groups_den} (recorded zero: {row.population_zero_enrollment_groups_den}); {row.population_coverage_status}")
+ 
+                         # KCOR6 mode: suppress slope parameter extraction/printing (no slope6/slope8).
+                         if kcor6_enabled_effective:
+@@ -9002,6 +9031,7 @@
+                             "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+                             "normalization_status", "unanchored_normalization_status", "unanchored_abnormal_fit", "risk_history_policy", "aggregate_scope", "gap_assumption_status",
+                             "EnrollmentDate", "YearOfBirth", "population_label", "Dose_num", "Dose_den",
++                            "population_age_groups_num", "population_age_groups_den", "population_zero_enrollment_groups_num", "population_zero_enrollment_groups_den", "population_coverage_status",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+                             "hazard_den", "cum_hazard_den", "adj_cum_hazard_den",
+@@ -9044,7 +9074,7 @@
+                         about_df.to_excel(writer, index=False, sheet_name="About")
+                         # Always write by_dose sheet (trim to used columns)
+                         by_dose_cols = [
+-                            "EnrollmentDate","Date","YearOfBirth","population_label","Dose","ISOweek",
++                            "EnrollmentDate","Date","YearOfBirth","population_label","Dose","ISOweek","population_age_groups","population_zero_enrollment_groups",
+                             "Dead","Alive","MR","hazard","cum_hazard","adj_cum_hazard","Cum_deaths","Cumu_Person_Time","Time_Index"
+                         ]
+                         debug_trim = debug_df[[c for c in by_dose_cols if c in debug_df.columns]].copy()
+@@ -9065,6 +9095,9 @@
+                         theta0_diag_df = build_theta0_diagnostics_rows(kcor6_params_map)
+                         if not theta0_diag_df.empty:
+                             theta0_diag_df["population_label"] = [year_of_birth_label(age,available_ages_by_sheet.get(sh,False)) for sh,age in zip(theta0_diag_df.EnrollmentDate,theta0_diag_df.YearOfBirth)]
++                            entries=[available_coverage_by_sheet.get(sh,{}).get(dose,("","")) if age==-2 else ("","") for sh,age,dose in zip(theta0_diag_df.EnrollmentDate,theta0_diag_df.YearOfBirth,theta0_diag_df.Dose)]
++                            theta0_diag_df["population_age_groups"]=[x[0] for x in entries]
++                            theta0_diag_df["population_zero_enrollment_groups"]=[x[1] for x in entries]
+                             # Validation: ratio must be NaN for dose=0 rows.
+                             dose0_bad_ratio = theta0_diag_df[
+                                 (theta0_diag_df.get("Dose", np.nan) == 0)
+@@ -9125,6 +9158,10 @@
+                             detail=pd.DataFrame(rows)
+                             if {"EnrollmentDate","YearOfBirth"}<=set(detail.columns):
+                                 detail["population_label"]=[year_of_birth_label(age,available_ages_by_sheet.get(sh,False)) for sh,age in zip(detail.EnrollmentDate,detail.YearOfBirth)]
++                                if "Dose" in detail:
++                                    entries=[available_coverage_by_sheet.get(sh,{}).get(dose,("","")) if age==-2 else ("","") for sh,age,dose in zip(detail.EnrollmentDate,detail.YearOfBirth,detail.Dose)]
++                                    detail["population_age_groups"]=[x[0] for x in entries]
++                                    detail["population_zero_enrollment_groups"]=[x[1] for x in entries]
+                             return detail
+                         if combined.attrs.get("wave_deficit_diagnostics"):
+                             label_diagnostic_population(combined.attrs["wave_deficit_diagnostics"]).to_excel(writer,index=False,sheet_name="wave_deficits")
+@@ -9583,6 +9620,11 @@
+                             summary_rows.append({
+                                 "Dose_Combination": "",
+                                 "YearOfBirth": age_label,
++                                "population_age_groups_num": row.get("population_age_groups_num",""),
++                                "population_age_groups_den": row.get("population_age_groups_den",""),
++                                "population_zero_enrollment_groups_num": row.get("population_zero_enrollment_groups_num",""),
++                                "population_zero_enrollment_groups_den": row.get("population_zero_enrollment_groups_den",""),
++                                "population_coverage_status": row.get("population_coverage_status",""),
+                                 "KCOR": f"{row['KCOR']:.4f}{abnormal_marker}",
+                                 "CI_Lower": f"{row['CI_lower']:.3f}",
+                                 "CI_Upper": f"{row['CI_upper']:.3f}",

@@ -1,0 +1,28 @@
+--- m142/documentation/preprint/supplement.md
++++ m143/documentation/preprint/supplement.md
+@@ -386,14 +386,14 @@
+ $$
+ {#eq:si_theta_positive}
+ 
+-for some cohorts, while others remain close to the weak-identification boundary:
++for some cohorts, while others have fitted variance near the nonnegative parameter boundary:
+ 
+ $$
+ \hat{\theta}_{0,d} \approx 0.
+ $$
+ {#eq:si_theta_near_zero_dose2}
+ 
+-Estimated heterogeneity can appear larger at younger ages because baseline hazards are low, so proportional differences across latent risk strata translate into visibly different short-term hazards before depletion compresses the risk distribution. At older ages, higher baseline hazard and stronger ongoing depletion can reduce the apparent dispersion of remaining risk, yielding smaller fitted $\theta_{0,d}$ even if latent heterogeneity is not literally smaller. These descriptive patterns should not be elevated into a validation criterion, and no single dose-ordering pattern is required by the revised estimator. Table @tbl:si_frailty_variance is therefore presented as an empirical summary of fitted parameters rather than as proof that the estimator is correct.
++Fitted relative frailty variance may vary across age bands because of differences in entry distributions, sampling uncertainty, or departures from the working model. Under proportional gamma depletion, the absolute survivor variance decreases with the mean, but the relative variance after mean-one rescaling is unchanged; higher baseline exposure alone does not imply a lower relative variance. These descriptive patterns should not be elevated into a validation criterion, and no single dose-ordering pattern is required by the revised estimator. Table @tbl:si_frailty_variance is therefore presented as an empirical summary of fitted parameters rather than as proof that the estimator is correct.
+ 
+ These raw contrasts reflect both selection and depletion effects and are not interpreted causally.
+ 
+@@ -417,7 +417,7 @@
+ 
+ **Diagnostic checks:**
+ - **Interpretation is conditional on diagnostics:** the numerical status and descriptive residual flags are listed above.
+-- **Weak-identification boundary:** estimates near zero are treated as low-curvature or weak-identification outputs, not as substantive evidence for or against any cohort story.
++- **Near-zero estimates:** these indicate little fitted frailty-induced depletion; their precision and identification must be assessed separately, not inferred from the point estimate alone.
+ - **Age coherence remains descriptive:** variation across age bands is reported descriptively and may reflect the interaction of baseline hazard, follow-up length, and depletion geometry.
+ - **Stability:** sign reversals, boundary pathologies, or major sensitivity to window perturbation would count against interpretability.
+ - **Falsifiability:** failure of any one of these checks would constitute evidence against model adequacy for that application.

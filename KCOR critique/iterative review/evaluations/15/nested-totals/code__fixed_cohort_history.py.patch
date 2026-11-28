@@ -1,0 +1,64 @@
+--- a/code/fixed_cohort_history.py
++++ b/code/fixed_cohort_history.py
+@@ -37,10 +37,10 @@
+     base = frame[~frame.YearOfBirth.isin([-2,-60])]
+     invalid = {}
+     unsupported = set()
+-    if aggregate.empty or base.empty:
++    if aggregate.empty:
+         return invalid, unsupported
+     cols = ["Alive","Dead"] + (["Dead_COVID"] if "Dead_COVID" in frame else [])
+-    for (age,dose), template in aggregate.groupby(["YearOfBirth","Dose"],sort=False):
++    for (age,dose), template in aggregate.groupby(["YearOfBirth","Dose"],sort=False) if not base.empty else []:
+         key=(age,dose)
+         source=base[base.Dose.eq(dose)]
+         if age==-60:
+@@ -76,6 +76,48 @@
+         if reason:
+             invalid[key]=[(key,reason)]
+             unsupported.add(key)
++    # All ages includes the known-born-1960+ subtotal. Validate both the
++    # complementary population and its remainder after displayed older and
++    # unknown-birth-year cells (the latter are outside the known-1960+ subtotal).
++    # This check also applies when the workbook contains only the nested totals.
++    def feasible(counts):
++        a=counts.to_numpy(float)
++        if not np.isfinite(a).all() or np.any(a<0):
++            return False
++        alive,dead=a[:,0],a[:,1]
++        if np.any(dead>alive) or ("Dead_COVID" in cols and np.any(a[:,2]>dead)):
++            return False
++        loss=alive[:-1]-dead[:-1]-alive[1:]
++        return not np.any(loss<0) and (risk_history_policy()=="allow_exits" or not np.any(loss!=0))
++
++    for dose,group in aggregate.groupby("Dose",sort=False):
++        all_rows=group[group.YearOfBirth.eq(-2)]
++        young_rows=group[group.YearOfBirth.eq(-60)]
++        if all_rows.empty or young_rows.empty:
++            continue
++        keys=[(-2,dose),(-60,dose)]
++        reason=None
++        if all_rows.DateDied.duplicated().any() or young_rows.DateDied.duplicated().any():
++            reason="duplicate week prevents nested aggregate reconciliation"
++        else:
++            full=all_rows.set_index("DateDied")[cols].sort_index()
++            young=young_rows.set_index("DateDied")[cols].sort_index()
++            full,young=full.align(young,fill_value=0)
++            remainder=full-young
++            known_outside=base[base.Dose.eq(dose)&((base.YearOfBirth.eq(-1))|((base.YearOfBirth>0)&(base.YearOfBirth<1960)))]
++            outside=known_outside.groupby("DateDied")[cols].sum().sort_index()
++            remainder,outside=remainder.align(outside,fill_value=0)
++            if not feasible(remainder) or not feasible(remainder-outside):
++                reason="incompatible nested inclusive totals or complementary risk/death history"
++        if reason:
++            # In an exhaustive extract an exact independently reconciled total
++            # remains identified by the complete disjoint population.
++            affected=keys
++            if scope=="exhaustive" and not base.empty and sum(k in invalid for k in keys)==1:
++                affected=[k for k in keys if k in invalid]
++            for key in affected:
++                invalid.setdefault(key,[]).append((key,reason))
++                unsupported.add(key)
+     return invalid,unsupported
+ 
+ 

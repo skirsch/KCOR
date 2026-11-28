@@ -1,0 +1,20 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -196,7 +196,7 @@
+ 
+ #### S4.2.2 Empirical negative control: age-shift construction
+ 
+-The empirical negative control (main-text Figure 6 and SI Figure S9) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are complete strata within the archived September 2025 extract, before the product restriction used for SI S6, rather than selectively sampled subcohorts, selection-induced depletion is reduced and the fitted $\theta_{0,d}$ values are expected to be small or weakly identified. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
++The empirical negative control (main-text Figure 6 and SI Figure S9) repurposes registry cohorts to create a **pseudo-null comparison** while inducing large baseline hazard differences via 10–20 year age shifts. Because these are complete strata within the archived September 2025 extract, before the product restriction used for SI S6, rather than selectively sampled subcohorts, their construction introduces no additional selective subsampling; this does not imply limited subsequent frailty depletion or weak identification. The goal here is to test end-to-end KCOR behavior, not to use the empirical geometry as proof that all confounding has been removed.
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+@@ -239,7 +239,7 @@
+ 
+ This joint simulation combines the selection-induced depletion mechanisms examined in Sections S4.2 and S4.5 with the injected-effect framework of Section S4.3.
+ 
+-The archived S7 experiment used the earlier single-window cumulative-hazard fitter, not the revised all-window estimator. The generator (`test/sim_grid/code/generate_s7_sim.py`) used 260 weeks, nominal 2 million people per cohort, baseline hazard 0.002/week, frailty variances 0.3 and 0.8, two skipped weeks, and quiet weeks 80--140 (zero-based). It used deterministic expected deaths in a 60-bin gamma quantile approximation (quantiles 0.001--0.999). The 13 scenarios combine step, ramp and bump shapes, multipliers 0.8 and 1.2, and early (10--25) or late (150--190) effect windows, plus a step-harm overlap variant (70--95). Archived trajectories and fit diagnostics are in `test/sim_grid/out/s7_results.xlsx` and `test/sim_grid/out/s7_diagnostics.csv`; both fits reported numerical success in all 13 scenarios. These are historical diagnostic runs, not coverage or current-fitter recovery results.
++The archived S7 experiment used the earlier single-window cumulative-hazard fitter, not the revised all-window estimator. The generator (`test/sim_grid/code/generate_s7_sim.py`) used 260 weeks, nominal 2 million people per cohort, baseline hazard 0.002/week, frailty variances 0.3 and 0.8, two skipped weeks, and quiet weeks 80--140 (zero-based). It used deterministic expected deaths in a 60-bin gamma quantile approximation (quantiles 0.001--0.999). The historical bin masses sum to 0.998 but the initial opening risk is set to the nominal population, leaving 4,000 people per cohort unaccounted for in the first week. That week is within the two-week skip; any future rerun should use consistent initial risk and mixture mass. The 13 scenarios combine step, ramp and bump shapes, multipliers 0.8 and 1.2, and early (10--25) or late (150--190) effect windows, plus a step-harm overlap variant (70--95). Archived trajectories and fit diagnostics are in `test/sim_grid/out/s7_results.xlsx` and `test/sim_grid/out/s7_diagnostics.csv`; both fits reported numerical success in all 13 scenarios. These are historical diagnostic runs, not coverage or current-fitter recovery results.
+ 
+ #### Design
+ 

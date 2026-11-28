@@ -1,0 +1,25 @@
+--- m142/code/KCOR.py
++++ m143/code/KCOR.py
+@@ -1566,12 +1566,16 @@
+             r = least_squares(_residual_joint, [np.log(k_fixed), min(max(theta,0.),theta0_max)],
+                 bounds=([np.log(1e-8),0.],[np.log(.1),theta0_max]),
+                 ftol=1e-14, xtol=1e-14, gtol=1e-14)
+-            if True:
+-                low = least_squares(_residual_joint, [np.log(k_fixed), 0.5],
+-                    bounds=([np.log(1e-8),0.],[np.log(.1),theta0_max]),
+-                    ftol=1e-14, xtol=1e-14, gtol=1e-14)
+-                if low.cost < r.cost:
+-                    r = low
++            low_start = min(0.5, theta0_max)
++            if abs(low_start - min(max(theta, 0.), theta0_max)) >= 1e-7:
++                try:
++                    low = least_squares(_residual_joint, [np.log(k_fixed), low_start],
++                        bounds=([np.log(1e-8),0.],[np.log(.1),theta0_max]),
++                        ftol=1e-14, xtol=1e-14, gtol=1e-14)
++                    if low.success and (not r.success or low.cost < r.cost):
++                        r = low
++                except (ValueError, ArithmeticError):
++                    pass  # Supplementary start must not discard the first fit.
+             old_k = k_fixed
+             k_fixed = float(np.exp(r.x[0]))
+             H_gom_full = k_fixed*unit_start

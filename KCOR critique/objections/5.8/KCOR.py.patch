@@ -1,0 +1,238 @@
+--- m109/code/KCOR.py
++++ m110/code/KCOR.py
+@@ -1625,12 +1625,18 @@
+             H_running += max((1.0 + theta * H_running) * (np.expm1(theta * hi) / theta if theta != 0 else hi), 0.0)
+         cumulative_prev = 0.0
+         Delta = np.zeros_like(h_arr, dtype=float)
++        delta_raw_values = []
++        delta_applied_values = []
+         for start in reentry_indices:
+             cumulative_i = float(H0_eff[start] - H_gom_full[start])
+             delta_i_raw = cumulative_i - cumulative_prev
+             di = float(max(delta_i_raw, 0.0))
++            delta_raw_values.append(float(delta_i_raw))
++            delta_applied_values.append(di)
+             cumulative_prev += di
+             Delta[start:] += di
++        delta_negative = any(x <= 0.0 for x in delta_raw_values)
++        delta_negative_clamped = delta_negative
+         H_eff_final = H_gom_full[fit_mask_theta] + Delta[fit_mask_theta]
+ 
+     pred = weekly_gamma_hazard(H_eff_final, week_fit, theta)
+@@ -5625,7 +5631,7 @@
+         base_cols = [
+             "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
+             "n_quiet_bins", "n_quiet_bins_prewave", "n_iter",
+-            "delta_negative", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
++            "delta_negative", "delta_raw_scale", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
+             "fit_residual_max", "fit_residual_rms",
+             "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+             "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+@@ -5687,6 +5693,7 @@
+             "n_quiet_bins_prewave": _as_int(params.get("n_quiet_bins_prewave", 0), default=0),
+             "n_iter": _as_int(params.get("n_iter", params.get("n_iterations", 0)), default=0),
+             "delta_negative": bool(params.get("delta_negative", False)),
++            "delta_raw_scale": str(params.get("delta_raw_scale", "baseline_exposure")),
+             "theta_hit_bound": bool(params.get("theta_hit_bound", False)),
+             "status": str(params.get("theta0_status", "") or ""),
+             "quiet_window_start": _as_float(params.get("quiet_window_start", np.nan)),
+@@ -5714,7 +5721,7 @@
+         base_cols = [
+             "EnrollmentDate", "YearOfBirth", "Dose", "k_hat", "theta0_init", "theta0_hat",
+             "n_quiet_bins", "n_quiet_bins_prewave", "n_iter",
+-            "delta_negative", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
++            "delta_negative", "delta_raw_scale", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
+             "fit_residual_max", "fit_residual_rms",
+             "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+             "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+@@ -5732,7 +5739,7 @@
+     for idx in range(1, max_waves + 1):
+         wave_cols.extend([f"delta_raw_{idx}", f"delta_applied_{idx}"])
+     tail_cols = [
+-        "delta_negative", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
++        "delta_negative", "delta_raw_scale", "theta_hit_bound", "status", "quiet_window_start", "quiet_window_end",
+         "fit_residual_max", "fit_residual_rms",
+         "h_obs_quiet_slope", "h_obs_first4_mean", "h_obs_last4_mean",
+         "h_obs_first4_vs_last4_ratio", "quiet_window_duration_weeks",
+@@ -7069,13 +7076,8 @@
+                         theta,
+                         dual_print,
+                     )
+-                # theta==0 is an intentional identity path (no frailty correction): H0_full == H_obs.
+-                H0_full = invert_gamma_frailty(H_obs, theta)
+-                H0_quiet = H0_full[fit_mask]
+-                t_quiet = t_vals[fit_mask]
+-                
+-                # Compute fit diagnostics
+-                fit_diagnostics = _compute_fit_diagnostics(H0_quiet, t_quiet)
++                # Shape diagnostics are computed after the active normalization.
++                fit_diagnostics = None
+ 
+                 # Extra diagnostics for auditability:
+                 # - Hspan_Hobs: observed cumulative hazard span over quiet-window fit points
+@@ -7162,6 +7164,8 @@
+                     "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
+                     "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                     "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
++                    "delta_raw_scale": str(diag.get("delta_raw_scale", "baseline_exposure")) if isinstance(diag, dict) else "baseline_exposure",
++                    "shape_quiet_weeks": t_vals[np.asarray(quiet_mask, bool) & fit_mask].tolist(),
+                     "quiet_window_start": float(diag.get("quiet_window_start", np.nan)) if isinstance(diag, dict) else np.nan,
+                     "quiet_window_end": float(diag.get("quiet_window_end", np.nan)) if isinstance(diag, dict) else np.nan,
+                     "theta0_status": theta0_status,
+@@ -7352,13 +7356,10 @@
+                                 dual_print,
+                             )
+ 
+-                        # theta==0 is an intentional identity path (no frailty correction): H0_full == H_obs.
+-                        H0_full = invert_gamma_frailty(H_obs, theta)
+-                        H0_quiet = H0_full[fit_mask]
+-                        t_quiet = t_vals[fit_mask]
++                        # Shape diagnostics are computed after active normalization.
+                         
+                         # Compute fit diagnostics
+-                        fit_diagnostics = _compute_fit_diagnostics(H0_quiet, t_quiet)
++                        fit_diagnostics = None
+ 
+                         try:
+                             if len(t_fit) >= 1 and np.isfinite(k_hat) and np.isfinite(theta):
+@@ -7439,6 +7440,8 @@
+                             "theta_hit_bound": bool(diag.get("theta_hit_bound", False)) if isinstance(diag, dict) else False,
+                             "delta_raw_values": list(diag.get("delta_raw_values", [])) if isinstance(diag, dict) else [],
+                             "delta_applied_values": list(diag.get("delta_applied_values", [])) if isinstance(diag, dict) else [],
++                            "delta_raw_scale": str(diag.get("delta_raw_scale", "baseline_exposure")) if isinstance(diag, dict) else "baseline_exposure",
++                            "shape_quiet_weeks": t_vals[np.asarray(quiet_mask, bool) & fit_mask].tolist(),
+                             "quiet_window_start": float(diag.get("quiet_window_start", np.nan)) if isinstance(diag, dict) else np.nan,
+                             "quiet_window_end": float(diag.get("quiet_window_end", np.nan)) if isinstance(diag, dict) else np.nan,
+                             "theta0_status": theta0_status,
+@@ -8135,6 +8138,9 @@
+         if MONTE_CARLO_MODE and "mc_id" in df.columns:
+             groupby_ch = ["mc_id"] + groupby_ch
+         df["CH"] = df.groupby(groupby_ch) ["hazard_eff"].cumsum()
++        if kcor6_norm_ok:
++            _update_normalized_shape_diagnostics(df, kcor6_params_map, effective_sheet_name,
++                                                 _gcf_nph["gamma_per_week"])
+ 
+         # Debug: print CH_raw vs CH_adj for specific cohort on request
+         try:
+@@ -9453,54 +9459,59 @@
+     
+     return combined
+ 
+-def _compute_fit_diagnostics(H0_quiet, t_quiet_weeks):
+-    """Compute gamma-frailty fit diagnostics from normalized cumulative hazard in quiet window.
+-    
+-    Args:
+-        H0_quiet: Array of normalized cumulative hazard (H0) values in quiet window
+-        t_quiet_weeks: Array of time values in weeks for quiet window bins
+-        
+-    Returns:
+-        Dictionary with diagnostic metrics: mean, sd, max_abs_dev, drift_per_year, n_bins
+-        Returns None if insufficient data
++def _compute_fit_diagnostics(H0, t_weeks, quiet_mask, k, gamma, skip):
++    """Within-window residuals of the actual normalized cumulative trajectory.
++
++    Subtract the value at quiet-window entry, so the offset carried into
++    that window is retained rather than imposing one line across gaps.
++    Compare to the integrated Gompertz baseline at week ends.
++    This is descriptive, not an additional fit or acceptance rule.
+     """
+-    import numpy as np
+-    
+-    if len(H0_quiet) < 2:
++    H=np.asarray(H0,float);t=np.asarray(t_weeks,float);quiet=np.asarray(quiet_mask,bool)
++    if len(H)!=len(t) or quiet.shape!=t.shape or not np.isfinite(k) or k<=0 or not np.isfinite(gamma) or gamma<=0:
+         return None
+-    
+-    try:
+-        # Convert time to years for drift_per_year calculation
+-        t_quiet_years = t_quiet_weeks / 52.0
+-        
+-        # Compute diagnostics
+-        mean = float(np.mean(H0_quiet))
+-        sd = float(np.std(H0_quiet, ddof=1))  # Sample standard deviation
+-        
+-        # OLS linear regression: H0(t) ≈ a + b*t_years
+-        if len(t_quiet_years) >= 2:
+-            coeffs = np.polyfit(t_quiet_years, H0_quiet, 1)
+-            a, b = coeffs[1], coeffs[0]  # polyfit returns [slope, intercept] in reverse order
+-            H0_pred = a + b * t_quiet_years
+-            max_abs_dev = float(np.max(np.abs(H0_quiet - H0_pred)))
+-            drift_per_year = float(b)
+-        else:
+-            max_abs_dev = np.nan
+-            drift_per_year = np.nan
+-        
+-        n_bins = len(H0_quiet)
+-        
+-        return {
+-            "mean": mean,
+-            "sd": sd,
+-            "max_abs_dev": max_abs_dev,
+-            "drift_per_year": drift_per_year,
+-            "n_bins": n_bins,
+-        }
+-    except Exception:
+-        return None
++    ix=np.flatnonzero(quiet & np.isfinite(H) & np.isfinite(t) & (t>=skip))
++    if not ix.size:return None
++    segments=np.split(ix,np.flatnonzero((np.diff(ix)!=1)|(np.diff(t[ix])!=1))+1)
++    residuals=[];windows=[]
++    for seg in segments:
++        first=int(seg[0]);start=t[first]-skip
++        if first and (not np.isfinite(H[first-1]) or t[first]-t[first-1]!=1):continue
++        if not first and start!=0:continue
++        entry=H[first-1] if first else 0.
++        elapsed=t[seg]-t[first]+1.
++        expected=k*np.exp(gamma*start)*np.expm1(gamma*elapsed)/gamma
++        e=H[seg]-entry-expected
++        drift=float(np.polyfit(elapsed/52.,e,1)[0]) if len(seg)>=2 else np.nan
++        residuals.extend(e.tolist())
++        windows.append(dict(start_week=float(t[first]),end_week=float(t[seg[-1]]),n_bins=len(seg),
++                            mean_residual=float(np.mean(e)),max_abs_dev=float(np.max(np.abs(e))),
++                            drift_per_year=drift))
++    if not residuals:return None
++    e=np.asarray(residuals);drifts=[w["drift_per_year"] for w in windows if np.isfinite(w["drift_per_year"])]
++    return dict(mean=float(np.mean(e)),sd=float(np.std(e,ddof=1)) if len(e)>1 else np.nan,
++                max_abs_dev=float(np.max(np.abs(e))),
++                drift_per_year=max(drifts,key=abs) if drifts else np.nan,n_bins=len(e),
++                shape_windows=windows)
++
++
++def _update_normalized_shape_diagnostics(df, params_map, sheet_name, gamma):
++    groups=["YearOfBirth","Dose"]
++    if MONTE_CARLO_MODE and "mc_id" in df:groups=["mc_id"]+groups
++    for key,g in df.groupby(groups,sort=False):
++        key=key if isinstance(key,tuple) else (key,)
++        params=params_map.get((sheet_name,*map(int,key)))
++        if not isinstance(params,dict):continue
++        g=g.sort_values("t")
++        t=g["t"].to_numpy(float)
++        quiet=np.isin(t,params.get("shape_quiet_weeks",[]))
++        result=_compute_fit_diagnostics(g["CH"].to_numpy(float),t,quiet,
++                                        params.get("k_hat",np.nan),gamma,DYNAMIC_HVE_SKIP_WEEKS)
++        if result is not None:params.update(result)
++
+ 
+ def create_summary_file(combined_data, out_path, dual_print, kcor6_params_map=None, src_path=None):
++    import json
+     # Note: src_path parameter kept for compatibility but not used - we extract H0 from combined_data instead
+     """Create KCOR_summary.xlsx with one sheet per enrollment date, formatted like console output."""
+     import os
+@@ -9626,6 +9637,8 @@
+                                 "sd": sd,
+                                 "max_abs_dev": max_abs_dev,
+                                 "drift_per_year": drift_per_year,
++                                "shape_metric": "within_window_Gompertz_residual" if params.get("shape_windows") else "unavailable",
++                                "shape_windows": json.dumps(params.get("shape_windows", []), default=float),
+                                 "n_bins": n_bins,
+                             })
+     
+@@ -9917,7 +9930,7 @@
+                         "quiet_window", "theta_source", "total_quiet_deaths", "insufficient_deaths", "degenerate_fit",
+                         "theta_fit_status", "theta0_raw", "theta_applied", "theta0_hat", "theta_hat", "k_hat",
+                         "relRMSE_hazard_fit", "mean", "sd", "max_abs_dev",
+-                        "drift_per_year", "n_bins"
++                        "drift_per_year", "n_bins", "shape_metric", "shape_windows"
+                     ]
+                     gamma_frailty_df = gamma_frailty_df[[col for col in column_order if col in gamma_frailty_df.columns]]
+                     gamma_frailty_df.to_excel(writer, index=False, sheet_name="gamma_frailty_fit")

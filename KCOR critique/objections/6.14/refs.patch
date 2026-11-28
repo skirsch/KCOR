@@ -1,0 +1,22 @@
+--- a/documentation/preprint/refs.bib
++++ b/documentation/preprint/refs.bib
+@@ -306,3 +306,19 @@
+   abstract = {Abstract             Life table methods are developed for populations whose members differ in their endowment for longevity. Unlike standard methods, which ignore such heterogeneity, these methods use different calculations to construct cohort, period, and individual life tables. The results imply that standard methods overestimate current life expectancy and potential gains in life expectancy from health and safety interventions, while underestimating rates of individual aging, past progress in reducing mortality, and mortality differentials between pairs of populations. Calculations based on Swedish mortality data suggest that these errors may be important, especially in old age.},
+   langid = {english}
+ }
++
++@misc{ema_vaxzevria,
++  author = {{European Medicines Agency}},
++  title = {Vaxzevria (previously COVID-19 Vaccine AstraZeneca): European Public Assessment Report},
++  year = {2024},
++  url = {https://www.ema.europa.eu/en/medicines/human/EPAR/vaxzevria},
++  urldate = {2026-11-26}
++}
++
++@misc{ema_jcovden,
++  author = {{European Medicines Agency}},
++  title = {Jcovden (previously COVID-19 Vaccine Janssen): European Public Assessment Report},
++  year = {2024},
++  url = {https://www.ema.europa.eu/en/medicines/human/EPAR/jcovden},
++  urldate = {2026-11-26}
++}

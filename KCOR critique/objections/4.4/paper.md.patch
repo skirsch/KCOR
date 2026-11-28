@@ -1,0 +1,20 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -368,7 +368,7 @@
+ q(s;k,\theta,a)=\frac{1}{\theta}\log\left(1+\frac{\theta[G(s+1;k)-G(s;k)]}{1+\theta[G(s;k)+a]}\right).
+ $$
+ 
+-At $\theta=0$ use the continuous limit. The first-window joint fit provides an initialization, not a fixed final baseline rate. For each candidate pair, reconstruct proportional cumulative exposure from observed survival, $H_{\mathrm{eff}}(s)=\operatorname{expm1}(\theta H_{\mathrm{obs}}(s))/\theta$, using the linear limit at zero. At quiet re-entry, including entry to the first quiet window if preceded by a gap, reconstruct raw cumulative offset $H_{\mathrm{eff}}(s)-G(s;k)$; the incremental offset relative to the preceding raw offset is constrained nonnegative. Record signed deficits diagnostically. At initial entry following proportional shock, the effective rate $r$ and observed survival identify the entry-aware seed rate through $k=r\exp(\theta H_{\rm obs}(s))/(1+\theta r F(s))$ with $F(s)=G(s;1)$.
++At $\theta=0$ use the continuous limit. The first-window joint fit provides an initialization, not a fixed final baseline rate. For each candidate pair, reconstruct proportional cumulative exposure from observed survival, $H_{\mathrm{eff}}(s)=\operatorname{expm1}(\theta H_{\mathrm{obs}}(s))/\theta$, using the linear limit at zero. At quiet re-entry, including entry to the first quiet window if preceded by a gap, reconstruct raw cumulative offset $H_{\mathrm{eff}}(s)-G(s;k)$; the incremental offset relative to the preceding applied cumulative offset is constrained nonnegative. Record signed deficits diagnostically. At initial entry following proportional shock, the effective rate $r$ and observed survival identify the entry-aware seed rate through $k=r\exp(\theta H_{\rm obs}(s))/(1+\theta r F(s))$ with $F(s)=G(s;1)$.
+ 
+ The objective jointly refits both parameters:
+ 
+@@ -380,7 +380,7 @@
+ 
+ Here $\mathcal Q_d$ includes the designated quiet and early fitting-anchor rows used by the implementation. The offsets are reconstructed inside the objective, not treated as fixed values. Optimize in log $k$ and nonnegative $\theta$; compare the first-window initialization with a second start at $\theta=0.5$. The implementation retains event-count, parameter-bound and residual diagnostics. No-common-signal and failed fits are flagged; zero-variance fallback is not evidence that frailty is absent.
+ 
+-When a specified nonlinear wave is active, use the full survival law $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$ of §2.7.3 for both fitting and inversion. For every candidate $k,\theta$, carry proportional gap exposures and the marked wave exposure through the history, predict quiet-week increments $\log L(B_s,W_s)-\log L(B_{s+1},W_{s+1})$, and minimize the same weekly least-squares objective. Marked wave rows reconstruct exposure rather than contributing quiet residuals, even if they overlap the early fitting anchors. Unmarked nonlinear shocks cannot be distinguished from other mortality changes by counts alone. This route assumes a supplied exponent; the proportional route is used when the module is off or $\alpha=1$.
++When a specified wave is active, use the full survival law $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$ of §2.7.3 for both fitting and inversion. For every candidate $k,\theta$, carry proportional gap exposures and the marked wave exposure through the history, predict quiet-week increments $\log L(B_s,W_s)-\log L(B_{s+1},W_{s+1})$, and minimize the same weekly least-squares objective. Marked wave rows reconstruct exposure rather than contributing quiet residuals, even if they overlap the early fitting anchors. Unmarked nonlinear shocks cannot be distinguished from other mortality changes by counts alone. This route assumes a supplied exponent and uses the same marked-wave exclusions for all values of the exponent, including one. At $\alpha=1$ the survival law and final inversion reduce to the exact proportional gamma identity. The ordinary unmarked proportional fit is used when the module is off.
+ 
+ ### 2.6 Normalization (depletion-neutralized cumulative hazards)
+ 

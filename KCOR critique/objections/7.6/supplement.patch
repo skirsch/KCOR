@@ -1,0 +1,33 @@
+--- m131/supplement.md
++++ m132/supplement.md
+@@ -65,9 +65,9 @@
+ | I4 Delta applicability | Offset reconstruction is coherent when the delta path is used. | Fall back or treat as non-identifiable |
+ | I5 Anchoring validity | Post-normalization behavior is stable in the reference quiet window. | Anchoring invalid |
+ | I6 NPH signal sufficiency | When the optional NPH module is used, cross-cohort differences in depletion geometry and excess hazard are strong enough to localize $\alpha$ jointly with a prespecified **externally supplied VE or other prespecified intervention-effect scale**. | $\alpha$ weakly identified; objectives flatten or estimators disagree |
+-| I7 Conservative failure rule | A required diagnostic fails. | Analysis treated as not identified; results not reported |
+-
+-When diagnostics indicate non-identifiability, the analysis is treated as not identified and results are not reported; this does not invalidate the KCOR estimator itself. In minimal aggregated data, identifiability of $\theta_{0,d}$ from curvature remains conditional on the working model rather than assumption-free: additive or sharply time-varying components can distort curvature, and heterogeneous multiplicative effects across cohorts can perturb depletion paths, with diagnostics intended to surface these failure modes. When the optional NPH module is used, identifiability of $\alpha$ is likewise conditional: it depends on cross-cohort separation in depletion geometry, stable excess-hazard measurement, and a prespecified **externally supplied VE or other prespecified intervention-effect scale** (main text §2.7.2); $\alpha$ is not separately identifiable from cohort-specific multiplicative effects under minimal data if that scale is not fixed externally (main text §5.4). The common external intensity is not directly observed.
++| I7 Conservative failure rule | A required diagnostic fails. | Substantive interpretability not established; flagged outputs may be shown for audit |
++
++When diagnostics indicate non-identifiability, substantive interpretation is withheld; explicitly flagged numerical outputs may be retained for descriptive illustration or audit; this does not invalidate the KCOR estimator itself. In minimal aggregated data, identifiability of $\theta_{0,d}$ from curvature remains conditional on the working model rather than assumption-free: additive or sharply time-varying components can distort curvature, and heterogeneous multiplicative effects across cohorts can perturb depletion paths, with diagnostics intended to surface these failure modes. When the optional NPH module is used, identifiability of $\alpha$ is likewise conditional: it depends on cross-cohort separation in depletion geometry, stable excess-hazard measurement, and a prespecified **externally supplied VE or other prespecified intervention-effect scale** (main text §2.7.2); $\alpha$ is not separately identifiable from cohort-specific multiplicative effects under minimal data if that scale is not fixed externally (main text §5.4). The common external intensity is not directly observed.
+ 
+ ### S2.1 Optional NPH exponent model: estimator and failure signatures
+ 
+@@ -338,7 +338,7 @@
+ 
+ ### S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data
+ 
+-The Czech results do not validate KCOR; they represent an application that satisfies all pre-specified diagnostic criteria. Substantive implications follow only if the identification assumptions hold. Throughout this subsection, observed divergences are interpreted strictly as properties of the estimator under real-world selection, not as intervention effects.
++The Czech example illustrates numerical fits and diagnostic outcomes; it does not establish that all pre-specified identification criteria were satisfied. Substantive implications follow only if the identification assumptions hold. Throughout this subsection, observed divergences are interpreted strictly as properties of the estimator under real-world selection, not as intervention effects.
+ 
+ Unless otherwise noted, KCOR curves in the Czech analyses are shown anchored at $t_0 = 4$ weeks for interpretability.
+ 
+@@ -363,7 +363,7 @@
+ 
+ The normalized cumulative trajectories are assessed against the fitted Gompertz curve with window offsets (main text §2.6.2). Deviations can reflect baseline misspecification or time-varying risk.
+ 
+-Table @tbl:si_diagnostic_gate reports the numerical fitting status and exploratory residual screen for the six age bands and full aggregate, using the current module-off all-window fitter. All 14 fits were numerically accepted, and six had residual-screen flags. Window-omission stability was not evaluated in this replay.
++Table @tbl:si_diagnostic_gate reports the numerical fitting status and exploratory residual screen for the six age bands and full aggregate, using the current module-off all-window fitter. All 14 fits were numerically accepted, and six had residual-screen flags. Omitting one configured quiet window at a time while retaining early fitting anchors yielded anchored KCOR point estimates of 1.336–1.555 for ages 40–49 and 1.115–1.134 for all ages (full-window estimates and bootstrap intervals in Table @tbl:si_frailty_variance). These ranges describe point sensitivity, not confidence intervals. Group-specific results are archived in `analysis/s6/window-omission.csv`.
+ 
+ Table: Numerical fitting status and weekly death-count residual flags for the Czech 2021-24 application (ages in calendar year 2024). {#tbl:si_diagnostic_gate}
+ 

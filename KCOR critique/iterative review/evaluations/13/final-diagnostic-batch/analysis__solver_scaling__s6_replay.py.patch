@@ -1,0 +1,38 @@
+--- a/analysis/solver_scaling/s6_replay.py
++++ b/analysis/solver_scaling/s6_replay.py
+@@ -37,6 +37,7 @@
+     return dict(k=float(k),theta=float(theta),theta_raw=float(diag.get("theta0_raw",th)),
+                 status=diag["status"],upper_bound=bool(diag.get("theta_hit_bound",False)),
+                 residual_flag=bool(diag.get("sampling_flag",False)),growth=float(inv[-1]/inv[anchor]),
++                gap_first_pass=diag.get("gap_first_pass"),gap_seed_status=diag.get("gap_seed_status","not_assessed"),
+                 fit_mask=np.asarray(diag.get("fit_mask_theta",np.zeros(len(t),bool)),bool).tolist())
+ 
+ def worker(task):
+@@ -47,7 +48,8 @@
+         rows.append(dict(birth_band=band,draw=draw,mode=mode,
+           theta0=a["theta"],theta2=b["theta"],theta0_raw=a["theta_raw"],theta2_raw=b["theta_raw"],
+           bound0=a["upper_bound"],bound2=b["upper_bound"],status0=a["status"],status2=b["status"],
+-          residual0=a["residual_flag"],residual2=b["residual_flag"],kcor=b["growth"]/a["growth"]))
++          residual0=a["residual_flag"],residual2=b["residual_flag"],kcor=b["growth"]/a["growth"],
++          gap0=json.dumps(a["gap_first_pass"]),gap2=json.dumps(b["gap_first_pass"]),gap_seed0=a["gap_seed_status"],gap_seed2=b["gap_seed_status"]))
+     return rows
+ 
+ def main():
+@@ -139,6 +141,17 @@
+                            interval=percentiles(group.kcor),valid=int(group.kcor.notna().sum())))
+     result=dict(draws=args.draws,seed=20261126,params=results,ratios=ratios,points=points)
+     (args.output_dir/"s6-all-window.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
++    sys.path.insert(0,str(args.candidate/"code"))
++    from bootstrap_reporting import gap_diagnostic
++    point_gaps={("2021_24",p["birth_band"],p["dose"]):p["gap_first_pass"] for p in points}
++    point_seed={("2021_24",p["birth_band"],p["dose"]):p["gap_seed_status"] for p in points}
++    draw_gaps=[{} for _ in range(args.draws)]
++    for row in frame.itertuples(index=False):
++        for dose in (0,2):
++            draw_gaps[row.draw][("2021_24",row.birth_band,dose)]=json.loads(getattr(row,"gap"+str(dose)))
++    summary,status=gap_diagnostic(point_gaps,draw_gaps,point_seed)
++    pd.DataFrame(summary).to_csv(args.output_dir/"s6-gap-diagnostics.csv",index=False)
++    (args.output_dir/"s6-gap-status.json").write_text(json.dumps({str(k):v for k,v in status.items()},indent=2))
+     print("DONE",len(frame),flush=True)
+ 
+ if __name__=="__main__":main()

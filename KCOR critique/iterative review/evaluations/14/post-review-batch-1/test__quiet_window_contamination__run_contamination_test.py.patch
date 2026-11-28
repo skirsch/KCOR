@@ -1,0 +1,74 @@
+--- a/test/quiet_window_contamination/run_contamination_test.py
++++ b/test/quiet_window_contamination/run_contamination_test.py
+@@ -376,6 +376,8 @@
+             )
+         mean_k = float(np.mean([r["KCOR_asymptote"] for r in rep_results]))
+         std_k = float(np.std([r["KCOR_asymptote"] for r in rep_results], ddof=1)) if n_ok > 1 else 0.0
++        from scipy.stats import t as student_t
++        halfwidth = float(student_t.ppf(.975,n_ok-1)*std_k/np.sqrt(n_ok)) if n_ok>1 else np.nan
+         mean_ea = float(np.mean([r["theta0_hat_A"] - THETA0_A for r in rep_results]))
+         std_ea = float(np.std([r["theta0_hat_A"] - THETA0_A for r in rep_results], ddof=1)) if n_ok > 1 else 0.0
+         mean_eb = float(np.mean([r["theta0_hat_B"] - THETA0_B for r in rep_results]))
+@@ -420,6 +422,8 @@
+                 "theta0_err_B_std": std_eb,
+                 "KCOR_asymptote_mean": mean_k,
+                 "KCOR_asymptote_std": std_k,
++                "lower95": mean_k-halfwidth,
++                "upper95": mean_k+halfwidth,
+                 "n_success": n_ok,
+                 "frac_reps_kcor_gt_1": frac_rev,
+             }
+@@ -515,10 +519,8 @@
+         if data is not None:
+             xs = [float(r[xkey]) for r in data]
+             ys = [r["KCOR_asymptote_mean"] for r in data]
+-            yerr = ([np.asarray(ys)-np.asarray([r["lower95"] for r in data]),
+-                     np.asarray([r["upper95"] for r in data])-np.asarray(ys)]
+-                    if all(np.isfinite(r.get("lower95",np.nan)) and np.isfinite(r.get("upper95",np.nan)) for r in data)
+-                    else [r["KCOR_asymptote_std"] for r in data])
++            yerr = [np.asarray(ys)-np.asarray([r.get("lower95",np.nan) for r in data]),
++                     np.asarray([r.get("upper95",np.nan) for r in data])-np.asarray(ys)]
+             ax_i.errorbar(xs, ys, yerr=yerr, fmt="o-", capsize=3)
+             ax_i.axhline(1.0, color="black", ls="--", lw=1)
+             ax_i.set_xlabel(xkey)
+@@ -557,7 +559,7 @@
+     print("\n--- Summary (quiet-window contamination) ---")
+     print(f"Empirical h_ref (calibration) = {h_ref:.6f} (weekly hazard scale; typical Czech band ~{z_lo}–{z_hi} cited in plan).")
+     if thr_d is not None:
+-        print(f"Type 1 (dynamic): sign reversal first at epsilon_dynamic > {thr_d} (mean KCOR asymptote > 1).")
++        print(f"Type 1 (dynamic): sign reversal first at epsilon_dynamic > {thr_d} (mean endpoint KCOR > 1).")
+         if thr_d < PLAUSIBLE_DYNAMIC_HVE_MAX:
+             print(
+                 f"WARNING: Sign reversal at epsilon={thr_d} — within plausible dynamic HVE max ({PLAUSIBLE_DYNAMIC_HVE_MAX})."
+@@ -567,7 +569,7 @@
+                 f"OK: Sign reversal only at epsilon_dynamic={thr_d} — above plausible max ({PLAUSIBLE_DYNAMIC_HVE_MAX})."
+             )
+     else:
+-        print("Type 1 (dynamic): no sign reversal in grid (mean KCOR asymptote stayed <= 1).")
++        print("Type 1 (dynamic): no sign reversal in grid (mean endpoint KCOR stayed <= 1).")
+         print(f"OK: no reversal in grid — above plausible range for dynamic HVE (max tested vs {PLAUSIBLE_DYNAMIC_HVE_MAX}).")
+ 
+     if thr_c is not None:
+@@ -588,7 +590,7 @@
+         xd, yc = thr_pair
+         print(f"Combined (dyn + comorb) sign reversal at epsilon_dyn={xd}, epsilon_comorb={yc}")
+     else:
+-        print("Combined (dyn + comorb): none in grid (mean KCOR asymptote <= 1 for all 4×4 pairs tested).")
++        print("Combined (dyn + comorb): none in grid (mean endpoint KCOR <= 1 for all 4×4 pairs tested).")
+ 
+     print(
+         "Closing: individual 1D sweeps and the joint 4×4 grid bound how much quiet-window "
+@@ -614,7 +616,13 @@
+     )
+     parser.add_argument("--outdir", type=Path, default=REPO_ROOT / "test" / "quiet_window_contamination" / "out")
+     parser.add_argument("--base-seed", type=int, default=42)
++    parser.add_argument("--plot-historical-grid", type=Path, help="Plot archived mean intervals without resimulation")
+     args = parser.parse_args()
++    if args.plot_historical_grid is not None:
++        rows = pd.read_csv(args.plot_historical_grid).to_dict("records")
++        args.outdir.mkdir(parents=True,exist_ok=True)
++        plot_figures(args.outdir, rows, rows, rows, 0.000456)
++        return
+ 
+     gom = K.get_gompertz_theta_fit_config()
+     gamma_per_week = float(gom.get("gamma_per_week", float(gom.get("gamma_per_year", 0.085)) / 52.0))

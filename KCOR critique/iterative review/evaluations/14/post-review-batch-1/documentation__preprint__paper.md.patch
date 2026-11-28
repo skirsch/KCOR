@@ -1,0 +1,20 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -779,7 +779,7 @@
+ 
+ **Design.** Two cohorts were simulated under the Gompertz-plus-gamma-frailty DGP with known ground-truth parameters: cohort A (lower frailty, $\theta_{0,A}=0.5$) and cohort B (higher frailty, $\theta_{0,B}=4.0$), with shared baseline scale $k$ calibrated to Czech KCOR_CMR weekly hazard for YoB 1940–1960, dose 0 reference ($h_{\mathrm{ref}}=0.000456$ per week). The two cohorts have identical underlying baseline hazards, so their baseline cumulative hazard ratio is 1. Additive non-frailty contamination was applied **only** to cohort A during rebased quiet-window weeks 4–56. Three contamination types were tested: **Type 1** (decaying dynamic-HVE-style hazard: $g(t)=\epsilon_{\mathrm{dyn}}\exp(-0.05\,t_{\mathrm{rebased}})$); **Type 2** (constant comorbidity-direction hazard: $g(t)=\epsilon_{\mathrm{comorb}}$); and **Type 3** (combined, full $4\times4$ outer product of positive $\epsilon_{\mathrm{dyn}}$ and $\epsilon_{\mathrm{comorb}}$ values, 16 cells). The figures and table use 20 replicates per cell and the original fitter. The first four accumulating weeks supply the baseline rate. Following the simulation design, KCOR is normalized at the end of the fifth accumulating week, so the reference ratio includes the first week of added deaths.
+ 
+-**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR at the final follow-up week and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and the fraction of combined simulations with KCOR above 1.
++**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR at the last eligible week of the 130-week simulation and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and the fraction of combined simulations with KCOR above 1.
+ 
+ *Type 1 (dynamic):* Dynamic contamination reduced the fitted frailty variance in cohort A. Mean KCOR fell from 1.063 [0.998, 1.128] at zero added hazard to 0.782 [0.735, 0.829] at the largest dynamic amplitude (0.005). All 20 endpoints at that amplitude were below 1. Brackets give pointwise 95 percent Monte Carlo confidence intervals.
+ 
+@@ -789,7 +789,7 @@
+ 
+ **Interpretation.** Added deaths enter the frailty fit and cumulative endpoint, and the first contaminated week also enters the normalizing ratio. A sensitivity analysis used the same fitted curves with the workbook reference at the end of week four, immediately before the added deaths. At the largest dynamic amplitude this gave mean KCOR 2.116 [1.992, 2.240]. The direction of the anchored contrast therefore depended on whether its reference included the first contaminated week. The size of any corresponding quiet-window hazard increment in the Czech cohorts remains unknown.
+ 
+-![Mean anchored KCOR at the final follow-up week versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
++![Mean anchored KCOR at the last eligible week of the 130-week simulation versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
+ 
+ ![Left and center: mean $\hat\theta_{0,A}$ error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored $\mathrm{KCOR}(t_{\rm end};t_0)>1$ on the combined $4\times4$ grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations.](figures/fig_quiet_contam_theta_error.png){#fig:quiet_contam_theta}
+ 

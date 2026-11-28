@@ -1,0 +1,32 @@
+{
+  "candidate": "m179",
+  "parent": "m178",
+  "reviewer_fixture_point": 2.217437202300441,
+  "interval": [
+    1.995868863931048,
+    2.650562566741663
+  ],
+  "draws": 3,
+  "point_and_interval_identical_to_parent": true,
+  "missing": {
+    "numerator": "1940,1950",
+    "denominator": "1940",
+    "denominator_recorded_zero": "none",
+    "status": "different_supplied_age_groups"
+  },
+  "explicit_zero": {
+    "numerator": "1940,1950",
+    "denominator": "1940,1950",
+    "denominator_recorded_zero": "1950",
+    "status": "same_supplied_age_groups"
+  },
+  "scope_changed_draws": 0,
+  "s6_rows": 1192,
+  "s6_previous_fields": 41,
+  "s6_point_parity": "exact",
+  "prior_archive_figure_files_unchanged": 51,
+  "clean_page": 18,
+  "redline_page": 19,
+  "redline_index_page": 82,
+  "distinct_visible_linked_objections": 90
+}

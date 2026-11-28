@@ -1,0 +1,27 @@
+---
+figureTitle: "Figure"
+tableTitle: "Table"
+figPrefix: ""
+tblPrefix: ""
+figureTemplate: "$$figureTitle$$ $$i$$. $$t$$"
+tableTemplate: "$$tableTitle$$ $$i$$. $$t$$"
+figPrefixTemplate: "$$i$$"
+tblPrefixTemplate: "$$i$$"
+eqnPrefix: ""
+eqnTemplate: "($$i$$)"
+eqnPrefixTemplate: "($$i$$)"
+lofTitle: "List of Figures"
+lotTitle: "List of Tables"
+lolTitle: "List of Listings"
+chapters: false
+numberSections: false
+chapDelim: "."
+rangeDelim: "–"
+titleDelim: ""
+
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{tabularx}
+  - \usepackage{array}
+  - \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+...

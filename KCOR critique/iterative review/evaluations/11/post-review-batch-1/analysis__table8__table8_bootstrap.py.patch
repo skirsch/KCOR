@@ -1,0 +1,93 @@
+--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -34,26 +34,10 @@
+ 
+ 
+ def read_population(workbook, sheet):
+-    frame = pd.read_excel(workbook, sheet_name=sheet, parse_dates=["DateDied"])
+-    start = pd.Timestamp.fromisocalendar(*map(int, sheet.split("_")), 1)
+-    frame = frame[frame.DateDied >= start]
+-    # Match ordinary and person-bootstrap validation before combining source rows.
+     sys.path.insert(0, str(HERE.parents[1] / "code"))
+-    from fixed_cohort_history import invalid_components, rectangular_overlap_counts
+-    bad = invalid_components(frame, start, layout="table8")
+-    if bad:
+-        raise ValueError(f"invalid source component histories: {bad}")
+-    group = frame.groupby(["YearOfBirth", "Dose", "DateDied"])[["Alive", "Dead"]].sum()
+-    dates, group = rectangular_overlap_counts(group,start,frame.DateDied.max())
+-    alive, dead = (group[c].to_numpy(dtype=int).reshape(3, 3, -1) for c in ("Alive", "Dead"))
+-    np.testing.assert_array_equal(alive[:, :, :-1] - dead[:, :, :-1], alive[:, :, 1:])
+-    outcomes = np.concatenate([dead, (alive-dead)[:, :, -1:]], axis=2)
+-    # Rows are dose-2 people, unvaccinated people, and everyone. Remove overlap
+-    # before sampling death weeks and survivors, then rebuild it after each draw.
+-    disjoint = outcomes.copy()
+-    disjoint[2] -= outcomes[0] + outcomes[1]
+-    assert disjoint.min() >= 0 and disjoint.sum() == alive[2, :, 0].sum()
+-    return dates, disjoint
++    from bootstrap_reporting import histories
++    _,dates,disjoint=histories(pd.read_excel(workbook,sheet_name=sheet),sheet,"table8")
++    return dates,disjoint
+ 
+ 
+ def initialize(populations, weekly_update="revised"):
+@@ -86,9 +70,10 @@
+     counts[2] += counts[0] + counts[1]
+     alive = np.cumsum(counts[:, :, ::-1], axis=2)[:, :, ::-1][:, :, :-1]
+     dead = counts[:, :, :-1]
+-    mr = dead / (alive + K.EPS)
++    mr = np.divide(dead,alive,out=np.full(dead.shape,np.nan),where=alive>0)
+     early = mr[:, :, :4]
+-    weights = np.nanmean(np.where(early > K.EPS, early, np.nan), axis=(1, 2)) * alive[:, :, :4].sum(axis=(1, 2))
++    from pooling import expected_deaths_weights
++    weights = expected_deaths_weights(early,alive[:, :, :4].sum(axis=(1,2)),K.EPS)
+     growth = np.empty((3, 3))
+     flags = 0
+     failed = 0
+@@ -96,7 +81,7 @@
+     skip = K.DYNAMIC_HVE_SKIP_WEEKS
+     fit = compare.joint_fit if joint else compare.production_fit
+     for a, d in np.ndindex(growth.shape):
+-        hazard = K.hazard_from_mr(np.clip(mr[a, d], 0, .999))
++        hazard = K.hazard_from_mr(mr[a,d])
+         effective = np.where(time >= skip, hazard, 0.)
+         diagnostic_kwargs = {"risk_arr": alive[a,d]} if diagnostics else {}
+         (k, theta), diag = fit(effective, time-skip, quiet, CONFIG["k_anchor_weeks"],
+@@ -113,8 +98,12 @@
+             inverted, time[keep], dates[keep], theta, (WAVE["apply_alpha"] if WAVE["apply_correction"] else 1.),
+             WAVE["start_dt"], WAVE["end_dt"], k, CONFIG["gamma_per_week"], observed_cumhaz=observed)
+         anchor = np.flatnonzero(time[keep] == K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE).item()
+-        growth[a, d] = corrected[-1] / corrected[anchor]
+-    pooled = [float(np.exp(np.average(np.log(growth[:, n]/growth[:, d]), weights=weights))) for n, d in PAIRS]
++        growth[a,d] = corrected[-1] / corrected[anchor] if np.isfinite(corrected[-1]) and np.isfinite(corrected[anchor]) and corrected[anchor]>0 else np.nan
++    pooled=[]
++    for n,d in PAIRS:
++        use=weights>0
++        ratio=growth[use,n]/growth[use,d]
++        pooled.append(float(np.exp(np.average(np.log(ratio),weights=weights[use]))) if use.any() and np.all(np.isfinite(ratio)&(ratio>0)) else np.nan)
+     if diagnostics:
+         contributors=np.isfinite(weights)&(weights>0.)
+         pair_flags=np.stack([fit_flags[contributors][:,[n,d],:].any(axis=(0,1)) for n,d in PAIRS])
+@@ -129,21 +118,8 @@
+ 
+ def workbook_points(path, populations):
+     frame = pd.read_excel(path, sheet_name="dose_pairs")
+-    rows = frame[(frame.Date == REPORT) & (frame.YearOfBirth > 0)]
+-    points = []
+-    for sheet, (_, cells) in zip(SHEETS, populations):
+-        strata = cells.copy()
+-        strata[2] = cells.sum(axis=0)
+-        alive = np.flip(np.cumsum(np.flip(strata, axis=2), axis=2), axis=2)
+-        early_rate = strata[:, :, :4] / alive[:, :, :4]
+-        weights = np.nanmean(np.where(early_rate > 0, early_rate, np.nan), axis=(1, 2)) * alive[:, :, :4].sum(axis=(1, 2))
+-        cohort = rows[rows.EnrollmentDate == sheet]
+-        ratios = []
+-        for n, d in PAIRS:
+-            by_age = cohort[(cohort.Dose_num == n) & (cohort.Dose_den == d)].set_index("YearOfBirth")
+-            ratios.append(float(np.exp(np.average(np.log(by_age.loc[[1940,1950,1960], "KCOR"]), weights=weights))))
+-        points.append(ratios)
+-    return points
++    rows = frame[(pd.to_datetime(frame.Date) == REPORT) & (frame.YearOfBirth == 0)]
++    return [[float(rows[(rows.EnrollmentDate==sheet)&(rows.Dose_num==n)&(rows.Dose_den==d)].KCOR.iloc[0]) for n,d in PAIRS] for sheet in SHEETS]
+ 
+ 
+ def main():

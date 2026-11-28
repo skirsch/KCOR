@@ -1,0 +1,314 @@
+[
+  {
+    "scenario": "gamma",
+    "bootstrap": "person",
+    "datasets": 2,
+    "point_available": 2,
+    "intervals_available": 2,
+    "bias_mean_ci": [
+      -0.008986561168739415,
+      -0.7154990602357578,
+      0.697525937898279
+    ],
+    "mean_kcor_ci": [
+      0.9910134388312606,
+      0.2845009397642422,
+      1.697525937898279
+    ],
+    "variance": 0.006183551708225792,
+    "sd": 0.0786355626178499,
+    "coverage": 2,
+    "coverage_ci": [
+      0.34238022750665303,
+      1.0
+    ],
+    "fit_flag": 0,
+    "fit_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "residual_flag": 0,
+    "residual_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "failed": 0,
+    "failed_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "median_interval_width": 0.15953970898244924,
+    "theta_a_mean_ci": [
+      1.1619491294975952,
+      0.39821366286526205,
+      1.9256845961299285
+    ],
+    "theta_b_mean_ci": [
+      0.25672827422804556,
+      -0.20965670610758913,
+      0.7231132545636803
+    ],
+    "flagged_bootstrap_draws": 0,
+    "failed_bootstrap_draws": 0
+  },
+  {
+    "scenario": "lognormal",
+    "bootstrap": "person",
+    "datasets": 2,
+    "point_available": 2,
+    "intervals_available": 2,
+    "bias_mean_ci": [
+      -0.022923571140447963,
+      -0.5272033280876152,
+      0.48135618580671924
+    ],
+    "mean_kcor_ci": [
+      0.977076428859552,
+      0.47279667191238484,
+      1.4813561858067192
+    ],
+    "variance": 0.003150223504792352,
+    "sd": 0.056126851905236516,
+    "coverage": 2,
+    "coverage_ci": [
+      0.34238022750665303,
+      1.0
+    ],
+    "fit_flag": 0,
+    "fit_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "residual_flag": 0,
+    "residual_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "failed": 0,
+    "failed_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "median_interval_width": 0.16398577041757212,
+    "theta_a_mean_ci": [
+      0.8283516109453252,
+      0.7602968912171857,
+      0.8964063306734646
+    ],
+    "theta_b_mean_ci": [
+      0.5027818069321481,
+      -0.23055086532788382,
+      1.23611447919218
+    ],
+    "flagged_bootstrap_draws": 0,
+    "failed_bootstrap_draws": 0
+  },
+  {
+    "scenario": "two_point",
+    "bootstrap": "person",
+    "datasets": 2,
+    "point_available": 2,
+    "intervals_available": 2,
+    "bias_mean_ci": [
+      -0.0010890303395977297,
+      -0.6441317883441449,
+      0.6419537276649494
+    ],
+    "mean_kcor_ci": [
+      0.9989109696604023,
+      0.35586821165585514,
+      1.6419537276649494
+    ],
+    "variance": 0.005122453220149189,
+    "sd": 0.07157131562399276,
+    "coverage": 2,
+    "coverage_ci": [
+      0.34238022750665303,
+      1.0
+    ],
+    "fit_flag": 0,
+    "fit_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "residual_flag": 0,
+    "residual_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "failed": 0,
+    "failed_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "median_interval_width": 0.11781034634985138,
+    "theta_a_mean_ci": [
+      1.237927917693945,
+      1.078359247564641,
+      1.397496587823249
+    ],
+    "theta_b_mean_ci": [
+      0.4044265958110632,
+      -0.28189528109584205,
+      1.0907484727179684
+    ],
+    "flagged_bootstrap_draws": 0,
+    "failed_bootstrap_draws": 0
+  },
+  {
+    "scenario": "bimodal",
+    "bootstrap": "person",
+    "datasets": 2,
+    "point_available": 2,
+    "intervals_available": 2,
+    "bias_mean_ci": [
+      -0.009165544517130586,
+      -0.20449810958225065,
+      0.18616702054798948
+    ],
+    "mean_kcor_ci": [
+      0.9908344554828694,
+      0.7955018904177493,
+      1.1861670205479895
+    ],
+    "variance": 0.00047265864349685784,
+    "sd": 0.021740713960145326,
+    "coverage": 2,
+    "coverage_ci": [
+      0.34238022750665303,
+      1.0
+    ],
+    "fit_flag": 0,
+    "fit_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "residual_flag": 0,
+    "residual_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "failed": 0,
+    "failed_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "median_interval_width": 0.09287673283222292,
+    "theta_a_mean_ci": [
+      1.193561167238122,
+      -0.02848327863155853,
+      2.415605613107802
+    ],
+    "theta_b_mean_ci": [
+      0.42355633958112343,
+      0.18100833506949587,
+      0.666104344092751
+    ],
+    "flagged_bootstrap_draws": 0,
+    "failed_bootstrap_draws": 0
+  },
+  {
+    "scenario": "correlated_gamma",
+    "bootstrap": "cluster",
+    "datasets": 2,
+    "point_available": 2,
+    "intervals_available": 2,
+    "bias_mean_ci": [
+      0.08040690392427552,
+      -0.043849694240374174,
+      0.2046635020889252
+    ],
+    "mean_kcor_ci": [
+      1.0804069039242754,
+      0.9561503057596257,
+      1.2046635020889251
+    ],
+    "variance": 0.00019126575405427202,
+    "sd": 0.01382988626324425,
+    "coverage": 2,
+    "coverage_ci": [
+      0.34238022750665303,
+      1.0
+    ],
+    "fit_flag": 0,
+    "fit_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "residual_flag": 1,
+    "residual_flag_ci": [
+      0.09453120573423074,
+      0.9054687942657693
+    ],
+    "failed": 0,
+    "failed_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "median_interval_width": 0.13962848447775494,
+    "theta_a_mean_ci": [
+      1.1898062492670243,
+      -2.2629561466473844,
+      4.6425686451814325
+    ],
+    "theta_b_mean_ci": [
+      0.14463076119722865,
+      -1.307589750929891,
+      1.5968512733243483
+    ],
+    "flagged_bootstrap_draws": 0,
+    "failed_bootstrap_draws": 0
+  },
+  {
+    "scenario": "correlated_gamma",
+    "bootstrap": "person",
+    "datasets": 2,
+    "point_available": 2,
+    "intervals_available": 2,
+    "bias_mean_ci": [
+      0.08040690392427552,
+      -0.043849694240374174,
+      0.2046635020889252
+    ],
+    "mean_kcor_ci": [
+      1.0804069039242754,
+      0.9561503057596257,
+      1.2046635020889251
+    ],
+    "variance": 0.00019126575405427202,
+    "sd": 0.01382988626324425,
+    "coverage": 2,
+    "coverage_ci": [
+      0.34238022750665303,
+      1.0
+    ],
+    "fit_flag": 0,
+    "fit_flag_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "residual_flag": 1,
+    "residual_flag_ci": [
+      0.09453120573423074,
+      0.9054687942657693
+    ],
+    "failed": 0,
+    "failed_ci": [
+      0.0,
+      0.6576197724933469
+    ],
+    "median_interval_width": 0.18729379163781978,
+    "theta_a_mean_ci": [
+      1.1898062492670243,
+      -2.2629561466473844,
+      4.6425686451814325
+    ],
+    "theta_b_mean_ci": [
+      0.14463076119722865,
+      -1.307589750929891,
+      1.5968512733243483
+    ],
+    "flagged_bootstrap_draws": 0,
+    "failed_bootstrap_draws": 0
+  }
+]

@@ -1,0 +1,3192 @@
+This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.12) (preloaded format=xelatex 2026.11.2)  26 NOV 2026 04:24
+entering extended mode
+ \write18 enabled.
+ %&-line parsing enabled.
+**./paper.tex
+(paper.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
+Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/base\size10.clo
+File: size10.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count271
+\c@section=\count272
+\c@subsection=\count273
+\c@subsubsection=\count274
+\c@paragraph=\count275
+\c@subparagraph=\count276
+\c@figure=\count277
+\c@table=\count278
+\abovecaptionskip=\skip49
+\belowcaptionskip=\skip50
+\bibindent=\dimen148
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: xetex.def on input line 274.
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\xetex.def
+File: xetex.def 2025/11/01 v5.0p Graphics/color driver for xetex
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.lt
+x)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+Package: geometry 2026/03/07 v6.0 Page Geometry
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks17
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+))
+\Gm@cnth=\count279
+\Gm@cntv=\count280
+\c@Gm@tempcnt=\count281
+\Gm@bindingoffset=\dimen149
+\Gm@wd@mp=\dimen150
+\Gm@odd@mp=\dimen151
+\Gm@even@mp=\dimen152
+\Gm@layoutwidth=\dimen153
+\Gm@layoutheight=\dimen154
+\Gm@layouthoffset=\dimen155
+\Gm@layoutvoffset=\dimen156
+\Gm@dimlist=\toks18
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+Package: amsmath 2025/07/09 v2.17z AMS math features
+\@mathmargin=\skip51
+
+For additional information on amsmath, use the `?' option.
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+Package: amstext 2024/11/17 v2.01 AMS text
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks19
+\ex@=\dimen157
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen158
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
+Package: amsopn 2022/04/08 v2.04 operator names
+)
+\inf@bad=\count282
+LaTeX Info: Redefining \frac on input line 233.
+\uproot@=\count283
+\leftroot@=\count284
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count285
+\DOTSCASE@=\count286
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
+\Mathstrutbox@=\box53
+\strutbox@=\box54
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen159
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count287
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count288
+\dotsspace@=\muskip17
+\c@parentequation=\count289
+\dspbrk@lvl=\count290
+\tag@help=\toks20
+\row@=\count291
+\column@=\count292
+\maxfields@=\count293
+\andhelp@=\toks21
+\eqnshift@=\dimen160
+\alignsep@=\dimen161
+\tagshift@=\dimen162
+\tagwidth@=\dimen163
+\totwidth@=\dimen164
+\lineht@=\dimen165
+\@envbody=\toks22
+\multlinegap=\skip52
+\multlinetaggap=\skip53
+\mathdisplay@stack=\toks23
+LaTeX Info: Redefining \[ on input line 2950.
+LaTeX Info: Redefining \] on input line 2951.
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/unicode-math\unicode-ma
+th.sty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
+Package: expl3 2025-12-24 L3 programming layer (loader) 
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-xet
+ex.def
+File: l3backend-xetex.def 2025-10-09 L3 backend support: XeTeX
+\g__graphics_track_int=\count294
+\g__pdfannot_backend_int=\count295
+\g__pdfannot_backend_link_int=\count296
+))
+Package: unicode-math 2023/08/13 v0.8r Unicode maths in XeLaTeX and LuaLaTeX
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/unicode-math\unicode-ma
+th-xetex.sty
+Package: unicode-math-xetex 2023/08/13 v0.8r Unicode maths in XeLaTeX and LuaLa
+TeX
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/xparse\xpars
+e.sty
+Package: xparse 2025-10-09 L3 Experimental document command parser
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/l3keys2e\l3k
+eys2e.sty
+Package: l3keys2e 2025-10-09 LaTeX2e option processing using LaTeX3 keys
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.sty
+Package: fontspec 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTeX
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec-xetex
+.sty
+Package: fontspec-xetex 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTe
+X
+\l__fontspec_script_int=\count297
+\l__fontspec_language_int=\count298
+\l__fontspec_strnum_int=\count299
+\l__fontspec_tmp_int=\count300
+\l__fontspec_tmpa_int=\count301
+\l__fontspec_tmpb_int=\count302
+\l__fontspec_tmpc_int=\count303
+\l__fontspec_em_int=\count304
+\l__fontspec_emdef_int=\count305
+\l__fontspec_strong_int=\count306
+\l__fontspec_strongdef_int=\count307
+\l__fontspec_tmpa_dim=\dimen166
+\l__fontspec_tmpb_dim=\dimen167
+\l__fontspec_tmpc_dim=\dimen168
+ (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
+Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.cfg))
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/base\fix-cm.sty
+Package: fix-cm 2020/11/24 v1.1t fixes to LaTeX
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/base\ts1enc.def
+File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
+LaTeX Font Info:    Redeclaring font encoding TS1 on input line 47.
+LaTeX Encoding Info:    Redeclaring text command \capitalcedilla (encoding TS1)
+ on input line 49.
+LaTeX Encoding Info:    Redeclaring text command \capitalogonek (encoding TS1) 
+on input line 52.
+LaTeX Encoding Info:    Redeclaring text command \capitalgrave (encoding TS1) o
+n input line 55.
+LaTeX Encoding Info:    Redeclaring text command \capitalacute (encoding TS1) o
+n input line 56.
+LaTeX Encoding Info:    Redeclaring text command \capitalcircumflex (encoding T
+S1) on input line 57.
+LaTeX Encoding Info:    Redeclaring text command \capitaltilde (encoding TS1) o
+n input line 58.
+LaTeX Encoding Info:    Redeclaring text command \capitaldieresis (encoding TS1
+) on input line 59.
+LaTeX Encoding Info:    Redeclaring text command \capitalhungarumlaut (encoding
+ TS1) on input line 60.
+LaTeX Encoding Info:    Redeclaring text command \capitalring (encoding TS1) on
+ input line 61.
+LaTeX Encoding Info:    Redeclaring text command \capitalcaron (encoding TS1) o
+n input line 62.
+LaTeX Encoding Info:    Redeclaring text command \capitalbreve (encoding TS1) o
+n input line 63.
+LaTeX Encoding Info:    Redeclaring text command \capitalmacron (encoding TS1) 
+on input line 64.
+LaTeX Encoding Info:    Redeclaring text command \capitaldotaccent (encoding TS
+1) on input line 65.
+LaTeX Encoding Info:    Redeclaring text command \t (encoding TS1) on input lin
+e 66.
+LaTeX Encoding Info:    Redeclaring text command \capitaltie (encoding TS1) on 
+input line 67.
+LaTeX Encoding Info:    Redeclaring text command \newtie (encoding TS1) on inpu
+t line 68.
+LaTeX Encoding Info:    Redeclaring text command \capitalnewtie (encoding TS1) 
+on input line 69.
+LaTeX Encoding Info:    Redeclaring text symbol \textcapitalcompwordmark (encod
+ing TS1) on input line 70.
+LaTeX Encoding Info:    Redeclaring text symbol \textascendercompwordmark (enco
+ding TS1) on input line 71.
+LaTeX Encoding Info:    Redeclaring text symbol \textquotestraightbase (encodin
+g TS1) on input line 72.
+LaTeX Encoding Info:    Redeclaring text symbol \textquotestraightdblbase (enco
+ding TS1) on input line 73.
+LaTeX Encoding Info:    Redeclaring text symbol \texttwelveudash (encoding TS1)
+ on input line 74.
+LaTeX Encoding Info:    Redeclaring text symbol \textthreequartersemdash (encod
+ing TS1) on input line 75.
+LaTeX Encoding Info:    Redeclaring text symbol \textleftarrow (encoding TS1) o
+n input line 76.
+LaTeX Encoding Info:    Redeclaring text symbol \textrightarrow (encoding TS1) 
+on input line 77.
+LaTeX Encoding Info:    Redeclaring text symbol \textblank (encoding TS1) on in
+put line 78.
+LaTeX Encoding Info:    Redeclaring text symbol \textdollar (encoding TS1) on i
+nput line 79.
+LaTeX Encoding Info:    Redeclaring text symbol \textquotesingle (encoding TS1)
+ on input line 80.
+LaTeX Encoding Info:    Redeclaring text command \textasteriskcentered (encodin
+g TS1) on input line 81.
+LaTeX Encoding Info:    Redeclaring text symbol \textdblhyphen (encoding TS1) o
+n input line 92.
+LaTeX Encoding Info:    Redeclaring text symbol \textfractionsolidus (encoding 
+TS1) on input line 93.
+LaTeX Encoding Info:    Redeclaring text symbol \textzerooldstyle (encoding TS1
+) on input line 94.
+LaTeX Encoding Info:    Redeclaring text symbol \textoneoldstyle (encoding TS1)
+ on input line 95.
+LaTeX Encoding Info:    Redeclaring text symbol \texttwooldstyle (encoding TS1)
+ on input line 96.
+LaTeX Encoding Info:    Redeclaring text symbol \textthreeoldstyle (encoding TS
+1) on input line 97.
+LaTeX Encoding Info:    Redeclaring text symbol \textfouroldstyle (encoding TS1
+) on input line 98.
+LaTeX Encoding Info:    Redeclaring text symbol \textfiveoldstyle (encoding TS1
+) on input line 99.
+LaTeX Encoding Info:    Redeclaring text symbol \textsixoldstyle (encoding TS1)
+ on input line 100.
+LaTeX Encoding Info:    Redeclaring text symbol \textsevenoldstyle (encoding TS
+1) on input line 101.
+LaTeX Encoding Info:    Redeclaring text symbol \texteightoldstyle (encoding TS
+1) on input line 102.
+LaTeX Encoding Info:    Redeclaring text symbol \textnineoldstyle (encoding TS1
+) on input line 103.
+LaTeX Encoding Info:    Redeclaring text symbol \textlangle (encoding TS1) on i
+nput line 104.
+LaTeX Encoding Info:    Redeclaring text symbol \textminus (encoding TS1) on in
+put line 105.
+LaTeX Encoding Info:    Redeclaring text symbol \textrangle (encoding TS1) on i
+nput line 106.
+LaTeX Encoding Info:    Redeclaring text symbol \textmho (encoding TS1) on inpu
+t line 107.
+LaTeX Encoding Info:    Redeclaring text symbol \textbigcircle (encoding TS1) o
+n input line 108.
+LaTeX Encoding Info:    Redeclaring text command \textcircled (encoding TS1) on
+ input line 109.
+LaTeX Encoding Info:    Redeclaring text symbol \textohm (encoding TS1) on inpu
+t line 115.
+LaTeX Encoding Info:    Redeclaring text symbol \textlbrackdbl (encoding TS1) o
+n input line 116.
+LaTeX Encoding Info:    Redeclaring text symbol \textrbrackdbl (encoding TS1) o
+n input line 117.
+LaTeX Encoding Info:    Redeclaring text symbol \textuparrow (encoding TS1) on 
+input line 118.
+LaTeX Encoding Info:    Redeclaring text symbol \textdownarrow (encoding TS1) o
+n input line 119.
+LaTeX Encoding Info:    Redeclaring text symbol \textasciigrave (encoding TS1) 
+on input line 120.
+LaTeX Encoding Info:    Redeclaring text symbol \textborn (encoding TS1) on inp
+ut line 121.
+LaTeX Encoding Info:    Redeclaring text symbol \textdivorced (encoding TS1) on
+ input line 122.
+LaTeX Encoding Info:    Redeclaring text symbol \textdied (encoding TS1) on inp
+ut line 123.
+LaTeX Encoding Info:    Redeclaring text symbol \textleaf (encoding TS1) on inp
+ut line 124.
+LaTeX Encoding Info:    Redeclaring text symbol \textmarried (encoding TS1) on 
+input line 125.
+LaTeX Encoding Info:    Redeclaring text symbol \textmusicalnote (encoding TS1)
+ on input line 126.
+LaTeX Encoding Info:    Redeclaring text symbol \texttildelow (encoding TS1) on
+ input line 127.
+LaTeX Encoding Info:    Redeclaring text symbol \textdblhyphenchar (encoding TS
+1) on input line 128.
+LaTeX Encoding Info:    Redeclaring text symbol \textasciibreve (encoding TS1) 
+on input line 129.
+LaTeX Encoding Info:    Redeclaring text symbol \textasciicaron (encoding TS1) 
+on input line 130.
+LaTeX Encoding Info:    Redeclaring text symbol \textacutedbl (encoding TS1) on
+ input line 131.
+LaTeX Encoding Info:    Redeclaring text symbol \textgravedbl (encoding TS1) on
+ input line 132.
+LaTeX Encoding Info:    Redeclaring text symbol \textdagger (encoding TS1) on i
+nput line 133.
+LaTeX Encoding Info:    Redeclaring text symbol \textdaggerdbl (encoding TS1) o
+n input line 134.
+LaTeX Encoding Info:    Redeclaring text symbol \textbardbl (encoding TS1) on i
+nput line 135.
+LaTeX Encoding Info:    Redeclaring text symbol \textperthousand (encoding TS1)
+ on input line 136.
+LaTeX Encoding Info:    Redeclaring text symbol \textbullet (encoding TS1) on i
+nput line 137.
+LaTeX Encoding Info:    Redeclaring text symbol \textcelsius (encoding TS1) on 
+input line 138.
+LaTeX Encoding Info:    Redeclaring text symbol \textdollaroldstyle (encoding T
+S1) on input line 139.
+LaTeX Encoding Info:    Redeclaring text symbol \textcentoldstyle (encoding TS1
+) on input line 140.
+LaTeX Encoding Info:    Redeclaring text symbol \textflorin (encoding TS1) on i
+nput line 141.
+LaTeX Encoding Info:    Redeclaring text symbol \textcolonmonetary (encoding TS
+1) on input line 142.
+LaTeX Encoding Info:    Redeclaring text symbol \textwon (encoding TS1) on inpu
+t line 143.
+LaTeX Encoding Info:    Redeclaring text symbol \textnaira (encoding TS1) on in
+put line 144.
+LaTeX Encoding Info:    Redeclaring text symbol \textguarani (encoding TS1) on 
+input line 145.
+LaTeX Encoding Info:    Redeclaring text symbol \textpeso (encoding TS1) on inp
+ut line 146.
+LaTeX Encoding Info:    Redeclaring text symbol \textlira (encoding TS1) on inp
+ut line 147.
+LaTeX Encoding Info:    Redeclaring text symbol \textrecipe (encoding TS1) on i
+nput line 148.
+LaTeX Encoding Info:    Redeclaring text symbol \textinterrobang (encoding TS1)
+ on input line 149.
+LaTeX Encoding Info:    Redeclaring text symbol \textinterrobangdown (encoding 
+TS1) on input line 150.
+LaTeX Encoding Info:    Redeclaring text symbol \textdong (encoding TS1) on inp
+ut line 151.
+LaTeX Encoding Info:    Redeclaring text symbol \texttrademark (encoding TS1) o
+n input line 152.
+LaTeX Encoding Info:    Redeclaring text symbol \textpertenthousand (encoding T
+S1) on input line 153.
+LaTeX Encoding Info:    Redeclaring text symbol \textpilcrow (encoding TS1) on 
+input line 154.
+LaTeX Encoding Info:    Redeclaring text symbol \textbaht (encoding TS1) on inp
+ut line 155.
+LaTeX Encoding Info:    Redeclaring text symbol \textnumero (encoding TS1) on i
+nput line 156.
+LaTeX Encoding Info:    Redeclaring text symbol \textdiscount (encoding TS1) on
+ input line 157.
+LaTeX Encoding Info:    Redeclaring text symbol \textestimated (encoding TS1) o
+n input line 158.
+LaTeX Encoding Info:    Redeclaring text symbol \textopenbullet (encoding TS1) 
+on input line 159.
+LaTeX Encoding Info:    Redeclaring text symbol \textservicemark (encoding TS1)
+ on input line 160.
+LaTeX Encoding Info:    Redeclaring text symbol \textlquill (encoding TS1) on i
+nput line 161.
+LaTeX Encoding Info:    Redeclaring text symbol \textrquill (encoding TS1) on i
+nput line 162.
+LaTeX Encoding Info:    Redeclaring text symbol \textcent (encoding TS1) on inp
+ut line 163.
+LaTeX Encoding Info:    Redeclaring text symbol \textsterling (encoding TS1) on
+ input line 164.
+LaTeX Encoding Info:    Redeclaring text symbol \textcurrency (encoding TS1) on
+ input line 165.
+LaTeX Encoding Info:    Redeclaring text symbol \textyen (encoding TS1) on inpu
+t line 166.
+LaTeX Encoding Info:    Redeclaring text symbol \textbrokenbar (encoding TS1) o
+n input line 167.
+LaTeX Encoding Info:    Redeclaring text symbol \textsection (encoding TS1) on 
+input line 168.
+LaTeX Encoding Info:    Redeclaring text symbol \textasciidieresis (encoding TS
+1) on input line 169.
+LaTeX Encoding Info:    Redeclaring text symbol \textcopyright (encoding TS1) o
+n input line 170.
+LaTeX Encoding Info:    Redeclaring text symbol \textordfeminine (encoding TS1)
+ on input line 171.
+LaTeX Encoding Info:    Redeclaring text symbol \textcopyleft (encoding TS1) on
+ input line 172.
+LaTeX Encoding Info:    Redeclaring text symbol \textlnot (encoding TS1) on inp
+ut line 173.
+LaTeX Encoding Info:    Redeclaring text symbol \textcircledP (encoding TS1) on
+ input line 174.
+LaTeX Encoding Info:    Redeclaring text symbol \textregistered (encoding TS1) 
+on input line 175.
+LaTeX Encoding Info:    Redeclaring text symbol \textasciimacron (encoding TS1)
+ on input line 176.
+LaTeX Encoding Info:    Redeclaring text symbol \textdegree (encoding TS1) on i
+nput line 177.
+LaTeX Encoding Info:    Redeclaring text symbol \textpm (encoding TS1) on input
+ line 178.
+LaTeX Encoding Info:    Redeclaring text symbol \texttwosuperior (encoding TS1)
+ on input line 179.
+LaTeX Encoding Info:    Redeclaring text symbol \textthreesuperior (encoding TS
+1) on input line 180.
+LaTeX Encoding Info:    Redeclaring text symbol \textasciiacute (encoding TS1) 
+on input line 181.
+LaTeX Encoding Info:    Redeclaring text symbol \textmu (encoding TS1) on input
+ line 182.
+LaTeX Encoding Info:    Redeclaring text symbol \textparagraph (encoding TS1) o
+n input line 183.
+LaTeX Encoding Info:    Redeclaring text symbol \textperiodcentered (encoding T
+S1) on input line 184.
+LaTeX Encoding Info:    Redeclaring text symbol \textreferencemark (encoding TS
+1) on input line 185.
+LaTeX Encoding Info:    Redeclaring text symbol \textonesuperior (encoding TS1)
+ on input line 186.
+LaTeX Encoding Info:    Redeclaring text symbol \textordmasculine (encoding TS1
+) on input line 187.
+LaTeX Encoding Info:    Redeclaring text symbol \textsurd (encoding TS1) on inp
+ut line 188.
+LaTeX Encoding Info:    Redeclaring text symbol \textonequarter (encoding TS1) 
+on input line 189.
+LaTeX Encoding Info:    Redeclaring text symbol \textonehalf (encoding TS1) on 
+input line 190.
+LaTeX Encoding Info:    Redeclaring text symbol \textthreequarters (encoding TS
+1) on input line 191.
+LaTeX Encoding Info:    Redeclaring text symbol \texteuro (encoding TS1) on inp
+ut line 192.
+LaTeX Encoding Info:    Redeclaring text symbol \texttimes (encoding TS1) on in
+put line 193.
+LaTeX Encoding Info:    Redeclaring text symbol \textdiv (encoding TS1) on inpu
+t line 194.
+))
+\g__um_fam_int=\count308
+\g__um_fonts_used_int=\count309
+\l__um_primecount_int=\count310
+\g__um_primekern_muskip=\muskip18
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/unicode-math\unicode-ma
+th-table.tex)))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/lm\lmodern.sty
+Package: lmodern 2015/05/01 v1.6.1 Latin Modern Fonts
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/cmr/m/n --> OT1/lmr/m/n on input line 22.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
+(Font)                  OML/cmm/m/it --> OML/lmm/m/it on input line 23.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
+(Font)                  OMS/cmsy/m/n --> OMS/lmsy/m/n on input line 24.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
+(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 25.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 26.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `bold'
+(Font)                  OML/cmm/b/it --> OML/lmm/b/it on input line 27.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
+(Font)                  OMS/cmsy/b/n --> OMS/lmsy/b/n on input line 28.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
+(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 29.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 31.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
+(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 32.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> OT1/lmr/m/it on input line 33.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
+(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 34.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 35.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  OT1/cmss/bx/n --> OT1/lmss/bx/n on input line 36.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  OT1/cmr/bx/it --> OT1/lmr/bx/it on input line 37.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 38.
+)
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 0.963629354430423.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 0.963629354430423.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 0.963629354430423.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/B scale = 0.944047646899576.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/B scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/B scale = 0.944047646899576.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/B scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/I scale = 1.001911883116192.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/I scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/I scale = 1.001911883116192.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/I scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/BI scale = 0.9818514257111176.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/BI scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/BI scale = 0.9818514257111176.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/BI scale = 1.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'TimesNewRoman(0)' created for font 'Times
+(fontspec)             New Roman' with options
+(fontspec)             [Scale=MatchLowercase,Ligatures=TeX,Scale=1].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.: <->s*[1]"Times New
+(fontspec)             Roman/OT:script=latn;language=dflt;mapping=tex-text;"
+(fontspec)             - 'small caps'  (m/sc) with NFSS spec.: <->s*[1]"Times
+(fontspec)             New
+(fontspec)             Roman/OT:script=latn;language=dflt;+smcp;mapping=tex-tex
+t;"
+(fontspec)             - 'bold' (b/n) with NFSS spec.: <->s*[1]"Times New
+(fontspec)             Roman/B/OT:script=latn;language=dflt;mapping=tex-text;"
+(fontspec)             - 'bold small caps'  (b/sc) with NFSS spec.:
+(fontspec)             <->s*[1]"Times New
+(fontspec)             Roman/B/OT:script=latn;language=dflt;+smcp;mapping=tex-t
+ext;"
+(fontspec)             - 'italic' (m/it) with NFSS spec.: <->s*[1]"Times New
+(fontspec)             Roman/I/OT:script=latn;language=dflt;mapping=tex-text;"
+(fontspec)             - 'italic small caps'  (m/scit) with NFSS spec.:
+(fontspec)             <->s*[1]"Times New
+(fontspec)             Roman/I/OT:script=latn;language=dflt;+smcp;mapping=tex-t
+ext;"
+(fontspec)             - 'bold italic' (b/it) with NFSS spec.: <->s*[1]"Times
+(fontspec)             New
+(fontspec)             Roman/BI/OT:script=latn;language=dflt;mapping=tex-text;"
+
+(fontspec)             - 'bold italic small caps'  (b/scit) with NFSS spec.:
+(fontspec)             <->s*[1]"Times New
+(fontspec)             Roman/BI/OT:script=latn;language=dflt;+smcp;mapping=tex-
+text;"
+
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/m/n' will be
+(Font)              scaled to size 10.0pt on input line 24.
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 0.9999965884395865.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 0.9999965884395865.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman scale = 0.9999965884395865.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/B scale = 0.9796758700672793.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/B scale = 0.9796758700672793.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/I scale = 1.039723894282441.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/I scale = 1.039723894282441.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/BI scale = 1.018906358084128.
+
+
+Package fontspec Info: 
+(fontspec)             Times New Roman/BI scale = 1.018906358084128.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'TimesNewRoman(1)' created for font 'Times
+(fontspec)             New Roman' with options [Scale=MatchLowercase].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.:
+(fontspec)             <->s*[0.9999965884395865]"Times New
+(fontspec)             Roman/OT:script=latn;language=dflt;"
+(fontspec)             - 'small caps'  (m/sc) with NFSS spec.:
+(fontspec)             <->s*[0.9999965884395865]"Times New
+(fontspec)             Roman/OT:script=latn;language=dflt;+smcp;"
+(fontspec)             - 'bold' (b/n) with NFSS spec.:
+(fontspec)             <->s*[0.9796758700672793]"Times New
+(fontspec)             Roman/B/OT:script=latn;language=dflt;"
+(fontspec)             - 'bold small caps'  (b/sc) with NFSS spec.:
+(fontspec)             <->s*[0.9796758700672793]"Times New
+(fontspec)             Roman/B/OT:script=latn;language=dflt;+smcp;"
+(fontspec)             - 'italic' (m/it) with NFSS spec.:
+(fontspec)             <->s*[1.039723894282441]"Times New
+(fontspec)             Roman/I/OT:script=latn;language=dflt;"
+(fontspec)             - 'italic small caps'  (m/scit) with NFSS spec.:
+(fontspec)             <->s*[1.039723894282441]"Times New
+(fontspec)             Roman/I/OT:script=latn;language=dflt;+smcp;"
+(fontspec)             - 'bold italic' (b/it) with NFSS spec.:
+(fontspec)             <->s*[1.018906358084128]"Times New
+(fontspec)             Roman/BI/OT:script=latn;language=dflt;"
+(fontspec)             - 'bold italic small caps'  (b/scit) with NFSS spec.:
+(fontspec)             <->s*[1.018906358084128]"Times New
+(fontspec)             Roman/BI/OT:script=latn;language=dflt;+smcp;"
+
+LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `normal'
+(Font)                  OT1/lmr/m/n --> TU/TimesNewRoman(1)/m/n on input line 2
+4.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/lmr/m/it --> TU/TimesNewRoman(1)/m/it on input line
+ 24.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/lmr/bx/n --> TU/TimesNewRoman(1)/b/n on input line 
+24.
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Could not resolve font "Cambria Math/B" (it probably
+(fontspec)             doesn't exist).
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'CambriaMath(0)' created for font 'Cambria
+(fontspec)             Math' with options
+(fontspec)             [Scale=MatchLowercase,BoldItalicFont={},ItalicFont={},Sm
+allCapsFont={},Script=Math].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.:
+(fontspec)             <->s*[0.9581558637687509]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;"
+
+LaTeX Font Info:    Font shape `TU/CambriaMath(0)/m/n' will be
+(Font)              scaled to size 9.5816pt on input line 25.
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Could not resolve font "Cambria Math/B" (it probably
+(fontspec)             doesn't exist).
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'CambriaMath(1)' created for font 'Cambria
+(fontspec)             Math' with options
+(fontspec)             [Scale=MatchLowercase,BoldItalicFont={},ItalicFont={},Sm
+allCapsFont={},Script=Math,SizeFeatures={{Size=8.65-},{Size=6.65-8.65,Font=Camb
+ria
+(fontspec)             Math,Style=MathScript},{Size=-6.65,Font=Cambria
+(fontspec)             Math,Style=MathScriptScript}}].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.:
+(fontspec)             <8.65->s*[0.9581558637687509]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;"<6.65-8.65>s*[0.95815
+58637687509]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;+ssty=0;"<-6.65>s*[0.9
+581558637687509]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;+ssty=1;"
+
+LaTeX Font Info:    Font shape `TU/CambriaMath(1)/m/n' will be
+(Font)              scaled to size 9.5816pt on input line 25.
+LaTeX Font Info:    Encoding `OT1' has changed to `TU' for symbol font
+(Font)              `operators' in the math version `normal' on input line 25.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/lmr/m/n --> TU/CambriaMath(1)/m/n on input line 25.
+
+LaTeX Font Info:    Encoding `OT1' has changed to `TU' for symbol font
+(Font)              `operators' in the math version `bold' on input line 25.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/lmr/bx/n --> TU/CambriaMath(1)/b/n on input line 25
+.
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9582516793551278.
+
+
+Package fontspec Info: 
+(fontspec)             Could not resolve font "Cambria Math/B" (it probably
+(fontspec)             doesn't exist).
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9582516793551278.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9582516793551278.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9582516793551278.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'CambriaMath(2)' created for font 'Cambria
+(fontspec)             Math' with options
+(fontspec)             [Scale=MatchLowercase,BoldItalicFont={},ItalicFont={},Sm
+allCapsFont={},Script=Math,SizeFeatures={{Size=8.65-},{Size=6.65-8.65,Font=Camb
+ria
+(fontspec)             Math,Style=MathScript},{Size=-6.65,Font=Cambria
+(fontspec)             Math,Style=MathScriptScript}},ScaleAgain=1.0001,FontAdju
+stment={\fontdimen
+(fontspec)             8\font =7.25171pt\relax \fontdimen 9\font
+(fontspec)             =5.61423pt\relax \fontdimen 10\font =4.39781pt\relax
+(fontspec)             \fontdimen 11\font =6.40958pt\relax \fontdimen 12\font
+(fontspec)             =4.81888pt\relax \fontdimen 13\font =3.5089pt\relax
+(fontspec)             \fontdimen 14\font =3.5089pt\relax \fontdimen 15\font
+(fontspec)             =2.87729pt\relax \fontdimen 16\font =1.95563pt\relax
+(fontspec)             \fontdimen 17\font =1.95563pt\relax \fontdimen 18\font
+(fontspec)             =2.15211pt\relax \fontdimen 19\font =1.49713pt\relax
+(fontspec)             \fontdimen 22\font =2.73694pt\relax \fontdimen 20\font
+(fontspec)             =0pt\relax \fontdimen 21\font =0pt\relax }].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.:
+(fontspec)             <8.65->s*[0.9582516793551278]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;"<6.65-8.65>s*[0.95825
+16793551278]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;+ssty=0;"<-6.65>s*[0.9
+582516793551278]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;+ssty=1;"
+
+LaTeX Font Info:    Encoding `OMS' has changed to `TU' for symbol font
+(Font)              `symbols' in the math version `normal' on input line 25.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
+(Font)                  OMS/lmsy/m/n --> TU/CambriaMath(2)/m/n on input line 25
+.
+LaTeX Font Info:    Encoding `OMS' has changed to `TU' for symbol font
+(Font)              `symbols' in the math version `bold' on input line 25.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
+(Font)                  OMS/lmsy/b/n --> TU/CambriaMath(2)/b/n on input line 25
+.
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.958060048182374.
+
+
+Package fontspec Info: 
+(fontspec)             Could not resolve font "Cambria Math/B" (it probably
+(fontspec)             doesn't exist).
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.958060048182374.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.958060048182374.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.9581558637687509.
+
+
+Package fontspec Info: 
+(fontspec)             Cambria Math scale = 0.958060048182374.
+
+
+Package fontspec Info: 
+(fontspec)             Font family 'CambriaMath(3)' created for font 'Cambria
+(fontspec)             Math' with options
+(fontspec)             [Scale=MatchLowercase,BoldItalicFont={},ItalicFont={},Sm
+allCapsFont={},Script=Math,SizeFeatures={{Size=8.65-},{Size=6.65-8.65,Font=Camb
+ria
+(fontspec)             Math,Style=MathScript},{Size=-6.65,Font=Cambria
+(fontspec)             Math,Style=MathScriptScript}},ScaleAgain=0.9999,FontAdju
+stment={\fontdimen
+(fontspec)             8\font =0.62224pt\relax \fontdimen 9\font
+(fontspec)             =0.62224pt\relax \fontdimen 10\font =0.62224pt\relax
+(fontspec)             \fontdimen 11\font =2.33926pt\relax \fontdimen 12\font
+(fontspec)             =5.80136pt\relax \fontdimen 13\font =0pt\relax }].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.:
+(fontspec)             <8.65->s*[0.958060048182374]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;"<6.65-8.65>s*[0.95806
+0048182374]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;+ssty=0;"<-6.65>s*[0.9
+58060048182374]"Cambria
+(fontspec)             Math/OT:script=math;language=dflt;+ssty=1;"
+
+LaTeX Font Info:    Encoding `OMX' has changed to `TU' for symbol font
+(Font)              `largesymbols' in the math version `normal' on input line 2
+5.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
+(Font)                  OMX/lmex/m/n --> TU/CambriaMath(3)/m/n on input line 25
+.
+LaTeX Font Info:    Encoding `OMX' has changed to `TU' for symbol font
+(Font)              `largesymbols' in the math version `bold' on input line 25.
+
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
+(Font)                  OMX/lmex/m/n --> TU/CambriaMath(3)/b/n on input line 25
+.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/upquote\upquote.sty
+Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verba
+tim
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/base\textcomp.sty
+Package: textcomp 2024/04/24 v2.1b Standard LaTeX package
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype.sty
+Package: microtype 2026/03/01 v3.2d Micro-typographical refinements (RS)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count311
+)
+\MT@toks=\toks24
+\MT@tempbox=\box55
+\MT@count=\count312
+LaTeX Info: Redefining \noprotrusionifhmode on input line 1084.
+LaTeX Info: Redefining \leftprotrusion on input line 1085.
+\MT@prot@toks=\toks25
+LaTeX Info: Redefining \rightprotrusion on input line 1104.
+LaTeX Info: Redefining \textls on input line 1449.
+\MT@outer@kern=\dimen169
+LaTeX Info: Redefining \microtypecontext on input line 2053.
+LaTeX Info: Redefining \textmicrotypecontext on input line 2070.
+\MT@listname@count=\count313
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype-xet
+ex.def
+File: microtype-xetex.def 2026/03/01 v3.2d Definitions specific to xetex (RS)
+LaTeX Info: Redefining \lsstyle on input line 443.
+LaTeX Info: Redefining \lslig on input line 451.
+\MT@outer@space=\skip54
+)
+Package microtype Info: Loading configuration file microtype.cfg.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype.cfg
+File: microtype.cfg 2026/03/01 v3.2d microtype main configuration file (RS)
+)
+LaTeX Info: Redefining \microtypesetup on input line 3065.
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/parskip\parskip.sty
+Package: parskip 2021-03-14 v2.0h non-zero parskip adjustments
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
+))) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/tools\longtable.sty
+Package: longtable 2025-10-13 v4.24 Multi-page Table package (DPC)
+\LTleft=\skip55
+\LTright=\skip56
+\LTpre=\skip57
+\LTpost=\skip58
+\LTchunksize=\count314
+\LTcapwidth=\dimen170
+\LT@head=\box56
+\LT@firsthead=\box57
+\LT@foot=\box58
+\LT@lastfoot=\box59
+\LT@gbox=\box60
+\LT@cols=\count315
+\LT@rows=\count316
+\c@LT@tables=\count317
+\c@LT@chunks=\count318
+\LT@p@ftn=\toks26
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
+Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
+\heavyrulewidth=\dimen171
+\lightrulewidth=\dimen172
+\cmidrulewidth=\dimen173
+\belowrulesep=\dimen174
+\belowbottomsep=\dimen175
+\aboverulesep=\dimen176
+\abovetopsep=\dimen177
+\cmidrulesep=\dimen178
+\cmidrulekern=\dimen179
+\defaultaddspace=\dimen180
+\@cmidla=\count319
+\@cmidlb=\count320
+\@aboverulesep=\dimen181
+\@belowrulesep=\dimen182
+\@thisruleclass=\count321
+\@lastruleclass=\count322
+\@thisrulewidth=\dimen183
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
+Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
+\col@sep=\dimen184
+\ar@mcellbox=\box61
+\extrarowheight=\dimen185
+\NC@list=\toks27
+\extratabsurround=\skip59
+\backup@length=\skip60
+\ar@cellbox=\box62
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen186
+\captionmargin=\dimen187
+\caption@leftmargin=\dimen188
+\caption@rightmargin=\dimen189
+\caption@width=\dimen190
+\caption@indent=\dimen191
+\caption@parindent=\dimen192
+\caption@hangindent=\dimen193
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count323
+\c@continuedfloat=\count324
+Package caption Info: longtable package is loaded.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/caption\ltcaption.sty
+Package: ltcaption 2021/01/08 v1.4c longtable captions (AR)
+))
+\c@none=\count325
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/tools\calc.sty
+Package: calc 2025/03/01 v4.3b Infix arithmetic (KKT,FJ)
+\calc@Acount=\count326
+\calc@Bcount=\count327
+\calc@Adimen=\dimen194
+\calc@Bdimen=\dimen195
+\calc@Askip=\skip61
+\calc@Bskip=\skip62
+LaTeX Info: Redefining \setlength on input line 86.
+LaTeX Info: Redefining \addtolength on input line 87.
+\calc@Ccount=\count328
+\calc@Cskip=\skip63
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: xetex.def on input line 106.
+)
+\Gin@req@height=\dimen196
+\Gin@req@width=\dimen197
+)
+\pandoc@box=\box63
+\cslhangindent=\skip64
+\csllabelwidth=\skip65
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
+Package: titlesec 2025/01/04 v2.17 Sectioning titles
+\ttl@box=\box64
+\beforetitleunit=\skip66
+\aftertitleunit=\skip67
+\ttl@plus=\dimen198
+\ttl@minus=\dimen199
+\ttl@toksa=\toks28
+\titlewidth=\dimen256
+\titlewidthlast=\dimen257
+\titlewidthfirst=\dimen258
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty
+Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
+\TX@col@width=\dimen259
+\TX@old@table=\dimen260
+\TX@old@col=\dimen261
+\TX@target=\dimen262
+\TX@delta=\dimen263
+\TX@cols=\count329
+\TX@ftn=\toks29
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/mdframed\mdframed.sty
+Package: mdframed 2013/07/01 1.9b: mdframed
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/zref\zref-abspage.sty
+Package: zref-abspage 2026-09-16 v2.38 Module abspage for zref (HO)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/zref\zref-base.sty
+Package: zref-base 2026-09-16 v2.38 Module base for zref (HO)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
+keys.sty
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode not found.
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/etexcmds\etexcmds.sty
+Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/auxhook\auxhook.sty
+Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
+)
+Package zref Info: New property list: main on input line 772.
+Package zref Info: New property: default on input line 773.
+Package zref Info: New property: page on input line 774.
+)
+\c@abspage=\count330
+Package zref Info: New property: abspage on input line 68.
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/needspace\needspace.sty
+Package: needspace 2025/03/13 v1.3e reserve vertical space
+)
+\mdf@templength=\skip68
+\c@mdf@globalstyle@cnt=\count331
+\mdf@skipabove@length=\skip69
+\mdf@skipbelow@length=\skip70
+\mdf@leftmargin@length=\skip71
+\mdf@rightmargin@length=\skip72
+\mdf@innerleftmargin@length=\skip73
+\mdf@innerrightmargin@length=\skip74
+\mdf@innertopmargin@length=\skip75
+\mdf@innerbottommargin@length=\skip76
+\mdf@splittopskip@length=\skip77
+\mdf@splitbottomskip@length=\skip78
+\mdf@outermargin@length=\skip79
+\mdf@innermargin@length=\skip80
+\mdf@linewidth@length=\skip81
+\mdf@innerlinewidth@length=\skip82
+\mdf@middlelinewidth@length=\skip83
+\mdf@outerlinewidth@length=\skip84
+\mdf@roundcorner@length=\skip85
+\mdf@footenotedistance@length=\skip86
+\mdf@userdefinedwidth@length=\skip87
+\mdf@needspace@length=\skip88
+\mdf@frametitleaboveskip@length=\skip89
+\mdf@frametitlebelowskip@length=\skip90
+\mdf@frametitlerulewidth@length=\skip91
+\mdf@frametitleleftmargin@length=\skip92
+\mdf@frametitlerightmargin@length=\skip93
+\mdf@shadowsize@length=\skip94
+\mdf@extratopheight@length=\skip95
+\mdf@subtitleabovelinewidth@length=\skip96
+\mdf@subtitlebelowlinewidth@length=\skip97
+\mdf@subtitleaboveskip@length=\skip98
+\mdf@subtitlebelowskip@length=\skip99
+\mdf@subtitleinneraboveskip@length=\skip100
+\mdf@subtitleinnerbelowskip@length=\skip101
+\mdf@subsubtitleabovelinewidth@length=\skip102
+\mdf@subsubtitlebelowlinewidth@length=\skip103
+\mdf@subsubtitleaboveskip@length=\skip104
+\mdf@subsubtitlebelowskip@length=\skip105
+\mdf@subsubtitleinneraboveskip@length=\skip106
+\mdf@subsubtitleinnerbelowskip@length=\skip107
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.
+sty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.st
+y
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-common.tex
+\pgfutil@everybye=\toks30
+\pgfutil@tempdima=\dimen264
+\pgfutil@tempdimb=\dimen265
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-latex.def
+\pgfutil@abb=\box65
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.
+code.tex
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
+))
+Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.
+sty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.
+sty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s.code.tex
+Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex
+\pgfkeys@pathtoks=\toks31
+\pgfkeys@temptoks=\toks32
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+libraryfiltered.code.tex
+\pgfkeys@tmptoks=\toks33
+))
+\pgf@x=\dimen266
+\pgf@y=\dimen267
+\pgf@xa=\dimen268
+\pgf@ya=\dimen269
+\pgf@xb=\dimen270
+\pgf@yb=\dimen271
+\pgf@xc=\dimen272
+\pgf@yc=\dimen273
+\pgf@xd=\dimen274
+\pgf@yd=\dimen275
+\w@pgf@writea=\write3
+\r@pgf@reada=\read2
+\c@pgf@counta=\count332
+\c@pgf@countb=\count333
+\c@pgf@countc=\count334
+\c@pgf@countd=\count335
+\t@pgf@toka=\toks34
+\t@pgf@tokb=\toks35
+\t@pgf@tokc=\toks36
+\pgf@sys@id@count=\count336
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.c
+fg
+File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
+)
+Driver file for pgf: pgfsys-xetex.def
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-xetex.def
+File: pgfsys-xetex.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-dvipdfmx.def
+File: pgfsys-dvipdfmx.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-common-pdf.def
+File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+)
+\pgfsys@objnum=\count337
+)))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+ssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfsyssoftpath@smallbuffer@items=\count338
+\pgfsyssoftpath@bigbuffer@items=\count339
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+sprotocol.code.tex
+File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+e.code.tex
+Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
+.tex
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathutil.
+code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparse
+r.code.tex
+\pgfmath@dimen=\dimen276
+\pgfmath@count=\count340
+\pgfmath@box=\box66
+\pgfmath@toks=\toks37
+\pgfmath@stack@operand=\toks38
+\pgfmath@stack@operation=\toks39
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.basic.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.trigonometric.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.random.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.comparison.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.base.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.round.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.misc.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.integerarithmetics.code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcalc.
+code.tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat
+.code.tex
+\c@pgfmathroundto@lastzeros=\count341
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.
+tex)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epoints.code.tex
+File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@picminx=\dimen277
+\pgf@picmaxx=\dimen278
+\pgf@picminy=\dimen279
+\pgf@picmaxy=\dimen280
+\pgf@pathminx=\dimen281
+\pgf@pathmaxx=\dimen282
+\pgf@pathminy=\dimen283
+\pgf@pathmaxy=\dimen284
+\pgf@xx=\dimen285
+\pgf@xy=\dimen286
+\pgf@yx=\dimen287
+\pgf@yy=\dimen288
+\pgf@zx=\dimen289
+\pgf@zy=\dimen290
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathconstruct.code.tex
+File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@path@lastx=\dimen291
+\pgf@path@lasty=\dimen292
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathusage.code.tex
+File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@shorten@end@additional=\dimen293
+\pgf@shorten@start@additional=\dimen294
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+escopes.code.tex
+File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfpic=\box67
+\pgf@hbox=\box68
+\pgf@layerbox@main=\box69
+\pgf@picture@serial@count=\count342
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+egraphicstate.code.tex
+File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgflinewidth=\dimen295
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+etransformations.code.tex
+File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@pt@x=\dimen296
+\pgf@pt@y=\dimen297
+\pgf@pt@temp=\dimen298
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+equick.code.tex
+File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eobjects.code.tex
+File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathprocessing.code.tex
+File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+earrows.code.tex
+File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowsep=\dimen299
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eshade.code.tex
+File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@max=\dimen300
+\pgf@sys@shading@range@num=\count343
+\pgf@shadingcount=\count344
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eimage.code.tex
+File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eexternal.code.tex
+File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfexternal@startupbox=\box70
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+elayers.code.tex
+File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+etransparency.code.tex
+File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epatterns.code.tex
+File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+erdf.code.tex
+File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+shapes.code.tex
+File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodeparttextbox=\box71
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+plot.code.tex
+File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
+mp-version-0-65.sty
+Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@nodesepstart=\dimen301
+\pgf@nodesepend=\dimen302
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
+mp-version-1-18.sty
+Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.st
+y
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys.s
+ty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
+.tex))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.
+code.tex
+Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
+\pgffor@iter=\dimen303
+\pgffor@skip=\dimen304
+\pgffor@stack=\toks40
+\pgffor@toks=\toks41
+))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z\tikz.code.tex
+Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
+aryplothandlers.code.tex
+File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@plot@mark@count=\count345
+\pgfplotmarksize=\dimen305
+)
+\tikz@lastx=\dimen306
+\tikz@lasty=\dimen307
+\tikz@lastxsaved=\dimen308
+\tikz@lastysaved=\dimen309
+\tikz@lastmovetox=\dimen310
+\tikz@lastmovetoy=\dimen311
+\tikzleveldistance=\dimen312
+\tikzsiblingdistance=\dimen313
+\tikz@figbox=\box72
+\tikz@figbox@bg=\box73
+\tikz@tempbox=\box74
+\tikz@tempbox@bg=\box75
+\tikztreelevel=\count346
+\tikznumberofchildren=\count347
+\tikznumberofcurrentchild=\count348
+\tikz@fig@count=\count349
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+matrix.code.tex
+File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfmatrixcurrentrow=\count350
+\pgfmatrixcurrentcolumn=\count351
+\pgf@matrix@numberofcolumns=\count352
+)
+\tikz@expandcount=\count353
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/mdframed\md-frame-1.mdf
+File: md-frame-1.mdf 2013/07/01\ 1.9b: md-frame-1
+)
+\mdf@frametitlebox=\box76
+\mdf@footnotebox=\box77
+\mdf@splitbox@one=\box78
+\mdf@splitbox@two=\box79
+\mdf@splitbox@save=\box80
+\mdfsplitboxwidth=\skip108
+\mdfsplitboxtotalwidth=\skip109
+\mdfsplitboxheight=\skip110
+\mdfsplitboxdepth=\skip111
+\mdfsplitboxtotalheight=\skip112
+\mdfframetitleboxwidth=\skip113
+\mdfframetitleboxtotalwidth=\skip114
+\mdfframetitleboxheight=\skip115
+\mdfframetitleboxdepth=\skip116
+\mdfframetitleboxtotalheight=\skip117
+\mdffootnoteboxwidth=\skip118
+\mdffootnoteboxtotalwidth=\skip119
+\mdffootnoteboxheight=\skip120
+\mdffootnoteboxdepth=\skip121
+\mdffootnoteboxtotalheight=\skip122
+\mdftotallinewidth=\skip123
+\mdfboundingboxwidth=\skip124
+\mdfboundingboxtotalwidth=\skip125
+\mdfboundingboxheight=\skip126
+\mdfboundingboxdepth=\skip127
+\mdfboundingboxtotalheight=\skip128
+\mdf@freevspace@length=\skip129
+\mdf@horizontalwidthofbox@length=\skip130
+\mdf@verticalmarginwhole@length=\skip131
+\mdf@horizontalspaceofbox=\skip132
+\mdfsubtitleheight=\skip133
+\mdfsubsubtitleheight=\skip134
+\c@mdfcountframes=\count354
+
+****** mdframed patching \endmdf@trivlist
+
+****** -- success******
+
+\mdf@envdepth=\count355
+\c@mdf@env@i=\count356
+\c@mdf@env@ii=\count357
+\c@mdf@zref@counter=\count358
+Package zref Info: New property: mdf@pagevalue on input line 895.
+)
+\c@kcorappendix=\count359
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/ragged2e\ragged2e.sty
+Package: ragged2e 2023/06/22 v3.6 ragged2e Package
+\CenteringLeftskip=\skip135
+\RaggedLeftLeftskip=\skip136
+\RaggedRightLeftskip=\skip137
+\CenteringRightskip=\skip138
+\RaggedLeftRightskip=\skip139
+\RaggedRightRightskip=\skip140
+\CenteringParfillskip=\skip141
+\RaggedLeftParfillskip=\skip142
+\RaggedRightParfillskip=\skip143
+\JustifyingParfillskip=\skip144
+\CenteringParindent=\skip145
+\RaggedLeftParindent=\skip146
+\RaggedRightParindent=\skip147
+\JustifyingParindent=\skip148
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/bookmark\bookmark.sty
+Package: bookmark 2026-05-21 v1.32 PDF bookmarks (HO)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+Package: hyperref 2025-07-12 v7.01o Hypertext links for LaTeX
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
+ty
+Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
+Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+Package: nameref 2025-06-21 v2.57 Cross-referencing by name of section
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
+Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
+lestring.sty
+Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
+)
+\c@section@level=\count360
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
+ty
+Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
+)
+)
+\@linkdim=\dimen314
+\Hy@linkcounter=\count361
+\Hy@pagecounter=\count362
+ (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
+File: pd1enc.def 2025-07-12 v7.01o Hyperref: PDFDocEncoding definition (HO)
+) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
+)
+\Hy@SavedSpaceFactor=\count363
+ (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
+File: puenc.def 2025-07-12 v7.01o Hyperref: PDF Unicode definition (HO)
+)
+Package hyperref Info: Option `unicode' set `true' on input line 4066.
+Package hyperref Info: Hyper figures OFF on input line 4195.
+Package hyperref Info: Link nesting OFF on input line 4200.
+Package hyperref Info: Hyper index ON on input line 4203.
+Package hyperref Info: Plain pages OFF on input line 4210.
+Package hyperref Info: Backreferencing OFF on input line 4215.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4462.
+\c@Hy@tempcnt=\count364
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
+\Urlmuskip=\muskip19
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 4801.
+\XeTeXLinkMargin=\dimen315
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
+.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
+)
+))
+\Fld@menulength=\count365
+\Field@Width=\dimen316
+\Fld@charsize=\dimen317
+Package hyperref Info: Hyper figures OFF on input line 6078.
+Package hyperref Info: Link nesting OFF on input line 6083.
+Package hyperref Info: Hyper index ON on input line 6086.
+Package hyperref Info: backreferencing OFF on input line 6093.
+Package hyperref Info: Link coloring OFF on input line 6098.
+Package hyperref Info: Link coloring with OCG OFF on input line 6103.
+Package hyperref Info: PDF/A mode OFF on input line 6108.
+\Hy@abspage=\count366
+\c@Item=\count367
+\c@Hfootnote=\count368
+)
+Package hyperref Info: Driver (autodetected): hxetex.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hxetex.def
+File: hxetex.def 2025-07-12 v7.01o Hyperref driver for XeTeX
+\pdfm@box=\box81
+\c@Hy@AnnotLevel=\count369
+\HyField@AnnotCount=\count370
+\Fld@listcount=\count371
+\c@bookmark@seq@number=\count372
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
+echeck.sty
+Package: rerunfilecheck 2025-06-21 v1.11 Rerun checks for auxiliary files (HO)
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
+ounter.sty
+Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
+)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+84.
+)
+\Hy@SectionHShift=\skip149
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/bookmark\bkm-xetex.def
+File: bkm-xetex.def 2026-05-21 v1.32 bookmark driver for xetex (HO)
+\BKM@id=\count373
+)) (C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/xurl\xurl.sty
+Package: xurl 2022/01/09 v 0.10 modify URL breaks
+)
+(paper.aux)
+\openout1 = `paper.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 204.
+LaTeX Font Info:    ... okay on input line 204.
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: xetex
+*geometry* verbose mode - [ preamble ] result:
+* driver: xetex
+* paper: <default>
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(72.26999pt, 469.75502pt, 72.26999pt)
+* v-part:(T,H,B)=(72.26999pt, 650.43001pt, 72.26999pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=469.75502pt
+* \textheight=650.43001pt
+* \oddsidemargin=0.0pt
+* \evensidemargin=0.0pt
+* \topmargin=-37.0pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=65.0pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
+(Font)                  OT1/lmss/m/n --> TU/lmss/m/n on input line 204.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  OT1/lmss/bx/n --> TU/lmss/b/n on input line 204.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
+(Font)                  OT1/lmtt/m/n --> TU/lmtt/m/n on input line 204.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  OT1/lmtt/m/n --> TU/lmtt/b/n on input line 204.
+LaTeX Info: Redefining \microtypecontext on input line 204.
+Package microtype Info: Applying patch `item' on input line 204.
+Package microtype Info: Applying patch `toc' on input line 204.
+Package microtype Info: Applying patch `eqnum' on input line 204.
+Package microtype Info: Applying patch `footnote' on input line 204.
+Package microtype Info: Applying patch `verbatim' on input line 204.
+LaTeX Info: Redefining \microtypesetup on input line 204.
+Package microtype Info: Character protrusion enabled (level 2).
+Package microtype Info: Using protrusion set `basicmath'.
+Package microtype Info: No adjustment of tracking.
+Package microtype Info: No adjustment of spacing.
+Package microtype Info: No adjustment of kerning.
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `TimesNewRoman' (encoding: TU).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: hyperref package is loaded.
+Package caption Info: End \AtBeginDocument code.
+Package hyperref Info: Link coloring OFF on input line 204.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/m/n' will be
+(Font)              scaled to size 14.4pt on input line 208.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/b/n' will be
+(Font)              scaled to size 14.4pt on input line 208.
+
+Underfull \hbox (badness 10000) in paragraph at lines 208--208
+|\TU/TimesNewRoman(0)/b/n/14.4 KCOR: A depletion-neutralized framework for retr
+ospective cohort
+ []
+
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/m/n' will be
+(Font)              scaled to size 12.0pt on input line 210.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/b/n' will be
+(Font)              scaled to size 12.0pt on input line 210.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/b/n' will be
+(Font)              scaled to size 10.0pt on input line 215.
+LaTeX Font Info:    Font shape `TU/CambriaMath(1)/m/n' will be
+(Font)              scaled to size 6.99457pt on input line 245.
+LaTeX Font Info:    Font shape `TU/CambriaMath(1)/m/n' will be
+(Font)              scaled to size 5.74896pt on input line 245.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 2
+45.
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
+File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+LaTeX Font Info:    Font shape `TU/CambriaMath(2)/m/n' will be
+(Font)              scaled to size 9.58252pt on input line 245.
+LaTeX Font Info:    Font shape `TU/CambriaMath(2)/m/n' will be
+(Font)              scaled to size 6.99524pt on input line 245.
+LaTeX Font Info:    Font shape `TU/CambriaMath(2)/m/n' will be
+(Font)              scaled to size 5.74951pt on input line 245.
+LaTeX Font Info:    Font shape `TU/CambriaMath(3)/m/n' will be
+(Font)              scaled to size 9.58054pt on input line 245.
+LaTeX Font Info:    Font shape `TU/CambriaMath(3)/m/n' will be
+(Font)              scaled to size 6.99379pt on input line 245.
+LaTeX Font Info:    Font shape `TU/CambriaMath(3)/m/n' will be
+(Font)              scaled to size 5.74832pt on input line 245.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 245
+.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msa.cfg
+File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 245
+.
+
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+(C:\Users\jasmi\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-msb.cfg
+File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
+)
+Underfull \hbox (badness 1371) in paragraph at lines 237--275
+\TU/TimesNewRoman(0)/m/n/10 cumulative hazards, biasing standard survival estim
+ands in retrospective cohort studies using registry and 
+ []
+
+
+Underfull \hbox (badness 2229) in paragraph at lines 281--286
+\TU/TimesNewRoman(0)/m/n/10 Randomized controlled trials (RCTs) are the gold st
+andard for causal inference, but are often infeasible, 
+ []
+
+[1
+
+]
+Underfull \hbox (badness 1107) in paragraph at lines 318--326
+\TU/TimesNewRoman(0)/m/n/10 of the cumulative hazard even when individual-level
+ hazards are simple functions of time. When selection 
+ []
+
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/m/it' will be
+(Font)              scaled to size 10.0pt on input line 402.
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--408
+[]\TU/TimesNewRoman(0)/b/n/10 Traditional matching and regression approaches: \
+TU/TimesNewRoman(0)/m/n/10 attempt to construct comparable cohorts by matching
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--408
+\TU/TimesNewRoman(0)/m/n/10 or adjusting \TU/TimesNewRoman(0)/m/it/10 character
+istics of living individuals \TU/TimesNewRoman(0)/m/n/10 at baseline or over fo
+llow-up, and then estimating effects
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 400--408
+\TU/TimesNewRoman(0)/m/n/10 via a fitted hazard model (e.g., Cox proportional h
+azards). This implicitly assumes that sufficiently rich
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 408--414
+[]\TU/TimesNewRoman(0)/b/n/10 Problem under latent frailty: \TU/TimesNewRoman(0
+)/m/n/10 even meticulous 1:1 matching on observed covariates can fail to equali
+ze
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 408--414
+\TU/TimesNewRoman(0)/m/n/10 mortality risk trajectories. In such settings, coho
+rt differences arise not from mismeasured covariates, but
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 414--423
+[]\TU/TimesNewRoman(0)/b/n/10 KCOR strategy: \TU/TimesNewRoman(0)/m/n/10 rather
+ than equating cohorts based on characteristics of the living, KCOR equates coh
+orts
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 414--423
+\TU/TimesNewRoman(0)/m/n/10 based on how they die in aggregate. It estimates co
+hort-specific enrollment-time depletion geometry
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 414--423
+\TU/TimesNewRoman(0)/m/n/10 through a Gompertz-plus-frailty working model
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 414--423
+\TU/TimesNewRoman(0)/m/n/10 adjusts for that geometry via analytic inversion un
+der the working model, and compares cohorts on the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 423--430
+[]\TU/TimesNewRoman(0)/b/n/10 Inferential distinction: \TU/TimesNewRoman(0)/m/n
+/10 Cox-type methods are \TU/TimesNewRoman(0)/b/n/10 model-based and individual
+-level\TU/TimesNewRoman(0)/m/n/10 , conditioning on
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 423--430
+\TU/TimesNewRoman(0)/m/n/10 survival and fitting covariate effects, whereas KCO
+R is \TU/TimesNewRoman(0)/b/n/10 measurement-based and cohort-level\TU/TimesNew
+Roman(0)/m/n/10 , operating
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 423--430
+\TU/TimesNewRoman(0)/m/n/10 directly on aggregated mortality trajectories witho
+ut fitting covariate models. The inferential target is
+ []
+
+[2]
+Package mdframed Info: Not enough space on this page on input line 431.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/m/n' will be
+(Font)              scaled to size 7.3pt on input line 439.
+ [3]
+Underfull \hbox (badness 1043) in paragraph at lines 505--509
+[]\TU/TimesNewRoman(0)/m/n/10 Together, these contributions position KCOR not a
+s a replacement for existing survival estimands, but as a 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 519--522
+[]\TU/TimesNewRoman(0)/b/n/10 Primary estimand (KCOR)\TU/TimesNewRoman(0)/m/n/1
+0 : For two fixed enrollment cohorts $[]$ and $[]$, it is a \TU/TimesNewRoman(0
+)/b/n/10 depletion-adjusted
+ []
+
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(1)/m/n' will be
+(Font)              scaled to size 10.0pt on input line 522.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(1)/m/n' will be
+(Font)              scaled to size 7.3pt on input line 522.
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(1)/m/n' will be
+(Font)              scaled to size 6.0pt on input line 522.
+
+Underfull \hbox (badness 10000) in paragraph at lines 522--530
+\TU/TimesNewRoman(0)/m/n/10 where $[][][][]$ is cohort $[]$’s \TU/TimesNewRoman
+(0)/b/n/10 depletion-neutralized baseline cumulative hazard \TU/TimesNewRoman(0
+)/m/n/10 obtained by estimating
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 522--530
+\TU/TimesNewRoman(0)/m/n/10 enrollment-time frailty variance $[][]$ from prespe
+cified quiet windows and applying the gamma-frailty
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 522--530
+\TU/TimesNewRoman(0)/m/n/10 inversion (Methods §2). When the optional NPH cumul
+ative correction is used, the same ratio employs
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+[]\TU/TimesNewRoman(0)/b/n/10 Operational summary\TU/TimesNewRoman(0)/m/n/10 : 
+KCOR proceeds by (i) freezing cohorts and rebasing time after a prespecified
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+\TU/TimesNewRoman(0)/m/n/10 stabilization skip, (ii) estimating $[][]$ with a G
+ompertz-based delta-iteration procedure across prespecified
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+\TU/TimesNewRoman(0)/m/n/10 quiet windows, (iii) applying gamma-frailty inversi
+on to the full post-enrollment cumulative hazard
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+\TU/TimesNewRoman(0)/m/n/10 trajectory, (iv) optionally applying the NPH correc
+tion to \TU/TimesNewRoman(0)/b/n/10 frailty-neutral cumulative hazard \TU/Times
+NewRoman(0)/m/n/10 after
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+\TU/TimesNewRoman(0)/m/n/10 inversion when prespecified (§2.7.3), not to raw ha
+zard, and (v) comparing cohorts on that scale. Steps
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+\TU/TimesNewRoman(0)/m/n/10 (i)–(iii) and (v) define the \TU/TimesNewRoman(0)/b
+/n/10 core \TU/TimesNewRoman(0)/m/n/10 pipeline; step (iv) is \TU/TimesNewRoman
+(0)/b/n/10 optional\TU/TimesNewRoman(0)/m/n/10 . When $[]$ is not identified, s
+tep (iv) is \TU/TimesNewRoman(0)/b/n/10 inactive
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 530--545
+\TU/TimesNewRoman(0)/m/n/10 and does not affect reported results. In epidemic-w
+ave settings, localization of $[]$ requires \TU/TimesNewRoman(0)/b/n/10 externa
+lly
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 545--557
+[]\TU/TimesNewRoman(0)/b/n/10 Interpretation\TU/TimesNewRoman(0)/m/n/10 : KCOR 
+is a time-indexed \TU/TimesNewRoman(0)/b/n/10 cumulative \TU/TimesNewRoman(0)/m
+/n/10 contrast on the depletion-neutralized scale. Values
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 545--557
+\TU/TimesNewRoman(0)/m/n/10 above/below 1 indicate greater/less cumulative even
+t accumulation in cohort $[]$ than $[]$ by time $[]$ after
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 545--557
+\TU/TimesNewRoman(0)/m/n/10 depletion normalization. KCOR is not an instantaneo
+us hazard ratio. It should be read as a \TU/TimesNewRoman(0)/b/n/10 diagnostic
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 545--557
+\TU/TimesNewRoman(0)/m/n/10 signal about persistent contrasts after working-mod
+el depletion adjustment, not—by itself—as evidence of
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 545--557
+\TU/TimesNewRoman(0)/m/n/10 causal harm or benefit. In particular, baseline dif
+ferences that operate through depletion geometry are
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 545--557
+\TU/TimesNewRoman(0)/m/n/10 adjusted out; residual differences should be interp
+reted as what remains after that depletion-based
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 557--561
+[]\TU/TimesNewRoman(0)/b/n/10 What it is not\TU/TimesNewRoman(0)/m/n/10 : KCOR 
+is \TU/TimesNewRoman(0)/b/n/10 not \TU/TimesNewRoman(0)/m/n/10 a causal effect 
+estimator (no ATE/ATT) and does not recover counterfactual
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--572
+[]\TU/TimesNewRoman(0)/b/n/10 When interpretable\TU/TimesNewRoman(0)/m/n/10 : I
+nterpretation is conditional on explicit assumptions (fixed cohorts; shared ext
+ernal
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--572
+\TU/TimesNewRoman(0)/m/n/10 hazard environment; adequacy of the working frailty
+ model; identifiability of $[][]$ from prespecified quiet
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--572
+\TU/TimesNewRoman(0)/m/n/10 windows; structured additivity of persistent wave o
+ffsets when the delta estimator is used) \TU/TimesNewRoman(0)/b/n/10 and \TU/Ti
+mesNewRoman(0)/m/n/10 on internal
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--572
+\TU/TimesNewRoman(0)/m/n/10 diagnostics (quiet-window fit quality; agreement wi
+th the fitted cumulative Gompertz shape within quiet
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 561--572
+\TU/TimesNewRoman(0)/m/n/10 windows; multi-window consistency; parameter stabil
+ity to perturbation; and, when relevant, identifiability
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 572--575
+[]\TU/TimesNewRoman(0)/b/n/10 If diagnostics indicate non-identifiability\TU/Ti
+mesNewRoman(0)/m/n/10 : the analysis is treated as not identified and KCOR is n
+ot
+ []
+
+
+Package mdframed Warning: You got a bad break
+(mdframed)                because the last box will be empty
+(mdframed)                you have to change it manually
+(mdframed)                by changing the text, the space
+(mdframed)                or something else on input line 576.
+
+[4]
+Underfull \hbox (badness 1917) in paragraph at lines 611--615
+[]\TU/TimesNewRoman(0)/b/n/10 Level differences\TU/TimesNewRoman(0)/m/n/10 : co
+hort hazards differ by an approximately time-stable multiplicative factor (or, 
+
+ []
+
+[5]
+File: figures/fig_kcor_empirical_intuition.png Graphic file (type bmp)
+<figures/fig_kcor_empirical_intuition.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 727--727
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 1: |Empirical illustration of the KCOR wor
+kflow on a deterministically selected grouped Czech cohort
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 727--727
+\TU/TimesNewRoman(0)/m/n/10 comparison (2021-07 enrollment, grouped dose 2 vers
+us dose 0 reference). (A) The raw observed cumulative
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 727--727
+\TU/TimesNewRoman(0)/m/n/10 hazards differ in both level and curvature. (B) The
+ earlier monthly normalization adjusted each cohort’s hazards
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 727--727
+\TU/TimesNewRoman(0)/m/n/10 using the slope fitted in its quiet period. The res
+ulting cumulative hazards are more nearly linear. (C) KCOR(t) is
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 727--727
+\TU/TimesNewRoman(0)/m/n/10 then computed as the cumulative contrast on that no
+rmalized scale. This figure is intended to illustrate the geometric
+ []
+
+[6] [7] [8]
+Underfull \hbox (badness 1024) in paragraph at lines 969--973
+[]\TU/TimesNewRoman(0)/m/n/10 Discrete binning accommodates tied events and agg
+regated registry releases. Bin width is chosen based on 
+ []
+
+[9] [10]
+Underfull \hbox (badness 1655) in paragraph at lines 1126--1131
+[]\TU/TimesNewRoman(0)/m/n/10 In contrast, additive or time-varying effects can
+ alter curvature and may be absorbed into $[][]$, leading to 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1144--1150
+\TU/TimesNewRoman(0)/m/n/10 In a quiet interval under the Gompertz–gamma model 
+with proportional survivor history from enrollment (so the
+ []
+
+[11] [12] [13]
+Underfull \hbox (badness 2027) in paragraph at lines 1357--1364
+\TU/TimesNewRoman(0)/m/n/10 The optional NPH module (§2.7.1–§2.7.4) extends the
+ framework to settings with wave-induced hazard 
+ []
+
+LaTeX Font Info:    Font shape `TU/TimesNewRoman(0)/m/n' will be
+(Font)              scaled to size 6.0pt on input line 1377.
+
+Underfull \hbox (badness 1067) in paragraph at lines 1408--1418
+[]\TU/TimesNewRoman(0)/m/n/10 Because $[]$ is not separately identifiable from 
+cohort-specific multiplicative intervention effects in minimal 
+ []
+
+[14]
+Underfull \hbox (badness 2197) in paragraph at lines 1465--1474
+\TU/TimesNewRoman(0)/m/n/10 Under minimal aggregated data, the NPH exponent $[]
+$ is not separately identifiable from cohort-specific 
+ []
+
+[15] [16]
+Underfull \hbox (badness 1215) in paragraph at lines 1598--1606
+[]\TU/TimesNewRoman(0)/m/n/10 The workbook reports the unanchored and anchored 
+ratios separately for individual age strata and directly 
+ []
+
+
+Underfull \hbox (badness 2005) in paragraph at lines 1618--1629
+\TU/TimesNewRoman(0)/m/n/10 (and, when prespecified, the optional NPH correctio
+n on \TU/TimesNewRoman(0)/b/n/10 frailty-neutral cumulative hazard\TU/TimesNewR
+oman(0)/m/n/10 , §2.7.3) to 
+ []
+
+[17]
+Underfull \hbox (badness 1038) in paragraph at lines 1707--1712
+[]\TU/TimesNewRoman(0)/b/n/10 Recompute KCOR. \TU/TimesNewRoman(0)/m/n/10 Compu
+te $[][][][]$ for each bootstrap replicate as the ratio of the per-replicate 
+ []
+
+[18]
+File: figures/fig_kcor_workflow.png Graphic file (type bmp)
+<figures/fig_kcor_workflow.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 2: |\TU/TimesNewRoman(0)/b/n/10 KCOR workf
+low: four-step $[][]$ estimation, then normalization and comparison. (A) \TU/Ti
+mesNewRoman(0)/m/n/10 Fixed-cohort
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 cumulative hazards are stabilized after enrollment,
+ and event time is rebased so that frailty identification targets
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 enrollment-time $[][]$. \TU/TimesNewRoman(0)/b/n/10
+ (B) \TU/TimesNewRoman(0)/m/n/10 Steps 1-4 estimate $[][]$: a seed Gompertz fit
+ is obtained in the nearest quiet window, the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 effective cumulative hazard is reconstructed over t
+he full trajectory using all weeks, persistent offsets are aligned
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 across quiet windows, and $[][]$ and $[][]$ are joi
+ntly refit across the pooled quiet windows. Reconstruction, offset
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 alignment, and pooled refitting iterate to converge
+nce before gamma-frailty inversion and KCOR computation. \TU/TimesNewRoman(0)/b
+/n/10 (C)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 In epidemic-wave applications, an optional NPH expo
+nent module may localize $[]$ using \TU/TimesNewRoman(0)/b/n/10 externally supp
+lied VE or
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/b/n/10 other prespecified intervention-effect scale \TU/Ti
+mesNewRoman(0)/m/n/10 and use the specified nonlinear survivor law consistently
+ for fitting and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 inversion (§2.7); it is not part of the universal K
+COR core and is interpreted only when identification diagnostics are
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1826--1826
+\TU/TimesNewRoman(0)/m/n/10 credible. \TU/TimesNewRoman(0)/m/it/10 This schemat
+ic is illustrative rather than empirical. In the schematic, $[][][][]$ denotes 
+the depletion-
+ []
+
+[19]
+Underfull \hbox (badness 1472) in paragraph at lines 1911--1917
+[]\TU/TimesNewRoman(0)/m/n/10 For each simulated dataset, a standard Cox propor
+tional hazards model was fitted using partial likelihood 
+ []
+
+[20]
+File: figures/fig_cox_bias_hr_vs_theta.png Graphic file (type bmp)
+<figures/fig_cox_bias_hr_vs_theta.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2006--2006
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 3: |Cox regression produces spurious non-n
+ull hazard ratios under a \TU/TimesNewRoman(0)/m/it/10 synthetic null \TU/Times
+NewRoman(0)/m/n/10 as frailty heterogeneity
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2006--2006
+\TU/TimesNewRoman(0)/m/n/10 increases. Hazard ratios (with 95% confidence inter
+vals) from Cox proportional hazards regression comparing cohort
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2006--2006
+\TU/TimesNewRoman(0)/m/n/10 B to cohort A in simulations where the true treatme
+nt effect is identically zero and cohorts differ only in
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2006--2006
+\TU/TimesNewRoman(0)/m/n/10 enrollment-time frailty variance ($[][]$). Deviatio
+ns from HR=1 arise solely from frailty-driven depletion and associated
+ []
+
+File: figures/fig_cox_bias_kcor_vs_theta.png Graphic file (type bmp)
+<figures/fig_cox_bias_kcor_vs_theta.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2029--2029
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 4: |$[][][][]$ stays near the null benchma
+rk under a synthetic null across increasing frailty heterogeneity. In
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2029--2029
+\TU/TimesNewRoman(0)/m/n/10 these simulations, $[][][][]$ asymptotes remain nea
+r 1 across $[][]$, which is the diagnostic behavior expected under
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2029--2029
+\TU/TimesNewRoman(0)/m/n/10 the working model rather than proof that the model 
+is true or that all confounding has been removed. Error bars show
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2029--2029
+\TU/TimesNewRoman(0)/m/n/10 pointwise 95% person-bootstrap intervals for week-5
+2 KCOR, with the generating frailty variances held fixed. All
+ []
+
+File: figures/fig_estimator_bias_vs_theta.png Graphic file (type bmp)
+<figures/fig_estimator_bias_vs_theta.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2060--2060
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 5: |Estimator bias as a function of enroll
+ment-time frailty variance $[][]$ on the synthetic-null grid (true
+ []
+
+
+Underfull \hbox (badness 7433) in paragraph at lines 2060--2060
+\TU/TimesNewRoman(0)/m/n/10 hazard ratio 1; true KCOR asymptote 1). \TU/TimesNe
+wRoman(0)/b/n/10 Cox: \TU/TimesNewRoman(0)/m/n/10 standard Cox hazard ratio bia
+s, $[] [] []$. \TU/TimesNewRoman(0)/b/n/10 KCOR: \TU/TimesNewRoman(0)/m/n/10 as
+ymptotic $[]$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2060--2060
+\TU/TimesNewRoman(0)/m/n/10 from the null-case bias observed in Table []10[] (p
+roportional attenuation of each standard Cox $[]$ toward 1 using the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2060--2060
+\TU/TimesNewRoman(0)/m/n/10 ratio of deviations from 1 in that table’s gamma-fr
+ailty null row), \TU/TimesNewRoman(0)/b/n/10 not \TU/TimesNewRoman(0)/m/n/10 a 
+full re-estimation of shared-frailty Cox at
+ []
+
+[21] [22] [23] [24] [25]
+File: figures/fig2_neg_control_10yr_age_diff.png Graphic file (type bmp)
+<figures/fig2_neg_control_10yr_age_diff.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2310--2310
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 6: |Empirical negative control with approx
+imately 10-year age difference between cohorts. Despite large
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2310--2310
+\TU/TimesNewRoman(0)/m/n/10 baseline mortality differences, $[][][][]$ is expec
+ted to be approximately horizontal under the pseudo-null, subject to
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2310--2310
+\TU/TimesNewRoman(0)/m/n/10 sampling stochasticity. Curves are shown as anchore
+d $[][][][] [][][]$, i.e., $[][][][][][][][][][]$, which removes
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2310--2310
+\TU/TimesNewRoman(0)/m/n/10 weeks (i.e., plotted as $[][][][] [][][]$). Cumulat
+ive hazard is indexed from week 4 following enrollment. Uncertainty
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2310--2310
+\TU/TimesNewRoman(0)/m/n/10 bands (95% bootstrap intervals) are shown. Data sou
+rce: Czech Republic mortality and vaccination dataset processed
+ []
+
+[26] [27] [28]
+File: figures/fig_quiet_contam_kcor_asymptote.png Graphic file (type bmp)
+<figures/fig_quiet_contam_kcor_asymptote.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2467--2467
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 7: |Mean anchored KCOR asymptote versus co
+ntamination magnitude. The left and center panels show the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2467--2467
+\TU/TimesNewRoman(0)/m/n/10 dynamic and comorbidity sweeps with pointwise 95 pe
+rcent Monte Carlo confidence intervals for the means. The
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2467--2467
+\TU/TimesNewRoman(0)/m/n/10 right panel shows mean KCOR on the combined grid. E
+ach cell uses 20 simulations. Baseline hazard scale
+ []
+
+File: figures/fig_quiet_contam_theta_error.png Graphic file (type bmp)
+<figures/fig_quiet_contam_theta_error.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2485--2485
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 8: |Left and center: mean $[]$ error versu
+s contamination magnitude for Types 1 and 2.
+ []
+
+[29]
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
+[]\TU/TimesNewRoman(0)/m/n/10 Table 1: |Selected cells from quiet-window contam
+ination experiment.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2503--2503
+\TU/TimesNewRoman(0)/m/n/10 as the reference. Brackets give pointwise 95 percen
+t Monte Carlo confidence intervals for the means from 20
+ []
+
+
+Underfull \hbox (badness 1005) in paragraph at lines 2554--2566
+\TU/TimesNewRoman(0)/m/n/10 These Monte Carlo intervals concern means, not indi
+vidual endpoints. The nonnegative variance boundary 
+ []
+
+File: figures/fig_alpha_synthetic_recovery.png Graphic file (type bmp)
+<figures/fig_alpha_synthetic_recovery.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2621--2621
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 9: |Synthetic validation of NPH exponent r
+ecovery. Estimated $[]$ versus true $[]$ under the historical
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2621--2621
+\TU/TimesNewRoman(0)/m/n/10 amplification formula, shown separately for the bas
+eline synthetic branch (A) and a harder heteroskedastic branch
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2621--2621
+\TU/TimesNewRoman(0)/m/n/10 (B). Both pairwise and collapse estimators recover 
+$[]$ with low bias when cross-cohort depletion geometry differs.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2621--2621
+\TU/TimesNewRoman(0)/m/n/10 The heteroskedastic branch shows reduced precision 
+rather than structural failure. Error bars show replicate standard
+ []
+
+[30]
+File: figures/fig_alpha_czech_objective.png Graphic file (type bmp)
+<figures/fig_alpha_czech_objective.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2658--2658
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 10: |Comparison of historical and updated 
+illustrative objective profiles; lower-boundary optima do not
+ []
+
+File: figures/fig_alpha_czech_diagnostics.png Graphic file (type bmp)
+<figures/fig_alpha_czech_diagnostics.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 2700--2700
+[]\TU/TimesNewRoman(0)/m/n/10 Figure 11: |Diagnostics for $[]$ estimation under
+ the Czech primary specification. (A) Leave-one-cohort-out analysis
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2700--2700
+\TU/TimesNewRoman(0)/m/n/10 shows that several cohort omissions materially affe
+ct $[]$, indicating uneven identifying information. (B) The bootstrap
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2700--2700
+\TU/TimesNewRoman(0)/m/n/10 distribution is broad and concentrates heavily at t
+he grid boundaries, consistent with weak localization of the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2700--2700
+\TU/TimesNewRoman(0)/m/n/10 optimum. (C) Segmented analyses exhibit reduced agr
+eement and occasional boundary-seeking behavior relative to
+ []
+
+[31] [32]
+Underfull \hbox (badness 1259) in paragraph at lines 2728--2731
+[]\TU/TimesNewRoman(0)/m/n/10 Future work may explore whether alternative cohor
+t constructions or stronger cross-cohort variation yield 
+ []
+
+[33] [34] [35]
+Underfull \hbox (badness 1210) in paragraph at lines 3005--3023
+\TU/TimesNewRoman(0)/m/n/10 through a time-invariant frailty distribution, for 
+which the gamma family provides a convenient and 
+ []
+
+
+Underfull \hbox (badness 1253) in paragraph at lines 3038--3047
+\TU/TimesNewRoman(0)/m/n/10 pathological simulations, and diagnostic failure de
+monstrations. This structure reflects the diagnostic-first 
+ []
+
+[36]
+Underfull \hbox (badness 1199) in paragraph at lines 3097--3101
+[]\TU/TimesNewRoman(0)/b/n/10 Fit residuals in hazard space \TU/TimesNewRoman(0
+)/m/n/10 (RMSE, residual plots) and stability of fitted parameters under small 
+
+ []
+
+[37]
+Underfull \hbox (badness 2460) in paragraph at lines 3204--3213
+\TU/TimesNewRoman(0)/m/n/10 COVID-19 mortality exhibits a pronounced departure 
+from proportional hazards, with epidemic waves 
+ []
+
+[38]
+Underfull \hbox (badness 1194) in paragraph at lines 3255--3261
+\TU/TimesNewRoman(0)/m/n/10 process, the addition of multiplicative effects rap
+idly degrades identifiability. This explains why $[]$ may be 
+ []
+
+[39]
+Underfull \hbox (badness 1622) in paragraph at lines 3349--3357
+\TU/TimesNewRoman(0)/m/n/10 analysis outputs and example datasets in KCOR_CMR f
+ormat are included to support full computational 
+ []
+
+
+Underfull \hbox (badness 1194) in paragraph at lines 3376--3380
+[]\TU/TimesNewRoman(0)/m/n/10 All scientific decisions, methodological choices,
+ analyses, interpretations, and judgments regarding which 
+ []
+
+[40] [41]
+Underfull \hbox (badness 10000) in paragraph at lines 3412--3412
+[]|\TU/TimesNewRoman(0)/m/n/10 Vaupel JW, Manton KG, Stallard E. The impact of 
+heterogeneity in individual frailty on the dynamics of
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3419--3419
+[]|\TU/TimesNewRoman(0)/m/n/10 Grambsch PM, Therneau TM. Proportional hazards t
+ests and diagnostics based on weighted residuals.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3426--3426
+[]|\TU/TimesNewRoman(0)/m/n/10 Andersen PK, Gill RD. Cox’s regression model for
+ counting processes: A large sample study. \TU/TimesNewRoman(0)/m/it/10 The Ann
+als of
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3434--3434
+[]|\TU/TimesNewRoman(0)/m/n/10 Royston P, Parmar MKB. Flexible parametric propo
+rtional-hazards and proportional-odds models for
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3434--3434
+\TU/TimesNewRoman(0)/m/n/10 censored survival data, with application to prognos
+tic modelling and estimation of treatment effects. \TU/TimesNewRoman(0)/m/it/10
+ Statistics
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3440--3440
+[]|\TU/TimesNewRoman(0)/m/n/10 Aalen OO. A linear regression model for the anal
+ysis of life times. \TU/TimesNewRoman(0)/m/it/10 Statistics in Medicine\TU/Time
+sNewRoman(0)/m/n/10 . 1989;8(8):907-925.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3446--3446
+[]|\TU/TimesNewRoman(0)/m/n/10 Lin DY, Ying Z. Semiparametric analysis of the a
+dditive risk model. \TU/TimesNewRoman(0)/m/it/10 Biometrika\TU/TimesNewRoman(0)
+/m/n/10 . 1994;81(1):61-71.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3453--3453
+[]|\TU/TimesNewRoman(0)/m/n/10 Van Houwelingen HC. Dynamic prediction by landma
+rking in event history analysis. \TU/TimesNewRoman(0)/m/it/10 Scandinavian Jour
+nal
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3460--3460
+[]|\TU/TimesNewRoman(0)/m/n/10 Robins JM, Hernán MÁ, Brumback B. Marginal struc
+tural models and causal inference in epidemiology:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3467--3467
+[]|\TU/TimesNewRoman(0)/m/n/10 Cole SR, Hernan MA. Constructing inverse probabi
+lity weights for marginal structural models. \TU/TimesNewRoman(0)/m/it/10 Ameri
+can
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3475--3475
+[]|\TU/TimesNewRoman(0)/m/n/10 Obel N, Fox M, Tetens M, et al. Confounding and 
+negative control methods in observational study of
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3475--3475
+\TU/TimesNewRoman(0)/m/n/10 SARS-CoV-2 vaccine effectiveness: A nationwide, pop
+ulation-based Danish health registry study. \TU/TimesNewRoman(0)/m/it/10 Clinic
+al
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3483--3483
+[]|\TU/TimesNewRoman(0)/m/n/10 Chemaitelly H, Ayoub HH, Coyle P, et al. Assessi
+ng healthy vaccinee effect in COVID-19 vaccine
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3483--3483
+\TU/TimesNewRoman(0)/m/n/10 effectiveness studies: A national cohort study in Q
+atar. Schiffer JT, Henry D, eds. \TU/TimesNewRoman(0)/m/it/10 eLife\TU/TimesNew
+Roman(0)/m/n/10 . 2025;14:e103690.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3490--3490
+[]|\TU/TimesNewRoman(0)/m/n/10 Agampodi S, Tadesse BT, Sahastrabuddhe S, Excler
+ JL, Kim JH. Biases in COVID-19 vaccine effectiveness
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3497--3497
+[]|\TU/TimesNewRoman(0)/m/n/10 Bakker B, Walk J, Meester R. Healthy vaccinee an
+d misclassification biases in Dutch observational health
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3503--3503
+[]|\TU/TimesNewRoman(0)/m/n/10 Kalbfleisch JD, Prentice RL. \TU/TimesNewRoman(0
+)/m/it/10 The Statistical Analysis of Failure Time Data\TU/TimesNewRoman(0)/m/n
+/10 . 1st ed. Wiley; 2002.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3510--3510
+[]|\TU/TimesNewRoman(0)/m/n/10 Deeks J, Dinnes J, D’Amico R, et al. Evaluating 
+non-randomised intervention studies. \TU/TimesNewRoman(0)/m/it/10 Health Techno
+logy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3519--3519
+[]|\TU/TimesNewRoman(0)/m/n/10 Levin AT, Hanage WP, Owusu-Boaitey N, Cochran KB
+, Walsh SP, Meyerowitz-Katz G. Assessing the age
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3519--3519
+\TU/TimesNewRoman(0)/m/n/10 specificity of infection fatality rates for COVID-1
+9: Systematic review, meta-analysis, and public policy
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3526--3526
+[]|\TU/TimesNewRoman(0)/m/n/10 Šanca O, Jarkovský J, Klimeš D, et al. \TU/Times
+NewRoman(0)/m/it/10 Vaccination, Positivity, Hospitalization for COVID-19, Deat
+hs, Long
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3526--3526
+\TU/TimesNewRoman(0)/m/it/10 COVID and Comorbidities in People in the Czech Rep
+ublic\TU/TimesNewRoman(0)/m/n/10 . National Health Information Portal, Czech
+ []
+
+[42] [43]
+Underfull \hbox (badness 10000) in paragraph at lines 3542--3542
+[]\TU/TimesNewRoman(0)/m/n/10 Table 2: |Summary of three large matched observat
+ional studies showing residual confounding / HVE despite
+ []
+
+
+Overfull \hbox (0.63564pt too wide) in paragraph at lines 3549--3550
+[]\TU/TimesNewRoman(0)/m/n/10 Matching/adjustment  
+ []
+
+
+Overfull \hbox (0.63564pt too wide) in paragraph at lines 3563--3564
+[]\TU/TimesNewRoman(0)/m/n/10 Matching/adjustment  
+ []
+
+[44]
+Underfull \hbox (badness 10000) in paragraph at lines 3605--3605
+[]\TU/TimesNewRoman(0)/m/n/10 Table 3: |Comparison of Cox proportional hazards,
+ Cox with frailty, and KCOR across key methodological
+ []
+
+[45] [46] [47]
+Underfull \hbox (badness 10000) in paragraph at lines 3781--3781
+[]\TU/TimesNewRoman(0)/m/n/10 Table 6: |Step-by-step KCOR algorithm (high-level
+), with recommended prespecification and diagnostics. All
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3781--3781
+\TU/TimesNewRoman(0)/m/n/10 analysis choices and estimation procedures are pres
+pecified; numerical parameters such as $[][]$ are estimated
+ []
+
+[48]
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+[]\TU/TimesNewRoman(0)/m/n/10 Table 7: |Cox vs KCOR under a synthetic null with
+ increasing frailty heterogeneity. Two cohorts are simulated with
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+\TU/TimesNewRoman(0)/m/n/10 identical baseline hazards and no treatment effect 
+\TU/TimesNewRoman(0)/m/it/10 (null by construction)\TU/TimesNewRoman(0)/m/n/10 
+; cohorts differ only in enrollment-time
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+\TU/TimesNewRoman(0)/m/n/10 gamma frailty variance ($[][]$). Despite the treatm
+ent hazard ratio at fixed frailty being 1 by construction, Cox
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+\TU/TimesNewRoman(0)/m/n/10 regression produces increasingly non-null hazard ra
+tios as $[][]$ increases, reflecting depletion-induced
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+\TU/TimesNewRoman(0)/m/n/10 non-proportional hazards. In the same simulations, 
+$[][][][]$ remains centered near unity with negligible
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+\TU/TimesNewRoman(0)/m/n/10 post-normalization slope across $[][]$ values, whic
+h is consistent with the expected null benchmark under the working
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3861--3861
+\TU/TimesNewRoman(0)/m/n/10 model and is interpreted diagnostically rather than
+ as proof that confounding has been removed. (Exact values
+ []
+
+[49]
+Underfull \hbox (badness 10000) in paragraph at lines 3933--3933
+[]\TU/TimesNewRoman(0)/m/n/10 Table 8: |Empirical negative-control KCOR at Dece
+mber 26, 2022 (pooled/ASMR). Historical v4.3 estimates and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3933--3933
+\TU/TimesNewRoman(0)/m/n/10 analytical intervals are retained for comparison. T
+he current primary analysis uses the all-window fit with the
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3933--3933
+\TU/TimesNewRoman(0)/m/n/10 optional nonlinear module inactive; the sensitivity
+ analysis uses the consistent survivor fit at forced alpha=1.18. Both
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3933--3933
+\TU/TimesNewRoman(0)/m/n/10 current columns use 999 matched person-bootstrap dr
+aws per enrollment. Sources:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3933--3933
+\TU/lmtt/m/n/10 analysis/table8/identified_only-table8.json \TU/TimesNewRoman(0
+)/m/n/10 and \TU/lmtt/m/n/10 analysis/table8/forced_alpha-table8.json\TU/TimesN
+ewRoman(0)/m/n/10 ;
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3933--3933
+\TU/TimesNewRoman(0)/m/n/10 historical source: v4.3 replay of Git commit \TU/lm
+tt/m/n/10 bb2d68249e8bf77c8fb07e6c8336bc790a808a8a
+ []
+
+[50]
+Underfull \hbox (badness 10000) in paragraph at lines 3995--3995
+[]\TU/TimesNewRoman(0)/m/n/10 Table 9: |Week-80 KCOR after all-window joint bas
+eline-rate and frailty fitting with pre-entry proportional exposure.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3995--3995
+\TU/TimesNewRoman(0)/m/n/10 Brackets give 95 percent percentile intervals from 
+999 resamples per scenario, with both cohorts refitted in each
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 3995--3995
+\TU/TimesNewRoman(0)/m/n/10 draw. Resampling used the rounded synthetic death a
+nd risk-set counts, treating residual risk-set losses as nondeath
+ []
+
+[51]
+Underfull \hbox (badness 10000) in paragraph at lines 4052--4052
+[]\TU/TimesNewRoman(0)/m/n/10 Table 10: |Comparison of Cox regression, shared f
+railty Cox models, and KCOR under selection-only and joint frailty
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4052--4052
+\TU/TimesNewRoman(0)/m/n/10 + treatment effect scenarios. Results are from S7 s
+imulation (joint frailty + treatment) and gamma-frailty null
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4052--4052
+\TU/TimesNewRoman(0)/m/n/10 scenario (selection-only). Standard Cox regression 
+produces non-null hazard ratios under selection-only conditions
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4052--4052
+\TU/TimesNewRoman(0)/m/n/10 due to depletion dynamics. Shared frailty Cox model
+s partially mitigate this bias but still exhibit residual non-null
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4052--4052
+\TU/TimesNewRoman(0)/m/n/10 behavior. KCOR remains near-null under selection-on
+ly conditions and correctly detects treatment effects when
+ []
+
+
+Overfull \hbox (8.02089pt too wide) in paragraph at lines 4055--4056
+[]\TU/TimesNewRoman(0)/m/n/10 Scenario  
+ []
+
+
+Overfull \hbox (8.02089pt too wide) in paragraph at lines 4075--4076
+[]\TU/TimesNewRoman(0)/m/n/10 Scenario  
+ []
+
+
+Overfull \hbox (6.35089pt too wide) in paragraph at lines 4095--4095
+[]|\TU/TimesNewRoman(0)/m/n/10 Gamma- 
+ []
+
+
+Overfull \hbox (0.83542pt too wide) in paragraph at lines 4097--4097
+\TU/TimesNewRoman(0)/m/n/10 (r=1.2)|  
+ []
+
+
+Overfull \hbox (0.79921pt too wide) in paragraph at lines 4099--4099
+\TU/TimesNewRoman(0)/m/n/10 benefit 
+ []
+
+
+Overfull \hbox (0.83542pt too wide) in paragraph at lines 4099--4099
+\TU/TimesNewRoman(0)/m/n/10 (r=0.8)|  
+ []
+
+[52]
+Underfull \hbox (badness 10000) in paragraph at lines 4121--4121
+[]\TU/TimesNewRoman(0)/m/n/10 Table 11: |Simulation comparison of KCOR and alte
+rnative estimands under selection-induced non-proportional
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4121--4121
+\TU/TimesNewRoman(0)/m/n/10 hazards. Results are summarized across simulation s
+cenarios (null scenarios: gamma-frailty null, non-gamma frailty,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4121--4121
+\TU/TimesNewRoman(0)/m/n/10 contamination, sparse events; effect scenarios: inj
+ected hazard increase/decrease). KCOR remains stable under
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4121--4121
+\TU/TimesNewRoman(0)/m/n/10 selection-only regimes, while RMST inherits depleti
+on bias and time-varying Cox captures non-proportional hazards
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4121--4121
+\TU/TimesNewRoman(0)/m/n/10 without normalizing selection geometry. All methods
+ were applied to identical simulation outputs. KCOR estimates
+ []
+
+[53]
+ignored error: Infinite glue shrinkage found in box being split [54] [55]
+[56]
+Underfull \hbox (badness 1430) in paragraph at lines 4445--4453
+[]\TU/TimesNewRoman(0)/b/n/10 Identification with fixed external scale. \TU/Tim
+esNewRoman(0)/m/n/10 Under minimal aggregated data, $[]$ is not separately iden
+tifiable 
+ []
+
+
+Underfull \hbox (badness 1354) in paragraph at lines 4481--4486
+[]\TU/TimesNewRoman(0)/m/n/10 Agreement between the two estimators is treated a
+s supportive of identification under the working model; 
+ []
+
+File: figures/fig_pos_control_injected.png Graphic file (type bmp)
+<figures/fig_pos_control_injected.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 4527--4527
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S1: |Historical positive-control compariso
+n. Left panels show harm scenario (r=1.2), right panels show benefit
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4527--4527
+\TU/TimesNewRoman(0)/m/n/10 scenario (r=0.8). Top row displays cohort hazard cu
+rves with effect window shaded. The lower panels show
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4527--4527
+\TU/TimesNewRoman(0)/m/n/10 anchored cumulative hazard ratios reproducible dire
+ctly from the raw counts. Table 9 gives the fitted endpoints.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4546--4546
+[]\TU/TimesNewRoman(0)/m/n/10 Table S4: |Summary of control-test and simulation
+ parameters referenced in Sections S4.2–S4.6. Values shown are
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4546--4546
+\TU/TimesNewRoman(0)/m/n/10 representative defaults or grids used to probe the 
+revised estimator; exact scripts and run settings are
+ []
+
+[57] [58] [59]
+File: figures/fig_si_kcor_bias_vs_theta.png Graphic file (type bmp)
+<figures/fig_si_kcor_bias_vs_theta.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 4719--4719
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S2: |Simulated-null summary: KCOR
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4719--4719
+\TU/TimesNewRoman(0)/m/n/10 in the synthetic-null grid (no treatment effect), r
+eflecting cumulative deviation under the null rather than
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4719--4719
+\TU/TimesNewRoman(0)/m/n/10 instantaneous hazard bias. This figure is a diagnos
+tic summary under the working model, not proof that the model is
+ []
+
+File: figures/fig_neg_control_synthetic.png Graphic file (type bmp)
+<figures/fig_neg_control_synthetic.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 4740--4740
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S3: |Synthetic negative control under stro
+ng selection (different curvature) but no effect: $[][][][]$ stays near
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4740--4740
+\TU/TimesNewRoman(0)/m/n/10 1 under the synthetic null. Top panel shows cohort 
+hazards with different frailty-mixture weights inducing different
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4740--4740
+\TU/TimesNewRoman(0)/m/n/10 curvature. Bottom panel shows $[][][][]$ remaining 
+near 1.0 after normalization, which is the diagnostic behavior
+ []
+
+[60] [61] [62]
+File: figures/fig_sensitivity_overview.png Graphic file (type bmp)
+<figures/fig_sensitivity_overview.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 4828--4828
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S4: |Sensitivity analysis summary showing 
+$[][][][]$ values across parameter grid. Heatmaps display
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4828--4828
+[][][][]$ \TU/TimesNewRoman(0)/m/n/10 estimates for different combinations of b
+aseline weeks (rows) and quiet-window start offsets (columns).
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4828--4828
+\TU/TimesNewRoman(0)/m/n/10 Across all comparisons, $[][][][]$ varies smoothly 
+and modestly across a wide range of quiet-start offsets and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4828--4828
+\TU/TimesNewRoman(0)/m/n/10 baseline window lengths, with no qualitative change
+s in sign or magnitude, indicating robustness to reasonable
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 4828--4828
+\TU/TimesNewRoman(0)/m/n/10 parameter choices. All panels use a unified color s
+cale centered at 1.0 to enable direct visual comparison across dose
+ []
+
+[63]
+Underfull \hbox (badness 2452) in paragraph at lines 4868--4875
+\TU/TimesNewRoman(0)/m/n/10 This simulation evaluates KCOR under conditions in 
+which \TU/TimesNewRoman(0)/b/n/10 both selection-induced depletion (frailty 
+ []
+
+[64] [65]
+File: figures/fig_si_quiet_window_theta_scan_czech_2021_24.png Graphic file (ty
+pe bmp)
+<figures/fig_si_quiet_window_theta_scan_czech_2021_24.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 5038--5038
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S5: |Quiet-window robustness scan: fitted 
+enrollment-time frailty variance $[]$ vs. quiet-window midpoint
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5038--5038
+\TU/TimesNewRoman(0)/m/n/10 date for the Czech 2021–2024 enrollment cohort, usi
+ng 12-month windows shifted monthly from April 2022 through
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5038--5038
+\TU/TimesNewRoman(0)/m/n/10 April 2023. Rows show birth decade and columns show
+ dose. Each dot gives the fitted frailty variance for one
+ []
+
+File: figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png Graph
+ic file (type bmp)
+<figures/supplement/kcor_realdata_yob1930_enroll2022w26_eval2023.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 5091--5091
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S6: |Birth-year cohort 1930: KCOR(t) traje
+ctories comparing dose 2 and dose 3 to dose 0 for
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5091--5091
+\TU/TimesNewRoman(0)/m/n/10 weeks (i.e., plotted as $[][][][] [][][]$). This fi
+gure is presented as an illustrative application demonstrating estimator
+ []
+
+File: figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png Graph
+ic file (type bmp)
+<figures/supplement/kcor_realdata_yob1940_enroll2022w26_eval2023.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 5111--5111
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S7: |Birth-year cohort 1940: KCOR(t) traje
+ctories comparing dose 2 and dose 3 to dose 0 for
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5111--5111
+\TU/TimesNewRoman(0)/m/n/10 weeks (i.e., plotted as $[][][][] [][][]$). This fi
+gure is presented as an illustrative application demonstrating estimator
+ []
+
+File: figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png Graph
+ic file (type bmp)
+<figures/supplement/kcor_realdata_yob1950_enroll2022w26_eval2023.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 5131--5131
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S8: |Birth-year cohort 1950: KCOR(t) traje
+ctories comparing dose 2 and dose 3 to dose 0 for
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5131--5131
+\TU/TimesNewRoman(0)/m/n/10 weeks (i.e., plotted as $[][][][] [][][]$). This fi
+gure is presented as an illustrative application demonstrating estimator
+ []
+
+[66] [67] [68] [69]
+File: figures/fig3_neg_control_20yr_age_diff.png Graphic file (type bmp)
+<figures/fig3_neg_control_20yr_age_diff.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 5162--5162
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S9: |Empirical negative control with appro
+ximately 20-year age difference between cohorts. Even under
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5162--5162
+\TU/TimesNewRoman(0)/m/n/10 extreme composition differences, $[][][][]$ shows l
+ittle systematic drift, which is consistent with the estimator
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5162--5162
+\TU/TimesNewRoman(0)/m/n/10 handling selection-induced curvature in this pseudo
+-null construction. KCOR curves
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5162--5162
+\TU/TimesNewRoman(0)/m/n/10 Data source: Czech Republic mortality and vaccinati
+on dataset processed into KCOR_CMR aggregated format
+ []
+
+
+Underfull \hbox (badness 1742) in paragraph at lines 5185--5203
+\TU/TimesNewRoman(0)/m/n/10 The COVID-19 vaccination period provides a natural 
+empirical regime characterized by strong selection 
+ []
+
+[70]
+Underfull \hbox (badness 1163) in paragraph at lines 5221--5229
+\TU/TimesNewRoman(0)/m/n/10 with curvature-driven normalization rather than coh
+ort identity. The pattern is visible directly in depletion- 
+ []
+
+[71] [72]
+Underfull \hbox (badness 10000) in paragraph at lines 5330--5330
+[]\TU/TimesNewRoman(0)/m/n/10 Table S7: |Estimated enrollment-time gamma-frailt
+y variance by age band and vaccination status for Czech cohorts
+ []
+
+[73]
+Underfull \hbox (badness 10000) in paragraph at lines 5398--5398
+[]\TU/TimesNewRoman(0)/m/n/10 Table S8: |Ratio of observed cumulative mortality
+ hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5398--5398
+\TU/TimesNewRoman(0)/m/n/10 Czech cohorts enrolled in 2021_24. (Note: the all-a
+ges row reflects aggregation effects and is not directly
+ []
+
+
+Underfull \hbox (badness 2326) in paragraph at lines 5434--5438
+[]\TU/TimesNewRoman(0)/m/n/10 This table reports unadjusted cumulative hazards 
+derived directly from the raw data, prior to any frailty 
+ []
+
+File: figures/kcor_realdata_allages_enroll2022w26_eval2023.png Graphic file (ty
+pe bmp)
+<figures/kcor_realdata_allages_enroll2022w26_eval2023.png>
+
+Underfull \hbox (badness 10000) in paragraph at lines 5486--5486
+[]\TU/TimesNewRoman(0)/m/n/10 Figure S10: |All-ages stress test: $[][][][]$ tra
+jectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 5486--5486
+\TU/TimesNewRoman(0)/m/n/10 as $[][][][] [][][]$). This figure is presented as 
+an illustrative application demonstrating estimator behavior under
+ []
+
+
+Underfull \hbox (badness 1158) in paragraph at lines 5492--5495
+\TU/TimesNewRoman(0)/b/n/10 Environment. \TU/TimesNewRoman(0)/m/n/10 Python 3.1
+1; key dependencies include numpy, scipy, pandas, and lifelines (for Cox-model 
+
+ []
+
+[74] [75] (paper.aux)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+ ***********
+ ) 
+Here is how much of TeX's memory you used:
+ 32018 strings out of 402987
+ 624986 string characters out of 5448524
+ 1227525 words of memory out of 5000000
+ 60265 multiletter control sequences out of 15000+600000
+ 631445 words of font info for 88 fonts, out of 8000000 for 9000
+ 1348 hyphenation exceptions out of 8191
+ 104i,11n,116p,1580b,969s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+Output written on paper.pdf (75 pages).

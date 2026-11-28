@@ -1,0 +1,11 @@
+--- m109/documentation/preprint/paper.md
++++ m110/documentation/preprint/paper.md
+@@ -410,7 +410,7 @@
+ 
+ KCOR includes internal diagnostics intended to make model stress visible rather than hidden.
+ 
+-1. **Post-normalization shape in quiet periods.** Within a quiet window, the normalized cumulative hazard should follow the fitted cumulative Gompertz curve, allowing for the offset carried into that window. In the continuous model this curve is linear in $(e^{\gamma t}-1)/\gamma$, where $t$ is rebased event time. Systematic departures from the fitted curve warrant investigation.
++1. **Post-normalization shape in quiet periods.** Within a quiet window, the normalized cumulative hazard should follow the fitted cumulative Gompertz curve, allowing for the offset carried into that window. In the continuous model this curve is linear in $(e^{\gamma t}-1)/\gamma$, where $t$ is rebased event time. For this diagnostic, compare the cumulative increase from each quiet window's entry to the integrated fitted Gompertz baseline over that window, using the same normalized trajectory as the reported KCOR. Residual drift and maximum deviation are reported by window. Systematic departures from the fitted curve warrant investigation.
+ 
+ 2. **Fit residual structure in hazard space.** Define residuals over the pooled fit set:
+ 

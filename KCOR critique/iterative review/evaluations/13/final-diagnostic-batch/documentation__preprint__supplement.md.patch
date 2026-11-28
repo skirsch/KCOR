@@ -1,0 +1,29 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -138,7 +138,7 @@
+ 
+ with $r>1$ for harm and $0<r<1$ for benefit.
+ 
+-The figure shows the historical positive-control comparison. Main-text Table 9 gives the fitted week-80 ratios and intervals.
++The figure shows the historical positive-control comparison. Main-text Table 9 gives the fitted anchored week-80 ratios and intervals. The benefit case is retained as an audit-only stress test because its signed gap interval lies wholly below zero (Section 3.2).
+ 
+ ![Historical positive-control comparison. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. The lower panels show anchored cumulative hazard ratios reproducible directly from the raw counts. Table 9 gives the fitted endpoints.  X-axis units are weeks since enrollment.](figures/fig_pos_control_injected.png){#fig:pos_control_injected}
+ 
+@@ -378,7 +378,7 @@
+ | 90–99 | OK | OK | No | Yes |
+ | All ages (eligible population) | OK | OK | Yes | Yes |
+ 
+-Source: `analysis/s6/replay.py` and `analysis/s6/results.json`. The residual screen is exploratory and the fitted parameters are retained.
++Source: `analysis/s6/replay.py` and `analysis/s6/results.json`. The residual screen is exploratory and the fitted parameters are retained. The separate signed first-pass gap diagnostic uses the same 999 person-bootstrap draws as the frailty table: 30 of 42 re-entry intervals are complete and none lies wholly below zero. For ages 40--49 and 50--59, both doses have incomplete gap intervals (respectively 893 and 964, and 996 and 794 valid draws out of 999 for doses 0 and 2); those comparisons remain unassessed, not diagnostic passes. Complete gap estimates, intervals and seed statuses are archived at `analysis/gap_assessment/s6/`. All fitted frailty and KCOR values and intervals are unchanged.
+ 
+ **Interpretation:** In this application, some cohorts exhibit larger fitted $\hat{\theta}_{0,d}$ than others, indicating stronger estimated depletion curvature at rebased enrollment time under the working model:
+ 
+@@ -412,7 +412,7 @@
+ 
+ **Notes:**
+ - The fitted frailty variance quantifies unobserved frailty heterogeneity and selection-induced depletion within cohorts at rebased enrollment time. Near-zero values indicate little fitted frailty-induced depletion; precision and identification must be assessed separately. At zero variance, the working-model cumulative hazard follows the Gompertz baseline.
+-- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 frailty remains poorly resolved. With the numerical ceiling increased to 500, none of the 999 draws reaches the upper-bound flag threshold in either dose group. The upper tail is no longer truncated at 100; the broad raw variance range is a statistical limitation, not evidence that variance is zero. Source: `analysis/seed_ceiling/s6/s6-all-window.json` and its matched draws; the previous ceiling and first-window studies are archived separately.
++- Frailty intervals use the raw constrained optimizer estimates; zeros denote values rounded to two decimals or the lower boundary. \* The dose-2 estimates at ages 50–59 and 60–69 concentrate at zero despite limited local information for small positive variances. A boundary-piled bootstrap is not a calibrated interval for the underlying variance. The 40–49 dose-2 frailty remains poorly resolved. With the numerical ceiling increased to 500, none of the 999 draws reaches the upper-bound flag threshold in either dose group. The upper tail is no longer truncated at 100; the broad raw variance range is a statistical limitation, not evidence that variance is zero. Source: `analysis/gap_assessment/s6/s6-all-window.json` and its matched draws; the previous ceiling and first-window studies are archived separately.
+ - The "All ages" row fits the supplied eligible-population aggregate counts, including unknown birth years.
+ - Table @tbl:si_raw_hazards reports raw outcome contrasts for ages 40–99 and the supplied eligible-population total.
+ 

@@ -1,0 +1,15 @@
+"""Small integration test: a changed effective anchor cannot resume an earlier replay."""
+from pathlib import Path
+import os, subprocess, sys, tempfile
+ROOT=Path(__file__).resolve().parents[1]
+def main():
+    with tempfile.TemporaryDirectory(prefix="table8-resume-") as out:
+        cmd=[sys.executable,str(ROOT/"analysis/solver_scaling/table8_replay.py"),"--mode","identified_only","--draws","1","--workers","2","--output-dir",out]
+        env={**os.environ,"SA_ANCHOR_WEEKS":"4"}
+        a=subprocess.run(cmd,env=env,capture_output=True,text=True,check=True)
+        b=subprocess.run(cmd+["--resume"],env=env,capture_output=True,text=True,check=True)
+        c=subprocess.run(cmd+["--resume"],env={**env,"SA_ANCHOR_WEEKS":"8"},capture_output=True,text=True)
+        assert "scheduled fit jobs 4" in a.stdout and "scheduled fit jobs 0" in b.stdout
+        assert c.returncode!=0 and "matching input, code and settings provenance" in c.stderr
+        print("Fresh run, matching resume, and changed anchor rejection passed.")
+if __name__=="__main__":main()

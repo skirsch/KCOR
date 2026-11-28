@@ -1,0 +1,39 @@
+{
+  "overlap_exhaustion": {
+    "point": 1.0,
+    "interval": [
+      0.8505213377640677,
+      1.083846804129863
+    ],
+    "valid_draws": 3,
+    "explicit_and_omitted_equal": true
+  },
+  "five_year_groups": [
+    {
+      "age": 1940,
+      "point": 1.0,
+      "interval": [
+        0.6674162403566697,
+        1.137210179782717
+      ],
+      "draws": 3
+    },
+    {
+      "age": 1945,
+      "point": 0.9998872912430706,
+      "interval": [
+        0.8689005909193497,
+        1.017633562877665
+      ],
+      "draws": 3
+    }
+  ],
+  "nonlinear": {
+    "no_unmarked_gap_theta": 4.000000000000005,
+    "unmarked_gap_theta": 4.000000000000004,
+    "diagnostics": [
+      "no_gaps",
+      "not_assessed"
+    ]
+  }
+}

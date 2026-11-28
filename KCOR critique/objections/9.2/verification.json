@@ -1,0 +1,10 @@
+{
+  "cells": 1323,
+  "max_abs_difference": 0.0,
+  "figure_byte_identical": true,
+  "status_counts": {
+    "ok": 1323
+  },
+  "diagnostic_fields_equal": true,
+  "regressions": "both modes and all reference lengths; missing supplied total unavailable"
+}

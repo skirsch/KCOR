@@ -1,0 +1,15 @@
+--- m143/analysis/table8/table8_bootstrap.py
++++ m144/analysis/table8/table8_bootstrap.py
+@@ -25,6 +25,12 @@
+     frame = pd.read_excel(workbook, sheet_name=sheet, parse_dates=["DateDied"])
+     start = pd.Timestamp.fromisocalendar(*map(int, sheet.split("_")), 1)
+     frame = frame[frame.DateDied >= start]
++    # Match ordinary and person-bootstrap validation before combining source rows.
++    sys.path.insert(0, str(HERE.parents[1] / "code"))
++    from fixed_cohort_history import invalid_components
++    bad = invalid_components(frame, start, layout="table8")
++    if bad:
++        raise ValueError(f"invalid source component histories: {bad}")
+     group = frame.groupby(["YearOfBirth", "Dose", "DateDied"])[["Alive", "Dead"]].sum()
+     dates = pd.date_range(start, frame.DateDied.max(), freq="7D")
+     index = pd.MultiIndex.from_product([[1940, 1950, 1960], range(3), dates], names=group.index.names)

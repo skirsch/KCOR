@@ -1,0 +1,11 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -79,7 +79,7 @@
+ F_d(t;\alpha)=E_d[z^{\alpha}\mid t],
+ $$
+ 
+-where $A(t)$ is an unknown common amplitude and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. When $\alpha=1$, amplification is proportional to baseline risk and the NPH module is effectively inactive. The exponent $\alpha$ should be interpreted as a model-calibrated summary of frailty-dependent amplification under the working model, not as a uniquely identified biological or mechanistic constant.
++where $A(t)$ is an unknown common amplitude and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. When $\alpha=1$, amplification is proportional to baseline risk and, for the same fitted parameters, the wave inversion reduces to the proportional gamma inversion. Enabling the module can still change the fit by excluding marked wave weeks from baseline estimation. The exponent $\alpha$ should be interpreted as a model-calibrated summary of frailty-dependent amplification under the working model, not as a uniquely identified biological or mechanistic constant.
+ 
+ Because $A(t)$ is common across cohorts, cross-cohort ratios of instantaneous wave components eliminate the unknown common amplitude:
+ 

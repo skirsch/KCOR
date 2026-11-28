@@ -1,0 +1,272 @@
+--- m104/code/KCOR.py
++++ m105/code/KCOR.py
+@@ -4290,6 +4290,27 @@
+     enrollment_date = first_monday + timedelta(weeks=week-1)
+     return enrollment_date
+ 
++def _set_kcor_reference(merged):
++    """Keep the two estimands separate, using the actual configured week."""
++    num = merged["CH_num"].to_numpy(float)
++    den = merged["CH_den"].to_numpy(float)
++    raw = np.divide(num, den, out=np.full(len(merged), np.nan),
++                    where=np.isfinite(num) & np.isfinite(den) & (den > EPS))
++    ref = np.flatnonzero((merged["t_num"].to_numpy() == KCOR_NORMALIZATION_WEEKS_EFFECTIVE)
++                         & (merged["t_den"].to_numpy() == KCOR_NORMALIZATION_WEEKS_EFFECTIVE))
++    idx = int(ref[0]) if len(ref) == 1 else None
++    ratio = raw[idx] if idx is not None else np.nan
++    valid = bool(np.isfinite(ratio) and ratio > EPS)
++    merged["K_raw"] = raw
++    merged["KCOR_unanchored"] = raw
++    merged["KCOR_anchored"] = raw / ratio if valid else np.nan
++    merged["KCOR"] = merged["KCOR_anchored"]  # backwards-compatible anchored column
++    merged["anchor_status"] = "ok" if valid else ("missing_reference_week" if idx is None else "undefined_reference_ratio")
++    merged["anchor_date"] = merged["DateDied"].iloc[idx] if idx is not None else pd.NaT
++    merged["anchor_ratio"] = ratio
++    return idx, valid
++
++
+ def build_kcor_rows(df, sheet_name, dual_print=None, slope6_params_map=None, kcor6_params_map=None, iteration_number=None):
+     """
+     Build per-age KCOR rows for all PAIRS and ASMR pooled rows (YearOfBirth=0).
+@@ -4424,23 +4445,8 @@
+             #         print(f"      Dose {den}: MR={row['MR_den']:.6f}, MR_adj={row['MR_adj_den']:.6f}, CH={row['CH_den']:.6f}, cumD_adj={row['cumD_adj_den']:.6f}")
+             #     print()
+ 
+-                # Handle division by zero or very small denominators
+-                # Note: CH_num and CH_den are cumulative hazards, not mortality rates
+-                valid_denom = merged["CH_den"] > EPS
+-                merged["K_raw"] = np.where(valid_denom,
+-                                          merged["CH_num"] / merged["CH_den"], 
+-                                          np.nan)
+-                
+-                # Get baseline K_raw value at effective normalization week (KCOR_NORMALIZATION_WEEKS weeks after accumulation starts)
+-                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+-                baseline_k_raw = merged["K_raw"].iloc[t0_idx]
+-                if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+-                    baseline_k_raw = 1.0
+-                
+-                # Compute final KCOR values normalized to baseline (no extra scaling)
+-                merged["KCOR"] = np.where(np.isfinite(merged["K_raw"]), 
+-                                          merged["K_raw"] / baseline_k_raw,
+-                                         np.nan)
++                reference_idx, anchor_valid = _set_kcor_reference(merged)
++                t0_idx = reference_idx if reference_idx is not None else 0  # CI bookkeeping only
+                 
+                 # Debug: Check for suspiciously large KCOR values
+             # if merged["KCOR"].max() > 10:
+@@ -4457,7 +4463,6 @@
+ 
+                 # KCOR 95% CI using post-anchor increments (Nelson–Aalen), adjusted for slope-normalization
+                 # Anchor index
+-                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+                 # Post-anchor cumulative hazard increments
+                 dCH_num = merged["CH_num"] - float(merged["CH_num"].iloc[t0_idx])
+                 dCH_den = merged["CH_den"] - float(merged["CH_den"].iloc[t0_idx])
+@@ -4540,7 +4545,7 @@
+             
+                 # Output columns: hazard=raw, cum_hazard=raw cumulative, adj_cum_hazard=adjusted cumulative
+                 # Include mc_id if present (Monte Carlo mode)
+-                output_cols = ["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper",
++                output_cols = ["DateDied","ISOweekDied_num","KCOR","CI_lower","CI_upper", "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                               "hazard_num","cum_hazard_num","adj_cum_hazard_num","t_num",
+                               "hazard_den","cum_hazard_den","adj_cum_hazard_den","t_den",
+                               "theta_num","theta_den","theta0_status_num","theta0_status_den","abnormal_fit"]
+@@ -4617,6 +4622,7 @@
+                 # Reorder columns: Date first, mc_id last
+                 column_order = [
+                     "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
++            "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                     "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                     "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                     "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -4725,11 +4731,30 @@
+                 # CH is already the adjusted cumulative hazard (theta-adjusted)
+                 if "CH" not in gvn.columns or "CH" not in gdn.columns:
+                     continue
+-                t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(gvn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE and len(gdn) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+-                c1 = gvn["CH"].iloc[t0_idx]
+-                c0 = gdn["CH"].iloc[t0_idx]
++                vn_ref = gvn[gvn["t"] == KCOR_NORMALIZATION_WEEKS_EFFECTIVE]
++                dn_ref = gdn[gdn["t"] == KCOR_NORMALIZATION_WEEKS_EFFECTIVE]
++                if len(vn_ref) != 1 or len(dn_ref) != 1 or vn_ref["DateDied"].iloc[0] != dn_ref["DateDied"].iloc[0]:
++                    continue
++                c1 = vn_ref["CH"].iloc[0]
++                c0 = dn_ref["CH"].iloc[0]
+                 if np.isfinite(c1) and np.isfinite(c0) and c1 > EPS and c0 > EPS:
+                     anchors[yob] = c1 / c0
++
++            # Preserve an explicit unavailable pooled endpoint when every
++            # weighted comparison has an invalid reference. Do not substitute
++            # an unanchored ratio or change the available-strata pooling rule.
++            if not any(weights.get(yob, 0.) > 0 for yob in anchors) and all_dates:
++                has_comparison = any(weights.get(yob, 0.) > 0 and {num, den}.issubset(set(group["Dose"]))
++                                     for yob, group in df_for_iteration.groupby("YearOfBirth"))
++                if has_comparison:
++                    dt = all_dates[-1]
++                    pooled_rows.append({"mc_id": mc_id_val,
++                        "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
++                        "Date": pd.to_datetime(dt), "KCOR": np.nan, "KCOR_anchored": np.nan,
++                        "KCOR_unanchored": np.nan, "anchor_status": "pooled_no_valid_reference",
++                        "CI_lower": np.nan, "CI_upper": np.nan, "EnrollmentDate": sheet_name,
++                        "YearOfBirth": 0, "Dose_num": num, "Dose_den": den})
++                    continue
+ 
+             for dt in all_dates:
+                 logs, wts, var_terms = [], [], []
+@@ -4903,6 +4928,8 @@
+                         "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
+                         "Date": date_val,  # Add Date column for filtering at reporting date
+                         "KCOR": Kpool,
++                        "KCOR_anchored": Kpool,
++                        "anchor_status": "pooled_available_strata",
+                         "CI_lower": CI_lower,
+                         "CI_upper": CI_upper,
+                         "EnrollmentDate": sheet_name,
+@@ -5415,25 +5442,9 @@
+             
+             merged_all = merged_all.reset_index(drop=True).copy(deep=True)
+             
+-            # Compute KCOR same way as per-age
+-            valid_denom = merged_all["CH_den"] > EPS
+-            merged_all["K_raw"] = np.where(valid_denom,
+-                                          merged_all["CH_num"] / merged_all["CH_den"], 
+-                                          np.nan)
+-            
+-            # Get baseline K_raw value at effective normalization week
+-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
+-            baseline_k_raw = merged_all["K_raw"].iloc[t0_idx]
+-            if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+-                baseline_k_raw = 1.0
+-            
+-            # Compute final KCOR values normalized to baseline
+-            merged_all["KCOR"] = np.where(np.isfinite(merged_all["K_raw"]), 
+-                                          merged_all["K_raw"] / baseline_k_raw,
+-                                         np.nan)
+-            
+-            # KCOR 95% CI using post-anchor increments (Nelson–Aalen)
+-            t0_idx = KCOR_NORMALIZATION_WEEKS_EFFECTIVE if len(merged_all) > KCOR_NORMALIZATION_WEEKS_EFFECTIVE else 0
++            reference_idx, anchor_valid = _set_kcor_reference(merged_all)
++            t0_idx = reference_idx if reference_idx is not None else 0  # CI bookkeeping only
++            # Existing conditional analytic interval (separately labeled)
+             dCH_num = merged_all["CH_num"] - float(merged_all["CH_num"].iloc[t0_idx])
+             dCH_den = merged_all["CH_den"] - float(merged_all["CH_den"].iloc[t0_idx])
+             # Nelson–Aalen incremental variances using raw hazard
+@@ -5513,6 +5524,11 @@
+                 "ISOweekDied": row["ISOweekDied_num"],
+                 "Date": date_val,  # Add Date column for filtering at reporting date
+                 "KCOR": row["KCOR"],
++                "KCOR_unanchored": row["KCOR_unanchored"],
++                "KCOR_anchored": row["KCOR_anchored"],
++                "anchor_status": row["anchor_status"],
++                "anchor_date": row["anchor_date"],
++                "anchor_ratio": row["anchor_ratio"],
+                 "CI_lower": row["CI_lower"],
+                 "CI_upper": row["CI_upper"],
+                 "EnrollmentDate": sheet_name,
+@@ -5571,6 +5587,7 @@
+         # STANDARD COLUMN ORDER: Date first, mc_id last
+         standard_columns = [
+             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
++            "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -5586,6 +5603,7 @@
+         return combined
+     return pd.DataFrame(columns=[
+         "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
++            "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+         "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+         "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+         "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -6625,7 +6643,7 @@
+                             h0_inc = np.clip(h0_inc, 0.0, None)
+                             CH = np.cumsum(h0_inc)
+ 
+-                            ch_by_dose[dose_i] = {"DateDied": d["DateDied"], "CH": CH}
++                            ch_by_dose[dose_i] = {"DateDied": d["DateDied"], "CH": CH, "t": d["t"]}
+                         ch_by_offset[int(off)] = ch_by_dose
+ 
+                     # Pre-merge K_raw series per (offset, dose_pair), then baseline-normalize per baseline weeks.
+@@ -6636,8 +6654,8 @@
+                             dn, dd = int(dose_num), int(dose_den)
+                             if dn not in ch_by_dose or dd not in ch_by_dose:
+                                 continue
+-                            df_num = pd.DataFrame({"DateDied": ch_by_dose[dn]["DateDied"], "CH_num": ch_by_dose[dn]["CH"]})
+-                            df_den = pd.DataFrame({"DateDied": ch_by_dose[dd]["DateDied"], "CH_den": ch_by_dose[dd]["CH"]})
++                            df_num = pd.DataFrame({"DateDied": ch_by_dose[dn]["DateDied"], "CH_num": ch_by_dose[dn]["CH"], "t_num": ch_by_dose[dn]["t"]})
++                            df_den = pd.DataFrame({"DateDied": ch_by_dose[dd]["DateDied"], "CH_den": ch_by_dose[dd]["CH"], "t_den": ch_by_dose[dd]["t"]})
+                             merged = pd.merge(df_num, df_den, on="DateDied", how="inner").sort_values("DateDied").reset_index(drop=True)
+                             if merged.empty:
+                                 continue
+@@ -6653,10 +6671,10 @@
+                                 merged = merged_by_offset_pair.get((int(off), dn, dd))
+                                 if merged is None or merged.empty:
+                                     continue
+-                                idx0 = t0_idx if len(merged) > t0_idx else 0
+-                                baseline_k_raw = merged["K_raw"].iloc[idx0]
++                                ref = merged.loc[(merged["t_num"] == t0_idx) & (merged["t_den"] == t0_idx), "K_raw"]
++                                baseline_k_raw = ref.iloc[0] if len(ref) == 1 else np.nan
+                                 if not (np.isfinite(baseline_k_raw) and baseline_k_raw > EPS):
+-                                    baseline_k_raw = 1.0
++                                    continue
+                                 kcor_series = np.where(np.isfinite(merged["K_raw"]), merged["K_raw"] / baseline_k_raw, np.nan)
+ 
+                                 diffs = (merged["DateDied"] - report_date).abs().to_numpy()
+@@ -8504,11 +8522,13 @@
+                         if pivot.empty or yob1 not in pivot.columns or yob2 not in pivot.columns:
+                             continue
+                         pivot = pivot.sort_index()
+-                        # Choose t0 index (KCOR_NORMALIZATION_WEEKS_EFFECTIVE from start)
+-                        t0_idx = min(KCOR_NORMALIZATION_WEEKS_EFFECTIVE, len(pivot) - 1) if len(pivot) > 0 else 0
+-                        k_raw = pivot[yob1] / pivot[yob2]
+-                        baseline = k_raw.iloc[t0_idx] if len(k_raw) > t0_idx and np.isfinite(k_raw.iloc[t0_idx]) and k_raw.iloc[t0_idx] > EPS else 1.0
+-                        k_series = k_raw / baseline
++                        ref = ts.loc[ts["t"] == KCOR_NORMALIZATION_WEEKS_EFFECTIVE]
++                        dates_ref = ref.groupby("DateDied")["YearOfBirth"].nunique()
++                        dates_ref = dates_ref[dates_ref == 2].index
++                        k_raw = pivot[yob1] / pivot[yob2].where(pivot[yob2] > EPS)
++                        baseline = k_raw.get(dates_ref[0], np.nan) if len(dates_ref) == 1 else np.nan
++                        anchor_valid = bool(np.isfinite(baseline) and baseline > EPS)
++                        k_series = k_raw / baseline if anchor_valid else k_raw * np.nan
+                         # pick KCOR at reporting date (~closest available)
+                         # closest row to report_date
+                         td = (pivot.index - report_date)
+@@ -8519,7 +8539,10 @@
+                             "YoB1": yob1,
+                             "YoB2": yob2,
+                             "Dose": int(dose),
+-                            "KCOR": k_val
++                            "KCOR": k_val,
++                            "KCOR_anchored": k_val,
++                            "KCOR_unanchored": float(k_raw.iloc[idx_closest]),
++                            "anchor_status": "ok" if anchor_valid else ("missing_reference_week" if len(dates_ref) != 1 else "undefined_reference_ratio")
+                         })
+             neg_df = pd.DataFrame(neg_rows)
+             # Write next to cohort outputs: ../data/Czech/negative_control_test_summary.xlsx
+@@ -9257,7 +9280,9 @@
+                         # Enforce standard column order (Czech format) for consistency across all datasets
+                         standard_col_order = [
+                             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
++            "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged", "CI_analytic_lower", "CI_analytic_upper",
++                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -9914,6 +9939,15 @@
+                                 "CI_valid_draws": row.get("CI_valid_draws", np.nan),
+                                 "CI_flagged_draws": row.get("CI_flagged_draws", np.nan),
+                                 "CI_point_flagged": row.get("CI_point_flagged", np.nan),
++                                "KCOR_unanchored": row.get("KCOR_unanchored", np.nan),
++                                "KCOR_anchored": row.get("KCOR_anchored", np.nan),
++                                "anchor_status": row.get("anchor_status", ""),
++                                "anchor_date": row.get("anchor_date", pd.NaT),
++                                "anchor_ratio": row.get("anchor_ratio", np.nan),
++                                "CI_undefined_anchor_draws": row.get("CI_undefined_anchor_draws", np.nan),
++                                "CI_missing_draws": row.get("CI_missing_draws", np.nan),
++                                "CI_unanchored_lower": row.get("CI_unanchored_lower", np.nan),
++                                "CI_unanchored_upper": row.get("CI_unanchored_upper", np.nan),
+ 
+                                 "Any_NonOK_Status": any_non_ok_theta,
+                                 "theta0_hat_num": theta0_hat_num,

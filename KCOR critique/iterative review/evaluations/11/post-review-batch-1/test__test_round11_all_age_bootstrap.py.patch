@@ -1,0 +1,17 @@
+--- /dev/null
++++ b/test/test_round11_all_age_bootstrap.py
+@@ -0,0 +1,14 @@
++﻿from pathlib import Path
++import sys,os,pandas as pd,numpy as np
++ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
++from test_round7_workbook import input_frame
++from test_round10_batch import written
++if __name__=='__main__':
++ f=input_frame('2021_24');f.loc[f.YearOfBirth.eq(1940),'YearOfBirth']=-1
++ g=f.groupby(['Dose','Sex','DateDied','ISOweekDied'],as_index=False)[['Alive','Dead']].sum();g['YearOfBirth']=-2;g['Sex']='O'
++ a,b=[written(z,'disjoint',[(1,0)],3) for z in (f,pd.concat([f,g],ignore_index=True))]
++ for col in ['KCOR','CI_lower','CI_upper','CI_valid_draws']:
++  x,y=[q[q.YearOfBirth.eq(-2)][col].to_numpy() for q in (a,b)]
++  np.testing.assert_allclose(x,y,equal_nan=True,rtol=1e-13)
++ print('all-ages matched bootstrap',a[a.YearOfBirth.eq(-2)].iloc[-1][['KCOR','CI_lower','CI_upper','CI_valid_draws']].to_dict())
++

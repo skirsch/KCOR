@@ -1,0 +1,1190 @@
+# KCOR: A depletion-neutralized framework for retrospective cohort comparison under latent frailty
+
+## Manuscript metadata
+
+- **Article type**: Methods / Statistical method
+- **Running title**: KCOR under selection-induced cohort bias
+- **Author**: Steven T. Kirsch
+- **Affiliations**: Independent Researcher, United States
+- **Corresponding author**: stk@alum.mit.edu
+- **Word count**: 11,200 (excluding Abstract and References; approximate after identifiability revisions)
+- **Keywords**: selection bias; frailty model; gamma mixture model; frailty inversion; frailty heterogeneity; selection-induced depletion; non-proportional hazards; cumulative hazard; hazard normalization; cumulative hazards; estimands; gamma frailty; negative controls; observational studies; observational cohort studies
+
+## Abstract
+
+We propose KCOR, a framework for retrospective cohort comparison with irreversible outcomes under latent frailty heterogeneity. Selection-induced depletion can generate non-proportional hazards and curvature in observed cumulative hazards, which can distort fixed-frailty contrasts inferred from conventional survival summaries in retrospective cohort studies using registry and administrative data. KCOR is a depletion-neutralized cohort comparison framework that uses a gamma-frailty working model with a Gompertz baseline to estimate a separate enrollment-time frailty variance $\theta_{0,d}$ for each cohort after a prespecified stabilization skip. The core estimator proceeds in four steps. It fits a seed $(k_d,\theta_{0,d}^{(0)})$ in the nearest quiet window, reconstructs the effective cumulative hazard over the full trajectory, aligns multiple quiet windows through persistent wave-offset terms, and jointly refits $k_d$ and $\theta_{0,d}$ across all prespecified quiet windows within that cohort before applying gamma-frailty inversion. In epidemic-wave applications, KCOR also includes an optional non-proportional-hazard (NPH) exponent module that models cross-cohort hazard amplification as a function of depletion geometry and proposes an approximate procedure for localizing a single shared exponent $\alpha$ using cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale** under minimal aggregated data. The fitted frailty variance depends on the scale of the observed cohort hazard, while the proposed $\alpha$-localization procedure requires that external scale to distinguish frailty-dependent amplification from cohort-specific multiplicative effects. For a specified nonlinear exponent, the fitting and correction use the same survivor law; the raw observed hazard is not rescaled (§2.7.3). The shared wave intensity cancels in the cross-cohort excess-hazard ratio at a given time, conditional on the surviving frailty distribution in each cohort. This extension remains optional, diagnostic, and assumption-dependent rather than part of the universal KCOR core. Across $\theta_0$ recovery simulations, negative and positive controls, and Cox comparison exercises, KCOR remains a diagnostic and descriptive framework: it targets cumulative contrasts after depletion normalization rather than counterfactual effects. This revised architecture replaces the earlier quiet-window fit under a flatter baseline specification with a more explicit identification strategy for retrospective cohort comparisons under selection-induced hazard curvature. We illustrate the method using national COVID-era registry data as a worked example.
+
+## 1. Introduction
+
+### 1.1 Retrospective cohort comparisons under selection
+
+Randomized controlled trials (RCTs) are the gold standard for causal inference, but are often infeasible, underpowered for rare outcomes, or unavailable for questions that arise after rollout. As a result, observational cohort comparisons are widely used to estimate intervention effects on outcomes such as all-cause mortality.
+
+Although mortality is used throughout this paper as a motivating and concrete example, the method applies more generally to any irreversible event process observed in a fixed cohort, including hospitalization, disease onset, or other terminal or absorbing states. Such applications require risk sets and an event process consistent with the assumed survival law; competing events must be addressed explicitly. Mortality is emphasized here because it is objectively defined, reliably recorded in many national datasets, and free from outcome-dependent ascertainment biases that complicate other endpoints.
+
+However, when intervention uptake is voluntary, prioritized, or otherwise selective, treated and untreated cohorts are frequently **non-exchangeable** at baseline and evolve differently over follow-up. This problem is not limited to any single intervention class; it arises whenever the same factors that influence treatment uptake also influence outcome risk.
+
+While motivated by epidemic-era registry data, the method applies to general retrospective cohort comparisons where selection-induced depletion of susceptibles generates curvature in cumulative hazard trajectories.
+
+This manuscript is a methods paper. Real-world registry data are used solely to illustrate estimator behavior, diagnostics, and failure modes under realistic selection-induced non-proportional hazards; no policy conclusions are drawn. KCOR does not attempt to recover counterfactual survival curves or causal vaccine-effect estimates, and readers seeking causal VE should not expect them here.
+
+### 1.2 Curvature (shape) is the hard part: non-proportional hazards from frailty depletion
+
+Selection does not merely shift mortality **levels**; it can alter mortality **curvature**—the time-evolution of cohort hazards. Frailty heterogeneity and selection-induced depletion (depletion of susceptibles) naturally induce curvature of the cumulative hazard even when individual-level hazards are simple functions of time. When selection concentrates high-frailty individuals into one cohort (or preferentially removes them from another), the resulting cohort-level hazard trajectories can be strongly non-proportional.
+
+This violates core assumptions of many standard tools:
+
+- **Cox PH**: assumes hazards differ by a time-invariant multiplicative factor (proportional hazards).
+- **IPTW / matching**: can balance measured covariates yet fail to balance unmeasured frailty and the resulting depletion dynamics.
+- **Age-standardization**: adjusts levels across age strata but does not remove cohort-specific time-evolving hazard shape.
+
+KCOR is designed for this failure mode: **cohorts whose hazards are not proportional because selection induces different depletion dynamics (curvature).** In the revised estimator, curvature is interpreted through an explicit working model: a Gompertz baseline hazard combined with gamma-frailty depletion and an enrollment-time frailty variance $\theta_{0,d}$ defined at rebased time $t=0$ after the stabilization skip. Agreement with the fitted cumulative Gompertz curve after normalization is one diagnostic.
+
+The methodological problem addressed here is general. The COVID-19 period provides a natural empirical regime characterized by strong selection heterogeneity and non-proportional hazards, and it serves as a useful illustration for the proposed framework. The **core** KCOR estimator identifies $\theta_{0,d}$ from prespecified quiet windows but applies depletion normalization to the full post-enrollment trajectory. For epidemic-wave applications, KCOR also supports an **optional** NPH exponent model in which a shared amplification parameter $\alpha$ captures how external hazards interact with depletion geometry across cohorts. That module is context-specific and is not part of the universal definition of KCOR. KCOR is therefore not specific to COVID, vaccination, or infectious disease, even though COVID-era registries motivate one important extension module.
+
+Two mechanisms often lumped as the 'healthy vaccinee effect' (HVE) are distinguished here:
+
+- **Static HVE:** baseline differences in latent frailty distributions at cohort entry (e.g., vaccinated cohorts are healthier on average). In the KCOR framework, differences in relative frailty heterogeneity manifest as differing enrollment-time frailty variance $\theta_{0,d}$ and are the primary target of frailty normalization. Differences in mean frailty may instead enter the cohort-specific reference baseline rate and need not change $\theta_{0,d}$. In practice, this adjustment is not limited to one named bias mechanism; it absorbs any enrollment-time baseline difference that enters the cohort comparison through the same depletion / frailty geometry.
+
+- **Dynamic HVE:** short-horizon, time-local selection processes around enrollment that create transient hazard suppression immediately after enrollment (e.g., deferral of vaccination during acute illness, administrative timing, or short-term behavioral/health-seeking changes). Dynamic HVE is operationally addressed by prespecifying a skip/stabilization window (§2.7), which also defines the rebased time origin at which $\theta_{0,d}$ is interpreted.
+
+In epidemic-wave applications, an additional complication arises from external non-proportional hazards that interact with baseline frailty. In this manuscript, that issue is handled through an optional NPH exponent module described in Methods §2.7.1–§2.7.4 and revisited in Limitations §5.4.
+
+> **Box 1. Two fundamentally different strategies for cohort comparability**
+>
+> - **Traditional matching and regression approaches:** attempt to construct comparable cohorts by matching or adjusting *characteristics of living individuals* at baseline or over follow-up, and then estimating effects via a fitted hazard model (e.g., Cox proportional hazards). This implicitly assumes that sufficiently rich covariate information can render cohorts exchangeable with respect to unobserved mortality risk.
+>
+> - **Problem under latent frailty:** even meticulous 1:1 matching on observed covariates can fail to equalize mortality risk trajectories. In such settings, cohort differences arise not from mismeasured covariates, but from **selection-induced depletion of susceptibles**, which alters hazard curvature over time.
+>
+> - **KCOR strategy:** rather than equating cohorts based on characteristics of the living, KCOR equates cohorts based on how they die in aggregate. It estimates cohort-specific enrollment-time depletion geometry through a Gompertz-plus-frailty working model anchored at rebased $t=0$, aligns prespecified quiet windows through a structured delta-iteration estimator, adjusts for that geometry via analytic inversion under the working model, and compares cohorts on the resulting depletion-neutralized cumulative hazard scale.
+>
+> - **Inferential distinction:** Cox-type methods are **model-based and individual-level**, conditioning on survival and fitting covariate effects, whereas KCOR is **measurement-based and cohort-level**, operating directly on aggregated mortality trajectories without fitting covariate models. The inferential target is cumulative outcome accumulation rather than an instantaneous hazard ratio conditional on survival.
+
+### 1.3 Related work (brief positioning)
+
+KCOR builds on the frailty and selection-induced depletion literature in which unobserved heterogeneity induces deceleration of cohort-level hazards over follow-up (a standard working model is gamma frailty) [@vaupel1979]. KCOR’s distinct contribution is not additional hazard flexibility, but a **diagnostics-driven normalization** of selection-induced depletion geometry in cumulative-hazard space prior to defining a cumulative cohort contrast. Related approaches that address non-proportional hazards (time-varying effects, flexible parametric hazards, additive hazards) or time-varying confounding (MSM/IPW/g-methods) target different estimands and typically require richer longitudinal covariates than are available in minimal registry data [@grambsch1994; @andersen1982; @royston2002; @aalen1989; @lin1994; @vanhouwelingen2007; @robins2000; @cole2008]. Additional discussion is provided in the Supplementary Information (SI).
+
+Time-varying coefficient Cox models allow hazards to change over time but do not adjust for frailty-induced depletion in the marginal cumulative sense targeted by KCOR because estimation remains conditional on survival; they therefore address non-proportionality without adjusting for selection-induced curvature in marginal cumulative comparisons.
+
+Marginal structural models target causal effects under exchangeability using longitudinal covariates and weighting; KCOR instead targets descriptive cumulative contrasts under minimal data, so the estimands, assumptions, and failure modes differ.
+
+Flexible parametric survival models improve baseline fit but do not resolve depletion-induced selection bias when frailty heterogeneity is present.
+
+### 1.4 Evidence from the literature: residual confounding despite meticulous matching
+
+Motivating applied studies suggest that even careful matching and adjustment can leave substantial residual differences in non-COVID mortality and time-varying “healthy vaccinee effect” signatures, consistent with selection and depletion dynamics not captured by measured covariates [@obel2024; @chemaitelly2025; @agampodi2024; @bakker2025].
+
+### 1.5 Contribution of this work
+
+This work makes four primary contributions: (i) it formalizes selection-induced depletion under latent frailty heterogeneity as a source of non-proportional hazards and curvature that can distort fixed-frailty contrasts inferred from conventional survival summaries; (ii) it replaces a single-window constant-baseline fit with a Gompertz-based delta-iteration estimator that targets a cohort-specific enrollment-time frailty variance $\theta_{0,d}$ across aligned quiet windows; (iii) it separates a universal KCOR core from an optional epidemic-wave NPH exponent module with a shared amplification parameter $\alpha$ localized, if at all, from cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale**, and consistent survivor-law fitting and inversion to obtain the **frailty-neutral cumulative hazard** (§2.7); and (iv) it validates the revised estimator using a broader stack that includes $\theta_0$ recovery, control analyses, Cox mismatch demonstrations, and explicit failure signaling.
+
+A central implication is identifiability: in minimal-data retrospective cohorts, interpretability depends not on any one quiet window alone but on a coherent combination of Gompertz curvature, rebased enrollment-time anchoring, consistency across quiet windows, and diagnostics of fit and stability. A common multiplier on individual baseline hazards preserves the frailty variance. Rescaling observed cohort hazards changes the fitted variance (§2.4.4). The optional NPH localization procedure requires a specified intervention-effect scale to separate $\alpha$ from cohort-specific multiplicative structure (Limitations §5.4).
+
+Together, these contributions position KCOR not as a replacement for existing survival estimands, but as a normalization step for studies targeting depletion-adjusted cumulative contrasts, rather than the observed marginal survival itself.
+
+### 1.6 Target estimand and scope (non-causal)
+
+> **Box 2. Target estimand and scope (non-causal)**
+>
+> - **Primary estimand (KCOR)**: For two fixed enrollment cohorts $A$ and $B$, it is a **depletion-adjusted cohort-level estimand on the reference-frailty scale**, defined as
+>   $$
+>   \mathrm{KCOR}(t)=\tilde H_{0,A}(t)/\tilde H_{0,B}(t),
+>   $$
+>   where $\tilde H_{0,d}(t)$ is cohort $d$'s **depletion-neutralized baseline cumulative hazard** at reference frailty $Z=1$ (the mean frailty within cohort $d$ at the rebased post-skip origin) under the mean-one working model, obtained by estimating enrollment-time frailty variance $\theta_{0,d}$ from prespecified quiet windows and applying the gamma-frailty inversion (Methods §2). When the optional NPH cumulative correction is used, the same ratio employs $H_{\mathrm{corr},d}(t)$ in place of $\tilde H_{0,d}(t)$ (§2.7.3).
+> - **Operational summary**: KCOR proceeds by (i) freezing cohorts and rebasing time after a prespecified stabilization skip, (ii) estimating $\theta_{0,d}$ with a Gompertz-based delta-iteration procedure across prespecified quiet windows, (iii) applying gamma-frailty inversion to the full post-enrollment cumulative hazard trajectory, (iv) optionally using the specified NPH survivor law in steps (ii) and (iii) when prespecified (§2.5; §2.7.3), without altering raw hazard, and (v) comparing cohorts on that scale. Steps (i)–(iii) and (v) define the **core** pipeline; step (iv) is **optional**. When $\alpha$ is not identified, step (iv) is **inactive** and does not affect reported results. In epidemic-wave settings, localization of $\alpha$ requires **externally supplied VE or other prespecified intervention-effect scale** (§2.7.1–§2.7.2).
+> - **Interpretation**: KCOR is a time-indexed **cumulative** contrast on the depletion-neutralized scale. Values above/below 1 indicate greater/less cumulative event accumulation in cohort $A$ than $B$ by time $t$ after depletion normalization. KCOR is not an instantaneous hazard ratio. It should be read as a **diagnostic** signal about persistent contrasts after working-model depletion adjustment, not—by itself—as evidence of causal harm or benefit. In particular, baseline differences that operate through depletion geometry are adjusted out; residual differences should be interpreted as what remains after that depletion-based normalization, not as automatically causal.
+> - **What it is not**: KCOR is **not** a causal effect estimator (no ATE/ATT) and does not recover counterfactual outcomes under hypothetical interventions.
+> - **When interpretable**: Interpretation is conditional on explicit assumptions (fixed cohorts; shared external hazard environment; adequacy of the working frailty model; identifiability of $\theta_{0,d}$ from prespecified quiet windows; structured additivity of persistent wave offsets when the delta estimator is used) **and** on internal diagnostics (quiet-window fit quality; agreement with the fitted cumulative Gompertz shape within quiet windows; multi-window consistency; parameter stability to perturbation; and, when relevant, identifiability and stability of the optional NPH exponent model).
+> - **If diagnostics indicate non-identifiability**: the analysis is treated as not identified and KCOR is not reported as a “normalized contrast”.
+
+### 1.7 Paper organization and supporting information (SI)
+
+The main text introduces the KCOR estimator, provides a demonstration of Cox estimates under frailty-driven depletion, and presents two primary validation examples (a negative control and a stress test). Additional validations—including positive controls—along with extended diagnostics, empirical registry-based nulls, and detailed simulation specifications are provided in the Supplementary Information (SI; Sections S2 and S4.2–S4.3; Tables S1–S3).
+
+## 2. Methods
+
+Mortality is used as the primary example throughout this section because it is objectively defined and reliably recorded in many administrative datasets.
+
+Table @tbl:notation defines the notation used throughout the Methods section.
+
+For COVID-19 vaccination analyses, intervention count corresponds to the number of vaccine doses received; more generally, this can index any discrete exposure level.
+
+### 2.1 Conceptual framework and estimand
+
+Retrospective cohort differences can arise from two qualitatively different components:
+
+* **Level differences**: cohort hazards differ by an approximately time-stable multiplicative factor (or, equivalently, cumulative hazards have different slopes but similar shape).
+* **Depletion (curvature) differences**: cohort hazards evolve differently over time because cohorts differ in latent heterogeneity and are **selectively depleted** at different rates.
+
+**Contrast with RMST and model-free cumulative summaries.** Restricted mean survival time (RMST), cumulative incidence, and similar integrated-survival summaries characterize outcome accumulation on the **observed** scale without adjusting for selection-induced depletion curvature in the hazard trajectory. KCOR instead defines a **geometry-consistent descriptive contrast** on the depletion-neutralized cumulative-hazard scale after frailty inversion when diagnostics support identification of $\theta_{0,d}$. The estimands differ when non-proportionality is driven by frailty depletion: RMST-style summaries retain that geometry in the marginal comparison, whereas KCOR attempts to partial it out under the stated working model.
+
+**Non-causal estimand.** $\mathrm{KCOR}(t)$ summarizes a depletion-adjusted contrast in cumulative outcomes on the working-model scale. It does not, by itself, identify causal effects. Interpretation as causal requires additional assumptions beyond the KCOR framework. Accordingly, KCOR should be interpreted as a **diagnostic signal** indicating whether outcome differences persist after adjusting for depletion geometry under the assumed frailty structure, not as evidence of causality.
+
+KCOR's static HVE adjustment targets baseline differences between cohorts insofar as they manifest through selection-induced depletion of susceptible individuals. This includes a broad class of baseline imbalances—whether due to health status, care-seeking, eligibility, or other enrollment-time selection factors—to the extent that they induce cohort-specific curvature in cumulative hazard trajectories under the working model. The resulting contrast therefore accounts for baseline differences that are explainable by depletion geometry, while remaining agnostic about mechanisms that do not act through that geometry.
+
+This framework targets the second failure mode. Under latent frailty heterogeneity, high-risk individuals die earlier, so the surviving risk set becomes progressively "healthier." With a constant individual baseline hazard this selection produces a concave cohort cumulative hazard, even under a null treatment effect. With an increasing baseline, the sign of the curvature also depends on baseline growth. When selection concentrates frailty heterogeneity differently across cohorts, the resulting curvature differences produce strong non-proportional hazards and can drive misleading contrasts for estimands that condition on the evolving risk set.
+
+KCOR does not assert a causal interpretation of the resulting contrast; rather, it highlights residual differences after adjustment for modeled depletion geometry. Selection differences that change the cohort-specific mean frailty may remain in the reference baseline rates. KCOR does not identify constant multiplicative hazard effects as separate parameters; they are not separately identifiable from baseline scale. Under minimal aggregated data, $\theta_{0,d}$ is estimated from the quiet-window hazard trajectory under the specified Gompertz model (§2.4.4). Non-multiplicative effects (additive or time-varying) may distort curvature and reduce identifiability. Interpretation is therefore conditional on the adequacy of the gamma-frailty working model, the Gompertz structure, and the associated diagnostics.
+
+The strategy is therefore:
+
+1. **Estimate the cohort-specific depletion geometry** (via curvature) during prespecified epidemiologically quiet periods.
+2. **Map observed cumulative hazards into a depletion-neutralized space** by inverting that geometry.
+3. **Compare cohorts only after normalization** using a prespecified post-adjustment estimand; ratios of depletion-neutralized cumulative hazards (KCOR) are used here.
+
+KCOR operates by estimating depletion geometry ($\theta_{0,d}$) from prespecified quiet windows, using the specified survivor law for fitting and inversion when optional wave-period amplification ($\alpha$) is modeled (§2.5; §2.7.3), and comparing cumulative outcomes on the normalized scale.
+
+Figure @fig:kcor_empirical_intuition illustrates normalization in a Czech cohort comparison. The selection rule restricted final KCOR to 0.85–1.15 and favored examples in which normalization reduced the between-cohort difference in curvature.
+
+![Empirical illustration of the KCOR workflow on a deterministically selected grouped Czech cohort comparison (2021-07 enrollment, grouped dose 2 versus dose 0 reference). (A) The raw observed cumulative hazards differ in both level and curvature. (B) The earlier monthly normalization adjusted each cohort's hazards using the slope fitted in its quiet period. The resulting cumulative hazards are more nearly linear. (C) KCOR(t) is then computed as the cumulative contrast on that normalized scale. This figure is intended to illustrate the geometric effect of the workflow on an analysis example rather than to serve as a standalone substantive result.](figures/fig_kcor_empirical_intuition.png){#fig:kcor_empirical_intuition}
+
+KCOR deliberately targets cumulative mortality contrasts rather than instantaneous hazard ratios. This choice is intentional: under the working model, frailty inversion removes depletion-induced curvature from the cumulative comparison; accumulation alone does not remove it. It is therefore not intended as a replacement for Cox proportional hazards models or flexible parametric survival models that estimate time-varying hazard effects. Instead, KCOR provides a geometry-based normalization of cumulative risk in settings where selection-induced depletion distorts marginal comparisons.
+
+All analyses are performed using discrete weekly time bins; continuous-time notation is used solely for expositional convenience.
+See Table @tbl:notation for the full symbol list.
+
+**Notation preview.**  
+Throughout this paper, $t$ denotes event time since cohort enrollment and $d$ indexes cohorts. For frailty identification, time is rebased after the stabilization skip so that $t_{\mathrm{rebased}}=0$ at the first accumulating interval. Unless otherwise specified, modeling and parameter estimation are carried out in rebased time. Let $H_{\mathrm{obs},d}(t)$ denote the observed cohort-level cumulative hazard, computed from fixed risk sets after the required preprocessing steps, and let $\tilde H_{0,d}(t)$ denote the corresponding *depletion-neutralized baseline cumulative hazard* obtained after frailty normalization. Let $H_{\mathrm{corr},d}(t)$ denote the optional NPH-corrected cumulative hazard obtained using the specified survivor law (§2.7.3). Hats denote estimated quantities; tildes denote depletion-neutralized quantities. Individual hazards are modeled using a latent multiplicative frailty term $z$, with cohort-specific enrollment-time variance $\theta_{0,d}$, which governs the strength of selection-induced depletion and resulting curvature in observed cumulative hazards. Each cohort's $\theta_{0,d}$ is estimated separately; there is no pooled/shared frailty variance across comparison groups in the core estimator. Full notation is summarized in Table @tbl:notation.
+
+#### 2.1.1 Target estimand
+
+Scope and interpretation are summarized in Box 2 (§1.6); the formal definition used throughout is provided here.
+
+Let $\tilde H_{0,d}(t)$ denote the **depletion-neutralized baseline cumulative hazard** for cohort $d$ at event time $t$ since enrollment (Table @tbl:notation). For two cohorts $A$ and $B$, KCOR is defined as
+
+$$
+\mathrm{KCOR}(t) = \frac{\tilde H_{0,A}(t)}{\tilde H_{0,B}(t)}.
+$$
+{#eq:kcor-estimand}
+
+When the optional NPH cumulative correction is active, $H_{\mathrm{corr},d}(t)$ replaces $\tilde H_{0,d}(t)$ in this ratio (§2.7.3).
+
+KCOR is therefore a constructed cumulative contrast defined on a depletion-normalized scale rather than a directly observable quantity in the raw data.
+
+For visualization, an **anchored KCOR** is sometimes reported to show changes relative to the reference ratio:
+$$
+\mathrm{KCOR}(t; t_0) = \mathrm{KCOR}(t)/\mathrm{KCOR}(t_0),
+$$
+with prespecified $t_0$ (e.g., 4 weeks).
+Anchoring is used only when explicitly stated to compare the cumulative ratio with its reference value; both cumulative hazards retain their pre-reference contributions.
+
+#### 2.1.2 Identification versus diagnostics
+
+Scope and interpretation are summarized in Box 2 (§1.6). A working-model identification proposition for $\theta_{0,d}$ is stated immediately after §2.4.4, together with a diagnostic interpretation disclaimer.
+
+Interpretability of a KCOR trajectory is assessed via prespecified diagnostics (Supplementary Information §S2; Tables S1–S3). When required diagnostics indicate non-identifiability, substantive interpretation is withheld; explicitly flagged numerical outputs may be retained for descriptive illustration or audit. Checks include:
+
+* stability of $(\hat{k}_d,\hat{\theta}_{0,d})$ and the aligned quiet-window geometry under small perturbations,
+* agreement of the normalized cumulative hazard with its fitted Gompertz shape within the quiet window,
+* absence of systematic residual structure in hazard space.
+
+Diagnostics corresponding to each assumption are summarized in Supplementary Information §S2 (Tables S1–S3).
+
+#### 2.1.3 KCOR assumptions and diagnostics
+
+These assumptions define when KCOR normalization is interpretable.
+
+The KCOR framework relies on the following assumptions, which are framed diagnostically:
+
+1. **Fixed cohort enrollment.**
+   Cohorts are defined at a common enrollment time and followed forward without dynamic entry or rebalancing.
+
+2. **Multiplicative latent frailty.**
+   Individual hazards are assumed to be multiplicatively composed of a baseline hazard and an unobserved frailty term, with cohort-specific frailty distributions.
+
+3. **Quiet-window stability.**
+   A prespecified epidemiologically quiet period exists during which external shocks to the baseline hazard are minimal, allowing depletion geometry to be estimated from observed cumulative hazards. Quiet windows need not be perfectly free of shocks; they should represent intervals where no large transient perturbations dominate baseline mortality. Residual baseline drift can be absorbed into the frailty parameter if quiet-window conditions are violated; sensitivity of fitted frailty variance to quiet-window placement is shown in Supplementary Figure S5 using Czech registry data. Epidemic-wave periods with sharp hazard shocks fall outside this assumption and are excluded from normalization by design.
+
+4. **Independence across strata.**
+   Cohorts or strata are analyzed independently, without interference, spillover, or cross-cohort coupling.
+
+5. **Sufficient event-time resolution.**
+   Event timing is observed at a temporal resolution adequate to estimate cumulative hazards over the quiet window.
+
+If no candidate quiet window satisfies diagnostic criteria, KCOR is not interpretable and analysis should terminate without reporting contrasts. Multiple disjoint quiet windows may be pooled provided fitted depletion parameters are stable and diagnostics are consistent across windows. Quiet-window validity diagnostics are summarized in Supplementary Information §S2 (Tables S1–S3).
+
+These assumptions are evaluated empirically using post-normalization diagnostics. Violations can manifest as residual curvature, drift, or instability in adjusted cumulative hazard trajectories.
+
+### 2.2 Cohort construction
+
+KCOR is defined for **fixed cohorts at enrollment**. Required inputs are minimal: enrollment date(s), event date, and optionally birth date (or year-of-birth) for age stratification. Analyses proceed in discrete event time $t$ (e.g., weeks) measured since cohort enrollment.
+
+Cohorts are assigned by intervention state at the start of the enrollment interval. In the primary estimand:
+
+* **No post-enrollment switching** is allowed (individuals remain in their enrollment cohort),
+* **No censoring** is applied (other than administrative end of follow-up),
+* analyses are performed on the resulting fixed risk sets.
+
+Censoring or reclassification due to cohort transitions (e.g., moving between exposure groups over time) is not permitted, because such transitions alter the frailty composition of the cohort in a time-dependent manner. Allowing transitions would introduce additional, endogenous selection that changes cohort mortality trajectories in unpredictable ways, confounding depletion effects that KCOR is designed to normalize.
+
+This fixed-cohort design is intentional. Assigning exposure at enrollment prevents later treatment events from determining the initial exposure group, and prevents outcome-driven switching rules from creating time-dependent selection that is difficult to diagnose under minimal covariate availability. Extensions that allow switching or censoring are treated as sensitivity analyses (§5.2) because they change the estimand and introduce additional identification requirements.
+
+Population eligibility criteria are application-specific and are not prescribed by KCOR. Their choice, including any criteria based on post-enrollment information, determines the population to which the resulting contrast applies and may introduce selection bias.
+
+Conceptual requirements of the KCOR framework are distinguished from operational defaults, which are reported separately for reproducibility (Supplementary Section S4).
+
+Throughout this manuscript the failure event is **all-cause mortality**. KCOR therefore targets cumulative mortality hazards and is not framed as a cause-specific competing-risks analysis.
+
+### 2.3 Hazard estimation and cumulative hazards in discrete time
+
+For each cohort $d$, let $N_d(0)$ denote the number of individuals at enrollment.
+Let $d_d(t)$ denote deaths occurring during interval $t$, and let
+$$
+D_d(t) = \sum_{s \le t} d_d(s)
+$$
+denote cumulative deaths up to the end of interval $t$.
+
+Define the risk set size at the start of interval $t$ as
+$$
+N_d(t) = N_d(0) - \sum_{s < t} d_d(s) = N_d(0) - D_d(t-1).
+$$
+In the primary estimand, individuals do not switch cohorts after enrollment and there is no loss to follow-up; therefore $N_d(t)$ is the risk set used to define all discrete-time hazards and cumulative hazards in this manuscript.
+
+Define the interval mortality ratio
+$$
+\mathrm{MR}_{d,t} = \frac{d_d(t)}{N_d(t)}.
+$$
+
+The discrete-time cohort hazard is computed as
+
+$$
+h_{\mathrm{obs},d}(t) = -\ln\!\left(1 - \mathrm{MR}_{d,t}\right) = -\ln\!\left(1 - \frac{d_d(t)}{N_d(t)}\right).
+$$
+{#eq:hazard-discrete}
+
+This transform is standard: it maps an interval event probability into a continuous-time equivalent hazard under a piecewise-constant hazard assumption. For rare events, $h_{\mathrm{obs},d}(t) \approx \mathrm{MR}_{d,t} = d_d(t)/N_d(t)$, but the log form remains accurate and stable when weekly risks are not negligible.
+The exact transform $h_{\mathrm{obs},d}(t) = -\log(1 - \mathrm{MR}_{d,t})$ is used throughout; the rare-event approximation is provided for intuition only.
+This discrete-time hazard transform under a piecewise-constant hazard assumption is standard; see, e.g., Kalbfleisch and Prentice (*The Statistical Analysis of Failure Time Data*) [@kalbfleisch2002].
+
+*All hazard and cumulative-hazard quantities used in KCOR are discrete-time integrated hazard estimators derived from fixed-cohort risk sets; likelihood-based or partial-likelihood formulations are not used for estimation or for the subsequent frailty-based normalization.*
+
+Observed cumulative hazards are accumulated over event time after preprocessing (§2.7), where preprocessing is the **stabilization skip** only: $h_d^{\mathrm{adj}}(t)=h_d^{\mathrm{eff}}(t)$. The optional NPH exponent module does **not** alter this accumulation; fitting and inversion use the specified survivor law (§2.5; §2.7.3).
+
+$$
+H_{\mathrm{obs},d}(t) = \sum_{s \le t} h_d^{\mathrm{adj}}(s),
+\qquad \Delta t = 1.
+$$
+{#eq:cumhazard-observed}
+
+Discrete binning accommodates tied events and aggregated registry releases. Bin width is chosen based on diagnostic stability (e.g., smoothness and sufficient counts per bin) rather than temporal resolution alone.
+
+In addition to the primary implementation above, $\hat H_{\mathrm{obs},d}(t)$ was computed using the Nelson--Aalen estimator $\sum_{s \le t} d_d(s)/N_d(s)$ as a sensitivity check; results were unchanged.
+
+### 2.4 Selection model: gamma frailty and depletion normalization
+
+#### 2.4.1 Individual hazards with multiplicative frailty
+
+Let $z_{i,d}$ denote an individual-specific latent frailty term with mean $1$ and variance $\theta_{0,d}$, defined at rebased time $t_{\mathrm{rebased}}=0$ after the stabilization skip. Let $\tilde h_{0,d}(t)$ denote the depletion-neutralized baseline hazard for cohort $d$. Individual hazards are modeled as
+
+$$
+h_{i,d}(t) = z_{i,d}\,\tilde h_{0,d}(t),
+\qquad
+z_{i,d} \sim \mathrm{Gamma}(\mathrm{mean}=1,\ \mathrm{var}=\theta_{0,d}).
+$$
+{#eq:individual-hazard-frailty}
+
+Here $\theta_{0,d}$ is an **enrollment-time** parameter: it characterizes the cohort's frailty heterogeneity at the start of the accumulating follow-up, not the time-varying variance of the surviving population after depletion has acted. Larger $\theta_{0,d}$ produces stronger early depletion of high-frailty individuals and therefore stronger cohort-level hazard deceleration.
+
+Gamma frailty is used because it yields a closed-form link between observed and baseline cumulative hazards via the Laplace transform [@vaupel1979]. In KCOR, gamma frailty is a **working geometric model** for depletion normalization, not a claim of biological truth. KCOR does **not** require the gamma frailty model to be structurally correct; it uses this specification to extract depletion-consistent curvature. If the true heterogeneity deviates from gamma, $\theta_{0,d}$ should be interpreted as an **effective parameter** summarizing depletion geometry rather than as the literal variance of a gamma distribution. Deviations from the gamma assumption can manifest as diagnostic failures (e.g., poor fit, unstable $\hat{\theta}_{0,d}$, or sub-nominal coverage), providing an internal check on model adequacy. Adequacy is evaluated empirically through fit quality, multi-window consistency, and post-normalization diagnostics.
+
+#### 2.4.2 Gamma-frailty identity and inversion
+
+Let
+
+$$
+\tilde H_{0,d}(t) = \int_0^t \tilde h_{0,d}(s)\,ds
+$$
+{#eq:baseline-cumhazard}
+
+denote the depletion-neutralized baseline cumulative hazard. Under the gamma-frailty working model, the observed cohort-level cumulative hazard satisfies
+
+$$
+H_{\mathrm{obs},d}(t) = \frac{1}{\theta_{0,d}}\,\log\!\left(1 + \theta_{0,d} \tilde H_{0,d}(t)\right),
+$$
+{#eq:gamma-frailty-identity}
+
+and the corresponding inversion is
+
+$$
+\tilde H_{0,d}(t) = \frac{\exp\!\left(\theta_{0,d} H_{\mathrm{obs},d}(t)\right) - 1}{\theta_{0,d}}.
+$$
+{#eq:gamma-frailty-inversion}
+
+Differentiating Eq. @eq:gamma-frailty-identity gives the hazard-level relation
+
+$$
+h_{\mathrm{obs},d}(t)=\frac{\tilde h_{0,d}(t)}{1+\theta_{0,d}\tilde H_{0,d}(t)},
+\qquad
+\tilde h_{0,d}(t)=h_{\mathrm{obs},d}(t)\left(1+\theta_{0,d}\tilde H_{0,d}(t)\right),
+$$
+
+where the hazards are instantaneous. Under the gamma-frailty working model, differencing the cumulative inversion at consecutive week boundaries gives the exact weekly update in Step 2. The inversion is the **normalization operator**: given an estimate $\hat{\theta}_{0,d}$, it maps the observed cumulative hazard $H_{\mathrm{obs},d}(t)$ into a depletion-neutralized cumulative hazard scale. This transformation is monotonic in $H_{\mathrm{obs},d}(t)$ for fixed $\theta_{0,d}$, preserving ordering of cumulative risk while altering curvature. KCOR normalization is not model-free: if the gamma-frailty working model or baseline specification is materially misspecified, the inversion may introduce bias rather than reduce bias under the assumed frailty structure. We use a tilde (e.g., $\tilde H_{0,d}(t)$) to denote depletion-neutralized baseline quantities obtained after frailty normalization; observed cohort-aggregated quantities are written without a tilde (e.g., $H_{\mathrm{obs},d}(t)$).
+
+#### 2.4.3 Gompertz baseline and enrollment-time interpretation
+
+To identify $\theta_{0,d}$, the revised KCOR estimator uses a Gompertz baseline hazard over rebased event time:
+
+$$
+\tilde h_{0,d}(t_{\mathrm{rebased}})=k_d e^{\gamma t_{\mathrm{rebased}}},
+\qquad
+H_{\mathrm{gom},d}(t_{\mathrm{rebased}})=\frac{k_d}{\gamma}\!\left(e^{\gamma t_{\mathrm{rebased}}}-1\right).
+$$
+{#eq:baseline-shape-default}
+
+This Gompertz form supplies the structured age-like trend against which depletion-induced curvature is identified. Here $\gamma$ is a fixed Gompertz slope and $k_d$ is a cohort-specific scale parameter. This choice imposes more structure than the earlier flatter-baseline specification, but it aligns the estimator with the biological age-slope assumption used in the v7.5 implementation and makes the parameter of interest explicit: $\theta_{0,d}$ is the frailty variance at rebased $t=0$, not a late-window summary of an already depleted cohort. The Gompertz specification is used as **minimal structure sufficient to separate baseline growth from depletion curvature**—a baseline trend anchor—while preserving identifiability of $\theta_{0,d}$; more flexible baselines would absorb curvature and weaken that identification.
+
+Changing the shared Gompertz slope can alter both fitted frailty variances. Under proportional inversion, its effect on KCOR is small when the refit changes the two normalized cumulative hazards by similar percentages. For anchored KCOR, each cohort's change is measured relative to its change at the reference week. In a 40-week example where one cohort’s hazard doubled after the week-20 anchor, varying the shared annual slope by ±0.020 around 0.085 shifted endpoint KCOR by only about 0.4% in either direction.
+
+#### 2.4.4 Quiet-window validity and identifiability
+
+Frailty parameters are fitted using bins within prespecified calendar quiet windows (ISO-week space) and the early post-skip fitting-anchor weeks, which are assumed to follow the baseline working model (section 2.5). Marked wave rows are excluded from quiet residuals when the optional wave model is active. These windows are chosen to avoid sharp external shocks that would confound depletion-geometry identification. In the revised estimator, however, no one quiet window is assumed sufficient on its own. Identification depends on:
+
+1. adequate Gompertz-plus-frailty fit within quiet windows,
+2. consistency of $\hat{\theta}_{0,d}$ across aligned quiet windows after structured offset correction,
+3. stability to small boundary perturbations, and
+4. plausible reconstruction of persistent wave offsets when the delta-iteration path is used.
+
+**Effect of hazard scaling on the fitted variance.**  
+Identification of $\theta_{0,d}$ uses the level and time course of the cohort hazard under the specified Gompertz baseline. With the Gompertz slope fixed, multiplying the observed cohort hazard by a constant $c>0$ gives model parameters $c k_d$ and $\theta_{0,d}/c$, whereas multiplying each individual's baseline hazard by $c$ preserves the frailty variance $\theta_{0,d}$. Constant multiplicative effects are not separately identifiable from baseline scale.
+
+In contrast, additive or time-varying effects can alter curvature and may be absorbed into $\theta_{0,d}$, leading to confounding. Accordingly, $\theta_{0,d}$ should be interpreted as capturing curvature attributable to depletion geometry plus any non-multiplicative residual effects present within the identification window.
+
+The effect of cohort-specific multipliers depends on the scale on which they act.
+
+When any of the conditions in items 1–4 fails, when non-multiplicative contamination or Gompertz misspecification dominates, or when diagnostics indicate material breakdown of the common-scale approximation, the analysis is treated as not identified rather than reported as a stable normalized contrast. Full operational diagnostics are summarized in Supplementary Information §S2.
+
+> **Proposition (Identification under a fixed Gompertz slope).**  
+> In a quiet interval under the Gompertz–gamma model with proportional survivor history from enrollment (so the survivor law retains its gamma form) and known slope $\gamma>0$, the positive instantaneous cohort hazard $h$ satisfies $h'=\gamma h-\theta_{0,d}h^2$. Its level and derivative therefore determine $\theta_{0,d}=(\gamma h-h')/h^2$ in the exact model.
+
+When $\theta_{0,d}=0$, Gompertz growth alone curves the observed cumulative hazard. When $k_d\theta_{0,d}=\gamma$, the observed hazard is constant and the cumulative hazard is linear despite positive frailty. This is a **parametric** identification statement under the working model. KCOR does **not** claim nonparametric identification; identifiability is evaluated **empirically** via curvature diagnostics and multi-window coherence (§2.1.2; SI §S2).
+
+While other latent heterogeneity structures could in principle generate similar curvature in cumulative hazard trajectories, KCOR does **not** rely on uniqueness of this mapping. Instead, identifiability is assessed empirically through diagnostic fit, stability across quiet windows, and consistency under stress tests. The parameter $\theta_{0,d}$ should therefore be interpreted as a **depletion-consistent effective frailty parameter** under the working model, rather than a uniquely identified structural quantity.
+
+Accordingly, KCOR recovers a **geometry-consistent representation** of depletion dynamics rather than a uniquely identified biological or mechanistic frailty parameter.
+
+### 2.5 Joint baseline and frailty estimation across quiet windows
+
+For each cohort independently, estimate one common Gompertz baseline scale $k_d$ and enrollment-time frailty variance $\theta_d\ge0$, with fixed slope $\gamma$. Weekly observed hazards use the stabilization skip only. Let $G(s;k)=k(e^{\gamma s}-1)/\gamma$ denote cumulative baseline exposure at the start of rebased week $s$. For a proportional offset $a$ the exact integrated weekly prediction is
+
+$$
+q(s;k,\theta,a)=\frac{1}{\theta}\log\left(1+\frac{\theta[G(s+1;k)-G(s;k)]}{1+\theta[G(s;k)+a]}\right).
+$$
+
+At $\theta=0$ use the continuous limit. The first usable contiguous quiet-window joint fit provides an initialization, not a fixed final baseline rate. If no single quiet window can supply a usable seed, or if seed fitting fails, initialize from the early rate estimate and default frailty and proceed with the same pooled objective, subject to the overall data sufficiency checks. For each candidate pair, reconstruct proportional cumulative exposure from observed survival, $H_{\mathrm{eff}}(s)=\operatorname{expm1}(\theta H_{\mathrm{obs}}(s))/\theta$, using the linear limit at zero. At re-entry after an actual gap in the union of baseline fitting anchors and quiet weeks, reconstruct raw cumulative offset $H_{\mathrm{eff}}(s)-G(s;k)$; the incremental offset relative to the preceding applied cumulative offset is constrained nonnegative. This proportional gap model assumes nonnegative excess exposure. A genuinely protective gap violates that assumption. Record signed changes in the raw cumulative offset at the initial fitting pass, without clamping them for this diagnostic. For the diagnostic only, use the signed entry-rate identity below, before imposing the nonnegative entry adjustment used in fitting. If the upper endpoint of their pointwise 95% person-bootstrap interval is below zero, flag the gap assumption as violated, irrespective of numerical convergence; report affected estimates and intervals for audit, not substantive interpretation. Incomplete diagnostic intervals are not a pass. The seed and pooled fits use the same configured numerical ceiling. A gap diagnostic is unassessed if its seed is unavailable or constrained at a numerical bound. This exploratory screen does not change the constrained fit. It applies to the proportional gap model; nonlinear unmarked gaps are not assessed by the proportional-initializer screen. At initial entry following proportional shock, the effective rate $r$ and observed survival identify the entry-aware seed rate through $k=r\exp(\theta H_{\rm obs}(s))/(1+\theta r F(s))$ with $F(s)=G(s;1)$.
+
+The objective jointly refits both parameters:
+
+$$
+(\hat k_d,\hat\theta_d)=\arg\min_{k>0,\theta\ge0}
+\sum_{s\in\mathcal Q_d}\{h_d^{\rm eff}(s)-q_d(s;k,\theta,a_d(s;k,\theta))\}^2 .
+$$
+{#eq:nls-objective}
+
+Here $\mathcal Q_d$ includes the designated quiet and early fitting-anchor rows used by the implementation. The inclusion of early fitting-anchor weeks assumes that their mortality follows the baseline working model, even when they fall outside the designated quiet windows. The offsets are reconstructed inside the objective, not treated as fixed values. For numerical convergence, the proportional fit divides residuals by a fixed positive scale set by the mean absolute observed weekly hazard in each fitting sample; this does not change the least-squares minimizer. Optimize in log $k$ over the weekly rate interval $[10^{-8},0.1]$, flagging active rate bounds, and $0\le\theta\le500$ by default; the ceiling is numerical, not a biological upper limit. Fits near the ceiling are flagged and the constrained value is retained for diagnostic output rather than reset to zero. Compare the first-window initialization with a second start at $\theta=0.5$. The implementation retains event-count, parameter-bound and residual diagnostics. No-common-signal and failed fits are flagged; zero-variance fallback is not evidence that frailty is absent.
+
+When a specified wave is active, use the full survival law $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$ of §2.7.3 for both fitting and inversion. For every candidate $k,\theta$, carry proportional gap exposures and the marked wave exposure through the history, predict quiet-week increments $\log L(B_s,W_s)-\log L(B_{s+1},W_{s+1})$, and minimize the same weekly least-squares objective. Marked wave rows reconstruct exposure rather than contributing quiet residuals, even if they overlap the early fitting anchors. Unmarked nonlinear shocks cannot be distinguished from other mortality changes by counts alone. This route assumes a supplied exponent and uses the same marked-wave exclusions for all values of the exponent, including one. At $\alpha=1$ the survival law and final inversion reduce to the exact proportional gamma identity. The ordinary unmarked proportional fit is used when the module is off.
+
+### 2.6 Normalization (depletion-neutralized cumulative hazards)
+
+After fitting, KCOR computes the depletion-neutralized baseline cumulative hazard for each cohort $d$ by applying the inversion to the full post-enrollment trajectory:
+
+$$
+\tilde H_{0,d}(t) = \frac{\exp\!\left(\hat{\theta}_{0,d}\,H_{\mathrm{obs},d}(t)\right)-1}{\hat{\theta}_{0,d}}.
+$$
+{#eq:normalized-cumhazard}
+
+This inversion adjusts for the curvature attributed to the estimated depletion geometry under the working model and places cohorts on a common cumulative-hazard scale. The normalization maps each cohort into a depletion-neutralized baseline-hazard space in which the hazard curvature attributable to frailty depletion has been factored out, while the baseline hazard level is retained. The inversion uses the full observed cumulative hazard trajectory built from $h_d^{\mathrm{eff}}(t)$ after the stabilization skip. When the optional NPH module is active, fitting and inversion use the specified survivor law (§2.5; §2.7.3), without modifying the raw observed hazards. This normalization defines a common comparison scale in cumulative-hazard space; it is not equivalent to Cox partial-likelihood baseline anchoring, but serves an analogous geometric role for cumulative contrasts.
+The core identities used in KCOR are given in Equations @eq:hazard-discrete, @eq:nls-objective, @eq:normalized-cumhazard, and @eq:kcor-estimand. Normalization defines a common comparison scale; the scientific estimand is then computed on that scale (Box 2).
+
+#### 2.6.1 Computational considerations
+
+KCOR operates on aggregated event counts in discrete time and cumulative-hazard space. Computational complexity scales linearly with the number of time bins and strata rather than the number of individuals, making the method feasible for very large population registries. In practice, KCOR analyses on national-scale datasets (millions of individuals) are memory-bound rather than CPU-bound and can be implemented efficiently using standard vectorized numerical libraries. No iterative optimization over individual-level records is required.
+**Numerical stability at vanishing frailty variance.**  
+When the fitted frailty variance satisfies $\hat\theta_{0,d} < \varepsilon$ (with $\varepsilon$ set to a small numerical tolerance, e.g., $10^{-8}$), the gamma-frailty inversion in Eq. (@eq:normalized-cumhazard) is evaluated in the $\theta_0 \to 0$ limit, yielding
+$$
+\tilde H_{0,d}(t)=H_{\mathrm{obs},d}(t),
+$$
+which is the observed cumulative hazard computed as the sum of negative log weekly survival probabilities, rather than the Nelson–Aalen sum of weekly death fractions. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates little fitted frailty-induced depletion. Weekly death fractions below one are converted without clipping. Exhausted risk sets and inversions outside the representable numerical range are flagged as unavailable; the inversion retains the fitted variance. From the first week with zero people at risk at its opening, the cohort hazard is undefined: subsequent weeks are excluded from fitting and the affected contrast and its interval are unavailable. Earlier supported estimates are retained; directly aggregated cohorts with positive opening risk remain eligible.
+
+#### 2.6.2 Internal diagnostics and 'self-check' behavior
+
+KCOR includes internal diagnostics intended to make model stress visible rather than hidden.
+
+1. **Post-normalization shape in quiet periods.** Within a quiet window, the normalized cumulative hazard should follow the fitted cumulative Gompertz curve, allowing for the offset carried into that window. In the continuous model this curve is linear in $(e^{\gamma t}-1)/\gamma$, where $t$ is rebased event time. For this diagnostic, compare the cumulative increase from each quiet window's entry to the integrated fitted Gompertz baseline over that window, using the same normalized trajectory as the reported KCOR. Residual drift and maximum deviation are reported by window. Systematic departures from the fitted curve warrant investigation.
+
+2. **Fit residual structure in hazard space.** Define residuals over the pooled fit set:
+
+$$
+r_{d}(t)=h_d^{\mathrm{adj}}(t)-q_d(t;\hat{k}_d,\hat{\theta}_{0,d},\Delta_d(t)).
+$$
+{#eq:si_residuals}
+
+KCOR expects residuals to be small and not systematically time-structured within or across quiet windows. For integer death counts and opening risk sets, the fitted integrated weekly hazard $q$ implies $p=1-e^{-q}$, expected deaths $Np$, and binomial variance $Np(1-p)$. Report standardized count residuals and doubled smaller inclusive binomial tail probabilities at the fitted parameters. A tail probability below $0.05/m$ across $m$ eligible count observations is an exploratory flag, not a calibrated goodness-of-fit test or an automatic frailty reset. Other existing eligibility and bound safeguards remain. Strongly patterned residuals indicate that the curvature attributed to depletion is instead being driven by unmodeled time-varying hazards.
+
+3. **Multi-window stability.** Under valid quiet-window selection, the reconstructed offsets and fitted parameters should be stable to small perturbations of quiet-window boundaries and to omission of individual quiet windows. Large changes under minor perturbations signal that the fitted geometry is being driven by transient dynamics rather than by stable depletion structure.
+
+4. **Weak-identification diagnostics.** Unstable $\Delta_d(t)$ or failure of the offset reconstruction can indicate weak identification. A near-zero estimate alone indicates little fitted frailty-induced depletion, not necessarily weak identification; assess precision separately. When the parameter is weakly identified, KCOR should be interpreted primarily as a diagnostic rather than as a strong normalization.
+
+These diagnostics are reported alongside $\mathrm{KCOR}(t)$ curves. Poor fit or instability can alert the analyst to model misspecification or contamination of a quiet window. Either can go undetected when the observed mortality pattern is consistent with the fitted model. Passing the checks therefore leaves interpretation conditional on the model and quiet-window assumptions. When diagnostics indicate non-identifiability, the depletion-based normalization is inappropriate and KCOR should not be interpreted.
+
+### 2.7 Stabilization (early weeks)
+
+The optional NPH module (§2.7.1–§2.7.4) extends the framework to settings with wave-induced hazard amplification but is **not** required for core KCOR estimation. Core $\mathrm{KCOR}(t)$ and depletion-normalized cumulative hazards $\tilde H_{0,d}(t)$ are defined and computed without $\alpha$. When $\alpha$ is not identified, that module is **inactive** and does not affect reported results.
+
+In many applications, the first few post-enrollment intervals can be unstable due to immediate post-enrollment artifacts (e.g., rapid deferral, short-term sorting, administrative effects). KCOR supports a prespecified stabilization rule by excluding early weeks from accumulation and from quiet-window fitting. The skip-weeks parameter is prespecified and evaluated via sensitivity analysis to exclude early enrollment instability rather than to tune estimates.
+
+In discrete time, define an effective hazard for accumulation:
+
+$$
+h_d^{\mathrm{eff}}(t)=
+\begin{cases}
+0, & t < \mathrm{SKIP\_WEEKS} \\
+h_{\mathrm{obs},d}(t), & t \ge \mathrm{SKIP\_WEEKS}.
+\end{cases}
+$$
+{#eq:effective-hazard-skip}
+
+For frailty identification, event time is rebased so that
+
+$$
+t_{\mathrm{rebased}} = t_{\mathrm{raw}} - \mathrm{SKIP\_WEEKS},
+$$
+
+placing $t_{\mathrm{rebased}}=0$ at the first accumulating interval. This rebased origin is the point at which $\theta_{0,d}$ is defined. All modeling is performed in rebased time unless otherwise specified.
+
+#### 2.7.1 Optional non-proportional hazard (NPH) exponent model
+
+Throughout §2.7, the **operational NPH correction** uses the specified survivor law for fitting and inversion (§2.5; §2.7.3) to obtain frailty-neutral cumulative hazard without modifying raw observed instantaneous hazard. The hazard-level relationships below motivate the frailty-dependent excess structure used to **localize** $\alpha$ during wave periods; they do not describe the domain of the cumulative correction operator.
+
+In some settings, especially COVID-era mortality analyses, external hazards interact with cohort-specific frailty in a non-proportional manner. In such cases, scalar rescaling is not rich enough to align trajectories across cohorts because amplification may depend on depletion geometry itself. KCOR therefore treats NPH as an **optional exponent module**, not as part of the universal KCOR core.
+
+Because a single cross-cohort excess-hazard contrast can confound $\alpha$ with an unknown intervention multiplier, the proposed localization procedure requires **externally supplied VE or other prespecified intervention-effect scale**, not learned from the same KCOR wave-period contrasts used to identify $\alpha$. KCOR does not estimate that intervention scale from the same aggregated wave-period contrasts used to localize $\alpha$. This separation matters because frailty-dependent amplification and intervention-associated hazard reduction can otherwise generate similar cross-cohort excess-hazard ratios, producing flat objectives and boundary-seeking estimates.
+
+Let the instantaneous hazard during an NPH period be represented schematically as
+
+$$
+h_d(t) = h_{0,d}(t) + A(t)\,E_d[z^{\alpha}\mid t],
+$$
+
+where $A(t)$ is an unknown common external intensity, $z$ denotes latent frailty under the gamma-frailty working model, and the exponent $\alpha$ is treated as global across cohorts within the analyzed period. Here the baseline component is conditional on the same actual survivors as the wave component. Equivalently, the instantaneous excess-hazard component satisfies
+
+$$
+h_{\mathrm{excess},d}(t)\propto E_d[z^{\alpha}\mid t].
+$$
+
+Under the gamma-frailty working model, this moment depends on the cohort's current depletion state, so the NPH module links external-hazard amplification to cumulative-hazard geometry rather than to a cohort-specific scalar multiplier. When $\alpha=1$, amplification is proportional to baseline risk and, for the same fitted parameters, the wave inversion reduces to the proportional gamma inversion. Enabling the module can still change the fit by excluding marked wave weeks from baseline estimation. The parameters $\theta_{0,d}$ and $\alpha$ are conceptually distinct: $\theta_{0,d}$ governs how each cohort depletes over time, while $\alpha$ governs how external hazards interact with that depletion.
+
+Because $A(t)$ is common across cohorts, ratios of the instantaneous wave components eliminate the unknown common amplitude:
+
+$$
+\frac{h_{\mathrm{excess},i}(t)}{h_{\mathrm{excess},j}(t)}
+=
+\frac{E_i[z^{\alpha}\mid t]}{E_j[z^{\alpha}\mid t]}.
+$$
+
+Earlier wave exposure still influences the survivor distributions. Subtracting a projected no-wave hazard does not in general isolate the wave component, because the no-wave survivor distribution differs from the actual one. Ratios of weekly integrated wave components need not cancel the common time-varying intensity; proportional survivor moments within the week suffice for cancellation. This cancellation is the geometric core for relating observed cross-cohort excess structure to $F_d(t;\alpha)$ once an **externally supplied VE or other prespecified intervention-effect scale** is fixed (§2.7.2). Identification of $\alpha$ still requires sufficient cross-cohort variation in depletion state and excess-hazard measurement; when cohorts are too similar, objectives flatten. Failure of identification manifests as flat objective functions, boundary-seeking estimates, or disagreement between estimators; such patterns are treated as weak signal or model misspecification rather than as valid $\alpha$ estimates.
+
+#### 2.7.2 Identification of $\alpha$ given an externally supplied intervention-effect scale
+
+The proposed localization procedure does not jointly estimate the NPH exponent $\alpha$ and cohort-specific intervention multipliers. When this procedure is used, the intervention-effect scale must be supplied from outside the KCOR core—for example from external clinical evidence, randomized trials, or other prespecified analyses—**as externally supplied VE or other prespecified intervention-effect scale**. KCOR does not identify that scale from the same aggregated wave-period contrasts used to localize $\alpha$. This is a requirement of the procedure, not a universal non-identifiability theorem: with known baseline and frailty parameters, a known common wave exposure and a constant unknown multiplier, repeated survivor observations can in some cases locally identify both parameters. Joint longitudinal localization is not evaluated here.
+
+Let $x$ denote an externally specified efficacy-style summary for the relevant wave-period hazard contrast between two cohorts $A$ and $B$, coded so that the **true** frailty-neutral excess hazards satisfy
+
+$$
+\Delta h_A^{\mathrm{true}}(t) = (1-x)\,\Delta h_B^{\mathrm{true}}(t),
+$$
+
+where $\Delta h_d^{\mathrm{true}}(t)$ denotes frailty-neutral excess hazard during the NPH period for cohort $d$. Under the gamma-frailty working model, the **instantaneous wave component** among actual survivors satisfies
+
+$$
+\Delta h_d^{\mathrm{obs}}(t)=\Delta h_d^{\mathrm{true}}(t)\,F_d(t;\alpha),
+\qquad
+F_d(t;\alpha)=E_d[z^{\alpha}\mid t].
+$$
+
+Therefore,
+
+$$
+\frac{\Delta h_A^{\mathrm{obs}}(t)}{\Delta h_B^{\mathrm{obs}}(t)}
+=
+(1-x)\,\frac{F_A(t;\alpha)}{F_B(t;\alpha)}.
+$$
+
+This relation can localize $\alpha$, if at all, when the instantaneous wave components can be measured or adequately approximated. With weekly mortality counts, its use in the historical localization objectives is approximate; subtracting a no-wave projection or another cohort's hazard does not supply the required component.
+
+Pairwise or collapse objective functions (SI §S2.1) can be evaluated under this approximation with $x$ (hence $(1-x)$) fixed externally. The weekly approximation has not been validated for identification under the full survivor law. Estimation directly from weekly survival with a shared wave exposure and the specified external scale remains open; inversion at a supplied $\alpha$ is addressed separately. If diagnostics indicate weak localization, estimator disagreement, or boundary-seeking behavior, $\alpha$ is treated as not identified.
+
+#### 2.7.3 Application of the NPH correction once $\alpha$ is specified
+
+Let $Z$ have the starting mean-one gamma law, and define $L(B,W)=E[\exp(-ZB-Z^\alpha W)]$ for proportional exposure $B$ and additional wave exposure $W$. At $\alpha=1$ ordinary gamma inversion returns $B+W$ exactly. At wave entry, use the preceding inverted cumulative hazard for $B$ and set $W=0$.
+
+For each modeled wave week, let $q$ be its observed integrated hazard and $b=G(s+1;\hat k)-G(s;\hat k)$. Solve the monotone scalar equation
+
+$$
+\frac{L(B+b,W+w)}{L(B,W)}=e^{-q}
+$$
+
+for a nonnegative wave increment $w$. If mortality is below the fitted conditional baseline, no such nonnegative increment exists at the planned $b$. In those weeks keep prior wave exposure, assign no additional wave exposure, and solve instead for a smaller nonnegative proportional increment from the observed survival. Count these deficit weeks and report their frequency. The same weekly attribution diagnostic is evaluated in the proportional identity cases (zero frailty or unit exponent), without changing the cumulative inversion. This is an attribution convention, not evidence of negative wave exposure or an estimator of both unknown hazards without a baseline assumption. The nonlinear wave correction assumes that the configured wave interval corresponds to a period of genuinely elevated mortality. Applying it to periods without appreciable excess mortality can cause sampling fluctuations to be attributed to wave exposure, potentially introducing bias.
+
+Update the cumulative exposures week by week and output $H_{\rm corr}=B+W$. After wave exit $e$, hold $W_e$ fixed and solve $L(B_e+u,W_e)/L(B_e,W_e)=\exp[-(H_{\rm obs}(t)-H_{\rm obs}(e))]$ for the subsequent proportional exposure $u(t)$. This retains total reference-frailty cumulative mortality while accounting for changing survivor frailty. Numerical exactness is conditional on the working survival model, fitted inputs, dates, and attribution rules. The same survival integral is evaluated for quiet-window fitting, weekly inversion and post-wave inversion, refining positive-weight quadrature until successive log-survival evaluations agree within numerical tolerance.
+
+#### 2.7.4 Practical workflow for the optional NPH module
+
+1. Initialize the cohort-specific baseline and frailty fit. For a supplied nonlinear exponent refit using the nonlinear survivor law.
+2. Obtain or prespecify **externally supplied VE or other prespecified intervention-effect scale** for the relevant wave-period hazard contrast (not from the same contrasts used to localize $\alpha$).
+3. When instantaneous wave components are measured or their approximation is justified, use the fixed external scale to localize $\alpha$ via §2.7.2, if diagnostics support identification.
+4. Before the first modeled wave, apply gamma-frailty inversion (Eq. @eq:normalized-cumhazard) to obtain $\tilde H_{0,d}(t)$.
+5. During the NPH window solve weekly conditional survival for exposure increments as in §2.7.3. After wave exit, hold wave exposure fixed and solve the conditional survival equation.
+6. Continue with the standard KCOR pipeline on the corrected cumulative-hazard scale (§2.8).
+7. If identification diagnostics fail, report $\alpha$ as not identified and treat the NPH module as inactive.
+
+### 2.8 KCOR estimator
+
+With depletion-neutralized cumulative hazards in hand, the primary KCOR trajectory is defined as
+
+$$
+\mathrm{KCOR}(t) = \frac{\tilde H_{0,A}(t)}{\tilde H_{0,B}(t)}.
+$$
+{#eq:kcor-estimator}
+
+When the optional NPH cumulative correction is active (§2.7.3), the same ratio is computed with $H_{\mathrm{corr},d}(t)$ in place of $\tilde H_{0,d}(t)$ for the affected cohorts and time range.
+
+When an anchored presentation is used, KCOR at each time $t$ is divided by its value at the prespecified reference week $t_0$, as defined in §2.1.1. The primary estimand, however, remains the ratio of (optionally NPH-corrected) depletion-neutralized cumulative hazards rather than an instantaneous hazard ratio.
+
+The workbook reports the unanchored and anchored ratios separately for individual age strata and directly aggregated cohorts; the legacy KCOR column remains anchored. If the prespecified reference week is missing or its ratio is zero or undefined, the anchored estimate is unavailable, rather than replaced by the unanchored ratio. Strictly positive finite reference ratios are accepted without an arbitrary near-zero threshold; unrepresentable numerical ratios are unavailable. An unavailable presentation reference does not invalidate earlier supported unanchored estimates. The bootstrap counts draws with undefined references separately from missing output rows and does not mix the two estimands. Pooled anchored ratios retain the existing weighted geometric mean of available strata. A genuine zero ratio with positive weight contributes zero to the geometric mean, rather than being omitted. The fixed within-draw weight of stratum $a$ is proportional to $h_a PT_a(W)$, where $W$ is the first four enrollment weeks (including the stabilization skip), $PT_a(W)$ is total person-weeks across doses, and $h_a$ is the unweighted mean of dose-week mortality rates exceeding $10^{-12}$ in $W$. If none are positive, the workbook uses the smallest rate exceeding that threshold across eligible strata, or $10^{-12}$ if none exists. Weights are normalized over contributing strata (equal weights if all initial weights are zero). This empirical weight is not the pooled deaths-to-person-time rate. The workbook reports the contributing and eligible strata and their retained weight fraction for each point. Pooling weights are recomputed in each bootstrap draw as before, but a draw with a different contributing set cannot provide uncertainty for the point's population. The pooled interval is unavailable if any required draw changes composition; the point and number of changed draws remain reported.
+
+This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
+
+Normalized cumulative contrasts at clinically relevant horizons (e.g., 90-day or 1-year mortality) are obtained directly from the cumulative-hazard scale used in Eq. @eq:kcor-estimator without requiring proportional hazards assumptions.
+
+### 2.9 Uncertainty quantification
+
+Uncertainty is quantified using person-level bootstrap resampling as **variance propagation** for the aggregated counting-process pipeline: event stochasticity and refitting uncertainty in $(\hat{k}_d,\hat{\theta}_{0,d})$ are carried through inversion (and, when prespecified, the optional NPH correction on **frailty-neutral cumulative hazard**, §2.7.3) to $\mathrm{KCOR}(t)$. The bootstrap is **not** asserted to yield universally calibrated inference under arbitrary frailty or baseline misspecification; interpretation remains tied to diagnostic pass status (§2.9.1; §5). Formal bootstrap theory for this stacked construction is **left to future work**.
+
+#### 2.9.1 Person-level bootstrap procedure
+
+Each bootstrap replicate refits the baseline rate and frailty variance for the same comparison groups used in the primary analysis. Strata used solely for resampling or standardization retain their membership during resampling and share the fit for their comparison group. For Table 8, each subgroup and pseudo-dose combination defines a separate fitted group. The anchored dose-pair ratios are then pooled across subgroups. This use of stratification follows standard survival-analysis practice (e.g., Kalbfleisch and Prentice, The Statistical Analysis of Failure Time Data) [@kalbfleisch2002].
+
+The ordinary workbook now reports 95% percentile intervals from 999 person-bootstrap draws by default. Each draw reconstructs person death and survival histories within disjoint fixed enrollment groups, refits the ordinary estimator, and recomputes its reference ratio and pooling weights. The primary workbook enforces death-only risk-set accounting before aggregation; unexplained losses make the affected contrast unavailable. Nondeath exits are permitted only in an explicitly declared exit-capable sensitivity analysis (`KCOR_RISK_HISTORY_POLICY=allow_exits`), with the policy recorded in the output. Overlapping age-shift control groups use their known disjoint components before rebuilding the overlapping groups. For standard converter workbooks, the disjoint birth-year, dose, sex and comorbidity strata (including unknown sex or birth year) are resampled once, and the reported all-ages and born-1960-or-later totals are reconstructed from the same sampled rows. Supplied totals for a complete extract must reconcile to the disjoint source counts; inconsistent totals are withheld without invalidating unrelated age-group results. In a declared partial extract (`KCOR_AGGREGATE_SCOPE=partial`), a valid wider supplied total may be used for the point estimate, but its joint person-bootstrap interval is unavailable if its constituent strata are missing. When no inclusive total is supplied in a partial extract, the aggregate of the supplied disjoint age groups is labeled "All available ages," with intervals for that same population. A supplied full total is not compared with an incomplete reconstructed total. For comparisons labeled "All available ages," the supplied birth-year groups and any explicitly recorded zero-enrollment groups are listed separately for the numerator and denominator. Supplied nested population totals must also have compatible weekly risk sets, deaths, and complementary population histories. An incompatible enrollment sheet yields unavailable intervals for that enrollment rather than disabling resampling of other supported enrollments. Where aggregate histories cannot determine the resampling units, the full interval is unavailable rather than replaced by a count-based interval. Event time and the reference are calculated from calendar weeks since enrollment; an incomplete fixed-cohort weekly history or a failed numerical normalization makes the affected contrast unavailable rather than shifting the reference or substituting an unnormalized estimate. Source birth-year, sex and comorbidity components are checked before aggregation; a truncated component with people remaining at risk is incomplete, not exhausted. The workbook records the normalization status, and affected pooled contrasts are not silently reweighted. The earlier analytical count-based interval is not used: uncertainty for anchored and unanchored KCOR is reported independently from complete valid refitted bootstrap draws, and is unavailable when the relevant point or required draws are unavailable. Exploratory residual-screen flags and unavailable screens are reported separately for the point estimate and bootstrap draws. Fit flags are retained for the point estimate and counted across draws; the configured fallback is not silently dropped from resampling. An interval involving flagged fits is labeled as such and is not evidence of identification.
+
+The person-level bootstrap procedure for KCOR proceeds as follows:
+
+1. **Resample people at enrollment.**  
+Use all eligible people alive at the start of the selected enrollment week for the original estimate. In the ordinary disjoint-cohort implementation, resample complete person records with replacement separately within each birth-year and dose group, keeping its observed enrollment size fixed. Sex and comorbidity composition within these groups may vary. This estimates uncertainty conditional on the observed birth-year and dose enrollment counts. For the overlapping age-shift controls in Table 8, draw the observed total number of people from the pooled disjoint components and rebuild the overlapping groups from that same draw; the component sizes may vary. Retain each drawn person's cohort characteristics and complete event history, including the original week of death or nondeath exit. Rebuild weekly deaths and numbers at risk from the sampled records. In each cohort,
+$$
+N_d(t)=N_d(0)-\sum_{s<t}\big[d_d(s)+e_d(s)\big]
+$$
+holds within each replicate, where $e_d(s)$ denotes nondeath exits between the start of week $s$ and the start of week $s+1$. Each sampled copy contributes to the risk set until death or another recorded exit; for the primary death-only histories $e_d(s)=0$, and a nonzero value is allowed only in the declared exit-capable sensitivity mode.
+
+2. **Re-estimate frailty parameters.** For each bootstrap replicate, re-estimate $(\hat{k}_d,\hat{\theta}_{0,d})$ independently for each cohort $d$ using the resampled data, applying the same delta-iteration pipeline and quiet-window definitions as in the primary analysis.
+
+3. **Recompute normalized cumulative hazards.** Using the bootstrap-estimated frailty parameters, recompute $\tilde H_{0,d}(t)$ for each cohort using Eq. @eq:normalized-cumhazard applied to the resampled observed cumulative hazards.
+
+4. **Optional NPH correction.** When the primary analysis applies the optional NPH module, repeat survivor-law fitting and inversion (§2.5; §2.7.3) on each replicate using the same prespecified $\alpha$, external intervention-effect scale, and wave window as in the primary analysis (treating those inputs as fixed by design in the bootstrap).
+
+5. **Recompute KCOR.** Compute $\mathrm{KCOR}(t)$ for each bootstrap replicate as the ratio of the per-replicate cumulative hazards used in Eq. @eq:kcor-estimator (i.e., $\tilde H_{0,d}$ or $H_{\mathrm{corr},d}$ when applicable).
+
+6. **Form percentile intervals.** From the bootstrap distribution of $\mathrm{KCOR}(t)$ values at each time point, form percentile-based confidence intervals (e.g., 2.5th and 97.5th percentiles for 95% intervals).
+
+Cohort and stratum sizes can vary across draws from the enrollment population. The original estimate is excluded when taking percentiles of the bootstrap replicates.
+
+Uncertainty intervals reflect event stochasticity and model-fit uncertainty in $(\hat{k}_d,\hat{\theta}_{0,d})$ and are interpreted as sampling variability of the aggregated counting process, not uncertainty in individual-level causal effects.
+
+Coverage depends on the resampling procedure and the estimator refitted in each draw. The historical pilot used weekly Poisson resampling and compared its intervals with a KCOR estimate fitted to one reference dataset. Four scenarios reused the same expected death counts across simulated datasets, so their reported coverage cannot establish how often intervals contain the population value across independently sampled cohorts.
+
+The bootstrap is used as a **variance-propagation** device for the aggregated process rather than a universally calibrated inferential procedure. Two person-bootstrap studies used one million people, unequal cohort frailties, and no wave adjustment. With the joint initial fit specified in section 2.4, the nominal 95 percent interval contained the true week-52 ratio in 189 of 200 datasets. In a separate study the production fitter fixed the baseline rate from early weeks. Its percentile interval contained the true ratio in 502 of 600 datasets, although all 600 original fits passed the study diagnostics. The studies used different designs and do not isolate the effect of the fitter. Both coverage studies predate the week-boundary fitting equations in section 2.5. Inference is interpreted conditional on diagnostic acceptance of the observed analysis. Bootstrap draws retain the configured fallback and the output separately reports flagged draws; intervals with such flags do not establish identification.
+
+
+#### Model-conditional information and precision
+
+For integrated hazard $q_i$, conditional event probability $p_i=1-e^{-q_i}$ and expected risk set $Y_i$, the conditional binomial information for $\beta=(\log k,\theta,\text{unknown gap exposures})$ is
+$$
+I(\beta)=\sum_i Y_i\frac{1-p_i}{p_i}\nabla q_i\nabla q_i^T.
+$$
+The model-conditional regular variance bound for log KCOR follows by propagating the gradient through $I^{-1}$, including nuisance covariance. Include all quiet weeks and survival transitions across gaps, also before the first quiet window; treat alpha as fixed. This is not an individual-dataset CI or a boundary-valid coverage guarantee. In a contiguous low-mortality window of $L$ weeks with approximately constant weekly rate $k$, profiling the unknown baseline gives $\operatorname{SE}(\theta)\gtrsim\sqrt{12/[Nk^3 L(L^2-1)]}$. Low volume and short windows impede frailty resolution; exact multi-window calculations account for their timing and gaps. Frailty precision and endpoint precision need not coincide. In a matched short-window 50,000-person two-stratum simulation, the theoretical KCOR interval was [0.877,1.140]; the all-window fitter median person-bootstrap width was 0.315, compared with 213.056 for the first-window joint fit. The local approximation does not capture nonnegative boundary bias. Overlapping empirical strata require a dependence model for a pooled bound.
+
+### 2.10 Algorithm summary and reproducibility checklist
+
+Table @tbl:KCOR_algorithm summarizes the complete KCOR pipeline.
+
+![**KCOR workflow: four-step $\theta_{0,d}$ estimation, then normalization and comparison.**
+**(A)** Fixed-cohort cumulative hazards are stabilized after enrollment, and event time is rebased so that frailty identification targets enrollment-time $\theta_{0,d}$.
+**(B)** Steps 1-4 estimate $\theta_{0,d}$: a seed Gompertz fit is obtained in the nearest quiet window, the effective cumulative hazard is reconstructed over the full trajectory using all weeks, persistent offsets are aligned across quiet windows, and $k_d$ and $\theta_{0,d}$ are jointly refit across the pooled quiet windows. Reconstruction, offset alignment, and pooled refitting iterate to convergence before gamma-frailty inversion and KCOR computation.
+**(C)** In epidemic-wave applications, an optional NPH exponent module may localize $\alpha$ using **externally supplied VE or other prespecified intervention-effect scale** and use the specified nonlinear survivor law consistently for fitting and inversion (§2.7); it is not part of the universal KCOR core and is interpreted only when identification diagnostics are credible.
+*This schematic is illustrative rather than empirical. In the schematic, $\tilde H_{0,d}(t)$ denotes the depletion-neutralized baseline cumulative hazard and $\theta_{0,d}$ denotes enrollment-time frailty variance after the stabilization skip.*
+](figures/fig_kcor_workflow.png){#fig:kcor_workflow}
+
+
+### 2.11 Relationship to Cox proportional hazards
+
+Cox proportional hazards models estimate an instantaneous hazard ratio under the assumption that hazards differ by a time-invariant multiplicative factor. Under selection on frailty with latent heterogeneity, this assumption is typically violated, yielding time-varying hazard ratios induced purely by depletion dynamics. This reflects an estimand mismatch: Cox targets an instantaneous hazard ratio conditional on survival, whereas KCOR targets a cumulative hazard contrast after depletion normalization. An ordinary cohort-only Cox fit can therefore depart from the fixed-frailty treatment-effect benchmark even in large samples. KCOR operates on Nelson–Aalen–type cumulative hazards without individual-level frailty observables.
+
+Accordingly, Cox results are presented here as a diagnostic demonstration of estimand mismatch, not as a competing intervention-effect estimator. This limitation is consistent with earlier work by Deeks showing that increasing covariate adjustment in non-randomized analyses can exacerbate bias and imprecision when selection effects and measurement error dominate. Deeks further noted that, despite the widespread reliance on covariate adjustment in non-randomized studies, there is no empirical evidence that such adjustment reduces bias on average [@deeks2003].
+
+Even when Cox models are extended with shared frailty to accommodate heterogeneity, they continue to estimate instantaneous hazard ratios conditional on survival. KCOR instead uses a cohort-level working model with Gompertz curvature, cohort-specific enrollment-time $\theta_{0,d}$, and quiet-window alignment to normalize selection-induced depletion geometry before computing a cumulative contrast on the depletion-neutralized scale.
+
+**Distinction from shared-frailty Cox models.**  
+Shared-frailty Cox models include a random effect shared by members of a cluster and estimate hazard ratios conditional on that effect. KCOR instead estimates cohort-specific enrollment-time frailty variance from aligned quiet-window geometry and inverts depletion before comparing cumulative hazards. These are distinct estimands.
+
+#### 2.11.1 Demonstration: Cox estimates under frailty heterogeneity with no treatment effect
+
+A controlled synthetic experiment was conducted in which the **true effect is known to be zero by construction**, isolating latent frailty heterogeneity as the sole driver of depletion-induced non-proportional hazards. Cox and KCOR were applied to the same simulated datasets.
+
+**Data-generating process.**
+
+Two cohorts of equal size were simulated under the same baseline hazard $h_0(t)$ over time (constant or Gompertz). Individual hazards were generated as $z\,h_0(t)$, with frailty
+$$
+z \sim \text{Gamma}(\theta_0^{-1}, \theta_0^{-1}),
+$$
+with mean 1 and variance $\theta_0$.
+
+Cohort A was generated with $\theta_0 = 0$ (no frailty heterogeneity), while Cohort B was generated with $\theta_0 > 0$. **No treatment or intervention effect was applied**: conditional on frailty, the two cohorts have identical hazards at all times. Thus, the treatment hazard ratio at fixed frailty is 1 by construction for all $t$.
+
+Simulations were repeated over a grid of frailty variances $\theta_0 \in \{0, 0.5, 1, 2, 5, 10, 20\}$.
+
+**Cox analysis.**
+
+For each simulated dataset, a standard Cox proportional hazards model was fitted using partial likelihood (statsmodels `PHReg`), with cohort membership as the sole covariate (no time-varying covariates or interactions). The fitted constant hazard ratio summarizes the follow-up-dependent marginal hazard contrast induced by frailty-driven depletion, not a treatment effect. The reported 95% Wald intervals and p-values are nominal, model-based Cox outputs; they are not calibrated inference for the fixed-frailty treatment effect under nonproportional hazards.
+
+**KCOR analysis.**
+
+The same simulated datasets were analyzed using KCOR. Observed cumulative hazards were estimated from the simulated event data. For the KCOR inversion, we used the frailty variance specified by the simulation for each cohort. This experiment therefore evaluates the inversion with known frailty variances. Post-normalization slope and week-52 KCOR values were examined as one component of the broader validation stack rather than as the sole validation criterion.
+
+**Expected behavior under the null.**
+
+Because the data-generating process includes **no treatment effect**, the fixed-frailty treatment hazard ratio and the depletion-normalized cumulative ratio both have benchmark 1; marginal hazards and survival need not coincide. In this setting:
+
+* **Cox regression** is expected to produce apparent non-null hazard ratios as $\theta_0$ increases, reflecting differential selection-induced depletion and violation of proportional hazards induced by frailty heterogeneity.
+* **KCOR** is expected to remain centered near unity with negligible post-normalization slope across all $\theta_0$, which would be consistent with the expected null behavior under the working model and therefore serves as a diagnostic check rather than as proof of correctness.
+
+**Summary of findings.**
+
+Across increasing values of $\theta_0$, Cox regression produced progressively larger apparent deviations from a hazard ratio of 1. The direction and magnitude of the apparent effect depended on the follow-up horizon and degree of frailty heterogeneity. In contrast, $\mathrm{KCOR}(t)$ trajectories remained stable and centered near unity, with post-normalization slopes approximately zero across the simulated conditions examined here.
+
+These results show that frailty heterogeneity alone can induce non-unit Cox hazard ratios despite the null treatment effect at fixed frailty, while KCOR behaves close to the null benchmark expected under the same working-model conditions.
+
+The standard Cox estimate departs progressively farther from the null treatment-effect benchmark as frailty variance increases on this grid. KCOR remains close to its cumulative-hazard target of 1 across the same parameter range.
+
+Table @tbl:cox_bias_demo reports numerical summaries of the Cox-vs-KCOR behavior across the frailty grid. Small residual deviations at week 52 are expected under extreme frailty heterogeneity and are negligible relative to the distortions observed under Cox; the diagnostic criterion is slope stability rather than exact unity. 
+
+Figure @fig:estimator_bias_vs_theta summarizes deviations from unity for standard Cox and week-52 KCOR on the same frailty grid. Additional Cox HR results from the same synthetic-null grid are shown in Figure @fig:cox_bias_hr.
+
+A compact summary of observed week-52 KCOR deviation from one as a function of frailty variance $\theta_0$ is provided in the Supplementary Information (Figure S2).
+
+![Cox regression produces non-unit hazard ratios under a *synthetic null treatment effect at fixed frailty* as frailty heterogeneity increases. Hazard ratios (with nominal model-based 95% Wald intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). The systematic departure from HR=1 reflects differential frailty depletion and associated non-proportional hazards; individual estimates also vary due to sampling.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
+
+![$\mathrm{KCOR}(t)$ stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, week-52 $\mathrm{KCOR}$ values remain near 1 across $\theta_0$, which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
+
+![Deviations from the fixed-frailty treatment-effect and depletion-normalized cumulative benchmarks, respectively. **Cox:** standard Cox hazard ratio minus 1, $\widehat{\mathrm{HR}}-1$. **KCOR:** week-52 $\mathrm{KCOR}$ minus 1, $\widehat{\mathrm{KCOR}}(52)-1$. The generating frailty variances are supplied for KCOR inversion. Generated by `test/sim_grid/code/plot_estimator_bias_vs_theta.py`.](figures/fig_estimator_bias_vs_theta.png){#fig:estimator_bias_vs_theta}
+
+**Interpretation.**
+
+This controlled synthetic null shows that Cox proportional hazards regression can report highly statistically significant non-null hazard ratios even when the true effect is identically zero, purely due to frailty-driven depletion and induced non-proportional hazards. In the same simulations, KCOR remains near unity after normalization, which is the diagnostic behavior expected when the working model matches the data-generating process but does not by itself prove that the model is correct.
+
+### 2.12 Worked example (descriptive)
+
+A brief worked example is included to illustrate the KCOR workflow end-to-end. This example is descriptive and intended solely to illustrate the mechanics of cohort construction, hazard estimation, $\theta_0$ estimation, depletion normalization, and KCOR computation.
+
+The example proceeds from aggregated cohort counts through cumulative-hazard estimation, stabilization and rebasing, delta-iteration fitting across configured quiet windows, gamma inversion, and $\mathrm{KCOR}(t)$ construction, accompanied by diagnostic plots assessing post-normalization linearity and parameter stability.
+
+### 2.13 Reproducibility and computational implementation
+
+The accompanying repository provides the manuscript, figure assets, executable analyses and archived results. The reproduction scope of each analysis, including historical studies verified from stored draws, is described in SI S7 and `analysis/README.md`. The manuscript is built from `documentation/preprint/paper.md` using the root `Makefile` build target `make paper-pdf`.
+
+Additional environment and runtime details are provided in the Supplementary Information (SI); code and archival links are provided in Code/Data Availability.
+
+
+### 2.14 Data requirements and feasible study designs
+
+KCOR is designed for settings where outcomes are ascertained repeatedly over time but individual-level covariates, visit schedules, or counterfactual exposure histories are unavailable or unreliable. This section clarifies the data structures required for valid application, as well as designs for which the method is not appropriate.
+
+**Minimum data requirements.** KCOR requires (i) a well-defined cohort entry or enrollment rule, (ii) repeated outcome ascertainment over calendar or follow-up time (which may be passive), (iii) sufficient event counts to estimate cumulative hazards with reasonable stability, and (iv) the presence of at least one diagnostically identifiable “quiet” window during which baseline risk is approximately stable. Individual-level covariates, treatment assignment models, or visit-based follow-up schedules are not required.
+
+**What KCOR does not require.** Unlike causal estimators, interrupted time-series methods, synthetic controls, or digital twin approaches, KCOR does not require exchangeability assumptions, individual-level confounder measurement, continuous exposure tracking, or explicit modeling of counterfactual untreated trajectories. The method operates entirely on aggregated cumulative hazard information and is therefore compatible with registries and administrative systems where outcomes are captured far more frequently than exposures or visits.
+
+**Well-suited data sources and designs.** KCOR is particularly well matched to vital statistics–linked cohorts, administrative or registry-based studies with passive outcome capture, program enrollments with irregular follow-up but reliable endpoints, and population-based datasets where cohorts are defined by eligibility, vulnerability, or sociodemographic characteristics rather than repeated clinical encounters.
+
+**Designs where KCOR is not appropriate.** KCOR is not suitable for settings with extremely sparse events, rapidly shifting baseline hazards with no diagnostically quiet interval, highly fluid cohorts with frequent switching between exposure groups, or outcome ascertainment that is strictly conditional on clinic visits. These designs violate the stated applicability conditions. Diagnostics may reveal the problem but cannot guarantee its detection; results should not be substantively interpreted when the conditions are not met.
+
+## 3. Results
+
+This section evaluates the revised KCOR estimator in five layers: (i) recovery of enrollment-time frailty variance $\theta_0$ and corresponding null behavior in synthetic settings, (ii) empirical negative controls, (iii) positive controls with injected effects, (iv) failure signaling under model stress, and (v) estimation of the optional NPH exponent $\alpha$. Synthetic-null flatness remains informative as a diagnostic implication under the working model, but it is no longer the sole validation anchor.
+
+The central validation claim is therefore broader than in earlier versions of the paper:
+
+- **Identification performance:** the estimator should recover the cohort-specific enrollment-time frailty parameters used to generate the geometry and align quiet windows coherently under the stated working model.
+- **Negative-control behavior:** under equal post-skip reference cumulative hazards, unanchored KCOR should remain approximately flat at 1; for proportional reference cumulative hazards, anchored KCOR should remain approximately flat at 1, subject to sampling variability and model adequacy. Equal intrinsic hazards before the skip need not imply equal post-skip reference hazards; this is interpreted as a diagnostic consistency check rather than as proof that all confounding has been removed.
+- **Positive-control behavior:** when known harm/benefit is injected, KCOR should deviate in the expected direction after the same normalization pipeline.
+- **Failure signaling:** when key assumptions are violated or the working model is stressed, diagnostics should degrade and the analysis should be treated as not identified rather than reported as a stable contrast.
+- **Optional NPH behavior:** when the NPH module is invoked, $\alpha$ should be recoverable in synthetic settings, stable only when cross-cohort signal is adequate, and explicitly non-interpretable when diagnostics fail.
+
+Throughout, curvature in cumulative-hazard plots reflects selection-induced depletion or external hazard structure, while agreement with the fitted Gompertz shape after normalization is consistent with the working model.
+
+In vaccinated–unvaccinated comparisons, large early differences in $\mathrm{KCOR}(t)$ may reflect baseline risk selection rather than intervention-attributable effects; in such cases, $\mathrm{KCOR}(t; t_0)$ is emphasized to report deviations relative to an early post-enrollment reference.
+
+### 3.1 Negative controls (selection-only null)
+
+#### 3.1.1 Structured synthetic validation: $\theta_0$ recovery and null behavior
+
+We first evaluate KCOR under synthetic settings in which the data-generating process matches the revised working model. The primary synthetic target is no longer only whether $\mathrm{KCOR}(t)$ is flat under a null; it is also whether the estimator recovers the **enrollment-time** frailty variance $\theta_0$ that generated the cohort geometry.
+
+In the multiwave recovery example, weekly deaths equal their model expectations, so the first observed hazard gives the generating baseline rate exactly. With that rate fixed, the example checks recovery of the enrollment-time frailty variance and alignment of the quiet windows. The separate synthetic negative-control figure in SI S4.2.1 illustrates an earlier hazard-relaxation normalization, not validation of the current gamma-frailty estimator. Current-fitter validation is reported separately, including SI S9. Full design details, recovery grids, and figures are provided in the Supplementary Information, including the $\theta_0$ recovery simulations and the synthetic negative-control figures (Section S4.2.1 and related figures).
+
+#### 3.1.2 Empirical negative control using national registry data (Czech Republic)
+
+This application is presented solely to illustrate KCOR's diagnostic behavior on real registry data; it uses an age-shift construction (pseudo-cohorts) that is a negative control by design rather than an observational treatment-effect analysis. No causal interpretation of vaccine effects is implied.
+
+The repository includes a pragmatic negative control construction that repurposes a real dataset by comparing "like with like" while inducing large composition differences (e.g., age band shifts). In this construction, age strata are remapped into pseudo-doses so that comparisons are, by construction, within the same underlying category; the baseline hazards differ strongly, and there is no assigned treatment contrast.
+
+These age-shift negative controls deliberately induce large baseline mortality differences (10–20 year age gaps). The anchored $\mathrm{KCOR}(t)$ trajectories are expected to be approximately horizontal, subject to sampling variation, if the underlying depletion-neutralized hazard trajectories are proportional. Different age-specific responses to epidemics or seasonality can violate that condition. This is an empirical negative control of **end-to-end behavior**, not a known-target synthetic null.
+
+The purpose is to verify **pipeline and normalization behavior under strong composition shift** when the working model and windowing assumptions hold (**model-consistent conditions**), not to establish robustness to every form of misspecification. Deliberate model stress and frailty misspecification are addressed in §3.3.
+
+This negative control evaluates end-to-end pipeline behavior under model-consistent conditions without a contrast in treatment assignment. It is **not** intended as a stress test of depletion correction under strong latent heterogeneity. Robustness to strong depletion geometry and frailty misspecification is assessed separately in simulation stress tests (§3.3).
+
+For the empirical age-shift negative control (Figure @fig:neg_control_10yr), aggregated weekly cohort summaries derived from the Czech Republic administrative mortality and vaccination dataset are used and exported in KCOR_CMR format.
+
+The age-shift figures and Table 8 use the archived September 2025 Czech registry extract (Git commit `bb2d6824`), which predates the introduction of the full-history vaccine-product eligibility restriction in November 2025. The separate Czech registry application in SI S6 deliberately restricts its study population to individuals with no recorded COVID-19 vaccine product other than Pfizer-BioNTech or Moderna among their first four doses, including doses recorded after enrollment. This excludes non-mRNA COVID-19 vaccines, including AstraZeneca and Janssen, whose EU marketing authorizations were subsequently withdrawn in 2024 [@ema_vaxzevria; @ema_jcovden]. KCOR constructs fixed enrollment cohorts within this restricted population. This application-specific eligibility rule may introduce retrospective survivor selection and is not a requirement of the general KCOR methodology (SI §S6.1.1).
+
+Notably, KCOR estimates frailty parameters independently for each cohort without knowledge of exposure status; the observed asymmetry in depletion normalization arises entirely from differences in hazard curvature rather than from any vaccination-specific assumptions.
+
+Figure @fig:neg_control_10yr provides a representative illustration; additional age-shift variants are provided in the Supplementary Information (SI).
+
+![Empirical negative control with a 10-year age shift: birth years 1940–1949 versus 1930–1939, all vaccination statuses pooled, enrolled in ISO week 2021-24. The all-window joint fitter is used with the optional NPH module inactive. Curves show anchored $\mathrm{KCOR}(t;t_0)$ from the end of the fourth accumulating week after the two-week skip (ISO week 2021-29) through 2024-41. Shading shows pointwise 95% percentile intervals from 999 matched person-bootstrap draws of the disjoint components, refitting the estimator in each draw. The oldest age group triggered the exploratory residual screen in the original fit; 987 of 999 draws flagged at least one contributing fit. All draws were numerically successful and retained. Flatness is expected if the normalized hazard trajectories are proportional. Data source: archived September 2025 Czech registry control, before the product restriction. X-axis: weeks since enrollment.](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+
+Table @tbl:neg_control_summary reports the historical v4.3 estimates, the current module-off primary estimates, and the archived forced-alpha sensitivity estimates (preceding seed implementation), on the same input, reporting date and 999 matched person-bootstrap draws per enrollment. The configured Czech exponent 1.18 is a sensitivity value, not an identified parameter. For the 2022-06 enrollment, the post-skip origin (ISO week 2022-08) falls within the marked 2021-41 to 2022-12 wave. The forced-alpha sensitivity assumes mean-one gamma frailty at that origin; prior nonlinear selection can produce a non-gamma survivor distribution, which is not reconstructed from the post-origin counts. The primary Czech configuration leaves the optional module inactive. The historical configuration documented a preference for the 2023 period because it showed the least vaccine harm; the chronology of that choice is unknown. The dates are retained, and the empirical illustrations should not be interpreted as outcome-independent validation of window selection. All twelve primary and sensitivity intervals include one. The empirical age-shift contrasts have no known exact target; intervals including one do not establish equivalence. No draws had insufficient-signal flags or unsuccessful contributing fits in either run. However, the exploratory residual screen flagged at least one contributing fit in all 999 primary draws for each comparison, and in 986--999 forced-alpha draws. These diagnostics indicate model discrepancy, not numerical failure; the results and intervals are retained for descriptive audit, not evidence of model adequacy. SI S10 reports the separate diagnostic counts. In the refreshed primary proportional run, 30 of 54 signed first-pass gap-offset intervals were complete and none lay wholly below zero; 24 were unassessed because at least one seed reached a numerical bound (analysis/finite_reference/table8-primary/).
+
+<!--
+NOTE: The empirical negative control is built from real-world data where non-proportional external hazards (e.g., epidemic waves) can create small deviations from an idealized null.
+The key validation claim is that KCOR does not produce spurious *drift* under large composition differences; curves are expected to be horizontal under the null, subject to sampling stochasticity, and injected effects (positive controls) are detectable.
+-->
+
+### 3.2 Positive controls (injected effects)
+
+Supplementary Section S3 describes the two positive controls. Table 9 reports their fitted anchored week-80 endpoints, with the end of the fourth accumulating week as the reference.
+
+The joint-fit anchored week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective. The generator uses a constant individual baseline hazard rather than the Gompertz baseline assumed by the fitter. The injected benefit precedes the quiet window and violates the nonnegative gap-exposure assumption: the treated group signed gap estimate is -0.02274 [-0.04223, -0.00686] (999 matched draws). The benefit result is retained as an audit-only stress test showing the direction of the injected contrast despite this violation, not as validation under the gap assumption. The harm and shared control signed gap intervals include zero. See `analysis/gap_assessment/table9/`.
+
+### 3.3 Stress tests (frailty misspecification)
+
+#### 3.3.1 Frailty misspecification robustness
+
+To assess robustness to departures from the gamma frailty assumption, a matched null study compared gamma, lognormal, two-point, continuous bimodal-mixture and within-cluster correlated gamma frailty using the current fitter. The cohorts share an individual baseline and the frailty laws have matched means and variances across scenarios. SI S9 reports the mean anchored KCOR (bias relative to 1), empirical sampling variance, percentile-interval coverage, and numerical-fit and residual-screen flags across 100 independent datasets per scenario. For correlated frailty, cluster resampling is compared with person resampling on the same datasets.
+
+These results are conditional on the tested distributions and event rates; a diagnostic pass is not proof that the frailty law is correct. Under misspecification the normalized contrast may move in either direction. The historical tail-mixture experiment in SI S4.5 provides a separate adversarial stress test.
+
+#### 3.3.2 Quiet-window contamination stress test
+
+Positive controls in §3.2 inject multiplicative hazard shifts in an **effect** window to test whether KCOR detects a true contrast. This stress test asks whether adding mortality unrelated to frailty within a quiet fitting window distorts the frailty estimate and can raise anchored KCOR above 1 when the cohorts share the same underlying baseline hazard.
+
+**Design.** Two cohorts were simulated under the Gompertz-plus-gamma-frailty DGP with known ground-truth parameters: cohort A (lower frailty, $\theta_{0,A}=0.5$) and cohort B (higher frailty, $\theta_{0,B}=4.0$), with shared baseline scale $k$ calibrated to Czech KCOR_CMR weekly hazard for YoB 1940–1960, dose 0 reference ($h_{\mathrm{ref}}=0.000456$ per week). The two cohorts have identical underlying baseline hazards, so their baseline cumulative hazard ratio is 1. Additive non-frailty contamination was applied **only** to cohort A during rebased quiet-window weeks 4–56. Three contamination types were tested: **Type 1** (decaying dynamic-HVE-style hazard: $g(t)=\epsilon_{\mathrm{dyn}}\exp(-0.05\,t_{\mathrm{rebased}})$); **Type 2** (constant comorbidity-direction hazard: $g(t)=\epsilon_{\mathrm{comorb}}$); and **Type 3** (combined, full $4\times4$ outer product of positive $\epsilon_{\mathrm{dyn}}$ and $\epsilon_{\mathrm{comorb}}$ values, 16 cells). The figures and table use 20 replicates per cell and the original fitter. The first four accumulating weeks supply the baseline rate. Following the simulation design, KCOR is normalized at the end of the fifth accumulating week, so the reference ratio includes the first week of added deaths.
+
+**Results.** Figure @fig:quiet_contam_kcor shows mean anchored KCOR at the last eligible week of the 130-week simulation and Figure @fig:quiet_contam_theta shows $\hat\theta_{0,A}$ error and the fraction of combined simulations with KCOR above 1.
+
+*Type 1 (dynamic):* Dynamic contamination reduced the fitted frailty variance in cohort A. Mean KCOR fell from 1.063 [0.998, 1.128] at zero added hazard to 0.782 [0.735, 0.829] at the largest dynamic amplitude (0.005). All 20 endpoints at that amplitude were below 1. Brackets give pointwise 95 percent Monte Carlo confidence intervals.
+
+*Type 2 (comorbidity):* With 200 datasets per level, mean KCOR was 1.050 [1.034, 1.066] at zero added hazard and 1.060 [1.045, 1.076] at an added weekly hazard of 0.0003. The difference was 0.010 [-0.012, 0.032]. The smallest tested addition whose mean increase over zero had an interval wholly above zero was 0.001 per week, with a difference of 0.179 [0.154, 0.204]. Brackets give pointwise 95 percent Monte Carlo confidence intervals. Mean KCOR already exceeded 1 at zero added hazard.
+
+*Type 3 (combined):* Mean KCOR exceeded 1 in 8 of the 16 combined cells. The heatmaps show the mean and the fraction of replicates above 1 for each combination.
+
+**Interpretation.** Added deaths enter the frailty fit and cumulative endpoint, and the first contaminated week also enters the normalizing ratio. A sensitivity analysis used the same fitted curves with the workbook reference at the end of week four, immediately before the added deaths. At the largest dynamic amplitude this gave mean KCOR 2.116 [1.992, 2.240]. The direction of the anchored contrast therefore depended on whether its reference included the first contaminated week. The size of any corresponding quiet-window hazard increment in the Czech cohorts remains unknown.
+
+![Mean anchored KCOR at the last eligible week of the 130-week simulation versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, dose 0).](figures/fig_quiet_contam_kcor_asymptote.png){#fig:quiet_contam_kcor}
+
+![Left and center: mean $\hat\theta_{0,A}$ error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored $\mathrm{KCOR}(t_{\rm end};t_0)>1$ on the combined $4\times4$ grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations.](figures/fig_quiet_contam_theta_error.png){#fig:quiet_contam_theta}
+
+| Contamination type | $\epsilon_{\mathrm{dyn}}$ | $\epsilon_{\mathrm{comorb}}$ | $\epsilon/h_{\mathrm{ref}}$ (comorb) | Mean endpoint KCOR | Frac. reps KCOR$>1$ |
+|---|---|---|---|---|---|
+| Dynamic only | $5\times10^{-3}$ | 0 | — | 0.782 [0.735, 0.829] | 0.00 |
+| Comorbidity only | 0 | $1\times10^{-4}$ | 22% | 0.989 [0.916, 1.062] | 0.40 |
+| Comorbidity only | 0 | $3\times10^{-4}$ | 66% | 1.062 [1.003, 1.120] | 0.65 |
+| Comorbidity only | 0 | $1\times10^{-3}$ | 219% | 1.194 [1.129, 1.259] | 1.00 |
+| Combined | $5\times10^{-4}$ | $3\times10^{-4}$ | 66% | 1.016 [0.965, 1.068] | 0.60 |
+| Combined | $1\times10^{-3}$ | $3\times10^{-4}$ | 66% | 0.992 [0.944, 1.040] | 0.50 |
+| Combined | $5\times10^{-4}$ | $1\times10^{-3}$ | 219% | 1.188 [1.122, 1.254] | 1.00 |
+
+Table: Selected cells from quiet-window contamination experiment. $h_{\mathrm{ref}}=0.000456$/week (Czech YoB 1940–1960, enrollment sheet `2021_24`). Results use the fifth accumulating week as the reference. Brackets give pointwise 95 percent Monte Carlo confidence intervals for the means from 20 simulations per cell. Full grid in `analysis/contamination/historical-grid.csv`. {#tbl:quiet_contam}
+
+**Population-size experiment.** Keeping the original contamination generator, timing and fifth accumulating-week reference, 200 simulations at each level for 50,000, 500,000 and 5,000,000 people per cohort used the all-window fit. Zero-addition mean KCOR was respectively 1.0494 [1.0305,1.0684], 1.0090 [1.0027,1.0153], and 1.0013 [0.9993,1.0033]. At 5M the smallest tested addition (0.0001) shifted the mean by +0.01969 [0.01698,0.02240]. These Monte Carlo intervals concern means, not individual endpoints. The nonnegative variance boundary and sampled reference contribute to the smaller population bias; this benchmark does not locate a universal contamination threshold. Earlier figures and the selected grid above refer to the historical smaller-population fitter.
+
+Additional validation results—including full simulation grids, quiet-window robustness catalogs, dynamic-selection checks, and extended comparator analyses—are provided in the Supplementary Information (SI).
+
+Additional derivations, simulation studies, robustness analyses, and implementation details are provided in the Supplementary Information.
+
+### 3.4 Estimation of the NPH exponent $\alpha$
+
+The optional NPH module is a **prespecified generalization** of the core pipeline. The localization experiments below use the historical amplification formula or weekly excess proxies, not direct estimation from the full weekly survivor law. We evaluated estimation of the NPH exponent $\alpha$ using a staged validation framework consisting of synthetic recovery, pooled empirical estimation, and diagnostic sensitivity analyses. Throughout, $\alpha$ is treated as a parameter of the working model describing how excess hazard scales with latent frailty, rather than as a causal or biological quantity. **When $\alpha$ is not identified, the cumulative correction on frailty-neutral cumulative hazard (§2.7.3) is not applied for inference—that outcome is a successful diagnostic, not a method failure.** The empirical pooled exercise in §3.4.2 is **illustrative**: under Methods §2.7.2, localization of $\alpha$ in minimal aggregated data requires **externally supplied VE or other prespecified intervention-effect scale** not learned from the same wave-period contrasts.
+
+#### 3.4.1 Synthetic validation of $\alpha$
+
+We first assessed whether the estimation procedure can recover known values of $\alpha$ under controlled conditions. Synthetic cohorts were generated using the historical gamma-moment amplification formula with specified $\alpha$, varying frailty variance and noise structure.
+
+![Synthetic validation of NPH exponent recovery. Estimated $\alpha$ versus true $\alpha$ under the historical amplification formula, shown separately for the baseline synthetic branch (A) and a harder heteroskedastic branch (B). Both pairwise and collapse estimators recover $\alpha$ with low bias when cross-cohort depletion geometry differs. The heteroskedastic branch shows reduced precision rather than structural failure. Error bars show replicate standard deviations.](figures/fig_alpha_synthetic_recovery.png){#fig:alpha_synth_recovery}
+
+Figure @fig:alpha_synth_recovery shows estimated versus true $\alpha$ under two regimes. In the baseline synthetic setting, both the pairwise and collapse estimators recover $\alpha$ with low bias across the tested range. Under heteroskedastic noise, recovery remains directionally correct but exhibits increased dispersion, reflecting reduced information rather than structural failure.
+
+The estimators recovered the supplied exponent in simulations using the historical amplification formula. In the Czech application, the revised survivor-law analysis did not identify $\alpha$.
+
+#### 3.4.2 Empirical pooled Czech registry application
+
+The historical illustrative pooled objectives (not supplied an external intervention-effect scale) had minima 1.190 and 1.185. Replaying the same data and objective with the all-window fit and with the nonlinear survivor fit refitted at each candidate exponent yields both minima at the lower boundary 1.00, on the original 1.00–1.30 grid. The wider diagnostic grid 0.70–1.30 gives both exact-survivor minima at its lower boundary. Forty-eight eligible cohort histories amount to 10.36 million overlapping enrollment memberships, but the positive raw-excess filter retains only 62 cohort-week rows across eight cohorts. The historical raw excess is the observed hazard difference from dose zero, not an independently measured instantaneous wave component.
+
+![Comparison of historical and updated illustrative objective profiles; lower-boundary optima do not identify an exponent.](figures/fig_alpha_czech_objective.png){#fig:alpha_czech_objective}
+
+#### 3.4.3 Diagnostics and identifiability of $\alpha$
+
+We evaluated identifiability using bootstrap, leave-one-out, and sensitivity analyses.
+
+In the historical replay, bootstrap resampling shows substantial dispersion and strong boundary-seeking behavior, with a large fraction of resampled estimates accumulating at the limits of the search grid. Leave-one-out analysis reveals instability, with several cohort omissions producing large shifts in the estimated optimum.
+
+Sensitivity analyses across anchor choice, excess-hazard definition, and time segmentation further demonstrate inconsistency. In particular, certain configurations produce boundary-seeking optima or materially different estimates, and segmented analyses show reduced agreement relative to the pooled specification. These diagnostic patterns are summarized in Figure @fig:alpha_czech_diagnostics.
+
+![Archived Czech $\alpha$ diagnostic plot. (A) The plotted leave-one-out estimates lie at the lower grid boundary (1.00). (B) The plotted bootstrap estimates concentrate at the lower boundary, with some at the upper boundary. (C) Both plotted segmented objectives minimize at 1.00. These archived diagnostics do not establish identification and are not a fresh replay under the current numerical fitter.](figures/fig_alpha_czech_diagnostics.png){#fig:alpha_czech_diagnostics}
+
+Taken together, these diagnostics indicate that the apparent pooled optimum does not reflect a stable, well-identified parameter.
+
+#### 3.4.4 Summary of identification status
+
+The Czech pooled analysis fails to meet the identification criteria of objective curvature, stability under resampling, and robustness to specification. Pairwise and collapse objectives use the same underlying residuals, so their agreement is not independent evidence of identification.
+
+We report $\alpha$ as **not identified**. The historical preference near 1.18–1.19 is not reproduced by the improved fitter. A value of 1.18 is retained only for sensitivity analyses.
+
+This outcome is consistent with the role of the identifiability diagnostics: the procedure may locate a shallow optimum even when the data do not contain sufficient information to support a stable estimate, and in such cases the appropriate conclusion is non-identification rather than point estimation.
+
+This non-identification is consistent with the structural confounding between $\alpha$ and cohort-specific multiplicative effects described in §5.4.
+
+Future work may explore whether alternative cohort constructions or stronger cross-cohort variation yield identifiable estimates of $\alpha$ in empirical settings.
+
+## 4. Discussion
+
+### 4.1 Limits of attribution and non-identifiability
+
+A notable strength of this study is the use of publicly available, record-level national mortality data. This permits independent verification and replication without reliance on restricted registries.
+
+KCOR should be viewed as complementary to hazard-based modeling rather than as a substitute. Cox models and flexible parametric approaches estimate instantaneous hazard relationships and allow time-varying coefficients, whereas KCOR addresses cumulative survival curvature arising from frailty-induced depletion. When depletion geometry materially distorts marginal hazard ratios, KCOR provides an alternative summary contrast at the cumulative scale.
+
+As in §2.1, $\mathrm{KCOR}(t)$ summarizes a depletion-adjusted cumulative contrast on the working-model scale; it does **not**, by itself, identify causal effects, and causal interpretation requires assumptions beyond this framework. It should be read as a **diagnostic** signal about persistent contrasts after depletion adjustment, not as evidence of harm or benefit attributable to an intervention.
+
+KCOR is best viewed as a **pre-causal diagnostic layer** for a specific failure mode: **selection-induced depletion geometry** that distorts **marginal** cumulative comparisons under minimal aggregated data. It does **not** adjust for general confounding in the causal-inference sense, replace covariate adjustment, or turn residual contrasts into causal effects. Persistent differences after depletion normalization may reflect unmeasured confounding, true effects, misspecification, or external hazards; they require substantive design and subject-matter reasoning beyond the normalization step.
+
+KCOR addresses selection-induced depletion that distorts marginal comparisons but does not remove general confounding. It should be interpreted as a **diagnostic normalization** step. Differences observed after normalization may reflect causal effects, residual confounding, or other mechanisms and require additional evidence for causal interpretation.
+
+At the same time, the static HVE correction is broader than a correction for one specific epidemiologic label. To the extent that baseline cohort differences operate through differential depletion of susceptible individuals, they are absorbed into the estimated depletion geometry and accounted for in the comparison. Residual differences therefore represent contrasts that are not explained by depletion alone, although they may still arise from time-varying confounding, external shocks, misspecification, or other non-depletive mechanisms.
+
+KCOR does not uniquely identify the biological, behavioral, or clinical mechanisms responsible for observed hazard heterogeneity. In particular, curvature in the cumulative hazard may arise from multiple sources, including selection on latent frailty, behavior change, seasonality, treatment effects, reporting artifacts, or their combination. Depletion of susceptibles is therefore used as a parsimonious working model whose adequacy is evaluated through diagnostics and negative controls rather than assumed as a substantive truth. KCOR's estimand is whether a cumulative outcome contrast persists after adjustment for curvature consistent with that working model, not attribution of the curvature to a specific mechanism.
+
+**Separation of curvature and level effects.**  
+KCOR distinguishes between curvature (depletion geometry) and level (multiplicative hazard) effects. The distinction between scaling individual baseline hazards and scaling observed cohort hazards is given in §2.4.4. Consequently, KCOR normalization adjusts for selection-induced curvature consistent with the working model but does not, by design, isolate or estimate proportional hazard intervention effects.
+
+**Identifiability under the revised estimator.**  
+Even under ideal data quality, KCOR does not identify $\theta_{0,d}$ from an arbitrary mortality trajectory. Identification depends on a joint regime: a plausible Gompertz baseline, a well-defined rebased origin after the stabilization skip, sufficient information to distinguish $k_d$ from $\theta_{0,d}$, quiet windows that remain coherent after alignment, and a structured cumulative-hazard offset model when the delta path is used. Rescaling observed cohort hazards changes the fitted frailty variances (§2.4.4), while additive or sharply time-varying components can alter curvature and contaminate $\theta_{0,d}$. The optional exponent $\alpha$ can alias with cohort-specific multiplicative effects in minimal aggregated data (§5.4). If any of these joint regime conditions fails, the estimator is weakly identified or non-identified.
+
+This ambiguity remains structural rather than cosmetic. In minimal aggregated data, depletion-induced curvature is not generically separable from additive or sharply time-varying hazard components that distort curvature over short horizons, and differential multiplicative effects across cohorts can resemble cross-cohort structure targeted by the optional NPH module. The revised estimator improves internal coherence by aligning the parameter target with enrollment time and by pooling information across quiet windows, but it does not eliminate the need for diagnostics or transform the method into a causal effect estimator. Interpretability remains conditional on the adequacy of the gamma-frailty working model and the Gompertz structure used to define the normalization.
+
+### 4.2 What KCOR estimates
+
+*Table @tbl:positioning clarifies that KCOR differs from non-proportional hazards methods not in flexibility, but in estimand and direction of inference.* The contrast with RMST-style and other model-free cumulative summaries, and the motivation for a depletion-neutralized cumulative estimand, are discussed in §2.1. KCOR normalizes selection-induced depletion under the working model and then compares depletion-neutralized cumulative hazards; $\mathrm{KCOR}(t)$ summarizes cumulative outcome accumulation rather than instantaneous hazard ratios. It is descriptive rather than causal, and interpretability is conditional on the stated assumptions and prespecified diagnostics (seed-fit quality, post-normalization linearity, multi-window consistency, and parameter stability). When required diagnostics fail, substantive interpretability is not established; explicitly flagged numerical outputs may be retained for descriptive illustration or audit. Anchored KCOR is used only when explicitly stated to compare the cumulative ratio with its reference value; both cumulative hazards retain their pre-reference contributions.
+
+Cumulative contrasts are particularly informative in settings where early hazard ratios attenuate over time due to depletion of high-risk individuals, leading instantaneous hazard-based summaries to obscure long-horizon risk differences.
+
+The optional NPH exponent extends this framework from a pure depletion-normalization model to a joint geometry-and-amplification model. The parameter $\theta_{0,d}$ governs how cohorts deplete over time, while the shared exponent $\alpha$ governs how external hazards interact with that depletion during NPH periods. Any **applied** wave-period correction uses the specified survivor law for fitting and inversion (§2.5; §2.7.3), not a modification of raw observed hazard. These parameters are conceptually distinct but jointly shape the observed non-proportional hazards that KCOR seeks to interpret diagnostically.
+
+### 4.3 Relationship to negative control methods
+
+Negative control outcomes/tests are widely used to *detect* confounding. KCOR's objective is different: it is an estimator intended to *adjust for a specific confounding structure*—selection-induced depletion dynamics—under the working model, prior to comparison. Negative and positive controls are nevertheless central to validating the estimator's behavior.
+
+This asymmetry helps explain why standard observational analyses can show large mortality differences during periods lacking a plausible mechanism: vaccinated cohorts are already selection-filtered, while unvaccinated hazards are suppressed by ongoing frailty depletion. The direction and magnitude of distortion in unadjusted contrasts depend on both cohorts' reference hazards and frailty distributions; observed differences may be attenuated or exaggerated.
+
+### 4.4 Practical guidelines for implementation
+
+This subsection summarizes common operational practices for applying KCOR in retrospective cohort studies and for assessing when resulting contrasts are interpretable under the stated working model.
+
+**Practical guideline.** KCOR should be applied only when curvature diagnostics indicate a well-identified regime (§2.1.2, §5.1); if required diagnostics fail, substantive interpretation is withheld. Explicitly flagged numerical outputs may be retained for audit, while undefined computations remain unavailable.
+
+Reporting commonly includes:
+
+- Enrollment definition and justification
+- Risk set definitions and event-time binning
+- Quiet-window definitions and justification across all windows used for $\theta_0$ identification
+- Gompertz baseline choice, rebased time origin, and fit diagnostics for $\theta_0$
+- Skip/stabilization rule and robustness to nearby values
+- Delta-offset diagnostics and multi-window consistency checks
+- If used, rationale, identification diagnostics, and estimator-stability checks for the optional NPH exponent module
+- Predefined negative/positive controls used for validation
+- Sensitivity analysis plan and results
+
+KCOR should therefore be applied and reported as a complete pipeline, from cohort freezing through depletion normalization to cumulative comparison and diagnostics, rather than as a standalone adjustment step. Scope and interpretation are summarized once in Box 2 (§1.6).
+
+KCOR is diagnostic-first: multiplicity concerns are mitigated by prespecification of cohorts, quiet windows, and control constructions. Exploratory stratified analyses should be interpreted descriptively, with emphasis on diagnostic consistency rather than formal significance claims.
+
+## 5. Limitations
+
+This section summarizes the principal limitations of the KCOR framework. The emphasis is on conditions under which interpretation is restricted rather than on situations in which the estimator merely “fails.” These limitations are diagnostic and design-related, reflecting the framework’s intentionally conservative scope.
+
+**Practical identifiability with weekly counts.** With finite weekly counts, different combinations of baseline rate and frailty variance can give similar fitted hazards. Fit stability and uncertainty then determine how precisely the data support the contrast.
+
+KCOR is intentionally diagnostic rather than test-based: it does not attempt to formally test properties such as quiet-window validity or frailty distributional form. Instead, it enforces conservative interpretability gates when prespecified empirical diagnostics fail. KCOR is not a causal effect estimator and does not identify counterfactual outcomes under hypothetical interventions.
+
+KCOR does not guarantee nominal uncertainty calibration under arbitrary frailty misspecification. Because the gamma frailty model is used as a working approximation, confidence intervals may be mildly anti-conservative in sparse-event regimes or when depletion geometry deviates substantially from gamma. Diagnostic criteria are intended to identify such regimes, and estimates from failing windows should not be interpreted.
+
+- **Model dependence**: Normalization relies on the adequacy of the gamma-frailty model, the Gompertz baseline assumption, and the structured offset logic used to align quiet windows. KCOR is therefore a working-model normalization, not a model-free correction.
+- **Relation to existing non-PH methods**: KCOR is complementary to time-varying Cox, flexible parametric, additive hazards, and MSM approaches; these methods address different estimands and identification strategies, whereas KCOR targets depletion-geometry normalization under minimal-data constraints (see §1.3).
+- **$\theta_0$ estimation is data-derived**: KCOR does not fix $\theta_0$ at zero a priori for any cohort; a flagged zero-variance fallback for insufficient or failed fitting data does not establish that the cohort is homogeneous. Near-zero fitted $\theta_0$ values indicate little fitted frailty-induced depletion under the working model; their precision and identifiability must be assessed separately. They should not be interpreted as an assumption of cohort homogeneity.
+- **Sparse events**: When event counts are small, hazard estimation and parameter fitting can be unstable.
+- **Contamination of quiet periods**: External shocks (e.g., epidemic waves) overlapping the quiet window can bias selection-parameter estimation.
+- **Optional NPH module risk**: If the epidemic-wave exponent model is misspecified or weakly identified, it can introduce bias rather than reduce bias under its own assumptions; that module must therefore remain diagnostically checked and treated as inactive when its signal is weak.
+- **Applicability to other outcomes**: Although this paper focuses on all-cause mortality, KCOR is applicable to other irreversible outcomes provided that event timing and risk sets are well defined. Application to cause-specific mortality would require explicit competing-risk definitions and cause-specific hazards, but the normalization logic remains cumulative and descriptive. Extension to non-fatal outcomes such as hospitalization requires attention to outcome definitions, censoring and recurrent events. Death before the studied event is a competing event: the target contrast, risk-set definition and additional modeling assumptions must be specified. The single-event inversion does not by itself adjust for competing-event selection.
+- **Non-gamma frailty**: The KCOR framework assumes that selection acts approximately multiplicatively through a time-invariant frailty distribution, for which the gamma family provides a convenient and empirically testable approximation. In settings where depletion dynamics are driven by more complex mechanisms, such as time-varying frailty variance, interacting risk factors, or shared frailty correlations within subgroups, the curvature structure exploited by KCOR may be misspecified. In such cases, KCOR diagnostics, for example poor curvature fit or unstable fitted frailty variance estimates, serve as indicators of model inadequacy rather than targets for parameter tuning. Extending the framework to accommodate dynamic or correlated frailty structures would require explicit model generalization rather than modification of KCOR normalization steps and is left to future work. Empirically, KCOR's validity depends on curvature removal rather than on the literal truth of the gamma family; alternative frailty distributions that generate similar depletion geometry may yield similar normalization.
+- **Frailty exogeneity assumption**: KCOR assumes that frailty differences between cohorts are pre-treatment in origin, reflecting selection into cohorts rather than biological or behavioral response to the intervention. This assumption is standard in frailty-corrected observational analysis and is not directly testable from mortality data alone. To the extent that frailty is partly endogenous to treatment—for example, through intervention-induced immune modulation or differential post-treatment behavioral change—the estimated frailty ratio would absorb a mixture of selection and causal signal, and KCOR's normalization could attenuate or amplify the contrast. Distinguishing a treatment-induced change in frailty from pre-existing selection requires independent evidence about the source of the mortality pattern.
+
+Sensitivity analyses in this work are intentionally embedded alongside the assumptions they interrogate, rather than consolidated into a single omnibus robustness section. Parameters governing quiet-window identification, frailty normalization, aggregation, and uncertainty estimation are stress-tested through targeted negative controls, pathological simulations, and diagnostic failure demonstrations. This structure reflects the diagnostic-first philosophy of KCOR: robustness is assessed by whether assumptions remain identifiable and diagnostics pass, not by tuning parameters to stabilize point estimates.
+
+
+
+
+
+### 5.1 Failure modes and diagnostics
+
+KCOR is designed to normalize selection-induced depletion curvature under its stated model and windowing assumptions. Reviewers and readers should expect the method to degrade when those assumptions are violated. Common failure modes include:
+
+- **Mis-specified quiet window**: If the quiet window overlaps major external shocks (epidemic waves, policy changes, reporting artifacts), the fitted parameters may absorb non-selection dynamics, biasing normalization.
+- **External time-varying hazards masquerading as frailty depletion**: Strong secular trends, seasonality, or outcome-definition changes can introduce curvature that is not well captured by gamma-frailty depletion alone. For example, COVID-19 waves disproportionately increase mortality among frail individuals; if one cohort has higher baseline frailty, such a wave can preferentially deplete that cohort, producing the appearance of a benefit in the lower-frailty cohort that is actually due to differential frailty-specific mortality from the external hazard rather than from the intervention under study.
+- **Extremely sparse cohorts**: When events are rare, observed cumulative hazards become noisy and $(\hat{k}_d,\hat{\theta}_{0,d})$ can be weakly identified, often manifesting as unstable fitted frailty variance estimates or wide uncertainty.
+- **Non-frailty-driven curvature**: Administrative censoring, cohort-definition drift, changes in risk-set construction, or differential loss can induce curvature unrelated to latent frailty.
+
+When the identifiability assumptions fail, the adjusted contrast can be attenuated or amplified. A fitted frailty variance near zero does not establish the direction of the distortion.
+
+Practical diagnostics include:
+
+- **Quiet-window overlays** on hazard/cumulative-hazard plots to confirm the fit window is epidemiologically stable.
+- **Fit residuals in hazard space** (RMSE, residual plots) and stability of fitted parameters under small perturbations of the quiet-window bounds.
+- **Sensitivity analyses** over plausible quiet windows and skip-weeks values.
+- **Prespecified negative controls**: $\mathrm{KCOR}(t)$ curves are expected to be horizontal under the null, subject to sampling stochasticity, under control constructions designed to induce composition differences without true effects.
+
+In practice, negative controls such as the age-shift comparisons in §3.1.2 assess end-to-end behavior under strong composition differences; their numerical target depends on the underlying normalized hazard trajectories.
+
+### 5.2 Conservativeness and edge-case detection limits
+
+Because KCOR compares fixed enrollment cohorts, subsequent uptake of the intervention among initially unexposed individuals (or additional dosing among exposed cohorts) introduces treatment crossover over time. The resulting change in the contrast depends on who crosses over and when. Analyses should therefore restrict follow-up to periods before substantial crossover or stratify by dosing state when the data permit.
+
+In the Czech 2021_24 Dose 0 versus Dose 2 example, all 14 subgroup fits were numerically accepted, but six triggered exploratory residual flags and window-omission sensitivity differed by group (SI S6.1.2). These checks illustrate diagnostic behavior rather than establish that all identification criteria were satisfied.
+
+**Treatment effects during a quiet window.**  
+If a treatment effect changes mortality during a quiet window, the frailty fit can absorb part of that change. Poor fit or instability when the window boundaries are varied can reveal a problem. If the change resembles the pattern expected from depletion, however, the fit can remain stable. In that case, the diagnostics alone cannot establish how much of the change the adjustment absorbed or whether the adjusted contrast is conservative.
+
+KCOR analyses commonly exclude an initial post-enrollment window to exclude dynamic Healthy Vaccinee Effect artifacts. If an intervention induces an acute mortality effect concentrated entirely within this skipped window, that transient signal will not be captured by the primary analysis. This limitation is addressed by reporting sensitivity analyses with reduced or zero skip-weeks and/or by separately evaluating a prespecified acute-risk window.
+
+An intervention that produces a constant multiplicative hazard effect throughout follow-up is not separately identifiable from the cohort-specific baseline rate. The unanchored KCOR can retain this level difference, whereas anchoring removes a constant normalized hazard ratio. Internal diagnostics cannot distinguish these observationally equivalent explanations.
+
+Simulation results in §3.3 illustrate that when key assumptions are violated—such as non-gamma frailty geometry, contamination of the quiet window by external shocks, or extreme event sparsity—frailty normalization may become weakly identified. In such regimes, KCOR's diagnostics, including poor cumulative-hazard fit and departures from the expected Gompertz shape, can signal that curvature-based inference is unreliable without model generalization or revised window selection.
+
+Increasing model complexity within the Cox regression framework—via random effects, cohort-specific frailty, or information-criterion–based selection—does not resolve this limitation, because these models continue to target instantaneous hazard ratios conditional on survival rather than cumulative counterfactual outcomes. Model-selection criteria applied within the Cox regression family favor specifications that improve likelihood fit of instantaneous hazards, but such criteria do not validate cumulative counterfactual interpretation under selection-induced non-proportional hazards.
+
+### 5.3 Data requirements and external validation
+
+KCOR precision depends on event counts during the fitting and reference periods and across follow-up. Frailty resolution also depends on the baseline mortality rate, frailty variance, and duration and placement of informative quiet windows (Section 2.9). Reporting event counts, fitted-parameter resolution and person-bootstrap KCOR intervals is recommended for sparse outcomes.
+
+**External validation across interventions.** A natural next step is to apply KCOR to other vaccines and interventions where large-scale individual-level event timing data are available. Many RCTs are underpowered for all-cause mortality and typically do not provide record-level timing needed for KCOR-style hazard-space normalization, while large observational studies often publish only aggregated effect estimates. Where sufficiently detailed time-to-event data exist (registries, integrated health systems, or open individual-level datasets), cross-intervention comparisons can help characterize how often selection-induced depletion dominates observed hazard curvature and how frequently post-normalization trajectories remain stable under negative controls.
+
+### 5.4 Optional NPH exponent model and remaining non-proportional hazard risk
+
+COVID-19 mortality exhibits a pronounced departure from proportional hazards, with epidemic waves disproportionately amplifying risk among individuals with higher underlying frailty or baseline all-cause mortality risk [@levin2020]. This phenomenon represents a distinct class of bias from both static and dynamic healthy-vaccinee effects. Even after frailty-driven depletion is adjusted for under the working model, wave-period mortality can remain differentially distorted because external infection pressure interacts nonlinearly with baseline vulnerability.
+
+For such settings, the revised KCOR architecture includes an **optional NPH exponent model** in which excess hazard during NPH periods is summarized through a shared amplification parameter $\alpha$ localized from cross-cohort structure together with **externally supplied VE or other prespecified intervention-effect scale** (§2.7.1–§2.7.2), with the specified survivor law used for fitting and inversion (§2.5; §2.7.3), not to modify raw observed hazard. This model captures one specific class of non-proportionality: frailty-dependent amplification of an external hazard. The exponent $\alpha$ should be interpreted as a model-calibrated summary of frailty-dependent amplification under the working model, not as a uniquely identified biological or mechanistic constant.
+
+**Empirical non-identification of $\alpha$** (as in §3.4 when diagnostics fail) is a **successful diagnostic outcome**: it signals that the data do not support applying the cumulative NPH correction for stable inference, and the module should be treated as inactive rather than forced into point estimates.
+
+In the proposed localization procedure, identification of $\alpha$ requires sufficient cross-cohort variation in depletion geometry and cumulative hazard, together with stable excess-hazard measurement and a **prespecified externally supplied VE or other prespecified intervention-effect scale** (§2.7.2). When cohorts have similar depletion states, excess hazards are noisy, the assumed power-law structure is inadequate, or the external scale is misspecified, $\alpha$ is weakly identified. In such settings the expected failure signatures are flat objective functions, boundary-seeking estimates, or disagreement between the pairwise and collapse estimators. These patterns are treated as evidence of weak signal or misspecification rather than as valid parameter estimates, and the NPH module should be considered inactive or unreliable.
+
+**Non-identifiability under simultaneous multiplicative effects.**  
+Without a specified effect scale, the proposed localization procedure does not separate the NPH exponent $\alpha$ from cohort-specific multiplicative effects (e.g., intervention-associated hazard reduction). Both mechanisms can produce similar cross-cohort excess-hazard ratios, leading to flat objective functions and boundary-seeking behavior.
+
+Simulation results confirm that even when $\alpha$ is identifiable under a correctly specified synthetic data-generating process, the addition of multiplicative effects rapidly degrades identifiability. This explains why $\alpha$ may be recoverable in controlled simulations but not in real-world data where multiplicative effects and depletion geometry coexist.
+
+The optional NPH model does **not** eliminate all epidemic-wave uncertainty. It assumes that excess hazard can be separated from baseline hazard and that amplification depends on frailty through a common amplitude and power-law relationship. Additive shocks, behavioral responses, time-varying frailty, or other non-separable external forces are not captured and may leave residual bias. Analyses spanning major epidemic waves therefore remain more assumption-sensitive than analyses anchored in quiet periods alone.
+
+In the Czech application analyzed here (§3.4), the pooled $\alpha$ region did not clear the prespecified identifiability gate and is therefore reported as not identified rather than used as a stable preprocessing parameter.
+
+When the optional NPH module is not used, or when its assumptions are not credible, wave-spanning contrasts should be interpreted descriptively and with explicit caution. More elaborate mitigation strategies remain possible in principle, but they would require additional assumptions beyond the present manuscript. The NPH exponent model should therefore be viewed as a narrow, assumption-bearing module rather than as a blanket solution to all wave-period bias.
+
+## 6. Conclusion
+
+KCOR complements hazard-based modeling by stabilizing cumulative risk comparisons when selection-induced depletion distorts marginal hazard ratios. The revised estimator targets enrollment-time frailty variance $\theta_0$ under a Gompertz working model, aligns quiet windows through structured offsets, and applies gamma-frailty inversion before cumulative comparison. In epidemic-wave settings, an optional NPH exponent model may also be used to summarize how external hazards interact with depletion geometry through a shared amplification parameter $\alpha$. Validation is correspondingly broader than in earlier formulations: it includes $\theta_0$ recovery, end-to-end negative and positive controls, Cox mismatch demonstrations, and explicit failure signaling under stress. In the Czech application studied here, the historical pooled $\alpha$ preference was not reproduced by the revised survivor-law fit; the revised objectives minimize at a grid boundary and no exponent is identified. Degraded fit, offset instability, departures from the expected cumulative shape, or unstable NPH objectives can flag weak identification. Passing these checks leaves identification conditional on the working assumptions. The resulting contrast remains descriptive and is interpretable only to the extent that the gamma-frailty working model, Gompertz structure, and associated diagnostics are adequate. The optional NPH module remains an assumption-bearing extension rather than a universal part of the KCOR core.
+
+\newpage
+
+## Declarations
+
+### Ethics approval and consent to participate
+
+This study used only simulated data and publicly available, aggregated registry summaries that contain no individual-level or identifiable information; as such, it did not constitute human subjects research and was exempt from institutional review board oversight. The primary validation results use synthetic data. Empirical negative-control figures (Figure 6 and Supplementary Figure S9) use aggregated cohort summaries derived from publicly available Czech Republic administrative data; no record-level data are reproduced in this manuscript, although the underlying Czech datasets are available at the record level [@sanca2024].
+
+### Consent for publication
+
+Not applicable.
+
+### Data availability
+
+This study analyzes aggregated cohort-level summaries derived from administrative health records. The Czech Republic mortality and vaccination data used in this study are publicly available, record-level administrative datasets released by the Czech National Health Information Portal [@sanca2024]. No restricted-access or proprietary data sources were used. For reproducibility and disclosure control, analyses in this manuscript are conducted on aggregated cohort-time summaries derived from the public record-level data.
+
+### Software availability
+
+The complete KCOR reference implementation, simulation code, and manuscript build instructions are available at https://github.com/skirsch/KCOR. A citable archival release of the software is available via Zenodo (DOI: 10.5281/zenodo.18050329).
+
+All synthetic validation datasets used for method development and evaluation (including negative and positive control simulations), along with their generation scripts, are publicly available in the project repository. Sensitivity analysis outputs and example datasets in KCOR_CMR format are included to support full computational reproducibility. A formal specification of the KCOR data formats, including schema definitions and disclosure-control semantics, is provided in `documentation/specs/KCOR_file_format.md`.
+
+### Use of artificial intelligence tools
+
+The KCOR method and estimand were developed by the author without the use of artificial intelligence (AI) tools. Generative AI tools, including OpenAI’s ChatGPT and Cursor Composer 1, were used during manuscript preparation to assist with drafting and editing text, mathematical typesetting, refactoring code, and implementing simulation studies described in this manuscript.
+
+Simulation designs were either specified by the author or proposed during iterative discussion and subsequently reviewed and approved by the author prior to implementation. AI assistance was used to draft code for approved simulations, which the author reviewed, tested, and validated. Additional large language models (including Grok and Claude) were used to provide feedback on manuscript wording and methodological exposition in a role analogous to informal peer review.
+
+All scientific decisions, methodological choices, analyses, interpretations, and judgments regarding which suggestions to accept or reject were made solely by the author, who reviewed and understands all content and takes full responsibility for the manuscript.
+
+### Competing interests
+
+The author is a board member of the Vaccine Safety Research Foundation.
+
+### Funding
+
+This research received no external funding.
+
+### Authors' contributions
+
+Steven T. Kirsch conceived the method, wrote the code, performed the analysis, and wrote the manuscript.
+
+### Acknowledgements
+
+The author thanks Clare Craig, James Lyons-Weiler, Jasmin Cardinal Prévost, Stefan Baral, Paul Fischer, Alan Mordue, and Ben Jackson for helpful discussions and methodological feedback during the development of this work. All errors remain the author’s responsibility.
+
+\newpage
+
+## References
+
+::: {#refs}
+
+:::
+
+\newpage
+
+## Tables
+
+Table: Summary of three large matched observational studies showing residual confounding / HVE despite meticulous matching. {#tbl:HVE_motivation}
+
+| Study | Design | Matching/adjustment | Key control finding | Implication for methods |
+|---|---|---|---|---|
+| Obel et al. (Denmark) [@obel2024] | Nationwide registry cohorts (60–90y) | 1:1 match on age/sex + covariate adjustment; negative control outcomes | Vaccinated had higher rates of multiple negative control outcomes, but substantially lower mortality after unrelated diagnoses | Strong evidence of confounding in observational VE estimates; "negative control methods indicate… substantial confounding" |
+| Chemaitelly et al. (Qatar) [@chemaitelly2025] | Matched national cohorts (primary series and booster) | Exact 1:1 matching on demographics + coexisting conditions + prior infection; Cox models | Strong early reduction in non-COVID mortality (HVE), with time-varying reversal later | Even meticulous matching leaves time-varying residual differences consistent with selection/frailty depletion |
+| Bakker et al. (Netherlands) [@bakker2025] | National observational mortality + COVID-19 vaccination cohort | Stratification + matching on multiple population and health indicators; survival analyses + calendar-time sanity checks | Evidence consistent with residual HVE despite matching; additional evidence of vaccination-status misclassification artifacts | Demonstrates how strong selection + misclassification artifacts can dominate VE/safety estimates; underscores need for diagnostics-first cohort comparison |
+
+
+Table: Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions. {#tbl:cox_vs_kcor}
+
+| Feature                             | Cox PH       | Cox + frailty     | KCOR                    |
+| ----------------------------------- | ------------ | ----------------- | ----------------------- |
+| Primary estimand                    | Hazard ratio | Hazard ratio      | Cumulative hazard ratio |
+| Final hazard target conditional on current survival | Yes | Yes | No (reference-frailty cumulative contrast) |
+| Assumes PH                          | Yes          | Yes (conditional) | No                      |
+| Frailty role                        | None         | Nuisance          | Object of inference     |
+| Uses partial likelihood             | Yes          | Yes               | No                      |
+| Handles selection-induced curvature | No           | Partial           | Yes (under working frailty model)          |
+| Interpretation under marginal non-PH | Follow-up-dependent summary | Conditional HR if conditional PH holds | Yes (cumulative) |
+
+Note: KCOR uses hazards calculated in surviving risk sets as input, but its final target is a cumulative contrast on the reference-frailty scale. Alternative post-normalization estimands are admissible within the framework.
+
+
+Table: Positioning KCOR relative to non-proportional hazards methods. {#tbl:positioning}
+
+| Method class                           | Primary target                  | What is modeled        | Handles selection-induced depletion? | Typical output           | Failure under latent frailty      |
+| -------------------------------------- | ------------------------------- | ---------------------- | ------------------------------------ | ------------------------ | --------------------------------- |
+| Cox PH                                 | Instantaneous hazard            | Linear predictor       | No                                   | HR                       | Non-PH from depletion → departure from fixed-frailty HR |
+| Time-varying Cox                       | Instantaneous hazard            | Time-varying $\beta(t)$      | No                                   | HR(t)                    | Fits depletion as signal          |
+| Flexible parametric survival (splines) | Survival / hazard shape         | Baseline hazard        | No                                   | Smooth hazard / survival | Absorbs depletion curvature       |
+| Additive hazards (Aalen)               | Hazard differences              | Additive hazard        | No                                   | $\Delta h(t)$            | Still conditional on survival     |
+| RMST                                   | Mean survival                   | Survival curve         | No                                   | RMST                     | Reflects marginal survival differences |
+| Frailty regression                     | Heterogeneity- adjusted HR       | Random effects         | Partial                              | HR                       | Frailty treated as nuisance       |
+| **KCOR (this work)**                   | **Cumulative outcome contrast** | **Depletion geometry** | **Yes (targeted)**                   | **$\mathrm{KCOR}(t)$**              | Diagnostics flag failure          |
+
+
+Table: Notation used throughout the Methods section. {#tbl:notation}
+
+| Symbol | Definition |
+|--------|------------|
+| $d$ | Cohort index |
+| $A,B$ | Indices of the two cohorts compared in a KCOR contrast |
+| $t$ | Event time since enrollment (discrete bins, e.g., weeks) |
+| $h_{\mathrm{obs},d}(t)$ | Discrete-time cohort hazard (conditional on $N_d(t)$) |
+| $H_{\mathrm{obs},d}(t)$ | Observed cumulative hazard (after skip/stabilization) |
+| $\tilde h_{0,d}(t)$ | Depletion-neutralized baseline hazard for cohort $d$ |
+| $\tilde H_{0,d}(t)$ | Depletion-neutralized baseline cumulative hazard for cohort $d$ |
+| $\theta_{0,d}$ | Enrollment-time frailty variance (selection strength) for cohort $d$ at rebased $t=0$; defined separately for each cohort |
+| $\hat{\theta}_{0,d}$ | Estimated enrollment-time frailty variance from the revised estimator, fit separately within each cohort |
+| $k_d$ | Gompertz baseline scale parameter for cohort $d$ |
+| $\hat{k}_d$ | Estimated Gompertz baseline scale parameter |
+| $\gamma$ | Fixed Gompertz age slope used in the working baseline |
+| $t_{\mathrm{rebased}}$ | Event time after the stabilization skip; the origin for $\theta_{0,d}$ |
+| $H_{\mathrm{gom},d}(t)$ | Gompertz cumulative hazard implied by $(k_d,\gamma)$ |
+| $H_{0,d}^{\mathrm{eff}}(t)$ | Reconstructed effective cumulative hazard over the full trajectory |
+| $\delta_{i,d}$ | Incremental persistent offset at wave end time $t_i$ |
+| $\Delta_d(t)$ | Accumulated offset applied when aligning quiet windows |
+| $t_0$ | Anchor time for baseline normalization (prespecified) |
+| $\mathrm{KCOR}(t; t_0)$ | Anchored KCOR: $\mathrm{KCOR}(t)/\mathrm{KCOR}(t_0)$ |
+
+Table: Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as $\theta_{0,d}$ are estimated separately for each cohort within the prespecified framework.{#tbl:KCOR_algorithm}
+
+| Step | Operation | Output | Prespecify? | Diagnostics |
+|---|---|---|---|---|
+| 1 | Choose enrollment date and define fixed cohorts | Cohort labels | Yes | Verify cohort sizes/risk sets |
+| 2 | Compute discrete-time hazards | Hazard curves | Yes (binning/transform) | Check for zeros/sparsity |
+| 3 | Apply stabilization skip, rebase time, and accumulate observed cumulative hazards | Preprocessed hazards and $H_{\mathrm{obs},d}(t)$ | Yes (skip rule) | Plot hazards and cumulative hazards |
+| 4 | Select prespecified quiet windows in calendar ISO-week space | Quiet-window sets $W_{j,d}$ | Yes | Overlay quiet windows on hazard plots |
+| 5 | Seed-fit $(\hat{k}_d,\hat{\theta}_{0,d}^{(0)})$ in the nearest quiet window | Initial fitted parameters | Yes (estimation procedure) | Seed-fit residuals and plausibility |
+| 6 | Reconstruct $H_{0,d}^{\mathrm{eff}}(t)$ and compute persistent offsets $\delta_{i,d}$, $\Delta_d(t)$ | Aligned depletion geometry | Yes (offset rules) | Offset plausibility and multi-window coherence |
+| 7 | Jointly refit $\hat{k}_d,\hat{\theta}_{0,d}$ across all quiet windows, then invert the gamma-frailty identity | Depletion-neutralized cumulative hazards | Yes | Residuals, stability, post-normalization linearity |
+| 8 | Compute $\mathrm{KCOR}(t)$ and anchored variants when used | $\mathrm{KCOR}(t)$ curve | Yes (horizon / anchor) | Near-flat under negative controls as a diagnostic check; coherent under positive controls |
+| 9 | Uncertainty | CI / intervals | Yes | Coverage and bootstrap stability |
+
+
+Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect *(null by construction)*; cohorts differ only in enrollment-time gamma frailty variance ($\theta_0$). Despite the treatment hazard ratio at fixed frailty being 1 by construction, Cox regression produces increasingly non-null hazard ratios as $\theta_0$ increases, reflecting depletion-induced non-proportional hazards. In the same simulations, $\mathrm{KCOR}(t)$ remains centered near unity with negligible post-normalization slope across $\theta_0$ values, which is consistent with the expected null benchmark under the working model and is interpreted diagnostically rather than as proof that confounding has been removed. (Exact values depend on simulation seed and follow-up horizon.) {#tbl:cox_bias_demo}
+
+| $\theta_0$ | Cox HR | Nominal 95% CI | Nominal Cox p-value | Week-52 KCOR | KCOR post-norm slope |
+| --------: | -----: | ------: | ----------: | -------------: | -------------------: |
+| 0.0  | 0.988 | [0.969, 1.008] | 0.234 | 0.988 | $7.6 \times 10^{-4}$ |
+| 0.5  | 0.965 | [0.946, 0.985] | $4.9 \times 10^{-4}$ | 0.990 | $-3.8 \times 10^{-5}$ |
+| 1.0  | 0.944 | [0.926, 0.963] | $1.7 \times 10^{-8}$ | 0.992 | $-3.0 \times 10^{-4}$ |
+| 2.0  | 0.902 | [0.884, 0.921] | $2.4 \times 10^{-23}$ | 0.991 | $3.7 \times 10^{-4}$ |
+| 5.0  | 0.804 | [0.787, 0.820] | $1.5 \times 10^{-93}$ | 0.993 | $-5.3 \times 10^{-4}$ |
+| 10.0 | 0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
+| 20.0 | 0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
+
+Table: Empirical negative-control KCOR at December 26, 2022 (weighted pooling across the two vaccination subgroups and their inclusive all-status group; these groups overlap). The original-point normalized weights in birth-group order 1940, 1950, 1960 are (0.22737, 0.22913, 0.54351) for 2021-24 and (0.17343, 0.17560, 0.65096) for 2022-06; the statistic is a descriptive combination of overlapping groups, not a population-standardized estimate. The input is the September 2025 extract, before the product restriction. Historical v4.3 estimates and the originally reported analytical bounds are shown for archival comparison only; those bounds are not valid uncertainty estimates for the current anchored statistic. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the archived sensitivity analysis uses the survivor fit at forced alpha=1.18 under the preceding seed implementation. Both columns use 999 matched person-bootstrap draws per enrollment, refitted with numerical ceiling 500 and the shared numerical integral. Sources: `analysis/finite_reference/table8-primary/identified_only-table8.json` and `analysis/ceiling500/table8/forced_alpha-table8.json`; historical source: v4.3 replay of Git commit `bb2d68249e8bf77c8fb07e6c8336bc790a808a8a` (`test/negative_control/out/KCOR_summary.log` at that commit). {#tbl:neg_control_summary}
+
+| Enrollment | Dose comparison | Historical KCOR | Historical bounds (archive) | Core [95% CI] | Sensitivity 1.18 [95% CI] |
+|---|---|---:|---|---|---|
+| 2021_24 | 1 vs 0 | 1.0097 | [0.992, 1.027] | 1.0162 [0.958, 1.072] | 1.0128 [0.956, 1.068] |
+| 2021_24 | 2 vs 0 | 1.0213 | [1.000, 1.043] | 1.0456 [0.982, 1.119] | 1.0331 [0.970, 1.106] |
+| 2021_24 | 2 vs 1 | 1.0115 | [0.991, 1.033] | 1.0289 [0.966, 1.103] | 1.0201 [0.958, 1.094] |
+| 2022_06 | 1 vs 0 | 0.9858 | [0.970, 1.002] | 1.0070 [0.962, 1.053] | 1.0126 [0.958, 1.075] |
+| 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] | 1.0164 [0.970, 1.071] | 1.0557 [0.996, 1.121] |
+| 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] | 1.0094 [0.957, 1.067] | 1.0426 [0.975, 1.109] |
+
+Table: Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts in the declared exit-capable mode, treating residual risk-set losses as nondeath exits. The benefit row is audit-only under the signed gap diagnostic (Section 3.2). {#tbl:pos_control_summary}
+
+| Scenario | Effect window | Hazard multiplier $r$ | Expected direction | Observed $\mathrm{KCOR}(80;t_0)$ |
+|---|---|---:|---|---:|
+| Benefit | week 20–79 | 0.8 | < 1 | 0.834 [0.774, 0.897] |
+| Harm | week 20–79 | 1.2 | > 1 | 1.162 [1.087, 1.248] |
+
+
+
+
+Table: Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains near unity under these selection-only regimes, while RMST reflects marginal survival differences and interval-specific Cox reflects survivor hazard differences. These estimands can differ despite a fixed-frailty treatment null. All methods were applied to identical simulation outputs. The Cox comparison fits separate prespecified intervals, retaining everyone at risk at interval entry and censoring at its end; deterministic expected deaths are rounded cumulatively. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window. {#tbl:comparison_estimands}
+
+| Method | Target estimand | Deviation from unity (selection-only scenarios) | Sampling or across-window variation | Interpretability notes |
+|--------|----------------|--------------------------------|---------------------|------------------------|
+| **KCOR** | Cumulative hazard ratio (depletion-normalized) | Near zero (median KCOR $\approx 1.0$) | Sampling variation not estimated | Stable under selection-induced depletion; normalization precedes comparison |
+| **RMST** | Restricted mean survival time | Non-zero (depends on depletion strength) | Sampling variation not estimated | Summarizes survival differences that may reflect depletion rather than treatment effect; does not normalize selection geometry |
+| **Cox** | Interval-specific hazard ratios | Mean HR 1.069 in the gamma-frailty null | Between-window HR SD 0.044 in that scenario | Captures time-varying hazards; does not normalize selection geometry |
+
+
+\newpage

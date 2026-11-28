@@ -1,0 +1,159 @@
+"""Fixed-cohort person bootstrap for ordinary KCOR reporting.
+
+Each mutually exclusive enrollment cohort is sampled using its death/exit/survival
+history cells. Each draw is passed through the ordinary fitter without recursive
+interval generation. Overlapping age-shift controls require their known layout.
+"""
+import os,sys,io
+from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
+from contextlib import redirect_stdout,redirect_stderr
+from tempfile import TemporaryDirectory
+import numpy as np
+import pandas as pd
+
+KEYS=["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"]
+def keyframe(df):
+    a=df.copy()
+    a["Date"]=pd.to_datetime(a["Date"])
+    if a.duplicated(KEYS).any():raise ValueError("nonunique ordinary output keys")
+    return a.set_index(KEYS)
+
+def histories(frame,sheet,layout):
+    need={"DateDied","ISOweekDied","YearOfBirth","Sex","Dose","Alive","Dead"}
+    if not need<=set(frame.columns):raise ValueError("missing fixed-cohort history columns")
+    if "PT" in frame.columns:raise ValueError("person-time histories require individual histories")
+    start=pd.Timestamp.fromisocalendar(*map(int,sheet.split("_")),1)
+    frame=frame.copy();frame["DateDied"]=pd.to_datetime(frame.DateDied)
+    frame=frame[frame.DateDied>=start]
+    if not len(frame):raise ValueError("no post-enrollment rows")
+    if layout=="table8":
+        group=frame.groupby(["YearOfBirth","Dose","DateDied"])[["Alive","Dead"]].sum().reset_index()
+        if sorted(group.YearOfBirth.unique())!=[1940,1950,1960] or sorted(group.Dose.unique())!=[0,1,2]:
+            raise ValueError("unexpected overlapping age-shift layout")
+        dates=pd.date_range(start,group.DateDied.max(),freq="7D")
+        idx=pd.MultiIndex.from_product([[1940,1950,1960],[0,1,2],dates],names=["YearOfBirth","Dose","DateDied"])
+        v=group.set_index(["YearOfBirth","Dose","DateDied"]).reindex(idx)
+        if v.isna().any().any():raise ValueError("incomplete overlapping histories")
+        a=v.Alive.to_numpy().reshape(3,3,-1);d=v.Dead.to_numpy().reshape(3,3,-1)
+        if np.any(a[:,:,:-1]-d[:,:,:-1]!=a[:,:,1:]):raise ValueError("overlap requires death-only fixed histories")
+        cells=np.concatenate([d,(a-d)[:,:,-1:]],axis=2)
+        cells[2]-=cells[0]+cells[1]
+        if np.any(cells<0) or np.any(cells!=np.floor(cells)):raise ValueError("invalid overlapping history counts")
+        return ("table8",dates,cells.astype(np.int64))
+    if layout!="disjoint":raise ValueError("unknown bootstrap layout")
+    if not set(frame.Sex.astype(str).unique())<= {"F","M"}:
+        raise ValueError("nonstandard/overlapping strata require explicit history layout")
+    group=frame.groupby(["YearOfBirth","Dose"],sort=True)
+    cohorts=[]
+    for (age,dose),g in group:
+        sexes=[];cells=[]
+        for sex,x in g.groupby("Sex",sort=True):
+            x=x.sort_values("DateDied")
+            dates=pd.DatetimeIndex(x.DateDied)
+            if dates.has_duplicates or dates[0]!=start or not np.all(np.diff(dates.values)==np.timedelta64(7,"D")):
+                raise ValueError("incomplete or duplicate weekly risk history")
+            a=x.Alive.to_numpy(float);d=x.Dead.to_numpy(float)
+            c=np.r_[d,a[:-1]-d[:-1]-a[1:],a[-1]-d[-1]]
+            if not np.isfinite(c).all() or np.any(c<0) or np.any(c!=np.floor(c)):
+                raise ValueError("risk sets do not reconstruct nonnegative integer person histories")
+            sexes.append((sex,x.copy(),len(c)));cells.extend(c.astype(np.int64))
+        cohorts.append((sexes,np.array(cells,dtype=np.int64)))
+    return ("disjoint",cohorts)
+
+def draw_history(record,rng):
+    if record[0]=="table8":
+        _,dates,cells=record
+        n=int(cells.sum());sample=rng.multinomial(n,cells.ravel()/n).reshape(cells.shape)
+        sample[2]+=sample[0]+sample[1]
+        alive=np.cumsum(sample[:,:,::-1],axis=2)[:,:,::-1][:,:,:-1]
+        rows=[]
+        for i,age in enumerate([1940,1950,1960]):
+            for j,dose in enumerate([0,1,2]):
+                rows.append(pd.DataFrame(dict(DateDied=dates,ISOweekDied=dates.strftime("%G-%V"),YearOfBirth=age,Dose=dose,Sex="F",Alive=alive[i,j],Dead=sample[i,j,:-1])))
+        return pd.concat(rows,ignore_index=True)
+    rows=[]
+    for sexes,cells in record[1]:
+        n=int(cells.sum())
+        sampled=rng.multinomial(n,cells/n) if n else cells.copy()
+        pos=0
+        for sex,x,size in sexes:
+            c=sampled[pos:pos+size];pos+=size
+            nw=len(x);dead=c[:nw];exits=c[nw:-1]
+            y=x.copy();y["Dead"]=dead;y["Alive"]=int(c.sum())-np.r_[0,np.cumsum(dead[:-1]+exits)]
+            rows.append(y)
+    return pd.concat(rows,ignore_index=True)
+
+def init_worker(hist, settings, seed, input_path):
+    global HIST,SETTINGS,SEED,INPUT
+    HIST,SETTINGS,SEED,INPUT=hist,settings,seed,input_path
+
+def worker(draw):
+    import KCOR as K
+    for k,v in SETTINGS.items():setattr(K,k,v)
+    frames={sh:draw_history(h,np.random.default_rng([SEED,draw,i])) for i,(sh,h) in enumerate(HIST.items())}
+    try:
+        with TemporaryDirectory(prefix="kcor-person-draw-") as tmp, redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            out=K.process_workbook(INPUT,str(Path(tmp)/"unused.xlsx"),bootstrap_frames=frames,return_rows=True)
+        return keyframe(out),None
+    except (ValueError,ArithmeticError) as e:
+        return None,f"{type(e).__name__}: {e}"
+
+def flagged(frame):
+    # Preserve the estimator's configured fallback; expose its use rather than
+    # conditioning the bootstrap on accepted draws.
+    bad=np.zeros(len(frame),dtype=bool)
+    if "abnormal_fit" in frame:
+        bad |= frame["abnormal_fit"].fillna(False).astype(bool).to_numpy()
+    for col in ("theta0_status_num","theta0_status_den"):
+        if col in frame:
+            status=frame[col]
+            bad |= (status.notna() & ~status.astype(str).str.lower().isin(["ok",""])).to_numpy()
+    # For aggregated rows, inherit flags from the contributing age strata.
+    z=frame.reset_index() if isinstance(frame.index,pd.MultiIndex) else frame.copy()
+    z["_bootstrap_flag"]=bad
+    groups=["EnrollmentDate","Dose_num","Dose_den","Date"]
+    pool=z.YearOfBirth<=0
+    any_group=z.groupby(groups,dropna=False)["_bootstrap_flag"].transform("any").to_numpy()
+    return bad | (pool.to_numpy() & any_group)
+
+def attach(model,frame,src,sheets,log):
+    out=frame.copy()
+    out["CI_analytic_lower"]=out["CI_lower"];out["CI_analytic_upper"]=out["CI_upper"]
+    out["CI_lower"]=np.nan;out["CI_upper"]=np.nan
+    out["CI_method"]="unavailable";out["CI_valid_draws"]=0
+    out["CI_flagged_draws"]=0;out["CI_point_flagged"]=flagged(out)
+    layout=os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")
+    draws=int(os.environ.get("KCOR_BOOTSTRAP_DRAWS","999"))
+    if draws<=0:
+        log("[BOOTSTRAP] disabled; analytic intervals separately labeled");return out
+    try:
+        hist={sh:histories(pd.read_excel(src,sheet_name=sh),sh,layout) for sh in sheets}
+    except ValueError as e:
+        log("[BOOTSTRAP] unavailable: "+str(e));return out
+    keys=keyframe(out).index
+    settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","MONTE_CARLO_MODE")}
+    seed=int(os.environ.get("KCOR_BOOTSTRAP_SEED","33080"))
+    values=[];flags=[]
+    with ProcessPoolExecutor(max_workers=int(os.environ.get("KCOR_BOOTSTRAP_WORKERS","5")),initializer=init_worker,initargs=(hist,settings,seed,str(Path(src).resolve()))) as pool:
+        for i,(v,error) in enumerate(pool.map(worker,range(1,draws+1),chunksize=1),1):
+            if error:
+                log(f"[BOOTSTRAP] draw {i} unavailable: {error}")
+                val=np.full(len(keys),np.nan);bad=np.ones(len(keys),dtype=bool)
+            else:
+                val=v["KCOR"].reindex(keys).to_numpy(float)
+                bad=pd.Series(flagged(v),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
+            values.append(val);flags.append(bad)
+            if i%100==0:log(f"[BOOTSTRAP] {i}/{draws}")
+    a=np.asarray(values);count=np.isfinite(a).sum(axis=0);out["CI_valid_draws"]=count
+    out["CI_flagged_draws"]=np.asarray(flags).sum(axis=0)
+    # Do not silently condition the interval on a subset of successful draws.
+    good=(count==draws)&np.isfinite(out["KCOR"].to_numpy())
+    good &= out["CI_analytic_lower"].notna().to_numpy()
+    if good.any():
+        out.loc[good,["CI_lower","CI_upper"]]=np.quantile(a[:,good],[.025,.975],axis=0).T
+        out.loc[good,"CI_method"]="person_bootstrap_percentile"
+        flagged_rows=good & ((out["CI_flagged_draws"]>0)|out["CI_point_flagged"]).to_numpy()
+        out.loc[flagged_rows,"CI_method"]="person_bootstrap_with_fit_flags"
+    log(f"[BOOTSTRAP] {draws} person draws; {int(good.sum())}/{len(out)} rows received full intervals")
+    return out

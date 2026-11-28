@@ -1,0 +1,87 @@
+% Fix run-in paragraph style for ##### headers
+\usepackage{titlesec}
+\titleformat{\paragraph}[block]{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{0.5em}
+\titleformat{\subparagraph}[block]{\normalfont\normalsize\bfseries}{\thesubparagraph}{1em}{}
+\titlespacing*{\subparagraph}{0pt}{3.25ex plus 1ex minus .2ex}{0.5em}
+
+% Table packages for tabularx with custom column types
+\usepackage{microtype}
+\frenchspacing
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage[framemethod=tikz]{mdframed}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Box all Markdown blockquotes (Pandoc uses the quote environment)
+% Use mdframed for stable full borders with no left/right clipping.
+\mdfdefinestyle{kcorquote}{%
+  linecolor=black,
+  linewidth=0.4pt,
+  backgroundcolor=white,
+  innerleftmargin=6pt,
+  innerrightmargin=6pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  leftmargin=0pt,
+  rightmargin=0pt,
+  skipabove=10pt,
+  skipbelow=10pt,
+  topline=true,
+  bottomline=true,
+  leftline=true,
+  rightline=true,
+  roundcorner=0pt,
+  splittopskip=0pt,
+  splitbottomskip=0pt
+}
+\renewenvironment{quote}{\begin{mdframed}[style=kcorquote]}{\end{mdframed}}
+
+% Appendix lettered numbering for figures and equations.
+%
+% In this repo, the manuscript uses "##" headings, which Pandoc maps to \subsection.
+% There are no \section-level headings, so relying on subsection/section counters
+% yields 0.x-style numbering. Instead, we define an appendix-letter counter that
+% advances once per appendix (\subsection after \appendix) and resets figure/equation
+% numbering within each appendix.
+\usepackage{etoolbox}
+\newif\ifkcorappendix
+\newcounter{kcorappendix}
+\pretocmd{\appendix}{%
+  \kcorappendixtrue%
+  \setcounter{kcorappendix}{0}%
+  \renewcommand{\thefigure}{\Alph{kcorappendix}.\arabic{figure}}%
+  \renewcommand{\theequation}{\Alph{kcorappendix}.\arabic{equation}}%
+  \renewcommand{\thetable}{\Alph{kcorappendix}.\arabic{table}}%
+}{}{}
+\pretocmd{\subsection}{%
+  \ifkcorappendix%
+    \stepcounter{kcorappendix}%
+    \setcounter{figure}{0}%
+    \setcounter{equation}{0}%
+    \setcounter{table}{0}%
+  \fi%
+}{}{}
+
+% Disable TeX hyphenation (reviewer-friendly) and avoid PDF soft-hyphen artifacts.
+% Note: this does not prevent manual hyphens, only automatic word-breaking.
+\usepackage{ragged2e}
+\RaggedRight
+\hyphenpenalty=10000
+% Allow line breaks at *explicit* hyphens that already exist in the text.
+% (Keep automatic hyphenation disabled via \hyphenpenalty above.)
+\exhyphenpenalty=50
+\pretolerance=10000
+\tolerance=2000
+\emergencystretch=3em
+
+% Suppress XeLaTeX "Missing character" warnings for Unicode math symbols.
+% When math like $\theta$ appears in table cells, XeLaTeX checks if the text font
+% has the Unicode math character (U+1D703 = mathematical italic theta), generating
+% a warning even though the math font handles rendering correctly.
+% \tracinglostchars=0 is the TeX primitive that controls this warning level:
+%   0 = no warnings, 1 = warnings in log only, 2 = warnings + terminal (default)
+\tracinglostchars=0
+

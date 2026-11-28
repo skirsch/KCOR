@@ -1,0 +1,30 @@
+{
+  "eligibility": [
+    {
+      "eligible": 0,
+      "reported": 0,
+      "success": false,
+      "status": "insufficient_data"
+    },
+    {
+      "eligible": 1,
+      "reported": 1,
+      "success": false,
+      "status": "insufficient_data"
+    },
+    {
+      "eligible": 2,
+      "reported": 2,
+      "success": false,
+      "status": "insufficient_data"
+    },
+    {
+      "eligible": 3,
+      "reported": 3,
+      "success": true,
+      "status": "ok"
+    }
+  ],
+  "table8_points_and_first_draw": "identical to frozen m94",
+  "full_999_draws_rerun": false
+}

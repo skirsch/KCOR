@@ -1,0 +1,109 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4838,31 +4838,6 @@
+                             print(f"  Weights: {[f'{w:.6f}' for w in wts[:5]]}...")
+                             print(f"  Final logK: {logK:.6f}")
+                             print()
+-                        # Extract theta_num and theta_den from KCOR6 params map for pooled rows
+-                        theta_num_pooled = np.nan
+-                        theta_den_pooled = np.nan
+-                        theta0_status_num_pooled = ""
+-                        theta0_status_den_pooled = ""
+-                        if kcor6_params_map is not None:
+-                            # For pooled rows, we need to aggregate theta across age groups
+-                            # Use weighted average or take from highest-weight age group
+-                            # For simplicity, use theta from first contributing age group
+-                            for yob_check in contributors:
+-                                params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+-                                params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+-                                if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled):
+-                                    theta_num_val = params_num_check.get("theta_hat", np.nan)
+-                                    if np.isfinite(theta_num_val):
+-                                        theta_num_pooled = float(theta_num_val)
+-                                    theta0_status_num_pooled = str(params_num_check.get("theta0_status", "") or theta0_status_num_pooled)
+-                                if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled):
+-                                    theta_den_val = params_den_check.get("theta_hat", np.nan)
+-                                    if np.isfinite(theta_den_val):
+-                                        theta_den_pooled = float(theta_den_val)
+-                                    theta0_status_den_pooled = str(params_den_check.get("theta0_status", "") or theta0_status_den_pooled)
+-                                if not (np.isnan(theta_num_pooled) or np.isnan(theta_den_pooled)):
+-                                    break
+-                    
+                         # mc_id_val is already set from the outer loop
+                         # Extract Date from dt (which is a pandas Timestamp)
+                         # Keep as Timestamp for consistency with other rows (will be converted to datetime later)
+@@ -4886,8 +4861,8 @@
+                             "Dose_den": den,
+                             "theta_num": np.nan,
+                             "theta_den": np.nan,
+-                            "theta0_status_num": theta0_status_num_pooled,
+-                            "theta0_status_den": theta0_status_den_pooled,
++                            "theta0_status_num": "",
++                            "theta0_status_den": "",
+                             "hazard_num": np.nan,  # Pooled ASMR has no per-dose hazards
+                             "cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose cumulative hazards
+                             "adj_cum_hazard_num": np.nan,  # Pooled ASMR has no per-dose adjusted cumulative hazards
+@@ -5003,31 +4978,7 @@
+ 
+                 abnormal_fit_pooled_value_asmr = contributor_flag(contributors_asmr, num, den, dt, mc_id_val_asmr) or ""
+                 
+-                # Extract theta_num and theta_den from KCOR6 params map for pooled rows
+-                theta_num_pooled_asmr = np.nan
+-                theta_den_pooled_asmr = np.nan
+-                theta0_status_num_pooled_asmr = ""
+-                theta0_status_den_pooled_asmr = ""
+-                if kcor6_params_map is not None:
+-                    # Use theta from first contributing age group
+-                    for yob_check in contributors_asmr:
+-                        params_num_check = kcor6_params_map.get((sheet_name, int(yob_check), int(num)), {})
+-                        params_den_check = kcor6_params_map.get((sheet_name, int(yob_check), int(den)), {})
+-                        if isinstance(params_num_check, dict) and np.isnan(theta_num_pooled_asmr):
+-                            theta_num_val = params_num_check.get("theta_hat", np.nan)
+-                            if np.isfinite(theta_num_val):
+-                                theta_num_pooled_asmr = float(theta_num_val)
+-                            theta0_status_num_pooled_asmr = str(params_num_check.get("theta0_status", "") or theta0_status_num_pooled_asmr)
+-                        if isinstance(params_den_check, dict) and np.isnan(theta_den_pooled_asmr):
+-                            theta_den_val = params_den_check.get("theta_hat", np.nan)
+-                            if np.isfinite(theta_den_val):
+-                                theta_den_pooled_asmr = float(theta_den_val)
+-                            theta0_status_den_pooled_asmr = str(params_den_check.get("theta0_status", "") or theta0_status_den_pooled_asmr)
+-                        if not (np.isnan(theta_num_pooled_asmr) or np.isnan(theta_den_pooled_asmr)):
+-                            break
+-                
+-                # Extract Date from dt
+-                date_val_asmr = dt.date() if hasattr(dt, 'date') else pd.to_datetime(dt).date()
++                date_val_asmr = pd.to_datetime(dt).date()
+                 all_ages_asmr_rows.append({
+                     "mc_id": mc_id_val_asmr,
+                     "ISOweekDied": df_sorted.loc[df_sorted["DateDied"]==dt, "ISOweekDied"].iloc[0],
+@@ -5041,8 +4992,8 @@
+                     "Dose_den": den,
+                     "theta_num": np.nan,
+                     "theta_den": np.nan,
+-                    "theta0_status_num": theta0_status_num_pooled_asmr,
+-                    "theta0_status_den": theta0_status_den_pooled_asmr,
++                    "theta0_status_num": "",
++                    "theta0_status_den": "",
+                     "CH_num": np.nan,  # Pooled All Ages ASMR has no per-dose CH
+                     "CH_den": np.nan,
+                     "hazard_num": np.nan,
+@@ -6293,16 +6244,13 @@
+         if MONTE_CARLO_MODE and "YearOfBirth" not in df.columns:
+             df["YearOfBirth"] = -2
+         
+-        # Filter out unreasonably large birth years (keep -1 for "not available", -2 for all ages in MC mode)
++        # In MC mode, keep the requested raw birth-year range plus optional aggregate rows.
++        # Ordinary source population eligibility is defined by the input, not a fixed calendar cutoff.
+         if MONTE_CARLO_MODE:
+-            # In MC mode, keep the requested raw birth-year range plus optional aggregate rows.
+-            df = df[df["YearOfBirth"] <= 2020]
+             aggregate_mask = df["YearOfBirth"].isin(SPECIAL_AGGREGATE_YOBS) if MC_INCLUDE_AGGREGATES else pd.Series(False, index=df.index)
+             df = df[aggregate_mask | ((df["YearOfBirth"] >= MC_YOB_START) & (df["YearOfBirth"] <= MC_YOB_END))]
+             dual_print(f"[DEBUG] Monte Carlo mode: Filtered to YOB {MC_YOB_START}-{MC_YOB_END} (aggregates={MC_INCLUDE_AGGREGATES}): {len(df)} rows")
+-        else:
+-            df = df[df["YearOfBirth"] <= 2020]
+-        
++
+         # Filter to start from enrollment date
+         if MONTE_CARLO_MODE:
+             # In MC mode, all iterations share a single enrollment cohort (default 2022_06; override via MC_ENROLLMENT_DATE)

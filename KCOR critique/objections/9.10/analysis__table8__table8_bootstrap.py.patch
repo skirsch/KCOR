@@ -1,0 +1,60 @@
+--- m150/analysis/table8/table8_bootstrap.py
++++ m151/analysis/table8/table8_bootstrap.py
+@@ -19,6 +19,18 @@
+ PAIRS = ((1, 0), (2, 0), (2, 1))
+ REPORT = pd.Timestamp("2022-12-26")
+ SEED = 20261121
++DIAGNOSTIC_CATEGORIES = ("insufficient_signal", "residual_screen", "residual_screen_unavailable",
++                         "theta_upper_bound", "baseline_rate_bound", "weak_identification",
++                         "insufficient_deaths", "failed_fit", "legacy_relative_error", "gap_clamp")
++
++
++def fit_diagnostic_flags(diag):
++    """Numerical, residual and raw-clamp indicators remain distinct."""
++    return np.asarray([bool(diag.get("insufficient_signal")), bool(diag.get("sampling_flag")),
++        not bool(diag.get("sampling_n", 0)), bool(diag.get("theta_hit_bound")), bool(diag.get("k_hit_bound")),
++        bool(diag.get("identifiability_flag")) or diag.get("status") == "weak_identifiability",
++        bool(diag.get("insufficient_deaths")), not bool(diag.get("success")),
++        bool(diag.get("legacy_relative_error_flag")), bool(diag.get("delta_negative_clamped"))],dtype=bool)
+ 
+ 
+ def read_population(workbook, sheet):
+@@ -66,7 +78,7 @@
+         DATA.append((dates.to_numpy(), time, quiet, keep, counts))
+ 
+ 
+-def estimate(index, draw, joint=True):
++def estimate(index, draw, joint=True, diagnostics=False):
+     dates, time, quiet, keep, disjoint = DATA[index]
+     counts = disjoint.copy()
+     if draw:
+@@ -82,14 +94,17 @@
+     growth = np.empty((3, 3))
+     flags = 0
+     failed = 0
++    fit_flags = np.zeros((3,3,len(DIAGNOSTIC_CATEGORIES)),dtype=bool)
+     skip = K.DYNAMIC_HVE_SKIP_WEEKS
+     fit = compare.joint_fit if joint else compare.production_fit
+     for a, d in np.ndindex(growth.shape):
+         hazard = K.hazard_from_mr(np.clip(mr[a, d], 0, .999))
+         effective = np.where(time >= skip, hazard, 0.)
++        diagnostic_kwargs = {"risk_arr": alive[a,d]} if diagnostics else {}
+         (k, theta), diag = fit(effective, time-skip, quiet, CONFIG["k_anchor_weeks"],
+                                CONFIG["gamma_per_week"], deaths_arr=dead[a, d],
+-                               iso_week=pd.DatetimeIndex(dates).strftime("%G%V").astype(int))
++                               iso_week=pd.DatetimeIndex(dates).strftime("%G%V").astype(int), **diagnostic_kwargs)
++        if diagnostics:fit_flags[a,d]=fit_diagnostic_flags(diag)
+         failed += int(not diag["success"])
+         flags += int(bool(diag.get("insufficient_signal")))
+         theta = theta if diag["success"] and np.isfinite(theta) and theta >= 0 else 0.
+@@ -102,6 +117,10 @@
+         anchor = np.flatnonzero(time[keep] == K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE).item()
+         growth[a, d] = corrected[-1] / corrected[anchor]
+     pooled = [float(np.exp(np.average(np.log(growth[:, n]/growth[:, d]), weights=weights))) for n, d in PAIRS]
++    if diagnostics:
++        contributors=np.isfinite(weights)&(weights>0.)
++        pair_flags=np.stack([fit_flags[contributors][:,[n,d],:].any(axis=(0,1)) for n,d in PAIRS])
++        return pooled, flags, failed, fit_flags, pair_flags
+     return pooled, flags, failed
+ 
+ 

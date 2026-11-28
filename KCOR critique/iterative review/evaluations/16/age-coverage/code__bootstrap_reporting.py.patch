@@ -1,0 +1,21 @@
+--- a/code/bootstrap_reporting.py
++++ b/code/bootstrap_reporting.py
+@@ -302,6 +302,8 @@
+     pooled=keys.get_level_values("YearOfBirth")==0
+     point_members=keyframe(out).get("pool_contributors",pd.Series("",index=keys)).fillna("").astype(str).to_numpy()
+     point_labels=keyframe(out).get("population_label",pd.Series("",index=keys)).fillna("").astype(str).to_numpy()
++    coverage_cols=("population_age_groups_num","population_age_groups_den","population_zero_enrollment_groups_num","population_zero_enrollment_groups_den")
++    point_coverage={col:keyframe(out).get(col,pd.Series("",index=keys)).fillna("").astype(str).to_numpy() for col in coverage_cols}
+     point_pool=pooled & np.isfinite(out["KCOR"].to_numpy(float)) & (point_members!="")
+     settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","AGE_RANGE","MONTE_CARLO_MODE")}
+     settings["ENROLLMENT_DATES"]=list(hist)
+@@ -325,6 +327,9 @@
+                 changed=point_pool & ~absent & (members!=point_members)
+                 draw_labels=v.get("population_label",pd.Series("",index=v.index)).reindex(keys).fillna("").astype(str).to_numpy()
+                 scope_changed=~absent & (point_labels!=draw_labels) & (point_labels!="")
++                for col, labels in point_coverage.items():
++                    draw_coverage=v.get(col,pd.Series("",index=v.index)).reindex(keys).fillna("").astype(str).to_numpy()
++                    scope_changed |= ~absent & (labels!="") & (labels!=draw_coverage)
+                 # A finite result for a different pool is not a valid draw
+                 # for the point's population; retain counts, not that value.
+                 val=val.copy();val[changed|scope_changed]=np.nan

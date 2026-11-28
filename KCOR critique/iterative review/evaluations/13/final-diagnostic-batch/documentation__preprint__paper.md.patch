@@ -1,0 +1,20 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -763,7 +763,7 @@
+ 
+ Supplementary Section S3 describes the two positive controls. Table 9 reports their fitted anchored week-80 endpoints, with the end of the fourth accumulating week as the reference.
+ 
+-The joint-fit anchored week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective. The generator uses a constant individual baseline hazard rather than the Gompertz baseline assumed by the fitter; these controls therefore test detection of the injected mortality contrast, not recovery of the true frailty parameters under baseline misspecification.
++The joint-fit anchored week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective. The generator uses a constant individual baseline hazard rather than the Gompertz baseline assumed by the fitter. The injected benefit precedes the quiet window and violates the nonnegative gap-exposure assumption: the treated group signed gap estimate is -0.02274 [-0.04223, -0.00686] (999 matched draws). The benefit result is retained as an audit-only stress test showing the direction of the injected contrast despite this violation, not as validation under the gap assumption. The harm and shared control signed gap intervals include zero. See `analysis/gap_assessment/table9/`.
+ 
+ ### 3.3 Stress tests (frailty misspecification)
+ 
+@@ -1168,7 +1168,7 @@
+ | 2022_06 | 2 vs 0 | 1.0756 | [1.055, 1.097] | 1.0164 [0.970, 1.071] | 1.0557 [0.996, 1.121] |
+ | 2022_06 | 2 vs 1 | 1.0911 | [1.070, 1.112] | 1.0094 [0.957, 1.067] | 1.0426 [0.975, 1.109] |
+ 
+-Table: Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts in the declared exit-capable mode, treating residual risk-set losses as nondeath exits. {#tbl:pos_control_summary}
++Table: Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts in the declared exit-capable mode, treating residual risk-set losses as nondeath exits. The benefit row is audit-only under the signed gap diagnostic (Section 3.2). {#tbl:pos_control_summary}
+ 
+ | Scenario | Effect window | Hazard multiplier $r$ | Expected direction | Observed $\mathrm{KCOR}(80;t_0)$ |
+ |---|---|---:|---|---:|

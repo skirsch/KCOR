@@ -1,0 +1,11 @@
+--- m148/documentation/preprint/paper.md
++++ m149/documentation/preprint/paper.md
+@@ -551,7 +551,7 @@
+ 
+ When an anchored presentation is used, KCOR at each time $t$ is divided by its value at the prespecified reference week $t_0$, as defined in §2.1.1. The primary estimand, however, remains the ratio of (optionally NPH-corrected) depletion-neutralized cumulative hazards rather than an instantaneous hazard ratio.
+ 
+-The workbook reports the unanchored and anchored ratios separately for individual age strata and directly aggregated cohorts; the legacy KCOR column remains anchored. If the prespecified reference week is missing or its ratio is zero or undefined, the anchored estimate is unavailable, rather than replaced by the unanchored ratio. The bootstrap counts draws with undefined references separately from missing output rows and does not mix the two estimands. Pooled anchored ratios retain the existing weighted geometric mean of available strata.
++The workbook reports the unanchored and anchored ratios separately for individual age strata and directly aggregated cohorts; the legacy KCOR column remains anchored. If the prespecified reference week is missing or its ratio is zero or undefined, the anchored estimate is unavailable, rather than replaced by the unanchored ratio. The bootstrap counts draws with undefined references separately from missing output rows and does not mix the two estimands. Pooled anchored ratios retain the existing weighted geometric mean of available strata. The workbook reports the contributing and eligible strata and their retained weight fraction for each point. Pooling weights are recomputed in each bootstrap draw as before, but a draw with a different contributing set cannot provide uncertainty for the point's population. The pooled interval is unavailable if any required draw changes composition; the point and number of changed draws remain reported.
+ 
+ This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
+ 

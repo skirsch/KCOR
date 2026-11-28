@@ -1,0 +1,12 @@
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -183,7 +183,8 @@
+                 observed_increment = np.diff(np.asarray(observed_cumhaz,float),prepend=0.)[indices]
+             if not (np.isfinite(observed_increment).all() and np.isfinite(planned_increment).all()):
+                 return H0.copy(), diag
+-            wave_add = np.maximum(total - planned, 0.)
++            roundoff = 8*np.finfo(float).eps*np.maximum(np.abs(opening)+np.abs(total),np.abs(planned))
++            wave_add = np.where(total-planned > roundoff, total-planned, 0.)
+             base_add = total - wave_add
+             wave_path = np.cumsum(wave_add)
+             base_path = opening[0] + np.cumsum(base_add)

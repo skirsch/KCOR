@@ -1,0 +1,15 @@
+﻿[KCOR7_DELTA_NEGATIVE_CLAMPED] enroll=2021_24, yob=-2, dose=1
+2021_24 | -2 | 1 | 4.2 | 2.001585e-03 | 6.353396e-03 | 37
+[WARN] KCOR_NUMERICAL_RANGE,EnrollmentDate=2021_24,yob=-2,dose=1,first_week=141.0
+[WARN] KCOR_NUMERICAL_RANGE,EnrollmentDate=2021_24,yob=1950,dose=1,first_week=141.0
+
+[DEBUG] Expected-deaths weights for ASMR pooling:
+  Age 1950: weight = 1.000000
+  Total weight: 1.000000
+
+FLAGGED  YearOfBirth  hazard_raw  CH  numerical_range_unavailable
+          -2         inf NaN                         True
+        1950         inf NaN                         True
+ENDPOINTS  YearOfBirth  KCOR  KCOR_unanchored
+          -2   NaN              NaN
+        1950   NaN              NaN

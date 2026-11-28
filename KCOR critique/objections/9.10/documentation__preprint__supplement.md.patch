@@ -1,0 +1,32 @@
+--- m150/documentation/preprint/supplement.md
++++ m151/documentation/preprint/supplement.md
+@@ -477,3 +477,29 @@
+ | Correlated gamma / person | 1.005 [0.997, 1.013] | 0.00155 | 96% [90.2, 98.4] | 0 | 13 |
+ 
+ Full percentile intervals were available for every dataset; no numerical fitting failures occurred. With expected (noiseless) counts, fitted anchored endpoints ranged from 0.99918 to 1.00010; the fitted variance need not equal the true variance for non-gamma laws. For correlated frailty, median interval widths were 0.164 with clusters and 0.165 with persons. The exploratory residual screen is not calibrated for clustered dependence. All Monte Carlo intervals for mean KCOR include 1, as do all Wilson intervals for coverage at 95%. These are design-specific results, not a general coverage guarantee under arbitrary misspecification or dependence. Source: `analysis/misspecification/` (simulation generator, replicate-level results and summary).
++
++
++\newpage
++
++## S10. Table 8 contributing-fit diagnostics
++
++For each pooled comparison, a diagnostic flag means that at least one positively weighted subgroup fit for either dose triggered that diagnostic. The point flag and number of flagged bootstrap draws out of 999 are reported separately. The proportional analysis was freshly refitted with opening risk sets supplied to the diagnostic routine. For the forced-alpha sensitivity, the same routine and survivor-model prediction were evaluated at the archived fitted parameters on the original matched death histories; 300 fresh matched refits independently reproduced the archived parameters, points and all diagnostic flags exactly. No draw was excluded, and all reported Table 8 point estimates and percentile intervals are unchanged.
++
++Table: Table 8 diagnostic flags by comparison. Point flag / number of draws (out of 999). {#tbl:si_table8_diagnostics}
++
++| Mode | Enrollment | Dose pair | Residual screen | Raw gap clamp |
++|---|---|---|---|---|
++| Proportional | 2021_24 | 1/0 | Yes / 999 | No / 0 |
++| Proportional | 2021_24 | 2/0 | Yes / 999 | No / 0 |
++| Proportional | 2021_24 | 2/1 | Yes / 999 | No / 0 |
++| Proportional | 2022_06 | 1/0 | Yes / 999 | Yes / 999 |
++| Proportional | 2022_06 | 2/0 | Yes / 999 | Yes / 991 |
++| Proportional | 2022_06 | 2/1 | Yes / 999 | Yes / 992 |
++| Forced alpha | 2021_24 | 1/0 | Yes / 999 | Yes / 999 |
++| Forced alpha | 2021_24 | 2/0 | Yes / 999 | Yes / 999 |
++| Forced alpha | 2021_24 | 2/1 | Yes / 999 | Yes / 999 |
++| Forced alpha | 2022_06 | 1/0 | Yes / 997 | No / 13 |
++| Forced alpha | 2022_06 | 2/0 | Yes / 986 | No / 93 |
++| Forced alpha | 2022_06 | 2/1 | No / 986 | No / 90 |
++
++For every comparison, the point flags and draw counts for insufficient signal, unavailable residual screen, upper frailty bound, baseline-rate bound, weak identification, insufficient deaths, failed fit and legacy relative-error screen were zero. The raw gap-clamp indicator records any nonpositive reconstructed offset; it is not the material-deficit assumption diagnostic in Section 2.5. Residual-screen flags are exploratory model-discrepancy indicators, not calibrated global goodness-of-fit tests or criteria for discarding resamples. Source: `analysis/table8_diagnostics/` (full subgroup and comparison flag arrays, category counts, and fresh-refit verification).

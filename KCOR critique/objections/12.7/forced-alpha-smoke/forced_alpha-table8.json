@@ -1,0 +1,350 @@
+{
+  "2021_24": {
+    "point": [
+      1.0127714006501782,
+      1.033085300228092,
+      1.0200577342180799
+    ],
+    "lower": [
+      1.009041833990256,
+      1.0051892227592987,
+      0.9736567921738281
+    ],
+    "upper": [
+      1.0438448398772886,
+      1.0211454002480496,
+      1.0113880840822638
+    ],
+    "point_contributors": [
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ]
+    ],
+    "composition_changed_draws": [
+      0,
+      0,
+      0
+    ],
+    "valid_draws": [
+      3,
+      3,
+      3
+    ],
+    "insufficient_signal_draws_any_group": 0,
+    "unsuccessful_group_fits": 0,
+    "diagnostics": {
+      "1/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        }
+      },
+      "2/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        }
+      },
+      "2/1": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        }
+      }
+    }
+  },
+  "2022_06": {
+    "point": [
+      1.0125517593613735,
+      1.0556572205016523,
+      1.0425711187025795
+    ],
+    "lower": [
+      0.9929339931502732,
+      1.016438485726983,
+      0.9960507166179894
+    ],
+    "upper": [
+      1.0306179146780687,
+      1.0638997167401658,
+      1.0338157103993142
+    ],
+    "point_contributors": [
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ]
+    ],
+    "composition_changed_draws": [
+      0,
+      0,
+      0
+    ],
+    "valid_draws": [
+      3,
+      3,
+      3
+    ],
+    "insufficient_signal_draws_any_group": 0,
+    "unsuccessful_group_fits": 0,
+    "diagnostics": {
+      "1/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        }
+      },
+      "2/0": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": true,
+          "bootstrap_draws": 3
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        }
+      },
+      "2/1": {
+        "insufficient_signal": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "residual_screen": {
+          "point_flag": false,
+          "bootstrap_draws": 3
+        },
+        "residual_screen_unavailable": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "theta_upper_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "baseline_rate_bound": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "weak_identification": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "insufficient_deaths": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "failed_fit": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "legacy_relative_error": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        },
+        "gap_clamp": {
+          "point_flag": false,
+          "bootstrap_draws": 0
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+--- a/code/bootstrap_reporting.py
++++ b/code/bootstrap_reporting.py
+@@ -164,13 +164,9 @@
+         if col in frame:
+             status=frame[col]
+             bad |= (status.notna() & ~status.astype(str).str.lower().isin(["ok",""])).to_numpy()
+-    # For aggregated rows, inherit flags from the contributing age strata.
+-    z=frame.reset_index() if isinstance(frame.index,pd.MultiIndex) else frame.copy()
+-    z["_bootstrap_flag"]=bad
+-    groups=["EnrollmentDate","Dose_num","Dose_den","Date"]
+-    pool=z.YearOfBirth<=0
+-    any_group=z.groupby(groups,dropna=False)["_bootstrap_flag"].transform("any").to_numpy()
+-    return bad | (pool.to_numpy() & any_group)
++    # Direct and pooled rows already carry their own contributing-fit flags.
++    return bad
++
+ 
+ def attach(model,frame,src,sheets,log):
+     out=frame.copy()

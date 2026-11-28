@@ -1,0 +1,33 @@
+﻿"""12.8: unified finite-positive reference validity across ordinary and pooled ratios."""
+from pathlib import Path
+import sys,numpy as np,pandas as pd
+ROOT=Path(__file__).resolve().parents[1];sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code')]
+from test_round7_workbook import K,run
+def fixture(small):
+    dates=pd.date_range('2021-06-14',periods=32,freq='7D')
+    t=np.arange(33);gamma=.085/52;G=.006*np.expm1(gamma*t)/gamma;H=np.log1p(5*G)/5
+    q=-np.expm1(-np.diff(H));rows=[]
+    for dose in (0,1):
+        risk=10**13 if small else 1_000_000
+        for i,date in enumerate(dates):
+            dead=(1+dose if i<6 else 1) if small else round(risk*(.99 if dose==1 and i==31 else q[i]))
+            rows.append(dict(YearOfBirth=1950,Dose=dose,Sex='F',DateDied=date,ISOweekDied=date.strftime('%G-%V'),Alive=risk,Dead=dead));risk-=dead
+    return pd.DataFrame(rows)
+def main():
+    f=K._finite_hazard_ratio
+    assert f(0,1)==0 and np.isnan(f(1,0)) and f(1e-15,1e-14)==.1
+    assert np.isnan(f(1e300,1e-300)) and np.isnan(f(1e-300,1e300))
+    assert f(1e-300,1e-300)==1
+    for small in (True,False):
+        rows=run('2021_24',fixture(small))
+        a,b,c=[rows[rows.YearOfBirth.eq(y)].iloc[-1] for y in (1950,0,-2)]
+        assert np.isfinite(a.KCOR) and a.KCOR>0
+        np.testing.assert_allclose([a.KCOR,b.KCOR,c.KCOR],a.KCOR,rtol=1e-12)
+        if not small:assert a.KCOR>1e6
+        print('small reference' if small else 'large ratio',a.KCOR,b.KCOR,c.KCOR,flush=True)
+    # Direct reference itself can be tiny even when its denominator is ordinary.
+    t0=K.KCOR_NORMALIZATION_WEEKS_EFFECTIVE
+    dates=pd.date_range('2021-06-14',periods=2,freq='7D')
+    m=pd.DataFrame(dict(CH_num=[1e-16,2e-16],CH_den=[1.,1.],t_num=[t0,t0+1],t_den=[t0,t0+1],DateDied=dates))
+    _,ok=K._set_kcor_reference(m);assert ok;np.testing.assert_array_equal(m.KCOR,[1.,2.])
+if __name__=='__main__':main()

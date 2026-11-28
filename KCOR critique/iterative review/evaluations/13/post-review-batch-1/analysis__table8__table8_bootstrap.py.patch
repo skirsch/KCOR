@@ -1,0 +1,20 @@
+--- a/analysis/table8/table8_bootstrap.py
++++ b/analysis/table8/table8_bootstrap.py
+@@ -111,14 +111,14 @@
+         reference=K._finite_hazard_ratio(anchor_value[:,n],anchor_value[:,d])
+         raw=K._finite_hazard_ratio(end_value[:,n],end_value[:,d])
+         ratio=K._finite_hazard_ratio(raw,reference)
+-        use=expected & np.isfinite(ratio) & (ratio>0)
++        use=expected & np.isfinite(ratio) & (ratio>=0)
+         members.append(use)
+         if np.any(expected & ~(support_ok[:,n]&support_ok[:,d])) or not use.any():
+             pooled.append(np.nan)
+         else:
+             with np.errstate(over="ignore",under="ignore"):
+-                value=float(np.exp(np.average(np.log(ratio[use]),weights=weights[use])))
+-            pooled.append(value if np.isfinite(value) and value>0 else np.nan)
++                value=0. if (ratio[use]==0).any() else float(np.exp(np.average(np.log(ratio[use]),weights=weights[use])))
++            pooled.append(value if np.isfinite(value) and (value>0 or (ratio[use]==0).any()) else np.nan)
+     members=np.asarray(members,dtype=bool)
+     result=(pooled,flags,failed)
+     if diagnostics:

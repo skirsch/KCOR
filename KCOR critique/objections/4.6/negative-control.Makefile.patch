@@ -1,0 +1,11 @@
+--- a/test/negative_control/Makefile
++++ b/test/negative_control/Makefile
+@@ -24,7 +24,7 @@
+ # Build negative control output only if stale/missing; turn off baseline scaling since 
+ # we are not dealing with a known net harmful vaccine.
+ $(OUT_XLSX): $(SYNTH) | $(OUT_DIR)
+-	SA_FINAL_KCOR_MIN=0 $(PY) $(ROOT)/code/KCOR.py $(SYNTH) $(OUT_XLSX) KCOR_summary_neg_control.log
++	KCOR_BOOTSTRAP_LAYOUT=table8 SA_FINAL_KCOR_MIN=0 $(PY) $(ROOT)/code/KCOR.py $(SYNTH) $(OUT_XLSX) KCOR_summary_neg_control.log
+ 
+ clean:
+ 	rm -f $(SYNTH)

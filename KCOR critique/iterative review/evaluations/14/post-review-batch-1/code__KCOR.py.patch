@@ -1,0 +1,124 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4310,6 +4310,8 @@
+         return rows
+     rows = rows.copy()
+     rows["normalization_status"] = "ok"
++    rows["unanchored_normalization_status"] = "ok"
++    rows["unanchored_abnormal_fit"] = rows["abnormal_fit"].astype(object)
+     bad = frame[~frame["normalization_status"].eq("ok")]
+     if bad.empty:
+         return rows
+@@ -4347,6 +4349,8 @@
+             unanchored_affected = affected
+             if status not in ("missing_week_history","invalid_risk_history","normalization_failed"):
+                 unanchored_affected = affected & pd.to_datetime(rows["Date"]).isin(dates.index)
++            rows.loc[unanchored_affected,"unanchored_normalization_status"] = status
++            rows.loc[unanchored_affected,"unanchored_abnormal_fit"] = True
+             if "KCOR_unanchored" in rows:
+                 rows.loc[unanchored_affected,"KCOR_unanchored"] = np.nan
+     return rows
+@@ -5955,6 +5959,8 @@
+     global SLOPE8_QUANTILE_TAU, KCOR_NORMALIZATION_WEEKS, KCOR_NORMALIZATION_WEEKS_EFFECTIVE  # SA overrides
+     global SLOPE6_QUANTILE_TAU  # SA overrides (linear fit tau used for YOB>=threshold and YOB=-2)
+     global OVERRIDE_YOBS  # SA overrides
++    from fixed_cohort_history import risk_history_policy
++    history_policy = risk_history_policy(os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
+     output_dir = os.path.dirname(out_path)
+     if not output_dir:
+         output_dir = "."
+@@ -6051,8 +6057,6 @@
+     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
+     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
+     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
+-    from fixed_cohort_history import risk_history_policy
+-    history_policy = risk_history_policy(os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
+     dual_print(f"  KCOR_RISK_HISTORY_POLICY = {history_policy}")
+     # Legacy quiet-anchor config removed
+     dual_print(f"  Reporting date calculation: 1 year from enrollment date")
+@@ -6212,8 +6216,8 @@
+                             value=np.nan;status="unavailable"
+                             if len(endpoint)==len(ref)==1:
+                                 a=float(endpoint.KCOR_unanchored.iloc[0]);b=float(ref.KCOR_unanchored.iloc[0])
+-                                if np.isfinite(a) and np.isfinite(b) and b>EPS and endpoint.normalization_status.eq("ok").all() and ref.normalization_status.eq("ok").all():
+-                                    value=a/b;status="ok"
++                                if np.isfinite(_finite_hazard_ratio(a,b)) and endpoint.unanchored_normalization_status.eq("ok").all() and ref.unanchored_normalization_status.eq("ok").all():
++                                    value=_finite_hazard_ratio(a,b);status="ok"
+                             results[(sh,num,den,int(bw),int(off))]=value
+                             details.append(dict(enrollment=sh,dose_num=num,dose_den=den,reference_weeks=int(bw),
+                                 quiet_start_offset=int(off),quiet_start=start_iso,quiet_end=end_iso,
+@@ -8174,19 +8178,12 @@
+                 data_sheet = combined[combined["EnrollmentDate"] == sheet_name]
+                 if data_sheet.empty:
+                     continue
+-                # pick closest date to target; else latest
+-                if target_dt is not None:
+-                    diffs = (data_sheet["Date"] - target_dt)
+-                    # robust absolute difference for older pandas versions
+-                    idxmin = int(np.argmin(np.abs(diffs.to_numpy())))
+-                    report_date = data_sheet.iloc[idxmin]["Date"]
+-                else:
+-                    report_date = data_sheet["Date"].max()
+-                end_data = data_sheet[data_sheet["Date"] == report_date]
++                # Respect the requested date even if its endpoint is unavailable.
++                report_date = target_dt if target_dt is not None else data_sheet["Date"].max()
+                 # doses present in by_dose_nc for this sheet
+                 doses = sorted(by_dose_nc[by_dose_nc["EnrollmentDate"] == sheet_name]["Dose"].unique()) if not by_dose_nc.empty else []
+                 # age pairs YoB1 in 1920..1980, YoB2=YoB1+10
+-                yob_all = sorted([y for y in end_data["YearOfBirth"].unique() if y > 0])
++                yob_all = sorted([y for y in by_dose_nc.loc[by_dose_nc["EnrollmentDate"] == sheet_name,"YearOfBirth"].unique() if y > 0])
+                 for yob1 in range(1920, 1990, 10):
+                     yob2 = yob1 + 10
+                     if yob1 not in yob_all or yob2 not in yob_all:
+@@ -8197,23 +8194,18 @@
+                         if ts["YearOfBirth"].nunique() != 2 or ts.empty:
+                             continue
+                         # Align by date and compute ratio
+-                        pivot = ts.pivot_table(index="DateDied", columns="YearOfBirth", values="CH")
+-                        pivot = pivot.dropna()
++                        pivot = ts.pivot_table(index="DateDied", columns="YearOfBirth", values="CH", dropna=False)
+                         if pivot.empty or yob1 not in pivot.columns or yob2 not in pivot.columns:
+                             continue
+                         pivot = pivot.sort_index()
+                         ref = ts.loc[ts["t"] == KCOR_NORMALIZATION_WEEKS_EFFECTIVE]
+                         dates_ref = ref.groupby("DateDied")["YearOfBirth"].nunique()
+                         dates_ref = dates_ref[dates_ref == 2].index
+-                        k_raw = pivot[yob1] / pivot[yob2].where(pivot[yob2] > EPS)
++                        k_raw = pd.Series(_finite_hazard_ratio(pivot[yob1], pivot[yob2]), index=pivot.index)
+                         baseline = k_raw.get(dates_ref[0], np.nan) if len(dates_ref) == 1 else np.nan
+-                        anchor_valid = bool(np.isfinite(baseline) and baseline > EPS)
+-                        k_series = k_raw / baseline if anchor_valid else k_raw * np.nan
+-                        # pick KCOR at reporting date (~closest available)
+-                        # closest row to report_date
+-                        td = (pivot.index - report_date)
+-                        idx_closest = int(np.argmin(np.abs(td.to_numpy())))
+-                        k_val = float(k_series.iloc[idx_closest]) if len(k_series) > idx_closest else np.nan
++                        anchor_valid = bool(np.isfinite(baseline) and baseline > 0)
++                        raw_val = float(k_raw.get(pd.Timestamp(report_date), np.nan))
++                        k_val = _finite_hazard_ratio(raw_val, baseline)
+                         neg_rows.append({
+                             "EnrollmentDate": sheet_name,
+                             "YoB1": yob1,
+@@ -8221,7 +8213,9 @@
+                             "Dose": int(dose),
+                             "KCOR": k_val,
+                             "KCOR_anchored": k_val,
+-                            "KCOR_unanchored": float(k_raw.iloc[idx_closest]),
++                            "KCOR_unanchored": raw_val,
++                            "ReportDate": report_date,
++                            "endpoint_status": "ok" if np.isfinite(k_val) else "unavailable",
+                             "anchor_status": "ok" if anchor_valid else ("missing_reference_week" if len(dates_ref) != 1 else "undefined_reference_ratio")
+                         })
+             neg_df = pd.DataFrame(neg_rows)
+@@ -8953,9 +8947,9 @@
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged",
+                             "residual_screen_flag", "residual_screen_unavailable", "CI_residual_flagged_draws", "CI_residual_unavailable_draws",
+-                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws", "CI_unanchored_method",
++                            "CI_undefined_anchor_draws", "CI_missing_draws", "CI_pool_composition_changed_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws", "CI_unanchored_method", "CI_unanchored_flagged_draws", "CI_unanchored_point_flagged",
+                             "pool_contributors", "pool_expected_ages", "pool_retained_weight_fraction", "pool_composition_status",
+-                            "normalization_status", "risk_history_policy", "gap_assumption_status",
++                            "normalization_status", "unanchored_normalization_status", "unanchored_abnormal_fit", "risk_history_policy", "gap_assumption_status",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",

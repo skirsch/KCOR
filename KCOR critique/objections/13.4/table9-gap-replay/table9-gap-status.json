@@ -1,0 +1,6 @@
+{
+  "('benefit', 1950, 0)": "no_deficit_detected",
+  "('benefit', 1950, 1)": "violation",
+  "('harm', 1950, 0)": "no_deficit_detected",
+  "('harm', 1950, 1)": "no_deficit_detected"
+}

@@ -1,5 +1,7 @@
 # KCOR critique
 
+**Current package: [m185, round 21 status](CURRENT-STATE.md).** Use the [full objection lineage](OBJECTION-LINEAGE.md) for rounds through 21.
+
 **Start with the [lead-author presentation](PR-PRESENTATION.md) or the [three-minute simplified briefing](PR-BRIEFING.md).** The [detailed scientific evidence](PR-SCIENTIFIC-EVIDENCE.md) supports its conclusions. The numbered investigations are now all under [objections/](objections/).
 
 The folder ID is `x.y`. The first number identifies the review series and the second identifies the objection within it. Series 1 contains the six original PR #5 objections. Series 2 contains findings N1–N10 from the first three-path LLM evaluation. An ID stays with its objection when a later edition revisits it.
@@ -38,4 +40,6 @@ Each numbered folder brings together the finding and its available evidence or r
 [Proposed PR structure and draft description](PR-STRUCTURE.md) — planned presentation, change groups, remaining decisions, and source/artifact map. Preparation only.
 
 
-[Historical study data archives](EVIDENCE_ARCHIVES.md) preserve the original PR #5 simulation draws in compressed form; extract them only when replaying those studies.
+## Series 4 — hypothetical integrated PR #6
+
+[Evaluation round 4](<iterative review/evaluations/4/README.md>) tests a separate post-approval edition. [Convergence and new findings](<iterative review/evaluations/4/convergence.md>) and [numbered records 4.1–4.9](objections/README.md#series-4--hypothetical-integrated-pr-6) are separate from the draft PR's implemented and experimental sources. No post-review correction adopted.

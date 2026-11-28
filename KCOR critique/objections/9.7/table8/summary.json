@@ -1,0 +1,35 @@
+{
+  "draws": 999,
+  "comparisons": 54,
+  "status_counts": {
+    "no_deficit_detected": 54
+  },
+  "max_point_difference": 0.00019315063005209687,
+  "changed_draws": [
+    {
+      "enrollment": "2022_06",
+      "draw": 806,
+      "max_difference": 0.00019315063005209687
+    }
+  ],
+  "cohort_status": {
+    "('2021_24', 1940, 0)": "no_deficit_detected",
+    "('2021_24', 1940, 1)": "no_deficit_detected",
+    "('2021_24', 1940, 2)": "no_deficit_detected",
+    "('2021_24', 1950, 0)": "no_deficit_detected",
+    "('2021_24', 1950, 1)": "no_deficit_detected",
+    "('2021_24', 1950, 2)": "no_deficit_detected",
+    "('2021_24', 1960, 0)": "no_deficit_detected",
+    "('2021_24', 1960, 1)": "no_deficit_detected",
+    "('2021_24', 1960, 2)": "no_deficit_detected",
+    "('2022_06', 1940, 0)": "no_deficit_detected",
+    "('2022_06', 1940, 1)": "no_deficit_detected",
+    "('2022_06', 1940, 2)": "no_deficit_detected",
+    "('2022_06', 1950, 0)": "no_deficit_detected",
+    "('2022_06', 1950, 1)": "no_deficit_detected",
+    "('2022_06', 1950, 2)": "no_deficit_detected",
+    "('2022_06', 1960, 0)": "no_deficit_detected",
+    "('2022_06', 1960, 1)": "no_deficit_detected",
+    "('2022_06', 1960, 2)": "no_deficit_detected"
+  }
+}

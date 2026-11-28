@@ -1,0 +1,10 @@
+--- m109/code/kcor_survivor.py
++++ m110/code/kcor_survivor.py
+@@ -323,6 +323,7 @@
+                     rmse_hazard=float(np.sqrt(np.mean(e**2))),fit_residual_max=float(np.max(abs(e))),relRMSE_hazard_fit=rel,
+                     delta_negative_clamped=any(x<=0 for x in gaps),delta_negative=any(x<=0 for x in gaps),
+                     nonlinear_gap_observed_deficit=gaps,nonlinear_gap_exposure=applied,nonlinear_wave_deficits=deficits,
++                    delta_raw_values=list(gaps),delta_applied_values=list(applied),delta_raw_scale="observed_log_survival",
+                     trial_nfev=sum(x.nfev for x in candidates))
+         return (k,0. if flag else theta),diag
+     return fit

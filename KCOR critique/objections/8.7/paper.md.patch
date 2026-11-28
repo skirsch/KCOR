@@ -1,0 +1,41 @@
+--- m141/paper.md
++++ m142/paper.md
+@@ -752,7 +752,7 @@
+ 
+ ![Empirical negative control with a 10-year age shift: birth years 1940–1949 versus 1930–1939, all vaccination statuses pooled, enrolled in ISO week 2021-24. The all-window joint fitter is used with the optional NPH module inactive. Curves show anchored $\mathrm{KCOR}(t;t_0)$ from the end of the fourth accumulating week after the two-week skip (ISO week 2021-29) through 2024-41. Shading shows pointwise 95% percentile intervals from 999 matched person-bootstrap draws of the disjoint components, refitting the estimator in each draw. The oldest age group triggered the exploratory residual screen in the original fit; 987 of 999 draws flagged at least one contributing fit. All draws were numerically successful and retained. Flatness is expected if the normalized hazard trajectories are proportional. Data source: archived September 2025 Czech registry control, before the product restriction. X-axis: weeks since enrollment.](figures/fig2_neg_control_10yr_age_diff.png){#fig:neg_control_10yr}
+ 
+-Table @tbl:neg_control_summary reports the historical v4.3 estimates, the current module-off primary estimates, and the archived forced-alpha sensitivity estimates (previous numerical ceiling of 100), on the same input, reporting date and 999 matched person-bootstrap draws per enrollment. The configured Czech exponent 1.18 is a sensitivity value, not an identified parameter. The primary Czech configuration leaves the optional module inactive. The historical configuration documented a preference for the 2023 period because it showed the least vaccine harm; the chronology of that choice is unknown. The dates are retained, and the empirical illustrations should not be interpreted as outcome-independent validation of window selection. All twelve primary and sensitivity intervals include one. The empirical age-shift contrasts have no known exact target; intervals including one do not establish equivalence. No draws had insufficient-signal flags or unsuccessful contributing fits in either run.
++Table @tbl:neg_control_summary reports the historical v4.3 estimates, the current module-off primary estimates, and the current forced-alpha sensitivity estimates, on the same input, reporting date and 999 matched person-bootstrap draws per enrollment. The configured Czech exponent 1.18 is a sensitivity value, not an identified parameter. The primary Czech configuration leaves the optional module inactive. The historical configuration documented a preference for the 2023 period because it showed the least vaccine harm; the chronology of that choice is unknown. The dates are retained, and the empirical illustrations should not be interpreted as outcome-independent validation of window selection. All twelve primary and sensitivity intervals include one. The empirical age-shift contrasts have no known exact target; intervals including one do not establish equivalence. No draws had insufficient-signal flags or unsuccessful contributing fits in either run.
+ 
+ <!--
+ NOTE: The empirical negative control is built from real-world data where non-proportional external hazards (e.g., epidemic waves) can create small deviations from an idealized null.
+@@ -769,17 +769,9 @@
+ 
+ #### 3.3.1 Frailty misspecification robustness
+ 
+-To assess robustness to departures from the gamma frailty assumption, simulations were conducted under alternative frailty distributions while maintaining the same selection-induced depletion geometry. These stress tests also probe the new estimator's vulnerability to failure of the offset structure, weak curvature, and model overfit. Simulations were performed for:
+-
+-- **Gamma** (baseline reference)
+-- **Lognormal** frailty
+-- **Two-point mixture** (discrete frailty)
+-- **Bimodal** frailty distributions
+-- **Correlated frailty** (within-subgroup correlation)
+-
+-For each frailty specification, bias (deviation from true cumulative hazard ratio), variance (trajectory stability), coverage (proportion of simulations where uncertainty intervals contain the true value), and non-identifiability rate (proportion of simulations where diagnostics indicated non-identifiability) are reported.
+-
+-Under frailty misspecification the contrast may move in either direction, even when diagnostic criteria are met. When the alternative frailty distribution produces similar depletion geometry to gamma frailty, KCOR normalization remains approximately valid, with bias remaining small and diagnostics indicating acceptable identification. When the alternative frailty structure produces substantially different depletion geometry, or when the structured offset model fails to align windows coherently, diagnostics such as poor fit, residual structure, offset instability, or weak identification can signal that the working approximation is inadequate. The pathological/non-gamma frailty mixture simulation in the Supplement provides a concrete stress test of this regime.
++To assess robustness to departures from the gamma frailty assumption, a matched null study compared gamma, lognormal, two-point, continuous bimodal-mixture and within-cluster correlated gamma frailty using the current fitter. The cohorts share an individual baseline and the frailty laws have matched means and variances across scenarios. SI S9 reports the mean anchored KCOR (bias relative to 1), empirical sampling variance, percentile-interval coverage, and numerical-fit and residual-screen flags across 100 independent datasets per scenario. For correlated frailty, cluster resampling is compared with person resampling on the same datasets.
++
++These results are conditional on the tested distributions and event rates; a diagnostic pass is not proof that the frailty law is correct. Under misspecification the normalized contrast may move in either direction. The historical tail-mixture experiment in SI S4.5 provides a separate adversarial stress test.
+ 
+ #### 3.3.2 Quiet-window contamination stress test
+ 
+@@ -1165,7 +1157,7 @@
+ | 10.0 | 0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
+ | 20.0 | 0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
+ 
+-Table: Empirical negative-control KCOR at December 26, 2022 (weighted pooling across the two vaccination subgroups and their inclusive all-status group; these groups overlap). The input is the September 2025 extract, before the product restriction. Historical v4.3 estimates and analytical intervals are retained for comparison. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the archived sensitivity analysis uses the survivor fit at forced alpha=1.18 with the previous numerical ceiling of 100. Both columns use 999 matched person-bootstrap draws per enrollment. The primary analysis was refitted with ceiling 500; the archived sensitivity retained fitted variances below 15, with no ceiling flags. Sources: `analysis/ceiling500/table8/identified_only-table8.json` and `analysis/solver_scaling/forced_alpha-table8.json`; historical source: v4.3 replay of Git commit `bb2d68249e8bf77c8fb07e6c8336bc790a808a8a` (`test/negative_control/out/KCOR_summary.log` at that commit). {#tbl:neg_control_summary}
++Table: Empirical negative-control KCOR at December 26, 2022 (weighted pooling across the two vaccination subgroups and their inclusive all-status group; these groups overlap). The input is the September 2025 extract, before the product restriction. Historical v4.3 estimates and analytical intervals are retained for comparison. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the current sensitivity analysis uses the survivor fit at forced alpha=1.18. Both columns use 999 matched person-bootstrap draws per enrollment, refitted with numerical ceiling 500 and the shared numerical integral. Sources: `analysis/ceiling500/table8/identified_only-table8.json` and `analysis/ceiling500/table8/forced_alpha-table8.json`; historical source: v4.3 replay of Git commit `bb2d68249e8bf77c8fb07e6c8336bc790a808a8a` (`test/negative_control/out/KCOR_summary.log` at that commit). {#tbl:neg_control_summary}
+ 
+ | Enrollment | Dose comparison | Historical KCOR | Historical 95% CI | Core [95% CI] | Sensitivity 1.18 [95% CI] |
+ |---|---|---:|---|---|---|

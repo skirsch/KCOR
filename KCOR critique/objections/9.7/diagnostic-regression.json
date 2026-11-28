@@ -1,0 +1,51 @@
+{
+  "exact_cases": [
+    {
+      "gap_multiplier": 0.3,
+      "point": 0.5884770771746998,
+      "signed_first_pass_offset": -0.08971178808637799,
+      "offset_interval": [
+        -0.09021557989909423,
+        -0.08925490005725163
+      ],
+      "flag": "violation"
+    },
+    {
+      "gap_multiplier": 1.0,
+      "point": 0.9999999999999996,
+      "signed_first_pass_offset": -1.6653345369377348e-16,
+      "offset_interval": [
+        -0.0058515854869398585,
+        0.005620768993521729
+      ],
+      "flag": "no_deficit_detected"
+    },
+    {
+      "gap_multiplier": 1.7,
+      "point": 1.3383358167868347,
+      "signed_first_pass_offset": 0.0897117880863775,
+      "offset_interval": [
+        0.07791826810633881,
+        0.1112745769783418
+      ],
+      "flag": "no_deficit_detected"
+    }
+  ],
+  "synthetic_draws": 49,
+  "synthetic_draw_design": "independent multinomial samples from expected counts; diagnostic smoke test",
+  "written_workbook": {
+    "draws": 19,
+    "gap_interval": [
+      -0.054542,
+      -0.054104
+    ],
+    "point": 0.767199,
+    "point_interval": [
+      0.760532,
+      0.772767
+    ],
+    "gap_assumption_status": "violation",
+    "theta0_status": "OK",
+    "CI_point_flagged": true
+  }
+}

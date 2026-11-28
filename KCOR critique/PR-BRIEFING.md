@@ -58,9 +58,12 @@ The original pooled alpha near 1.18–1.19 remains unidentified with the new mac
 | Nonpositive gap reset fitted frailty | Retain the fit; flag material deficits. |
 | Extra adjustment at alpha = 1; incorrect survivor state | Restore proportional identity and correct wave-entry/exit calculations. |
 | Weekly-block resampling | Resample people; retain death timing. |
+| Unexplained risk-set losses, exhausted cohorts, changing pooled age groups | Validate fixed histories; withhold unsupported points or intervals. Retire the incorrect legacy analytical intervals. |
+| Incomplete diagnostic reporting | Separate numerical fit status, residual flags and material gap deficits. |
 | Scan excluded failures | Use the corrected fitter and count all attempts. |
 | Validation descriptions and processing mismatched | Verify fitted controls, correct provenance, pooling and MC processing. |
 | Contamination threshold ignored biased null | Compare with measured zero-addition result. |
+| Ancillary manufacturer report used unadjusted hazards and inconsistent cohorts | Reuse ordinary KCOR and reconcile product groups to fixed enrollment. |
 | Overbroad paper claims | Clarify assumptions, Cox comparison, scaling, example selection and uncertainty. |
 
 **Decision:** approve the proposed fitter, scientific additions and wave/entry corrections separately. KCOR's original objective remains unchanged.

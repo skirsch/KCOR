@@ -1,0 +1,30 @@
+{
+  "candidate": "m180",
+  "parent": "m179",
+  "old_rep1_alone": 1.4282339943906839,
+  "old_rep1_batched": 1.073988304098244,
+  "old_rep1_alone_weights": {
+    "1940": 0.4099104054271924,
+    "1950": 0.5900895945728075
+  },
+  "old_shared_batch_weights": {
+    "1940": 0.07989479501890598,
+    "1950": 0.9201052049810939
+  },
+  "new_rep1_alone_batched_reordered": 1.4282339943906839,
+  "new_rep2_alone_batched_reordered": 1.0024129724526591,
+  "new_rep2_weights": {
+    "1940": 0.04426078704739584,
+    "1950": 0.9557392129526041
+  },
+  "intervals": "not applicable to individual deterministic MC replicate points",
+  "pooled_rows_exactly_equal": true,
+  "written_workbook_verified": true,
+  "replicate_specific_flag_lookup_verified": true,
+  "s6_rows": 1192,
+  "s6_fields": 46,
+  "s6_exact_parity": true,
+  "ordinary_coverage_regression": "passed",
+  "archive_figure_files_unchanged": 51,
+  "paper_unchanged": true
+}

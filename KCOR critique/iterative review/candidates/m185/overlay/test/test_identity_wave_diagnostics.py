@@ -1,0 +1,25 @@
+﻿"""12.2: weekly attribution in both proportional identity limits."""
+from pathlib import Path
+import os,sys,numpy as np
+ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'code'));os.environ['DATASET']='Czech';import KCOR as K
+def main():
+    t=np.arange(5,dtype=float);dates=np.datetime64('2022-01-03')+np.arange(5)*np.timedelta64(7,'D')
+    gamma=.085/52;k=.01
+    planned=k*np.exp(gamma*t)*K._gompertz_week_factor(gamma)
+    inc=np.array([.003,.002,.030,.002,.004]);X=np.cumsum(inc)
+    for th,alpha in [(0.,1.18),(.5,1.),(0.,1.)]:
+        H=np.log1p(th*X)/th if th else X.copy()
+        actual,diag=K.apply_nph_correction_post_inversion(X,t,dates,th,alpha,dates[1],dates[3],k,gamma,t_rebased=t,observed_cumhaz=H)
+        np.testing.assert_array_equal(actual,X);assert diag['wave_points']==3 and diag['deficit_weeks']==2 and diag['skipped_nonpositive_excess']==2
+        expected=max(inc[2]-planned[2],0)
+        np.testing.assert_allclose(diag['post_wave_exposure'],expected,atol=1e-14)
+        np.testing.assert_allclose(np.array(diag['baseline_exposure_path'])+diag['wave_exposure_path'],X[1:4],atol=1e-14)
+        print(th,alpha,'deficits',diag['deficit_weeks'],'wave',diag['post_wave_exposure'],'endpoint',actual[-1])
+    # Equality is not strict deficit. Missing baseline parameters => unavailable counts, known denominator.
+    X=np.cumsum(planned);H=np.log1p(.5*X)/.5
+    for kfit in [k,np.nan]:
+        y,d=K.apply_nph_correction_post_inversion(X,t,dates,.5,1.,dates[1],dates[3],kfit,gamma,t_rebased=t,observed_cumhaz=H)
+        np.testing.assert_array_equal(y,X);assert d['wave_points']==3
+        assert (d['deficit_weeks']==0 if np.isfinite(kfit) else np.isnan(d['deficit_weeks']))
+    print('identity equality and unavailable-parameter tests passed')
+if __name__=='__main__':main()

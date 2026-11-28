@@ -1,0 +1,106 @@
+--- a/code/bootstrap_reporting.py
++++ b/code/bootstrap_reporting.py
+@@ -31,9 +31,13 @@
+     frame=frame.copy();frame["DateDied"]=pd.to_datetime(frame.DateDied)
+     frame=frame[frame.DateDied>=start]
+     if not len(frame):raise ValueError("no post-enrollment rows")
+-    from fixed_cohort_history import invalid_components
++    from fixed_cohort_history import invalid_components,aggregate_reconciliation,aggregate_scope
++    scope=aggregate_scope(layout)
+     bad=invalid_components(frame,start,layout=layout)
+-    if bad:
++    supplied=frame.YearOfBirth.isin([-2,-60])
++    # In a mixed extract, only malformed supplied totals can be excluded
++    # without changing the disjoint component populations.
++    if bad and (layout!="disjoint" or supplied.all() or any(k[0] not in (-2,-60) for k in bad)):
+         raise ValueError(f"invalid source component histories: {bad}")
+ 
+     if layout=="table8":
+@@ -65,16 +69,13 @@
+         raise ValueError("unrecognized birth-year aggregates mixed with converter totals")
+     if ((base.YearOfBirth<=0)&(base.YearOfBirth!=-1)).any() and base.YearOfBirth.nunique()>1:
+         raise ValueError("unknown overlapping birth-year strata")
+-    count_cols=["Alive","Dead"]+(["Dead_COVID"] if "Dead_COVID" in frame else [])
+-    agg_keys=["Dose","DateDied"]
+-    for age,template in aggregate.groupby("YearOfBirth",sort=True):
+-        if template.duplicated(agg_keys).any() or not template.Sex.eq("O").all() or ("DCCI" in template and not template.DCCI.eq(-1).all()):
+-            raise ValueError("unexpected converter aggregate layout")
+-        source=base if age==-2 else base[base.YearOfBirth>=1960]
+-        observed=template.set_index(agg_keys)[count_cols].sort_index()
+-        expected=source.groupby(agg_keys)[count_cols].sum().sort_index()
+-        if not observed.index.equals(expected.index) or not np.array_equal(observed.to_numpy(),expected.to_numpy()):
+-            raise ValueError(f"aggregate {age} does not match disjoint source counts")
++    invalid,unsupported=aggregate_reconciliation(frame,scope)
++    unsupported |= set(bad)
++    # Keep verified redundant total templates only. Do not draw from a total
++    # and its constituent people independently or silently replace its population.
++    if not aggregate.empty:
++        keys=list(zip(aggregate.YearOfBirth,aggregate.Dose))
++        aggregate=aggregate.loc[[k not in unsupported for k in keys]].copy()
+     group=base.groupby(["YearOfBirth","Dose"],sort=True)
+     cohorts=[]
+     for (age,dose),g in group:
+@@ -97,7 +98,7 @@
+             components.append((key,x.copy(),len(c)));cells.extend(c.astype(np.int64))
+         cohorts.append((components,np.array(cells,dtype=np.int64)))
+     if not cohorts:raise ValueError("no disjoint cohort histories")
+-    return ("disjoint",cohorts,aggregate)
++    return ("disjoint",cohorts,aggregate,unsupported)
+ 
+ 
+ def draw_history(record,rng):
+@@ -138,7 +139,7 @@
+         sums=source.groupby(["Dose","DateDied"])[count_cols].sum()
+         y=template.copy()
+         idx=pd.MultiIndex.from_frame(y[["Dose","DateDied"]])
+-        y[count_cols]=sums.reindex(idx).to_numpy()
++        y[count_cols]=sums.reindex(idx,fill_value=0).to_numpy()
+         if "cumDead_prev" in y:
+             y=y.sort_values(["Dose","DateDied"])
+             y["cumDead_prev"]=y.groupby("Dose")["Dead"].transform(lambda z:z.cumsum().shift(fill_value=0))
+@@ -282,11 +283,21 @@
+     for sh in sheets:
+         try:
+             hist[sh]=histories(pd.read_excel(src,sheet_name=sh),sh,layout)
++            if hist[sh][0]=="disjoint" and len(hist[sh])>3:
++                for age,dose in sorted(hist[sh][3]):
++                    log(f"[BOOTSTRAP] {sh}: supplied aggregate {age}, dose {dose} cannot be jointly resampled from source components; affected intervals unavailable")
+         except (ValueError,TypeError,KeyError) as e:
+             log(f"[BOOTSTRAP] {sh} unavailable: {e}")
+     if not hist:return annotate_gap_diagnostic(model,out,point_gaps,[],log)
+     keys=keyframe(out).index
+     supported=keys.get_level_values("EnrollmentDate").isin(hist)
++    aggregate_unsupported=np.array([
++        sh in hist and hist[sh][0]=="disjoint" and len(hist[sh])>3
++        and ((age,num) in hist[sh][3] or (age,den) in hist[sh][3])
++        for sh,age,num,den,_ in keys],dtype=bool)
++    supported &= ~aggregate_unsupported
++    unsupported_groups={(sh,age,dose) for sh,h in hist.items()
++                        if h[0]=="disjoint" and len(h)>3 for age,dose in h[3]}
+     pooled=keys.get_level_values("YearOfBirth")==0
+     point_members=keyframe(out).get("pool_contributors",pd.Series("",index=keys)).fillna("").astype(str).to_numpy()
+     point_pool=pooled & np.isfinite(out["KCOR"].to_numpy(float)) & (point_members!="")
+@@ -302,9 +313,9 @@
+                 raw=val.copy();raw_bad=bad.copy();invalid=np.zeros(len(keys),dtype=bool);absent=np.ones(len(keys),dtype=bool);changed=np.zeros(len(keys),dtype=bool)
+             else:
+                 val=v["KCOR"].reindex(keys).to_numpy(float)
+-                raw=v["KCOR_unanchored"].reindex(keys).to_numpy(float)
++                raw=v["KCOR_unanchored"].reindex(keys).to_numpy(float).copy()
+                 anchor=v["anchor_status"].reindex(keys)
+-                invalid=anchor.isin(["undefined_reference_ratio","missing_reference_week","pooled_no_valid_reference"]).to_numpy(bool)
++                invalid=anchor.isin(["undefined_reference_ratio","missing_reference_week","pooled_no_valid_reference"]).to_numpy(bool).copy()
+                 absent=~keys.isin(v.index)
+                 bad=pd.Series(flagged(v),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
+                 raw_bad=pd.Series(flagged(v,unanchored=True),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
+@@ -314,7 +325,10 @@
+                 # for the point's population; retain counts, not that value.
+                 val=val.copy();val[changed]=np.nan
+                 bad=bad | changed
+-            gap_draws.append({} if error else v.attrs.get("gap_first_pass",{}))
++            val[aggregate_unsupported]=np.nan
++            raw[aggregate_unsupported]=np.nan
++            invalid[aggregate_unsupported]=False
++            gap_draws.append({} if error else {k:x for k,x in v.attrs.get("gap_first_pass",{}).items() if k not in unsupported_groups})
+             residual_flags.append(np.zeros(len(keys),bool) if error else v.get("residual_screen_flag",pd.Series(False,index=v.index)).reindex(keys).fillna(False).to_numpy(bool))
+             residual_missing.append(np.ones(len(keys),bool) if error else v.get("residual_screen_unavailable",pd.Series(True,index=v.index)).reindex(keys).fillna(True).to_numpy(bool))
+             values.append(val);flags.append(bad);raw_values.append(raw);raw_flags.append(raw_bad);invalid_anchors.append(invalid);missing.append(absent);composition.append(changed)

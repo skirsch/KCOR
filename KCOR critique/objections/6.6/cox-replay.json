@@ -1,0 +1,50 @@
+[
+  {
+    "scenario": "gamma_null",
+    "cox_hr_mean": 1.0693087657960019,
+    "cox_hr_instability": 0.04403179773352849,
+    "cox_fit_success": true,
+    "cox_message": "success",
+    "cox_n_windows": 4
+  },
+  {
+    "scenario": "hazard_increase",
+    "cox_hr_mean": 1.0999765310942093,
+    "cox_hr_instability": 0.09995279812415286,
+    "cox_fit_success": true,
+    "cox_message": "success",
+    "cox_n_windows": 4
+  },
+  {
+    "scenario": "hazard_decrease",
+    "cox_hr_mean": 0.8500048730274815,
+    "cox_hr_instability": 0.15005015541418887,
+    "cox_fit_success": true,
+    "cox_message": "success",
+    "cox_n_windows": 4
+  },
+  {
+    "scenario": "nongamma_null",
+    "cox_hr_mean": 1.0305127689294349,
+    "cox_hr_instability": 0.04853705165423673,
+    "cox_fit_success": true,
+    "cox_message": "success",
+    "cox_n_windows": 4
+  },
+  {
+    "scenario": "contamination",
+    "cox_hr_mean": 1.0699412346043755,
+    "cox_hr_instability": 0.04373024078436663,
+    "cox_fit_success": true,
+    "cox_message": "success",
+    "cox_n_windows": 4
+  },
+  {
+    "scenario": "sparse",
+    "cox_hr_mean": 1.0181689627144148,
+    "cox_hr_instability": 0.030794427931440282,
+    "cox_fit_success": true,
+    "cox_message": "success",
+    "cox_n_windows": 4
+  }
+]

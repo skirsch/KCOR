@@ -1,0 +1,683 @@
+{
+  "input": "data\\Czech\\KCOR_CMR.xlsx",
+  "sha256": "b736e53c4d84d709c68ff364f2a415483e3d26b35669debd8bdae3f82c7a6c9c",
+  "sheet": "2021_24",
+  "endpoint": "2024-16",
+  "mode": "identified_only",
+  "skip_weeks": 2,
+  "age_reference_year": 2024,
+  "rows": [
+    {
+      "birth_band": -2,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.02020432296966776,
+      "raw_hazard_after_skip": 0.019867465714947487,
+      "k": 0.0001453920238780404,
+      "theta": 31.064537298217374,
+      "theta_raw": 31.064537298217374,
+      "status": "OK",
+      "sampling_flag": true,
+      "sampling_min_tail": 0.00041085694376003916,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 2.3951895040669724e-05,
+          "max_abs_dev": 3.5222039962346375e-05,
+          "drift_per_year": -3.575437314537817e-07
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -2.0233209962158825e-05,
+          "max_abs_dev": 3.093045255571391e-05,
+          "drift_per_year": -0.0003523006922301536
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -6.475823807975892e-06,
+          "max_abs_dev": 2.217926850946357e-05,
+          "drift_per_year": 5.3767746198828975e-06
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 1.0367602347217017e-05,
+          "max_abs_dev": 1.3324454551269884e-05,
+          "drift_per_year": 6.594739797737688e-06
+        }
+      ]
+    },
+    {
+      "birth_band": -2,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.07401056258700446,
+      "raw_hazard_after_skip": 0.0733042268130768,
+      "k": 0.00038878229931691864,
+      "theta": 2.888346677973248e-23,
+      "theta_raw": 2.888346677973248e-23,
+      "status": "OK",
+      "sampling_flag": true,
+      "sampling_min_tail": 0.00011017988070162573,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -0.00011278870276199655,
+          "max_abs_dev": 0.00014140540518063887,
+          "drift_per_year": -0.00032142779947102345
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": 8.577550281326699e-05,
+          "max_abs_dev": 0.00011787391697494379,
+          "drift_per_year": 0.0013068374768422503
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 1.0380557304627044e-05,
+          "max_abs_dev": 5.094295620909628e-05,
+          "drift_per_year": -3.154514289449502e-05
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": -1.82728337529003e-05,
+          "max_abs_dev": 3.2047816061067354e-05,
+          "drift_per_year": -0.00029996239312259646
+        }
+      ]
+    },
+    {
+      "birth_band": 1925,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.7845627991013999,
+      "raw_hazard_after_skip": 0.7741548472158284,
+      "k": 0.0045672002564755825,
+      "theta": 0.5075574346958008,
+      "theta_raw": 0.5075574346958008,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.01630277524897706,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 1.1790207952481231e-05,
+          "max_abs_dev": 0.0005237129635611362,
+          "drift_per_year": -0.0020582294631827152
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": 0.00034587951558005424,
+          "max_abs_dev": 0.0008246397197920752,
+          "drift_per_year": 0.0090918332615715
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -0.002139803099900126,
+          "max_abs_dev": 0.004335355020208764,
+          "drift_per_year": -0.009405724563284527
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 0.0006757878493651765,
+          "max_abs_dev": 0.0008289201331551678,
+          "drift_per_year": 0.00270852320105972
+        }
+      ]
+    },
+    {
+      "birth_band": 1925,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.5217774808379372,
+      "raw_hazard_after_skip": 0.5163524911327994,
+      "k": 0.0027833147014982786,
+      "theta": 1.9849499749749466e-20,
+      "theta_raw": 1.9849499749749466e-20,
+      "status": "OK",
+      "sampling_flag": true,
+      "sampling_min_tail": 0.0007239495688432691,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -0.0018939893074481748,
+          "max_abs_dev": 0.0029607337426170548,
+          "drift_per_year": -0.012982824469038269
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": 0.0005318724888288679,
+          "max_abs_dev": 0.0006331351745765199,
+          "drift_per_year": 0.005358413180077615
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 0.0006113320549721236,
+          "max_abs_dev": 0.0020142822934959836,
+          "drift_per_year": 0.0056228867568457784
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": -9.95827962969795e-05,
+          "max_abs_dev": 0.0002766088874699294,
+          "drift_per_year": 0.007110199615738695
+        }
+      ]
+    },
+    {
+      "birth_band": 1935,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.3117908003162541,
+      "raw_hazard_after_skip": 0.3068252970096434,
+      "k": 0.002009383888702525,
+      "theta": 1.6982014729046573,
+      "theta_raw": 1.6982014729046573,
+      "status": "OK",
+      "sampling_flag": true,
+      "sampling_min_tail": 0.0009296088691527052,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 0.0004243382713451985,
+          "max_abs_dev": 0.0008487760564256618,
+          "drift_per_year": -0.002262069846437756
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": 5.1160359687892716e-05,
+          "max_abs_dev": 0.00019475563579348862,
+          "drift_per_year": 0.004147008187237663
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -8.708601359307781e-05,
+          "max_abs_dev": 0.0008306803096656823,
+          "drift_per_year": -0.0014072596559719834
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 0.00014888432582438576,
+          "max_abs_dev": 0.00023450248558230758,
+          "drift_per_year": -0.0008945597337596935
+        }
+      ]
+    },
+    {
+      "birth_band": 1935,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.16867029600568384,
+      "raw_hazard_after_skip": 0.1672473178581385,
+      "k": 0.0008899198009098443,
+      "theta": 1.7916933186524764e-16,
+      "theta_raw": 1.7916933186524764e-16,
+      "status": "OK",
+      "sampling_flag": true,
+      "sampling_min_tail": 1.5546742990140254e-05,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -0.0006795558811334683,
+          "max_abs_dev": 0.0011193659065549793,
+          "drift_per_year": -0.005039194724056679
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": 5.173425851029477e-05,
+          "max_abs_dev": 6.695115606277402e-05,
+          "drift_per_year": -0.0006167089261697595
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 0.0002526737416537488,
+          "max_abs_dev": 0.00040859989077305855,
+          "drift_per_year": 0.0005344467686251108
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 0.0003158342864144373,
+          "max_abs_dev": 0.0004926265731924886,
+          "drift_per_year": 0.00625805794200826
+        }
+      ]
+    },
+    {
+      "birth_band": 1945,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.12511501085545226,
+      "raw_hazard_after_skip": 0.12304162867147497,
+      "k": 0.0008884502237542464,
+      "theta": 5.1552112717614635,
+      "theta_raw": 5.1552112717614635,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.06027948126020858,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 0.0001453083717976779,
+          "max_abs_dev": 0.0002635295245600536,
+          "drift_per_year": 0.00014763722545613658
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -7.845564897865915e-05,
+          "max_abs_dev": 0.00011188572820569837,
+          "drift_per_year": -0.0002750796998950015
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -0.0002956382898378761,
+          "max_abs_dev": 0.0006128906457052666,
+          "drift_per_year": -0.0011552319941844833
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 0.0002394009033721577,
+          "max_abs_dev": 0.00033027335514224316,
+          "drift_per_year": 0.0041475056431195525
+        }
+      ]
+    },
+    {
+      "birth_band": 1945,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.05810148607019635,
+      "raw_hazard_after_skip": 0.05766326173462671,
+      "k": 0.00031266493829206957,
+      "theta": 1.124857867950402e-14,
+      "theta_raw": 1.124857867950402e-14,
+      "status": "OK",
+      "sampling_flag": true,
+      "sampling_min_tail": 8.204175450639023e-06,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -0.000316581242836718,
+          "max_abs_dev": 0.00046296039864574196,
+          "drift_per_year": -0.0016862980747127025
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": 5.016474343196412e-05,
+          "max_abs_dev": 7.829212633666464e-05,
+          "drift_per_year": 0.0009316226695100354
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 0.00012296262914075946,
+          "max_abs_dev": 0.0002928648789936768,
+          "drift_per_year": 0.0006877351639295175
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 1.2367074117050061e-06,
+          "max_abs_dev": 3.8625025764557836e-05,
+          "drift_per_year": -0.00033441794134628244
+        }
+      ]
+    },
+    {
+      "birth_band": 1955,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.04618870082904494,
+      "raw_hazard_after_skip": 0.04546747482903106,
+      "k": 0.00031946758595080045,
+      "theta": 11.472864554633954,
+      "theta_raw": 11.472864554633954,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.03602784071322032,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 5.781888725437258e-05,
+          "max_abs_dev": 9.641082379017356e-05,
+          "drift_per_year": 0.0001560083472671341
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -1.4045516216573575e-06,
+          "max_abs_dev": 4.245802718106403e-05,
+          "drift_per_year": -0.0007132443379085483
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -5.465427301140275e-05,
+          "max_abs_dev": 0.0001755569355257633,
+          "drift_per_year": 0.00029227682063087646
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 4.418309329020726e-05,
+          "max_abs_dev": 6.588804669274066e-05,
+          "drift_per_year": 6.391557729673583e-05
+        }
+      ]
+    },
+    {
+      "birth_band": 1955,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.0233374841783034,
+      "raw_hazard_after_skip": 0.023134401257636765,
+      "k": 0.00012186464670099726,
+      "theta": 5.289049461962357e-15,
+      "theta_raw": 5.289049461962357e-15,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.0044721609664889654,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -9.120933850081409e-05,
+          "max_abs_dev": 0.0001363060902137953,
+          "drift_per_year": -0.0004930081548810471
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -9.741010435321912e-06,
+          "max_abs_dev": 2.8968864485172505e-05,
+          "drift_per_year": 0.0003904488873101839
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 5.007553245077706e-05,
+          "max_abs_dev": 9.21505552505782e-05,
+          "drift_per_year": 0.0001633112373665331
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 5.256308436691354e-06,
+          "max_abs_dev": 2.904180241218991e-05,
+          "drift_per_year": 0.0004522518737770461
+        }
+      ]
+    },
+    {
+      "birth_band": 1965,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.015200036491717816,
+      "raw_hazard_after_skip": 0.014968218759240511,
+      "k": 0.00010244798198048742,
+      "theta": 26.823872496443197,
+      "theta_raw": 26.823872496443197,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.008227086426486082,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 2.100923888572706e-05,
+          "max_abs_dev": 3.1472625612915476e-05,
+          "drift_per_year": 5.4938004048250526e-05
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -2.3375019297640663e-05,
+          "max_abs_dev": 4.386265089192118e-05,
+          "drift_per_year": -0.0005974512632209762
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -2.8172602335144954e-05,
+          "max_abs_dev": 7.363651143953457e-05,
+          "drift_per_year": -0.00012392713389411115
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 2.7121957093490433e-05,
+          "max_abs_dev": 4.3797793540192365e-05,
+          "drift_per_year": 0.0006596583155680451
+        }
+      ]
+    },
+    {
+      "birth_band": 1965,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.009630531916417917,
+      "raw_hazard_after_skip": 0.009581854719241318,
+      "k": 5.3722592124551544e-05,
+      "theta": 3.0240142751187047e-15,
+      "theta_raw": 3.0240142751187047e-15,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.06710819079977039,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -4.065105986505271e-05,
+          "max_abs_dev": 7.90891434475897e-05,
+          "drift_per_year": -0.0003512839635361423
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -2.7208087474872765e-05,
+          "max_abs_dev": 5.2509474797508826e-05,
+          "drift_per_year": -0.0007739139160369964
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 2.0601305806525476e-05,
+          "max_abs_dev": 4.4657034540782374e-05,
+          "drift_per_year": 2.0831736447464478e-05
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 5.277534796004528e-05,
+          "max_abs_dev": 7.244187017927062e-05,
+          "drift_per_year": 0.0007857764397940471
+        }
+      ]
+    },
+    {
+      "birth_band": 1975,
+      "dose": 0,
+      "weeks": 149,
+      "raw_hazard_full": 0.0053206512114041555,
+      "raw_hazard_after_skip": 0.005259445285349154,
+      "k": 3.679484846940546e-05,
+      "theta": 63.87338473352981,
+      "theta_raw": 63.87338473352981,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.008799376934879541,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": 4.915889820909498e-06,
+          "max_abs_dev": 1.679141359922805e-05,
+          "drift_per_year": 8.921801998048994e-05
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -1.9485162494415066e-05,
+          "max_abs_dev": 2.2632680937592848e-05,
+          "drift_per_year": -8.379178174100693e-05
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": 1.342023002643205e-06,
+          "max_abs_dev": 2.487460211098762e-05,
+          "drift_per_year": 9.547510874459366e-05
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": -2.269581952715985e-06,
+          "max_abs_dev": 4.315482477438659e-06,
+          "drift_per_year": -8.384535750198633e-05
+        }
+      ]
+    },
+    {
+      "birth_band": 1975,
+      "dose": 2,
+      "weeks": 149,
+      "raw_hazard_full": 0.004146343786830953,
+      "raw_hazard_after_skip": 0.004116745640856656,
+      "k": 2.711120783425164e-05,
+      "theta": 71.8301352045958,
+      "theta_raw": 71.8301352045958,
+      "status": "OK",
+      "sampling_flag": false,
+      "sampling_min_tail": 0.08071106836962595,
+      "sampling_n": 41,
+      "shape_windows": [
+        {
+          "start_week": 2.0,
+          "end_week": 12.0,
+          "n_bins": 11,
+          "mean_residual": -2.165751591835488e-05,
+          "max_abs_dev": 3.654050485162068e-05,
+          "drift_per_year": 9.505424458308297e-05
+        },
+        {
+          "start_week": 50.0,
+          "end_week": 53.0,
+          "n_bins": 4,
+          "mean_residual": -1.6726101157676628e-06,
+          "max_abs_dev": 2.6139504988954775e-05,
+          "drift_per_year": 0.0007132869263082748
+        },
+        {
+          "start_week": 99.0,
+          "end_week": 120.0,
+          "n_bins": 22,
+          "mean_residual": -1.567072823788717e-05,
+          "max_abs_dev": 5.368681533163039e-05,
+          "drift_per_year": 7.59135029107245e-05
+        },
+        {
+          "start_week": 143.0,
+          "end_week": 146.0,
+          "n_bins": 4,
+          "mean_residual": 1.1519536499784427e-05,
+          "max_abs_dev": 1.6217588024180357e-05,
+          "drift_per_year": 7.6090330098172e-05
+        }
+      ]
+    }
+  ]
+}

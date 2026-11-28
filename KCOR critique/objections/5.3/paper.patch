@@ -1,0 +1,11 @@
+--- m104/documentation/preprint/paper.md
++++ m105/documentation/preprint/paper.md
+@@ -548,6 +548,8 @@
+ When the optional NPH cumulative correction is active (§2.7.3), the same ratio is computed with $H_{\mathrm{corr},d}(t)$ in place of $\tilde H_{0,d}(t)$ for the affected cohorts and time range.
+ 
+ When an anchored presentation is used, KCOR at each time $t$ is divided by its value at the prespecified reference week $t_0$, as defined in §2.1.1. The primary estimand, however, remains the ratio of (optionally NPH-corrected) depletion-neutralized cumulative hazards rather than an instantaneous hazard ratio.
++
++The workbook reports the unanchored and anchored ratios separately for individual age strata and directly aggregated cohorts; the legacy KCOR column remains anchored. If the prespecified reference week is missing or its ratio is zero or undefined, the anchored estimate is unavailable, rather than replaced by the unanchored ratio. The bootstrap counts draws with undefined references separately from missing output rows and does not mix the two estimands. Pooled anchored ratios retain the existing weighted geometric mean of available strata.
+ 
+ This ratio is computed after depletion normalization and is interpreted conditional on the stated assumptions and diagnostics (Box 2; §2.1.2).
+ 

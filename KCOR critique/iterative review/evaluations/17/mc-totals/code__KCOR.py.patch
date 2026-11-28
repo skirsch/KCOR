@@ -1,0 +1,76 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -4298,15 +4298,33 @@
+     return bool(len(t) and np.array_equal(t, np.arange(len(t), dtype=float)))
+ 
+ 
+-def _all_age_source_mask(frame):
+-    """Use the same explicit population layout for aggregate fit and inversion."""
++def _all_age_source_mask(frame, *, missing_only=False):
++    """Use the same explicit population layout for aggregate fit and inversion.
++
++    In a batched Monte Carlo workbook, supplied totals belong to a single
++    replicate (and, for exhaustive disjoint inputs, to a single dose). Select
++    reconstructed components only where an appropriate supplied total is absent.
++    """
+     supplied = frame["YearOfBirth"] == -2
++    layout = os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint")
++    if layout == "table8":
++        # The 1960 pseudo-birth-year is inclusive of the 1940 and 1950 groups.
++        components = frame["YearOfBirth"] == 1960
++    else:
++        components = (frame["YearOfBirth"] > 0) | (frame["YearOfBirth"] == -1)
++    if MONTE_CARLO_MODE and "mc_id" in frame.columns:
++        from fixed_cohort_history import aggregate_scope
++        groups = [frame["mc_id"]]
++        # Partial component populations cannot substitute for a supplied full
++        # total of another dose. Preserve the ordinary population rule.
++        if layout == "disjoint" and aggregate_scope(layout) == "exhaustive":
++            groups.append(frame["Dose"])
++        has_total = supplied.groupby(groups, sort=False).transform("any")
++        reconstruct = components & ~has_total
++        return reconstruct if missing_only else supplied | reconstruct
+     if supplied.any():
+-        return supplied
+-    if os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint") == "table8":
+-        # The 1960 pseudo-birth-year is inclusive of the 1940 and 1950 groups.
+-        return frame["YearOfBirth"] == 1960
+-    return (frame["YearOfBirth"] > 0) | (frame["YearOfBirth"] == -1)
++        return supplied & False if missing_only else supplied
++    return components
+ 
+ 
+ def _flag_unavailable_normalization(rows, frame, sheet):
+@@ -6573,14 +6591,13 @@
+                 risk_accounting_bad.add((bucket, dose))
+         # If reconstructing an aggregate, an absent component week cannot
+         # become an apparently valid aggregate count.
+-        if -2 not in df["YearOfBirth"].values:
+-            aggregate_source = df[_all_age_source_mask(df)]
+-            for key, g in aggregate_source.groupby(time_group_cols, sort=False):
+-                if key in calendar_bad:
+-                    aggregate_key = (key[0], -2, key[-1]) if len(key) == 3 else (-2, key[-1])
+-                    calendar_bad.add(aggregate_key)
+-                    if key in risk_accounting_bad:
+-                        risk_accounting_bad.add(aggregate_key)
++        aggregate_source = df[_all_age_source_mask(df, missing_only=True)]
++        for key, g in aggregate_source.groupby(time_group_cols, sort=False):
++            if key in calendar_bad:
++                aggregate_key = (key[0], -2, key[-1]) if len(key) == 3 else (-2, key[-1])
++                calendar_bad.add(aggregate_key)
++                if key in risk_accounting_bad:
++                    risk_accounting_bad.add(aggregate_key)
+ 
+ 
+         # -------------------------------------------------------------------
+@@ -7552,8 +7569,8 @@
+         
+         # Build all-ages cohort (YearOfBirth = -2) at hazard stage if missing.
+         build_all_ages_hazard = not (MONTE_CARLO_MODE and not MC_INCLUDE_AGGREGATES)
+-        if build_all_ages_hazard and -2 not in df["YearOfBirth"].values:
+-            df_for_agg = df[_all_age_source_mask(df)].copy()
++        if build_all_ages_hazard:
++            df_for_agg = df[_all_age_source_mask(df, missing_only=True)].copy()
+             if not df_for_agg.empty:
+                 groupby_cols = ["Dose", "DateDied"]
+                 if MONTE_CARLO_MODE and "mc_id" in df_for_agg.columns:

@@ -1,0 +1,11 @@
+--- m100/documentation/preprint/paper.md
++++ m101/documentation/preprint/paper.md
+@@ -757,7 +757,7 @@
+ 
+ Supplementary Section S3 describes the two positive controls. Table 9 reports their fitted week-80 endpoints.
+ 
+-The joint-fit week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective.
++The joint-fit week-80 ratio was below 1 for benefit and above 1 for harm. Both 95 percent intervals excluded 1. The quiet window used for the fit began in week 81, so these comparisons are retrospective. The generator uses a constant individual baseline hazard rather than the Gompertz baseline assumed by the fitter; these controls therefore test detection of the injected mortality contrast, not recovery of the true frailty parameters under baseline misspecification.
+ 
+ ### 3.3 Stress tests (frailty misspecification)
+ 

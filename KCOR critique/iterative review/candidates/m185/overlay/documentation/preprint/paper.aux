@@ -1,0 +1,452 @@
+\relax 
+\providecommand\zref@newlabel[2]{}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\HyPL@Entry{0<</S/D>>}
+\@writefile{toc}{\contentsline {section}{KCOR: A depletion-neutralized framework for retrospective cohort comparison under latent frailty}{1}{section*.1}\protected@file@percent }
+\newlabel{kcor-a-depletion-neutralized-framework-for-retrospective-cohort-comparison-under-latent-frailty}{{}{1}{KCOR: A depletion-neutralized framework for retrospective cohort comparison under latent frailty}{section*.1}{}}
+\@writefile{toc}{\contentsline {subsection}{Manuscript metadata}{1}{subsection*.2}\protected@file@percent }
+\newlabel{manuscript-metadata}{{}{1}{Manuscript metadata}{subsection*.2}{}}
+\@writefile{toc}{\contentsline {subsection}{Abstract}{1}{subsection*.3}\protected@file@percent }
+\newlabel{abstract}{{}{1}{Abstract}{subsection*.3}{}}
+\@writefile{toc}{\contentsline {subsection}{1. Introduction}{1}{subsection*.4}\protected@file@percent }
+\newlabel{introduction}{{}{1}{1. Introduction}{subsection*.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1.1 Retrospective cohort comparisons under selection}{1}{subsubsection*.5}\protected@file@percent }
+\newlabel{retrospective-cohort-comparisons-under-selection}{{}{1}{1.1 Retrospective cohort comparisons under selection}{subsubsection*.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1.2 Curvature (shape) is the hard part: non-proportional hazards from frailty depletion}{2}{subsubsection*.6}\protected@file@percent }
+\newlabel{curvature-shape-is-the-hard-part-non-proportional-hazards-from-frailty-depletion}{{}{2}{1.2 Curvature (shape) is the hard part: non-proportional hazards from frailty depletion}{subsubsection*.6}{}}
+\pgfsyspdfmark {pgfid1}{4736286}{31128680}
+\@writefile{toc}{\contentsline {subsubsection}{1.3 Related work (brief positioning)}{3}{subsubsection*.7}\protected@file@percent }
+\newlabel{related-work-brief-positioning}{{}{3}{1.3 Related work (brief positioning)}{subsubsection*.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1.4 Evidence from the literature: residual confounding despite meticulous matching}{3}{subsubsection*.8}\protected@file@percent }
+\newlabel{evidence-from-the-literature-residual-confounding-despite-meticulous-matching}{{}{3}{1.4 Evidence from the literature: residual confounding despite meticulous matching}{subsubsection*.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1.5 Contribution of this work}{3}{subsubsection*.9}\protected@file@percent }
+\newlabel{contribution-of-this-work}{{}{3}{1.5 Contribution of this work}{subsubsection*.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{1.6 Target estimand and scope (non-causal)}{4}{subsubsection*.10}\protected@file@percent }
+\newlabel{target-estimand-and-scope-non-causal}{{}{4}{1.6 Target estimand and scope (non-causal)}{subsubsection*.10}{}}
+\pgfsyspdfmark {pgfid2}{4736286}{6718706}
+\pgfsyspdfmark {pgfid3}{4736286}{45561806}
+\@writefile{toc}{\contentsline {subsubsection}{1.7 Paper organization and supporting information (SI)}{5}{subsubsection*.11}\protected@file@percent }
+\newlabel{paper-organization-and-supporting-information-si}{{}{5}{1.7 Paper organization and supporting information (SI)}{subsubsection*.11}{}}
+\@writefile{toc}{\contentsline {subsection}{2. Methods}{5}{subsection*.12}\protected@file@percent }
+\newlabel{methods}{{}{5}{2. Methods}{subsection*.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.1 Conceptual framework and estimand}{5}{subsubsection*.13}\protected@file@percent }
+\newlabel{conceptual-framework-and-estimand}{{}{5}{2.1 Conceptual framework and estimand}{subsubsection*.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Empirical illustration of the KCOR workflow on a deterministically selected grouped Czech cohort comparison (2021-07 enrollment, grouped dose 2 versus dose 0 reference). (A) The raw observed cumulative hazards differ in both level and curvature. (B) The earlier monthly normalization adjusted each cohort's hazards using the slope fitted in its quiet period. The resulting cumulative hazards are more nearly linear. (C) KCOR(t) is then computed as the cumulative contrast on that normalized scale. This figure is intended to illustrate the geometric effect of the workflow on an analysis example rather than to serve as a standalone substantive result.}}{6}{figure.caption.14}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:kcor_empirical_intuition}{{1}{6}{Empirical illustration of the KCOR workflow on a deterministically selected grouped Czech cohort comparison (2021-07 enrollment, grouped dose 2 versus dose 0 reference). (A) The raw observed cumulative hazards differ in both level and curvature. (B) The earlier monthly normalization adjusted each cohort's hazards using the slope fitted in its quiet period. The resulting cumulative hazards are more nearly linear. (C) KCOR(t) is then computed as the cumulative contrast on that normalized scale. This figure is intended to illustrate the geometric effect of the workflow on an analysis example rather than to serve as a standalone substantive result}{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.1.1 Target estimand}{7}{paragraph*.15}\protected@file@percent }
+\newlabel{target-estimand}{{}{7}{2.1.1 Target estimand}{paragraph*.15}{}}
+\newlabel{eq:kcor-estimand}{{1}{7}{2.1.1 Target estimand}{section*.16}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.1.2 Identification versus diagnostics}{7}{paragraph*.17}\protected@file@percent }
+\newlabel{identification-versus-diagnostics}{{}{7}{2.1.2 Identification versus diagnostics}{paragraph*.17}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.1.3 KCOR assumptions and diagnostics}{7}{paragraph*.18}\protected@file@percent }
+\newlabel{kcor-assumptions-and-diagnostics}{{}{7}{2.1.3 KCOR assumptions and diagnostics}{paragraph*.18}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.2 Cohort construction}{8}{subsubsection*.19}\protected@file@percent }
+\newlabel{cohort-construction}{{}{8}{2.2 Cohort construction}{subsubsection*.19}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.3 Hazard estimation and cumulative hazards in discrete time}{8}{subsubsection*.20}\protected@file@percent }
+\newlabel{hazard-estimation-and-cumulative-hazards-in-discrete-time}{{}{8}{2.3 Hazard estimation and cumulative hazards in discrete time}{subsubsection*.20}{}}
+\newlabel{eq:hazard-discrete}{{2}{9}{2.3 Hazard estimation and cumulative hazards in discrete time}{section*.21}{}}
+\newlabel{eq:cumhazard-observed}{{3}{9}{2.3 Hazard estimation and cumulative hazards in discrete time}{section*.22}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.4 Selection model: gamma frailty and depletion normalization}{9}{subsubsection*.23}\protected@file@percent }
+\newlabel{selection-model-gamma-frailty-and-depletion-normalization}{{}{9}{2.4 Selection model: gamma frailty and depletion normalization}{subsubsection*.23}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.4.1 Individual hazards with multiplicative frailty}{9}{paragraph*.24}\protected@file@percent }
+\newlabel{individual-hazards-with-multiplicative-frailty}{{}{9}{2.4.1 Individual hazards with multiplicative frailty}{paragraph*.24}{}}
+\newlabel{eq:individual-hazard-frailty}{{4}{9}{2.4.1 Individual hazards with multiplicative frailty}{section*.25}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.4.2 Gamma-frailty identity and inversion}{10}{paragraph*.26}\protected@file@percent }
+\newlabel{gamma-frailty-identity-and-inversion}{{}{10}{2.4.2 Gamma-frailty identity and inversion}{paragraph*.26}{}}
+\newlabel{eq:baseline-cumhazard}{{5}{10}{2.4.2 Gamma-frailty identity and inversion}{section*.27}{}}
+\newlabel{eq:gamma-frailty-identity}{{6}{10}{2.4.2 Gamma-frailty identity and inversion}{section*.28}{}}
+\newlabel{eq:gamma-frailty-inversion}{{7}{10}{2.4.2 Gamma-frailty identity and inversion}{section*.29}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.4.3 Gompertz baseline and enrollment-time interpretation}{10}{paragraph*.30}\protected@file@percent }
+\newlabel{gompertz-baseline-and-enrollment-time-interpretation}{{}{10}{2.4.3 Gompertz baseline and enrollment-time interpretation}{paragraph*.30}{}}
+\newlabel{eq:baseline-shape-default}{{8}{10}{2.4.3 Gompertz baseline and enrollment-time interpretation}{section*.31}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.4.4 Quiet-window validity and identifiability}{11}{paragraph*.32}\protected@file@percent }
+\newlabel{quiet-window-validity-and-identifiability}{{}{11}{2.4.4 Quiet-window validity and identifiability}{paragraph*.32}{}}
+\pgfsyspdfmark {pgfid4}{4736286}{16418728}
+\@writefile{toc}{\contentsline {subsubsection}{2.5 Joint baseline and frailty estimation across quiet windows}{12}{subsubsection*.33}\protected@file@percent }
+\newlabel{joint-baseline-and-frailty-estimation-across-quiet-windows}{{}{12}{2.5 Joint baseline and frailty estimation across quiet windows}{subsubsection*.33}{}}
+\newlabel{eq:nls-objective}{{9}{12}{2.5 Joint baseline and frailty estimation across quiet windows}{section*.34}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.6 Normalization (depletion-neutralized cumulative hazards)}{12}{subsubsection*.35}\protected@file@percent }
+\newlabel{normalization-depletion-neutralized-cumulative-hazards}{{}{12}{2.6 Normalization (depletion-neutralized cumulative hazards)}{subsubsection*.35}{}}
+\newlabel{eq:normalized-cumhazard}{{10}{12}{2.6 Normalization (depletion-neutralized cumulative hazards)}{section*.36}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.6.1 Computational considerations}{13}{paragraph*.37}\protected@file@percent }
+\newlabel{computational-considerations}{{}{13}{2.6.1 Computational considerations}{paragraph*.37}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.6.2 Internal diagnostics and `self-check' behavior}{13}{paragraph*.38}\protected@file@percent }
+\newlabel{internal-diagnostics-and-self-check-behavior}{{}{13}{2.6.2 Internal diagnostics and `self-check' behavior}{paragraph*.38}{}}
+\newlabel{eq:si_residuals}{{11}{13}{2.6.2 Internal diagnostics and `self-check' behavior}{section*.39}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.7 Stabilization (early weeks)}{14}{subsubsection*.40}\protected@file@percent }
+\newlabel{stabilization-early-weeks}{{}{14}{2.7 Stabilization (early weeks)}{subsubsection*.40}{}}
+\newlabel{eq:effective-hazard-skip}{{12}{14}{2.7 Stabilization (early weeks)}{section*.41}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.7.1 Optional non-proportional hazard (NPH) exponent model}{14}{paragraph*.42}\protected@file@percent }
+\newlabel{optional-non-proportional-hazard-nph-exponent-model}{{}{14}{2.7.1 Optional non-proportional hazard (NPH) exponent model}{paragraph*.42}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.7.2 Identification of \(\mitalpha \) given an externally supplied intervention-effect scale}{15}{paragraph*.43}\protected@file@percent }
+\newlabel{identification-of-alpha-given-an-externally-supplied-intervention-effect-scale}{{}{15}{\texorpdfstring {2.7.2 Identification of \(\alpha \) given an externally supplied intervention-effect scale}{2.7.2 Identification of \textbackslash alpha given an externally supplied intervention-effect scale}}{paragraph*.43}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.7.3 Application of the NPH correction once \(\mitalpha \) is specified}{16}{paragraph*.44}\protected@file@percent }
+\newlabel{application-of-the-nph-correction-once-alpha-is-specified}{{}{16}{\texorpdfstring {2.7.3 Application of the NPH correction once \(\alpha \) is specified}{2.7.3 Application of the NPH correction once \textbackslash alpha is specified}}{paragraph*.44}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.7.4 Practical workflow for the optional NPH module}{16}{paragraph*.45}\protected@file@percent }
+\newlabel{practical-workflow-for-the-optional-nph-module}{{}{16}{2.7.4 Practical workflow for the optional NPH module}{paragraph*.45}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.8 KCOR estimator}{16}{subsubsection*.46}\protected@file@percent }
+\newlabel{kcor-estimator}{{}{16}{2.8 KCOR estimator}{subsubsection*.46}{}}
+\newlabel{eq:kcor-estimator}{{13}{16}{2.8 KCOR estimator}{section*.47}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.9 Uncertainty quantification}{17}{subsubsection*.48}\protected@file@percent }
+\newlabel{uncertainty-quantification}{{}{17}{2.9 Uncertainty quantification}{subsubsection*.48}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.9.1 Person-level bootstrap procedure}{17}{paragraph*.49}\protected@file@percent }
+\newlabel{person-level-bootstrap-procedure}{{}{17}{2.9.1 Person-level bootstrap procedure}{paragraph*.49}{}}
+\@writefile{toc}{\contentsline {paragraph}{Model-conditional information and precision}{18}{paragraph*.50}\protected@file@percent }
+\newlabel{model-conditional-information-and-precision}{{}{18}{Model-conditional information and precision}{paragraph*.50}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.10 Algorithm summary and reproducibility checklist}{19}{subsubsection*.51}\protected@file@percent }
+\newlabel{algorithm-summary-and-reproducibility-checklist}{{}{19}{2.10 Algorithm summary and reproducibility checklist}{subsubsection*.51}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {KCOR workflow: four-step \(\mittheta _{0,d}\) estimation, then normalization and comparison.} \textbf  {(A)} Fixed-cohort cumulative hazards are stabilized after enrollment, and event time is rebased so that frailty identification targets enrollment-time \(\mittheta _{0,d}\). \textbf  {(B)} Steps 1-4 estimate \(\mittheta _{0,d}\): a seed Gompertz fit is obtained in the nearest quiet window, the effective cumulative hazard is reconstructed over the full trajectory using all weeks, persistent offsets are aligned across quiet windows, and \(k_d\) and \(\mittheta _{0,d}\) are jointly refit across the pooled quiet windows. Reconstruction, offset alignment, and pooled refitting iterate to convergence before gamma-frailty inversion and KCOR computation. \textbf  {(C)} In epidemic-wave applications, an optional NPH exponent module may localize \(\mitalpha \) using \textbf  {externally supplied VE or other prespecified intervention-effect scale} and use the specified nonlinear survivor law consistently for fitting and inversion (§2.7); it is not part of the universal KCOR core and is interpreted only when identification diagnostics are credible. \emph  {This schematic is illustrative rather than empirical. In the schematic, \(\tilde H_{0,d}(t)\) denotes the depletion-neutralized baseline cumulative hazard and \(\mittheta _{0,d}\) denotes enrollment-time frailty variance after the stabilization skip.}}}{19}{figure.caption.52}\protected@file@percent }
+\newlabel{fig:kcor_workflow}{{2}{19}{\textbf {KCOR workflow: four-step \(\theta _{0,d}\) estimation, then normalization and comparison.} \textbf {(A)} Fixed-cohort cumulative hazards are stabilized after enrollment, and event time is rebased so that frailty identification targets enrollment-time \(\theta _{0,d}\). \textbf {(B)} Steps 1-4 estimate \(\theta _{0,d}\): a seed Gompertz fit is obtained in the nearest quiet window, the effective cumulative hazard is reconstructed over the full trajectory using all weeks, persistent offsets are aligned across quiet windows, and \(k_d\) and \(\theta _{0,d}\) are jointly refit across the pooled quiet windows. Reconstruction, offset alignment, and pooled refitting iterate to convergence before gamma-frailty inversion and KCOR computation. \textbf {(C)} In epidemic-wave applications, an optional NPH exponent module may localize \(\alpha \) using \textbf {externally supplied VE or other prespecified intervention-effect scale} and use the specified nonlinear survivor law consistently for fitting and inversion (§2.7); it is not part of the universal KCOR core and is interpreted only when identification diagnostics are credible. \emph {This schematic is illustrative rather than empirical. In the schematic, \(\tilde H_{0,d}(t)\) denotes the depletion-neutralized baseline cumulative hazard and \(\theta _{0,d}\) denotes enrollment-time frailty variance after the stabilization skip.}}{figure.caption.52}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.11 Relationship to Cox proportional hazards}{19}{subsubsection*.53}\protected@file@percent }
+\newlabel{relationship-to-cox-proportional-hazards}{{}{19}{2.11 Relationship to Cox proportional hazards}{subsubsection*.53}{}}
+\@writefile{toc}{\contentsline {paragraph}{2.11.1 Demonstration: Cox bias under frailty heterogeneity with no treatment effect}{20}{paragraph*.54}\protected@file@percent }
+\newlabel{demonstration-cox-bias-under-frailty-heterogeneity-with-no-treatment-effect}{{}{20}{2.11.1 Demonstration: Cox bias under frailty heterogeneity with no treatment effect}{paragraph*.54}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.12 Worked example (descriptive)}{21}{subsubsection*.58}\protected@file@percent }
+\newlabel{worked-example-descriptive}{{}{21}{2.12 Worked example (descriptive)}{subsubsection*.58}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.13 Reproducibility and computational implementation}{21}{subsubsection*.59}\protected@file@percent }
+\newlabel{reproducibility-and-computational-implementation}{{}{21}{2.13 Reproducibility and computational implementation}{subsubsection*.59}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Cox regression produces spurious non-null hazard ratios under a \emph  {synthetic null} as frailty heterogeneity increases. Hazard ratios (with 95\% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance (\(\mittheta _0\)). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.}}{22}{figure.caption.55}\protected@file@percent }
+\newlabel{fig:cox_bias_hr}{{3}{22}{Cox regression produces spurious non-null hazard ratios under a \emph {synthetic null} as frailty heterogeneity increases. Hazard ratios (with 95\% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance (\(\theta _0\)). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards}{figure.caption.55}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \(\mathrm {KCOR}(t)\) stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, \(\mathrm {KCOR}(t)\) asymptotes remain near 1 across \(\mittheta _0\), which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95\% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1.}}{23}{figure.caption.56}\protected@file@percent }
+\newlabel{fig:cox_bias_kcor}{{4}{23}{\(\mathrm {KCOR}(t)\) stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, \(\mathrm {KCOR}(t)\) asymptotes remain near 1 across \(\theta _0\), which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95\% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1}{figure.caption.56}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Estimator bias as a function of enrollment-time frailty variance \(\mittheta _0\) on the synthetic-null grid (true hazard ratio 1; true KCOR asymptote 1). \textbf  {Cox:} standard Cox hazard ratio bias, \(\widehat {\mathrm {HR}}-1\). \textbf  {KCOR:} asymptotic \(\mathrm {KCOR}\) bias, \(\widehat {\mathrm {KCOR}}_\infty -1\). \textbf  {Shared-frailty (approx.):} the shared-frailty Cox curve is an \textbf  {approximate reference} constructed from the null-case bias observed in Table \ref {tbl:joint_frailty_comparison} (proportional attenuation of each standard Cox \(\widehat {\mathrm {HR}}\) toward 1 using the ratio of deviations from 1 in that table's gamma-frailty null row), \textbf  {not} a full re-estimation of shared-frailty Cox at each frailty level. Generated by \texttt {test/sim\_grid/code/plot\_estimator\_bias\_vs\_theta.py}.}}{24}{figure.caption.57}\protected@file@percent }
+\newlabel{fig:estimator_bias_vs_theta}{{5}{24}{Estimator bias as a function of enrollment-time frailty variance \(\theta _0\) on the synthetic-null grid (true hazard ratio 1; true KCOR asymptote 1). \textbf {Cox:} standard Cox hazard ratio bias, \(\widehat {\mathrm {HR}}-1\). \textbf {KCOR:} asymptotic \(\mathrm {KCOR}\) bias, \(\widehat {\mathrm {KCOR}}_\infty -1\). \textbf {Shared-frailty (approx.):} the shared-frailty Cox curve is an \textbf {approximate reference} constructed from the null-case bias observed in Table \ref {tbl:joint_frailty_comparison} (proportional attenuation of each standard Cox \(\widehat {\mathrm {HR}}\) toward 1 using the ratio of deviations from 1 in that table's gamma-frailty null row), \textbf {not} a full re-estimation of shared-frailty Cox at each frailty level. Generated by \protect \texttt {test/sim\_grid/code/plot\_estimator\_bias\_vs\_theta.py}}{figure.caption.57}{}}
+\@writefile{toc}{\contentsline {subsubsection}{2.14 Data requirements and feasible study designs}{25}{subsubsection*.60}\protected@file@percent }
+\newlabel{data-requirements-and-feasible-study-designs}{{}{25}{2.14 Data requirements and feasible study designs}{subsubsection*.60}{}}
+\@writefile{toc}{\contentsline {subsection}{3. Results}{25}{subsection*.61}\protected@file@percent }
+\newlabel{results}{{}{25}{3. Results}{subsection*.61}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.1 Negative controls (selection-only null)}{26}{subsubsection*.62}\protected@file@percent }
+\newlabel{negative-controls-selection-only-null}{{}{26}{3.1 Negative controls (selection-only null)}{subsubsection*.62}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.1.1 Structured synthetic validation: \(\mittheta _0\) recovery and null behavior}{26}{paragraph*.63}\protected@file@percent }
+\newlabel{structured-synthetic-validation-theta_0-recovery-and-null-behavior}{{}{26}{\texorpdfstring {3.1.1 Structured synthetic validation: \(\theta _0\) recovery and null behavior}{3.1.1 Structured synthetic validation: \textbackslash theta\_0 recovery and null behavior}}{paragraph*.63}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.1.2 Empirical negative control using national registry data (Czech Republic)}{26}{paragraph*.64}\protected@file@percent }
+\newlabel{empirical-negative-control-using-national-registry-data-czech-republic}{{}{26}{3.1.2 Empirical negative control using national registry data (Czech Republic)}{paragraph*.64}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \(\mathrm {KCOR}(t)\) is expected to be approximately horizontal under the pseudo-null, subject to sampling stochasticity. Curves are shown as anchored \(\mathrm {KCOR}(t; t_0)\), i.e., \(\mathrm {KCOR}(t)/\mathrm {KCOR}(t_0)\), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information (SI)).}}{27}{figure.caption.65}\protected@file@percent }
+\newlabel{fig:neg_control_10yr}{{6}{27}{Empirical negative control with approximately 10-year age difference between cohorts. Despite large baseline mortality differences, \(\mathrm {KCOR}(t)\) is expected to be approximately horizontal under the pseudo-null, subject to sampling stochasticity. Curves are shown as anchored \(\mathrm {KCOR}(t; t_0)\), i.e., \(\mathrm {KCOR}(t)/\mathrm {KCOR}(t_0)\), which removes pre-existing cumulative differences and displays post-anchor divergence only. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Cumulative hazard is indexed from week 4 following enrollment. Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information (SI))}{figure.caption.65}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.2 Positive controls (injected effects)}{28}{subsubsection*.66}\protected@file@percent }
+\newlabel{positive-controls-injected-effects}{{}{28}{3.2 Positive controls (injected effects)}{subsubsection*.66}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.3 Stress tests (frailty misspecification)}{28}{subsubsection*.67}\protected@file@percent }
+\newlabel{stress-tests-frailty-misspecification}{{}{28}{3.3 Stress tests (frailty misspecification)}{subsubsection*.67}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.3.1 Frailty misspecification robustness}{28}{paragraph*.68}\protected@file@percent }
+\newlabel{frailty-misspecification-robustness}{{}{28}{3.3.1 Frailty misspecification robustness}{paragraph*.68}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.3.2 Quiet-window contamination stress test}{28}{paragraph*.69}\protected@file@percent }
+\newlabel{quiet-window-contamination-stress-test}{{}{28}{3.3.2 Quiet-window contamination stress test}{paragraph*.69}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Mean anchored KCOR asymptote versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale \(h_{\mathrm {ref}}=0.000456\)/week (Czech YoB 1940--1960, dose 0).}}{29}{figure.caption.70}\protected@file@percent }
+\newlabel{fig:quiet_contam_kcor}{{7}{29}{Mean anchored KCOR asymptote versus contamination magnitude. The left and center panels show the dynamic and comorbidity sweeps with pointwise 95 percent Monte Carlo confidence intervals for the means. The right panel shows mean KCOR on the combined grid. Each cell uses 20 simulations. Baseline hazard scale \(h_{\mathrm {ref}}=0.000456\)/week (Czech YoB 1940--1960, dose 0)}{figure.caption.70}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Left and center: mean \(\hat \mittheta _{0,A}\) error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored \(\mathrm {KCOR}_\infty >1\) on the combined \(4\times 4\) grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations.}}{29}{figure.caption.71}\protected@file@percent }
+\newlabel{fig:quiet_contam_theta}{{8}{29}{Left and center: mean \(\hat \theta _{0,A}\) error versus contamination magnitude for Types 1 and 2. Right: fraction of replicates with anchored \(\mathrm {KCOR}_\infty >1\) on the combined \(4\times 4\) grid (joint contamination), using the fifth accumulating week as the reference. The frailty error bars show one standard deviation across simulations}{figure.caption.71}{}}
+\gdef \LT@i {\LT@entry 
+    {1}{74.30708pt}\LT@entry 
+    {1}{80.30708pt}\LT@entry 
+    {1}{80.30708pt}\LT@entry 
+    {1}{80.30708pt}\LT@entry 
+    {1}{80.30708pt}\LT@entry 
+    {1}{74.30708pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Selected cells from quiet-window contamination experiment. \(h_{\mathrm {ref}}=0.000456\)/week (Czech YoB 1940--1960, enrollment sheet \texttt {2021\_24}). Results use the fifth accumulating week as the reference. Brackets give pointwise 95 percent Monte Carlo confidence intervals for the means from 20 simulations per cell. Full grid in \texttt {analysis/contamination/historical-grid.csv}.}}{30}{table.1}\protected@file@percent }
+\newlabel{tbl:quiet_contam}{{1}{30}{Selected cells from quiet-window contamination experiment. \(h_{\mathrm {ref}}=0.000456\)/week (Czech YoB 1940--1960, enrollment sheet \protect \texttt {2021\_24}). Results use the fifth accumulating week as the reference. Brackets give pointwise 95 percent Monte Carlo confidence intervals for the means from 20 simulations per cell. Full grid in \protect \texttt {analysis/contamination/historical-grid.csv}}{table.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{3.4 Estimation of the NPH exponent \(\mitalpha \)}{30}{subsubsection*.72}\protected@file@percent }
+\newlabel{estimation-of-the-nph-exponent-alpha}{{}{30}{\texorpdfstring {3.4 Estimation of the NPH exponent \(\alpha \)}{3.4 Estimation of the NPH exponent \textbackslash alpha}}{subsubsection*.72}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.4.1 Synthetic validation of \(\mitalpha \)}{30}{paragraph*.73}\protected@file@percent }
+\newlabel{synthetic-validation-of-alpha}{{}{30}{\texorpdfstring {3.4.1 Synthetic validation of \(\alpha \)}{3.4.1 Synthetic validation of \textbackslash alpha}}{paragraph*.73}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Synthetic validation of NPH exponent recovery. Estimated \(\mitalpha \) versus true \(\mitalpha \) under the historical amplification formula, shown separately for the baseline synthetic branch (A) and a harder heteroskedastic branch (B). Both pairwise and collapse estimators recover \(\mitalpha \) with low bias when cross-cohort depletion geometry differs. The heteroskedastic branch shows reduced precision rather than structural failure. Error bars show replicate standard deviations.}}{31}{figure.caption.74}\protected@file@percent }
+\newlabel{fig:alpha_synth_recovery}{{9}{31}{Synthetic validation of NPH exponent recovery. Estimated \(\alpha \) versus true \(\alpha \) under the historical amplification formula, shown separately for the baseline synthetic branch (A) and a harder heteroskedastic branch (B). Both pairwise and collapse estimators recover \(\alpha \) with low bias when cross-cohort depletion geometry differs. The heteroskedastic branch shows reduced precision rather than structural failure. Error bars show replicate standard deviations}{figure.caption.74}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.4.2 Empirical pooled Czech registry application}{31}{paragraph*.75}\protected@file@percent }
+\newlabel{empirical-pooled-czech-registry-application}{{}{31}{3.4.2 Empirical pooled Czech registry application}{paragraph*.75}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.4.3 Diagnostics and identifiability of \(\mitalpha \)}{31}{paragraph*.77}\protected@file@percent }
+\newlabel{diagnostics-and-identifiability-of-alpha}{{}{31}{\texorpdfstring {3.4.3 Diagnostics and identifiability of \(\alpha \)}{3.4.3 Diagnostics and identifiability of \textbackslash alpha}}{paragraph*.77}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Comparison of historical and updated illustrative objective profiles; lower-boundary optima do not identify an exponent.}}{32}{figure.caption.76}\protected@file@percent }
+\newlabel{fig:alpha_czech_objective}{{10}{32}{Comparison of historical and updated illustrative objective profiles; lower-boundary optima do not identify an exponent}{figure.caption.76}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Diagnostics for \(\mitalpha \) estimation under the Czech primary specification. (A) Leave-one-cohort-out analysis shows that several cohort omissions materially affect \(\mitalpha \), indicating uneven identifying information. (B) The bootstrap distribution is broad and concentrates heavily at the grid boundaries, consistent with weak localization of the optimum. (C) Segmented analyses exhibit reduced agreement and occasional boundary-seeking behavior relative to the pooled specification, illustrating weaker identifiability outside the primary pooled fit.}}{32}{figure.caption.78}\protected@file@percent }
+\newlabel{fig:alpha_czech_diagnostics}{{11}{32}{Diagnostics for \(\alpha \) estimation under the Czech primary specification. (A) Leave-one-cohort-out analysis shows that several cohort omissions materially affect \(\alpha \), indicating uneven identifying information. (B) The bootstrap distribution is broad and concentrates heavily at the grid boundaries, consistent with weak localization of the optimum. (C) Segmented analyses exhibit reduced agreement and occasional boundary-seeking behavior relative to the pooled specification, illustrating weaker identifiability outside the primary pooled fit}{figure.caption.78}{}}
+\@writefile{toc}{\contentsline {paragraph}{3.4.4 Summary of identification status}{33}{paragraph*.79}\protected@file@percent }
+\newlabel{summary-of-identification-status}{{}{33}{3.4.4 Summary of identification status}{paragraph*.79}{}}
+\@writefile{toc}{\contentsline {subsection}{4. Discussion}{33}{subsection*.80}\protected@file@percent }
+\newlabel{discussion}{{}{33}{4. Discussion}{subsection*.80}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.1 Limits of attribution and non-identifiability}{33}{subsubsection*.81}\protected@file@percent }
+\newlabel{limits-of-attribution-and-non-identifiability}{{}{33}{4.1 Limits of attribution and non-identifiability}{subsubsection*.81}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.2 What KCOR estimates}{34}{subsubsection*.82}\protected@file@percent }
+\newlabel{what-kcor-estimates}{{}{34}{4.2 What KCOR estimates}{subsubsection*.82}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.3 Relationship to negative control methods}{34}{subsubsection*.83}\protected@file@percent }
+\newlabel{relationship-to-negative-control-methods}{{}{34}{4.3 Relationship to negative control methods}{subsubsection*.83}{}}
+\@writefile{toc}{\contentsline {subsubsection}{4.4 Practical guidelines for implementation}{35}{subsubsection*.84}\protected@file@percent }
+\newlabel{practical-guidelines-for-implementation}{{}{35}{4.4 Practical guidelines for implementation}{subsubsection*.84}{}}
+\@writefile{toc}{\contentsline {subsection}{5. Limitations}{35}{subsection*.85}\protected@file@percent }
+\newlabel{limitations}{{}{35}{5. Limitations}{subsection*.85}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.1 Failure modes and diagnostics}{36}{subsubsection*.86}\protected@file@percent }
+\newlabel{failure-modes-and-diagnostics}{{}{36}{5.1 Failure modes and diagnostics}{subsubsection*.86}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.2 Conservativeness and edge-case detection limits}{37}{subsubsection*.87}\protected@file@percent }
+\newlabel{conservativeness-and-edge-case-detection-limits}{{}{37}{5.2 Conservativeness and edge-case detection limits}{subsubsection*.87}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.3 Data requirements and external validation}{38}{subsubsection*.88}\protected@file@percent }
+\newlabel{data-requirements-and-external-validation}{{}{38}{5.3 Data requirements and external validation}{subsubsection*.88}{}}
+\@writefile{toc}{\contentsline {subsubsection}{5.4 Optional NPH exponent model and remaining non-proportional hazard risk}{38}{subsubsection*.89}\protected@file@percent }
+\newlabel{optional-nph-exponent-model-and-remaining-non-proportional-hazard-risk}{{}{38}{5.4 Optional NPH exponent model and remaining non-proportional hazard risk}{subsubsection*.89}{}}
+\@writefile{toc}{\contentsline {subsection}{6. Conclusion}{39}{subsection*.90}\protected@file@percent }
+\newlabel{conclusion}{{}{39}{6. Conclusion}{subsection*.90}{}}
+\@writefile{toc}{\contentsline {subsection}{Declarations}{40}{subsection*.91}\protected@file@percent }
+\newlabel{declarations}{{}{40}{Declarations}{subsection*.91}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Ethics approval and consent to participate}{40}{subsubsection*.92}\protected@file@percent }
+\newlabel{ethics-approval-and-consent-to-participate}{{}{40}{Ethics approval and consent to participate}{subsubsection*.92}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Consent for publication}{40}{subsubsection*.93}\protected@file@percent }
+\newlabel{consent-for-publication}{{}{40}{Consent for publication}{subsubsection*.93}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Data availability}{40}{subsubsection*.94}\protected@file@percent }
+\newlabel{data-availability}{{}{40}{Data availability}{subsubsection*.94}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Software availability}{40}{subsubsection*.95}\protected@file@percent }
+\newlabel{software-availability}{{}{40}{Software availability}{subsubsection*.95}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Use of artificial intelligence tools}{40}{subsubsection*.96}\protected@file@percent }
+\newlabel{use-of-artificial-intelligence-tools}{{}{40}{Use of artificial intelligence tools}{subsubsection*.96}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Competing interests}{40}{subsubsection*.97}\protected@file@percent }
+\newlabel{competing-interests}{{}{40}{Competing interests}{subsubsection*.97}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Funding}{41}{subsubsection*.98}\protected@file@percent }
+\newlabel{funding}{{}{41}{Funding}{subsubsection*.98}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Authors' contributions}{41}{subsubsection*.99}\protected@file@percent }
+\newlabel{authors-contributions}{{}{41}{Authors' contributions}{subsubsection*.99}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Acknowledgements}{41}{subsubsection*.100}\protected@file@percent }
+\newlabel{acknowledgements}{{}{41}{Acknowledgements}{subsubsection*.100}{}}
+\bibcite{ref-vaupel1979}{\citeproctext }
+\bibcite{ref-grambsch1994}{\citeproctext }
+\bibcite{ref-andersen1982}{\citeproctext }
+\bibcite{ref-royston2002}{\citeproctext }
+\bibcite{ref-aalen1989}{\citeproctext }
+\bibcite{ref-lin1994}{\citeproctext }
+\bibcite{ref-vanhouwelingen2007}{\citeproctext }
+\bibcite{ref-robins2000}{\citeproctext }
+\bibcite{ref-cole2008}{\citeproctext }
+\bibcite{ref-obel2024}{\citeproctext }
+\bibcite{ref-chemaitelly2025}{\citeproctext }
+\bibcite{ref-agampodi2024}{\citeproctext }
+\bibcite{ref-bakker2025}{\citeproctext }
+\bibcite{ref-kalbfleisch2002}{\citeproctext }
+\bibcite{ref-deeks2003}{\citeproctext }
+\bibcite{ref-levin2020}{\citeproctext }
+\bibcite{ref-sanca2024}{\citeproctext }
+\@writefile{toc}{\contentsline {subsection}{References}{42}{subsection*.101}\protected@file@percent }
+\newlabel{references}{{}{42}{References}{subsection*.101}{}}
+\newlabel{refs}{{}{42}{References}{section*.102}{}}
+\gdef \LT@ii {\LT@entry 
+    {1}{90.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{90.34972pt}}
+\@writefile{toc}{\contentsline {subsection}{Tables}{44}{subsection*.103}\protected@file@percent }
+\newlabel{tables}{{}{44}{Tables}{subsection*.103}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Summary of three large matched observational studies showing residual confounding / HVE despite meticulous matching.}}{44}{table.2}\protected@file@percent }
+\newlabel{tbl:HVE_motivation}{{2}{44}{Summary of three large matched observational studies showing residual confounding / HVE despite meticulous matching}{table.2}{}}
+\gdef \LT@iii {\LT@entry 
+    {1}{180.49876pt}\LT@entry 
+    {1}{71.81207pt}\LT@entry 
+    {1}{96.75748pt}\LT@entry 
+    {1}{120.68668pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions.}}{45}{table.3}\protected@file@percent }
+\newlabel{tbl:cox_vs_kcor}{{3}{45}{Comparison of Cox proportional hazards, Cox with frailty, and KCOR across key methodological dimensions}{table.3}{}}
+\gdef \LT@iv {\LT@entry 
+    {1}{90.61325pt}\LT@entry 
+    {1}{81.04486pt}\LT@entry 
+    {1}{61.00603pt}\LT@entry 
+    {1}{92.18658pt}\LT@entry 
+    {1}{65.43271pt}\LT@entry 
+    {1}{79.47154pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Positioning KCOR relative to non-proportional hazards methods.}}{46}{table.4}\protected@file@percent }
+\newlabel{tbl:positioning}{{4}{46}{Positioning KCOR relative to non-proportional hazards methods}{table.4}{}}
+\gdef \LT@v {\LT@entry 
+    {1}{189.09921pt}\LT@entry 
+    {1}{280.65579pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Notation used throughout the Methods section.}}{47}{table.5}\protected@file@percent }
+\newlabel{tbl:notation}{{5}{47}{Notation used throughout the Methods section}{table.5}{}}
+\gdef \LT@vi {\LT@entry 
+    {1}{90.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{90.34972pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as \(\mittheta _{0,d}\) are estimated separately for each cohort within the prespecified framework.}}{48}{table.6}\protected@file@percent }
+\newlabel{tbl:KCOR_algorithm}{{6}{48}{Step-by-step KCOR algorithm (high-level), with recommended prespecification and diagnostics. All analysis choices and estimation procedures are prespecified; numerical parameters such as \(\theta _{0,d}\) are estimated separately for each cohort within the prespecified framework}{table.6}{}}
+\gdef \LT@vii {\LT@entry 
+    {1}{61.02705pt}\LT@entry 
+    {1}{48.71388pt}\LT@entry 
+    {1}{54.82245pt}\LT@entry 
+    {1}{79.2817pt}\LT@entry 
+    {1}{97.63864pt}\LT@entry 
+    {1}{128.30876pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect \emph  {(null by construction)}; cohorts differ only in enrollment-time gamma frailty variance (\(\mittheta _0\)). Despite the treatment hazard ratio at fixed frailty being 1 by construction, Cox regression produces increasingly non-null hazard ratios as \(\mittheta _0\) increases, reflecting depletion-induced non-proportional hazards. In the same simulations, \(\mathrm {KCOR}(t)\) remains centered near unity with negligible post-normalization slope across \(\mittheta _0\) values, which is consistent with the expected null benchmark under the working model and is interpreted diagnostically rather than as proof that confounding has been removed. (Exact values depend on simulation seed and follow-up horizon.)}}{49}{table.7}\protected@file@percent }
+\newlabel{tbl:cox_bias_demo}{{7}{49}{Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect \emph {(null by construction)}; cohorts differ only in enrollment-time gamma frailty variance (\(\theta _0\)). Despite the treatment hazard ratio at fixed frailty being 1 by construction, Cox regression produces increasingly non-null hazard ratios as \(\theta _0\) increases, reflecting depletion-induced non-proportional hazards. In the same simulations, \(\mathrm {KCOR}(t)\) remains centered near unity with negligible post-normalization slope across \(\theta _0\) values, which is consistent with the expected null benchmark under the working model and is interpreted diagnostically rather than as proof that confounding has been removed. (Exact values depend on simulation seed and follow-up horizon.)}{table.7}{}}
+\gdef \LT@viii {\LT@entry 
+    {1}{70.69946pt}\LT@entry 
+    {1}{76.69946pt}\LT@entry 
+    {1}{98.25137pt}\LT@entry 
+    {1}{76.69946pt}\LT@entry 
+    {1}{76.69946pt}\LT@entry 
+    {1}{70.69946pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Empirical negative-control KCOR at December 26, 2022 (pooled/ASMR). Historical v4.3 estimates and analytical intervals are retained for comparison. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the sensitivity analysis uses the consistent survivor fit at forced alpha=1.18. Both current columns use 999 matched person-bootstrap draws per enrollment. Sources: \texttt {analysis/table8/identified\_only-table8.json} and \texttt {analysis/table8/forced\_alpha-table8.json}; historical source: v4.3 replay of Git commit \texttt {bb2d68249e8bf77c8fb07e6c8336bc790a808a8a} (\texttt {test/negative\_control/out/KCOR\_summary.log} at that commit).}}{50}{table.8}\protected@file@percent }
+\newlabel{tbl:neg_control_summary}{{8}{50}{Empirical negative-control KCOR at December 26, 2022 (pooled/ASMR). Historical v4.3 estimates and analytical intervals are retained for comparison. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the sensitivity analysis uses the consistent survivor fit at forced alpha=1.18. Both current columns use 999 matched person-bootstrap draws per enrollment. Sources: \protect \texttt {analysis/table8/identified\_only-table8.json} and \protect \texttt {analysis/table8/forced\_alpha-table8.json}; historical source: v4.3 replay of Git commit \protect \texttt {bb2d68249e8bf77c8fb07e6c8336bc790a808a8a} (\protect \texttt {test/negative\_control/out/KCOR\_summary.log} at that commit)}{table.8}{}}
+\gdef \LT@ix {\LT@entry 
+    {1}{80.43909pt}\LT@entry 
+    {1}{86.43909pt}\LT@entry 
+    {1}{111.2414pt}\LT@entry 
+    {1}{86.43909pt}\LT@entry 
+    {1}{105.2414pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts, treating residual risk-set losses as nondeath exits.}}{51}{table.9}\protected@file@percent }
+\newlabel{tbl:pos_control_summary}{{9}{51}{Week-80 KCOR after all-window joint baseline-rate and frailty fitting with pre-entry proportional exposure. Brackets give 95 percent percentile intervals from 999 resamples per scenario, with both cohorts refitted in each draw. Resampling used the rounded synthetic death and risk-set counts, treating residual risk-set losses as nondeath exits}{table.9}{}}
+\gdef \LT@x {\LT@entry 
+    {1}{32.96446pt}\LT@entry 
+    {1}{57.86491pt}\LT@entry 
+    {1}{33.56097pt}\LT@entry 
+    {1}{71.32654pt}\LT@entry 
+    {1}{57.86491pt}\LT@entry 
+    {1}{68.666pt}\LT@entry 
+    {1}{84.82938pt}\LT@entry 
+    {1}{62.666pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds.}}{52}{table.10}\protected@file@percent }
+\newlabel{tbl:joint_frailty_comparison}{{10}{52}{Comparison of Cox regression, shared frailty Cox models, and KCOR under selection-only and joint frailty + treatment effect scenarios. Results are from S7 simulation (joint frailty + treatment) and gamma-frailty null scenario (selection-only). Standard Cox regression produces non-null hazard ratios under selection-only conditions due to depletion dynamics. Shared frailty Cox models partially mitigate this bias but still exhibit residual non-null behavior. KCOR remains near-null under selection-only conditions and correctly detects treatment effects when temporal separability holds}{table.10}{}}
+\gdef \LT@xi {\LT@entry 
+    {1}{39.40009pt}\LT@entry 
+    {1}{78.80661pt}\LT@entry 
+    {1}{145.61324pt}\LT@entry 
+    {1}{99.68329pt}\LT@entry 
+    {1}{106.20671pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window.}}{53}{table.11}\protected@file@percent }
+\newlabel{tbl:comparison_estimands}{{11}{53}{Simulation comparison of KCOR and alternative estimands under selection-induced non-proportional hazards. Results are summarized across simulation scenarios (null scenarios: gamma-frailty null, non-gamma frailty, contamination, sparse events; effect scenarios: injected hazard increase/decrease). KCOR remains stable under selection-only regimes, while RMST inherits depletion bias and time-varying Cox captures non-proportional hazards without normalizing selection geometry. All methods were applied to identical simulation outputs. KCOR estimates in this grid used the earlier procedure, which fitted cumulative hazard over a single quiet window}{table.11}{}}
+\gdef \LT@xii {\LT@entry 
+    {1}{154.56912pt}\LT@entry 
+    {1}{160.56912pt}\LT@entry 
+    {1}{154.56912pt}}
+\@writefile{toc}{\contentsline {section}{KCOR Supplementary Information (SI)}{54}{section*.104}\protected@file@percent }
+\newlabel{kcor-supplementary-information-si}{{}{54}{KCOR Supplementary Information (SI)}{section*.104}{}}
+\@writefile{toc}{\contentsline {subsection}{S1. Overview}{54}{subsection*.105}\protected@file@percent }
+\newlabel{s1.-overview}{{}{54}{S1. Overview}{subsection*.105}{}}
+\@writefile{toc}{\contentsline {subsection}{S2. Extended diagnostics and failure modes}{54}{subsection*.106}\protected@file@percent }
+\newlabel{s2.-extended-diagnostics-and-failure-modes}{{}{54}{S2. Extended diagnostics and failure modes}{subsection*.106}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S1}{\ignorespaces KCOR working assumptions.}}{54}{table.1}\protected@file@percent }
+\newlabel{tbl:si_assumptions}{{S1}{54}{KCOR working assumptions}{table.1}{}}
+\gdef \LT@xiii {\LT@entry 
+    {1}{154.56912pt}\LT@entry 
+    {1}{160.56912pt}\LT@entry 
+    {1}{154.56912pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {S2}{\ignorespaces Empirical diagnostics associated with KCOR assumptions.}}{55}{table.2}\protected@file@percent }
+\newlabel{tbl:si_diagnostics}{{S2}{55}{Empirical diagnostics associated with KCOR assumptions}{table.2}{}}
+\gdef \LT@xiv {\LT@entry 
+    {1}{154.56912pt}\LT@entry 
+    {1}{160.56912pt}\LT@entry 
+    {1}{154.56912pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {S3}{\ignorespaces Identifiability criteria governing KCOR interpretation.}}{56}{table.3}\protected@file@percent }
+\newlabel{tbl:si_identifiability}{{S3}{56}{Identifiability criteria governing KCOR interpretation}{table.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S2.1 Optional NPH exponent model: estimator and failure signatures}{56}{subsubsection*.107}\protected@file@percent }
+\newlabel{s2.1-optional-nph-exponent-model-estimator-and-failure-signatures}{{}{56}{S2.1 Optional NPH exponent model: estimator and failure signatures}{subsubsection*.107}{}}
+\@writefile{toc}{\contentsline {subsection}{S3. Positive controls}{57}{subsection*.108}\protected@file@percent }
+\newlabel{s3.-positive-controls}{{}{57}{S3. Positive controls}{subsection*.108}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S3.1 Construction of injected effects}{57}{subsubsection*.109}\protected@file@percent }
+\newlabel{s3.1-construction-of-injected-effects}{{}{57}{S3.1 Construction of injected effects}{subsubsection*.109}{}}
+\newlabel{eq:pos-control-injection}{{14}{57}{S3.1 Construction of injected effects}{section*.110}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S1}{\ignorespaces Historical positive-control comparison. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. The lower panels show anchored cumulative hazard ratios reproducible directly from the raw counts. Table 9 gives the fitted endpoints. X-axis units are weeks since enrollment.}}{58}{figure.caption.111}\protected@file@percent }
+\newlabel{fig:pos_control_injected}{{S1}{58}{Historical positive-control comparison. Left panels show harm scenario (r=1.2), right panels show benefit scenario (r=0.8). Top row displays cohort hazard curves with effect window shaded. The lower panels show anchored cumulative hazard ratios reproducible directly from the raw counts. Table 9 gives the fitted endpoints. X-axis units are weeks since enrollment}{figure.caption.111}{}}
+\gdef \LT@xv {\LT@entry 
+    {1}{90.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{96.34972pt}\LT@entry 
+    {1}{90.34972pt}}
+\@writefile{toc}{\contentsline {subsection}{S4. Control-test specifications and simulation parameters}{59}{subsection*.112}\protected@file@percent }
+\newlabel{s4.-control-test-specifications-and-simulation-parameters}{{}{59}{S4. Control-test specifications and simulation parameters}{subsection*.112}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.0 Summary tables for control-test and simulation parameters}{59}{subsubsection*.113}\protected@file@percent }
+\newlabel{s4.0-summary-tables-for-control-test-and-simulation-parameters}{{}{59}{S4.0 Summary tables for control-test and simulation parameters}{subsubsection*.113}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {S4}{\ignorespaces Summary of control-test and simulation parameters referenced in Sections S4.2--S4.6. Values shown are representative defaults or grids used to probe the revised estimator; exact scripts and run settings are version-controlled in the repository.}}{59}{table.4}\protected@file@percent }
+\newlabel{tbl:si_sim_params}{{S4}{59}{Summary of control-test and simulation parameters referenced in Sections S4.2--S4.6. Values shown are representative defaults or grids used to probe the revised estimator; exact scripts and run settings are version-controlled in the repository}{table.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.1 Reference implementation and default operational settings}{59}{subsubsection*.114}\protected@file@percent }
+\newlabel{s4.1-reference-implementation-and-default-operational-settings}{{}{59}{S4.1 Reference implementation and default operational settings}{subsubsection*.114}{}}
+\gdef \LT@xvi {\LT@entry 
+    {1}{114.43875pt}\LT@entry 
+    {1}{120.43875pt}\LT@entry 
+    {1}{120.43875pt}\LT@entry 
+    {1}{114.43875pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {S5}{\ignorespaces Reference implementation and default operational settings.}}{60}{table.5}\protected@file@percent }
+\newlabel{tbl:si_defaults}{{S5}{60}{Reference implementation and default operational settings}{table.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.2 Negative controls}{60}{subsubsection*.115}\protected@file@percent }
+\newlabel{s4.2-negative-controls}{{}{60}{S4.2 Negative controls}{subsubsection*.115}{}}
+\@writefile{toc}{\contentsline {paragraph}{S4.2.1 Synthetic negative control: gamma-frailty null}{60}{paragraph*.116}\protected@file@percent }
+\newlabel{s4.2.1-synthetic-negative-control-gamma-frailty-null}{{}{60}{S4.2.1 Synthetic negative control: gamma-frailty null}{paragraph*.116}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S2}{\ignorespaces Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance \(\mittheta _0\). Bias is defined as \(\mathrm {KCOR}_{\mathrm {asymptote}} - 1\) at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown.}}{61}{figure.caption.117}\protected@file@percent }
+\newlabel{fig:si_kcor_bias_vs_theta}{{S2}{61}{Simulated-null summary: KCOR bias as a function of enrollment-time frailty variance \(\theta _0\). Bias is defined as \(\mathrm {KCOR}_{\mathrm {asymptote}} - 1\) at the end of follow-up in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown}{figure.caption.117}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S3}{\ignorespaces Synthetic negative control under strong selection (different curvature) but no effect: \(\mathrm {KCOR}(t)\) stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows \(\mathrm {KCOR}(t)\) remaining near 1.0 after normalization, which is the diagnostic behavior expected under the working model rather than proof that all confounding has been removed.}}{62}{figure.caption.118}\protected@file@percent }
+\newlabel{fig:neg_control_synthetic}{{S3}{62}{Synthetic negative control under strong selection (different curvature) but no effect: \(\mathrm {KCOR}(t)\) stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows \(\mathrm {KCOR}(t)\) remaining near 1.0 after normalization, which is the diagnostic behavior expected under the working model rather than proof that all confounding has been removed}{figure.caption.118}{}}
+\@writefile{toc}{\contentsline {paragraph}{S4.2.2 Empirical negative control: age-shift construction}{63}{paragraph*.119}\protected@file@percent }
+\newlabel{s4.2.2-empirical-negative-control-age-shift-construction}{{}{63}{S4.2.2 Empirical negative control: age-shift construction}{paragraph*.119}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.3 Positive control: injected effect}{63}{subsubsection*.120}\protected@file@percent }
+\newlabel{s4.3-positive-control-injected-effect}{{}{63}{S4.3 Positive control: injected effect}{subsubsection*.120}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.4 Sensitivity analysis parameters}{63}{subsubsection*.121}\protected@file@percent }
+\newlabel{s4.4-sensitivity-analysis-parameters}{{}{63}{S4.4 Sensitivity analysis parameters}{subsubsection*.121}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)}{63}{subsubsection*.123}\protected@file@percent }
+\newlabel{s4.5-tail-sampling-bimodal-selection-adversarial-selection-geometry}{{}{63}{S4.5 Tail-sampling / bimodal selection (adversarial selection geometry)}{subsubsection*.123}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S4}{\ignorespaces Sensitivity analysis summary showing \(\mathrm {KCOR}(t)\) values across parameter grid. Heatmaps display \(\mathrm {KCOR}(t)\) estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, \(\mathrm {KCOR}(t)\) varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons.}}{64}{figure.caption.122}\protected@file@percent }
+\newlabel{fig:sensitivity_overview}{{S4}{64}{Sensitivity analysis summary showing \(\mathrm {KCOR}(t)\) values across parameter grid. Heatmaps display \(\mathrm {KCOR}(t)\) estimates for different combinations of baseline weeks (rows) and quiet-window start offsets (columns). Across all comparisons, \(\mathrm {KCOR}(t)\) varies smoothly and modestly across a wide range of quiet-start offsets and baseline window lengths, with no qualitative changes in sign or magnitude, indicating robustness to reasonable parameter choices. All panels use a unified color scale centered at 1.0 to enable direct visual comparison across dose comparisons}{figure.caption.122}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S4.6 Joint frailty and treatment-effect simulation}{64}{subsubsection*.124}\protected@file@percent }
+\newlabel{s4.6-joint-frailty-and-treatment-effect-simulation}{{}{64}{S4.6 Joint frailty and treatment-effect simulation}{subsubsection*.124}{}}
+\@writefile{toc}{\contentsline {paragraph}{Design}{64}{paragraph*.125}\protected@file@percent }
+\newlabel{design}{{}{64}{Design}{paragraph*.125}{}}
+\newlabel{eq:si_individual_hazard_with_effect}{{15}{64}{Design}{section*.126}{}}
+\@writefile{toc}{\contentsline {subsection}{S5. Additional figures and diagnostics}{64}{subsection*.127}\protected@file@percent }
+\newlabel{s5.-additional-figures-and-diagnostics}{{}{64}{S5. Additional figures and diagnostics}{subsection*.127}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.1 Fit diagnostics}{65}{subsubsection*.128}\protected@file@percent }
+\newlabel{s5.1-fit-diagnostics}{{}{65}{S5.1 Fit diagnostics}{subsubsection*.128}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.2 Residual analysis}{65}{subsubsection*.129}\protected@file@percent }
+\newlabel{s5.2-residual-analysis}{{}{65}{S5.2 Residual analysis}{subsubsection*.129}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.3 Parameter stability checks}{65}{subsubsection*.130}\protected@file@percent }
+\newlabel{s5.3-parameter-stability-checks}{{}{65}{S5.3 Parameter stability checks}{subsubsection*.130}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.4 Quiet-window perturbation scan (empirical Czech data)}{65}{subsubsection*.131}\protected@file@percent }
+\newlabel{s5.4-quiet-window-perturbation-scan-empirical-czech-data}{{}{65}{S5.4 Quiet-window perturbation scan (empirical Czech data)}{subsubsection*.131}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S5}{\ignorespaces Quiet-window robustness scan: fitted enrollment-time frailty variance \(\hat {\mittheta }_{0,d}\) vs.~quiet-window midpoint date for the Czech 2021--2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Rows show birth decade and columns show dose. Each dot gives the fitted frailty variance for one window. All 78 fits passed.}}{66}{figure.caption.132}\protected@file@percent }
+\newlabel{fig:si_quiet_window_theta_scan}{{S5}{66}{Quiet-window robustness scan: fitted enrollment-time frailty variance \(\hat {\theta }_{0,d}\) vs.~quiet-window midpoint date for the Czech 2021--2024 enrollment cohort, using 12-month windows shifted monthly from April 2022 through April 2023. Rows show birth decade and columns show dose. Each dot gives the fitted frailty variance for one window. All 78 fits passed}{figure.caption.132}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.5 Quiet-window overlay plots}{66}{subsubsection*.133}\protected@file@percent }
+\newlabel{s5.5-quiet-window-overlay-plots}{{}{66}{S5.5 Quiet-window overlay plots}{subsubsection*.133}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S5.6 Robustness to age stratification}{66}{subsubsection*.134}\protected@file@percent }
+\newlabel{s5.6-robustness-to-age-stratification}{{}{66}{S5.6 Robustness to age stratification}{subsubsection*.134}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S6}{\ignorespaces Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{67}{figure.caption.135}\protected@file@percent }
+\newlabel{fig:si_yob1930}{{S6}{67}{Birth-year cohort 1930: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.caption.135}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S7}{\ignorespaces Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{68}{figure.caption.136}\protected@file@percent }
+\newlabel{fig:si_yob1940}{{S7}{68}{Birth-year cohort 1940: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.caption.136}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S8}{\ignorespaces Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment.}}{69}{figure.caption.137}\protected@file@percent }
+\newlabel{fig:si_yob1950}{{S8}{69}{Birth-year cohort 1950: KCOR(t) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior on registry data and does not support causal inference. X-axis units are weeks since enrollment}{figure.caption.137}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S9}{\ignorespaces Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \(\mathrm {KCOR}(t)\) shows little systematic drift, which is consistent with the estimator handling selection-induced curvature in this pseudo-null construction. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment.}}{70}{figure.caption.138}\protected@file@percent }
+\newlabel{fig:neg_control_20yr}{{S9}{70}{Empirical negative control with approximately 20-year age difference between cohorts. Even under extreme composition differences, \(\mathrm {KCOR}(t)\) shows little systematic drift, which is consistent with the estimator handling selection-induced curvature in this pseudo-null construction. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). Uncertainty bands (95\% bootstrap intervals) are shown. Data source: Czech Republic mortality and vaccination dataset processed into KCOR\_CMR aggregated format (negative-control construction; see Supplementary Information, SI). X-axis units are weeks since enrollment}{figure.caption.138}{}}
+\@writefile{toc}{\contentsline {subsection}{S6. Extended Czech empirical application}{70}{subsection*.139}\protected@file@percent }
+\newlabel{s6.-extended-czech-empirical-application}{{}{70}{S6. Extended Czech empirical application}{subsection*.139}{}}
+\@writefile{toc}{\contentsline {subsubsection}{S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data}{70}{subsubsection*.140}\protected@file@percent }
+\newlabel{s6.1-empirical-application-with-diagnostic-validation-czech-republic-national-registry-mortality-data}{{}{70}{S6.1 Empirical application with diagnostic validation: Czech Republic national registry mortality data}{subsubsection*.140}{}}
+\@writefile{toc}{\contentsline {paragraph}{S6.1.1 Illustrative empirical context: COVID-19 mortality data}{70}{paragraph*.141}\protected@file@percent }
+\newlabel{s6.1.1-illustrative-empirical-context-covid-19-mortality-data}{{}{70}{S6.1.1 Illustrative empirical context: COVID-19 mortality data}{paragraph*.141}{}}
+\@writefile{toc}{\contentsline {paragraph}{S6.1.2 Descriptive frailty-normalization behavior in the Czech application}{71}{paragraph*.142}\protected@file@percent }
+\newlabel{s6.1.2-descriptive-frailty-normalization-behavior-in-the-czech-application}{{}{71}{S6.1.2 Descriptive frailty-normalization behavior in the Czech application}{paragraph*.142}{}}
+\newlabel{eq:si_theta_near_zero}{{16}{71}{S6.1.2 Descriptive frailty-normalization behavior in the Czech application}{section*.143}{}}
+\gdef \LT@xvii {\LT@entry 
+    {1}{77.78123pt}\LT@entry 
+    {1}{92.76515pt}\LT@entry 
+    {1}{137.6397pt}\LT@entry 
+    {1}{97.23781pt}\LT@entry 
+    {1}{64.3311pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {S6}{\ignorespaces Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass.}}{72}{table.6}\protected@file@percent }
+\newlabel{tbl:si_diagnostic_gate}{{S6}{72}{Diagnostic gate for Czech application: KCOR results reported only where diagnostics pass}{table.6}{}}
+\newlabel{eq:si_theta_positive}{{17}{72}{S6.1.2 Descriptive frailty-normalization behavior in the Czech application}{section*.144}{}}
+\newlabel{eq:si_theta_near_zero_dose2}{{18}{72}{S6.1.2 Descriptive frailty-normalization behavior in the Czech application}{section*.145}{}}
+\gdef \LT@xviii {\LT@entry 
+    {1}{143.1559pt}\LT@entry 
+    {1}{166.32335pt}\LT@entry 
+    {1}{160.32335pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {S7}{\ignorespaces Estimated enrollment-time gamma-frailty variance by age band and vaccination status for Czech cohorts enrolled in 2021\_24.}}{73}{table.7}\protected@file@percent }
+\newlabel{tbl:si_frailty_variance}{{S7}{73}{Estimated enrollment-time gamma-frailty variance by age band and vaccination status for Czech cohorts enrolled in 2021\_24}{table.7}{}}
+\gdef \LT@xix {\LT@entry 
+    {1}{108.06506pt}\LT@entry 
+    {1}{158.69412pt}\LT@entry 
+    {1}{165.07443pt}\LT@entry 
+    {1}{37.88167pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {S8}{\ignorespaces Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021\_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.)}}{74}{table.8}\protected@file@percent }
+\newlabel{tbl:si_raw_hazards}{{S8}{74}{Ratio of observed cumulative mortality hazards for unvaccinated (Dose 0) versus fully vaccinated (Dose 2) Czech cohorts enrolled in 2021\_24. (Note: the all-ages row reflects aggregation effects and is not directly comparable to age-stratified rows.)}{table.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{S6.1.3 Illustrative application to national registry mortality data}{74}{paragraph*.146}\protected@file@percent }
+\newlabel{s6.1.3-illustrative-application-to-national-registry-mortality-data}{{}{74}{S6.1.3 Illustrative application to national registry mortality data}{paragraph*.146}{}}
+\@writefile{toc}{\contentsline {subsection}{S7. Computational environment and runtime notes}{74}{subsection*.148}\protected@file@percent }
+\newlabel{s7.-computational-environment-and-runtime-notes}{{}{74}{S7. Computational environment and runtime notes}{subsection*.148}{}}
+\@writefile{toc}{\contentsline {subsection}{S8. Joint-fit and nonlinear survivor-model validation}{74}{subsection*.149}\protected@file@percent }
+\newlabel{s8.-joint-fit-and-nonlinear-survivor-model-validation}{{}{74}{S8. Joint-fit and nonlinear survivor-model validation}{subsection*.149}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {S10}{\ignorespaces All-ages stress test: \(\mathrm {KCOR}(t)\) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment.}}{75}{figure.caption.147}\protected@file@percent }
+\newlabel{fig:si_allages}{{S10}{75}{All-ages stress test: \(\mathrm {KCOR}(t)\) trajectories comparing dose 2 and dose 3 to dose 0 for cohorts enrolled in ISO week 2022-26 and evaluated over calendar year 2023. KCOR curves are anchored at \(t_0 = 4\) weeks (i.e., plotted as \(\mathrm {KCOR}(t; t_0)\)). This figure is presented as an illustrative application demonstrating estimator behavior under extreme heterogeneity and does not support causal inference. X-axis units are weeks since enrollment}{figure.caption.147}{}}
+\gdef \@abspage@last{75}

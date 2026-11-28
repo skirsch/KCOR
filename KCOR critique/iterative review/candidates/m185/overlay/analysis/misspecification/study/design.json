@@ -1,0 +1,28 @@
+{
+  "scenarios": [
+    "gamma",
+    "lognormal",
+    "two_point",
+    "bimodal",
+    "correlated_gamma"
+  ],
+  "people_per_cohort": 100000,
+  "weeks": 120,
+  "baseline_weekly_k": 0.002,
+  "gamma": 0.0016346153846153847,
+  "variances": [
+    1.0,
+    0.3
+  ],
+  "skip": 2,
+  "anchor_index": 5,
+  "quiet_weeks": [
+    20,
+    80
+  ],
+  "cluster_size": 20,
+  "seed": 20261126,
+  "datasets": 100,
+  "bootstraps": 199,
+  "truth": 1
+}

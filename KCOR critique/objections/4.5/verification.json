@@ -1,0 +1,38 @@
+{
+  "cases": [
+    {
+      "case": "two first,31 later",
+      "quiet": 33,
+      "k": 0.0020000000000000026,
+      "theta": 2.000000000000022,
+      "status": "ok",
+      "n_fit": 35
+    },
+    {
+      "case": "all segments short",
+      "quiet": 30,
+      "k": 0.002000000000000425,
+      "theta": 2.000000000002309,
+      "status": "ok",
+      "n_fit": 32
+    },
+    {
+      "case": "ordinary first window",
+      "quiet": 41,
+      "k": 0.0020000000000000005,
+      "theta": 1.9999999999999045,
+      "status": "ok",
+      "n_fit": 41
+    },
+    {
+      "case": "insufficient total",
+      "quiet": 2,
+      "k": 0.001984133463248328,
+      "theta": NaN,
+      "status": "insufficient_data",
+      "n_fit": 2
+    }
+  ],
+  "table8_points_and_first_draw": "identical to m97",
+  "full_999_draws_rerun": false
+}

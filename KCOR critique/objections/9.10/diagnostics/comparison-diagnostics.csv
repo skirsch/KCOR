@@ -1,0 +1,13 @@
+mode,enrollment,pair,insufficient_signal_point,insufficient_signal_draws,residual_screen_point,residual_screen_draws,residual_screen_unavailable_point,residual_screen_unavailable_draws,theta_upper_bound_point,theta_upper_bound_draws,baseline_rate_bound_point,baseline_rate_bound_draws,weak_identification_point,weak_identification_draws,insufficient_deaths_point,insufficient_deaths_draws,failed_fit_point,failed_fit_draws,legacy_relative_error_point,legacy_relative_error_draws,gap_clamp_point,gap_clamp_draws
+identified_only,2021_24,1/0,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,False,0
+identified_only,2021_24,2/0,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,False,0
+identified_only,2021_24,2/1,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,False,0
+identified_only,2022_06,1/0,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,True,999
+identified_only,2022_06,2/0,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,True,991
+identified_only,2022_06,2/1,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,True,992
+forced_alpha,2021_24,1/0,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,True,999
+forced_alpha,2021_24,2/0,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,True,999
+forced_alpha,2021_24,2/1,False,0,True,999,False,0,False,0,False,0,False,0,False,0,False,0,False,0,True,999
+forced_alpha,2022_06,1/0,False,0,True,997,False,0,False,0,False,0,False,0,False,0,False,0,False,0,False,13
+forced_alpha,2022_06,2/0,False,0,True,986,False,0,False,0,False,0,False,0,False,0,False,0,False,0,False,93
+forced_alpha,2022_06,2/1,False,0,False,986,False,0,False,0,False,0,False,0,False,0,False,0,False,0,False,90

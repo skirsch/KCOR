@@ -1,0 +1,86 @@
+{
+  "introduced_commit": "6b727556",
+  "date": "2026-01-11",
+  "input": "data/Czech/KCOR_CMR.xlsx at that commit",
+  "input_sha256": "2940a9b1f05d76863d101abdf01bc1487ab661172eb18a02b6d8fe49d9624f8f",
+  "interpretation": "Near match using age in calendar 2024, two skipped weeks, known-only total. Exact historical calculation not located.",
+  "rows": [
+    {
+      "birth_band": 1975,
+      "published": [
+        0.00526,
+        0.004117
+      ],
+      "archived_count_recalculation": [
+        0.005259445285349154,
+        0.004116745640856656
+      ]
+    },
+    {
+      "birth_band": 1965,
+      "published": [
+        0.014969,
+        0.009582
+      ],
+      "archived_count_recalculation": [
+        0.014968218759240511,
+        0.009581854719241318
+      ]
+    },
+    {
+      "birth_band": 1955,
+      "published": [
+        0.045475,
+        0.023136
+      ],
+      "archived_count_recalculation": [
+        0.04546747482903106,
+        0.023134401257636765
+      ]
+    },
+    {
+      "birth_band": 1945,
+      "published": [
+        0.123097,
+        0.057675
+      ],
+      "archived_count_recalculation": [
+        0.12304162867147497,
+        0.05766326173462671
+      ]
+    },
+    {
+      "birth_band": 1935,
+      "published": [
+        0.307169,
+        0.167345
+      ],
+      "archived_count_recalculation": [
+        0.3068252970096434,
+        0.1672473178581385
+      ]
+    },
+    {
+      "birth_band": 1925,
+      "published": [
+        0.776341,
+        0.517284
+      ],
+      "archived_count_recalculation": [
+        0.7741548472158284,
+        0.5163524911327994
+      ]
+    },
+    {
+      "birth_band": "known-only total",
+      "published": [
+        0.02316,
+        0.073323
+      ],
+      "archived_count_recalculation": [
+        0.023158021885805714,
+        0.0733042268130768
+      ]
+    }
+  ]
+}

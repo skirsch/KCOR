@@ -1,0 +1,19 @@
+--- m152/analysis/table8/table8_bootstrap.py
++++ m153/analysis/table8/table8_bootstrap.py
+@@ -39,14 +39,12 @@
+     frame = frame[frame.DateDied >= start]
+     # Match ordinary and person-bootstrap validation before combining source rows.
+     sys.path.insert(0, str(HERE.parents[1] / "code"))
+-    from fixed_cohort_history import invalid_components
++    from fixed_cohort_history import invalid_components, rectangular_overlap_counts
+     bad = invalid_components(frame, start, layout="table8")
+     if bad:
+         raise ValueError(f"invalid source component histories: {bad}")
+     group = frame.groupby(["YearOfBirth", "Dose", "DateDied"])[["Alive", "Dead"]].sum()
+-    dates = pd.date_range(start, frame.DateDied.max(), freq="7D")
+-    index = pd.MultiIndex.from_product([[1940, 1950, 1960], range(3), dates], names=group.index.names)
+-    assert group.index.equals(index)
++    dates, group = rectangular_overlap_counts(group,start,frame.DateDied.max())
+     alive, dead = (group[c].to_numpy(dtype=int).reshape(3, 3, -1) for c in ("Alive", "Dead"))
+     np.testing.assert_array_equal(alive[:, :, :-1] - dead[:, :, :-1], alive[:, :, 1:])
+     outcomes = np.concatenate([dead, (alive-dead)[:, :, -1:]], axis=2)

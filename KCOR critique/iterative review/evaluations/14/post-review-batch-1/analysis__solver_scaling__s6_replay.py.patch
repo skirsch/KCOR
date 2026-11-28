@@ -1,0 +1,20 @@
+--- a/analysis/solver_scaling/s6_replay.py
++++ b/analysis/solver_scaling/s6_replay.py
+@@ -37,7 +37,7 @@
+     return dict(k=float(k),theta=float(theta),theta_raw=float(diag.get("theta0_raw",th)),
+                 status=diag["status"],upper_bound=bool(diag.get("theta_hit_bound",False)),
+                 residual_flag=bool(diag.get("sampling_flag",False)),growth=float(inv[-1]/inv[anchor]),
+-                gap_first_pass=diag.get("gap_first_pass"),gap_seed_status=diag.get("gap_seed_status","not_assessed"),
++                gap_first_pass=[(float(w),float(v) if v is not None and np.isfinite(v) else None) for w,v in (diag.get("gap_first_pass") or [])],gap_seed_status=diag.get("gap_seed_status","not_assessed"),
+                 fit_mask=np.asarray(diag.get("fit_mask_theta",np.zeros(len(t),bool)),bool).tolist())
+ 
+ def worker(task):
+@@ -49,7 +49,7 @@
+           theta0=a["theta"],theta2=b["theta"],theta0_raw=a["theta_raw"],theta2_raw=b["theta_raw"],
+           bound0=a["upper_bound"],bound2=b["upper_bound"],status0=a["status"],status2=b["status"],
+           residual0=a["residual_flag"],residual2=b["residual_flag"],kcor=b["growth"]/a["growth"],
+-          gap0=json.dumps(a["gap_first_pass"]),gap2=json.dumps(b["gap_first_pass"]),gap_seed0=a["gap_seed_status"],gap_seed2=b["gap_seed_status"]))
++          gap0=json.dumps(a["gap_first_pass"],allow_nan=False),gap2=json.dumps(b["gap_first_pass"],allow_nan=False),gap_seed0=a["gap_seed_status"],gap_seed2=b["gap_seed_status"]))
+     return rows
+ 
+ def main():

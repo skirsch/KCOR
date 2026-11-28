@@ -1,0 +1,40 @@
+--- m136/code/KCOR.py
++++ m137/code/KCOR.py
+@@ -6707,6 +6707,8 @@
+         else:
+             enrollment_date = df["DateDied"].min()
+ 
++        source_horizon = df["DateDied"].max()
++
+         # Apply debug age filter (skip in MC mode since YearOfBirth=-2 is always used)
+         if YEAR_RANGE and not MONTE_CARLO_MODE:
+             start_year, end_year = YEAR_RANGE
+@@ -6728,6 +6730,15 @@
+             df = df[df["Dose"].isin(valid_doses)]
+             dual_print(f"[DEBUG] Filtered to doses {valid_doses} (max dose {max_dose}): {len(df)} rows")
+         
++        # Validate source cells before age bucketing or sex/DCCI aggregation.
++        # Normal fixed-cohort sheets have one declared calendar horizon.
++        source_bad = {}
++        if not MONTE_CARLO_MODE:
++            from fixed_cohort_history import invalid_components
++            source_bad = invalid_components(df, enrollment_date, source_horizon, os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
++            for key, reasons in source_bad.items():
++                dual_print(f"[WARN] KCOR_SOURCE_HISTORY,EnrollmentDate={sh},yob={key[0]},dose={key[1]},reason={reasons}")
++
+         # Aggregate across sexes for each dose/date/age combination
+         # Optionally bucket YearOfBirth into AGE_RANGE-year bins (e.g., 10 -> 1920, 1930, ...)
+         # In MC mode, apply bucketing to individual birth years but preserve YOB=-2 (all ages)
+@@ -6785,6 +6796,12 @@
+         df["t"] = (df["DateDied"] - pd.Timestamp(enrollment_date)).dt.total_seconds() / (7 * 86400.)
+         calendar_bad = {key for key, g in df.groupby(time_group_cols, sort=False)
+                         if not _complete_week_history(g.sort_values("DateDied")["t"])}
++        # Translate invalid source cells into their fitted age group.
++        for (age, dose) in source_bad:
++            bucket = age
++            if kcor6_enabled_effective and int(AGE_RANGE or 1) > 1 and age >= 0:
++                bucket = (int(age) // int(AGE_RANGE)) * int(AGE_RANGE)
++            calendar_bad.add((bucket, dose))
+         # If reconstructing an aggregate, an absent component week cannot
+         # become an apparently valid aggregate count.
+         if -2 not in df["YearOfBirth"].values:

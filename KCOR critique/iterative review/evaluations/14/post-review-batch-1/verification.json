@@ -1,0 +1,63 @@
+{
+  "candidate": "m170",
+  "parent": "m169",
+  "parent_manifest_files_verified_unchanged": 1370,
+  "implemented": [
+    "14.5",
+    "14.6",
+    "14.7",
+    "14.8",
+    "14.9",
+    "14.10",
+    "14.11",
+    "14.12"
+  ],
+  "remaining": [
+    "14.1",
+    "14.2",
+    "14.3",
+    "14.4"
+  ],
+  "regression": {
+    "reference_indices": [
+      59,
+      60
+    ],
+    "unanchored_point": 1.068548139961029,
+    "unanchored_interval": [
+      0.9045636138274488,
+      1.115132924524487
+    ],
+    "valid_draws": 3,
+    "unanchored_flagged_draws": [
+      0,
+      0
+    ],
+    "unanchored_point_flags": [
+      false,
+      false
+    ],
+    "anchored_flagged_draws": [
+      0,
+      3
+    ],
+    "anchored_point_flags": [
+      false,
+      true
+    ],
+    "exhausted_anchored_value": null
+  },
+  "tests": {
+    "round13_batch": "passed",
+    "round13_unanchored_bootstrap": "passed",
+    "round14_batch": "passed",
+    "historical_figure_sha256": "both exact",
+    "default_mean_interval_mock_reps": "passed",
+    "s6_strict_json_arrays": 13986,
+    "s6_changed_cells": 349,
+    "s6_diagnostic_rows_identical": 42,
+    "table8_archive_files_identical": 4,
+    "table9_archive_files_identical": 3
+  },
+  "new_full_primary_bootstrap": false
+}

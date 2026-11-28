@@ -1,0 +1,80 @@
+{
+  "valid": {
+    "KCOR": 0.8959149650873316,
+    "KCOR_anchored": 0.8959149650873316,
+    "KCOR_unanchored": 0.8932816954887112,
+    "anchor_status": "ok",
+    "CI_lower": 0.8926847485236737,
+    "CI_upper": 0.9147826382890827,
+    "CI_undefined_anchor_draws": 0,
+    "CI_missing_draws": 0,
+    "CI_unanchored_lower": 0.851855238708037,
+    "CI_unanchored_upper": 0.9325657536604612,
+    "CI_unanchored_valid_draws": 3
+  },
+  "invalid": {
+    "KCOR": null,
+    "KCOR_anchored": null,
+    "KCOR_unanchored": 0.6288911268844093,
+    "anchor_status": "undefined_reference_ratio",
+    "CI_lower": null,
+    "CI_upper": null,
+    "CI_undefined_anchor_draws": 3,
+    "CI_missing_draws": 0,
+    "CI_unanchored_lower": 0.6015228687982757,
+    "CI_unanchored_upper": 0.6433398077080311,
+    "CI_unanchored_valid_draws": 3
+  },
+  "mixed": {
+    "KCOR": 502.3074027475159,
+    "KCOR_anchored": 502.3074027475159,
+    "KCOR_unanchored": 0.6289281105059251,
+    "anchor_status": "ok",
+    "CI_lower": null,
+    "CI_upper": null,
+    "CI_undefined_anchor_draws": 4,
+    "CI_missing_draws": 0,
+    "CI_unanchored_lower": 0.6072746417564081,
+    "CI_unanchored_upper": 0.6705457642703243,
+    "CI_unanchored_valid_draws": 12
+  },
+  "aggregate": {
+    "KCOR": null,
+    "KCOR_anchored": null,
+    "KCOR_unanchored": 0.6288911268844093,
+    "anchor_status": "undefined_reference_ratio",
+    "CI_lower": null,
+    "CI_upper": null,
+    "CI_undefined_anchor_draws": 0,
+    "CI_missing_draws": 0,
+    "CI_unanchored_lower": null,
+    "CI_unanchored_upper": null,
+    "CI_unanchored_valid_draws": 0
+  },
+  "invalid_pooled": {
+    "KCOR": null,
+    "KCOR_anchored": null,
+    "KCOR_unanchored": null,
+    "anchor_status": "pooled_no_valid_reference",
+    "CI_lower": null,
+    "CI_upper": null,
+    "CI_undefined_anchor_draws": 3,
+    "CI_missing_draws": 0,
+    "CI_unanchored_lower": null,
+    "CI_unanchored_upper": null,
+    "CI_unanchored_valid_draws": 0
+  },
+  "mixed_pooled": {
+    "KCOR": 502.3074027475161,
+    "KCOR_anchored": 502.3074027475161,
+    "KCOR_unanchored": null,
+    "anchor_status": "pooled_available_strata",
+    "CI_lower": null,
+    "CI_upper": null,
+    "CI_undefined_anchor_draws": 4,
+    "CI_missing_draws": 0,
+    "CI_unanchored_lower": null,
+    "CI_unanchored_upper": null,
+    "CI_unanchored_valid_draws": 0
+  }
+}

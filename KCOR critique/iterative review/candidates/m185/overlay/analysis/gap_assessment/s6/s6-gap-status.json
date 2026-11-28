@@ -1,0 +1,16 @@
+{
+  "('2021_24', 1975, 0)": "not_assessed",
+  "('2021_24', 1975, 2)": "not_assessed",
+  "('2021_24', 1965, 0)": "not_assessed",
+  "('2021_24', 1965, 2)": "not_assessed",
+  "('2021_24', 1955, 0)": "no_deficit_detected",
+  "('2021_24', 1955, 2)": "no_deficit_detected",
+  "('2021_24', 1945, 0)": "no_deficit_detected",
+  "('2021_24', 1945, 2)": "no_deficit_detected",
+  "('2021_24', 1935, 0)": "no_deficit_detected",
+  "('2021_24', 1935, 2)": "no_deficit_detected",
+  "('2021_24', 1925, 0)": "no_deficit_detected",
+  "('2021_24', 1925, 2)": "no_deficit_detected",
+  "('2021_24', -2, 0)": "no_deficit_detected",
+  "('2021_24', -2, 2)": "no_deficit_detected"
+}

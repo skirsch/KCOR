@@ -1,0 +1,62 @@
+--- /dev/null
++++ b/test/test_round11_batch.py
+@@ -0,0 +1,59 @@
++﻿"""Round 11 approved corrections: representation, workbook and dedicated replay."""
++from pathlib import Path
++import os,sys,tempfile,io
++from contextlib import redirect_stdout,redirect_stderr
++import pandas as pd,numpy as np
++ROOT=Path(__file__).resolve().parents[1]
++sys.path[:0]=[str(ROOT/'test'),str(ROOT/'code'),str(ROOT/'analysis/table8')]
++from test_round7_workbook import K,run,input_frame
++from bootstrap_reporting import histories,gap_diagnostic,annotate_residual_screen
++import table8_bootstrap as T
++from pooling import expected_deaths_weights
++SHEET='2021_24'
++def ordinary():
++    f=input_frame(SHEET); f.loc[f.YearOfBirth.eq(1940),'YearOfBirth']=-1
++    g=f.groupby(['Dose','Sex','DateDied','ISOweekDied'],as_index=False)[['Alive','Dead']].sum();g['YearOfBirth']=-2
++    with_total=pd.concat([f,g],ignore_index=True)
++    outputs=[run(SHEET,x) for x in (f,with_total)]
++    sel=lambda x:x[x.YearOfBirth.eq(-2)].KCOR.to_numpy()
++    np.testing.assert_allclose(sel(outputs[0]),sel(outputs[1]),equal_nan=True,rtol=1e-13)
++    print('all ages invariant',sel(outputs[0])[-1])
++    h1=histories(f,SHEET,'disjoint');h2=histories(f,SHEET.replace('_','-'),'disjoint')
++    for (_,a),(_,b) in zip(h1[1],h2[1]):np.testing.assert_array_equal(a,b)
++    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
++        src=Path(tmp)/'in.xlsx';dst=Path(tmp)/'out.xlsx'; f.to_excel(src,sheet_name=SHEET,index=False)
++        os.environ['KCOR_BOOTSTRAP_DRAWS']='0'
++        K.ENROLLMENT_DATES=[SHEET];K.OVERRIDE_DOSE_PAIRS=[(1,0)]
++        with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()): K.process_workbook(str(src),str(dst))
++        about=pd.read_excel(dst,sheet_name='About').set_index('Field').Value
++        assert str(about['YEAR_RANGE'])==str(K.YEAR_RANGE) and int(about['KCOR_NORMALIZATION_WEEKS'])==K.KCOR_NORMALIZATION_WEEKS
++        by=pd.read_excel(dst,sheet_name='by_dose');by=by.sort_values(['YearOfBirth','Dose','Date'])
++        np.testing.assert_allclose(by.Cumu_Person_Time,by.groupby(['YearOfBirth','Dose']).Alive.cumsum())
++        rows=pd.read_excel(dst,sheet_name='dose_pairs');assert rows[rows.YearOfBirth.eq(0)].theta_num.isna().all()
++        assert 'residual_screen_flag' in rows and 'CI_residual_flagged_draws' in rows
++    z=pd.DataFrame([dict(EnrollmentDate=SHEET,YearOfBirth=1950,Dose_num=1,Dose_den=0),dict(EnrollmentDate=SHEET,YearOfBirth=0,Dose_num=1,Dose_den=0,pool_contributors='1950')])
++    annotate_residual_screen(z,{(SHEET,1950,1):{'sampling_diagnostic':{'sampling_n':3,'sampling_flag':True}},(SHEET,1950,0):{'sampling_diagnostic':{'sampling_n':3,'sampling_flag':False}}})
++    assert z.residual_screen_flag.all() and not z.residual_screen_unavailable.any()
++    d,s=gap_diagnostic({(SHEET,1950,1):[(70.,np.nan)]},[{(SHEET,1950,1):[(70.,.02)]}])
++    assert len(d)==1 and d[0]['status']=='not_assessed' and d[0]['reason']=='point_offset_unavailable'
++    print('reporting regressions passed')
++def replay():
++    from test_round10_batch import overlap_fixture
++    f=overlap_fixture();m=f.YearOfBirth.eq(1940)&f.Dose.eq(0)&f.Sex.eq('F')
++    f['Alive']=f.Alive.astype(float);f.loc[m,'Alive']+=.5;f.loc[f.YearOfBirth.eq(1960)&f.Dose.eq(0)&f.Sex.eq('F'),'Alive']+=.5
++    b=io.BytesIO();f.to_excel(b,sheet_name=SHEET,index=False);b.seek(0)
++    try:T.read_population(b,SHEET)
++    except ValueError:pass
++    else:raise AssertionError('fractional counts accepted')
++    os.environ['KCOR_BOOTSTRAP_LAYOUT']='table8'
++    pop=[T.read_population(ROOT/'analysis/table8/input.xlsx',s) for s in T.SHEETS]
++    for kind in ['original','exhausted','sparse']:
++        dates,cells=pop[0];c=cells.copy()
++        if kind=='exhausted':c[0,2,29]+=c[0,2,30:].sum();c[0,2,30:]=0
++        if kind=='sparse':c[0,:,-1]+=c[0,:,:4].sum(axis=1);c[0,:,:4]=0
++        T.initialize([(dates,c),pop[1]],'revised');v=T.estimate(0,0)[0]
++        print(kind,v,flush=True)
++        if kind=='exhausted':assert np.isfinite(v[0]) and np.isnan(v[1]) and np.isnan(v[2])
++        elif kind=='sparse':assert np.isfinite(v).all()
++        else:np.testing.assert_allclose(v,[1.01619311434,1.04559921965,1.02893751679],rtol=1e-7)
++if __name__=='__main__':ordinary();replay()

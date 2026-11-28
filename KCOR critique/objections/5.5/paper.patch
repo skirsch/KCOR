@@ -1,0 +1,19 @@
+--- m106/documentation/preprint/paper.md
++++ m107/documentation/preprint/paper.md
+@@ -568,11 +568,11 @@
+ The person-level bootstrap procedure for KCOR proceeds as follows:
+ 
+ 1. **Resample people at enrollment.**  
+-Use all eligible people alive at the start of the selected enrollment week for the original estimate. For each bootstrap replicate, draw the same number of complete records with replacement from this pooled population. Retain each drawn person's cohort characteristics and event history, including the original death week if a death occurred. Rebuild weekly deaths and numbers at risk from the sampled records. In each cohort,
+-$$
+-N_d(t)=N_d(0)-\sum_{s<t} d_d(s)
+-$$
+-holds within each replicate because each sampled copy contributes to the risk set at the start of each week it is still alive.
++Use all eligible people alive at the start of the selected enrollment week for the original estimate. In the ordinary disjoint-cohort implementation, resample complete person records with replacement separately within each birth-year and dose group, keeping its observed enrollment size fixed. Sex and comorbidity composition within these groups may vary. This estimates uncertainty conditional on the observed birth-year and dose enrollment counts. For the overlapping age-shift controls in Table 8, draw the observed total number of people from the pooled disjoint components and rebuild the overlapping groups from that same draw; the component sizes may vary. Retain each drawn person's cohort characteristics and complete event history, including the original week of death or nondeath exit. Rebuild weekly deaths and numbers at risk from the sampled records. In each cohort,
++$$
++N_d(t)=N_d(0)-\sum_{s<t}\big[d_d(s)+e_d(s)\big]
++$$
++holds within each replicate, where $e_d(s)$ denotes nondeath exits between the start of week $s$ and the start of week $s+1$. Each sampled copy contributes to the risk set until death or another recorded exit; for death-only histories $e_d(s)=0$.
+ 
+ 2. **Re-estimate frailty parameters.** For each bootstrap replicate, re-estimate $(\hat{k}_d,\hat{\theta}_{0,d})$ independently for each cohort $d$ using the resampled data, applying the same delta-iteration pipeline and quiet-window definitions as in the primary analysis.
+ 

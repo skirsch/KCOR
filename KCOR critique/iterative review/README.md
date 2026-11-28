@@ -1,5 +1,7 @@
 # KCOR revision workspace
 
+**Current evaluated edition: [m185](candidates/m185/README.md).** The previously packaged `revised/` folder and earlier checkpoints remain historical editions. For m185 use the candidate materializer, current PDF pair and [round 21 status](../CURRENT-STATE.md); the older build instructions below apply to the earlier editions.
+
 Use the [x.y objection index](../README.md) to find the evidence, checks and decisions for any individual objection.
 
 | Material | Location |

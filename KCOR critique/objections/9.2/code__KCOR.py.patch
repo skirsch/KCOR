@@ -1,0 +1,52 @@
+--- m144/code/KCOR.py
++++ m145/code/KCOR.py
+@@ -6107,7 +6107,7 @@
+         import traceback
+         traceback.print_exc()
+ 
+-def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log", *, bootstrap_frames=None, return_rows=False):
++def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log", *, bootstrap_frames=None, return_rows=False, sensitivity_all_ages_only=False):
+     
+     # Set up dual output (console + file)
+     global ENROLLMENT_DATES  # Declare global before any reference to ENROLLMENT_DATES
+@@ -6342,13 +6342,13 @@
+             for sh in sheets_to_process:
+                 raw=pd.read_excel(src_path,sheet_name=sh)
+                 raw["DateDied"]=pd.to_datetime(raw["DateDied"])
+-                # Same explicit aggregate selector as the ordinary estimator.
+-                source=raw[_all_age_source_mask(raw)].copy()
+-                if source.empty:
++                # Preserve the entire sheet so the ordinary estimator checks the
++                # same calendar and source histories before selecting all ages.
++                if not _all_age_source_mask(raw).any():
+                     raise ValueError(f"No supported all-ages source in {sh}")
+                 ENROLLMENT_DATES=[sh]
+                 report_date=pd.Timestamp(get_reporting_date(sh))
+-                dual_print(f"[SA] {sh}: reporting date {report_date.date()}, source rows {len(source)}")
++                dual_print(f"[SA] {sh}: reporting date {report_date.date()}, source rows {len(raw)}")
+                 for off in quiet_start_offsets:
+                     iso=(start+timedelta(weeks=int(off))).isocalendar()
+                     start_iso=f"{iso.year}-{iso.week:02d}"
+@@ -6357,7 +6357,7 @@
+                     with TemporaryDirectory() as temp:
+                         with redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):
+                             rows=process_workbook(src_path,os.path.join(temp,"ordinary.xlsx"),
+-                                "ordinary.log",bootstrap_frames={sh:source},return_rows=True)
++                                "ordinary.log",bootstrap_frames={sh:raw},return_rows=True, sensitivity_all_ages_only=True)
+                     rows=rows[rows.YearOfBirth.eq(-2)].copy()
+                     for num,den in get_dose_pairs(sh):
+                         pair=rows[rows.Dose_num.eq(num)&rows.Dose_den.eq(den)]
+@@ -6506,6 +6506,13 @@
+             source_bad = invalid_components(df, enrollment_date, source_horizon, os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
+             for key, reasons in source_bad.items():
+                 dual_print(f"[WARN] KCOR_SOURCE_HISTORY,EnrollmentDate={sh},yob={key[0]},dose={key[1]},reason={reasons}")
++
++        # The sensitivity sweep needs only the all-ages output. Once the full
++        # source calendar and every source history have been validated, avoid
++        # fitting unrelated ages when an explicit inclusive source is available.
++        # For reconstructed all ages retain all source components.
++        if sensitivity_all_ages_only and (df["YearOfBirth"].eq(-2).any() or os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint") == "table8"):
++            df = df[_all_age_source_mask(df)].copy()
+ 
+         # Aggregate across sexes for each dose/date/age combination
+         # Optionally bucket YearOfBirth into AGE_RANGE-year bins (e.g., 10 -> 1920, 1930, ...)

@@ -1,0 +1,35 @@
+{
+  "candidate": "m138",
+  "mode": "identified_only (module off)",
+  "source": {
+    "data/Czech/KCOR_CMR.xlsx": "b736e53c4d84d709c68ff364f2a415483e3d26b35669debd8bdae3f82c7a6c9c",
+    "data/Czech/Czech.yaml": "1cdf7b929ee46ffed0fc8e8abd5d90e50834d116cf38e35e1a0b37e21a8ed1b8",
+    "code/KCOR.py": "4d46c6fec395cc974328b4eb47ff534f49caa829a9fa61566aa6ed98808aa66e",
+    "code/kcor_survivor.py": "3a5c22439ab1286ccf18f12360d50a2827bb373d3de2674807cc5149b3e5f1a6",
+    "code/fixed_cohort_history.py": "feb7ee7ff151209a11acde47b5a2019da75a9770f9ee1d43bbc0457fbe05af2f",
+    "code/generate_sensitivity_figure.py": "7bbea65305b01ae3fc0b838c52744122525b691c50de1c69a9b71fb611397bf2",
+    "analysis/sensitivity/current/KCOR_SA.xlsx": "34aecfa6bfff8f381993cb29fb49bb8233b462ccdef8ea96b6e914afc1240989",
+    "analysis/sensitivity/current/KCOR_SA_cells.csv": "feb198f9dd554cb98ed77c6d34cbd81413d4bce44cac85714cceea44d0030369"
+  },
+  "reporting": "one year from enrollment, nearest Monday",
+  "offsets": [
+    -12,
+    -8,
+    -4,
+    0,
+    4,
+    8,
+    12
+  ],
+  "reference_weeks": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "quiet_start": "2023-01",
+  "quiet_end": "2023-52"
+}

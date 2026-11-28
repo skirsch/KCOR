@@ -1,0 +1,12 @@
+﻿Building LaTeX: documentation/preprint/paper.md -> documentation/preprint/paper.tex
+Building PDF: documentation/preprint/paper.tex -> documentation/preprint/paper.pdf
+make : miktex-dvipdfmx: major issue: So far, you have not checked for MiKTeX updates.
+At line:2 char:280
++ ... 17'); try { make -B paper 'SHELL=C:/Program Files/Git/usr/bin/sh.exe' ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (miktex-dvipdfmx...MiKTeX updates.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+xelatex: major issue: So far, you have not checked for MiKTeX updates.
+miktex-dvipdfmx: major issue: So far, you have not checked for MiKTeX updates.
+xelatex: major issue: So far, you have not checked for MiKTeX updates.

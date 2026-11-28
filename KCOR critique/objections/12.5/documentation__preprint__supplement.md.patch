@@ -1,0 +1,44 @@
+--- a/documentation/preprint/supplement.md
++++ b/documentation/preprint/supplement.md
+@@ -153,6 +153,7 @@
+ | S4.2.1 | Synthetic validation | Data source / scripts | Repository simulation scripts | Used for $\theta_0$ recovery and null-behavior checks |
+ | S4.2.1 | Synthetic validation | Frailty heterogeneity grid | Prespecified varying grid | Includes weak- and strong-curvature regimes |
+ | S4.2.1 | Synthetic validation | Baseline model in estimator | Gompertz with fixed $\gamma$ | Aligns with main-text estimator |
++| S4.2.1 | Historical synthetic illustration | Estimator | Four-parameter log-hazard relaxation fit across full follow-up | Five-class mixture; not current gamma-frailty inversion |
+ | S4.2.1 | Synthetic validation | Time horizon | Multi-year follow-up | Sufficient to probe identifiability |
+ | S4.2.2 | Empirical negative control | Data source | Czech admin registry data (KCOR_CMR) | Aggregated cohorts |
+ | S4.2.2 | Empirical negative control | Construction | Age strata remapped to pseudo-doses | Preserves a pseudo-null by design |
+@@ -180,19 +181,19 @@
+ 
+ Negative controls are used to evaluate the behavior of KCOR under settings where the true effect is known to be null, while allowing substantial heterogeneity in baseline risk and selection-induced depletion. Two complementary classes of negative controls are considered: (i) fully synthetic simulations used to assess both $\theta_0$ recovery and null KCOR behavior, and (ii) empirical registry-based constructions that preserve a pseudo-null by repurposing age strata as pseudo-exposures without selective sampling. Together, these controls assess whether KCOR remains stable in the presence of non-proportional hazards arising from selection rather than treatment.
+ 
+-#### S4.2.1 Synthetic negative control: gamma-frailty null
+-
+-The synthetic negative control (Figure @fig:neg_control_synthetic) is a fully specified simulation designed to induce **strong selection-induced depletion curvature under a true null effect**. The separate multiwave recovery example uses expected weekly deaths and fixes the baseline rate at the first observed hazard, which equals the generating rate. It checks recovery of enrollment-time frailty variance and alignment of the quiet windows under those conditions. Near-1 behavior here is interpreted as a diagnostic implication under the working model, not as stand-alone proof that the estimator is correct.
++#### S4.2.1 Synthetic negative controls: gamma-frailty recovery and historical illustration
++
++The historical synthetic negative control (Figure @fig:neg_control_synthetic) illustrates strong depletion curvature under a fixed-frailty null. Its generator (`code/generate_pathological_neg_control_figs.py`) fits separate four-parameter log-hazard relaxation curves over the full follow-up of a five-class frailty mixture and anchors the ratio of the resulting normalized cumulative hazards. It does not fit gamma frailty variance or use the current quiet-window inversion procedure. The separate multiwave recovery example uses expected weekly deaths and fixes the baseline rate at the first observed hazard, which equals the generating rate. It checks recovery of enrollment-time frailty variance and alignment of the quiet windows under those conditions. The historical figure is retained as an illustration of earlier normalization, not as evidence of recovery under the revised estimator. The current-fitter study is in SI S9.
+ 
+ Parameter values and scripts are summarized in Table @tbl:si_sim_params.
+ 
+-Both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
++In the historical illustration, both cohorts share identical per-frailty-group death probabilities; only the mixture weights differ. This induces different cohort-level curvature under the null.
+ 
+ Figure S2 provides a compact summary of observed week-52 KCOR deviation from one as a function of frailty variance under the same synthetic-null grid used in main-text Table 7.
+ 
+ ![Simulated-null summary: observed week-52 KCOR deviation from one as a function of enrollment-time frailty variance $\theta_0$. Deviation is defined as week-52 $\mathrm{KCOR} - 1$ in the synthetic-null grid (no treatment effect), reflecting cumulative deviation under the null rather than instantaneous hazard bias. This figure is a diagnostic summary under the working model, not proof that the model is true. Points show single-run estimates from the grid; no error bars are shown.](figures/fig_si_kcor_bias_vs_theta.png){#fig:si_kcor_bias_vs_theta}
+ 
+-![Synthetic negative control under strong selection (different curvature) but no effect: $\mathrm{KCOR}(t)$ stays near 1 under the synthetic null. Top panel shows cohort hazards with different frailty-mixture weights inducing different curvature. Bottom panel shows $\mathrm{KCOR}(t)$ remaining near 1.0 after normalization, which is the diagnostic behavior expected under the working model rather than proof that all confounding has been removed. ](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
++![Historical synthetic negative control under strong depletion curvature and no effect at fixed frailty. Top: cohort hazards for distinct five-class frailty-mixture weights. Bottom: anchored cumulative ratio following separate full-follow-up log-hazard relaxation fits. This earlier normalization is not the current gamma-frailty estimator.](figures/fig_neg_control_synthetic.png){#fig:neg_control_synthetic}
+ 
+ #### S4.2.2 Empirical negative control: age-shift construction
+ 
+@@ -202,7 +203,7 @@
+ 
+ This construction compares age groups within the same underlying vaccination category (or all categories pooled). Flatness requires proportional underlying depletion-neutralized hazard trajectories, not merely equal treatment status.
+ 
+-This contrasts with the synthetic negative control (Section S4.2.1), where strong, deliberately induced frailty heterogeneity requires gamma-frailty normalization to recover the null.
++The historical synthetic illustration in Section S4.2.1 deliberately varies frailty-mixture weights to induce different curvature; it used an earlier normalization.
+ 
+ ### S4.3 Positive control: injected effect
+ 

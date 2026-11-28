@@ -1,0 +1,78 @@
+--- a/code/fixed_cohort_history.py
++++ b/code/fixed_cohort_history.py
+@@ -40,6 +40,30 @@
+     if aggregate.empty:
+         return invalid, unsupported
+     cols = ["Alive","Dead"] + (["Dead_COVID"] if "Dead_COVID" in frame else [])
++    def feasible(counts, *operands):
++        """Check a difference of histories, allowing only fractional roundoff."""
++        a=np.asarray(counts,dtype=float)
++        inputs=[np.asarray(x,dtype=float) for x in operands]
++        if not np.isfinite(a).all() or any(not np.isfinite(x).all() for x in inputs):
++            return False
++        # Integer input counts remain exact; fractional differences can lose
++        # a few ulps when the original population totals are subtracted.
++        if all(np.array_equal(x,np.floor(x)) for x in inputs):
++            tol=np.zeros_like(a)
++        else:
++            scale=np.maximum.reduce([np.ones_like(a),np.abs(a),*[np.abs(x) for x in inputs]])
++            tol=16*np.finfo(float).eps*scale
++        if np.any(a < -tol):
++            return False
++        alive,dead=a[:,0],a[:,1]
++        if np.any(dead-alive>tol[:,0]+tol[:,1]):
++            return False
++        if "Dead_COVID" in cols and np.any(a[:,2]-dead>tol[:,2]+tol[:,1]):
++            return False
++        loss=alive[:-1]-dead[:-1]-alive[1:]
++        loss_tol=tol[:-1,0]+tol[:-1,1]+tol[1:,0]
++        return not np.any(loss < -loss_tol) and (risk_history_policy()=="allow_exits" or not np.any(np.abs(loss)>loss_tol))
++
+     for (age,dose), template in aggregate.groupby(["YearOfBirth","Dose"],sort=False) if not base.empty else []:
+         key=(age,dose)
+         source=base[base.Dose.eq(dose)]
+@@ -62,12 +86,8 @@
+             if not (np.isfinite(a).all() and np.isfinite(b).all()):
+                 reason="nonfinite supplied or component counts"
+             elif not np.array_equal(a,b):
+-                if scope=="partial" and np.all(a>=b):
+-                    remainder=a-b
+-                    alive,dead=remainder[:,0],remainder[:,1]
+-                    loss=alive[:-1]-dead[:-1]-alive[1:]
+-                    exits= risk_history_policy()=="allow_exits"
+-                    if np.any(dead>alive) or np.any(loss<0) or (not exits and np.any(loss!=0)):
++                if scope=="partial":
++                    if not feasible(a-b,a,b):
+                         reason="supplied partial total has an inconsistent undisplayed population"
+                     else:
+                         unsupported.add(key)
+@@ -80,16 +100,6 @@
+     # complementary population and its remainder after displayed older and
+     # unknown-birth-year cells (the latter are outside the known-1960+ subtotal).
+     # This check also applies when the workbook contains only the nested totals.
+-    def feasible(counts):
+-        a=counts.to_numpy(float)
+-        if not np.isfinite(a).all() or np.any(a<0):
+-            return False
+-        alive,dead=a[:,0],a[:,1]
+-        if np.any(dead>alive) or ("Dead_COVID" in cols and np.any(a[:,2]>dead)):
+-            return False
+-        loss=alive[:-1]-dead[:-1]-alive[1:]
+-        return not np.any(loss<0) and (risk_history_policy()=="allow_exits" or not np.any(loss!=0))
+-
+     for dose,group in aggregate.groupby("Dose",sort=False):
+         all_rows=group[group.YearOfBirth.eq(-2)]
+         young_rows=group[group.YearOfBirth.eq(-60)]
+@@ -107,7 +117,11 @@
+             known_outside=base[base.Dose.eq(dose)&((base.YearOfBirth.eq(-1))|((base.YearOfBirth>0)&(base.YearOfBirth<1960)))]
+             outside=known_outside.groupby("DateDied")[cols].sum().sort_index()
+             remainder,outside=remainder.align(outside,fill_value=0)
+-            if not feasible(remainder) or not feasible(remainder-outside):
++            # Use the original operands for roundoff scales, not only the
++            # potentially small cancellation remainder.
++            full=full.reindex(remainder.index,fill_value=0)
++            young=young.reindex(remainder.index,fill_value=0)
++            if not feasible(remainder,full,young) or not feasible(remainder-outside,full,young,outside):
+                 reason="incompatible nested inclusive totals or complementary risk/death history"
+         if reason:
+             # In an exhaustive extract an exact independently reconciled total

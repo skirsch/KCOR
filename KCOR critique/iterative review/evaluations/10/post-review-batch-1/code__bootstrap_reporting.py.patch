@@ -1,0 +1,28 @@
+--- m152/code/bootstrap_reporting.py
++++ m153/code/bootstrap_reporting.py
+@@ -33,13 +33,9 @@
+         raise ValueError(f"invalid source component histories: {bad}")
+ 
+     if layout=="table8":
+-        group=frame.groupby(["YearOfBirth","Dose","DateDied"])[["Alive","Dead"]].sum().reset_index()
+-        if sorted(group.YearOfBirth.unique())!=[1940,1950,1960] or sorted(group.Dose.unique())!=[0,1,2]:
+-            raise ValueError("unexpected overlapping age-shift layout")
+-        dates=pd.date_range(start,group.DateDied.max(),freq="7D")
+-        idx=pd.MultiIndex.from_product([[1940,1950,1960],[0,1,2],dates],names=["YearOfBirth","Dose","DateDied"])
+-        v=group.set_index(["YearOfBirth","Dose","DateDied"]).reindex(idx)
+-        if v.isna().any().any():raise ValueError("incomplete overlapping histories")
++        from fixed_cohort_history import rectangular_overlap_counts
++        group=frame.groupby(["YearOfBirth","Dose","DateDied"])[["Alive","Dead"]].sum()
++        dates,v=rectangular_overlap_counts(group,start,frame.DateDied.max())
+         a=v.Alive.to_numpy().reshape(3,3,-1);d=v.Dead.to_numpy().reshape(3,3,-1)
+         if np.any(a[:,:,:-1]-d[:,:,:-1]!=a[:,:,1:]):raise ValueError("overlap requires death-only fixed histories")
+         cells=np.concatenate([d,(a-d)[:,:,-1:]],axis=2)
+@@ -260,7 +256,7 @@
+     pooled=keys.get_level_values("YearOfBirth")==0
+     point_members=keyframe(out).get("pool_contributors",pd.Series("",index=keys)).fillna("").astype(str).to_numpy()
+     point_pool=pooled & np.isfinite(out["KCOR"].to_numpy(float)) & (point_members!="")
+-    settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","MONTE_CARLO_MODE")}
++    settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","AGE_RANGE","MONTE_CARLO_MODE")}
+     settings["ENROLLMENT_DATES"]=list(hist)
+     seed=int(os.environ.get("KCOR_BOOTSTRAP_SEED","33080"))
+     values=[];flags=[];raw_values=[];invalid_anchors=[];missing=[];gap_draws=[];composition=[]

@@ -1,0 +1,10 @@
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,7 @@
+ KCOR
+ 
+ The combined manuscript, its Markdown sources and figures are in documentation/preprint. Method code is in code and scientific inputs and analyses are in the corresponding repo directories.
++
++### Inclusive population totals
++
++The ordinary disjoint layout defaults to `KCOR_AGGREGATE_SCOPE=exhaustive`: supplied inclusive totals must equal the corresponding disjoint weekly counts. Use `KCOR_AGGREGATE_SCOPE=partial` only for an explicitly incomplete age extract with an independently supplied valid wider total. The wider point can be reported, but its joint bootstrap interval is unavailable when constituent strata are absent. Unrelated supported age-group intervals remain available. The declared overlapping Table 8 layout is unchanged.

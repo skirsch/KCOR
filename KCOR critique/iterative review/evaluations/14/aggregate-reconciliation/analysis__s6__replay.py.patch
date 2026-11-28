@@ -1,0 +1,11 @@
+--- a/analysis/s6/replay.py
++++ b/analysis/s6/replay.py
+@@ -7,7 +7,7 @@
+ HERE = Path(__file__).resolve().parent
+ SOURCE = ROOT / "data/Czech/KCOR_CMR.xlsx"
+ os.environ.update(DATASET="Czech", KCOR_NPH_MODE="identified_only",
+-                  KCOR_BOOTSTRAP_DRAWS="0", SA_DOSE_PAIRS="2,0", MONTE_CARLO="0")
++                  KCOR_BOOTSTRAP_DRAWS="0", KCOR_AGGREGATE_SCOPE="partial", SA_DOSE_PAIRS="2,0", MONTE_CARLO="0")
+ sys.path.insert(0, str(ROOT / "code"))
+ import KCOR as K
+ 

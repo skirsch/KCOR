@@ -1,0 +1,154 @@
+--- m138/code/KCOR.py
++++ m139-review/code/KCOR.py
+@@ -1175,7 +1175,7 @@
+ 
+     gom_cfg = get_gompertz_theta_fit_config()
+     degen_cfg = get_theta_degenerate_fit_config()
+-    theta0_max = float(degen_cfg.get("theta0_max", 100.0))
++    theta0_max = float(degen_cfg.get("theta0_max", 500.0))
+     min_quiet_deaths = int(degen_cfg.get("min_quiet_deaths", 30))
+     bad_fit_relrmse_threshold = float(degen_cfg.get("bad_fit_relrmse_threshold", 1e5))
+     convergence_tol = float(gom_cfg.get("convergence_tol", 1e-8))
+@@ -1674,11 +1674,11 @@
+     theta0_raw = float(theta) if np.isfinite(theta) else np.nan
+     theta_hit_bound = bool(np.isfinite(theta0_raw) and theta0_raw >= (theta0_max * 0.999))
+     if theta_hit_bound:
+-        insufficient_signal = True
++        insufficient_signal = False
+         fit_mask_out = fit_mask_theta.copy()
+         n_fit_out = int(np.count_nonzero(fit_mask_out))
+-        return (k_fixed, 0.0), {
+-            "success": True,
++        return (k_fixed, theta0_raw), {
++            "success": success,
+             "n_obs": n_fit_out,
+             "n_fit": n_fit_out,
+             "rmse_hazard": rmse_h,
+@@ -1686,15 +1686,15 @@
+             "relRMSE_hazard_fit": rel_rmse,
+             "fitted_weekly_hazard": pred.copy(),
+             "legacy_relative_error_flag": bool(np.isfinite(rel_rmse) and rel_rmse > bad_fit_relrmse_threshold),
+-            "status": "insufficient_signal",
+-            "message": "INSUFFICIENT_SIGNAL: theta0_raw reached upper bound; applied theta=0.0",
++            "status": "theta_upper_bound" if success else "error",
++            "message": "THETA_UPPER_BOUND: fitted variance near numerical ceiling; retained constrained estimate",
+             "fit_mask_theta": fit_mask_out,
+             "anchor_only": False,
+             "k_hat": k_fixed,
+             "theta0_raw": theta0_raw,
+             "identifiability_flag": identifiability_flag,
+             "delta_negative_clamped": delta_negative_clamped,
+-            "insufficient_signal": True,
++            "insufficient_signal": False,
+             "insufficient_deaths": False,
+             "bad_fit": False,
+             "theta_hit_bound": True,
+@@ -1929,9 +1929,9 @@
+                 # Preferred schema:
+                 #   time_varying_theta:
+                 #     min_quiet_deaths: 30
+-                #     degenerate_theta_max: 100
++                #     degenerate_theta_max: 500
+                 #     degenerate_fit:
+-                #       theta0_max: 100
++                #       theta0_max: 500
+                 #       action: set_zero
+                 _theta_degen_cfg = {}
+                 _tv_theta_cfg = _dataset_config.get("time_varying_theta", {})
+@@ -2200,7 +2200,7 @@
+     cfg = _DATASET_THETA_DEGENERATE_CFG_CACHE or {}
+     out = {
+         "min_quiet_deaths": 30,
+-        "theta0_max": 100.0,
++        "theta0_max": 500.0,
+         "bad_fit_relrmse_threshold": 1e5,
+         "action": "set_zero",
+     }
+@@ -2264,7 +2264,7 @@
+     if not np.isfinite(theta_hat):
+         return theta_eff, flagged, reason
+ 
+-    theta0_max = float(cfg.get("theta0_max", 100.0))
++    theta0_max = float(cfg.get("theta0_max", 500.0))
+     action = str(cfg.get("action", "set_zero")).strip().lower()
+     if bool(theta_hat > theta0_max):
+         flagged = True
+@@ -6857,7 +6857,7 @@
+                         theta0_raw,
+                         k_hat,
+                         _gcf["gamma_per_week"],
+-                        float(theta_degen_cfg.get("theta0_max", 100.0)),
++                        float(theta_degen_cfg.get("theta0_max", 500.0)),
+                         effective_sheet_name,
+                         int(yob),
+                         int(dose),
+@@ -6913,6 +6913,8 @@
+                     theta0_status = "INSUFFICIENT_DEATHS"
+                 elif insufficient_signal_flag:
+                     theta0_status = "INSUFFICIENT_SIGNAL"
++                elif diag.get("theta_hit_bound", False):
++                    theta0_status = "THETA_UPPER_BOUND"
+                 elif diag.get("k_hit_bound", False):
+                     theta0_status = "BASELINE_RATE_BOUND"
+                 else:
+@@ -7143,7 +7145,7 @@
+                                 theta0_raw,
+                                 k_hat,
+                                 _gcf["gamma_per_week"],
+-                                float(theta_degen_cfg.get("theta0_max", 100.0)),
++                                float(theta_degen_cfg.get("theta0_max", 500.0)),
+                                 effective_sheet_name,
+                                 -2,
+                                 int(dose),
+@@ -7197,6 +7199,8 @@
+                             theta0_status = "INSUFFICIENT_DEATHS"
+                         elif insufficient_signal_flag:
+                             theta0_status = "INSUFFICIENT_SIGNAL"
++                        elif diag.get("theta_hit_bound", False):
++                            theta0_status = "THETA_UPPER_BOUND"
+                         elif diag.get("k_hit_bound", False):
+                             theta0_status = "BASELINE_RATE_BOUND"
+                         else:
+@@ -9490,6 +9494,8 @@
+             return "INSUFFICIENT_DEATHS"
+         if bool(params.get("insufficient_signal", False)):
+             return "INSUFFICIENT_SIGNAL"
++        if bool(params.get("theta_hit_bound", False)):
++            return "THETA_UPPER_BOUND"
+         return "OK"
+ 
+     def _theta0_params_lookup(enrollment_date, yob, dose, mc_id=None):
+@@ -9533,7 +9539,7 @@
+                     latest_data = sheet_data[sheet_data["Date"] == report_date]
+                     
+                     # Compact counts of theta0 status for this enrollment date.
+-                    theta_counts = {"OK": 0, "INSUFFICIENT_SIGNAL": 0, "INSUFFICIENT_DEATHS": 0, "NOT_IDENTIFIED": 0}
++                    theta_counts = {"OK": 0, "INSUFFICIENT_SIGNAL": 0, "INSUFFICIENT_DEATHS": 0, "NOT_IDENTIFIED": 0, "THETA_UPPER_BOUND": 0}
+                     quality_hits = set()
+                     if isinstance(kcor6_params_map, dict):
+                         for key, params in kcor6_params_map.items():
+@@ -9569,6 +9575,7 @@
+                         theta_counts["INSUFFICIENT_SIGNAL"] > 0
+                         or theta_counts["INSUFFICIENT_DEATHS"] > 0
+                         or theta_counts["NOT_IDENTIFIED"] > 0
++                        or theta_counts["THETA_UPPER_BOUND"] > 0
+                     )
+                     quality_hits_sorted = sorted(quality_hits, key=lambda item: (-1 if item[0] is None else item[0], *item[1:]))
+                     quality_flag = bool(quality_hits_sorted)
+@@ -9584,6 +9591,7 @@
+                         "INSUFFICIENT_SIGNAL": int(theta_counts["INSUFFICIENT_SIGNAL"]),
+                         "INSUFFICIENT_DEATHS": int(theta_counts["INSUFFICIENT_DEATHS"]),
+                         "NOT_IDENTIFIED": int(theta_counts["NOT_IDENTIFIED"]),
++                        "THETA_UPPER_BOUND": int(theta_counts["THETA_UPPER_BOUND"]),
+                         "any_non_ok_status": any_non_ok_theta,
+                         "quality_flag": quality_flag,
+                         "quality_flag_detail": quality_flag_detail,
+@@ -9728,7 +9736,7 @@
+                     theta0_status_df = pd.DataFrame(theta0_status_summary_rows)
+                     status_col_order = [
+                         "enrollment_date", "reporting_date", "OK", "INSUFFICIENT_SIGNAL",
+-                        "INSUFFICIENT_DEATHS", "NOT_IDENTIFIED", "any_non_ok_status",
++                        "INSUFFICIENT_DEATHS", "NOT_IDENTIFIED", "THETA_UPPER_BOUND", "any_non_ok_status",
+                         "quality_flag", "quality_flag_detail"
+                     ]
+                     theta0_status_df = theta0_status_df[[c for c in status_col_order if c in theta0_status_df.columns]]

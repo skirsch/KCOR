@@ -1,0 +1,11 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -743,6 +743,8 @@
+ This negative control evaluates end-to-end pipeline behavior under model-consistent conditions without a contrast in treatment assignment. It is **not** intended as a stress test of depletion correction under strong latent heterogeneity. Robustness to strong depletion geometry and frailty misspecification is assessed separately in simulation stress tests (§3.3).
+ 
+ For the empirical age-shift negative control (Figure @fig:neg_control_10yr), aggregated weekly cohort summaries derived from the Czech Republic administrative mortality and vaccination dataset are used and exported in KCOR_CMR format.
++
++The Czech application deliberately restricts its study population to individuals with no recorded COVID-19 vaccine product other than Pfizer-BioNTech or Moderna among their first four doses, including doses recorded after enrollment. This excludes non-mRNA COVID-19 vaccines, including AstraZeneca and Janssen, whose EU marketing authorizations were subsequently withdrawn in 2024 [@ema_vaxzevria; @ema_jcovden]. KCOR constructs fixed enrollment cohorts within this restricted population. This application-specific eligibility rule may introduce retrospective survivor selection and is not a requirement of the general KCOR methodology (SI §S6.1.1).
+ 
+ Notably, KCOR estimates frailty parameters independently for each cohort without knowledge of exposure status; the observed asymmetry in depletion normalization arises entirely from differences in hazard curvature rather than from any vaccination-specific assumptions.
+ 

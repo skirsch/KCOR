@@ -1,0 +1,68 @@
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -145,11 +145,60 @@
+         dates = np.asarray(dates, dtype="datetime64[ns]")
+         mask = (dates >= np.datetime64(start_dt)) & (dates <= np.datetime64(end_dt)) & (t_r >= 0)
+         indices = np.flatnonzero(mask)
+-        if (abs(alpha - 1) <= model.NPH_IDENTITY_TOL or theta < model.KCOR6_THETA_EPS
+-                or not np.isfinite(theta) or not len(indices)
+-                or not (np.isfinite(k_hat) and k_hat > 0 and np.isfinite(gamma_per_week))):
+-            return original(H0, t_vals, dates, theta, alpha, start_dt, end_dt, k_hat,
+-                            gamma_per_week, t_rebased=t_r, observed_cumhaz=observed_cumhaz)
++        identity = abs(alpha - 1) <= model.NPH_IDENTITY_TOL or (0 <= theta < model.KCOR6_THETA_EPS)
++        valid_params = (np.isfinite(theta) and theta >= 0 and np.isfinite(k_hat)
++                        and k_hat > 0 and np.isfinite(gamma_per_week))
++        if identity:
++            # Proportional exposure is exactly additive when alpha=1 or theta=0
++            # (using the existing zero-frailty / alpha-one numerical conventions).
++            # Attribute each week's increment independently; never modify H0.
++            diag = dict(correction_mode="identity", wave_points=len(indices),
++                        deficit_weeks=np.nan, skipped_nonpositive_excess=np.nan,
++                        corrected_points=0, max_abs_change=0., post_wave_level_shift=0.,
++                        post_wave_exposure=np.nan, any_nonmonotone_fixed=False,
++                        f_min=np.nan, f_max=np.nan)
++            if not len(indices):
++                diag.update(deficit_weeks=0, skipped_nonpositive_excess=0,
++                            post_wave_exposure=0.)
++                return H0.copy(), diag
++            if not valid_params:
++                return H0.copy(), diag
++            effective_theta = 0. if theta < model.KCOR6_THETA_EPS else theta
++            opening = np.r_[0., H0[:-1]][indices]
++            total = H0[indices] - opening
++            planned = k_hat * model.safe_exp(gamma_per_week * t_r[indices]) * model._gompertz_week_factor(gamma_per_week)
++            if not (np.isfinite(opening).all() and np.isfinite(total).all()
++                    and np.isfinite(planned).all() and (opening>=0).all()
++                    and (total>=0).all() and (planned>=0).all()):
++                return H0.copy(), diag
++            if effective_theta == 0:
++                observed_increment, planned_increment = total, planned
++            else:
++                # Compare strict deficits on observed integrated-hazard scale,
++                # using the same opening survivor distribution for both increments.
++                den = 1. + effective_theta * opening
++                observed_increment = np.log1p(effective_theta * total / den) / effective_theta
++                planned_increment = np.log1p(effective_theta * planned / den) / effective_theta
++            if observed_cumhaz is not None:
++                observed_increment = np.diff(np.asarray(observed_cumhaz,float),prepend=0.)[indices]
++            if not (np.isfinite(observed_increment).all() and np.isfinite(planned_increment).all()):
++                return H0.copy(), diag
++            wave_add = np.maximum(total - planned, 0.)
++            base_add = total - wave_add
++            wave_path = np.cumsum(wave_add)
++            base_path = opening[0] + np.cumsum(base_add)
++            diag.update(deficit_weeks=int(np.count_nonzero(observed_increment < planned_increment - 1e-12)),
++                        skipped_nonpositive_excess=int(np.count_nonzero(wave_add == 0.)),
++                        corrected_points=int(np.count_nonzero(wave_add > 0.)),
++                        wave_exposure_path=wave_path.tolist(), baseline_exposure_path=base_path.tolist(),
++                        post_wave_exposure=float(wave_path[-1]), post_wave_baseline=float(base_path[-1]))
++            return H0.copy(), diag
++        if not valid_params or not len(indices):
++            output, diag = original(H0, t_vals, dates, theta, alpha, start_dt, end_dt, k_hat,
++                                    gamma_per_week, t_rebased=t_r, observed_cumhaz=observed_cumhaz)
++            diag.update(wave_points=len(indices), deficit_weeks=np.nan if len(indices) else 0,
++                        skipped_nonpositive_excess=np.nan if len(indices) else 0)
++            return output, diag
+ 
+         observed = (np.log1p(theta * H0) / theta if observed_cumhaz is None
+                     else np.asarray(observed_cumhaz, dtype=float))

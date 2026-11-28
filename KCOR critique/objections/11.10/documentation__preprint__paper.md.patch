@@ -1,0 +1,47 @@
+--- a/documentation/preprint/paper.md
++++ b/documentation/preprint/paper.md
+@@ -644,7 +644,7 @@
+ 
+ **Cox analysis.**
+ 
+-For each simulated dataset, a standard Cox proportional hazards model was fitted using partial likelihood (statsmodels `PHReg`), with cohort membership as the sole covariate (no time-varying covariates or interactions). The resulting hazard ratio estimates and confidence intervals therefore reflect **only differences induced by frailty-driven depletion**, not any treatment effect.
++For each simulated dataset, a standard Cox proportional hazards model was fitted using partial likelihood (statsmodels `PHReg`), with cohort membership as the sole covariate (no time-varying covariates or interactions). The fitted constant hazard ratio summarizes the follow-up-dependent marginal hazard contrast induced by frailty-driven depletion, not a treatment effect. The reported 95% Wald intervals and p-values are nominal, model-based Cox outputs; they are not calibrated inference for the fixed-frailty treatment effect under nonproportional hazards.
+ 
+ **KCOR analysis.**
+ 
+@@ -671,7 +671,7 @@
+ 
+ A compact summary of observed week-52 KCOR deviation from one as a function of frailty variance $\theta_0$ is provided in the Supplementary Information (Figure S2).
+ 
+-![Cox regression produces non-unit hazard ratios under a *synthetic null treatment effect at fixed frailty* as frailty heterogeneity increases. Hazard ratios (with 95% confidence intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
++![Cox regression produces non-unit hazard ratios under a *synthetic null treatment effect at fixed frailty* as frailty heterogeneity increases. Hazard ratios (with nominal model-based 95% Wald intervals) from Cox proportional hazards regression comparing cohort B to cohort A in simulations where the true treatment effect is identically zero and cohorts differ only in enrollment-time frailty variance ($\theta_0$). Deviations from HR=1 arise solely from frailty-driven depletion and associated non-proportional hazards.](figures/fig_cox_bias_hr_vs_theta.png){#fig:cox_bias_hr}
+ 
+ ![$\mathrm{KCOR}(t)$ stays near the null benchmark under a synthetic null across increasing frailty heterogeneity. In these simulations, week-52 $\mathrm{KCOR}$ values remain near 1 across $\theta_0$, which is the diagnostic behavior expected under the working model rather than proof that the model is true or that all confounding has been removed. Error bars show pointwise 95% person-bootstrap intervals for week-52 KCOR, with the generating frailty variances held fixed. All seven intervals include the null value of 1.](figures/fig_cox_bias_kcor_vs_theta.png){#fig:cox_bias_kcor}
+ 
+@@ -1088,7 +1088,7 @@
+ | Frailty role                        | None         | Nuisance          | Object of inference     |
+ | Uses partial likelihood             | Yes          | Yes               | No                      |
+ | Handles selection-induced curvature | No           | Partial           | Yes (under working frailty model)          |
+-| Output interpretable under non-PH   | No           | No                | Yes (cumulative)        |
++| Interpretation under marginal non-PH | Follow-up-dependent summary | Conditional HR if conditional PH holds | Yes (cumulative) |
+ 
+ Note: KCOR uses hazards calculated in surviving risk sets as input, but its final target is a cumulative contrast on the reference-frailty scale. Alternative post-normalization estimands are admissible within the framework.
+ 
+@@ -1097,7 +1097,7 @@
+ 
+ | Method class                           | Primary target                  | What is modeled        | Handles selection-induced depletion? | Typical output           | Failure under latent frailty      |
+ | -------------------------------------- | ------------------------------- | ---------------------- | ------------------------------------ | ------------------------ | --------------------------------- |
+-| Cox PH                                 | Instantaneous hazard            | Linear predictor       | No                                   | HR                       | Non-PH from depletion → biased HR |
++| Cox PH                                 | Instantaneous hazard            | Linear predictor       | No                                   | HR                       | Non-PH from depletion → departure from fixed-frailty HR |
+ | Time-varying Cox                       | Instantaneous hazard            | Time-varying $\beta(t)$      | No                                   | HR(t)                    | Fits depletion as signal          |
+ | Flexible parametric survival (splines) | Survival / hazard shape         | Baseline hazard        | No                                   | Smooth hazard / survival | Absorbs depletion curvature       |
+ | Additive hazards (Aalen)               | Hazard differences              | Additive hazard        | No                                   | $\Delta h(t)$            | Still conditional on survival     |
+@@ -1147,7 +1147,7 @@
+ 
+ Table: Cox vs KCOR under a synthetic null with increasing frailty heterogeneity. Two cohorts are simulated with identical baseline hazards and no treatment effect *(null by construction)*; cohorts differ only in enrollment-time gamma frailty variance ($\theta_0$). Despite the treatment hazard ratio at fixed frailty being 1 by construction, Cox regression produces increasingly non-null hazard ratios as $\theta_0$ increases, reflecting depletion-induced non-proportional hazards. In the same simulations, $\mathrm{KCOR}(t)$ remains centered near unity with negligible post-normalization slope across $\theta_0$ values, which is consistent with the expected null benchmark under the working model and is interpreted diagnostically rather than as proof that confounding has been removed. (Exact values depend on simulation seed and follow-up horizon.) {#tbl:cox_bias_demo}
+ 
+-| $\theta_0$ | Cox HR | 95% CI | Cox p-value | Week-52 KCOR | KCOR post-norm slope |
++| $\theta_0$ | Cox HR | Nominal 95% CI | Nominal Cox p-value | Week-52 KCOR | KCOR post-norm slope |
+ | --------: | -----: | ------: | ----------: | -------------: | -------------------: |
+ | 0.0  | 0.988 | [0.969, 1.008] | 0.234 | 0.988 | $7.6 \times 10^{-4}$ |
+ | 0.5  | 0.965 | [0.946, 0.985] | $4.9 \times 10^{-4}$ | 0.990 | $-3.8 \times 10^{-5}$ |

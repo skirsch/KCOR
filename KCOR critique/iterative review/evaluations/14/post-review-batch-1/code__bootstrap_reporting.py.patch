@@ -1,0 +1,119 @@
+--- a/code/bootstrap_reporting.py
++++ b/code/bootstrap_reporting.py
+@@ -22,7 +22,10 @@
+ def histories(frame,sheet,layout):
+     need={"DateDied","ISOweekDied","YearOfBirth","Sex","Dose","Alive","Dead"}
+     if not need<=set(frame.columns):raise ValueError("missing fixed-cohort history columns")
+-    if "PT" in frame.columns:raise ValueError("person-time histories require individual histories")
++    if "PT" in frame.columns:
++        if not np.array_equal(frame.PT.to_numpy(float),frame.Alive.to_numpy(float)):
++            raise ValueError("person-time histories require individual histories")
++        frame=frame.drop(columns="PT")
+     from KCOR import _parse_enrollment_date
+     start=_parse_enrollment_date(sheet)
+     frame=frame.copy();frame["DateDied"]=pd.to_datetime(frame.DateDied)
+@@ -179,14 +182,16 @@
+     frame["residual_screen_unavailable"]=[x[1] for x in result]
+ 
+ 
+-def flagged(frame):
++def flagged(frame,unanchored=False):
+     # Preserve the estimator's configured fallback; expose its use rather than
+     # conditioning the bootstrap on accepted draws.
+     bad=np.zeros(len(frame),dtype=bool)
+-    if "abnormal_fit" in frame:
+-        bad |= frame["abnormal_fit"].fillna(False).astype(bool).to_numpy()
+-    if "normalization_status" in frame:
+-        status = frame["normalization_status"]
++    fit_col="unanchored_abnormal_fit" if unanchored and "unanchored_abnormal_fit" in frame else "abnormal_fit"
++    status_col="unanchored_normalization_status" if unanchored and "unanchored_normalization_status" in frame else "normalization_status"
++    if fit_col in frame:
++        bad |= frame[fit_col].fillna(False).astype(bool).to_numpy()
++    if status_col in frame:
++        status = frame[status_col]
+         bad |= (status.notna() & ~status.astype(str).str.lower().isin(["ok", ""])).to_numpy()
+     for col in ("theta0_status_num","theta0_status_den"):
+         if col in frame:
+@@ -213,14 +218,14 @@
+         for week,value in gaps:
+             sample=np.asarray([dict(d.get(key) or []).get(week,np.nan) for d in draws],float)
+             finite=int(np.isfinite(sample).sum())
+-            complete=bool(n and finite==n and np.isfinite(value))
++            complete=bool(n and finite==n and np.isfinite(float(value) if value is not None else np.nan))
+             lower,upper=np.quantile(sample,[.025,.975]) if complete else (np.nan,np.nan)
+             flag="violation" if complete and upper<0 else ("no_deficit_detected" if complete else "not_assessed")
+             if flag=="violation":status[key]=flag
+             elif flag=="not_assessed" and status[key]!="violation":status[key]=flag
+             summary.append(dict(EnrollmentDate=key[0],YearOfBirth=key[1],Dose=key[2],rebased_reentry_week=week,
+                 signed_first_pass_offset=value,lower95=float(lower),upper95=float(upper),valid_draws=finite,requested_draws=n,status=flag,
+-                reason=((point_seed_status or {}).get(key) or "point_offset_unavailable") if not np.isfinite(value) else "incomplete_draws" if not complete else ""))
++                reason=((point_seed_status or {}).get(key) or "point_offset_unavailable") if not np.isfinite(float(value) if value is not None else np.nan) else "incomplete_draws" if not complete else ""))
+     return summary,status
+ 
+ 
+@@ -242,6 +247,9 @@
+             if state=="violation":
+                 out.loc[subidx,"abnormal_fit"]=True
+                 out.loc[subidx,"CI_point_flagged"]=True
++                out.loc[subidx,"CI_unanchored_point_flagged"]=True
++                if "unanchored_abnormal_fit" in out:
++                    out.loc[subidx,"unanchored_abnormal_fit"]=True
+                 if "CI_method" in out:
+                     use=out.index.isin(subidx)&out.CI_method.eq("person_bootstrap_percentile")
+                     out.loc[use,"CI_method"]="person_bootstrap_with_fit_flags"
+@@ -264,6 +272,8 @@
+     out["CI_pool_composition_changed_draws"]=0
+     out["CI_unanchored_lower"]=np.nan;out["CI_unanchored_upper"]=np.nan;out["CI_unanchored_valid_draws"]=0
+     out["CI_unanchored_method"]="unavailable"
++    out["CI_unanchored_point_flagged"]=flagged(out,unanchored=True)
++    out["CI_unanchored_flagged_draws"]=0
+     layout=os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")
+     draws=int(os.environ.get("KCOR_BOOTSTRAP_DRAWS","999"))
+     if draws<=0:
+@@ -283,13 +293,13 @@
+     settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","AGE_RANGE","MONTE_CARLO_MODE")}
+     settings["ENROLLMENT_DATES"]=list(hist)
+     seed=int(os.environ.get("KCOR_BOOTSTRAP_SEED","33080"))
+-    values=[];flags=[];raw_values=[];invalid_anchors=[];missing=[];gap_draws=[];composition=[];residual_flags=[];residual_missing=[]
++    values=[];flags=[];raw_values=[];raw_flags=[];invalid_anchors=[];missing=[];gap_draws=[];composition=[];residual_flags=[];residual_missing=[]
+     with ProcessPoolExecutor(max_workers=int(os.environ.get("KCOR_BOOTSTRAP_WORKERS","5")),initializer=init_worker,initargs=(hist,settings,seed,str(Path(src).resolve()),sheet_indices)) as pool:
+         for i,(v,error) in enumerate(pool.map(worker,range(1,draws+1),chunksize=1),1):
+             if error:
+                 log(f"[BOOTSTRAP] draw {i} unavailable: {error}")
+                 val=np.full(len(keys),np.nan);bad=np.ones(len(keys),dtype=bool)
+-                raw=val.copy();invalid=np.zeros(len(keys),dtype=bool);absent=np.ones(len(keys),dtype=bool);changed=np.zeros(len(keys),dtype=bool)
++                raw=val.copy();raw_bad=bad.copy();invalid=np.zeros(len(keys),dtype=bool);absent=np.ones(len(keys),dtype=bool);changed=np.zeros(len(keys),dtype=bool)
+             else:
+                 val=v["KCOR"].reindex(keys).to_numpy(float)
+                 raw=v["KCOR_unanchored"].reindex(keys).to_numpy(float)
+@@ -297,6 +307,7 @@
+                 invalid=anchor.isin(["undefined_reference_ratio","missing_reference_week","pooled_no_valid_reference"]).to_numpy(bool)
+                 absent=~keys.isin(v.index)
+                 bad=pd.Series(flagged(v),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
++                raw_bad=pd.Series(flagged(v,unanchored=True),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
+                 members=v.get("pool_contributors",pd.Series("",index=v.index)).reindex(keys).fillna("").astype(str).to_numpy()
+                 changed=point_pool & ~absent & (members!=point_members)
+                 # A finite result for a different pool is not a valid draw
+@@ -306,7 +317,7 @@
+             gap_draws.append({} if error else v.attrs.get("gap_first_pass",{}))
+             residual_flags.append(np.zeros(len(keys),bool) if error else v.get("residual_screen_flag",pd.Series(False,index=v.index)).reindex(keys).fillna(False).to_numpy(bool))
+             residual_missing.append(np.ones(len(keys),bool) if error else v.get("residual_screen_unavailable",pd.Series(True,index=v.index)).reindex(keys).fillna(True).to_numpy(bool))
+-            values.append(val);flags.append(bad);raw_values.append(raw);invalid_anchors.append(invalid);missing.append(absent);composition.append(changed)
++            values.append(val);flags.append(bad);raw_values.append(raw);raw_flags.append(raw_bad);invalid_anchors.append(invalid);missing.append(absent);composition.append(changed)
+             if i%100==0:log(f"[BOOTSTRAP] {i}/{draws}")
+     a=np.asarray(values);count=np.isfinite(a).sum(axis=0);out["CI_valid_draws"]=count
+     out["CI_flagged_draws"]=np.where(supported,np.asarray(flags).sum(axis=0),0)
+@@ -317,11 +328,12 @@
+     out["CI_pool_composition_changed_draws"]=np.where(supported,np.asarray(composition).sum(axis=0),0)
+     raw_a=np.asarray(raw_values);raw_count=np.isfinite(raw_a).sum(axis=0)
+     out["CI_unanchored_valid_draws"]=raw_count
++    out["CI_unanchored_flagged_draws"]=np.where(supported,np.asarray(raw_flags).sum(axis=0),0)
+     raw_good=(raw_count==draws)&np.isfinite(out["KCOR_unanchored"].to_numpy(float))
+     if raw_good.any():
+         out.loc[raw_good,["CI_unanchored_lower","CI_unanchored_upper"]]=np.quantile(raw_a[:,raw_good],[.025,.975],axis=0).T
+         out.loc[raw_good,"CI_unanchored_method"]="person_bootstrap_percentile"
+-        raw_flagged=raw_good & ((out["CI_flagged_draws"]>0)|out["CI_point_flagged"]).to_numpy()
++        raw_flagged=raw_good & ((out["CI_unanchored_flagged_draws"]>0)|out["CI_unanchored_point_flagged"]).to_numpy()
+         out.loc[raw_flagged,"CI_unanchored_method"]="person_bootstrap_with_fit_flags"
+     # Do not silently condition the interval on a subset of successful draws.
+     good=(count==draws)&np.isfinite(out["KCOR"].to_numpy())

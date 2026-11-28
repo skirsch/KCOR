@@ -1,0 +1,40 @@
+--- m101/documentation/preprint/paper.md
++++ m102/documentation/preprint/paper.md
+@@ -352,7 +352,7 @@
+ When any of the conditions in items 1–4 fails, when non-multiplicative contamination or Gompertz misspecification dominates, or when diagnostics indicate material breakdown of the common-scale approximation, the analysis is treated as not identified rather than reported as a stable normalized contrast. Full operational diagnostics are summarized in Supplementary Information §S2.
+ 
+ > **Proposition (Identification under a fixed Gompertz slope).**  
+-> In a quiet interval under the Gompertz–gamma model with known slope $\gamma>0$, the positive instantaneous cohort hazard $h$ satisfies $h'=\gamma h-\theta_{0,d}h^2$. Its level and derivative therefore determine $\theta_{0,d}=(\gamma h-h')/h^2$ in the exact model.
++> In a quiet interval under the Gompertz–gamma model with proportional survivor history from enrollment (so the survivor law retains its gamma form) and known slope $\gamma>0$, the positive instantaneous cohort hazard $h$ satisfies $h'=\gamma h-\theta_{0,d}h^2$. Its level and derivative therefore determine $\theta_{0,d}=(\gamma h-h')/h^2$ in the exact model.
+ 
+ When $\theta_{0,d}=0$, Gompertz growth alone curves the observed cumulative hazard. When $k_d\theta_{0,d}=\gamma$, the observed hazard is constant and the cumulative hazard is linear despite positive frailty. This is a **parametric** identification statement under the working model. KCOR does **not** claim nonparametric identification; identifiability is evaluated **empirically** via curvature diagnostics and multi-window coherence (§2.1.2; SI §S2).
+ 
+@@ -402,7 +402,7 @@
+ $$
+ \tilde H_{0,d}(t)=H_{\mathrm{obs},d}(t),
+ $$
+-which corresponds to the standard Nelson–Aalen cumulative hazard. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates negligible detectable depletion curvature.
++which is the observed cumulative hazard computed as the sum of negative log weekly survival probabilities, rather than the Nelson–Aalen sum of weekly death fractions. This avoids numerical instability from evaluating $(\exp(\theta_0 H)-1)/\theta_0$ near machine precision and reflects the fact that near-zero fitted $\theta_0$ indicates negligible detectable depletion curvature. The cumulative inverter also limits the applied variance to $80/\max_t |H_{\mathrm{obs},d}(t)|$ when its exponent would exceed 80 in magnitude, and clips the exponent to $[-80,80]$. When this guard activates, the returned result is a numerical approximation rather than the exact inverse at the fitted variance.
+ 
+ #### 2.6.2 Internal diagnostics and 'self-check' behavior
+ 
+@@ -605,8 +605,8 @@
+ 
+ ![**KCOR workflow: four-step $\theta_{0,d}$ estimation, then normalization and comparison.**
+ **(A)** Fixed-cohort cumulative hazards are stabilized after enrollment, and event time is rebased so that frailty identification targets enrollment-time $\theta_{0,d}$.
+-**(B)** Steps 1-4 estimate $\theta_{0,d}$: a seed Gompertz fit is obtained in the nearest quiet window, the effective cumulative hazard is reconstructed over the full trajectory using all weeks, persistent offsets are aligned across quiet windows, and $\theta_{0,d}$ is refit across the pooled quiet windows with $\hat{k}_d$ held fixed. Reconstruction, offset alignment, and pooled refitting iterate to convergence before gamma-frailty inversion and KCOR computation.
+-**(C)** In epidemic-wave applications, an optional NPH exponent module may localize $\alpha$ using **externally supplied VE or other prespecified intervention-effect scale** and apply a cumulative-hazard correction **after** gamma-frailty inversion (§2.7); it is not part of the universal KCOR core and is interpreted only when identification diagnostics are credible.
++**(B)** Steps 1-4 estimate $\theta_{0,d}$: a seed Gompertz fit is obtained in the nearest quiet window, the effective cumulative hazard is reconstructed over the full trajectory using all weeks, persistent offsets are aligned across quiet windows, and $k_d$ and $\theta_{0,d}$ are jointly refit across the pooled quiet windows. Reconstruction, offset alignment, and pooled refitting iterate to convergence before gamma-frailty inversion and KCOR computation.
++**(C)** In epidemic-wave applications, an optional NPH exponent module may localize $\alpha$ using **externally supplied VE or other prespecified intervention-effect scale** and use the specified nonlinear survivor law consistently for fitting and inversion (§2.7); it is not part of the universal KCOR core and is interpreted only when identification diagnostics are credible.
+ *This schematic is illustrative rather than empirical. In the schematic, $\tilde H_{0,d}(t)$ denotes the depletion-neutralized baseline cumulative hazard and $\theta_{0,d}$ denotes enrollment-time frailty variance after the stabilization skip.*
+ ](figures/fig_kcor_workflow.png){#fig:kcor_workflow}
+ 
+@@ -1159,7 +1159,7 @@
+ | 10.0 | 0.701 | [0.686, 0.717] | $<10^{-200}$ | 1.020 | $3.2 \times 10^{-4}$ |
+ | 20.0 | 0.551 | [0.539, 0.564] | $<10^{-300}$ | 1.024 | $-1.6 \times 10^{-4}$ |
+ 
+-Table: Empirical negative-control KCOR at December 26, 2022 (pooled/ASMR). Historical v4.3 estimates and analytical intervals are retained for comparison. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the sensitivity analysis uses the consistent survivor fit at forced alpha=1.18. Both current columns use 999 matched person-bootstrap draws per enrollment. Sources: `analysis/table8/identified_only-table8.json` and `analysis/table8/forced_alpha-table8.json`; historical source `test/negative_control/out/KCOR_summary.log`. {#tbl:neg_control_summary}
++Table: Empirical negative-control KCOR at December 26, 2022 (pooled/ASMR). Historical v4.3 estimates and analytical intervals are retained for comparison. The current primary analysis uses the all-window fit with the optional nonlinear module inactive; the sensitivity analysis uses the consistent survivor fit at forced alpha=1.18. Both current columns use 999 matched person-bootstrap draws per enrollment. Sources: `analysis/table8/identified_only-table8.json` and `analysis/table8/forced_alpha-table8.json`; historical source: v4.3 replay of Git commit `bb2d68249e8bf77c8fb07e6c8336bc790a808a8a` (`test/negative_control/out/KCOR_summary.log` at that commit). {#tbl:neg_control_summary}
+ 
+ | Enrollment | Dose comparison | Historical KCOR | Historical 95% CI | Core [95% CI] | Sensitivity 1.18 [95% CI] |
+ |---|---|---:|---|---|---|

@@ -1,0 +1,12 @@
+--- m142/analysis/solver_scaling/check_workbook.py
++++ m143/analysis/solver_scaling/check_workbook.py
+@@ -6,8 +6,7 @@
+ from test_round7_workbook import run
+ points={}
+ for mode in ("identified_only","forced_alpha"):
+-    source=HERE/(mode+"-draws.npz")
+-    if not source.exists(): source=HERE/(mode+"-partial.npz")
++    source=ROOT/"analysis/ceiling500/table8"/(mode+"-draws.npz")
+     expected=np.load(source)["points"][:,0]
+     points[mode]={}
+     for i,sheet in enumerate(("2021_24","2022_06")):

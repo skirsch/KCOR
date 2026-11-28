@@ -1,0 +1,8 @@
+{
+  "ordinary_max_trajectory_error": 0.0,
+  "mc_max_trajectory_error": 0.0,
+  "mc_ids": [
+    11,
+    22
+  ]
+}

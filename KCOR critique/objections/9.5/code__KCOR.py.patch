@@ -1,0 +1,96 @@
+--- m145/code/KCOR.py
++++ m146/code/KCOR.py
+@@ -4286,7 +4286,7 @@
+         status_by_date = g.set_index("DateDied")["normalization_status"]
+         for status, dates in status_by_date.groupby(status_by_date):
+             affected = (rows["Dose_num"] == dose) | (rows["Dose_den"] == dose)
+-            if status not in ("missing_week_history", "normalization_failed") and not (
++            if status not in ("missing_week_history", "invalid_risk_history", "normalization_failed") and not (
+                     g.loc[g.normalization_status.eq(status), "t"] <= KCOR_NORMALIZATION_WEEKS_EFFECTIVE).any():
+                 affected &= pd.to_datetime(rows["Date"]).isin(dates.index)
+             if mc:
+@@ -6211,6 +6211,9 @@
+     dual_print(f"  DEBUG_VERBOSE         = {DEBUG_VERBOSE}")
+     dual_print(f"  OVERRIDE_DOSE_PAIRS   = {OVERRIDE_DOSE_PAIRS}")
+     dual_print(f"  OVERRIDE_YOBS         = {OVERRIDE_YOBS}")
++    from fixed_cohort_history import risk_history_policy
++    history_policy = risk_history_policy(os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
++    dual_print(f"  KCOR_RISK_HISTORY_POLICY = {history_policy}")
+     # Legacy quiet-anchor config removed
+     dual_print(f"  Reporting date calculation: 1 year from enrollment date")
+     dual_print(f"  NEGATIVE_CONTROL_MODE = {NEGATIVE_CONTROL_MODE}")
+@@ -6506,6 +6509,20 @@
+             source_bad = invalid_components(df, enrollment_date, source_horizon, os.environ.get("KCOR_BOOTSTRAP_LAYOUT", "disjoint"))
+             for key, reasons in source_bad.items():
+                 dual_print(f"[WARN] KCOR_SOURCE_HISTORY,EnrollmentDate={sh},yob={key[0]},dose={key[1]},reason={reasons}")
++            if history_policy == "allow_exits":
++                exit_totals = {}
++                component_keys = ["YearOfBirth", "Dose"] + [c for c in ("Sex", "DCCI") if c in df]
++                for key, component in df.groupby(component_keys, sort=False, dropna=False):
++                    pair = tuple(key[:2])
++                    if pair in source_bad:
++                        continue
++                    component = component.sort_values("DateDied")
++                    alive = component["Alive"].to_numpy(float)
++                    dead = component["Dead"].to_numpy(float)
++                    exits = float(np.maximum(alive[:-1] - dead[:-1] - alive[1:], 0.).sum())
++                    exit_totals[pair] = exit_totals.get(pair, 0.) + exits
++                for (age, dose), exits in exit_totals.items():
++                    dual_print(f"[KCOR_NONDEATH_EXITS] EnrollmentDate={sh},yob={age},dose={dose},count={exits:g}")
+ 
+         # The sensitivity sweep needs only the all-ages output. Once the full
+         # source calendar and every source history have been validated, avoid
+@@ -6572,11 +6589,14 @@
+         calendar_bad = {key for key, g in df.groupby(time_group_cols, sort=False)
+                         if not _complete_week_history(g.sort_values("DateDied")["t"])}
+         # Translate invalid source cells into their fitted age group.
++        risk_accounting_bad = set()
+         for (age, dose) in source_bad:
+             bucket = age
+             if kcor6_enabled_effective and int(AGE_RANGE or 1) > 1 and age >= 0:
+                 bucket = (int(age) // int(AGE_RANGE)) * int(AGE_RANGE)
+             calendar_bad.add((bucket, dose))
++            if any("death-only accounting" in reason for _, reason in source_bad[(age, dose)]):
++                risk_accounting_bad.add((bucket, dose))
+         # If reconstructing an aggregate, an absent component week cannot
+         # become an apparently valid aggregate count.
+         if -2 not in df["YearOfBirth"].values:
+@@ -6585,6 +6605,8 @@
+                 if key in calendar_bad:
+                     aggregate_key = (key[0], -2, key[-1]) if len(key) == 3 else (-2, key[-1])
+                     calendar_bad.add(aggregate_key)
++                    if key in risk_accounting_bad:
++                        risk_accounting_bad.add(aggregate_key)
+ 
+ 
+         # -------------------------------------------------------------------
+@@ -7851,8 +7873,8 @@
+ 
+                     t_vals = g_sorted["t"].to_numpy(dtype=float)
+                     if key in calendar_bad or not _complete_week_history(t_vals):
+-                        norm_status[idx] = "missing_week_history"
+-                        dual_print(f"[WARN] KCOR_MISSING_WEEK_HISTORY,EnrollmentDate={sh},yob={yob},dose={dose}")
++                        norm_status[idx] = "invalid_risk_history" if key in risk_accounting_bad else "missing_week_history"
++                        dual_print(f"[WARN] KCOR_{norm_status[idx[0]].upper()},EnrollmentDate={sh},yob={yob},dose={dose}")
+                         continue
+                     try:
+                         t_vals = g_sorted["t"].to_numpy(dtype=float)
+@@ -8143,7 +8165,8 @@
+                 how="left"
+             )
+         if "normalization_status" in out_sh and "KCOR_ns" in out_sh:
+-            out_sh.loc[out_sh.normalization_status.eq("missing_week_history"), "KCOR_ns"] = np.nan
++            out_sh.loc[out_sh.normalization_status.isin(["missing_week_history", "invalid_risk_history"]), "KCOR_ns"] = np.nan
++        out_sh["risk_history_policy"] = history_policy
+         all_out.append(out_sh)
+         
+         # For Monte Carlo mode: collect KCOR values at the cohort reporting date for summary
+@@ -9027,7 +9050,7 @@
+             "KCOR_unanchored", "KCOR_anchored", "anchor_status", "anchor_date", "anchor_ratio",
+                             "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged", "CI_analytic_lower", "CI_analytic_upper",
+                             "CI_undefined_anchor_draws", "CI_missing_draws", "CI_unanchored_lower", "CI_unanchored_upper", "CI_unanchored_valid_draws",
+-                            "normalization_status",
++                            "normalization_status", "risk_history_policy",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",

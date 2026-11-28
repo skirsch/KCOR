@@ -1,0 +1,15 @@
+{
+  "ordinary_fixed_group_size": true,
+  "ordinary_draws_tested": 10,
+  "exit_cells": [
+    3,
+    2,
+    1,
+    2,
+    2,
+    90
+  ],
+  "table8_fixed_total": 2511927,
+  "table8_component_sizes_vary": true,
+  "table8_draws_tested": 10
+}

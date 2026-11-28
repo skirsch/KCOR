@@ -1,0 +1,68 @@
+--- a/code/KCOR.py
++++ b/code/KCOR.py
+@@ -6157,7 +6157,7 @@
+         import traceback
+         traceback.print_exc()
+ 
+-def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log"):
++def process_workbook(src_path: str, out_path: str, log_filename: str = "KCOR_summary.log", *, bootstrap_frames=None, return_rows=False):
+     
+     # Set up dual output (console + file)
+     global ENROLLMENT_DATES  # Declare global before any reference to ENROLLMENT_DATES
+@@ -6680,7 +6680,7 @@
+ 
+     for sh in sheets_to_process:
+         dual_print(f"[Info] Processing sheet: {sh}")
+-        df = pd.read_excel(src_path, sheet_name=sh)
++        df = pd.read_excel(src_path, sheet_name=sh) if bootstrap_frames is None else bootstrap_frames[sh].copy()
+         # prep
+         df["DateDied"] = pd.to_datetime(df["DateDied"])
+         # (Removed temporary diagnostics)
+@@ -8446,6 +8446,16 @@
+     
+     # Now sort after ensuring Date is datetime type
+     combined = combined.sort_values(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den","Date"])
++    if return_rows:
++        xls.close()
++        log_file_handle.close()
++        return combined
++    if not MONTE_CARLO_MODE:
++        import bootstrap_reporting
++        from types import SimpleNamespace
++        combined = bootstrap_reporting.attach(SimpleNamespace(**globals()), combined,
++                                               src_path, sheets_to_process, dual_print)
++
+ 
+     # Negative control mode: output summarized KCOR by (EnrollmentDate, YoB1, YoB2=YoB1+10, Dose)
+     if int(NEGATIVE_CONTROL_MODE) == 1:
+@@ -9143,8 +9153,8 @@
+                         "    - Dose_num: Numerator dose group",
+                         "    - Dose_den: Denominator dose group",
+                         "    - KCOR: Hazard ratio (CH_num/CH_den) normalized to baseline (unitless)",
+-                        "    - CI_lower: 95% lower confidence bound for KCOR",
+-                        "    - CI_upper: 95% upper confidence bound for KCOR",
++                        "    - CI_lower: person-bootstrap percentile lower bound (ordinary mode; blank if unavailable)",
++                        "    - CI_upper: person-bootstrap percentile upper bound (ordinary mode; blank if unavailable)",
+                         "    - MR_num: Weekly mortality rate (annualized per 100,000 for display)",
+                         "    - MR_num: Weekly mortality rate for numerator (annualized per 100,000)",
+                         "    - CH_num: Cumulative hazard for numerator (unitless)",
+@@ -9241,6 +9251,7 @@
+                         # Enforce standard column order (Czech format) for consistency across all datasets
+                         standard_col_order = [
+                             "Date", "ISOweekDied", "KCOR", "CI_lower", "CI_upper",
++                            "CI_method", "CI_valid_draws", "CI_flagged_draws", "CI_point_flagged", "CI_analytic_lower", "CI_analytic_upper",
+                             "EnrollmentDate", "YearOfBirth", "Dose_num", "Dose_den",
+                             "theta_num", "theta_den", "theta0_status_num", "theta0_status_den",
+                             "hazard_num", "cum_hazard_num", "adj_cum_hazard_num", "t",
+@@ -9893,6 +9904,11 @@
+                                 "KCOR": f"{row['KCOR']:.4f}{abnormal_marker}",
+                                 "CI_Lower": f"{row['CI_lower']:.3f}",
+                                 "CI_Upper": f"{row['CI_upper']:.3f}",
++                                "CI_method": row.get("CI_method", "analytic_count_based"),
++                                "CI_valid_draws": row.get("CI_valid_draws", np.nan),
++                                "CI_flagged_draws": row.get("CI_flagged_draws", np.nan),
++                                "CI_point_flagged": row.get("CI_point_flagged", np.nan),
++
+                                 "Any_NonOK_Status": any_non_ok_theta,
+                                 "theta0_hat_num": theta0_hat_num,
+                                 "theta0_hat_den": theta0_hat_den,

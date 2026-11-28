@@ -1,0 +1,24 @@
+--- a/code/kcor_survivor.py
++++ b/code/kcor_survivor.py
+@@ -245,9 +245,20 @@
+         if abs(alpha-1)<=model.NPH_IDENTITY_TOL or not np.any((t>=max(0,wave[0]))&(t<=wave[1])):
+             return base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
+         initial,diag=base(h,t,quiet,k_anchor_weeks,gamma_per_week,theta0_init,deaths_arr)
++        # Eligibility must reflect the requested nonlinear model, not the seed fit.
++        eligible=(np.isfinite(h)&np.isfinite(t)&(t>=0)
++                  &(quiet|(t<k_anchor_weeks))&~((t>=wave[0])&(t<=wave[1])))
++        n_fit=int(eligible.sum())
++        if n_fit<3:
++            diag.update(success=False,status="insufficient_data",
++                        message="nonlinear_fit_too_few_eligible_weeks",
++                        n_obs=n_fit,n_fit=n_fit,fit_mask_theta=eligible,
++                        k_hat=np.nan,theta0_raw=np.nan,anchor_only=False,
++                        insufficient_signal=True,rmse_hazard=np.nan,
++                        fit_residual_max=np.nan,relRMSE_hazard_fit=np.nan)
++            return (np.nan,np.nan),diag
+         if diag.get("insufficient_deaths") or not np.isfinite(initial[0]):return initial,diag
+         p=Profile(h,t,quiet,k_anchor_weeks,gamma_per_week,wave)
+-        if not p.fit.any() or len(p.h[p.fit])<3:return initial,diag
+         target=p.h[p.fit]
+         # Scale residuals for numerical optimization only (same LS minimum).
+         scale=max(float(target.mean()),1e-8)

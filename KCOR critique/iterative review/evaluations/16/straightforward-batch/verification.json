@@ -1,0 +1,17 @@
+{
+  "candidate": "m178",
+  "parent": "m177",
+  "fractional_points_restored": {
+    "all_ages": 1.002719227352062,
+    "born_1960_plus": 1.002370694967249,
+    "intervals": "not calculated; point-only fractional expected counts"
+  },
+  "real_fractional_discrepancy_rejected": 0.001,
+  "integer_nested_regression": "passed",
+  "cause_specific_contradiction": "invalid totals withheld",
+  "valid_partial_complement": "accepted",
+  "archive_interval_pairs_updated": 7,
+  "noninterval_fields": "identical",
+  "other_checked_archive_figure_files_identical": 51,
+  "manuscript_and_pdf_unchanged": true
+}

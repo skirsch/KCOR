@@ -1,0 +1,86 @@
+--- m148/code/bootstrap_reporting.py
++++ m149/code/bootstrap_reporting.py
+@@ -214,19 +214,18 @@
+     # positive-weight paired ages, matching the original point population.
+     for (sheet,age,num,den),idx in out.groupby(["EnrollmentDate","YearOfBirth","Dose_num","Dose_den"],sort=False).groups.items():
+         if age==0:
+-            weights=model.ASMR_WEIGHTS_BY_SHEET.get(sheet,{})
+-            paired=set(out.loc[(out.EnrollmentDate==sheet)&(out.Dose_num==num)&(out.Dose_den==den),"YearOfBirth"])
+-            ages=[a for a,w in weights.items() if w>0 and a in paired and a>0]
+-        else:ages=[age]
+-        states=[status.get((sheet,a,d),"not_assessed") for a in ages for d in (num,den)]
+-        state=("violation" if "violation" in states else "not_assessed" if not states or "not_assessed" in states else "no_deficit_detected" if "no_deficit_detected" in states else "no_gaps")
+-        out.loc[idx,"gap_assumption_status"]=state
+-        if state=="violation":
+-            out.loc[idx,"abnormal_fit"]=True
+-            out.loc[idx,"CI_point_flagged"]=True
+-            if "CI_method" in out:
+-                use=out.index.isin(idx)&out.CI_method.eq("person_bootstrap_percentile")
+-                out.loc[use,"CI_method"]="person_bootstrap_with_fit_flags"
++            groups=[([int(a) for a in label.split(",") if a], subidx.index) for label,subidx in out.loc[idx,"pool_contributors"].fillna("").groupby(out.loc[idx,"pool_contributors"].fillna(""))] if "pool_contributors" in out else [([],idx)]
++        else:groups=[([age],idx)]
++        for ages,subidx in groups:
++            states=[status.get((sheet,a,d),"not_assessed") for a in ages for d in (num,den)]
++            state=("violation" if "violation" in states else "not_assessed" if not states or "not_assessed" in states else "no_deficit_detected" if "no_deficit_detected" in states else "no_gaps")
++            out.loc[subidx,"gap_assumption_status"]=state
++            if state=="violation":
++                out.loc[subidx,"abnormal_fit"]=True
++                out.loc[subidx,"CI_point_flagged"]=True
++                if "CI_method" in out:
++                    use=out.index.isin(subidx)&out.CI_method.eq("person_bootstrap_percentile")
++                    out.loc[use,"CI_method"]="person_bootstrap_with_fit_flags"
+     for row in summary:
+         if row["status"]=="violation":log(f"[KCOR_GAP_ASSUMPTION_VIOLATION] {row}")
+     return out
+@@ -240,6 +239,7 @@
+     out["CI_method"]="unavailable";out["CI_valid_draws"]=0
+     out["CI_flagged_draws"]=0;out["CI_point_flagged"]=flagged(out)
+     out["CI_undefined_anchor_draws"]=0;out["CI_missing_draws"]=0
++    out["CI_pool_composition_changed_draws"]=0
+     out["CI_unanchored_lower"]=np.nan;out["CI_unanchored_upper"]=np.nan;out["CI_unanchored_valid_draws"]=0
+     layout=os.environ.get("KCOR_BOOTSTRAP_LAYOUT","disjoint")
+     draws=int(os.environ.get("KCOR_BOOTSTRAP_DRAWS","999"))
+@@ -254,16 +254,19 @@
+     if not hist:return annotate_gap_diagnostic(model,out,point_gaps,[],log)
+     keys=keyframe(out).index
+     supported=keys.get_level_values("EnrollmentDate").isin(hist)
++    pooled=keys.get_level_values("YearOfBirth")==0
++    point_members=keyframe(out).get("pool_contributors",pd.Series("",index=keys)).fillna("").astype(str).to_numpy()
++    point_pool=pooled & np.isfinite(out["KCOR"].to_numpy(float)) & (point_members!="")
+     settings={k:getattr(model,k) for k in ("ENROLLMENT_DATES","OVERRIDE_DOSE_PAIRS","OVERRIDE_YOBS","KCOR_NORMALIZATION_WEEKS","KCOR_NORMALIZATION_WEEKS_EFFECTIVE","DYNAMIC_HVE_SKIP_WEEKS","YEAR_RANGE","MONTE_CARLO_MODE")}
+     settings["ENROLLMENT_DATES"]=list(hist)
+     seed=int(os.environ.get("KCOR_BOOTSTRAP_SEED","33080"))
+-    values=[];flags=[];raw_values=[];invalid_anchors=[];missing=[];gap_draws=[]
++    values=[];flags=[];raw_values=[];invalid_anchors=[];missing=[];gap_draws=[];composition=[]
+     with ProcessPoolExecutor(max_workers=int(os.environ.get("KCOR_BOOTSTRAP_WORKERS","5")),initializer=init_worker,initargs=(hist,settings,seed,str(Path(src).resolve()),sheet_indices)) as pool:
+         for i,(v,error) in enumerate(pool.map(worker,range(1,draws+1),chunksize=1),1):
+             if error:
+                 log(f"[BOOTSTRAP] draw {i} unavailable: {error}")
+                 val=np.full(len(keys),np.nan);bad=np.ones(len(keys),dtype=bool)
+-                raw=val.copy();invalid=np.zeros(len(keys),dtype=bool);absent=np.ones(len(keys),dtype=bool)
++                raw=val.copy();invalid=np.zeros(len(keys),dtype=bool);absent=np.ones(len(keys),dtype=bool);changed=np.zeros(len(keys),dtype=bool)
+             else:
+                 val=v["KCOR"].reindex(keys).to_numpy(float)
+                 raw=v["KCOR_unanchored"].reindex(keys).to_numpy(float)
+@@ -271,13 +274,20 @@
+                 invalid=anchor.isin(["undefined_reference_ratio","missing_reference_week","pooled_no_valid_reference"]).to_numpy(bool)
+                 absent=~keys.isin(v.index)
+                 bad=pd.Series(flagged(v),index=v.index).reindex(keys).fillna(True).to_numpy(bool)
++                members=v.get("pool_contributors",pd.Series("",index=v.index)).reindex(keys).fillna("").astype(str).to_numpy()
++                changed=point_pool & ~absent & (members!=point_members)
++                # A finite result for a different pool is not a valid draw
++                # for the point's population; retain counts, not that value.
++                val=val.copy();val[changed]=np.nan
++                bad=bad | changed
+             gap_draws.append({} if error else v.attrs.get("gap_first_pass",{}))
+-            values.append(val);flags.append(bad);raw_values.append(raw);invalid_anchors.append(invalid);missing.append(absent)
++            values.append(val);flags.append(bad);raw_values.append(raw);invalid_anchors.append(invalid);missing.append(absent);composition.append(changed)
+             if i%100==0:log(f"[BOOTSTRAP] {i}/{draws}")
+     a=np.asarray(values);count=np.isfinite(a).sum(axis=0);out["CI_valid_draws"]=count
+     out["CI_flagged_draws"]=np.where(supported,np.asarray(flags).sum(axis=0),0)
+     out["CI_undefined_anchor_draws"]=np.asarray(invalid_anchors).sum(axis=0)
+     out["CI_missing_draws"]=np.where(supported,np.asarray(missing).sum(axis=0),0)
++    out["CI_pool_composition_changed_draws"]=np.where(supported,np.asarray(composition).sum(axis=0),0)
+     raw_a=np.asarray(raw_values);raw_count=np.isfinite(raw_a).sum(axis=0)
+     out["CI_unanchored_valid_draws"]=raw_count
+     raw_good=(raw_count==draws)&np.isfinite(out["KCOR_unanchored"].to_numpy(float))
